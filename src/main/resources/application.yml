@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: r4r-spring-ai-rag
+  main:
+    web-application-type: none
+
+r4r:
+  catalog-on-startup: false
+  knowledge:
+    root: knowledge
+    max-file-bytes: 1048576
+    max-chunk-chars: 2000

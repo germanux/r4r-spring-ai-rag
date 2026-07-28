@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "base-catalog-green",
+  "benchmark": "benchmarks/01-base.md",
+  "objective": "Keep the minimal Markdown catalog compiling and tested.",
+  "allowed_paths": [
+    "pom.xml",
+    "src/main/**",
+    "src/test/**",
+    "knowledge/**",
+    "agent/shared/MEMORY.md"
+  ],
+  "pre_gate": ["./scripts/verify.sh", "java"],
+  "post_gate": ["./scripts/verify.sh", "java"],
+  "opencode_prompt": ".opencode/commands/resume.md",
+  "review_required": true
+}

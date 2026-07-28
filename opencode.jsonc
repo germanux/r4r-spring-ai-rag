@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "r4r-local",
+  "share": "disabled",
+  "snapshot": true,
+  "provider": {
+    "ollama-local": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama local or LAN",
+      "options": {
+        "baseURL": "{env:R4R_OLLAMA_BASE_URL}"
+      },
+      "models": {
+        "r4r-coder": {
+          "name": "R4R coding model alias",
+          "temperature": true,
+          "limit": {
+            "context": 32768,
+            "output": 4096
+          }
+        }
+      }
+    }
+  }
+}

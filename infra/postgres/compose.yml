@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: r4r-rag-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-r4r_rag}
+      POSTGRES_USER: ${POSTGRES_USER:-r4r}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-r4r_local_only}
+    ports:
+      - "${POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - r4r_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-r4r} -d ${POSTGRES_DB:-r4r_rag}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  r4r_pgdata:
