@@ -21,5 +21,26 @@
         }
       }
     }
+  },
+  "mcp": {
+    "codegraph": {
+      "type": "local",
+      "command": [
+        "codegraph",
+        "serve",
+        "--mcp"
+      ],
+      "enabled": true
+    }
+  },
+  "watcher": {
+    "ignore": [
+      ".git/**",
+      ".codegraph/**",
+      "runtime/**",
+      "target/**",
+      "docker-postgres/data/**",
+      "docker-postgres/backups/**"
+    ]
   }
 }

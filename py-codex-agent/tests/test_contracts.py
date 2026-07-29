@@ -3,35 +3,40 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from r4r_codex_agent.contracts import load_task, validate_decision
+from r4r_codex_agent.contracts import default_progress, load_progress, load_task_plan, validate_structured_result
 
 
 class ContractsTest(unittest.TestCase):
-    def test_loads_strict_task(self):
+    def test_loads_ordered_task_plan(self):
         payload = {
             "schema_version": 1,
-            "id": "task-1",
-            "benchmark": ".opencode/commands/benchmark-01-base.md",
-            "objective": "Keep green",
-            "allowed_paths": ["src/**"],
-            "pre_gate": ["true"],
-            "post_gate": ["true"],
-            "opencode_prompt": ".opencode/commands/benchmark-01-base.md",
-            "review_required": True,
+            "tasks": [{
+                "id": "task-01-base", "command": ".opencode/commands/task-01-base.md",
+                "objective": "Keep green", "allowed_paths": ["src/**"],
+                "gate": ["./scripts/task-gate.sh", "task-01-base"],
+                "commit_message": "chore: baseline",
+            }],
+            "final_gate": ["./scripts/task-gate.sh", "all"],
         }
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "task.json"
+            path = Path(directory) / "plan.json"
             path.write_text(json.dumps(payload), encoding="utf-8")
-            task = load_task(path)
-        self.assertEqual("task-1", task.id)
+            plan = load_task_plan(path)
+        self.assertEqual("task-01-base", plan.tasks[0].id)
 
-    def test_rejects_review_for_another_task(self):
-        decision = {
-            "schema_version": 1, "decision": "ACCEPT", "task_id": "other",
-            "summary": "Green", "paths": [], "next_action": "Commit manually",
-        }
+    def test_progress_must_match_plan_order(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "progress.json"
+            path.write_text(json.dumps(default_progress(["wrong"])), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                load_progress(path, ["task-01-base"])
+
+    def test_rejects_result_for_another_task(self):
         with self.assertRaises(ValueError):
-            validate_decision(decision, "task-1")
+            validate_structured_result(
+                {"schema_version": 1, "decision": "ACCEPT", "task_id": "other"},
+                "task-01-base", {"ACCEPT"},
+            )
 
 
 if __name__ == "__main__":

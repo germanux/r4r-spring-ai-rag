@@ -1,8 +1,8 @@
-Validate the current repository without editing application code:
+Validate without editing product code:
 
-1. `./scripts/verify.sh unit`
-2. `./scripts/verify.sh all`
-3. `git diff --check`
-4. `git status --short`
+1. `./scripts/task-gate.sh all`
+2. `git diff --check`
+3. `git status --short`
 
-Report exact exits and the first failing condition. Do not declare success from stale logs.
+Report exact exits and the first failing condition. Do not use stale runtime logs as
+proof.

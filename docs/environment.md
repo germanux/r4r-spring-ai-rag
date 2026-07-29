@@ -1,39 +1,44 @@
-# How `.env` is loaded
+# Project-local environment
 
-`.env` is a project-local configuration file. It does not permanently modify Linux,
-the user account, or the desktop session.
+`.env` contains project variables. It does not permanently modify system or user
+environment variables.
 
 ## Docker Compose
 
-`scripts/db.sh` always calls:
+`scripts/db.sh` calls:
 
-```text
-docker compose --env-file <repository>/.env -f docker-postgres/compose.yml ...
+```bash
+docker compose --env-file .env -f docker-postgres/compose.yml ...
 ```
 
-Compose substitutes `${VARIABLE}` expressions and passes the declared values into the
-containers. The loading is explicit and independent of the shell's current directory.
+Compose substitutes the database image, names, ports and credentials.
 
 ## Spring Boot
 
-`application.yml` contains:
+`application.yml` imports:
 
 ```yaml
-spring.config.import: optional:file:./.env[.properties]
+spring:
+  config:
+    import: optional:file:./.env[.properties]
 ```
 
-Spring reads `.env` as a Java properties file when launched from the repository root.
-The scripts and Maven gates run there. Real operating-system environment variables or
-command-line properties have higher precedence and can override the file.
+Spring reads the same project file as application properties. Real operating-system
+environment variables still take precedence.
 
-## OpenCode and the Python controller
+## Shell launchers
 
-`scripts/run-opencode.sh` and `scripts/run-codex-agent.sh` execute `source .env` with
-automatic export enabled. Those values exist only in that script process and its child
-processes. They are not written to system or user configuration.
+Agent scripts use:
+
+```bash
+set -a
+source .env
+set +a
+```
+
+Those variables exist only in that shell and its child processes.
 
 ## Git
 
-`.env` is ignored because it is machine-specific. `.env.example` is the versioned
-reference. The ZIP includes a ready local `.env`; `setup.sh` recreates it from the
-example if it is missing.
+`.env` is ignored because it can contain machine-specific values or secrets.
+`.env.example` is the versioned template.

@@ -1,12 +1,20 @@
 # py-codex-agent
 
-A deliberately small controller for one cycle:
+Small automatic controller for the ordered R4R task plan.
 
-`pre-gate -> OpenCode -> path check -> post-gate -> optional Codex JSON review`.
+It does not implement product code. It:
 
-It never commits or pushes. Every run is stored under `runtime/runs/<UTC timestamp>/`
-with logs, evidence, decisions and `state.json` together.
+1. verifies accepted tasks;
+2. selects the first pending or regressed task;
+3. requests a structured read-only Codex plan;
+4. launches OpenCode with the selected task and plan;
+5. runs the exact deterministic gate;
+6. requests a structured read-only Codex review;
+7. permits a bounded number of revisions;
+8. updates progress and memory;
+9. creates a local commit when enabled;
+10. advances automatically until complete or blocked.
 
-`R4R_CODEX_CMD_JSON` is optional. When empty, the cycle ends as `REVIEW_PENDING`.
-When configured, it must be a JSON array representing a command that reads the review
-request from standard input and writes only the strict decision JSON to standard output.
+Runtime output is written only under `runtime/runs/`. An unfinished task keeps
+`runtime/locks/active-task.json`, allowing a later invocation to resume only when
+its dirty paths remain within that task's scope.

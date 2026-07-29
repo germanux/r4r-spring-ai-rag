@@ -8,7 +8,6 @@
 
 # Node
 /.opencode/node_modules/
-/.opencode/package-lock.json
 
 # Python
 /py-codex-agent/.venv/

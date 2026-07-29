@@ -1,2 +1,0 @@
-[console_scripts]
-r4r-codex-cycle = r4r_codex_agent.cli:main

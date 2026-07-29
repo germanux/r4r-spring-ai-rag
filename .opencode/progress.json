@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "active_task": null,
+  "last_run": null,
+  "tasks": [
+    {
+      "id": "task-01-base",
+      "status": "PENDING",
+      "accepted_at": null
+    },
+    {
+      "id": "task-02-ingestion",
+      "status": "PENDING",
+      "accepted_at": null
+    },
+    {
+      "id": "task-03-pgvector",
+      "status": "PENDING",
+      "accepted_at": null
+    },
+    {
+      "id": "task-04-rag",
+      "status": "PENDING",
+      "accepted_at": null
+    }
+  ]
+}

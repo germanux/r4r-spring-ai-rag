@@ -1,1 +1,1 @@
-"""Bounded R4R Codex/OpenCode controller."""
+"""Automatic R4R Codex/OpenCode task controller."""

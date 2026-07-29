@@ -13,7 +13,7 @@
 
     <groupId>com.riansares</groupId>
     <artifactId>r4r-spring-ai-rag</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
+    <version>0.3.0-SNAPSHOT</version>
     <name>r4r-spring-ai-rag</name>
     <description>Minimal local RAG baseline with Spring AI, Ollama and PostgreSQL/pgvector</description>
 

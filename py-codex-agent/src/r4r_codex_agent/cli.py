@@ -6,34 +6,29 @@ import os
 from pathlib import Path
 import sys
 
-from .contracts import load_task
-from .runner import CycleRunner, command_from_env
+from .contracts import load_task_plan
+from .runner import AutomaticRunner
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run one bounded R4R OpenCode/Codex cycle")
+    parser = argparse.ArgumentParser(description="Run the automatic R4R Codex/OpenCode task sequence")
     parser.add_argument("--repo", type=Path, default=Path.cwd())
-    parser.add_argument("--task", type=Path, default=Path(".opencode/CURRENT_TASK.json"))
+    parser.add_argument("--plan", type=Path, default=Path(".opencode/task-plan.json"))
+    parser.add_argument("--progress", type=Path, default=Path(".opencode/progress.json"))
+    parser.add_argument("--status", action="store_true", help="Show task progress and current gate status")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     repo = args.repo.resolve()
-    task_path = args.task if args.task.is_absolute() else repo / args.task
-    task = load_task(task_path)
-    opencode_bin = os.environ.get("R4R_OPENCODE_BIN", "opencode")
-    agent = os.environ.get("R4R_OPENCODE_AGENT", "r4r-pc")
-    opencode_command = (
-        opencode_bin, "--print-logs", "--log-level", "INFO", "run",
-        "--dir", str(repo), "--agent", agent, "--format", "json",
-    )
+    plan_path = args.plan if args.plan.is_absolute() else repo / args.plan
+    progress_path = args.progress if args.progress.is_absolute() else repo / args.progress
     try:
-        exit_code = CycleRunner(repo, task).execute(
-            opencode_command, command_from_env("R4R_CODEX_CMD_JSON")
-        )
+        runner = AutomaticRunner(repo, load_task_plan(plan_path), progress_path)
+        exit_code = runner.status() if args.status else runner.execute()
     except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as exception:
-        print(f"r4r-codex-cycle: {exception}", file=sys.stderr)
+        print(f"r4r-codex-agent: {exception}", file=sys.stderr)
         raise SystemExit(2) from exception
     raise SystemExit(exit_code)
 

@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "r4r-codex-agent"
-version = "0.2.0"
-description = "Small deterministic controller for one bounded OpenCode/Codex review cycle"
+version = "0.3.0"
+description = "Automatic bounded task controller using Codex planning/review and OpenCode implementation"
 requires-python = ">=3.10"
 dependencies = []
 
 [project.scripts]
-r4r-codex-cycle = "r4r_codex_agent.cli:main"
+r4r-codex-agent = "r4r_codex_agent.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -1,24 +1,26 @@
 # Architecture
 
-```text
-src/                    Java product and Flyway migrations
-knowledge/              Markdown corpus
-.opencode/              OpenCode agent, commands, task and concise memory
-py-codex-agent/          One bounded Python controller and strict review contract
-docker-postgres/         PostgreSQL/pgvector compose, bind data and backups
-scripts/                 Public shell entry points
-runtime/                 Generated runs, logs, evidence and decisions
-docs/                    Human documentation
-.codegraph/              Regenerable local index, ignored by Git
-```
+## Product flow
 
-The product path is deliberately incremental:
+Markdown -> deterministic loader/chunker -> idempotent ingestion -> Spring AI
+PgVector -> retrieval -> cited non-web RAG service.
 
-1. deterministic Markdown loading/chunking and real PostgreSQL baseline;
-2. idempotent ingestion;
-3. Spring AI PgVectorStore and embeddings;
-4. cited non-web RAG;
-5. bounded OpenCode/Codex cycle.
+## Agent flow
 
-PostgreSQL application data uses `docker-postgres/data/app/`. Integration tests use
-a second service backed by `tmpfs`; Testcontainers is intentionally absent.
+Task plan -> Codex read-only plan -> OpenCode implementation -> deterministic gate
+-> Codex read-only review -> controller progress/memory update -> local commit -> next
+task.
+
+The controller is deliberately small and bounded. It does not use worktrees,
+background supervisors, autonomous push, REST acceptance, browser automation or a
+second task planner.
+
+## Ownership
+
+- `src/`, `knowledge/`: product code and corpus.
+- `.opencode/`: OpenCode agent, commands, ordered task plan and concise progress.
+- `py-codex-agent/`: automatic controller, prompts, schemas and tests.
+- `docker-postgres/`: PostgreSQL Compose, init, persistent data and backups.
+- `scripts/`: public operational entry points and deterministic gates.
+- `runtime/`: ignored logs, decisions, evidence and resumable task lock.
+- `docs/`: human documentation.
