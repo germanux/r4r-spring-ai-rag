@@ -1,46 +1,33 @@
-# r4r-spring-ai-rag
+# R4R Spring AI RAG
 
-Minimal, staged base for a local RAG project and a guided OpenCode/Codex workflow.
+Small non-web Java 21 baseline for a local RAG system:
 
-## Current scope
+- Spring Boot, Spring AI and Ollama;
+- JDBC, Flyway and PostgreSQL/pgvector;
+- deterministic Markdown loading and chunking;
+- persistent development DB plus disposable integration-test DB;
+- OpenCode with CodeGraph available;
+- bounded optional Codex review controller;
+- all generated logs/evidence under `runtime/`.
 
-Phase 0 only:
-
-- Java 21 and Spring Boot;
-- recursive Markdown discovery;
-- deterministic heading-aware chunking;
-- unit tests;
-- a small Python orchestration harness;
-- organized OpenCode and Codex instructions;
-- PostgreSQL/pgvector infrastructure prepared but not coupled to Java yet.
-
-Not included yet: Angular, REST, custom Ollama clients, embeddings, pgvector persistence, Playwright, CodeGraph, autonomous commits or multi-epoch autopilot.
-
-## First run
+## Start
 
 ```bash
-cp .env.example .env
-./scripts/install/dev.sh
-./scripts/verify.sh
+./scripts/setup.sh
+./scripts/verify.sh all
 ```
 
-Optional database:
+`setup.sh` does not install PostgreSQL or use `sudo`; Docker runs PostgreSQL.
+Edit `.env` for local endpoints, ports, credentials or model names. See
+`docs/environment.md` for the exact loading rules.
+
+## Main operations
 
 ```bash
-./scripts/db/postgres.sh up
-./scripts/db/postgres.sh status
+./scripts/db.sh up
+./scripts/db.sh status
+./scripts/run-opencode.sh
+./scripts/run-codex-agent.sh
 ```
 
-OpenCode:
-
-```bash
-./scripts/agent/run-opencode.sh
-```
-
-Guided cycle (requires a clean Git working tree):
-
-```bash
-./scripts/agent/run-cycle.sh
-```
-
-The phase order and migration rationale are documented in `docs/ARCHITECTURE.md` and `benchmarks/`.
+The initial active task is `.opencode/commands/benchmark-01-base.md`. Commit the imported baseline manually before running `./scripts/run-codex-agent.sh`, because the bounded controller requires a clean working tree.

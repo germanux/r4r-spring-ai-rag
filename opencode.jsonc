@@ -1,22 +1,22 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "default_agent": "r4r-local",
+  "default_agent": "r4r-pc",
   "share": "disabled",
   "snapshot": true,
   "provider": {
-    "ollama-local": {
+    "ollama-pc": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Ollama local or LAN",
+      "name": "Ollama PC - R4R",
       "options": {
-        "baseURL": "{env:R4R_OLLAMA_BASE_URL}"
+        "baseURL": "{env:R4R_OPENCODE_OLLAMA_BASE_URL}"
       },
       "models": {
-        "r4r-coder": {
-          "name": "R4R coding model alias",
+        "qwen3-coder-next-80b-t025-168k-8k-pc-pc": {
+          "name": "Qwen3-Coder-Next 80B 168K",
           "temperature": true,
           "limit": {
-            "context": 32768,
-            "output": 4096
+            "context": 172032,
+            "output": 8192
           }
         }
       }

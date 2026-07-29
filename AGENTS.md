@@ -1,36 +1,12 @@
-# Repository rules
+# Repository agent rules
 
-## Scope
-
-Work only in this repository and only on the active task in
-`agent/shared/CURRENT_TASK.json`.
-
-## Required start
-
-1. Read this file.
-2. Read `agent/shared/CURRENT_TASK.json`.
-3. Read `agent/shared/MEMORY.md`.
-4. Inspect `git status --short` and `git diff --stat`.
-5. State the first unproven acceptance condition before editing.
-
-## Editing discipline
-
-- Change only paths listed in the active task.
-- Make one coherent change at a time.
-- Do not add web, REST, database or LLM integration before its benchmark phase.
-- Do not create custom Ollama HTTP clients; Spring AI integration belongs to phase 4.
-- Do not weaken tests to obtain green.
-- Do not run Git write operations.
-- Do not edit generated output or runtime evidence.
-
-## Validation
-
-The deterministic runner owns validation. Use only commands defined in the active
-JSON task. Preserve exit codes and do not pipe Maven through `head`, `tail`, `grep`
-or `tee`.
-
-## Stop conditions
-
-Stop when the active acceptance conditions are proven, a deterministic gate fails,
-or required external infrastructure is unavailable. Record exact evidence in
-`agent/shared/MEMORY.md`.
+1. Work on exactly one active command from `.opencode/CURRENT_TASK.json`.
+2. Keep the application non-web until a later explicit benchmark changes that scope.
+3. PostgreSQL/pgvector runs only through `docker-postgres/compose.yml`.
+4. Flyway is the sole owner of application schema changes.
+5. Use Spring AI abstractions; do not create handwritten Ollama HTTP clients.
+6. CodeGraph is available for impact analysis but is not a success gate.
+7. Deterministic commands and current outputs own acceptance; prose does not.
+8. Store logs, evidence, decisions and state only under `runtime/runs/<timestamp>/`.
+9. Never commit, push, create worktrees, install system packages, or use `sudo` autonomously.
+10. Do not add REST, Angular, Playwright, Testcontainers, retries or autopilot unless an explicit later benchmark requires them.

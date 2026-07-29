@@ -1,23 +1,36 @@
-# Java
+# Local configuration
+.env
+
+# Java / IDE
 /target/
-*.iml
 .idea/
+*.iml
+
+# Node
+/.opencode/node_modules/
+/.opencode/package-lock.json
 
 # Python
-.venv/
-__pycache__/
+/py-codex-agent/.venv/
+**/__pycache__/
 *.py[cod]
-*.egg-info/
+.pytest_cache/
 
-# Node/OpenCode
-.opencode/node_modules/
+# Generated agent runtime
+/runtime/runs/*
+!/runtime/runs/.gitkeep
+/runtime/locks/*
+!/runtime/locks/.gitkeep
 
-# Local environment and runtime evidence
-.env
-/runtime/*
-!/runtime/.gitkeep
+# PostgreSQL runtime data and local backups
+/docker-postgres/data/app/*
+!/docker-postgres/data/app/.gitkeep
+/docker-postgres/backups/*
+!/docker-postgres/backups/.gitkeep
 
-# OS/editor
+# Regenerable CodeGraph index
+/.codegraph/
+
+# OS/editor noise
 .DS_Store
-*.swp
-*.zip
+*~

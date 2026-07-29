@@ -1,12 +1,36 @@
 spring:
+  config:
+    # Spring Boot treats the project-local .env as a Java properties file.
+    # Operating-system environment variables still override these values.
+    import: optional:file:./.env[.properties]
   application:
     name: r4r-spring-ai-rag
   main:
     web-application-type: none
+  datasource:
+    url: ${RAG_DB_URL}
+    username: ${RAG_DB_USER}
+    password: ${RAG_DB_PASSWORD}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  ai:
+    ollama:
+      base-url: ${RAG_OLLAMA_BASE_URL}
+      chat:
+        options:
+          model: ${RAG_GENERATION_MODEL}
+      embedding:
+        options:
+          model: ${RAG_EMBEDDING_MODEL}
+    vectorstore:
+      pgvector:
+        initialize-schema: false
+        dimensions: ${RAG_EMBEDDING_DIMENSIONS}
 
 r4r:
   catalog-on-startup: false
   knowledge:
-    root: knowledge
-    max-file-bytes: 1048576
-    max-chunk-chars: 2000
+    root: ${RAG_KNOWLEDGE_PATH}
+    max-file-bytes: ${RAG_MAX_FILE_BYTES}
+    max-chunk-chars: ${RAG_MAX_CHUNK_CHARS}

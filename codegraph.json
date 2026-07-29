@@ -1,0 +1,12 @@
+{
+  "exclude": [
+    "**/target/**",
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/__pycache__/**",
+    "runtime/**",
+    "docker-postgres/data/**",
+    "docker-postgres/backups/**",
+    ".codegraph/**"
+  ]
+}
