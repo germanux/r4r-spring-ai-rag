@@ -162,14 +162,17 @@ class AutomaticRunner:
         self._require_binary(self.opencode_bin)
         self._require_binary(self.codex_bin)
         dirty = git_changed_paths(self.repo)
-        if dirty and not self.lock_path.exists():
+        if self.lock_path.exists():
+            # A valid lock owns the current task, even when the worktree happens
+            # to be clean. Validate it before selecting any task so a later-task
+            # failure can never reopen an already accepted task.
+            self._validate_resume_lock(dirty)
+        elif dirty:
             if not self._can_bootstrap(dirty):
                 return self._finish("DIRTY_WORKTREE_UNOWNED", 64, {"changed_paths": dirty})
             result = self._bootstrap()
             if result != 0:
                 return result
-        elif dirty and self.lock_path.exists():
-            self._validate_resume_lock(dirty)
 
         completed = 0
         while True:
@@ -233,20 +236,18 @@ class AutomaticRunner:
             raise RuntimeError(f"Dirty resume contains out-of-scope paths: {disallowed}")
 
     def _select_task(self) -> Task | None:
-        accepted_tasks = [
-            task for task in self.plan.tasks
-            if task_progress(self.progress, task.id)["status"] == "ACCEPTED"
-        ]
-        if accepted_tasks:
-            latest = accepted_tasks[-1]
-            if latest.id not in self.verified_green:
-                gate = run_command(latest.gate, self.repo, timeout_seconds=self.timeout)
-                if gate.exit_code != 0:
-                    item = task_progress(self.progress, latest.id)
-                    item["status"] = "REGRESSION"
-                    item["accepted_at"] = None
-                    return latest
-                self.verified_green.add(latest.id)
+        # The active lock is authoritative. It represents unfinished work that
+        # belongs to exactly one task and must be resumed before considering the
+        # progress file. In particular, tests introduced by a pending task must
+        # not cause an earlier accepted task to be reopened as a regression.
+        if self.lock_path.exists():
+            lock = json.loads(self.lock_path.read_text(encoding="utf-8"))
+            return self._task_by_id(str(lock.get("task_id")))
+
+        # Without a lock, advance monotonically to the first task that has not
+        # been accepted. Cross-task regression detection is delegated to each
+        # current task gate and to the final gate, both of which run the complete
+        # deterministic verification suite.
         for task in self.plan.tasks:
             if task_progress(self.progress, task.id)["status"] != "ACCEPTED":
                 return task
@@ -427,9 +428,46 @@ Use CodeGraph only when useful. Implement, run the exact task gate, and stop.
 
     def _write_patch(self, attempt_dir: Path, changed: Sequence[str]) -> None:
         evidence = attempt_dir / "evidence"
-        tracked = run_command(("git", "diff", "--binary", "--", *changed), self.repo) if changed else None
-        if tracked:
-            (evidence / "changes.patch").write_text(tracked.stdout, encoding="utf-8")
+        evidence.mkdir(parents=True, exist_ok=True)
+        parts: list[str] = []
+
+        if changed:
+            unstaged = run_command(
+                ("git", "diff", "--binary", "--no-ext-diff", "--", *changed),
+                self.repo,
+            )
+            if unstaged.exit_code != 0:
+                raise RuntimeError(unstaged.stderr.strip() or "Unable to capture unstaged changes")
+            if unstaged.stdout:
+                parts.append(unstaged.stdout)
+
+            staged = run_command(
+                ("git", "diff", "--cached", "--binary", "--no-ext-diff", "--", *changed),
+                self.repo,
+            )
+            if staged.exit_code != 0:
+                raise RuntimeError(staged.stderr.strip() or "Unable to capture staged changes")
+            if staged.stdout:
+                parts.append(staged.stdout)
+
+            untracked = _nul_paths(
+                run_command(("git", "ls-files", "--others", "--exclude-standard", "-z"), self.repo)
+            )
+            for relative in sorted(set(changed).intersection(untracked)):
+                path = self.repo / relative
+                if not path.is_file():
+                    continue
+                addition = run_command(
+                    ("git", "diff", "--no-index", "--binary", "--", "/dev/null", relative),
+                    self.repo,
+                )
+                # `git diff --no-index` returns 1 when differences are present.
+                if addition.exit_code not in (0, 1):
+                    raise RuntimeError(addition.stderr.strip() or f"Unable to capture untracked file: {relative}")
+                if addition.stdout:
+                    parts.append(addition.stdout)
+
+        (evidence / "changes.patch").write_text("".join(parts), encoding="utf-8")
 
     def _write_lock(self, task: Task) -> None:
         self.lock_path.parent.mkdir(parents=True, exist_ok=True)

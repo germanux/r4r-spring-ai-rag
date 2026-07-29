@@ -1,8 +1,11 @@
 from pathlib import Path
+import json
 import tempfile
 import unittest
 
+from r4r_codex_agent.contracts import Task, TaskPlan
 from r4r_codex_agent.runner import (
+    AutomaticRunner,
     codex_exec_command,
     git_worktree_fingerprint,
     path_is_allowed,
@@ -29,12 +32,7 @@ class RunnerTest(unittest.TestCase):
     def test_worktree_fingerprint_detects_untracked_content_changes(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)
-            run_command(("git", "init", "-q"), repo)
-            run_command(("git", "config", "user.email", "test@example.invalid"), repo)
-            run_command(("git", "config", "user.name", "Test Runner"), repo)
-            (repo / "tracked.txt").write_text("baseline", encoding="utf-8")
-            run_command(("git", "add", "tracked.txt"), repo)
-            run_command(("git", "commit", "-q", "-m", "baseline"), repo)
+            self._init_repo(repo)
 
             baseline = git_worktree_fingerprint(repo)
             (repo / "new.txt").write_text("first", encoding="utf-8")
@@ -44,6 +42,72 @@ class RunnerTest(unittest.TestCase):
 
             self.assertNotEqual(baseline, first)
             self.assertNotEqual(first, second)
+
+    def test_active_lock_is_authoritative_for_task_selection(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runner = self._selection_runner(Path(directory))
+            runner.lock_path.parent.mkdir(parents=True)
+            runner.lock_path.write_text(
+                json.dumps({"schema_version": 1, "task_id": "task-02"}),
+                encoding="utf-8",
+            )
+
+            selected = runner._select_task()
+
+            self.assertIsNotNone(selected)
+            self.assertEqual("task-02", selected.id)
+
+    def test_without_lock_selects_first_non_accepted_task(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runner = self._selection_runner(Path(directory))
+
+            selected = runner._select_task()
+
+            self.assertIsNotNone(selected)
+            self.assertEqual("task-02", selected.id)
+
+    def test_patch_evidence_contains_untracked_file_content(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            self._init_repo(repo)
+            (repo / "new.txt").write_text("new evidence\n", encoding="utf-8")
+            attempt = repo / "runtime" / "attempt-01"
+
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner._write_patch(attempt, ("new.txt",))
+
+            patch = (attempt / "evidence" / "changes.patch").read_text(encoding="utf-8")
+            self.assertIn("new evidence", patch)
+            self.assertIn("new file mode", patch)
+
+    @staticmethod
+    def _init_repo(repo: Path) -> None:
+        run_command(("git", "init", "-q"), repo)
+        run_command(("git", "config", "user.email", "test@example.invalid"), repo)
+        run_command(("git", "config", "user.name", "Test Runner"), repo)
+        (repo / "tracked.txt").write_text("baseline", encoding="utf-8")
+        run_command(("git", "add", "tracked.txt"), repo)
+        run_command(("git", "commit", "-q", "-m", "baseline"), repo)
+
+    @staticmethod
+    def _selection_runner(repo: Path) -> AutomaticRunner:
+        task_01 = Task("task-01", "task-01.md", "base", ("src/**",), ("false",), "task 01")
+        task_02 = Task("task-02", "task-02.md", "next", ("src/**",), ("true",), "task 02")
+        runner = object.__new__(AutomaticRunner)
+        runner.repo = repo
+        runner.plan = TaskPlan(1, (task_01, task_02), ("true",))
+        runner.progress = {
+            "schema_version": 1,
+            "active_task": None,
+            "last_run": None,
+            "tasks": [
+                {"id": "task-01", "status": "ACCEPTED", "accepted_at": "now"},
+                {"id": "task-02", "status": "PENDING", "accepted_at": None},
+            ],
+        }
+        runner.lock_path = repo / "runtime" / "locks" / "active-task.json"
+        return runner
 
 
 if __name__ == "__main__":
