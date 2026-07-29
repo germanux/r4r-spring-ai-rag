@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: r4r-codex-agent
+Version: 0.2.0
+Summary: Small deterministic controller for one bounded OpenCode/Codex review cycle
+Requires-Python: >=3.10

@@ -25,9 +25,18 @@ Edit `.env` for local endpoints, ports, credentials or model names. See
 
 ```bash
 ./scripts/db.sh up
+./scripts/db.sh down
 ./scripts/db.sh status
-./scripts/run-opencode.sh
-./scripts/run-codex-agent.sh
+./scripts/db.sh logs
+./scripts/db.sh reset --yes
+
+./scripts/db.sh test-up
+./scripts/db.sh test-down
 ```
 
 The initial active task is `.opencode/commands/benchmark-01-base.md`. Commit the imported baseline manually before running `./scripts/run-codex-agent.sh`, because the bounded controller requires a clean working tree.
+
+## Agents
+
+./scripts/run-opencode.sh
+./scripts/run-codex-agent.sh

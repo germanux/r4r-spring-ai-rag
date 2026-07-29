@@ -1,0 +1,13 @@
+README.md
+pyproject.toml
+src/r4r_codex_agent/__init__.py
+src/r4r_codex_agent/cli.py
+src/r4r_codex_agent/contracts.py
+src/r4r_codex_agent/runner.py
+src/r4r_codex_agent.egg-info/PKG-INFO
+src/r4r_codex_agent.egg-info/SOURCES.txt
+src/r4r_codex_agent.egg-info/dependency_links.txt
+src/r4r_codex_agent.egg-info/entry_points.txt
+src/r4r_codex_agent.egg-info/top_level.txt
+tests/test_contracts.py
+tests/test_runner.py
