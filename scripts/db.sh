@@ -68,7 +68,6 @@ case "${1:-status}" in
     "${DOCKER[@]}" run --rm --user root \
       -v "$ROOT/docker-postgres/data/app:/var/lib/postgresql/data" \
       "$POSTGRES_IMAGE" sh -c 'find /var/lib/postgresql/data -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +'
-    touch "$ROOT/docker-postgres/data/app/.gitkeep"
     "${COMPOSE[@]}" up -d postgres-app
     wait_healthy postgres-app
     ;;
