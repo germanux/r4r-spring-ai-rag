@@ -34,3 +34,7 @@
 .DS_Store
 *~
 /docker-postgres/data/app/.gitkeep
+# PostgreSQL runtime data managed by Docker
+/docker-postgres/data/
+/docker-postgres/backups/*
+!/docker-postgres/backups/.gitkeep
