@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from fnmatch import fnmatch
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -95,6 +96,29 @@ def git_head(repo: Path) -> str | None:
     return result.stdout.strip() if result.exit_code == 0 else None
 
 
+def git_worktree_fingerprint(repo: Path) -> str:
+    """Return a content fingerprint for tracked changes and untracked files."""
+    digest = hashlib.sha256()
+
+    head = git_head(repo)
+    diff_command = ("git", "diff", "--binary", "--no-ext-diff", head or "--root")
+    tracked = run_command(diff_command, repo)
+    if tracked.exit_code != 0:
+        raise RuntimeError(tracked.stderr.strip() or "Unable to fingerprint tracked changes")
+    digest.update(tracked.stdout.encode("utf-8", errors="surrogateescape"))
+
+    untracked = _nul_paths(run_command(("git", "ls-files", "--others", "--exclude-standard", "-z"), repo))
+    for relative in sorted(untracked):
+        digest.update(relative.encode("utf-8", errors="surrogateescape"))
+        path = repo / relative
+        if path.is_file():
+            digest.update(path.read_bytes())
+        elif path.is_symlink():
+            digest.update(os.readlink(path).encode("utf-8", errors="surrogateescape"))
+
+    return digest.hexdigest()
+
+
 def path_is_allowed(path: str, allowed_patterns: Sequence[str]) -> bool:
     return any(fnmatch(path, pattern) for pattern in allowed_patterns)
 
@@ -131,6 +155,7 @@ class AutomaticRunner:
         self.run_dir.mkdir(parents=True, exist_ok=False)
         self.lock_path = self.repo / "runtime" / "locks" / "active-task.json"
         self.memory_path = self.repo / ".opencode" / "memory.md"
+        self.notify_script = self.repo / "scripts" / "notify-success.sh"
         self.verified_green: set[str] = set()
 
     def execute(self) -> int:
@@ -150,16 +175,13 @@ class AutomaticRunner:
         while True:
             task = self._select_task()
             if task is None:
-                final = self._run_logged("final-gate", self.plan.final_gate, self.run_dir, stream=True)
+                final = self._run_gate("final-gate", self.plan.final_gate, self.run_dir, stream=True)
                 if final.exit_code != 0:
                     return self._finish("FINAL_GATE_FAILED", final.exit_code)
                 self._write_progress(None)
                 self._write_memory()
                 if self.auto_commit:
                     self._commit_if_needed("chore: record completed R4R task plan")
-                notify = self.repo / "scripts" / "notify-success.sh"
-                if notify.exists() and os.access(notify, os.X_OK):
-                    self._run_logged("notify-success", (str(notify),), self.run_dir, stream=True)
                 return self._finish("ALL_TASKS_ACCEPTED", 0)
             if self.max_tasks and completed >= self.max_tasks:
                 return self._finish("TASK_LIMIT_REACHED", 0, {"next_task": task.id})
@@ -188,7 +210,7 @@ class AutomaticRunner:
     def _bootstrap(self) -> int:
         task = self.plan.tasks[0]
         task_dir = self.run_dir / task.id / "bootstrap"
-        gate = self._run_logged("task-gate", task.gate, task_dir, stream=True)
+        gate = self._run_gate("task-gate", task.gate, task_dir, stream=True)
         if gate.exit_code != 0:
             return self._finish("BOOTSTRAP_GATE_FAILED", gate.exit_code)
         self._accept_progress(task)
@@ -234,7 +256,7 @@ class AutomaticRunner:
         task_root = self.run_dir / task.id
         task_root.mkdir(parents=True, exist_ok=True)
         self._write_lock(task)
-        initial_gate = self._run_logged("initial-gate", task.gate, task_root, stream=True)
+        initial_gate = self._run_gate("initial-gate", task.gate, task_root, stream=True)
         next_action: str | None = None
         if initial_gate.exit_code != 0:
             plan = self._codex_plan(task, initial_gate, task_root)
@@ -246,10 +268,11 @@ class AutomaticRunner:
         for attempt in range(1, self.max_revisions + 2):
             attempt_dir = task_root / f"attempt-{attempt:02d}"
             attempt_dir.mkdir(parents=True, exist_ok=True)
-            current_gate = initial_gate if attempt == 1 else self._run_logged("pre-edit-gate", task.gate, attempt_dir)
+            current_gate = initial_gate if attempt == 1 else self._run_gate("pre-edit-gate", task.gate, attempt_dir)
             if current_gate.exit_code != 0 or next_action:
                 prompt = self._opencode_prompt(task, current_gate, next_action)
                 before_head = git_head(self.repo)
+                before_fingerprint = git_worktree_fingerprint(self.repo)
                 edit = self._run_logged(
                     "opencode",
                     (self.opencode_bin, "run", "--dir", str(self.repo), "--agent", self.opencode_agent,
@@ -258,6 +281,12 @@ class AutomaticRunner:
                 )
                 if edit.exit_code != 0:
                     return self._finish("OPENCODE_FAILED", edit.exit_code, {"task": task.id, "attempt": attempt})
+                after_fingerprint = git_worktree_fingerprint(self.repo)
+                if after_fingerprint != before_fingerprint:
+                    self._notify(
+                        attempt_dir, f"files-changed-{attempt:02d}", 1,
+                        f"{task.id}: repository files changed",
+                    )
                 if git_head(self.repo) != before_head:
                     return self._finish("OPENCODE_GIT_WRITE_VIOLATION", 69, {"task": task.id})
                 changed = git_changed_paths(self.repo)
@@ -270,7 +299,12 @@ class AutomaticRunner:
                     return self._finish("SCOPE_VIOLATION", 65, {"task": task.id, "paths": disallowed})
                 self._write_patch(attempt_dir, changed)
 
-            gate = self._run_logged("task-gate", task.gate, attempt_dir, stream=True)
+            gate = self._run_gate("task-gate", task.gate, attempt_dir, stream=True)
+            if gate.exit_code == 0:
+                self._notify(
+                    attempt_dir, f"handoff-to-codex-{attempt:02d}", 4,
+                    f"{task.id}: green gate, handing control to Codex",
+                )
             review = self._codex_review(task, gate, attempt_dir)
             if review["decision"] == "ACCEPT":
                 if gate.exit_code != 0:
@@ -368,6 +402,28 @@ Use CodeGraph only when useful. Implement, run the exact task gate, and stop.
             "timed_out": result.timed_out,
         }, indent=2), encoding="utf-8")
         return result
+
+    def _run_gate(
+        self, name: str, command: Sequence[str], directory: Path,
+        input_text: str | None = None, stream: bool = False,
+    ) -> CommandResult:
+        result = self._run_logged(name, command, directory, input_text=input_text, stream=stream)
+        if result.exit_code == 0:
+            self._notify(directory, f"{name}-green", 2, f"{name}: tests are green")
+        return result
+
+    def _notify(self, directory: Path, event: str, count: int, message: str) -> None:
+        if not self.notify_script.exists() or not os.access(self.notify_script, os.X_OK):
+            print(f"[r4r] notification skipped; executable not found: {self.notify_script}", file=sys.stderr)
+            return
+        result = self._run_logged(
+            f"notify-{event}",
+            (str(self.notify_script), str(count), message),
+            directory,
+            stream=True,
+        )
+        if result.exit_code != 0:
+            print(f"[r4r] notification failed for {event}; workflow continues", file=sys.stderr)
 
     def _write_patch(self, attempt_dir: Path, changed: Sequence[str]) -> None:
         evidence = attempt_dir / "evidence"
