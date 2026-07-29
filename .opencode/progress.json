@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
   "active_task": null,
-  "last_run": null,
+  "last_run": "20260729T174231Z",
   "tasks": [
     {
       "id": "task-01-base",
-      "status": "PENDING",
-      "accepted_at": null
+      "status": "ACCEPTED",
+      "accepted_at": "2026-07-29T17:43:37.875467+00:00"
     },
     {
       "id": "task-02-ingestion",
