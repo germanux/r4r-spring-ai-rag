@@ -1,5 +1,4 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -12,9 +11,11 @@
   ],
   "properties": {
     "schema_version": {
+      "type": "integer",
       "const": 1
     },
     "decision": {
+      "type": "string",
       "enum": [
         "ACCEPT",
         "REVISE",
@@ -22,23 +23,19 @@
       ]
     },
     "task_id": {
-      "type": "string",
-      "minLength": 1
+      "type": "string"
     },
     "summary": {
-      "type": "string",
-      "minLength": 1
+      "type": "string"
     },
     "paths": {
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "uniqueItems": true
+      }
     },
     "next_action": {
-      "type": "string",
-      "minLength": 1
+      "type": "string"
     }
   }
 }
