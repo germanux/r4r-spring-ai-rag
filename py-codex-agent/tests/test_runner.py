@@ -357,6 +357,8 @@ class RunnerTest(unittest.TestCase):
             script = repo / "scripts" / "run-codex-agent.sh"
             script.parent.mkdir(parents=True)
             script.write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+            orphan_script = repo / "scripts" / "find-and-stop-r4r-orphans.sh"
+            orphan_script.write_text("#!/usr/bin/env bash\n", encoding="utf-8")
             command = repo / ".opencode" / "commands" / "recovery.md"
             command.parent.mkdir(parents=True)
             command.write_text("# Recovery\n", encoding="utf-8")
@@ -368,6 +370,7 @@ class RunnerTest(unittest.TestCase):
             run_command((
                 "git", "add",
                 str(script.relative_to(repo)),
+                str(orphan_script.relative_to(repo)),
                 str(command.relative_to(repo)),
                 str(agent.relative_to(repo)),
                 str(gitignore.relative_to(repo)),

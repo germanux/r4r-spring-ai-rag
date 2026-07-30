@@ -147,6 +147,7 @@ LOCK_AUTO_ADVANCE_PATHS = (
     "scripts/run-codex-agent.sh",
     "scripts/export-evaluation.sh",
     "scripts/notify-success.sh",
+    "scripts/find-and-stop-r4r-orphans.sh",
     "py-codex-agent/**",
     ".opencode/commands/*",
     ".opencode/agents/**",
