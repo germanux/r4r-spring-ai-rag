@@ -7,7 +7,10 @@
     "task_id",
     "summary",
     "paths",
-    "next_action"
+    "next_action",
+    "local_understanding_assessment",
+    "instruction_corrections",
+    "corrected_extra_instructions"
   ],
   "properties": {
     "schema_version": {
@@ -35,6 +38,18 @@
       }
     },
     "next_action": {
+      "type": "string"
+    },
+    "local_understanding_assessment": {
+      "type": "string"
+    },
+    "instruction_corrections": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "corrected_extra_instructions": {
       "type": "string"
     }
   }

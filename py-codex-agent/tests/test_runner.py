@@ -7,6 +7,7 @@ from r4r_codex_agent.contracts import Task, TaskPlan
 from r4r_codex_agent.runner import (
     AutomaticRunner,
     codex_exec_command,
+    extract_opencode_text,
     git_worktree_fingerprint,
     path_is_allowed,
     run_command,
@@ -28,6 +29,90 @@ class RunnerTest(unittest.TestCase):
         self.assertIn("read-only", command)
         self.assertIn("--output-schema", command)
         self.assertEqual("-", command[-1])
+
+    def test_extracts_local_understanding_from_opencode_jsonl(self):
+        stdout = "\n".join([
+            json.dumps({"type": "step_start", "part": {"type": "step-start"}}),
+            json.dumps({"type": "text", "part": {"type": "text", "text": "# Local understanding report"}}),
+            json.dumps({"type": "text", "part": {"type": "text", "text": "## Task objective in my own words\nImplement ingestion."}}),
+        ])
+
+        report = extract_opencode_text(stdout)
+
+        self.assertIn("# Local understanding report", report)
+        self.assertIn("Implement ingestion", report)
+
+    def test_instruction_bundle_includes_task_companion_and_codex_extra(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            (repo / "AGENTS.md").write_text("global", encoding="utf-8")
+            commands = repo / ".opencode" / "commands"
+            commands.mkdir(parents=True)
+            (commands / "task.md").write_text("workflow", encoding="utf-8")
+            task_path = commands / "task-02-ingestion.md"
+            task_path.write_text("task", encoding="utf-8")
+            guide = commands / "task-02-ingestion-implementation-guide.md"
+            guide.write_text("guide", encoding="utf-8")
+            unrelated = commands / "task-03-pgvector.md"
+            unrelated.write_text("unrelated", encoding="utf-8")
+
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner.control_dir = repo / "runtime" / "control"
+            runner.control_dir.mkdir(parents=True)
+            runner.codex_extra_instructions_path = (
+                runner.control_dir / "codex-qwen3-extra-instructions.md"
+            )
+            runner.codex_extra_instructions_path.write_text("correction", encoding="utf-8")
+            task = Task(
+                "task-02-ingestion",
+                ".opencode/commands/task-02-ingestion.md",
+                "ingestion",
+                ("src/**",),
+                ("true",),
+                "commit",
+            )
+
+            files = runner._instruction_files(task)
+            relative = {str(path.relative_to(repo)) for path in files}
+
+            self.assertIn("AGENTS.md", relative)
+            self.assertIn(".opencode/commands/task.md", relative)
+            self.assertIn(".opencode/commands/task-02-ingestion.md", relative)
+            self.assertIn(
+                ".opencode/commands/task-02-ingestion-implementation-guide.md",
+                relative,
+            )
+            self.assertIn("runtime/control/codex-qwen3-extra-instructions.md", relative)
+            self.assertNotIn(".opencode/commands/task-03-pgvector.md", relative)
+
+    def test_codex_revision_writes_extra_instructions_and_accept_clears_them(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner.control_dir = repo / "runtime" / "control"
+            runner.codex_extra_instructions_path = (
+                runner.control_dir / "codex-qwen3-extra-instructions.md"
+            )
+            task = Task("task-02", "task.md", "objective", ("src/**",), ("true",), "commit")
+            revise = {
+                "decision": "REVISE",
+                "next_action": "Fix the rollback test.",
+                "local_understanding_assessment": "The worker bypassed the proxy.",
+                "instruction_corrections": ["Use the Spring-managed service."],
+                "corrected_extra_instructions": "Autowire the service and use a trigger.",
+            }
+
+            runner._write_codex_extra_instructions(task, revise)
+
+            content = runner.codex_extra_instructions_path.read_text(encoding="utf-8")
+            self.assertIn("The worker bypassed the proxy", content)
+            self.assertIn("Use the Spring-managed service", content)
+            self.assertIn("Autowire the service and use a trigger", content)
+
+            runner._write_codex_extra_instructions(task, {"decision": "ACCEPT"})
+            self.assertFalse(runner.codex_extra_instructions_path.exists())
 
     def test_worktree_fingerprint_detects_untracked_content_changes(self):
         with tempfile.TemporaryDirectory() as directory:
