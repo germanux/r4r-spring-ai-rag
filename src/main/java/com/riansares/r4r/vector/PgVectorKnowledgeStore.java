@@ -187,7 +187,9 @@ public class PgVectorKnowledgeStore {
     }
 
     private static void validateChunk(MarkdownChunk chunk) {
-        Objects.requireNonNull(chunk, "chunk");
+        if (chunk == null) {
+            throw new IllegalArgumentException("chunk must not be null");
+        }
         requireNonBlank(chunk.source(), "chunk.source");
         requireNonBlank(chunk.content(), "chunk.content");
     }

@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -452,10 +453,14 @@ class PgVectorKnowledgeStoreIT {
 
     @Test
     void rejectsNullChunkEntry() {
-        assertThatThrownBy(() -> store.index(List.of(
-                chunk("source.md", 0, "Valid"),
-                null)))
-                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> {
+            List<MarkdownChunk> listWithNull = new ArrayList<>();
+            listWithNull.add(chunk("source.md", 0, "Valid"));
+            listWithNull.add(null);
+            store.index(listWithNull);
+        })
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("chunk must not be null");
     }
 
     @Test
