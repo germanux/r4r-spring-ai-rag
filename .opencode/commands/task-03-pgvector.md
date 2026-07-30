@@ -21,3 +21,12 @@ schema automatically. No chat, REST or frontend in this task.
 ## Gate
 
 `./scripts/task-gate.sh task-03-pgvector`
+
+## Mandatory implementation route
+
+Before editing, read in full:
+
+    `.opencode/commands/task-03-pgvector-implementation-guide.md`
+
+This guidance is normative. Reconcile the implementation against the actual
+Spring AI 1.0.0 API before adding tests or further abstractions.
