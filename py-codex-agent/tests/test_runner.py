@@ -6,9 +6,12 @@ import unittest
 from r4r_codex_agent.contracts import Task, TaskPlan
 from r4r_codex_agent.runner import (
     AutomaticRunner,
+    CommandResult,
     codex_exec_command,
     extract_opencode_text,
+    git_product_changed_paths,
     git_worktree_fingerprint,
+    is_controller_runtime_path,
     path_is_allowed,
     run_command,
 )
@@ -23,6 +26,31 @@ class RunnerTest(unittest.TestCase):
     def test_matches_allowed_paths(self):
         self.assertTrue(path_is_allowed("src/main/App.java", ("src/**",)))
         self.assertFalse(path_is_allowed("scripts/task-gate.sh", ("src/**",)))
+
+    def test_controller_runtime_paths_are_not_product_scope(self):
+        self.assertTrue(
+            is_controller_runtime_path(
+                "runtime/control/codex-qwen3-extra-instructions.md"
+            )
+        )
+        self.assertFalse(is_controller_runtime_path("src/main/App.java"))
+
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            self._init_repo(repo)
+            control = repo / "runtime" / "control"
+            control.mkdir(parents=True)
+            (control / "codex-qwen3-extra-instructions.md").write_text(
+                "controller state",
+                encoding="utf-8",
+            )
+            product = repo / "src" / "main" / "App.java"
+            product.parent.mkdir(parents=True)
+            product.write_text("class App {}\n", encoding="utf-8")
+
+            changed = git_product_changed_paths(repo)
+
+            self.assertEqual(("src/main/App.java",), changed)
 
     def test_builds_read_only_codex_command(self):
         command = codex_exec_command("codex", Path("schema.json"), Path("out.json"), "gpt-test")
@@ -114,6 +142,65 @@ class RunnerTest(unittest.TestCase):
             runner._write_codex_extra_instructions(task, {"decision": "ACCEPT"})
             self.assertFalse(runner.codex_extra_instructions_path.exists())
 
+    def test_resume_uses_pending_codex_extra_instructions_for_same_task(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner.control_dir = repo / "runtime" / "control"
+            runner.control_dir.mkdir(parents=True)
+            runner.codex_extra_instructions_path = (
+                runner.control_dir / "codex-qwen3-extra-instructions.md"
+            )
+            runner.codex_extra_instructions_path.write_text(
+                "- Active task: `task-02`\n\nFix exact headings.\n",
+                encoding="utf-8",
+            )
+            task = Task("task-02", "task.md", "objective", ("src/**",), ("true",), "commit")
+            other = Task("task-03", "task.md", "objective", ("src/**",), ("true",), "commit")
+
+            self.assertIsNotNone(runner._resume_action_from_codex_extra(task))
+            self.assertIsNone(runner._resume_action_from_codex_extra(other))
+
+    def test_opencode_prompt_embeds_full_codex_extra_instructions(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            (repo / "AGENTS.md").write_text("global", encoding="utf-8")
+            commands = repo / ".opencode" / "commands"
+            commands.mkdir(parents=True)
+            (commands / "task.md").write_text("workflow", encoding="utf-8")
+            (commands / "task-02.md").write_text("task", encoding="utf-8")
+
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner.control_dir = repo / "runtime" / "control"
+            runner.control_dir.mkdir(parents=True)
+            runner.codex_extra_instructions_path = (
+                runner.control_dir / "codex-qwen3-extra-instructions.md"
+            )
+            runner.codex_extra_instructions_path.write_text(
+                "Assert exact ordered heading paths.",
+                encoding="utf-8",
+            )
+            task = Task(
+                "task-02",
+                ".opencode/commands/task-02.md",
+                "ingestion",
+                ("src/**",),
+                ("./scripts/task-gate.sh", "task-02"),
+                "commit",
+            )
+            gate = CommandResult(task.gate, 0, "green", "")
+
+            prompt = runner._opencode_prompt(task, gate, "Fix tests.")
+
+            self.assertIn("Assert exact ordered heading paths.", prompt)
+            self.assertIn(
+                "./scripts/task-gate.sh task-02",
+                prompt,
+            )
+            self.assertIn("Do not add a pipeline", prompt)
+
     def test_worktree_fingerprint_detects_untracked_content_changes(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)
@@ -189,10 +276,17 @@ class RunnerTest(unittest.TestCase):
             command = repo / ".opencode" / "commands" / "recovery.md"
             command.parent.mkdir(parents=True)
             command.write_text("# Recovery\n", encoding="utf-8")
+            agent = repo / ".opencode" / "agents" / "r4r-pc.md"
+            agent.parent.mkdir(parents=True)
+            agent.write_text("runtime control read permission\n", encoding="utf-8")
+            gitignore = repo / ".gitignore"
+            gitignore.write_text("/runtime/control/*\n", encoding="utf-8")
             run_command((
                 "git", "add",
                 str(script.relative_to(repo)),
                 str(command.relative_to(repo)),
+                str(agent.relative_to(repo)),
+                str(gitignore.relative_to(repo)),
             ), repo)
             run_command(("git", "commit", "-q", "-m", "agent maintenance"), repo)
             current = run_command(("git", "rev-parse", "HEAD"), repo).stdout.strip()

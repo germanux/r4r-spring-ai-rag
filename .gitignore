@@ -33,6 +33,8 @@ dist/
 !/runtime/runs/.gitkeep
 /runtime/locks/*
 !/runtime/locks/.gitkeep
+/runtime/control/*
+!/runtime/control/.gitkeep
 
 # PostgreSQL runtime data and local backups
 /docker-postgres/data/app/*

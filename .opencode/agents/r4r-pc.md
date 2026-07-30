@@ -19,6 +19,7 @@ permission:
     ".gitignore": allow
     "codegraph.json": allow
     "runtime/locks/**": allow
+    "runtime/control/**": allow
   edit:
     "pom.xml": allow
     "src/**": allow
