@@ -24,3 +24,5 @@ Prove transactional rollback using PostgreSQL:
 7. assert the original checksum and exact ordered chunks remain unchanged.
 
 Run ./scripts/task-gate.sh task-02-ingestion and stop.
+
+Please be disciplined, check the list of instructions and lockers provided to you.
