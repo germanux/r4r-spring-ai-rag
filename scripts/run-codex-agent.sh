@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export GIT_AUTHOR_NAME="Codex QWEN3 Agent"
+export GIT_AUTHOR_EMAIL="conrado.perez@gmail.com"
+export GIT_COMMITTER_NAME="Codex QWEN3 Agent"
+export GIT_COMMITTER_EMAIL="conrado.perez@gmail.com"
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
