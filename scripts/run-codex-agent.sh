@@ -49,31 +49,42 @@ command -v "${R4R_CODEX_BIN:-codex}" >/dev/null 2>&1 || {
 }
 
 CONTROLLER=("$PYTHON" -m r4r_codex_agent.cli --repo "$ROOT" "$@")
+dirty_recovery_attempted="${R4R_DIRTY_RECOVERY_ATTEMPTED:-0}"
+lock_repair_attempted="${R4R_LOCK_REPAIR_ATTEMPTED:-0}"
 
-set +e
-"${CONTROLLER[@]}"
-controller_exit=$?
-set -e
+while true; do
+  set +e
+  "${CONTROLLER[@]}"
+  controller_exit=$?
+  set -e
 
-if (( controller_exit != 64 )); then
+  if (( controller_exit == 2 )) && [[ "$lock_repair_attempted" != "1" ]]; then
+    printf '%s\n' \
+      "[r4r] controller exception detected; checking whether a stale active-task lock can be repaired"
+    if "$ROOT/scripts/repair-active-task-lock.sh"; then
+      lock_repair_attempted=1
+      export R4R_LOCK_REPAIR_ATTEMPTED=1
+      printf '%s\n' \
+        "[r4r] active-task lock repaired safely; retrying the controller once"
+      continue
+    fi
+    echo "[r4r] active-task lock repair was not applicable or not safe" >&2
+    exit "$controller_exit"
+  fi
+
+  if (( controller_exit == 64 )) && [[ "$dirty_recovery_attempted" != "1" ]]; then
+    printf '%s\n' \
+      "[r4r] DIRTY_WORKTREE_UNOWNED detected; attempting conservative ownership recovery"
+    if "$ROOT/scripts/recover-dirty-worktree.sh"; then
+      dirty_recovery_attempted=1
+      export R4R_DIRTY_RECOVERY_ATTEMPTED=1
+      printf '%s\n' \
+        "[r4r] dirty worktree adopted safely; retrying the controller once"
+      continue
+    fi
+    echo "[r4r] automatic recovery was not safe; preserving the original exit code 64" >&2
+    exit "$controller_exit"
+  fi
+
   exit "$controller_exit"
-fi
-
-if [[ "${R4R_DIRTY_RECOVERY_ATTEMPTED:-0}" == "1" ]]; then
-  echo "[r4r] automatic dirty-worktree recovery was already attempted; refusing another retry" >&2
-  exit "$controller_exit"
-fi
-
-printf '%s\n' \
-  "[r4r] DIRTY_WORKTREE_UNOWNED detected; attempting conservative ownership recovery"
-
-if ! "$ROOT/scripts/recover-dirty-worktree.sh"; then
-  echo "[r4r] automatic recovery was not safe; preserving the original exit code 64" >&2
-  exit "$controller_exit"
-fi
-
-printf '%s\n' \
-  "[r4r] dirty worktree adopted safely; retrying the controller once"
-
-export R4R_DIRTY_RECOVERY_ATTEMPTED=1
-exec "${CONTROLLER[@]}"
+done

@@ -10,6 +10,6 @@ PYTHON="$ROOT/py-codex-agent/.venv/bin/python"
   exit 2
 }
 
-exec "$PYTHON" -m r4r_codex_agent.recover_dirty_worktree \
+exec "$PYTHON" -m r4r_codex_agent.repair_active_task_lock \
   --repo "$ROOT" \
   "$@"

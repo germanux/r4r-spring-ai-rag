@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shlex
 import shutil
 import signal
@@ -146,14 +147,40 @@ def git_product_changed_paths(repo: Path) -> tuple[str, ...]:
 LOCK_AUTO_ADVANCE_PATHS = (
     "scripts/run-codex-agent.sh",
     "scripts/recover-dirty-worktree.sh",
+    "scripts/repair-active-task-lock.sh",
     "scripts/export-evaluation.sh",
     "scripts/notify-success.sh",
     "scripts/find-and-stop-r4r-orphans.sh",
     "py-codex-agent/**",
     ".opencode/commands/*",
     ".opencode/agents/**",
+    ".opencode/memory.md",
     ".gitignore",
 )
+
+# Browser downloads and manual extraction can accidentally commit a mirror of a
+# maintenance bundle under a top-level directory. Such a mirror is maintenance
+# only when its path, after stripping the bundle directory, is itself one of the
+# canonical maintenance paths above. Product files under the bundle directory do
+# not qualify.
+_MAINTENANCE_BUNDLE_PREFIX = re.compile(
+    r"^(?:r4r-agent-update-v[0-9]+|r4r-agent-hotfix-v[0-9]+|r4r-self-recovery)/(.+)$"
+)
+_MAINTENANCE_ARTIFACT_PATH = re.compile(
+    r"^(?:r4r-agent-update-v[0-9]+|r4r-agent-hotfix-v[0-9]+|r4r-self-recovery-files)\.zip$"
+    r"|^install-r4r-agent-(?:update|hotfix)-v[0-9]+\.sh$"
+)
+
+
+def is_lock_auto_advance_path(path: str) -> bool:
+    if path_is_allowed(path, LOCK_AUTO_ADVANCE_PATHS):
+        return True
+    if _MAINTENANCE_ARTIFACT_PATH.fullmatch(path):
+        return True
+    match = _MAINTENANCE_BUNDLE_PREFIX.fullmatch(path)
+    if match is None:
+        return False
+    return path_is_allowed(match.group(1), LOCK_AUTO_ADVANCE_PATHS)
 
 
 def git_paths_between(repo: Path, base: str, head: str) -> tuple[str, ...]:
@@ -178,7 +205,7 @@ def codex_exec_command(binary: str, schema: Path, output: Path, model: str | Non
 
 
 def extract_opencode_text(stdout: str) -> str:
-    """Extract the final structured local-understanding report from JSONL."""
+    """Extract the model-authored text from OpenCode JSONL output."""
     parts: list[str] = []
     for raw_line in stdout.splitlines():
         try:
@@ -198,6 +225,39 @@ def extract_opencode_text(stdout: str) -> str:
         if "# Local understanding report" in value:
             return "\n\n".join(parts[index:]).strip()
     return "\n\n".join(parts).strip()
+
+
+def extract_codegraph_tool_calls(stdout: str) -> tuple[str, ...]:
+    """Return actual CodeGraph tool identifiers found in OpenCode JSONL events.
+
+    The traversal deliberately accepts different OpenCode event shapes, but only
+    records exact string values beginning with ``codegraph_``. Merely mentioning
+    CodeGraph in model prose or in the prompt does not satisfy the requirement.
+    """
+    calls: set[str] = set()
+
+    def visit(value: Any) -> None:
+        if isinstance(value, dict):
+            for nested in value.values():
+                visit(nested)
+            return
+        if isinstance(value, list):
+            for nested in value:
+                visit(nested)
+            return
+        if (
+            isinstance(value, str)
+            and value.startswith("codegraph_")
+            and value.replace("_", "").replace("-", "").replace(".", "").isalnum()
+        ):
+            calls.add(value)
+
+    for raw_line in stdout.splitlines():
+        try:
+            visit(json.loads(raw_line))
+        except json.JSONDecodeError:
+            continue
+    return tuple(sorted(calls))
 
 
 class AutomaticRunner:
@@ -228,6 +288,13 @@ class AutomaticRunner:
         self.opencode_agent = os.environ.get("R4R_OPENCODE_AGENT", "r4r-pc")
         self.codex_bin = os.environ.get("R4R_CODEX_BIN", "codex")
         self.codex_model = os.environ.get("R4R_CODEX_MODEL", "").strip() or None
+        self.codegraph_bin = os.environ.get("R4R_CODEGRAPH_BIN", "codegraph")
+        self.require_codegraph = (
+            os.environ.get("R4R_REQUIRE_CODEGRAPH", "true").lower() == "true"
+        )
+        self.codegraph_retries = int(
+            os.environ.get("R4R_CODEGRAPH_RETRIES", "1")
+        )
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         self.run_id = stamp
         self.run_dir = self.repo / "runtime" / "runs" / stamp
@@ -245,6 +312,8 @@ class AutomaticRunner:
     def execute(self) -> int:
         self._require_binary(self.opencode_bin)
         self._require_binary(self.codex_bin)
+        if self.require_codegraph:
+            self._require_binary(self.codegraph_bin)
         dirty = git_changed_paths(self.repo)
         if self.lock_path.exists():
             # A valid lock owns the current task, even when the worktree happens
@@ -284,6 +353,17 @@ class AutomaticRunner:
             gate = run_command(task.gate, self.repo, timeout_seconds=self.timeout)
             print(f"- {task.id}: progress={item['status']} gate={'GREEN' if gate.exit_code == 0 else 'RED'}")
         return 0
+
+    def record_unhandled_failure(self, exception: BaseException) -> int:
+        """Persist a state.json even when validation raises outside normal flow."""
+        return self._finish(
+            "CONTROLLER_EXCEPTION",
+            2,
+            {
+                "error_type": type(exception).__name__,
+                "error": str(exception),
+            },
+        )
 
     def _require_binary(self, binary: str) -> None:
         if shutil.which(binary) is None:
@@ -341,7 +421,7 @@ class AutomaticRunner:
         committed_paths = git_paths_between(self.repo, base_commit, current_head)
         unsafe_paths = [
             path for path in committed_paths
-            if not path_is_allowed(path, LOCK_AUTO_ADVANCE_PATHS)
+            if not is_lock_auto_advance_path(path)
         ]
         if unsafe_paths:
             raise RuntimeError(
@@ -419,9 +499,32 @@ class AutomaticRunner:
                 else self._run_gate("pre-edit-gate", task.gate, attempt_dir)
             )
             changed_this_attempt = False
+            codegraph_report = "CodeGraph reconnaissance is disabled."
+            if self.require_codegraph:
+                try:
+                    codegraph_report = self._run_codegraph_reconnaissance(
+                        task,
+                        current_gate,
+                        attempt_dir,
+                    )
+                except RuntimeError as exception:
+                    return self._finish(
+                        "CODEGRAPH_RECONNAISSANCE_FAILED",
+                        76,
+                        {
+                            "task": task.id,
+                            "attempt": attempt,
+                            "error": str(exception),
+                        },
+                    )
 
             if current_gate.exit_code != 0 or next_action:
-                prompt = self._opencode_prompt(task, current_gate, next_action)
+                prompt = self._opencode_prompt(
+                    task,
+                    current_gate,
+                    next_action,
+                    codegraph_report,
+                )
                 before_head = git_head(self.repo)
                 before_fingerprint = git_worktree_fingerprint(self.repo)
                 edit = self._run_logged(
@@ -543,7 +646,11 @@ class AutomaticRunner:
                     "--format",
                     "json",
                     "--auto",
-                    self._opencode_assimilation_prompt(task, gate),
+                    self._opencode_assimilation_prompt(
+                        task,
+                        gate,
+                        codegraph_report,
+                    ),
                 ),
                 attempt_dir,
                 stream=True,
@@ -868,6 +975,14 @@ class AutomaticRunner:
             if local_understanding_path.exists()
             else "No local understanding report was produced."
         )
+        codegraph_path = (
+            evidence_dir / "evidence" / "codegraph-reconnaissance.md"
+        )
+        codegraph_reconnaissance = (
+            codegraph_path.read_text(encoding="utf-8")
+            if codegraph_path.exists()
+            else "No verified CodeGraph reconnaissance was produced."
+        )
         extra_instructions = self._current_codex_extra_instructions()
         include_companion = self._use_full_instruction_bundle(stage)
         context_mode = (
@@ -886,6 +1001,8 @@ class AutomaticRunner:
             + self._instruction_manifest(task)
             + "\n\nCURRENT MEMORY\n"
             + memory
+            + "\n\nVERIFIED CODEGRAPH RECONNAISSANCE\n"
+            + codegraph_reconnaissance
             + "\n\nLOCAL MODEL UNDERSTANDING REPORT\n"
             + local_understanding
             + "\n\nCURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS\n"
@@ -914,11 +1031,164 @@ class AutomaticRunner:
             "another Codex review before making the requested correction."
         )
 
+    def _codegraph_reconnaissance_prompt(
+        self,
+        task: Task,
+        gate: CommandResult,
+        retry: int,
+    ) -> str:
+        changed = (
+            "\n".join(f"- {path}" for path in git_product_changed_paths(self.repo))
+            or "- none"
+        )
+        retry_instruction = ""
+        if retry > 1:
+            retry_instruction = (
+                "\nThe previous reconnaissance produced no verified CodeGraph MCP "
+                "tool event. You must call an available codegraph_* tool now; prose "
+                "about CodeGraph does not count.\n"
+            )
+        return f"""This is a mandatory read-only CodeGraph reconnaissance for {task.id}.
+Do not edit files, do not run Git write commands and do not run the task gate.
+{retry_instruction}
+Before broad file reads, call the available CodeGraph MCP tools. You must make at
+least one actual tool call whose identifier begins with `codegraph_`. Inspect the
+symbols, dependencies, callers and related tests most relevant to this task and to
+the currently changed paths. Prefer exact symbol queries over repository-wide reads.
+
+Task objective:
+{task.objective}
+
+Currently changed product paths:
+{changed}
+
+Current gate exit: {gate.exit_code}
+Gate stderr tail:
+{gate.stderr[-4000:]}
+
+Return only a concise Markdown report with exactly these headings:
+
+# CodeGraph reconnaissance report
+## CodeGraph tools called
+## Relevant symbols and relationships
+## Changed paths mapped to symbols
+## Tests and callers affected
+## Structural risks or stale assumptions
+## Recommended bounded file reads
+
+Name every CodeGraph tool you actually called. Do not claim a tool call that was not
+executed. The controller verifies OpenCode JSONL events and rejects prose-only claims.
+"""
+
+    def _run_codegraph_reconnaissance(
+        self,
+        task: Task,
+        gate: CommandResult,
+        attempt_dir: Path,
+    ) -> str:
+        sync_before_head = git_head(self.repo)
+        sync_before_fingerprint = git_worktree_fingerprint(self.repo)
+        sync = self._run_logged(
+            "codegraph-sync",
+            (self.codegraph_bin, "sync", ".", "--quiet"),
+            attempt_dir,
+            stream=True,
+        )
+        if sync.exit_code != 0:
+            diagnostic = (sync.stderr or sync.stdout)[-4000:].strip()
+            raise RuntimeError(
+                "CodeGraph index synchronization failed: "
+                + (diagnostic or f"exit {sync.exit_code}")
+            )
+        if git_head(self.repo) != sync_before_head:
+            raise RuntimeError("CodeGraph synchronization performed a forbidden Git write")
+        if git_worktree_fingerprint(self.repo) != sync_before_fingerprint:
+            raise RuntimeError(
+                "CodeGraph synchronization modified tracked or untracked product files"
+            )
+
+        errors: list[str] = []
+        for retry in range(1, self.codegraph_retries + 2):
+            before_head = git_head(self.repo)
+            before_fingerprint = git_worktree_fingerprint(self.repo)
+            result = self._run_logged(
+                "opencode-codegraph"
+                if retry == 1
+                else f"opencode-codegraph-retry-{retry:02d}",
+                (
+                    self.opencode_bin,
+                    "run",
+                    "--dir",
+                    str(self.repo),
+                    "--agent",
+                    self.opencode_agent,
+                    "--format",
+                    "json",
+                    "--auto",
+                    self._codegraph_reconnaissance_prompt(task, gate, retry),
+                ),
+                attempt_dir,
+                stream=True,
+            )
+            if result.exit_code != 0:
+                errors.append(
+                    f"try {retry}: exit={result.exit_code}; "
+                    f"{(result.stderr or result.stdout)[-1000:].strip()}"
+                )
+                continue
+            if git_head(self.repo) != before_head:
+                raise RuntimeError(
+                    "CodeGraph reconnaissance performed a forbidden Git write"
+                )
+            if git_worktree_fingerprint(self.repo) != before_fingerprint:
+                raise RuntimeError(
+                    "CodeGraph reconnaissance modified repository files"
+                )
+
+            calls = extract_codegraph_tool_calls(result.stdout)
+            if not calls:
+                errors.append(
+                    f"try {retry}: OpenCode emitted no actual codegraph_* tool event"
+                )
+                continue
+
+            report = extract_opencode_text(result.stdout).strip()
+            if not report:
+                report = (
+                    "# CodeGraph reconnaissance report\n\n"
+                    "The worker called CodeGraph but produced no model-authored report."
+                )
+            evidence = attempt_dir / "evidence"
+            evidence.mkdir(parents=True, exist_ok=True)
+            (evidence / "codegraph-tool-calls.json").write_text(
+                json.dumps(
+                    {
+                        "required": True,
+                        "calls": list(calls),
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (evidence / "codegraph-reconnaissance.md").write_text(
+                report.rstrip() + "\n",
+                encoding="utf-8",
+            )
+            return report
+
+        raise RuntimeError(
+            "Mandatory CodeGraph reconnaissance was not proven after retries: "
+            + " | ".join(errors)
+        )
+
     def _opencode_prompt(
         self,
         task: Task,
         gate: CommandResult,
         next_action: str | None,
+        codegraph_report: str,
     ) -> str:
         action = next_action or "Implement the selected task completely."
         extra_instructions = self._current_codex_extra_instructions()
@@ -939,6 +1209,9 @@ CODEX PLAN OR REVISION ACTION:
 CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS:
 {extra_instructions}
 
+MANDATORY CODEGRAPH RECONNAISSANCE EVIDENCE:
+{codegraph_report}
+
 CURRENT TASK GATE EXIT: {gate.exit_code}
 CURRENT GATE STDOUT TAIL:
 {gate.stdout[-8000:]}
@@ -949,7 +1222,9 @@ Do not edit task, controller, progress, memory or gate files. Do not run Git wri
 Before editing, translate every numbered Codex instruction into an explicit code/test
 checklist. Apply all items; do not stop after satisfying only the first one. Before the
 gate, re-open the edited path and verify the checklist against exact assertions.
-Use CodeGraph only when useful. Implement, then run exactly:
+The controller has already forced a verified CodeGraph reconnaissance pass. Use
+its symbol and dependency findings before broad source reads; do not disregard it.
+Implement, then run exactly:
 {exact_gate}
 Do not add a pipeline, redirect, tee, tail, grep, echo suffix or log-file write.
 The Python controller captures the gate output. Stop after the exact gate result.
@@ -959,6 +1234,7 @@ The Python controller captures the gate output. Stop after the exact gate result
         self,
         task: Task,
         gate: CommandResult,
+        codegraph_report: str,
     ) -> str:
         include_companion = self._use_full_instruction_bundle("review")
         instruction_list = "\n".join(
@@ -978,6 +1254,9 @@ Read every instruction file in full:
 
 CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS:
 {extra_instructions}
+
+VERIFIED CODEGRAPH RECONNAISSANCE:
+{codegraph_report}
 
 Inspect the currently changed implementation paths:
 {changed}
@@ -1217,7 +1496,7 @@ next instruction packet.
             "- PostgreSQL only in Docker; Flyway owns application schema.",
             "- Spring AI abstractions; no handwritten Ollama HTTP client.",
             "- Codex plans/reviews read-only; OpenCode edits; Python validates and commits.",
-            "- CodeGraph is optional impact analysis, not a success gate.",
+            "- CodeGraph reconnaissance is mandatory; the controller verifies actual codegraph_* MCP calls before each local pass.",
             "- Runtime evidence stays under `runtime/runs/`; no automatic push.", "",
             "## Task commits", "",
         ]
