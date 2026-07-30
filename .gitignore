@@ -1,0 +1,57 @@
+# Local configuration
+.env
+
+# Java / IDE
+/target/
+.idea/
+*.iml
+
+# Node
+/.opencode/node_modules/
+
+# Python
+/py-codex-agent/.venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+# Python virtual environments and generated package metadata
+
+/py-codex-agent/.venv/
+*.egg-info/
+
+# Python caches and build output
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+# Generated agent runtime
+/runtime/runs/*
+!/runtime/runs/.gitkeep
+/runtime/locks/*
+!/runtime/locks/.gitkeep
+/runtime/control/*
+!/runtime/control/.gitkeep
+
+# PostgreSQL runtime data and local backups
+/docker-postgres/data/app/*
+!/docker-postgres/data/app/.gitkeep
+/docker-postgres/backups/*
+!/docker-postgres/backups/.gitkeep
+
+# Regenerable CodeGraph index
+/.codegraph/
+
+# OS/editor noise
+.DS_Store
+*~
+/docker-postgres/data/app/.gitkeep
+# PostgreSQL runtime data managed by Docker
+/docker-postgres/data/
+/docker-postgres/backups/*
+!/docker-postgres/backups/.gitkeep
+
+patches-applied/

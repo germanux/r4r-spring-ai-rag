@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    url: ${RAG_TEST_DB_URL}
+    username: ${RAG_TEST_DB_USER}
+    password: ${RAG_TEST_DB_PASSWORD}

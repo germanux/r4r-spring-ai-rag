@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "active_task": null,
+  "last_run": "20260730T141122Z",
+  "tasks": [
+    {
+      "id": "task-01-base",
+      "status": "ACCEPTED",
+      "accepted_at": "2026-07-30T01:56:21.671118+00:00"
+    },
+    {
+      "id": "task-02-ingestion",
+      "status": "ACCEPTED",
+      "accepted_at": "2026-07-30T14:21:45.327732+00:00"
+    },
+    {
+      "id": "task-03-pgvector",
+      "status": "PENDING",
+      "accepted_at": null
+    },
+    {
+      "id": "task-04-rag",
+      "status": "PENDING",
+      "accepted_at": null
+    }
+  ]
+}

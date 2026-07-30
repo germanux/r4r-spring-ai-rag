@@ -1,0 +1,46 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "r4r-pc",
+  "share": "disabled",
+  "snapshot": true,
+  "provider": {
+    "ollama-pc": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama PC - R4R",
+      "options": {
+        "baseURL": "{env:R4R_OPENCODE_OLLAMA_BASE_URL}"
+      },
+      "models": {
+        "qwen3-coder-next-80b-t025-168k-8k-pc-pc": {
+          "name": "Qwen3-Coder-Next 80B 168K",
+          "temperature": true,
+          "limit": {
+            "context": 172032,
+            "output": 8192
+          }
+        }
+      }
+    }
+  },
+  "mcp": {
+    "codegraph": {
+      "type": "local",
+      "command": [
+        "codegraph",
+        "serve",
+        "--mcp"
+      ],
+      "enabled": true
+    }
+  },
+  "watcher": {
+    "ignore": [
+      ".git/**",
+      ".codegraph/**",
+      "runtime/**",
+      "target/**",
+      "docker-postgres/data/**",
+      "docker-postgres/backups/**"
+    ]
+  }
+}
