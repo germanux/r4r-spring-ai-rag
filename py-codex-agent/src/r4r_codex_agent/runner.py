@@ -145,6 +145,7 @@ def git_product_changed_paths(repo: Path) -> tuple[str, ...]:
 
 LOCK_AUTO_ADVANCE_PATHS = (
     "scripts/run-codex-agent.sh",
+    "scripts/recover-dirty-worktree.sh",
     "scripts/export-evaluation.sh",
     "scripts/notify-success.sh",
     "scripts/find-and-stop-r4r-orphans.sh",

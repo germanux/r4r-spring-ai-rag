@@ -48,4 +48,32 @@ command -v "${R4R_CODEX_BIN:-codex}" >/dev/null 2>&1 || {
   exit 2
 }
 
-exec "$PYTHON" -m r4r_codex_agent.cli --repo "$ROOT" "$@"
+CONTROLLER=("$PYTHON" -m r4r_codex_agent.cli --repo "$ROOT" "$@")
+
+set +e
+"${CONTROLLER[@]}"
+controller_exit=$?
+set -e
+
+if (( controller_exit != 64 )); then
+  exit "$controller_exit"
+fi
+
+if [[ "${R4R_DIRTY_RECOVERY_ATTEMPTED:-0}" == "1" ]]; then
+  echo "[r4r] automatic dirty-worktree recovery was already attempted; refusing another retry" >&2
+  exit "$controller_exit"
+fi
+
+printf '%s\n' \
+  "[r4r] DIRTY_WORKTREE_UNOWNED detected; attempting conservative ownership recovery"
+
+if ! "$ROOT/scripts/recover-dirty-worktree.sh"; then
+  echo "[r4r] automatic recovery was not safe; preserving the original exit code 64" >&2
+  exit "$controller_exit"
+fi
+
+printf '%s\n' \
+  "[r4r] dirty worktree adopted safely; retrying the controller once"
+
+export R4R_DIRTY_RECOVERY_ATTEMPTED=1
+exec "${CONTROLLER[@]}"
