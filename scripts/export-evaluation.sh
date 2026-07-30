@@ -50,7 +50,7 @@ resolve_run_dir() {
 RUN_DIR="$(resolve_run_dir "${1:-}")"
 STAMP="$(date '+%Y%m%d-%H%M%S')"
 PACKAGE_NAME="r4r-evaluation-$STAMP"
-WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/r4r-evaluation-staging.XXXXXX")"
+WORK_DIR="$(mktemp -d "$ROOT/runtime/.evaluation-staging.XXXXXX")"
 STAGE_DIR="$WORK_DIR/$PACKAGE_NAME"
 OUTPUT_ZIP="$EXPORT_DIR/$PACKAGE_NAME.zip"
 
@@ -128,11 +128,6 @@ if [[ -d py-codex-agent ]]; then
     fi
   done
 fi
-
-# Remove generated Python caches from every copied subtree.
-find "$STAGE_DIR" -type d -name '__pycache__' -prune -exec rm -rf {} +
-find "$STAGE_DIR" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
-find "$STAGE_DIR" -type d -name '*.egg-info' -prune -exec rm -rf {} +
 
 # Docker definition only. Never package PostgreSQL data or local backups.
 if [[ -d docker-postgres ]]; then
