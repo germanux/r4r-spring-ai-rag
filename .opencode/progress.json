@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "active_task": null,
-  "last_run": "20260729T224755Z",
+  "last_run": "20260730T141122Z",
   "tasks": [
     {
       "id": "task-01-base",
@@ -10,8 +10,8 @@
     },
     {
       "id": "task-02-ingestion",
-      "status": "PENDING",
-      "accepted_at": null
+      "status": "ACCEPTED",
+      "accepted_at": "2026-07-30T14:21:45.327732+00:00"
     },
     {
       "id": "task-03-pgvector",
