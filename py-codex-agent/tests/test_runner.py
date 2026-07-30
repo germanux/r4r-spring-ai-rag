@@ -81,6 +81,69 @@ class RunnerTest(unittest.TestCase):
             self.assertIn("new evidence", patch)
             self.assertIn("new file mode", patch)
 
+    def test_resume_lock_auto_advances_across_maintenance_commit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            self._init_repo(repo)
+            runner = self._selection_runner(repo)
+            base = run_command(("git", "rev-parse", "HEAD"), repo).stdout.strip()
+            runner.lock_path.parent.mkdir(parents=True)
+            runner.lock_path.write_text(
+                json.dumps({
+                    "schema_version": 1,
+                    "task_id": "task-02",
+                    "base_commit": base,
+                    "run_id": "test",
+                    "allowed_paths": ["src/**"],
+                }),
+                encoding="utf-8",
+            )
+            script = repo / "scripts" / "run-codex-agent.sh"
+            script.parent.mkdir(parents=True)
+            script.write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+            command = repo / ".opencode" / "commands" / "recovery.md"
+            command.parent.mkdir(parents=True)
+            command.write_text("# Recovery\n", encoding="utf-8")
+            run_command((
+                "git", "add",
+                str(script.relative_to(repo)),
+                str(command.relative_to(repo)),
+            ), repo)
+            run_command(("git", "commit", "-q", "-m", "agent maintenance"), repo)
+            current = run_command(("git", "rev-parse", "HEAD"), repo).stdout.strip()
+
+            runner._validate_resume_lock(())
+
+            lock = json.loads(runner.lock_path.read_text(encoding="utf-8"))
+            self.assertEqual(current, lock["base_commit"])
+            self.assertTrue(lock["run_id"].startswith("resume-"))
+
+    def test_resume_lock_rejects_product_commit_between_base_and_head(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            self._init_repo(repo)
+            runner = self._selection_runner(repo)
+            base = run_command(("git", "rev-parse", "HEAD"), repo).stdout.strip()
+            runner.lock_path.parent.mkdir(parents=True)
+            runner.lock_path.write_text(
+                json.dumps({
+                    "schema_version": 1,
+                    "task_id": "task-02",
+                    "base_commit": base,
+                    "run_id": "test",
+                    "allowed_paths": ["src/**"],
+                }),
+                encoding="utf-8",
+            )
+            product = repo / "src" / "main" / "App.java"
+            product.parent.mkdir(parents=True)
+            product.write_text("class App {}\n", encoding="utf-8")
+            run_command(("git", "add", str(product.relative_to(repo))), repo)
+            run_command(("git", "commit", "-q", "-m", "product change"), repo)
+
+            with self.assertRaisesRegex(RuntimeError, "non-maintenance commits"):
+                runner._validate_resume_lock(())
+
     @staticmethod
     def _init_repo(repo: Path) -> None:
         run_command(("git", "init", "-q"), repo)

@@ -123,6 +123,25 @@ def path_is_allowed(path: str, allowed_patterns: Sequence[str]) -> bool:
     return any(fnmatch(path, pattern) for pattern in allowed_patterns)
 
 
+LOCK_AUTO_ADVANCE_PATHS = (
+    "scripts/run-codex-agent.sh",
+    "scripts/export-evaluation.sh",
+    "scripts/notify-success.sh",
+    "py-codex-agent/**",
+    ".opencode/commands/*",
+)
+
+
+def git_paths_between(repo: Path, base: str, head: str) -> tuple[str, ...]:
+    result = run_command(("git", "diff", "--name-only", "-z", f"{base}..{head}"), repo)
+    return tuple(sorted(_nul_paths(result)))
+
+
+def git_is_ancestor(repo: Path, ancestor: str, descendant: str) -> bool:
+    result = run_command(("git", "merge-base", "--is-ancestor", ancestor, descendant), repo)
+    return result.exit_code == 0
+
+
 def codex_exec_command(binary: str, schema: Path, output: Path, model: str | None = None) -> tuple[str, ...]:
     command = [
         binary, "exec", "--sandbox", "read-only", "--ephemeral",
@@ -229,11 +248,49 @@ class AutomaticRunner:
     def _validate_resume_lock(self, dirty: Sequence[str]) -> None:
         lock = json.loads(self.lock_path.read_text(encoding="utf-8"))
         task = self._task_by_id(str(lock.get("task_id")))
-        if lock.get("base_commit") != git_head(self.repo):
-            raise RuntimeError("Active-task lock does not match current Git HEAD")
+        current_head = git_head(self.repo)
+        base_commit = str(lock.get("base_commit") or "")
+        if base_commit != current_head:
+            self._auto_advance_resume_lock(lock, base_commit, current_head)
         disallowed = [path for path in dirty if not path_is_allowed(path, task.allowed_paths)]
         if disallowed:
             raise RuntimeError(f"Dirty resume contains out-of-scope paths: {disallowed}")
+
+    def _auto_advance_resume_lock(
+        self, lock: dict[str, Any], base_commit: str, current_head: str | None,
+    ) -> None:
+        if not base_commit or not current_head:
+            raise RuntimeError("Active-task lock has no usable Git base commit")
+        if not git_is_ancestor(self.repo, base_commit, current_head):
+            raise RuntimeError(
+                "Active-task lock diverged from current Git HEAD; manual review is required"
+            )
+
+        committed_paths = git_paths_between(self.repo, base_commit, current_head)
+        unsafe_paths = [
+            path for path in committed_paths
+            if not path_is_allowed(path, LOCK_AUTO_ADVANCE_PATHS)
+        ]
+        if unsafe_paths:
+            raise RuntimeError(
+                "Active-task lock cannot advance across non-maintenance commits: "
+                f"{unsafe_paths}"
+            )
+
+        lock["base_commit"] = current_head
+        lock["run_id"] = (
+            "resume-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        )
+        temporary = self.lock_path.with_suffix(".json.tmp")
+        temporary.write_text(
+            json.dumps(lock, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(self.lock_path)
+        print(
+            f"[r4r] active-task lock advanced automatically to {current_head[:12]}",
+            flush=True,
+        )
 
     def _select_task(self) -> Task | None:
         # The active lock is authoritative. It represents unfinished work that
