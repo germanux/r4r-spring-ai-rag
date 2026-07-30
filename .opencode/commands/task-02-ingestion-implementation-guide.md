@@ -740,7 +740,93 @@ Do not add unrelated pgvector or RAG retrieval work in Task 02.
 
 ---
 
-## 12. Acceptance checklist
+## 12. Focused recovery and failure triage
+
+Use this section when Codex has already accepted the production design and the
+remaining work is a narrow test or build correction. Do not reopen settled design
+questions.
+
+### 12.1 Exact final assertions for the current replacement proof
+
+In `changedContentReplacesChunksAndPreservesSourceIdentity`, the post-replacement
+state itself must prove both sides of replacement:
+
+```java
+String afterContent = after.chunks().stream()
+        .map(ChunkSnapshot::content)
+        .reduce("", (left, right) -> left + " " + right);
+
+assertThat(afterContent).contains("Replacement body.");
+assertThat(afterContent).doesNotContain("Original stable body.");
+```
+
+An assertion about what the *before* snapshot did not contain is not evidence that
+the new database state removed the old text.
+
+In `headingPathsAndOrdinalsAreCorrect`, compare every persisted row in ordinal
+order. Aggregate substring checks are insufficient:
+
+```java
+assertThat(chunks)
+        .extracting(ChunkSnapshot::ordinal)
+        .containsExactly(0, 1, 2);
+
+assertThat(chunks)
+        .extracting(ChunkSnapshot::headingPath)
+        .containsExactly(
+                "[\"Building\"]",
+                "[\"Building\",\"Roof\"]",
+                "[\"Building\",\"Roof\",\"Drainage\"]");
+```
+
+These assertions must fail for a missing row, extra row, wrong hierarchy, wrong
+chunk assignment, or wrong order.
+
+### 12.2 Maven failure classification
+
+When the exact gate is red, classify the first authoritative failure before
+editing:
+
+1. **Compilation failure**: locate the first `COMPILATION ERROR`, exact source path,
+   line and symbol. Fix imports, signatures, types or visibility in that path only.
+2. **Surefire unit-test failure**: use the first failing test and its assertion or
+   exception. Do not infer success from later log lines.
+3. **Failsafe integration-test failure**: inspect the first failing integration
+   test, PostgreSQL exception and transaction boundary.
+4. **Flyway failure**: inspect the migration version, SQL state and first failing
+   statement. Do not add `IF NOT EXISTS` merely to hide schema drift.
+5. **Controller permission or scope failure**: this is not a Maven defect. Preserve
+   product files and correct the agent/controller permission or runtime-path
+   classification in a maintenance commit.
+6. **Transient tool-schema, timeout or process failure**: start a fresh local-model
+   session on the same locked task and reuse the Codex correction packet. Do not
+   discard validated product changes.
+
+The Python controller runs and captures the authoritative gate. OpenCode may run
+only the exact command shown by the task, without `tee`, pipes, redirects, `grep`,
+`tail`, synthetic exit-code echoes or manually written runtime logs.
+
+### 12.3 Codex ↔ local-model correction protocol
+
+For every revision:
+
+1. Qwen reads the active task and the current
+   `runtime/control/codex-qwen3-extra-instructions.md` packet.
+2. Qwen maps every numbered instruction to an exact path, method and assertion.
+3. Qwen edits all listed items, reopens the edited file and checks the mapping.
+4. The controller runs the deterministic gate.
+5. Qwen emits `local-understanding.md`, explicitly marking unproven items.
+6. Codex compares the canonical task, current code, gate evidence and Qwen report.
+7. Codex either accepts or writes a complete resolved packet for a fresh Qwen
+   session. A recoverable model/tool failure must resume the same locked task.
+
+Companion guides may be omitted from repeated focused prompts after Codex has
+written a complete correction packet. Their SHA-256 hashes and line counts remain
+in the review manifest, reducing repeated context while preserving traceability.
+
+---
+
+## 13. Acceptance checklist
 
 The task is ready for Codex review only when all are true:
 

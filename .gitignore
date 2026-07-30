@@ -54,3 +54,4 @@ dist/
 /docker-postgres/backups/*
 !/docker-postgres/backups/.gitkeep
 
+patchs-applied/

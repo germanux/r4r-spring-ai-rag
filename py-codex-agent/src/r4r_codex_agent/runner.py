@@ -205,7 +205,20 @@ class AutomaticRunner:
         self.progress_path = progress_path
         self.progress = load_progress(progress_path, (task.id for task in plan.tasks))
         self.timeout = int(os.environ.get("R4R_COMMAND_TIMEOUT_SECONDS", "14400"))
-        self.max_revisions = int(os.environ.get("R4R_MAX_REVISIONS_PER_TASK", "2"))
+        # Every OpenCode invocation is already a fresh local-model session. Keep
+        # revising the same locked task across fresh sessions instead of stopping
+        # after an arbitrary two-pass limit. Set to 0 for no controller cap.
+        self.max_attempts = int(os.environ.get("R4R_MAX_ATTEMPTS_PER_TASK", "12"))
+        self.max_transient_failures = int(
+            os.environ.get("R4R_MAX_TRANSIENT_FAILURES", "3")
+        )
+        self.max_no_progress_cycles = int(
+            os.environ.get("R4R_MAX_NO_PROGRESS_CYCLES", "3")
+        )
+        self.compact_revision_context = (
+            os.environ.get("R4R_COMPACT_REVISION_CONTEXT", "true").lower()
+            == "true"
+        )
         self.max_tasks = int(os.environ.get("R4R_MAX_TASKS_PER_RUN", "0"))
         self.auto_commit = os.environ.get("R4R_AUTO_COMMIT", "true").lower() == "true"
         self.bootstrap_commit = os.environ.get("R4R_BOOTSTRAP_COMMIT", "true").lower() == "true"
@@ -374,36 +387,95 @@ class AutomaticRunner:
         initial_gate = self._run_gate("initial-gate", task.gate, task_root, stream=True)
         next_action = self._resume_action_from_codex_extra(task)
         if initial_gate.exit_code != 0:
-            plan = self._codex_plan(task, initial_gate, task_root)
+            try:
+                plan = self._codex_plan(task, initial_gate, task_root)
+            except RuntimeError as exception:
+                return self._finish(
+                    "CODEX_PLAN_RETRY_EXHAUSTED",
+                    75,
+                    {"task": task.id, "error": str(exception)},
+                )
             if plan["decision"] == "BLOCKED":
                 self._mark_blocked(task)
                 return self._finish("CODEX_PLAN_BLOCKED", 68, {"task": task.id, "plan": plan})
-            next_action = "\n".join(f"{index + 1}. {value}" for index, value in enumerate(plan["instructions"]))
+            next_action = "\n".join(
+                f"{index + 1}. {value}"
+                for index, value in enumerate(plan["instructions"])
+            )
 
-        for attempt in range(1, self.max_revisions + 2):
+        attempt = 1
+        transient_failures = 0
+        no_progress_cycles = 0
+        last_review_action = ""
+
+        while self.max_attempts <= 0 or attempt <= self.max_attempts:
             attempt_dir = task_root / f"attempt-{attempt:02d}"
             attempt_dir.mkdir(parents=True, exist_ok=True)
-            current_gate = initial_gate if attempt == 1 else self._run_gate("pre-edit-gate", task.gate, attempt_dir)
+            current_gate = (
+                initial_gate
+                if attempt == 1
+                else self._run_gate("pre-edit-gate", task.gate, attempt_dir)
+            )
+            changed_this_attempt = False
+
             if current_gate.exit_code != 0 or next_action:
                 prompt = self._opencode_prompt(task, current_gate, next_action)
                 before_head = git_head(self.repo)
                 before_fingerprint = git_worktree_fingerprint(self.repo)
                 edit = self._run_logged(
                     "opencode",
-                    (self.opencode_bin, "run", "--dir", str(self.repo), "--agent", self.opencode_agent,
-                     "--format", "json", "--auto", prompt),
-                    attempt_dir, stream=True,
+                    (
+                        self.opencode_bin,
+                        "run",
+                        "--dir",
+                        str(self.repo),
+                        "--agent",
+                        self.opencode_agent,
+                        "--format",
+                        "json",
+                        "--auto",
+                        prompt,
+                    ),
+                    attempt_dir,
+                    stream=True,
                 )
                 if edit.exit_code != 0:
-                    return self._finish("OPENCODE_FAILED", edit.exit_code, {"task": task.id, "attempt": attempt})
+                    transient_failures += 1
+                    if transient_failures > self.max_transient_failures:
+                        return self._finish(
+                            "OPENCODE_RETRY_EXHAUSTED",
+                            edit.exit_code,
+                            {"task": task.id, "attempt": attempt},
+                        )
+                    next_action = self._transient_retry_action(
+                        "OpenCode edit",
+                        edit,
+                        next_action,
+                    )
+                    attempt += 1
+                    continue
+
+                transient_failures = 0
                 after_fingerprint = git_worktree_fingerprint(self.repo)
-                if after_fingerprint != before_fingerprint:
+                changed_this_attempt = after_fingerprint != before_fingerprint
+                if changed_this_attempt:
+                    no_progress_cycles = 0
                     self._notify(
-                        attempt_dir, f"files-changed-{attempt:02d}", 1,
+                        attempt_dir,
+                        f"files-changed-{attempt:02d}",
+                        1,
                         f"{task.id}: repository files changed",
                     )
+                else:
+                    no_progress_cycles += 1
+
                 if git_head(self.repo) != before_head:
-                    return self._finish("OPENCODE_GIT_WRITE_VIOLATION", 69, {"task": task.id})
+                    return self._finish(
+                        "OPENCODE_GIT_WRITE_VIOLATION",
+                        69,
+                        {"task": task.id},
+                    )
+
                 all_changed = git_changed_paths(self.repo)
                 controller_runtime = tuple(
                     path for path in all_changed
@@ -419,60 +491,104 @@ class AutomaticRunner:
                 ]
                 (attempt_dir / "evidence").mkdir(exist_ok=True)
                 (attempt_dir / "evidence" / "changed-paths.json").write_text(
-                    json.dumps({
-                        "changed_paths": changed,
-                        "ignored_controller_runtime_paths": controller_runtime,
-                        "disallowed_paths": disallowed,
-                    }, indent=2),
+                    json.dumps(
+                        {
+                            "changed_paths": changed,
+                            "ignored_controller_runtime_paths": controller_runtime,
+                            "disallowed_paths": disallowed,
+                        },
+                        indent=2,
+                    ),
                     encoding="utf-8",
                 )
                 if disallowed:
-                    return self._finish("SCOPE_VIOLATION", 65, {"task": task.id, "paths": disallowed})
+                    return self._finish(
+                        "SCOPE_VIOLATION",
+                        65,
+                        {"task": task.id, "paths": disallowed},
+                    )
                 self._write_patch(attempt_dir, changed)
+
+                if (
+                    not changed_this_attempt
+                    and no_progress_cycles >= self.max_no_progress_cycles
+                ):
+                    next_action = self._no_progress_action(next_action)
 
             gate = self._run_gate("task-gate", task.gate, attempt_dir, stream=True)
             if gate.exit_code == 0:
                 self._notify(
-                    attempt_dir, f"handoff-to-codex-{attempt:02d}", 4,
+                    attempt_dir,
+                    f"handoff-to-codex-{attempt:02d}",
+                    4,
                     f"{task.id}: green gate, handing control to Codex",
                 )
 
-            # Force the local worker to re-read the active instruction bundle and
-            # explain its understanding before Codex reviews the implementation.
-            # This creates an explicit local-model -> Codex communication channel.
+            # Force the local worker to explain its understanding before Codex
+            # reviews. Assimilation text is evidence, but a transient failure to
+            # produce it must not discard an otherwise reviewable implementation.
             assimilation_before_head = git_head(self.repo)
             assimilation_before_fingerprint = git_worktree_fingerprint(self.repo)
             assimilation = self._run_logged(
                 "opencode-assimilation",
                 (
-                    self.opencode_bin, "run", "--dir", str(self.repo),
-                    "--agent", self.opencode_agent, "--format", "json", "--auto",
+                    self.opencode_bin,
+                    "run",
+                    "--dir",
+                    str(self.repo),
+                    "--agent",
+                    self.opencode_agent,
+                    "--format",
+                    "json",
+                    "--auto",
                     self._opencode_assimilation_prompt(task, gate),
                 ),
                 attempt_dir,
                 stream=True,
             )
             if assimilation.exit_code != 0:
-                return self._finish(
-                    "OPENCODE_ASSIMILATION_FAILED",
-                    assimilation.exit_code,
-                    {"task": task.id, "attempt": attempt},
-                )
-            if git_head(self.repo) != assimilation_before_head:
-                return self._finish(
-                    "OPENCODE_ASSIMILATION_GIT_WRITE_VIOLATION",
-                    69,
-                    {"task": task.id, "attempt": attempt},
-                )
-            if git_worktree_fingerprint(self.repo) != assimilation_before_fingerprint:
-                return self._finish(
-                    "OPENCODE_ASSIMILATION_FILE_WRITE_VIOLATION",
-                    65,
-                    {"task": task.id, "attempt": attempt},
-                )
-            self._write_local_understanding(attempt_dir, assimilation.stdout)
+                self._write_failed_local_understanding(attempt_dir, assimilation)
+            else:
+                if git_head(self.repo) != assimilation_before_head:
+                    return self._finish(
+                        "OPENCODE_ASSIMILATION_GIT_WRITE_VIOLATION",
+                        69,
+                        {"task": task.id, "attempt": attempt},
+                    )
+                if (
+                    git_worktree_fingerprint(self.repo)
+                    != assimilation_before_fingerprint
+                ):
+                    return self._finish(
+                        "OPENCODE_ASSIMILATION_FILE_WRITE_VIOLATION",
+                        65,
+                        {"task": task.id, "attempt": attempt},
+                    )
+                self._write_local_understanding(attempt_dir, assimilation.stdout)
 
-            review = self._codex_review(task, gate, attempt_dir)
+            try:
+                review = self._codex_review(task, gate, attempt_dir)
+            except RuntimeError as exception:
+                transient_failures += 1
+                if transient_failures > self.max_transient_failures:
+                    return self._finish(
+                        "CODEX_REVIEW_RETRY_EXHAUSTED",
+                        75,
+                        {
+                            "task": task.id,
+                            "attempt": attempt,
+                            "error": str(exception),
+                        },
+                    )
+                next_action = (
+                    "Codex review failed transiently. Preserve the current product "
+                    "changes, rerun the deterministic gate, regenerate the local "
+                    "understanding report and hand the same evidence to Codex again."
+                )
+                attempt += 1
+                continue
+
+            transient_failures = 0
             if review["decision"] == "ACCEPT":
                 if gate.exit_code != 0:
                     next_action = (
@@ -482,7 +598,9 @@ class AutomaticRunner:
                     invalid_accept = dict(review)
                     invalid_accept["decision"] = "REVISE"
                     invalid_accept["local_understanding_assessment"] = (
-                        str(review.get("local_understanding_assessment") or "").strip()
+                        str(
+                            review.get("local_understanding_assessment") or ""
+                        ).strip()
                         + " Codex attempted ACCEPT while the deterministic gate was red."
                     ).strip()
                     invalid_accept["instruction_corrections"] = [
@@ -491,67 +609,196 @@ class AutomaticRunner:
                     ]
                     invalid_accept["corrected_extra_instructions"] = next_action
                     self._write_codex_extra_instructions(task, invalid_accept)
+                    attempt += 1
                     continue
+
                 self._write_codex_extra_instructions(task, review)
                 self._accept_progress(task)
                 self.verified_green.add(task.id)
                 self._write_progress(None)
                 self._write_memory()
                 if not self.auto_commit:
-                    return self._finish("TASK_ACCEPTED_COMMIT_REQUIRED", 0, {"task": task.id})
+                    return self._finish(
+                        "TASK_ACCEPTED_COMMIT_REQUIRED",
+                        0,
+                        {"task": task.id},
+                    )
                 if self._commit_if_needed(task.commit_message) is None:
-                    return self._finish("AUTO_COMMIT_FAILED", 67, {"task": task.id})
+                    return self._finish(
+                        "AUTO_COMMIT_FAILED",
+                        67,
+                        {"task": task.id},
+                    )
                 self.lock_path.unlink(missing_ok=True)
                 return 0
 
             self._write_codex_extra_instructions(task, review)
             if review["decision"] == "BLOCKED":
                 self._mark_blocked(task)
-                return self._finish("CODEX_REVIEW_BLOCKED", 68, {"task": task.id, "review": review})
-            next_action = review["next_action"]
-        return self._finish("REVISION_LIMIT_REACHED", 70, {"task": task.id})
+                return self._finish(
+                    "CODEX_REVIEW_BLOCKED",
+                    68,
+                    {"task": task.id, "review": review},
+                )
 
-    def _codex_plan(self, task: Task, gate: CommandResult, task_dir: Path) -> dict[str, Any]:
-        output = task_dir / "decisions" / "codex-plan.json"
+            next_action = str(review["next_action"]).strip()
+            normalized_action = " ".join(next_action.split()).lower()
+            if normalized_action and normalized_action == last_review_action:
+                no_progress_cycles += 1
+            else:
+                last_review_action = normalized_action
+                if changed_this_attempt:
+                    no_progress_cycles = 0
+            if no_progress_cycles >= self.max_no_progress_cycles:
+                next_action = self._no_progress_action(next_action)
+
+            attempt += 1
+
+        return self._finish(
+            "GLOBAL_ATTEMPT_LIMIT_REACHED",
+            70,
+            {
+                "task": task.id,
+                "attempts": self.max_attempts,
+                "recovery_packet": str(
+                    self.codex_extra_instructions_path.relative_to(self.repo)
+                )
+                if self.codex_extra_instructions_path.exists()
+                else None,
+            },
+        )
+
+    def _transient_retry_action(
+        self,
+        component: str,
+        result: CommandResult,
+        previous_action: str | None,
+    ) -> str:
+        details = (result.stderr or result.stdout)[-4000:].strip()
+        return (
+            f"{component} failed transiently with exit {result.exit_code}. "
+            "Start a fresh local session, preserve the current worktree, diagnose "
+            "the concrete error below and continue the same locked task. Do not "
+            "revert already validated changes.\n\n"
+            f"Previous action:\n{previous_action or 'Implement the active task.'}"
+            f"\n\nFailure tail:\n{details or 'No diagnostic text was produced.'}"
+        )
+
+    def _no_progress_action(self, previous_action: str | None) -> str:
+        return (
+            "The previous local pass made no effective product change or repeated "
+            "the same unresolved action. Treat the CURRENT CODEX-TO-LOCAL EXTRA "
+            "INSTRUCTIONS as a checklist: map every numbered requirement to an "
+            "exact code or test assertion, edit the named path, and verify each "
+            "item before running the exact gate. Do not merely restate the task."
+            f"\n\nPrevious unresolved action:\n{previous_action or 'none'}"
+        )
+
+    def _codex_plan(
+        self,
+        task: Task,
+        gate: CommandResult,
+        task_dir: Path,
+    ) -> dict[str, Any]:
+        return self._run_codex_structured(
+            "plan",
+            task,
+            gate,
+            task_dir,
+            self.repo / "py-codex-agent/schemas/plan.schema.json",
+            {"READY", "BLOCKED"},
+        )
+
+    def _codex_review(
+        self,
+        task: Task,
+        gate: CommandResult,
+        attempt_dir: Path,
+    ) -> dict[str, Any]:
+        return self._run_codex_structured(
+            "review",
+            task,
+            gate,
+            attempt_dir,
+            self.repo / "py-codex-agent/schemas/review.schema.json",
+            {"ACCEPT", "REVISE", "BLOCKED"},
+        )
+
+    def _run_codex_structured(
+        self,
+        stage: str,
+        task: Task,
+        gate: CommandResult,
+        directory: Path,
+        schema: Path,
+        allowed_decisions: set[str],
+    ) -> dict[str, Any]:
+        output = directory / "decisions" / f"codex-{stage}.json"
         output.parent.mkdir(parents=True, exist_ok=True)
-        prompt = self._structured_prompt("plan", task, gate, task_dir)
+        prompt = self._structured_prompt(stage, task, gate, directory)
         command = codex_exec_command(
-            self.codex_bin, self.repo / "py-codex-agent/schemas/plan.schema.json", output, self.codex_model
+            self.codex_bin,
+            schema,
+            output,
+            self.codex_model,
         )
-        result = self._run_logged("codex-plan", command, task_dir, input_text=prompt, stream=True)
-        if result.exit_code != 0 or not output.exists():
-            raise RuntimeError("Codex planning command failed or produced no structured output")
-        value = validate_structured_result(json.loads(output.read_text(encoding="utf-8")), task.id, {"READY", "BLOCKED"})
-        return value
+        errors: list[str] = []
+        for retry in range(1, self.max_transient_failures + 2):
+            output.unlink(missing_ok=True)
+            name = (
+                f"codex-{stage}"
+                if retry == 1
+                else f"codex-{stage}-retry-{retry:02d}"
+            )
+            result = self._run_logged(
+                name,
+                command,
+                directory,
+                input_text=prompt,
+                stream=True,
+            )
+            if result.exit_code != 0 or not output.exists():
+                errors.append(
+                    f"try {retry}: exit={result.exit_code}; "
+                    f"{(result.stderr or result.stdout)[-1000:].strip()}"
+                )
+                continue
+            try:
+                value = json.loads(output.read_text(encoding="utf-8"))
+                return validate_structured_result(
+                    value,
+                    task.id,
+                    allowed_decisions,
+                )
+            except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exception:
+                errors.append(f"try {retry}: invalid structured result: {exception}")
+        raise RuntimeError(
+            f"Codex {stage} failed after retries: " + " | ".join(errors)
+        )
 
-    def _codex_review(self, task: Task, gate: CommandResult, attempt_dir: Path) -> dict[str, Any]:
-        output = attempt_dir / "decisions" / "codex-review.json"
-        output.parent.mkdir(parents=True, exist_ok=True)
-        prompt = self._structured_prompt("review", task, gate, attempt_dir)
-        command = codex_exec_command(
-            self.codex_bin, self.repo / "py-codex-agent/schemas/review.schema.json", output, self.codex_model
-        )
-        result = self._run_logged("codex-review", command, attempt_dir, input_text=prompt, stream=True)
-        if result.exit_code != 0 or not output.exists():
-            raise RuntimeError("Codex review command failed or produced no structured output")
-        return validate_structured_result(
-            json.loads(output.read_text(encoding="utf-8")), task.id, {"ACCEPT", "REVISE", "BLOCKED"}
+    def _companion_instruction_files(self, task: Task) -> tuple[Path, ...]:
+        task_path = self.repo / task.command
+        if task_path.parent != self.repo / ".opencode" / "commands":
+            return ()
+        return tuple(
+            path
+            for path in sorted(task_path.parent.glob(f"{task_path.stem}*.md"))
+            if path.resolve() != task_path.resolve()
         )
 
-    def _instruction_files(self, task: Task) -> tuple[Path, ...]:
+    def _instruction_files(
+        self,
+        task: Task,
+        include_companion: bool = True,
+    ) -> tuple[Path, ...]:
         """Return the deterministic instruction bundle for the active task."""
         candidates: list[Path] = [
             self.repo / "AGENTS.md",
             self.repo / ".opencode" / "commands" / "task.md",
             self.repo / task.command,
         ]
-
-        task_path = self.repo / task.command
-        if task_path.parent == self.repo / ".opencode" / "commands":
-            # Include task-specific companion guides such as
-            # task-02-ingestion-implementation-guide.md, but never unrelated tasks.
-            candidates.extend(sorted(task_path.parent.glob(f"{task_path.stem}*.md")))
-
+        if include_companion:
+            candidates.extend(self._companion_instruction_files(task))
         if self.codex_extra_instructions_path.exists():
             candidates.append(self.codex_extra_instructions_path)
 
@@ -565,9 +812,32 @@ class AutomaticRunner:
             unique.append(candidate)
         return tuple(unique)
 
-    def _instruction_bundle(self, task: Task) -> str:
+    def _use_full_instruction_bundle(self, stage: str) -> bool:
+        return (
+            stage == "plan"
+            or not getattr(self, "compact_revision_context", True)
+            or not self.codex_extra_instructions_path.exists()
+        )
+
+    def _instruction_manifest(self, task: Task) -> str:
+        lines: list[str] = []
+        for path in self._companion_instruction_files(task):
+            content = path.read_bytes()
+            relative = path.relative_to(self.repo)
+            line_count = path.read_text(encoding="utf-8").count("\n") + 1
+            lines.append(
+                f"- {relative}: sha256={hashlib.sha256(content).hexdigest()} "
+                f"lines={line_count}"
+            )
+        return "\n".join(lines) or "- none"
+
+    def _instruction_bundle(
+        self,
+        task: Task,
+        include_companion: bool = True,
+    ) -> str:
         sections: list[str] = []
-        for path in self._instruction_files(task):
+        for path in self._instruction_files(task, include_companion):
             try:
                 label = str(path.relative_to(self.repo))
             except ValueError:
@@ -596,17 +866,22 @@ class AutomaticRunner:
             if local_understanding_path.exists()
             else "No local understanding report was produced."
         )
-        extra_instructions = (
-            self.codex_extra_instructions_path.read_text(encoding="utf-8")
-            if self.codex_extra_instructions_path.exists()
-            else "No active Codex-to-local extra instructions."
+        extra_instructions = self._current_codex_extra_instructions()
+        include_companion = self._use_full_instruction_bundle(stage)
+        context_mode = (
+            "full canonical bundle"
+            if include_companion
+            else "focused revision bundle; unchanged companion guides are hashed below"
         )
         tail_stdout = gate.stdout[-12000:]
         tail_stderr = gate.stderr[-12000:]
         return (
             contract
+            + f"\n\nCONTEXT MODE\n{context_mode}"
             + "\n\nACTIVE INSTRUCTION BUNDLE\n"
-            + self._instruction_bundle(task)
+            + self._instruction_bundle(task, include_companion)
+            + "\n\nUNCHANGED COMPANION GUIDE MANIFEST\n"
+            + self._instruction_manifest(task)
             + "\n\nCURRENT MEMORY\n"
             + memory
             + "\n\nLOCAL MODEL UNDERSTANDING REPORT\n"
@@ -646,9 +921,10 @@ class AutomaticRunner:
         action = next_action or "Implement the selected task completely."
         extra_instructions = self._current_codex_extra_instructions()
         exact_gate = shlex.join(task.gate)
+        include_companion = self._use_full_instruction_bundle("edit")
         instruction_list = "\n".join(
             f"- {path.relative_to(self.repo) if path.is_relative_to(self.repo) else path}"
-            for path in self._instruction_files(task)
+            for path in self._instruction_files(task, include_companion)
         )
         return f"""Read every file in this active instruction bundle before editing:
 {instruction_list}
@@ -668,6 +944,9 @@ CURRENT GATE STDERR TAIL:
 {gate.stderr[-8000:]}
 
 Do not edit task, controller, progress, memory or gate files. Do not run Git write commands.
+Before editing, translate every numbered Codex instruction into an explicit code/test
+checklist. Apply all items; do not stop after satisfying only the first one. Before the
+gate, re-open the edited path and verify the checklist against exact assertions.
 Use CodeGraph only when useful. Implement, then run exactly:
 {exact_gate}
 Do not add a pipeline, redirect, tee, tail, grep, echo suffix or log-file write.
@@ -679,9 +958,10 @@ The Python controller captures the gate output. Stop after the exact gate result
         task: Task,
         gate: CommandResult,
     ) -> str:
+        include_companion = self._use_full_instruction_bundle("review")
         instruction_list = "\n".join(
             f"- {path.relative_to(self.repo) if path.is_relative_to(self.repo) else path}"
-            for path in self._instruction_files(task)
+            for path in self._instruction_files(task, include_companion)
         )
         changed = (
             "\n".join(f"- {path}" for path in git_product_changed_paths(self.repo))
@@ -712,8 +992,10 @@ Return only a concise Markdown report with exactly these headings:
 ## Uncertainties, contradictions or possible instruction defects
 ## Questions or corrections requested from Codex
 
-Be specific. Do not claim success merely because the gate is green. This report is
-sent directly to Codex so it can identify your misunderstandings and correct the
+Be specific. For every numbered Codex instruction, state the exact file, method and
+assertion or implementation line that satisfies it. Explicitly mark any item that is
+not yet proven. Do not claim success merely because the gate is green. This report
+is sent directly to Codex so it can identify your misunderstandings and correct the
 next instruction packet.
 """
 
@@ -736,6 +1018,24 @@ next instruction packet.
             encoding="utf-8",
         )
 
+    def _write_failed_local_understanding(
+        self,
+        attempt_dir: Path,
+        result: CommandResult,
+    ) -> None:
+        evidence = attempt_dir / "evidence"
+        evidence.mkdir(parents=True, exist_ok=True)
+        diagnostic = (result.stderr or result.stdout)[-4000:].strip()
+        (evidence / "local-understanding.md").write_text(
+            "# Local understanding report\n\n"
+            "## Assimilation status\n"
+            f"The local assimilation command failed with exit {result.exit_code}. "
+            "Codex must review the implementation and gate evidence directly.\n\n"
+            "## Diagnostic tail\n"
+            f"{diagnostic or 'No diagnostic text was produced.'}\n",
+            encoding="utf-8",
+        )
+
     def _write_codex_extra_instructions(
         self,
         task: Task,
@@ -754,11 +1054,21 @@ next instruction packet.
         body = str(review.get("corrected_extra_instructions") or "").strip()
         if not body:
             body = str(review.get("next_action") or "").strip()
+        reviewed_paths = review.get("paths") or []
+        path_lines = "\n".join(f"- `{value}`" for value in reviewed_paths) or "- none"
         content = f"""# Codex ↔ Qwen3 extra instructions
 
 - Generated at: {datetime.now(timezone.utc).isoformat()}
 - Active task: `{task.id}`
 - Codex decision: `{review['decision']}`
+
+## Reviewed or target paths
+
+{path_lines}
+
+## Immediate next action
+
+{str(review.get('next_action') or '').strip() or 'Apply the resolved instructions below.'}
 
 ## Codex assessment of the local understanding
 

@@ -201,6 +201,90 @@ class RunnerTest(unittest.TestCase):
             )
             self.assertIn("Do not add a pipeline", prompt)
 
+
+    def test_compact_revision_context_omits_long_companion_but_keeps_manifest(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            (repo / "AGENTS.md").write_text("global", encoding="utf-8")
+            commands = repo / ".opencode" / "commands"
+            commands.mkdir(parents=True)
+            (commands / "task.md").write_text("workflow", encoding="utf-8")
+            task_path = commands / "task-02-ingestion.md"
+            task_path.write_text("task", encoding="utf-8")
+            guide = commands / "task-02-ingestion-implementation-guide.md"
+            guide.write_text("very long guide\n", encoding="utf-8")
+
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner.compact_revision_context = True
+            runner.control_dir = repo / "runtime" / "control"
+            runner.control_dir.mkdir(parents=True)
+            runner.codex_extra_instructions_path = (
+                runner.control_dir / "codex-qwen3-extra-instructions.md"
+            )
+            runner.codex_extra_instructions_path.write_text(
+                "focused correction",
+                encoding="utf-8",
+            )
+            task = Task(
+                "task-02-ingestion",
+                ".opencode/commands/task-02-ingestion.md",
+                "ingestion",
+                ("src/**",),
+                ("true",),
+                "commit",
+            )
+
+            files = runner._instruction_files(
+                task,
+                include_companion=runner._use_full_instruction_bundle("review"),
+            )
+            relative = {str(path.relative_to(repo)) for path in files}
+            manifest = runner._instruction_manifest(task)
+
+            self.assertNotIn(
+                ".opencode/commands/task-02-ingestion-implementation-guide.md",
+                relative,
+            )
+            self.assertIn(
+                "runtime/control/codex-qwen3-extra-instructions.md",
+                relative,
+            )
+            self.assertIn("task-02-ingestion-implementation-guide.md", manifest)
+            self.assertIn("sha256=", manifest)
+
+    def test_failed_assimilation_becomes_reviewable_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            attempt = repo / "runtime" / "attempt-01"
+            result = CommandResult(
+                ("opencode",),
+                124,
+                "",
+                "local model timed out",
+                timed_out=True,
+            )
+
+            runner._write_failed_local_understanding(attempt, result)
+
+            report = (attempt / "evidence" / "local-understanding.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("failed with exit 124", report)
+            self.assertIn("local model timed out", report)
+            self.assertIn("Codex must review", report)
+
+    def test_no_progress_recovery_demands_exact_checklist_mapping(self):
+        runner = object.__new__(AutomaticRunner)
+
+        action = runner._no_progress_action("Fix exact headings.")
+
+        self.assertIn("checklist", action)
+        self.assertIn("exact code or test assertion", action)
+        self.assertIn("Fix exact headings", action)
+
     def test_worktree_fingerprint_detects_untracked_content_changes(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)
