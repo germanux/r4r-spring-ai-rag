@@ -48,17 +48,25 @@ rag_gate() {
   "$ROOT/scripts/verify.sh" all
 }
 
+rag_api_gate() {
+  require_rag_artifacts
+  require_file src/main/java/com/riansares/r4r/rag/api/RagQueryController.java
+  require_file src/test/java/com/riansares/r4r/rag/api/RagQueryControllerTest.java
+  "$ROOT/scripts/verify.sh" all
+}
+
 case "$TASK" in
   task-01-base) base_gate ;;
   task-02-ingestion) ingestion_gate ;;
   task-03-pgvector) pgvector_gate ;;
   task-04-rag) rag_gate ;;
+  task-05-rag-api) rag_api_gate ;;
   all)
     require_rag_artifacts
     "$ROOT/scripts/verify.sh" all
     ;;
   *)
-    echo "Usage: $0 {task-01-base|task-02-ingestion|task-03-pgvector|task-04-rag|all}" >&2
+    echo "Usage: $0 {task-01-base|task-02-ingestion|task-03-pgvector|task-04-rag|task-05-rest-api|all}" >&2
     exit 2
     ;;
 esac

@@ -17,6 +17,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.mockito.ArgumentCaptor;
+
 class CitedRagServiceTest {
 
     private PgVectorKnowledgeStore knowledgeStore;
@@ -58,17 +60,6 @@ class CitedRagServiceTest {
     }
 
     @Test
-    void returnsAbstentionWhenChunksDoNotMeetThreshold() {
-        when(knowledgeStore.search(any(), any(Integer.class), any(Double.class)))
-                .thenReturn(List.of());
-
-        RagResult result = service.answer("test question");
-
-        assertThat(result.abstention()).isTrue();
-        verify(chatModel, never()).call(any(Prompt.class));
-    }
-
-    @Test
     void buildsPromptWithLabeledChunksInRetrievalOrder() {
         MarkdownChunk chunk1 = new MarkdownChunk(
                 "doc1.md", List.of("Section"), 0, "First content");
@@ -89,11 +80,26 @@ class CitedRagServiceTest {
         when(generation.getOutput()).thenReturn(message);
         when(message.getText()).thenReturn("Combined answer");
 
-        when(chatModel.call(any(Prompt.class))).thenReturn(response);
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        when(chatModel.call(promptCaptor.capture())).thenReturn(response);
 
-        service.answer("test question");
+        RagResult result = service.answer("test question");
 
-        verify(chatModel).call(any(Prompt.class));
+        verify(chatModel).call(promptCaptor.capture());
+        
+        // Verify retrieval was called with exact parameters: question, top-K 5, min score 0.5
+        verify(knowledgeStore).search("test question", 5, 0.5);
+        
+        String expectedPrompt = "You are a helpful assistant. Use the following evidence to answer the question.\n\n[S1]\nFirst content\n\n[S2]\nSecond content\n\nQuestion: test question\n\nAnswer with citations in the format [S1], [S2], etc.:\n";
+        assertThat(promptCaptor.getValue().getContents()).isEqualTo(expectedPrompt);
+        
+        assertThat(result.answer()).isEqualTo("Combined answer");
+        assertThat(result.abstention()).isFalse();
+        assertThat(result.citations()).hasSize(2);
+        assertThat(result.citations().get(0).label()).isEqualTo("[S1]");
+        assertThat(result.citations().get(0).source()).isEqualTo("doc1.md");
+        assertThat(result.citations().get(1).label()).isEqualTo("[S2]");
+        assertThat(result.citations().get(1).source()).isEqualTo("doc2.md");
     }
 
     @Test

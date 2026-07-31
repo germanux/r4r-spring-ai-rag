@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "tasks": [
+    {
+      "id": "task-01-base",
+      "command": ".opencode/commands/task-01-base.md",
+      "objective": "Keep the Java, PostgreSQL, Flyway and Spring AI baseline green.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/**",
+        "knowledge/**",
+        "docker-postgres/**",
+        "docs/backend/**",
+        ".env.example",
+        ".gitignore",
+        "codegraph.json"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-01-base"
+      ],
+      "commit_message": "chore(task-01): establish green R4R baseline"
+    },
+    {
+      "id": "task-02-ingestion",
+      "command": ".opencode/commands/task-02-ingestion.md",
+      "objective": "Implement deterministic and idempotent Markdown ingestion.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "knowledge/**",
+        "docs/backend/**"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-02-ingestion"
+      ],
+      "commit_message": "feat(task-02): add deterministic knowledge ingestion"
+    },
+    {
+      "id": "task-03-pgvector",
+      "command": ".opencode/commands/task-03-pgvector.md",
+      "objective": "Persist and retrieve chunks through Spring AI PgVector.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "knowledge/**",
+        "docs/backend/**"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-03-pgvector"
+      ],
+      "commit_message": "feat(task-03): add Spring AI pgvector retrieval"
+    },
+    {
+      "id": "task-04-rag",
+      "command": ".opencode/commands/task-04-rag.md",
+      "objective": "Implement a minimal cited non-web RAG service with abstention.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "knowledge/**",
+        "docs/backend/**"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-04-rag"
+      ],
+      "commit_message": "feat(task-04): add minimal cited RAG service"
+    },
+    {
+      "id": "task-05-rag-api",
+      "command": ".opencode/commands/task-05-rag-api.md",
+      "objective": "Expose the cited RAG service through a stable JSON HTTP API for Angular.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-05-rag-api"
+      ],
+      "commit_message": "feat(task-05): expose cited RAG HTTP API"
+    }
+  ],
+  "final_gate": [
+    "./scripts/task-gate.sh",
+    "all"
+  ]
+}

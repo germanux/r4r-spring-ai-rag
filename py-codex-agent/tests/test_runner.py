@@ -48,6 +48,15 @@ class RunnerTest(unittest.TestCase):
                 "r4r-self-recovery/scripts/run-codex-agent.sh"
             )
         )
+        self.assertTrue(
+            is_lock_auto_advance_path(
+                "r4r-dual-agent-code-intelligence-v1/payload/scripts/cgr.sh"
+            )
+        )
+        self.assertTrue(is_lock_auto_advance_path("README-DUAL-AGENTS.md"))
+        self.assertTrue(
+            is_lock_auto_advance_path("docs/dual-agent-code-intelligence.md")
+        )
         self.assertTrue(is_lock_auto_advance_path("r4r-agent-update-v2.zip"))
         self.assertTrue(
             is_lock_auto_advance_path("install-r4r-agent-hotfix-v3.sh")
@@ -85,6 +94,22 @@ class RunnerTest(unittest.TestCase):
             changed = git_product_changed_paths(repo)
 
             self.assertEqual(("src/main/App.java",), changed)
+
+    def test_fingerprint_ignores_peer_owned_paths(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            self._init_repo(repo)
+            backend = repo / "src" / "main" / "App.java"
+            frontend = repo / "frontend" / "src" / "app.ts"
+            backend.parent.mkdir(parents=True, exist_ok=True)
+            frontend.parent.mkdir(parents=True, exist_ok=True)
+            backend.write_text("class App {}\n", encoding="utf-8")
+            frontend.write_text("export const x = 1;\n", encoding="utf-8")
+            before = git_worktree_fingerprint(repo, ("frontend/**",))
+            frontend.write_text("export const x = 2;\n", encoding="utf-8")
+            self.assertEqual(before, git_worktree_fingerprint(repo, ("frontend/**",)))
+            backend.write_text("class App { int x; }\n", encoding="utf-8")
+            self.assertNotEqual(before, git_worktree_fingerprint(repo, ("frontend/**",)))
 
     def test_builds_read_only_codex_command(self):
         command = codex_exec_command("codex", Path("schema.json"), Path("out.json"), "gpt-test")

@@ -70,6 +70,20 @@ class DiagnosticsTest(unittest.TestCase):
             self.assertEqual((), diagnostics.source_paths)
             self.assertIn("docker-postgres/compose.yml", diagnostics.related_paths)
 
+    def test_extracts_frontend_typescript_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            source = repo / "frontend/src/app/app.component.ts"
+            source.parent.mkdir(parents=True)
+            source.write_text("export class AppComponent {}\n", encoding="utf-8")
+            evidence = repo / "runtime/evidence"
+            diagnostics = build_gate_diagnostics(
+                repo, evidence, ("npm", "run", "build"), 1,
+                "ERROR in frontend/src/app/app.component.ts:4:2 TypeScript error", "",
+            )
+            self.assertEqual("frontend-compilation", diagnostics.classification)
+            self.assertIn("frontend/src/app/app.component.ts", diagnostics.source_paths)
+
 
 if __name__ == "__main__":
     unittest.main()

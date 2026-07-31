@@ -15,6 +15,7 @@ _JAVA_PATH = re.compile(
     r"(?::\[(?P<line>\d+),(?P<column>\d+)\]|:(?P<stack_line>\d+))?"
 )
 _STACK_JAVA = re.compile(r"\((?P<name>[A-Za-z_$][A-Za-z0-9_$]*\.java):\d+\)")
+_FRONTEND_PATH = re.compile(r"(?P<path>frontend/[A-Za-z0-9_./@-]+\.(?:ts|tsx|html|css|scss|json))(?::(?P<line>\d+):(?P<column>\d+))?")
 _TEST_FAILURE = re.compile(
     r"^\[ERROR\]\s+(?P<class>[A-Za-z_$][A-Za-z0-9_$.]+)\."
     r"(?P<method>[A-Za-z_$][A-Za-z0-9_$]*)\s+[»:]",
@@ -86,6 +87,11 @@ def extract_source_paths(repo: Path, stdout: str, stderr: str) -> tuple[str, ...
         if len(candidates) == 1:
             paths.add(candidates[0])
 
+    for match in _FRONTEND_PATH.finditer(text.replace("\\", "/")):
+        relative = match.group("path").lstrip("./")
+        if (repo / relative).is_file():
+            paths.add(relative)
+
     return tuple(sorted(paths))
 
 
@@ -96,6 +102,12 @@ def classify_gate_failure(stdout: str, stderr: str, exit_code: int) -> tuple[str
     text = (stdout + "\n" + stderr).lower()
     if "compilation error" in text or "compilation failure" in text:
         return "compilation", "Java compilation or test compilation failed."
+    if "angular 17 required" in text or "required frontend artifact is missing" in text:
+        return "frontend-structure", "The Angular 17 frontend scaffold or a required task artifact is missing."
+    if "ng build" in text or "error ng" in text or "typescript error" in text:
+        return "frontend-compilation", "Angular or TypeScript compilation failed."
+    if "npm error" in text or "npm err!" in text:
+        return "npm-failure", "The frontend npm command failed; inspect the exact npm output."
     if (
         "connection to 127.0.0.1:55433 refused" in text
         or "unable to obtain connection from database" in text
@@ -116,6 +128,15 @@ def classify_gate_failure(stdout: str, stderr: str, exit_code: int) -> tuple[str
 
 def _related_paths(repo: Path, classification: str, source_paths: Sequence[str]) -> tuple[str, ...]:
     related: set[str] = set(source_paths)
+    if classification in {"frontend-structure", "frontend-compilation", "npm-failure"}:
+        for value in (
+            "frontend/package.json",
+            "frontend/package-lock.json",
+            "frontend/angular.json",
+            "frontend/tsconfig.json",
+        ):
+            if (repo / value).is_file():
+                related.add(value)
     if classification in {"database-unavailable", "docker-unavailable", "migration-failure"}:
         for value in (
             "docker-postgres/compose.yml",

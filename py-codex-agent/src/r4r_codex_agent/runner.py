@@ -100,26 +100,32 @@ def git_head(repo: Path) -> str | None:
     return result.stdout.strip() if result.exit_code == 0 else None
 
 
-def git_worktree_fingerprint(repo: Path) -> str:
-    """Return a content fingerprint for tracked changes and untracked files."""
+def git_worktree_fingerprint(
+    repo: Path,
+    ignored_patterns: Sequence[str] = (),
+) -> str:
+    """Fingerprint current non-maintenance changes while ignoring peer-owned paths."""
     digest = hashlib.sha256()
-
-    head = git_head(repo)
-    diff_command = ("git", "diff", "--binary", "--no-ext-diff", head or "--root")
-    tracked = run_command(diff_command, repo)
-    if tracked.exit_code != 0:
-        raise RuntimeError(tracked.stderr.strip() or "Unable to fingerprint tracked changes")
-    digest.update(tracked.stdout.encode("utf-8", errors="surrogateescape"))
-
-    untracked = _nul_paths(run_command(("git", "ls-files", "--others", "--exclude-standard", "-z"), repo))
-    for relative in sorted(untracked):
+    digest.update((git_head(repo) or "<no-head>").encode("utf-8"))
+    for relative in git_changed_paths(repo):
+        if is_controller_runtime_path(relative) or is_lock_auto_advance_path(relative):
+            continue
+        if path_is_allowed(relative, ignored_patterns):
+            continue
         digest.update(relative.encode("utf-8", errors="surrogateescape"))
         path = repo / relative
-        if path.is_file():
+        tracked = run_command(
+            ("git", "diff", "--binary", "HEAD", "--", relative), repo
+        )
+        if tracked.exit_code not in (0, 1):
+            raise RuntimeError(
+                tracked.stderr.strip() or f"Unable to fingerprint {relative}"
+            )
+        digest.update(tracked.stdout.encode("utf-8", errors="surrogateescape"))
+        if path.is_file() and not tracked.stdout:
             digest.update(path.read_bytes())
         elif path.is_symlink():
             digest.update(os.readlink(path).encode("utf-8", errors="surrogateescape"))
-
     return digest.hexdigest()
 
 
@@ -154,6 +160,10 @@ MAINTENANCE_PATHS = (
     ".opencode/**",
     ".env",
     ".env.example",
+    ".env.r4r.local",
+    ".env.r4r.local.example",
+    "config/**",
+    "package.json",
     "opencode.jsonc",
     "codegraph.json",
     ".gitignore",
@@ -164,6 +174,8 @@ MAINTENANCE_PATHS = (
     "fix-r4r-*.sh",
     "r4r-agent-*.zip",
     "README.txt",
+    "README-DUAL-AGENTS.md",
+    "docs/dual-agent-code-intelligence.md",
     "SHA256SUMS.txt",
 )
 
@@ -177,7 +189,7 @@ LOCK_AUTO_ADVANCE_PATHS = MAINTENANCE_PATHS
 # canonical maintenance paths above. Product files under the bundle directory do
 # not qualify.
 _MAINTENANCE_BUNDLE_PREFIX = re.compile(
-    r"^(?:r4r-agent-[^/]+|r4r-self-recovery)/(.+)$"
+    r"^(?:r4r-(?:agent|dual-agent)-[^/]+|r4r-self-recovery)/(.+)$"
 )
 _MAINTENANCE_ARTIFACT_PATH = re.compile(
     r"^(?:(?:install|apply|fix)-r4r-[^/]+\.sh"
@@ -282,6 +294,15 @@ def extract_codegraph_tool_calls(stdout: str) -> tuple[str, ...]:
 class AutomaticRunner:
     def __init__(self, repo: Path, plan: TaskPlan, progress_path: Path):
         self.repo = repo.resolve()
+        self.worker_id = os.environ.get("R4R_WORKER_ID", "PC").strip().upper() or "PC"
+        try:
+            peer_value = json.loads(os.environ.get("R4R_PEER_PATHS_JSON", "[]"))
+        except json.JSONDecodeError as exception:
+            raise ValueError("R4R_PEER_PATHS_JSON must be a JSON array") from exception
+        if not isinstance(peer_value, list) or not all(isinstance(v, str) for v in peer_value):
+            raise ValueError("R4R_PEER_PATHS_JSON must be a JSON string array")
+        self.peer_paths = tuple(peer_value)
+        self.plan_display = os.environ.get("R4R_PLAN_DISPLAY", ".opencode/task-plan.json")
         self.plan = plan
         self.progress_path = progress_path
         self.progress = load_progress(progress_path, (task.id for task in plan.tasks))
@@ -331,21 +352,25 @@ class AutomaticRunner:
         )
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         self.run_id = stamp
-        self.run_dir = self.repo / "runtime" / "runs" / stamp
+        self.run_dir = self.repo / "runtime" / "runs" / self.worker_id / stamp
         self.run_dir.mkdir(parents=True, exist_ok=False)
         # Legacy path is retained only so old locks can be deleted safely.
         # Task continuation is recorded in .opencode/progress.json.
         self.lock_path = self.repo / "runtime" / "locks" / "active-task.json"
         self.active_task_lock_enabled = False
-        self.memory_path = self.repo / ".opencode" / "memory.md"
+        memory_value = Path(os.environ.get("R4R_MEMORY_PATH", ".opencode/memory.md"))
+        self.memory_path = memory_value if memory_value.is_absolute() else self.repo / memory_value
         self.notify_script = self.repo / "scripts" / "notify-success.sh"
-        self.control_dir = self.repo / "runtime" / "control"
+        self.control_dir = self.repo / "runtime" / "control" / self.worker_id
         self.control_dir.mkdir(parents=True, exist_ok=True)
         self.codex_extra_instructions_path = (
             self.control_dir / "codex-qwen3-extra-instructions.md"
         )
         self.codex_plan_cache_path = self.control_dir / "codex-plan-cache.json"
         self.verified_green: set[str] = set()
+
+    def _worktree_fingerprint(self) -> str:
+        return git_worktree_fingerprint(self.repo, getattr(self, "peer_paths", ()))
 
     def execute(self) -> int:
         self._require_binary(self.opencode_bin)
@@ -486,7 +511,7 @@ class AutomaticRunner:
             return self._finish("BOOTSTRAP_READY_COMMIT_REQUIRED", 0, {"task": task.id})
         if self._commit_if_needed(
                 task.commit_message,
-                (*task.allowed_paths, ".opencode/progress.json", ".opencode/memory.md"),
+                (*task.allowed_paths, str(self.progress_path.relative_to(self.repo)), str(self.memory_path.relative_to(self.repo))),
             ) is None:
             return self._finish("BOOTSTRAP_COMMIT_FAILED", 67)
         return 0
@@ -504,6 +529,7 @@ class AutomaticRunner:
             path for path in dirty
             if not is_controller_runtime_path(path)
             and not is_lock_auto_advance_path(path)
+            and not path_is_allowed(path, getattr(self, "peer_paths", ()))
         )
         if not product_dirty:
             return
@@ -557,9 +583,10 @@ class AutomaticRunner:
             )
             changed_this_attempt = False
             diagnostics = self._record_gate_diagnostics(current_gate, attempt_dir)
-            codegraph_report = "CodeGraph reconnaissance is disabled."
+            codegraph_report = "CodeGraph reconnaissance skipped for a green gate." if current_gate.exit_code == 0 else "CodeGraph reconnaissance is disabled."
             if (
-                self.require_codegraph
+                current_gate.exit_code != 0
+                and self.require_codegraph
                 and self.codegraph_policy != "off"
                 and not getattr(self, "compact_local_worker", False)
             ):
@@ -585,9 +612,17 @@ class AutomaticRunner:
                         attempt_dir, str(exception)
                     )
 
-            self._run_pre_edit_understanding(
-                task, current_gate, attempt_dir, diagnostics, codegraph_report
-            )
+            if current_gate.exit_code != 0:
+                self._run_pre_edit_understanding(
+                    task, current_gate, attempt_dir, diagnostics, codegraph_report
+                )
+            else:
+                evidence = attempt_dir / "evidence"
+                evidence.mkdir(parents=True, exist_ok=True)
+                (evidence / "pre-edit-understanding.md").write_text(
+                    "# Pre-edit understanding report\n\nSkipped because the exact task gate is already green; proceed directly to evidence review.\n",
+                    encoding="utf-8",
+                )
 
             if current_gate.exit_code != 0:
                 try:
@@ -617,7 +652,7 @@ class AutomaticRunner:
                     diagnostics,
                 )
                 before_head = git_head(self.repo)
-                before_fingerprint = git_worktree_fingerprint(self.repo)
+                before_fingerprint = self._worktree_fingerprint()
                 edit = self._run_logged(
                     "opencode",
                     (
@@ -662,7 +697,7 @@ class AutomaticRunner:
                     continue
 
                 transient_failures = 0
-                after_fingerprint = git_worktree_fingerprint(self.repo)
+                after_fingerprint = self._worktree_fingerprint()
                 changed_this_attempt = after_fingerprint != before_fingerprint
                 if changed_this_attempt:
                     no_progress_cycles = 0
@@ -688,10 +723,15 @@ class AutomaticRunner:
                     if is_controller_runtime_path(path)
                     or is_lock_auto_advance_path(path)
                 )
+                peer_changes = tuple(
+                    path for path in all_changed
+                    if path_is_allowed(path, getattr(self, "peer_paths", ()))
+                )
                 changed = tuple(
                     path for path in all_changed
                     if not is_controller_runtime_path(path)
                     and not is_lock_auto_advance_path(path)
+                    and not path_is_allowed(path, getattr(self, "peer_paths", ()))
                 )
                 disallowed = [
                     path for path in changed
@@ -703,6 +743,7 @@ class AutomaticRunner:
                         {
                             "changed_paths": changed,
                             "ignored_controller_runtime_paths": controller_runtime,
+                            "peer_owned_background_paths": peer_changes,
                             "disallowed_paths": disallowed,
                         },
                         indent=2,
@@ -745,7 +786,7 @@ class AutomaticRunner:
                 )
             else:
                 assimilation_before_head = git_head(self.repo)
-                assimilation_before_fingerprint = git_worktree_fingerprint(self.repo)
+                assimilation_before_fingerprint = self._worktree_fingerprint()
                 assimilation = self._run_logged(
                     "opencode-assimilation",
                     (
@@ -777,7 +818,7 @@ class AutomaticRunner:
                             {"task": task.id, "attempt": attempt},
                         )
                     if (
-                        git_worktree_fingerprint(self.repo)
+                        self._worktree_fingerprint()
                         != assimilation_before_fingerprint
                     ):
                         return self._finish(
@@ -846,7 +887,7 @@ class AutomaticRunner:
                     )
                 if self._commit_if_needed(
                     task.commit_message,
-                    (*task.allowed_paths, ".opencode/progress.json", ".opencode/memory.md"),
+                    (*task.allowed_paths, str(self.progress_path.relative_to(self.repo)), str(self.memory_path.relative_to(self.repo))),
                 ) is None:
                     return self._finish(
                         "AUTO_COMMIT_FAILED",
@@ -1097,7 +1138,7 @@ Do not propose code yet. Do not claim that an infrastructure outage is a Java bu
             )
             return
         before_head = git_head(self.repo)
-        before_fingerprint = git_worktree_fingerprint(self.repo)
+        before_fingerprint = self._worktree_fingerprint()
         result = self._run_logged(
             "opencode-pre-edit-understanding",
             (
@@ -1128,7 +1169,7 @@ Do not propose code yet. Do not claim that an infrastructure outage is a Java bu
         else:
             if git_head(self.repo) != before_head:
                 raise RuntimeError("Pre-edit understanding performed a forbidden Git write")
-            if git_worktree_fingerprint(self.repo) != before_fingerprint:
+            if self._worktree_fingerprint() != before_fingerprint:
                 raise RuntimeError("Pre-edit understanding modified repository files")
             report = extract_opencode_text(result.stdout).strip() or (
                 "# Pre-edit understanding report\n\n"
@@ -1478,7 +1519,7 @@ executed. The controller verifies OpenCode JSONL events and rejects prose-only c
                 "No Java source path was implicated by the current gate evidence.",
             )
         sync_before_head = git_head(self.repo)
-        sync_before_fingerprint = git_worktree_fingerprint(self.repo)
+        sync_before_fingerprint = self._worktree_fingerprint()
         sync = self._run_logged(
             "codegraph-sync",
             (self.codegraph_bin, "sync", ".", "--quiet"),
@@ -1493,7 +1534,7 @@ executed. The controller verifies OpenCode JSONL events and rejects prose-only c
             )
         if git_head(self.repo) != sync_before_head:
             raise RuntimeError("CodeGraph synchronization performed a forbidden Git write")
-        if git_worktree_fingerprint(self.repo) != sync_before_fingerprint:
+        if self._worktree_fingerprint() != sync_before_fingerprint:
             raise RuntimeError(
                 "CodeGraph synchronization modified tracked or untracked product files"
             )
@@ -1501,7 +1542,7 @@ executed. The controller verifies OpenCode JSONL events and rejects prose-only c
         errors: list[str] = []
         for retry in range(1, self.codegraph_retries + 2):
             before_head = git_head(self.repo)
-            before_fingerprint = git_worktree_fingerprint(self.repo)
+            before_fingerprint = self._worktree_fingerprint()
             result = self._run_logged(
                 "opencode-codegraph"
                 if retry == 1
@@ -1533,7 +1574,7 @@ executed. The controller verifies OpenCode JSONL events and rejects prose-only c
                 raise RuntimeError(
                     "CodeGraph reconnaissance performed a forbidden Git write"
                 )
-            if git_worktree_fingerprint(self.repo) != before_fingerprint:
+            if self._worktree_fingerprint() != before_fingerprint:
                 raise RuntimeError(
                     "CodeGraph reconnaissance modified repository files"
                 )
@@ -1903,7 +1944,7 @@ next instruction packet.
             f"- Active task: {self.progress.get('active_task') or 'None'}.",
             f"- Accepted: {', '.join(item['id'] for item in accepted) or 'none'}.",
             f"- Remaining: {', '.join(item['id'] for item in pending) or 'none'}.",
-            "- Exact plan: `.opencode/task-plan.json`.", "",
+            "- Exact plan: `{self.plan_display}`.", "",
             "## Fixed decisions", "",
             "- Non-web application until an explicit later task changes scope.",
             "- PostgreSQL only in Docker; Flyway owns application schema.",

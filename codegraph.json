@@ -1,12 +1,17 @@
 {
+  "includeIgnored": [
+    ".r4r/reference-repositories/"
+  ],
   "exclude": [
     "**/target/**",
     "**/node_modules/**",
+    "**/dist/**",
     "**/.venv/**",
     "**/__pycache__/**",
     "runtime/**",
     "docker-postgres/data/**",
     "docker-postgres/backups/**",
-    ".codegraph/**"
+    ".codegraph/**",
+    ".cgr-runtime/**"
   ]
 }

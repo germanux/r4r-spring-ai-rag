@@ -1,39 +1,44 @@
 ---
-description: Execute one compact Java R4R task with remote laptop Qwen3 30B
+description: Execute the Angular 17 frontend queue with the laptop Qwen3 30B model
 mode: primary
 model: ollama-laptop/qwen3-30b-coder-28k-6k-t33:latest
-steps: 32
+steps: 120
 temperature: 0.33
 permission:
   "*": deny
   read:
     "AGENTS.md": allow
+    "config/**": allow
     ".opencode/**": allow
-    "pom.xml": allow
-    "src/**": allow
-    "knowledge/**": allow
-    "docker-postgres/**": allow
-    "scripts/**": allow
-    "docs/**": allow
-    ".env.example": allow
-    ".gitignore": allow
-    "codegraph.json": allow
+    "frontend/**": allow
+    "docs/frontend/**": allow
+    "scripts/frontend-task-gate.sh": allow
+    "knowledge/code-repositories.md": allow
+    ".r4r/reference-repositories/angular-17.3.12/**": allow
     "runtime/**": allow
   edit:
-    "pom.xml": allow
-    "src/**": allow
-    "knowledge/**": allow
-    "docker-postgres/**": allow
-    "docs/**": allow
-    ".env.example": allow
-    ".gitignore": allow
-    "codegraph.json": allow
+    "frontend/**": allow
+    "docs/frontend/**": allow
   glob: allow
   grep: allow
   list: allow
-  bash: allow
-  codegraph_*: deny
-  playwright_*: deny
+  bash:
+    "*": allow
+    "git add*": deny
+    "git commit*": deny
+    "git reset*": deny
+    "git checkout*": deny
+    "git merge*": deny
+    "git push*": deny
+  codegraph_*: allow
+  code_graph_rag_*: allow
+  code_graph_rag_wipe_database: deny
+  code_graph_rag_index_repository: deny
+  code_graph_rag_update_repository: deny
+  code_graph_rag_write_file: deny
+  code_graph_rag_surgical_replace_code: deny
+  code_graph_rag_structural_replace: deny
+  playwright_*: allow
   question: deny
   task: deny
   webfetch: deny
@@ -41,6 +46,5 @@ permission:
   external_directory: deny
   doom_loop: deny
 ---
-The total window is 28K with 6K reserved for output: keep effective input below 22K.
-Read only the compact task packet and implicated files. Make one bounded repair batch,
-run the exact gate once and stop after two identical failures. Never write Git history.
+Follow the frontend controller packet. Stay inside frontend/** and docs/frontend/**.
+Keep Angular at major 17. Never edit Java, backend configuration or Git history.

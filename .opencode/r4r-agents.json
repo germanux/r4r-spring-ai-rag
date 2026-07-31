@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 2,
+  "defaults": {
+    "requestTimeoutSeconds": 14400,
+    "chunkTimeoutSeconds": 600,
+    "maxAttemptsPerTask": 0,
+    "maxNoProgressCycles": 4,
+    "maxTransientFailures": 8,
+    "autoCommit": false,
+    "bootstrapCommit": false
+  },
+  "codeIntelligence": {
+    "referenceManifest": "knowledge/code-repositories.md",
+    "referenceRoot": ".r4r/reference-repositories",
+    "maxEnabledRepositories": 2,
+    "codeGraph": {
+      "enabled": true,
+      "mcpName": "codegraph"
+    },
+    "codeGraphRag": {
+      "enabled": true,
+      "mcpName": "code_graph_rag",
+      "package": "code-graph-rag[treesitter-full,semantic,ast-grep]==0.0.484",
+      "workspace": "r4r-code",
+      "endpointEnv": "R4R_CGR_BASE_URL",
+      "modelEnv": "R4R_CGR_MODEL",
+      "defaultEndpoint": "http://127.0.0.1:11434/v1",
+      "defaultModel": "qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest"
+    }
+  },
+  "agents": {
+    "PC": {
+      "agentId": "r4r-pc",
+      "role": "backend-java21-spring-ai",
+      "provider": "ollama-pc",
+      "endpointEnv": "R4R_OPENCODE_PC_BASE_URL",
+      "defaultEndpoint": "http://127.0.0.1:11434/v1",
+      "model": "qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest",
+      "modelLabel": "Qwen3-Coder-Next 80B PC 168K/8K",
+      "contextTokens": 172032,
+      "outputTokens": 8192,
+      "temperature": 0.25,
+      "worker": "opencode",
+      "plan": ".opencode/task-plan.backend.json",
+      "progress": ".opencode/progress.backend.json",
+      "memory": ".opencode/memory.backend.md",
+      "controlDir": "runtime/control/PC",
+      "allowedPaths": [
+        "pom.xml",
+        "src/**",
+        "knowledge/**",
+        "docker-postgres/**",
+        "docs/backend/**"
+      ],
+      "peerPaths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "mcp": [
+        "codegraph",
+        "code_graph_rag"
+      ]
+    },
+    "LP": {
+      "agentId": "r4r-laptop",
+      "role": "frontend-angular17",
+      "provider": "ollama-laptop",
+      "endpointEnv": "R4R_OPENCODE_LP_BASE_URL",
+      "defaultEndpoint": "http://192.168.1.9:11434/v1",
+      "model": "qwen3-30b-coder-28k-6k-t33:latest",
+      "modelLabel": "Qwen3 Coder 30B Laptop 28K/6K t33",
+      "contextTokens": 28672,
+      "outputTokens": 6144,
+      "temperature": 0.33,
+      "worker": "opencode",
+      "plan": ".opencode/task-plan.frontend.json",
+      "progress": ".opencode/progress.frontend.json",
+      "memory": ".opencode/memory.frontend.md",
+      "controlDir": "runtime/control/LP",
+      "allowedPaths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "peerPaths": [
+        "pom.xml",
+        "src/**",
+        "knowledge/**",
+        "docker-postgres/**",
+        "docs/backend/**"
+      ],
+      "mcp": [
+        "codegraph",
+        "code_graph_rag",
+        "playwright"
+      ]
+    }
+  }
+}

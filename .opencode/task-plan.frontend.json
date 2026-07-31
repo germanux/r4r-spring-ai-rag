@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "tasks": [
+    {
+      "id": "task-fe-01-angular17-bootstrap",
+      "command": ".opencode/commands/task-fe-01-angular17-bootstrap.md",
+      "objective": "Create a strict Angular 17 standalone application under frontend/.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-01-angular17-bootstrap"
+      ],
+      "commit_message": "feat(frontend-01): bootstrap Angular 17 client"
+    },
+    {
+      "id": "task-fe-02-rag-client",
+      "command": ".opencode/commands/task-fe-02-rag-client.md",
+      "objective": "Implement typed Angular HTTP access to the backend cited RAG API.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-02-rag-client"
+      ],
+      "commit_message": "feat(frontend-02): add typed RAG API client"
+    },
+    {
+      "id": "task-fe-03-rag-ui",
+      "command": ".opencode/commands/task-fe-03-rag-ui.md",
+      "objective": "Build the Angular question, answer, abstention and citation experience.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-03-rag-ui"
+      ],
+      "commit_message": "feat(frontend-03): add cited RAG user interface"
+    },
+    {
+      "id": "task-fe-04-playwright",
+      "command": ".opencode/commands/task-fe-04-playwright.md",
+      "objective": "Verify the Angular RAG flow with deterministic Playwright tests.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-04-playwright"
+      ],
+      "commit_message": "test(frontend-04): add Playwright RAG coverage"
+    }
+  ],
+  "final_gate": [
+    "./scripts/frontend-task-gate.sh",
+    "all"
+  ]
+}
