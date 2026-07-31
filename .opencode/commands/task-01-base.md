@@ -1,14 +1,58 @@
-# Task 01 — Base
+# Task 01 — Java 21 Spring Boot baseline
 
-## Outcome
+## Ownership
 
-- Java 21 non-web Spring Boot application compiles/packages.
-- Recursive Markdown loading and heading-aware bounded chunking remain deterministic.
-- JDBC PostgreSQL, Flyway and Spring AI Ollama/PgVector dependencies remain.
-- Persistent `postgres-app` and disposable `postgres-test` work.
-- `PostgresBaselineIT` proves PostgreSQL 16, pgvector and Flyway.
+Owner: PC backend agent.
 
-Do not add product features, REST, frontend, Playwright, Testcontainers or handwritten
-Ollama HTTP clients.
+This task preserves the accepted backend baseline. It must not introduce new product
+features.
 
-Gate: `./scripts/task-gate.sh task-01-base`
+## Required outcome
+
+Verify that the existing Java 21 non-web Spring Boot application:
+
+1. Compiles successfully.
+2. Packages successfully.
+3. Starts with the expected Spring configuration.
+4. Preserves the existing PostgreSQL, Flyway and Spring AI configuration.
+5. Keeps all current deterministic unit and integration tests green.
+
+## Scope
+
+Allowed paths:
+
+- pom.xml
+- src/main/**
+- src/test/**
+- docker-postgres/**
+- .env.example
+- docs/backend/**
+
+Only repair defects required to restore the accepted baseline.
+
+## Forbidden work
+
+Do not add:
+
+- REST controllers;
+- HTTP endpoints;
+- Angular;
+- HTML, CSS or TypeScript;
+- Playwright;
+- new product features;
+- handwritten Ollama HTTP clients;
+- unrelated refactors.
+
+REST and frontend work belong to later dedicated tasks.
+
+## Gate
+
+Run exactly:
+
+`./scripts/task-gate.sh task-01-base`
+
+Completion requires:
+
+- gate exit code 0;
+- all existing tests green;
+- no unrelated product changes.
