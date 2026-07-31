@@ -3,6 +3,44 @@
   "default_agent": "r4r-pc",
   "share": "disabled",
   "snapshot": true,
+  "provider": {
+    "ollama-pc": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama PC - R4R",
+      "options": {
+        "baseURL": "http://127.0.0.1:11434/v1",
+        "timeout": 14400000,
+        "chunkTimeout": 600000
+      },
+      "models": {
+        "qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest": {
+          "name": "Qwen3-Coder-Next 80B PC 168K/8K",
+          "limit": {
+            "context": 172032,
+            "output": 8192
+          }
+        }
+      }
+    },
+    "ollama-laptop": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama Laptop - R4R",
+      "options": {
+        "baseURL": "http://192.168.1.9:11434/v1",
+        "timeout": 14400000,
+        "chunkTimeout": 600000
+      },
+      "models": {
+        "qwen3-30b-coder-28k-6k-t33:latest": {
+          "name": "Qwen3 Coder 30B Laptop 28K/6K t33",
+          "limit": {
+            "context": 28672,
+            "output": 6144
+          }
+        }
+      }
+    }
+  },
   "permission": {
     "codegraph_*": "deny",
     "code_graph_rag_*": "deny",
