@@ -20,6 +20,14 @@
             "context": 172032,
             "output": 8192
           }
+        },
+        "qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest": {
+          "name": "Qwen3-Coder-Next 80B PC 168K/8K",
+          "temperature": true,
+          "limit": {
+            "context": 172032,
+            "output": 8192
+          }
         }
       }
     },

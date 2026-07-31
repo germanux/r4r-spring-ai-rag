@@ -5,29 +5,21 @@
 /target/
 .idea/
 *.iml
-
 # Node
 /.opencode/node_modules/
-
 # Python
 /py-codex-agent/.venv/
 **/__pycache__/
 *.py[cod]
 .pytest_cache/
 # Python virtual environments and generated package metadata
-
-/py-codex-agent/.venv/
 *.egg-info/
-
 # Python caches and build output
 __pycache__/
-*.py[cod]
-.pytest_cache/
 .mypy_cache/
 .ruff_cache/
 build/
 dist/
-
 # Generated agent runtime
 /runtime/runs/*
 !/runtime/runs/.gitkeep
@@ -35,27 +27,20 @@ dist/
 !/runtime/locks/.gitkeep
 /runtime/control/*
 !/runtime/control/.gitkeep
-
 # PostgreSQL runtime data and local backups
 /docker-postgres/data/app/*
 !/docker-postgres/data/app/.gitkeep
 /docker-postgres/backups/*
 !/docker-postgres/backups/.gitkeep
-
 # Regenerable CodeGraph index
 /.codegraph/
-
 # OS/editor noise
 .DS_Store
 *~
 /docker-postgres/data/app/.gitkeep
 # PostgreSQL runtime data managed by Docker
 /docker-postgres/data/
-/docker-postgres/backups/*
-!/docker-postgres/backups/.gitkeep
-
 patches-applied/
-
 # R4R agent update artifacts
 /todos.zip
 /r4r-agent-update-v*.zip
@@ -66,13 +51,9 @@ patches-applied/
 /r4r-self-recovery/
 /install-r4r-agent-update-v*.sh
 /install-r4r-agent-hotfix-v*.sh
-__pycache__/
-*.py[cod]
-
 runtime/installer/
 runtime/
 /.opencode/progress.json
-
 # BEGIN R4R stable agent repair artifacts
 /r4r-*.zip
 /r4r-*.zip.sha256
@@ -84,3 +65,10 @@ runtime/
 /README.txt
 /payload/
 # END R4R stable agent repair artifacts
+.cgr-runtime/
+# Code-Graph-RAG generated state
+.cgr-parser-fingerprint
+.cgr-hash-cache.json
+.cgr-dir-mtimes.json
+# Local agent sessions
+.tmp/session_*.log
