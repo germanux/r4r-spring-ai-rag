@@ -1,25 +1,15 @@
 # Task 04 — Minimal cited RAG
 
-## Objective
+## Outcome
 
-Build a minimal non-web RAG service using Spring AI abstractions.
-
-## Required outcome
-
-- Retrieve relevant chunks from the vector store.
-- Build a compact prompt containing stable source identifiers.
-- Call the configured Ollama chat model through Spring AI.
-- Return an answer and the source identifiers used.
+- Retrieve relevant chunks through the Task 03 store.
+- Build a compact deterministic prompt with stable source identifiers.
+- Call the configured chat model through Spring AI.
+- Return answer plus used source identifiers.
 - Abstain when retrieval support is insufficient.
-- Keep deterministic prompt, citation and abstention logic unit-testable without a
-  live model.
-- Add focused test `CitedRagServiceTest`.
+- Unit-test prompt, citation and abstention logic without a live model.
+- Keep any live Ollama contract outside the default deterministic gate.
 
-## Restrictions
+No REST controller, frontend, Playwright or browser workflow in this task.
 
-No REST controller, Angular, Playwright or autonomous browser workflow. Isolate any
-live Ollama contract from the default deterministic test gate.
-
-## Gate
-
-`./scripts/task-gate.sh task-04-rag`
+Gate: `./scripts/task-gate.sh task-04-rag`

@@ -1,14 +1,22 @@
 # Codex planning contract
 
-Plan exactly one selected repository task in read-only mode. Inspect the current
-repository, `AGENTS.md`, the parent task, the selected task, current memory and the
-latest failing gate evidence. Do not edit files, run Git writes, select another task
-or broaden scope.
+Plan exactly one selected task in read-only mode. Before returning JSON, inspect:
 
-Return one JSON object conforming to `schemas/plan.schema.json`, with no prose before
-or after it.
+1. the active instruction bundle;
+2. the pre-edit local understanding report;
+3. the focused CodeGraph report when available;
+4. `evidence/diagnostics/gate-full.log` in full;
+5. `error-manifest.json` and every file copied under `diagnostics/files/`.
 
-- `READY`: the task can be implemented locally. Provide a short ordered list of
-  concrete instructions and the most relevant paths.
-- `BLOCKED`: an external prerequisite prevents implementation. State the exact
-  prerequisite; do not use BLOCKED for ordinary code failures.
+The compressed bundle is archival evidence; the expanded files are authoritative.
+Classify infrastructure failures separately from Java defects. A refused test database
+connection is not permission to edit Java.
+
+Return only one object matching `schemas/plan.schema.json`.
+
+- `READY`: provide a short ordered repair plan, precise focus paths and exact
+  verification commands. Correct only evidence-supported failures.
+- `BLOCKED`: use only for an external prerequisite that cannot be repaired locally.
+
+Do not edit, run Git writes, select another task or broaden scope. Do not truncate or
+ignore the complete Maven evidence merely because the local model received a summary.

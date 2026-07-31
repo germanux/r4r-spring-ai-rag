@@ -1,89 +1,82 @@
 # R4R repository agent rules
 
-## 1. Purpose
+## Purpose
 
-This repository builds a small, non-web Java 21 RAG application for Riansares 4R.
-The implementation must remain incremental, test-driven and recoverable. The
-machine-controlled task sequence is defined in `.opencode/task-plan.json`; the
-human-readable parent task is `.opencode/commands/task.md`.
+Build the Java 21 Riansares 4R RAG incrementally. The controller owns task
+selection, evidence, progress and commits. Codex plans/reviews read-only. OpenCode
+implements exactly one selected task.
 
-## 2. Mandatory read order
+## Read order
 
-Before editing, read only:
+Before any edit, read only:
 
 1. `AGENTS.md`;
 2. `.opencode/commands/task.md`;
 3. `.opencode/memory.md`;
-4. the exact task file selected by the controller;
-5. the Codex plan supplied in the current prompt.
+4. the selected task file;
+5. companions whose filename starts with the selected task stem;
+6. the current Codex instruction packet.
 
-Do not read every task, every document or historical runtime log by default.
+Do not read every task, historical run or knowledge document by default.
 
-## 3. Responsibilities
+## Mandatory execution order
 
-- The Python controller selects tasks, runs deterministic gates, invokes Codex,
-  validates scope, records evidence and creates accepted commits.
-- Codex plans and reviews in read-only mode. It does not edit the repository.
-- OpenCode implements one selected task. It does not select the next task.
-- Maven, Flyway, PostgreSQL and tests determine acceptance. Model prose does not.
+For every attempt:
 
-## 4. Product boundaries
+1. run the exact task gate;
+2. classify the failure and save the complete Maven output;
+3. package only implicated source/config files into the runtime error bundle;
+4. request a focused CodeGraph map when Java paths are implicated;
+5. produce a concise read-only local understanding report;
+6. let Codex inspect the complete log and packaged files;
+7. edit only after Codex returns a bounded plan;
+8. rerun the exact gate;
+9. produce post-edit understanding and obtain Codex review.
 
-- Keep the application non-web until a later explicit task changes that scope.
-- Do not add REST controllers, Angular, Playwright, Testcontainers or a second
-  orchestration framework.
-- Use Spring AI abstractions. Do not create handwritten HTTP clients for Ollama.
-- Prefer small cohesive classes and explicit contracts over speculative layers.
-- Do not add retries, supervisors, worktrees or background daemons unless the
-  active task explicitly requires them.
+An identical diagnostic may reuse a Codex plan during the configured cooldown.
+Changed diagnostics bypass the cooldown. CodeGraph is advisory unless explicitly
+configured as required; missing MCP evidence must not conceal compiler/test evidence.
 
-## 5. PostgreSQL and schema ownership
+## Product boundaries
 
-- PostgreSQL/pgvector runs only through `docker-postgres/compose.yml`.
-- The development database is persistent under `docker-postgres/data/app/`.
-- The integration-test database is disposable and uses tmpfs.
-- Flyway is the sole owner of application schema changes.
-- Container `init/` scripts must not duplicate application tables or migrations.
-- Never replace PostgreSQL evidence with H2, mocks or an in-memory substitute.
+- Keep the application non-web until an explicit task changes scope.
+- No REST, Angular, Playwright, Testcontainers or browser automation in Tasks 01–04.
+- Use Spring AI abstractions; no handwritten Ollama HTTP client.
+- Keep deterministic loading, chunking, identities and tests independent of live LLMs.
+- Do not add speculative layers, retries or background daemons to product code.
 
-## 6. Java and Spring rules
+## PostgreSQL and tests
 
-- Java release: 21.
-- Preserve the non-web Spring Boot startup mode.
-- Keep deterministic Markdown loading and chunking independent from live models.
-- Preserve UTF-8, bounded input sizes, stable identities and idempotent behavior.
-- Embedding dimensions, normalization and similarity policy must be explicit and
-  consistent between indexing and querying.
+- PostgreSQL/pgvector runs through `docker-postgres/compose.yml`.
+- `postgres-app` is persistent; `postgres-test` is disposable.
+- Flyway exclusively owns application schema.
+- Integration evidence must use real PostgreSQL/pgvector, never H2 or mocks.
+- Use `./scripts/task-gate.sh <task>`; direct `mvn install` does not start the test DB.
+- A refused connection to `127.0.0.1:55433` is infrastructure, not a Java defect.
 
-## 7. CodeGraph
+## Editing discipline
 
-CodeGraph is available for structural impact analysis. Use it when a change spans
-several symbols, callers or files. Do not use it as a ceremonial success gate and
-do not replace source inspection or tests with CodeGraph output.
+- Edit only task-allowed paths.
+- While compilation is red, repair one file/method at a time and compile after each
+  bounded change.
+- Do not replace a complete Java file when a method-level patch is sufficient.
+- Keep package, imports, type declaration, fields, constructors, annotations and
+  public signatures active.
+- Temporary quarantine is allowed only inside one broken method body and must be
+  removed before the official gate.
+- Do not disable tests/plugins, weaken assertions or alter the gate to obtain green.
 
-## 8. Shell and tool discipline
+## Tool and Git discipline
 
-- Run commands directly; do not wrap them in `bash -lc`, `tee`, `tail`, pipelines
-  or synthetic `echo success` suffixes unless the task explicitly needs that.
-- Do not use `sudo`, package managers, web search or external directories from
-  OpenCode.
-- Do not edit task definitions, gate scripts, controller code or agent policy
-  while implementing a product task.
-- Do not run Git write commands from OpenCode: no add, commit, reset, checkout,
-  clean, branch, worktree, merge, rebase, tag or push.
+- Run commands directly; no `bash -lc`, `tee`, synthetic success suffixes or hidden
+  log redirection from OpenCode.
+- No `sudo`, package managers, web search or external directories from OpenCode.
+- No Git writes from OpenCode or Codex: no add, commit, reset, checkout, branch,
+  worktree, merge, rebase, tag, clean or push.
+- Runtime evidence belongs only under `runtime/runs/` and `runtime/control/`.
 
-## 9. Scope and evidence
+## Completion
 
-- Edit only paths allowed by the selected task.
-- Run the exact task gate before claiming completion.
-- Current command output is evidence; stale logs are not.
-- Report the changed paths, exact gate result and first remaining unproven
-  condition.
-- All generated logs, decisions and evidence belong under
-  `runtime/runs/<timestamp>/`; never scatter logs through the repository.
-
-## 10. Git and completion
-
-OpenCode must leave Git writes to the controller. After Codex returns `ACCEPT` and
-the task gate is green, the controller updates progress and memory, then creates a
-controlled commit when `R4R_AUTO_COMMIT=true`. Pushing is always manual.
+A task is complete only when its exact gate is green and Codex returns `ACCEPT`.
+The controller then updates progress/memory and may create a local commit. Pushes are
+manual. Report exact changed paths, gate totals and the first unproven condition.

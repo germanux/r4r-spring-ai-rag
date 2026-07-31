@@ -78,4 +78,3 @@ printf 'R4R notification: %s — %s ting(s) at %s\n' \
   "$MESSAGE" \
   "$COUNT" \
   "$(date --iso-8601=seconds)"
-  
