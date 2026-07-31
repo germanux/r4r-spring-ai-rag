@@ -68,3 +68,6 @@ patches-applied/
 /install-r4r-agent-hotfix-v*.sh
 __pycache__/
 *.py[cod]
+
+runtime/installer/
+runtime/

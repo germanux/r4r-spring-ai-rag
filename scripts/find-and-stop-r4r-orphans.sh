@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-REPO="${R4R_REPO:-/home/german/Desarrollo/r4r-spring-ai-rag.git}"
+SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="${R4R_REPO:-$SCRIPT_ROOT}"
+REPO="$(realpath "$REPO")"
 MODE="${1:---all}"
 SELF_PID="$$"
 
