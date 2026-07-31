@@ -492,6 +492,38 @@ class AutomaticRunner:
         )
         return any(marker in text for marker in markers)
 
+    def _manual_commit_paths(self, task: Task) -> tuple[str, ...]:
+        # Return only dirty product paths owned by the selected task.
+        return tuple(
+            path for path in git_changed_paths(self.repo)
+            if not is_controller_runtime_path(path)
+            and not is_lock_auto_advance_path(path)
+            and not path_is_allowed(path, getattr(self, "peer_paths", ()))
+            and path_is_allowed(path, task.allowed_paths)
+        )
+
+    @staticmethod
+    def _manual_commit_guidance(
+        task: Task, paths: Sequence[str],
+    ) -> str:
+        # Build safe, copyable manual Git commands without executing them.
+        unique_paths = tuple(dict.fromkeys(paths))
+        lines = [
+            f"Suggested commit message: {task.commit_message}",
+            "Changed product paths:",
+        ]
+        lines.extend(f"  - {path}" for path in unique_paths)
+        lines.append("Suggested commands:")
+        if unique_paths:
+            quoted_paths = " ".join(shlex.quote(path) for path in unique_paths)
+            lines.append(f"  git add -- {quoted_paths}")
+        else:
+            lines.append("  # No task-owned product path is currently dirty.")
+        lines.append(
+            f"  git commit -m {shlex.quote(task.commit_message)}"
+        )
+        return "\n".join(lines)
+
     def _can_bootstrap(self, dirty: Sequence[str]) -> bool:
         return bool(self.bootstrap_commit) and all(
             item["status"] == "PENDING" for item in self.progress["tasks"]
@@ -508,7 +540,18 @@ class AutomaticRunner:
         self._write_progress(None)
         self._write_memory()
         if not self.auto_commit:
-            return self._finish("BOOTSTRAP_READY_COMMIT_REQUIRED", 0, {"task": task.id})
+            manual_paths = self._manual_commit_paths(task)
+            guidance = self._manual_commit_guidance(task, manual_paths)
+            print(f"\n[r4r] manual commit required\n{guidance}", flush=True)
+            return self._finish(
+                "BOOTSTRAP_READY_COMMIT_REQUIRED",
+                0,
+                {
+                    "task": task.id,
+                    "suggested_commit_message": task.commit_message,
+                    "commit_paths": manual_paths,
+                },
+            )
         if self._commit_if_needed(
                 task.commit_message,
                 (*task.allowed_paths, str(self.progress_path.relative_to(self.repo)), str(self.memory_path.relative_to(self.repo))),
@@ -534,10 +577,51 @@ class AutomaticRunner:
         if not product_dirty:
             return
         if task is None:
-            raise RuntimeError(
-                "Completed plan has uncommitted product paths: "
-                f"{list(product_dirty)}"
+            # AUTO_COMMIT_COMPLETED_PLAN_RECOVERY_V1
+            if not self.auto_commit:
+                raise RuntimeError(
+                    "Completed plan has uncommitted product paths: "
+                    f"{list(product_dirty)}"
+                )
+
+            commit_task = next(
+                (
+                    candidate
+                    for candidate in reversed(self.plan.tasks)
+                    if all(
+                        path_is_allowed(path, candidate.allowed_paths)
+                        for path in product_dirty
+                    )
+                ),
+                None,
             )
+            if commit_task is None:
+                raise RuntimeError(
+                    "Completed plan has dirty paths that do not belong entirely "
+                    f"to one accepted task: {list(product_dirty)}"
+                )
+
+            committed_head = self._commit_if_needed(
+                commit_task.commit_message,
+                (
+                    *commit_task.allowed_paths,
+                    str(self.progress_path.relative_to(self.repo)),
+                    str(self.memory_path.relative_to(self.repo)),
+                ),
+            )
+            if committed_head is None:
+                raise RuntimeError(
+                    "Automatic recovery commit failed for accepted task "
+                    f"{commit_task.id}: {list(product_dirty)}"
+                )
+
+            print(
+                "[r4r] recovered accepted task with automatic commit: "
+                f"{commit_task.id} -> {committed_head}",
+                flush=True,
+            )
+            return
+
         disallowed = [
             path for path in product_dirty
             if not path_is_allowed(path, task.allowed_paths)
@@ -880,10 +964,22 @@ class AutomaticRunner:
                 self._write_progress(None)
                 self._write_memory()
                 if not self.auto_commit:
+                    manual_paths = self._manual_commit_paths(task)
+                    guidance = self._manual_commit_guidance(
+                        task, manual_paths,
+                    )
+                    print(
+                        f"\n[r4r] manual commit required\n{guidance}",
+                        flush=True,
+                    )
                     return self._finish(
                         "TASK_ACCEPTED_COMMIT_REQUIRED",
                         0,
-                        {"task": task.id},
+                        {
+                            "task": task.id,
+                            "suggested_commit_message": task.commit_message,
+                            "commit_paths": manual_paths,
+                        },
                     )
                 if self._commit_if_needed(
                     task.commit_message,
@@ -1978,12 +2074,24 @@ next instruction packet.
 
         add = run_command(("git", "add", "-A", "--", *selected), self.repo)
         if add.exit_code != 0:
+            print(
+                "[r4r] git add failed\n"
+                + add.stdout + add.stderr,
+                file=sys.stderr,
+                flush=True,
+            )
             return None
         check = run_command(
             ("git", "diff", "--cached", "--check", "--", *selected),
             self.repo,
         )
         if check.exit_code != 0:
+            print(
+                "[r4r] git diff --cached --check failed\n"
+                + check.stdout + check.stderr,
+                file=sys.stderr,
+                flush=True,
+            )
             return None
         # --only commits the selected task/progress paths and deliberately leaves
         # downloaded ZIPs, installers and unrelated staged work untouched.
@@ -1993,7 +2101,15 @@ next instruction packet.
             timeout_seconds=self.timeout,
             stream=True,
         )
-        return git_head(self.repo) if commit.exit_code == 0 else None
+        if commit.exit_code != 0:
+            print(
+                "[r4r] git commit failed\n"
+                + commit.stdout + commit.stderr,
+                file=sys.stderr,
+                flush=True,
+            )
+            return None
+        return git_head(self.repo)
 
     def _task_by_id(self, task_id: str) -> Task:
         for task in self.plan.tasks:

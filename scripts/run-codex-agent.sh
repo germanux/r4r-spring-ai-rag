@@ -117,8 +117,8 @@ export R4R_OPENCODE_AGENT="$agent"
 export R4R_PLAN_DISPLAY="$plan"
 export R4R_MEMORY_PATH="$memory"
 export R4R_PEER_PATHS_JSON="$peer_paths_json"
-export R4R_AUTO_COMMIT=false
-export R4R_BOOTSTRAP_COMMIT=false
+export R4R_AUTO_COMMIT="${R4R_AUTO_COMMIT:-true}"
+export R4R_BOOTSTRAP_COMMIT="${R4R_BOOTSTRAP_COMMIT:-true}"
 export R4R_MAX_ATTEMPTS_PER_TASK="${R4R_MAX_ATTEMPTS_PER_TASK:-0}"
 export R4R_MAX_NO_PROGRESS_CYCLES="${R4R_MAX_NO_PROGRESS_CYCLES:-4}"
 export R4R_MAX_TRANSIENT_FAILURES="${R4R_MAX_TRANSIENT_FAILURES:-8}"
@@ -257,8 +257,9 @@ PYTHON="$ROOT/py-codex-agent/.venv/bin/python"
 export R4R_CODEGRAPH_POLICY="${R4R_CODEGRAPH_POLICY:-advisory}"
 export R4R_REQUIRE_CODEGRAPH="${R4R_REQUIRE_CODEGRAPH:-true}"
 
-printf '[r4r] worker=%s agent=%s endpoint=%s model=%s plan=%s auto_commit=false\n' \
-  "$DEST" "$agent" "$base_url" "$model" "$plan"
+printf '[r4r] worker=%s agent=%s endpoint=%s model=%s plan=%s auto_commit=%s bootstrap_commit=%s\n' \
+  "$DEST" "$agent" "$base_url" "$model" "$plan" \
+  "$R4R_AUTO_COMMIT" "$R4R_BOOTSTRAP_COMMIT"
 
 exec "$PYTHON" \
   -m r4r_codex_agent.cli \
