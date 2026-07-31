@@ -50,3 +50,10 @@ endpoints belong in `.env.r4r.local`, never in the application `.env`.
 - Frontend tests and Playwright must not require a live LLM.
 - Flyway owns the backend schema.
 - A task completes only with its exact gate green and Codex `ACCEPT`.
+  - Never run find, rg, grep or glob recursively through:
+    frontend/node_modules/**
+    frontend/dist/**
+    frontend/.angular/**
+    node_modules/**
+    runtime/**
+    .r4r/**
