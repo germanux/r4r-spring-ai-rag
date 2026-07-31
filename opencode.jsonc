@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "default_agent": "r4r-pc",
+  "default_agent": "r4r-laptop",
   "share": "disabled",
   "snapshot": true,
   "provider": {
