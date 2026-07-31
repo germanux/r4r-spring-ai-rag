@@ -44,95 +44,95 @@ public class PgVectorKnowledgeStore {
     }
 
     /**
-      * Replaces every represented source with the supplied current chunks.
-      *
-      * <p>The delete and batched insert execute in one Spring transaction. Chunks
-      * from sources not represented in the argument are preserved.</p>
-      */
-     @Transactional
-     public void index(List<MarkdownChunk> chunks) {
-         if (chunks == null) {
-             throw new IllegalArgumentException("chunks must not be null");
-         }
+     * Replaces every source represented by the supplied chunks.
+     * The complete request is validated before the first database mutation.
+     */
+    @Transactional
+    public void index(List<MarkdownChunk> chunks) {
+        if (chunks == null) {
+            throw new IllegalArgumentException("chunks must not be null");
+        }
 
-         Map<String, List<MarkdownChunk>> bySource = new LinkedHashMap<>();
-         for (MarkdownChunk chunk : chunks) {
-             validateChunk(chunk);
-             bySource.computeIfAbsent(chunk.source(), ignored -> new ArrayList<>())
-                     .add(chunk);
-         }
+        Map<String, List<MarkdownChunk>> chunksBySource = new LinkedHashMap<>();
+        for (MarkdownChunk chunk : chunks) {
+            validateChunk(chunk);
+            chunksBySource
+                    .computeIfAbsent(chunk.source(), ignored -> new ArrayList<>())
+                    .add(chunk);
+        }
 
-         // Prevalidate all sources and build immutable Document batches
-         Map<String, List<Document>> sourceToDocuments = new LinkedHashMap<>();
-         Set<String> seenIdsPerSource = new HashSet<>();
+        // Prevalidation: build all Documents and check for duplicates across ALL sources before any mutation
+        Map<String, List<Document>> preparedBatches = new LinkedHashMap<>();
+        Set<String> globalIds = new HashSet<>();
 
-         for (Map.Entry<String, List<MarkdownChunk>> entry : bySource.entrySet()) {
-             String source = entry.getKey();
-             List<MarkdownChunk> chunkList = entry.getValue();
-             Set<String> ids = new HashSet<>();
-             List<Document> documents = new ArrayList<>(chunkList.size());
+        for (Map.Entry<String, List<MarkdownChunk>> entry
+                : chunksBySource.entrySet()) {
 
-             for (MarkdownChunk chunk : chunkList) {
-                 Document document = toDocument(chunk);
-                 if (!ids.add(document.getId())) {
-                     throw new IllegalArgumentException(
-                             "Duplicate logical chunk identity for source "
-                                     + source
-                                     + ": ordinal "
-                                     + chunk.index());
-                 }
-                 documents.add(document);
-             }
+            String source = entry.getKey();
+            List<MarkdownChunk> sourceChunks = entry.getValue();
 
-             sourceToDocuments.put(source, List.copyOf(documents));
-             seenIdsPerSource.addAll(ids);
-         }
+            // Validate and prepare documents for this source
+            Set<String> sourceIds = new HashSet<>();
+            List<Document> sourceDocuments = new ArrayList<>(sourceChunks.size());
 
-         // Now delete and insert - all prevalidation passed
-         for (Map.Entry<String, List<MarkdownChunk>> entry : bySource.entrySet()) {
-             String source = entry.getKey();
-             List<Document> documents = sourceToDocuments.get(source);
-             replaceSourceInternal(source, documents);
-         }
-     }
+            for (MarkdownChunk chunk : sourceChunks) {
+                Document document = toDocument(chunk);
+                String docId = document.getId();
+                
+                // Check for duplicate logical IDs within the same source
+                if (!sourceIds.add(docId)) {
+                    throw new IllegalArgumentException(
+                            "Duplicate logical chunk identity for source "
+                                    + source
+                                    + ": ordinal "
+                                    + chunk.index());
+                }
+                
+                // Check for duplicate logical IDs across all sources in this request
+                if (!globalIds.add(docId)) {
+                    throw new IllegalArgumentException(
+                            "Duplicate logical chunk identity across sources: "
+                                    + docId);
+                }
+                
+                sourceDocuments.add(document);
+            }
+
+            preparedBatches.put(source, List.copyOf(sourceDocuments));
+        }
+
+        // All validation passed - now perform mutations
+        for (Map.Entry<String, List<Document>> entry
+                : preparedBatches.entrySet()) {
+
+            replacePreparedSource(entry.getKey(), entry.getValue());
+        }
+    }
 
     /**
-      * Replaces one source explicitly. An empty chunk list removes every vector
-      * currently stored for that source.
-      */
-     @Transactional
-     public void replaceSource(
-             String source,
-             List<MarkdownChunk> chunks) {
+     * Replaces one source explicitly. An empty list removes that source.
+     */
+    @Transactional
+    public void replaceSource(
+            String source,
+            List<MarkdownChunk> chunks) {
 
-         requireNonBlank(source, "source");
-         if (chunks == null) {
-             throw new IllegalArgumentException("chunks must not be null");
-         }
+        requireNonBlank(source, "source");
+        if (chunks == null) {
+            throw new IllegalArgumentException("chunks must not be null");
+        }
 
-         // Prevalidate all chunks and build immutable Document batch
-         Set<String> ids = new HashSet<>();
-         List<Document> documents = new ArrayList<>(chunks.size());
+        for (MarkdownChunk chunk : chunks) {
+            validateChunk(chunk);
+            if (!source.equals(chunk.source())) {
+                throw new IllegalArgumentException(
+                        "Every chunk must belong to source " + source);
+            }
+        }
 
-         for (MarkdownChunk chunk : chunks) {
-             validateChunk(chunk);
-             if (!source.equals(chunk.source())) {
-                 throw new IllegalArgumentException(
-                         "Every chunk must belong to source " + source);
-             }
-             Document document = toDocument(chunk);
-             if (!ids.add(document.getId())) {
-                 throw new IllegalArgumentException(
-                         "Duplicate logical chunk identity for source "
-                                 + source
-                                 + ": ordinal "
-                                 + chunk.index());
-             }
-             documents.add(document);
-         }
-
-         replaceSourceInternal(source, List.copyOf(documents));
-     }
+        List<Document> documents = prepareDocuments(source, chunks);
+        replacePreparedSource(source, documents);
+    }
 
     public List<MarkdownChunk> search(
             String query,
@@ -143,12 +143,12 @@ public class PgVectorKnowledgeStore {
         if (topK <= 0) {
             throw new IllegalArgumentException("topK must be greater than zero");
         }
-        if (Double.isNaN(minScore)
+        if (!Double.isFinite(minScore)
                 || minScore < 0.0
                 || minScore > 1.0) {
 
             throw new IllegalArgumentException(
-                    "minScore must be between 0.0 and 1.0");
+                    "minScore must be finite and between 0.0 and 1.0");
         }
 
         SearchRequest request = SearchRequest.builder()
@@ -162,27 +162,46 @@ public class PgVectorKnowledgeStore {
                 .toList();
     }
 
-    private void replaceSourceInternal(
+    private List<Document> prepareDocuments(
+            String source,
+            List<MarkdownChunk> chunks) {
+
+        Set<String> ids = new HashSet<>();
+        List<Document> documents = new ArrayList<>(chunks.size());
+
+        for (MarkdownChunk chunk : chunks) {
+            Document document = toDocument(chunk);
+            if (!ids.add(document.getId())) {
+                throw new IllegalArgumentException(
+                        "Duplicate logical chunk identity for source "
+                                + source
+                                + ": ordinal "
+                                + chunk.index());
+            }
+            documents.add(document);
+        }
+
+        return List.copyOf(documents);
+    }
+
+    private void replacePreparedSource(
             String source,
             List<Document> documents) {
 
         jdbcTemplate.update(DELETE_SOURCE_SQL, source);
-
         if (!documents.isEmpty()) {
-            vectorStore.add(List.copyOf(documents));
+            vectorStore.add(documents);
         }
     }
 
     private Document toDocument(MarkdownChunk chunk) {
-        String id = stableId(chunk).toString();
-
         Map<String, Object> metadata = Map.of(
                 SOURCE_METADATA, chunk.source(),
                 HEADING_PATH_METADATA, chunk.headingPath(),
                 ORDINAL_METADATA, chunk.index());
 
         return Document.builder()
-                .id(id)
+                .id(stableId(chunk).toString())
                 .text(chunk.content())
                 .metadata(metadata)
                 .build();
@@ -267,11 +286,10 @@ public class PgVectorKnowledgeStore {
         }
 
         int ordinal = number.intValue();
-        if (ordinal < 0
-                || number.doubleValue() != (double) ordinal) {
-
+        if (ordinal < 0 || number.doubleValue() != (double) ordinal) {
             throw new IllegalStateException(
-                    "Vector metadata '" + key
+                    "Vector metadata '"
+                            + key
                             + "' must be a non-negative integer");
         }
         return ordinal;

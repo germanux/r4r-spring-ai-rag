@@ -1,7 +1,7 @@
 package com.riansares.r4r.vector;
 
+import com.riansares.r4r.chunking.MarkdownChunk;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +11,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -23,8 +22,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Import(PgVectorTestConfiguration.class)
 class PgVectorKnowledgeStoreTransactionalRollbackIT {
 
-    private static final String TRIGGER_NAME = "vector_store_insert_fail_trigger";
-    private static final String FUNCTION_NAME = "vector_store_insert_fail_function";
+    private static final String TRIGGER_NAME =
+            "fail_vector_store_insert_trigger";
+    private static final String FUNCTION_NAME =
+            "fail_vector_store_insert";
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -32,118 +33,107 @@ class PgVectorKnowledgeStoreTransactionalRollbackIT {
     @Autowired
     private PgVectorKnowledgeStore store;
 
-    @BeforeAll
-    static void cleanupStaleTriggerAndFunction() {
-        // Clean up any stale trigger/function from previous runs
-        try (var conn = javax.sql.DataSource.class.cast(
-                org.springframework.beans.factory.BeanFactoryUtils
-                        .lookup(org.springframework.context.ApplicationContext.class)
-                        .getBean(javax.sql.DataSource.class)).getConnection()) {
-            var stmt = conn.createStatement();
-            stmt.execute("DROP TRIGGER IF EXISTS " + TRIGGER_NAME + " ON vector_store");
-            stmt.execute("DROP FUNCTION IF EXISTS " + FUNCTION_NAME + "() CASCADE");
-        } catch (Exception ignored) {
-            // Ignore cleanup errors
-        }
-    }
-
     @BeforeEach
-    void clearVectorStore() {
+    void prepareDatabase() {
+        dropFailureObjects();
         jdbcTemplate.execute("TRUNCATE TABLE vector_store");
+        
+        // Seed through the real store
+        store.replaceSource("rollback-source.md", List.of(
+                new MarkdownChunk(
+                        "rollback-source.md",
+                        List.of("Section"),
+                        0,
+                        "Original content zero"),
+                new MarkdownChunk(
+                        "rollback-source.md",
+                        List.of("Section"),
+                        1,
+                        "Original content one")));
     }
 
     @AfterEach
-    void cleanupTriggerAndFunction() {
-        try {
-            jdbcTemplate.execute("DROP TRIGGER IF EXISTS " + TRIGGER_NAME + " ON vector_store");
-            jdbcTemplate.execute("DROP FUNCTION IF EXISTS " + FUNCTION_NAME + "() CASCADE");
-        } catch (Exception ignored) {
-            // Ignore cleanup errors
-        }
+    void cleanupDatabase() {
+        dropFailureObjects();
+        jdbcTemplate.execute("TRUNCATE TABLE vector_store");
     }
 
     @Test
-    void indexOperationRollsBackOnInsertFailure() {
-        String source = "rollback-source.md";
+    void replaceSourceRollsBackDeleteWhenRealInsertFails() {
+        // Snapshot every relevant row as immutable records before failure injection
+        List<VectorRowSnapshot> before = snapshot("rollback-source.md");
 
-        // Seed with valid chunks through the real store
-        store.index(List.of(
-                new MarkdownChunk(source, List.of("Section"), 0, "Original content")));
+        installFailureTrigger();
 
-        // Snapshot every relevant row before operation
-        List<Map<String, Object>> beforeSnapshot = jdbcTemplate.queryForList("""
-                SELECT id::text AS id,
-                       content,
-                       metadata::text AS metadata,
-                       embedding::text AS embedding
-                FROM vector_store
-                WHERE metadata->>'source' = ?
-                ORDER BY ordinal(metadata), id
-                """, source);
+        try {
+            assertThatThrownBy(() -> store.replaceSource("rollback-source.md", List.of(
+                    new MarkdownChunk(
+                            "rollback-source.md",
+                            List.of("Section"),
+                            0,
+                            "Replacement content"))))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasStackTraceContaining(
+                            "forced vector store insert failure");
+        } finally {
+            dropFailureObjects();
+        }
 
-        // Install BEFORE INSERT trigger that raises failure
+        // Assert the exact after snapshot equals the before snapshot
+        List<VectorRowSnapshot> after = snapshot("rollback-source.md");
+        assertThat(after).isEqualTo(before);
+    }
+
+    private void installFailureTrigger() {
         jdbcTemplate.execute("""
-                CREATE OR REPLACE FUNCTION """ + FUNCTION_NAME + """()
-                RETURNS TRIGGER
+                CREATE OR REPLACE FUNCTION fail_vector_store_insert()
+                RETURNS trigger
                 LANGUAGE plpgsql
-                AS $func$
+                AS $$
                 BEGIN
                     RAISE EXCEPTION 'forced vector store insert failure';
                 END;
-                $func$""");
+                $$
+                """);
 
         jdbcTemplate.execute("""
-                CREATE CONSTRAINT TRIGGER """ + TRIGGER_NAME + """
-                AFTER INSERT ON vector_store
-                DEFERRABLE INITIALLY DEFERRED
+                CREATE TRIGGER fail_vector_store_insert_trigger
+                BEFORE INSERT ON vector_store
                 FOR EACH ROW
-                EXECUTE FUNCTION """ + FUNCTION_NAME + """()""");
-
-        // Verify trigger is installed
-        String triggerExists = jdbcTemplate.queryForObject("""
-                SELECT tgname FROM pg_trigger
-                WHERE tgname = ? AND tgrelid = 'vector_store'::regclass
-                """, String.class, TRIGGER_NAME);
-        assertThat(triggerExists).isNotNull();
-
-        assertThatThrownBy(() -> {
-            List<MarkdownChunk> chunks = List.of(
-                    new MarkdownChunk(source, List.of("Section"), 1, "New content to index"));
-            store.index(chunks);
-        }).isInstanceOf(RuntimeException.class)
-          .hasMessageContaining("forced vector store insert failure");
-
-        // Snapshot every relevant row after operation
-        List<Map<String, Object>> afterSnapshot = jdbcTemplate.queryForList("""
-                SELECT id::text AS id,
-                       content,
-                       metadata::text AS metadata,
-                       embedding::text AS embedding
-                FROM vector_store
-                WHERE metadata->>'source' = ?
-                ORDER BY ordinal(metadata), id
-                """, source);
-
-        // Assert exact snapshot equality - rollback succeeded
-        assertThat(afterSnapshot).isEqualTo(beforeSnapshot);
+                EXECUTE FUNCTION fail_vector_store_insert()
+                """);
     }
 
-    private static int ordinal(Map<String, Object> row) {
-        Object value = row.get("metadata");
-        if (value instanceof String json) {
-            // Simple JSON parsing for our known structure
-            int ordinalIdx = json.indexOf("\"ordinal\":");
-            if (ordinalIdx >= 0) {
-                int start = ordinalIdx + "\"ordinal\":".length();
-                int end = start;
-                while (end < json.length() && Character.isDigit(json.charAt(end))) {
-                    end++;
-                }
-                if (end > start) {
-                    return Integer.parseInt(json.substring(start, end));
-                }
-            }
-        }
-        return -1;
+    private void dropFailureObjects() {
+        jdbcTemplate.execute("""
+                DROP TRIGGER IF EXISTS fail_vector_store_insert_trigger
+                ON vector_store
+                """);
+        jdbcTemplate.execute("""
+                DROP FUNCTION IF EXISTS fail_vector_store_insert()
+                """);
+    }
+
+    private List<VectorRowSnapshot> snapshot(String source) {
+        return jdbcTemplate.query("""
+                SELECT id::text,
+                       content,
+                       metadata::text,
+                       embedding::text
+                FROM vector_store
+                WHERE metadata->>'source' = ?
+                ORDER BY (metadata->>'ordinal')::int, id
+                """, (resultSet, rowNumber) -> new VectorRowSnapshot(
+                resultSet.getString(1),
+                resultSet.getString(2),
+                resultSet.getString(3),
+                resultSet.getString(4)), source);
+    }
+
+    private record VectorRowSnapshot(
+            String id,
+            String content,
+            String metadata,
+            String embedding) {
     }
 }

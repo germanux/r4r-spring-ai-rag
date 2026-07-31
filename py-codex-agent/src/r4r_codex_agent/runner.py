@@ -14,9 +14,11 @@ import signal
 import subprocess
 import sys
 import threading
+import time
 from typing import Any, Sequence
 
 from .contracts import Task, TaskPlan, load_progress, task_progress, validate_structured_result
+from .diagnostics import GateDiagnostics, build_gate_diagnostics
 
 
 @dataclass(frozen=True)
@@ -145,16 +147,23 @@ def git_product_changed_paths(repo: Path) -> tuple[str, ...]:
 
 
 LOCK_AUTO_ADVANCE_PATHS = (
+    "AGENTS.md",
     "scripts/run-codex-agent.sh",
     "scripts/recover-dirty-worktree.sh",
     "scripts/repair-active-task-lock.sh",
     "scripts/export-evaluation.sh",
     "scripts/notify-success.sh",
     "scripts/find-and-stop-r4r-orphans.sh",
+    "scripts/mvn-with-test-db.sh",
+    "scripts/universfield-error-notification-03-125761.mp3",
     "py-codex-agent/**",
     ".opencode/commands/*",
     ".opencode/agents/**",
     ".opencode/memory.md",
+    ".opencode/task-plan.json",
+    ".env.example",
+    "opencode.jsonc",
+    "codegraph.json",
     ".gitignore",
 )
 
@@ -292,8 +301,16 @@ class AutomaticRunner:
         self.require_codegraph = (
             os.environ.get("R4R_REQUIRE_CODEGRAPH", "true").lower() == "true"
         )
+        self.codegraph_policy = os.environ.get(
+            "R4R_CODEGRAPH_POLICY", "advisory"
+        ).strip().lower()
+        if self.codegraph_policy not in {"off", "advisory", "required"}:
+            raise ValueError("R4R_CODEGRAPH_POLICY must be off, advisory or required")
         self.codegraph_retries = int(
             os.environ.get("R4R_CODEGRAPH_RETRIES", "1")
+        )
+        self.codex_min_interval_seconds = int(
+            os.environ.get("R4R_CODEX_MIN_INTERVAL_SECONDS", "3600")
         )
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         self.run_id = stamp
@@ -307,12 +324,13 @@ class AutomaticRunner:
         self.codex_extra_instructions_path = (
             self.control_dir / "codex-qwen3-extra-instructions.md"
         )
+        self.codex_plan_cache_path = self.control_dir / "codex-plan-cache.json"
         self.verified_green: set[str] = set()
 
     def execute(self) -> int:
         self._require_binary(self.opencode_bin)
         self._require_binary(self.codex_bin)
-        if self.require_codegraph:
+        if self.require_codegraph and self.codegraph_policy != "off":
             self._require_binary(self.codegraph_bin)
         dirty = git_changed_paths(self.repo)
         if self.lock_path.exists():
@@ -419,14 +437,26 @@ class AutomaticRunner:
             )
 
         committed_paths = git_paths_between(self.repo, base_commit, current_head)
+        task = self._task_by_id(str(lock.get("task_id")))
         unsafe_paths = [
             path for path in committed_paths
             if not is_lock_auto_advance_path(path)
+            and not path_is_allowed(path, task.allowed_paths)
         ]
         if unsafe_paths:
             raise RuntimeError(
-                "Active-task lock cannot advance across non-maintenance commits: "
+                "Active-task lock cannot advance across out-of-scope commits: "
                 f"{unsafe_paths}"
+            )
+        task_paths = [
+            path for path in committed_paths
+            if not is_lock_auto_advance_path(path)
+        ]
+        if task_paths:
+            print(
+                "[r4r] active-task lock adopted committed in-scope task paths: "
+                + ", ".join(task_paths),
+                flush=True,
             )
 
         lock["base_commit"] = current_head
@@ -468,22 +498,6 @@ class AutomaticRunner:
         self._write_lock(task)
         initial_gate = self._run_gate("initial-gate", task.gate, task_root, stream=True)
         next_action = self._resume_action_from_codex_extra(task)
-        if initial_gate.exit_code != 0:
-            try:
-                plan = self._codex_plan(task, initial_gate, task_root)
-            except RuntimeError as exception:
-                return self._finish(
-                    "CODEX_PLAN_RETRY_EXHAUSTED",
-                    75,
-                    {"task": task.id, "error": str(exception)},
-                )
-            if plan["decision"] == "BLOCKED":
-                self._mark_blocked(task)
-                return self._finish("CODEX_PLAN_BLOCKED", 68, {"task": task.id, "plan": plan})
-            next_action = "\n".join(
-                f"{index + 1}. {value}"
-                for index, value in enumerate(plan["instructions"])
-            )
 
         attempt = 1
         transient_failures = 0
@@ -499,24 +513,53 @@ class AutomaticRunner:
                 else self._run_gate("pre-edit-gate", task.gate, attempt_dir)
             )
             changed_this_attempt = False
+            diagnostics = self._record_gate_diagnostics(current_gate, attempt_dir)
             codegraph_report = "CodeGraph reconnaissance is disabled."
-            if self.require_codegraph:
+            if self.require_codegraph and self.codegraph_policy != "off":
                 try:
                     codegraph_report = self._run_codegraph_reconnaissance(
                         task,
                         current_gate,
                         attempt_dir,
+                        diagnostics.source_paths,
                     )
                 except RuntimeError as exception:
-                    return self._finish(
-                        "CODEGRAPH_RECONNAISSANCE_FAILED",
-                        76,
-                        {
-                            "task": task.id,
-                            "attempt": attempt,
-                            "error": str(exception),
-                        },
+                    if self.codegraph_policy == "required":
+                        return self._finish(
+                            "CODEGRAPH_RECONNAISSANCE_FAILED",
+                            76,
+                            {
+                                "task": task.id,
+                                "attempt": attempt,
+                                "error": str(exception),
+                            },
+                        )
+                    codegraph_report = self._write_advisory_codegraph_failure(
+                        attempt_dir, str(exception)
                     )
+
+            self._run_pre_edit_understanding(
+                task, current_gate, attempt_dir, diagnostics, codegraph_report
+            )
+
+            if current_gate.exit_code != 0:
+                try:
+                    plan = self._codex_plan(task, current_gate, attempt_dir)
+                except RuntimeError as exception:
+                    return self._finish(
+                        "CODEX_PLAN_RETRY_EXHAUSTED",
+                        75,
+                        {"task": task.id, "attempt": attempt, "error": str(exception)},
+                    )
+                if plan["decision"] == "BLOCKED":
+                    self._mark_blocked(task)
+                    return self._finish(
+                        "CODEX_PLAN_BLOCKED", 68, {"task": task.id, "plan": plan}
+                    )
+                next_action = "\n".join(
+                    f"{index + 1}. {value}"
+                    for index, value in enumerate(plan["instructions"])
+                )
 
             if current_gate.exit_code != 0 or next_action:
                 prompt = self._opencode_prompt(
@@ -524,6 +567,7 @@ class AutomaticRunner:
                     current_gate,
                     next_action,
                     codegraph_report,
+                    diagnostics,
                 )
                 before_head = git_head(self.repo)
                 before_fingerprint = git_worktree_fingerprint(self.repo)
@@ -803,13 +847,250 @@ class AutomaticRunner:
             f"\n\nPrevious unresolved action:\n{previous_action or 'none'}"
         )
 
+    def _record_gate_diagnostics(
+        self, gate: CommandResult, directory: Path,
+    ) -> GateDiagnostics:
+        evidence = directory / "evidence"
+        evidence.mkdir(parents=True, exist_ok=True)
+        diagnostics = build_gate_diagnostics(
+            self.repo,
+            evidence,
+            gate.command,
+            gate.exit_code,
+            gate.stdout,
+            gate.stderr,
+        )
+        (evidence / "gate-diagnostics.json").write_text(
+            json.dumps(diagnostics.to_dict(), indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        print(
+            f"[r4r] gate diagnostics: {diagnostics.classification}; "
+            f"sources={len(diagnostics.source_paths)}; bundle={diagnostics.bundle_path}",
+            flush=True,
+        )
+        return diagnostics
+
+    def _diagnostic_fingerprint(self, directory: Path) -> str:
+        manifest = directory / "evidence" / "diagnostics" / "error-manifest.json"
+        if not manifest.exists():
+            return "missing-diagnostics"
+        value = json.loads(manifest.read_text(encoding="utf-8"))
+        return str(value.get("fingerprint") or "missing-fingerprint")
+
+    def _load_cached_codex_plan(
+        self, task_id: str, fingerprint: str,
+    ) -> dict[str, Any] | None:
+        if self.codex_min_interval_seconds <= 0 or not self.codex_plan_cache_path.exists():
+            return None
+        try:
+            value = json.loads(self.codex_plan_cache_path.read_text(encoding="utf-8"))
+            created = float(value.get("created_at_epoch", 0))
+            plan = value.get("plan")
+            if (
+                value.get("task_id") == task_id
+                and value.get("diagnostic_fingerprint") == fingerprint
+                and time.time() - created < self.codex_min_interval_seconds
+                and isinstance(plan, dict)
+            ):
+                return validate_structured_result(
+                    plan, task_id, {"READY", "BLOCKED"}
+                )
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            return None
+        return None
+
+    def _store_cached_codex_plan(
+        self, task_id: str, fingerprint: str, plan: dict[str, Any],
+    ) -> None:
+        self.control_dir.mkdir(parents=True, exist_ok=True)
+        temporary = self.codex_plan_cache_path.with_suffix(".json.tmp")
+        temporary.write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "task_id": task_id,
+                    "diagnostic_fingerprint": fingerprint,
+                    "created_at_epoch": time.time(),
+                    "minimum_interval_seconds": self.codex_min_interval_seconds,
+                    "plan": plan,
+                },
+                indent=2,
+                ensure_ascii=False,
+            ) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(self.codex_plan_cache_path)
+
+    def _write_codegraph_skipped(self, attempt_dir: Path, reason: str) -> str:
+        report = (
+            "# CodeGraph reconnaissance report\n\n"
+            "## Status\n\n"
+            f"Skipped: {reason}\n\n"
+            "## Scope\n\n"
+            "No repository-wide exploration was performed.\n"
+        )
+        evidence = attempt_dir / "evidence"
+        evidence.mkdir(parents=True, exist_ok=True)
+        (evidence / "codegraph-reconnaissance.md").write_text(
+            report, encoding="utf-8"
+        )
+        (evidence / "codegraph-tool-calls.json").write_text(
+            json.dumps({"required": False, "calls": [], "status": "skipped"}, indent=2)
+            + "\n",
+            encoding="utf-8",
+        )
+        return report
+
+    def _write_advisory_codegraph_failure(
+        self, attempt_dir: Path, error: str,
+    ) -> str:
+        report = (
+            "# CodeGraph reconnaissance report\n\n"
+            "## Status\n\n"
+            "Advisory CodeGraph mapping was unavailable. The workflow continues; "
+            "Codex and exact source inspection remain authoritative.\n\n"
+            "## Diagnostic\n\n"
+            f"{error}\n"
+        )
+        evidence = attempt_dir / "evidence"
+        evidence.mkdir(parents=True, exist_ok=True)
+        (evidence / "codegraph-reconnaissance.md").write_text(
+            report, encoding="utf-8"
+        )
+        (evidence / "codegraph-tool-calls.json").write_text(
+            json.dumps(
+                {"required": False, "calls": [], "status": "unavailable", "error": error},
+                indent=2,
+                ensure_ascii=False,
+            ) + "\n",
+            encoding="utf-8",
+        )
+        print(f"[r4r] CodeGraph advisory unavailable: {error}", file=sys.stderr)
+        return report
+
+    def _pre_edit_understanding_prompt(
+        self,
+        task: Task,
+        gate: CommandResult,
+        diagnostics: GateDiagnostics,
+        codegraph_report: str,
+    ) -> str:
+        source_list = "\n".join(
+            f"- {path}" for path in diagnostics.source_paths
+        ) or "- none"
+        return f"""This is a read-only pre-edit understanding pass for {task.id}.
+Do not edit files, do not run Git write commands and do not run Maven.
+
+Read only AGENTS.md, .opencode/commands/task.md, the selected task file, the
+current diagnostic summary and the focused CodeGraph report. Do not read the full
+Maven log; Codex will process that complete evidence.
+
+Task objective: {task.objective}
+Gate exit: {gate.exit_code}
+Diagnostic classification: {diagnostics.classification}
+Diagnostic summary: {diagnostics.summary}
+Implicated source paths:
+{source_list}
+
+Focused CodeGraph report:
+{codegraph_report}
+
+Return only concise Markdown with exactly these headings:
+# Pre-edit understanding report
+## Objective
+## Current blocker
+## Files I expect Codex to inspect
+## Minimal repair boundary
+## What I must not change
+## Question for Codex
+
+Do not propose code yet. Do not claim that an infrastructure outage is a Java bug.
+"""
+
+    def _run_pre_edit_understanding(
+        self,
+        task: Task,
+        gate: CommandResult,
+        attempt_dir: Path,
+        diagnostics: GateDiagnostics,
+        codegraph_report: str,
+    ) -> None:
+        before_head = git_head(self.repo)
+        before_fingerprint = git_worktree_fingerprint(self.repo)
+        result = self._run_logged(
+            "opencode-pre-edit-understanding",
+            (
+                self.opencode_bin,
+                "run",
+                "--dir",
+                str(self.repo),
+                "--agent",
+                self.opencode_agent,
+                "--format",
+                "json",
+                "--auto",
+                self._pre_edit_understanding_prompt(
+                    task, gate, diagnostics, codegraph_report
+                ),
+            ),
+            attempt_dir,
+            stream=True,
+        )
+        evidence = attempt_dir / "evidence"
+        evidence.mkdir(parents=True, exist_ok=True)
+        if result.exit_code != 0:
+            report = (
+                "# Pre-edit understanding report\n\n"
+                "The local worker failed to produce a read-only summary. Codex must "
+                "use the deterministic diagnostic bundle directly.\n"
+            )
+        else:
+            if git_head(self.repo) != before_head:
+                raise RuntimeError("Pre-edit understanding performed a forbidden Git write")
+            if git_worktree_fingerprint(self.repo) != before_fingerprint:
+                raise RuntimeError("Pre-edit understanding modified repository files")
+            report = extract_opencode_text(result.stdout).strip() or (
+                "# Pre-edit understanding report\n\n"
+                "No model-authored summary was produced.\n"
+            )
+        (evidence / "pre-edit-understanding.md").write_text(
+            report.rstrip() + "\n", encoding="utf-8"
+        )
+
     def _codex_plan(
         self,
         task: Task,
         gate: CommandResult,
         task_dir: Path,
     ) -> dict[str, Any]:
-        return self._run_codex_structured(
+        fingerprint = self._diagnostic_fingerprint(task_dir)
+        cached = self._load_cached_codex_plan(task.id, fingerprint)
+        if cached is not None:
+            decisions = task_dir / "decisions"
+            decisions.mkdir(parents=True, exist_ok=True)
+            (decisions / "codex-plan.json").write_text(
+                json.dumps(cached, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            (task_dir / "evidence" / "codex-plan-cache-reused.json").write_text(
+                json.dumps(
+                    {
+                        "task_id": task.id,
+                        "diagnostic_fingerprint": fingerprint,
+                        "minimum_interval_seconds": self.codex_min_interval_seconds,
+                    },
+                    indent=2,
+                ) + "\n",
+                encoding="utf-8",
+            )
+            print(
+                "[r4r] reusing Codex plan for unchanged diagnostics within the hourly cooldown",
+                flush=True,
+            )
+            return cached
+
+        plan = self._run_codex_structured(
             "plan",
             task,
             gate,
@@ -817,6 +1098,8 @@ class AutomaticRunner:
             self.repo / "py-codex-agent/schemas/plan.schema.json",
             {"READY", "BLOCKED"},
         )
+        self._store_cached_codex_plan(task.id, fingerprint, plan)
+        return plan
 
     def _codex_review(
         self,
@@ -970,10 +1253,18 @@ class AutomaticRunner:
         local_understanding_path = (
             evidence_dir / "evidence" / "local-understanding.md"
         )
+        pre_edit_understanding_path = (
+            evidence_dir / "evidence" / "pre-edit-understanding.md"
+        )
         local_understanding = (
             local_understanding_path.read_text(encoding="utf-8")
             if local_understanding_path.exists()
-            else "No local understanding report was produced."
+            else "No post-edit local understanding report was produced."
+        )
+        pre_edit_understanding = (
+            pre_edit_understanding_path.read_text(encoding="utf-8")
+            if pre_edit_understanding_path.exists()
+            else "No pre-edit local understanding report was produced."
         )
         codegraph_path = (
             evidence_dir / "evidence" / "codegraph-reconnaissance.md"
@@ -990,8 +1281,14 @@ class AutomaticRunner:
             if include_companion
             else "focused revision bundle; unchanged companion guides are hashed below"
         )
-        tail_stdout = gate.stdout[-12000:]
-        tail_stderr = gate.stderr[-12000:]
+        diagnostics_summary_path = evidence_dir / "evidence" / "diagnostics" / "gate-summary.md"
+        diagnostics_manifest_path = evidence_dir / "evidence" / "diagnostics" / "error-manifest.json"
+        diagnostics_bundle_path = evidence_dir / "evidence" / "diagnostics" / "codex-error-bundle.zip"
+        diagnostics_summary = (
+            diagnostics_summary_path.read_text(encoding="utf-8")
+            if diagnostics_summary_path.exists()
+            else "No gate diagnostic summary was produced."
+        )
         return (
             contract
             + f"\n\nCONTEXT MODE\n{context_mode}"
@@ -1003,15 +1300,23 @@ class AutomaticRunner:
             + memory
             + "\n\nVERIFIED CODEGRAPH RECONNAISSANCE\n"
             + codegraph_reconnaissance
-            + "\n\nLOCAL MODEL UNDERSTANDING REPORT\n"
+            + "\n\nPRE-EDIT LOCAL UNDERSTANDING REPORT\n"
+            + pre_edit_understanding
+            + "\n\nPOST-EDIT LOCAL UNDERSTANDING REPORT\n"
             + local_understanding
+            + "\n\nGATE DIAGNOSTIC SUMMARY\n"
+            + diagnostics_summary
+            + "\n\nDIAGNOSTIC ARTIFACTS\n"
+            + f"Manifest: {diagnostics_manifest_path.relative_to(self.repo) if diagnostics_manifest_path.exists() else 'missing'}\n"
+            + f"Compressed error bundle: {diagnostics_bundle_path.relative_to(self.repo) if diagnostics_bundle_path.exists() else 'missing'}\n"
+            + "Codex must inspect the complete log and every packaged source file before returning a plan or review.\n"
             + "\n\nCURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS\n"
             + extra_instructions
             + f"\n\nTASK ID\n{task.id}"
             + f"\nEVIDENCE DIRECTORY\n{evidence_dir.relative_to(self.repo)}"
             + f"\n\nCURRENT GATE EXIT\n{gate.exit_code}"
-            + f"\nGATE STDOUT TAIL\n{tail_stdout}"
-            + f"\nGATE STDERR TAIL\n{tail_stderr}\n"
+            + f"\nFULL GATE STDOUT (UNTRUNCATED)\n{gate.stdout}"
+            + f"\nFULL GATE STDERR (UNTRUNCATED)\n{gate.stderr}\n"
         )
 
     def _current_codex_extra_instructions(self) -> str:
@@ -1036,9 +1341,10 @@ class AutomaticRunner:
         task: Task,
         gate: CommandResult,
         retry: int,
+        focus_paths: Sequence[str],
     ) -> str:
         changed = (
-            "\n".join(f"- {path}" for path in git_product_changed_paths(self.repo))
+            "\n".join(f"- {path}" for path in focus_paths)
             or "- none"
         )
         retry_instruction = ""
@@ -1048,18 +1354,17 @@ class AutomaticRunner:
                 "tool event. You must call an available codegraph_* tool now; prose "
                 "about CodeGraph does not count.\n"
             )
-        return f"""This is a mandatory read-only CodeGraph reconnaissance for {task.id}.
+        return f"""This is a focused read-only CodeGraph map for {task.id}.
 Do not edit files, do not run Git write commands and do not run the task gate.
 {retry_instruction}
-Before broad file reads, call the available CodeGraph MCP tools. You must make at
-least one actual tool call whose identifier begins with `codegraph_`. Inspect the
-symbols, dependencies, callers and related tests most relevant to this task and to
-the currently changed paths. Prefer exact symbol queries over repository-wide reads.
+Call an available CodeGraph MCP tool whose identifier begins with `codegraph_`.
+Map only the listed failing source files, their directly connected symbols, callers
+and focused tests. Do not perform repository-wide exploration. Prefer exact symbols.
 
 Task objective:
 {task.objective}
 
-Currently changed product paths:
+Current failing or implicated source paths:
 {changed}
 
 Current gate exit: {gate.exit_code}
@@ -1085,7 +1390,13 @@ executed. The controller verifies OpenCode JSONL events and rejects prose-only c
         task: Task,
         gate: CommandResult,
         attempt_dir: Path,
+        focus_paths: Sequence[str],
     ) -> str:
+        if not focus_paths:
+            return self._write_codegraph_skipped(
+                attempt_dir,
+                "No Java source path was implicated by the current gate evidence.",
+            )
         sync_before_head = git_head(self.repo)
         sync_before_fingerprint = git_worktree_fingerprint(self.repo)
         sync = self._run_logged(
@@ -1125,7 +1436,9 @@ executed. The controller verifies OpenCode JSONL events and rejects prose-only c
                     "--format",
                     "json",
                     "--auto",
-                    self._codegraph_reconnaissance_prompt(task, gate, retry),
+                    self._codegraph_reconnaissance_prompt(
+                        task, gate, retry, focus_paths
+                    ),
                 ),
                 attempt_dir,
                 stream=True,
@@ -1189,6 +1502,7 @@ executed. The controller verifies OpenCode JSONL events and rejects prose-only c
         gate: CommandResult,
         next_action: str | None,
         codegraph_report: str,
+        diagnostics: GateDiagnostics,
     ) -> str:
         action = next_action or "Implement the selected task completely."
         extra_instructions = self._current_codex_extra_instructions()
@@ -1209,21 +1523,28 @@ CODEX PLAN OR REVISION ACTION:
 CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS:
 {extra_instructions}
 
-MANDATORY CODEGRAPH RECONNAISSANCE EVIDENCE:
+FOCUSED CODEGRAPH EVIDENCE (ADVISORY):
 {codegraph_report}
 
 CURRENT TASK GATE EXIT: {gate.exit_code}
+CURRENT DIAGNOSTIC CLASSIFICATION: {diagnostics.classification}
+CURRENT DIAGNOSTIC SUMMARY: {diagnostics.summary}
+CODEX ERROR BUNDLE: {diagnostics.bundle_path}
+IMPLICATED SOURCE PATHS:
+{chr(10).join(f"- {path}" for path in diagnostics.source_paths) or "- none"}
 CURRENT GATE STDOUT TAIL:
-{gate.stdout[-8000:]}
+{gate.stdout[-4000:]}
 CURRENT GATE STDERR TAIL:
-{gate.stderr[-8000:]}
+{gate.stderr[-4000:]}
 
+Codex has received the complete untruncated Maven output and packaged source files.
+Do not reinterpret an infrastructure outage as a Java defect.
 Do not edit task, controller, progress, memory or gate files. Do not run Git write commands.
 Before editing, translate every numbered Codex instruction into an explicit code/test
 checklist. Apply all items; do not stop after satisfying only the first one. Before the
 gate, re-open the edited path and verify the checklist against exact assertions.
-The controller has already forced a verified CodeGraph reconnaissance pass. Use
-its symbol and dependency findings before broad source reads; do not disregard it.
+Use a verified focused CodeGraph map when available. If CodeGraph was unavailable,
+follow Codex and exact source/compiler evidence instead of stopping the workflow.
 Implement, then run exactly:
 {exact_gate}
 Do not add a pipeline, redirect, tee, tail, grep, echo suffix or log-file write.
@@ -1496,7 +1817,9 @@ next instruction packet.
             "- PostgreSQL only in Docker; Flyway owns application schema.",
             "- Spring AI abstractions; no handwritten Ollama HTTP client.",
             "- Codex plans/reviews read-only; OpenCode edits; Python validates and commits.",
-            "- CodeGraph reconnaissance is mandatory; the controller verifies actual codegraph_* MCP calls before each local pass.",
+            "- Every red gate produces a full diagnostic log and compressed source bundle for Codex.",
+            "- Identical Codex planning evidence is rate-limited; changed failures bypass the cooldown.",
+            "- CodeGraph is focused and advisory by default; unavailable MCP evidence does not stop repair.",
             "- Runtime evidence stays under `runtime/runs/`; no automatic push.", "",
             "## Task commits", "",
         ]
@@ -1537,4 +1860,18 @@ next instruction packet.
             state.update(extra)
         (self.run_dir / "state.json").write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         print(f"\n[r4r] {status} (exit {exit_code})", flush=True)
+        notify_script = getattr(self, "notify_script", None)
+        if (
+            exit_code != 0
+            and isinstance(notify_script, Path)
+            and notify_script.exists()
+            and os.access(notify_script, os.X_OK)
+        ):
+            notification = run_command(
+                (str(notify_script), "--error", f"{status} (exit {exit_code})"),
+                self.repo,
+                timeout_seconds=30,
+            )
+            if notification.exit_code != 0:
+                print("[r4r] error sound notification failed; workflow state is preserved", file=sys.stderr)
         return exit_code

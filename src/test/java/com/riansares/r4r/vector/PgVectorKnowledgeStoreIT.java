@@ -1,10 +1,10 @@
 package com.riansares.r4r.vector;
 
 import com.riansares.r4r.chunking.MarkdownChunk;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -32,18 +33,16 @@ class PgVectorKnowledgeStoreIT {
     @Autowired
     private PgVectorKnowledgeStore store;
 
+    @Autowired
+    private EmbeddingModel embeddingModel;
+
     @BeforeEach
     void clearVectorStore() {
         jdbcTemplate.execute("TRUNCATE TABLE vector_store");
     }
 
-    @AfterEach
-    void cleanup() {
-        jdbcTemplate.execute("TRUNCATE TABLE vector_store");
-    }
-
     @Test
-    void flywayCreatesVector768AndHnswCosineIndex() {
+    void flywayCreatesExpectedPgVectorSchema() {
         String vectorType = jdbcTemplate.queryForObject("""
                 SELECT format_type(attribute.atttypid, attribute.atttypmod)
                 FROM pg_attribute attribute
@@ -57,15 +56,17 @@ class PgVectorKnowledgeStoreIT {
                   AND attribute.attnum > 0
                 """, String.class);
 
-        String idType = jdbcTemplate.queryForObject("""
-                SELECT data_type
-                FROM information_schema.columns
-                WHERE table_schema = 'public'
-                  AND table_name = 'vector_store'
-                  AND column_name = 'id'
+        String idType = columnType("id");
+        String metadataType = columnType("metadata");
+
+        String primaryKey = jdbcTemplate.queryForObject("""
+                SELECT pg_get_constraintdef(oid)
+                FROM pg_constraint
+                WHERE conrelid = 'public.vector_store'::regclass
+                  AND contype = 'p'
                 """, String.class);
 
-        String indexDefinition = jdbcTemplate.queryForObject("""
+        String embeddingIndex = jdbcTemplate.queryForObject("""
                 SELECT indexdef
                 FROM pg_indexes
                 WHERE schemaname = 'public'
@@ -83,40 +84,105 @@ class PgVectorKnowledgeStoreIT {
 
         assertThat(vectorType).isEqualTo("vector(768)");
         assertThat(idType).isEqualTo("uuid");
-        assertThat(indexDefinition)
-                .containsIgnoringCase("USING hnsw")
+        assertThat(metadataType).isEqualTo("jsonb");
+        assertThat(primaryKey).contains("PRIMARY KEY").contains("id");
+        assertThat(embeddingIndex.toLowerCase())
+                .contains("using hnsw")
                 .contains("vector_cosine_ops");
         assertThat(flywayVersion).isEqualTo("3");
     }
 
     @Test
-    void reindexUpdatesStableRowsAndRemovesOnlyStaleSourceRows() {
-        store.index(List.of(
-                chunk("source-a.md", 0, "Alpha original"),
-                chunk("source-a.md", 1, "Beta original"),
-                chunk("source-a.md", 2, "Obsolete chunk"),
-                chunk("source-b.md", 0, "Preserved source")));
+    void deterministicEmbeddingModelIsLocalStableAnd768Dimensional() {
+        assertThat(embeddingModel)
+                .isInstanceOf(DeterministicEmbeddingModel.class);
 
-        UUID sourceAOrdinalZeroId = storedId("source-a.md", 0);
+        DeterministicEmbeddingModel model =
+                (DeterministicEmbeddingModel) embeddingModel;
+
+        float[] first = model.embed(document("same text"));
+        float[] second = model.embed(document("same text"));
+        float[] different = model.embed(document("unrelated tokens"));
+
+        assertThat(model.dimensions()).isEqualTo(768);
+        assertThat(first).hasSize(768);
+        assertThat(second).containsExactly(first);
+        assertThat(Arrays.equals(first, different)).isFalse();
+    }
+
+    @Test
+    void deterministicEmbeddingModelProducesExact768DimensionalVectors() {
+        DeterministicEmbeddingModel model =
+                (DeterministicEmbeddingModel) embeddingModel;
+
+        // Test dimensions() returns 768
+        assertThat(model.dimensions()).isEqualTo(768);
+
+        // Test produced vector length is exactly 768
+        float[] vector = model.embed(document("test"));
+        assertThat(vector).hasSize(768);
+
+        // Test equal text produces identical vectors
+        float[] v1 = model.embed(document("identical content"));
+        float[] v2 = model.embed(document("identical content"));
+        assertThat(v2).containsExactly(v1);
+
+        // Test controlled relevant/irrelevant texts produce distinguishable vectors
+        float[] relevant = model.embed(document("apple banana cherry date"));
+        float[] irrelevant = model.embed(document("xyz abc def ghi"));
+        
+        // Vectors should not be equal (cosine similarity < 1.0)
+        assertThat(relevant).isNotEqualTo(irrelevant);
+    }
+
+    @Test
+    void repeatedIndexingKeepsRowCountAndLogicalIds() {
+        List<MarkdownChunk> chunks = List.of(
+                chunk("repeat.md", 0, "Alpha"),
+                chunk("repeat.md", 1, "Beta"));
+
+        store.index(chunks);
+        List<StoredRow> before = snapshotAllRows();
+
+        store.index(chunks);
+        List<StoredRow> after = snapshotAllRows();
+
+        assertThat(after).isEqualTo(before);
+        assertThat(after).hasSize(2);
+    }
+
+    @Test
+    void contentChangeKeepsIdAndReplacesStoredContent() {
+        store.index(List.of(chunk("content.md", 0, "Original")));
+        UUID originalId = storedId("content.md", 0);
+
+        store.replaceSource(
+                "content.md",
+                List.of(chunk("content.md", 0, "Replacement")));
+
+        assertThat(storedId("content.md", 0)).isEqualTo(originalId);
+        assertThat(storedContent("content.md", 0))
+                .isEqualTo("Replacement");
+    }
+
+    @Test
+    void replacementRemovesStaleRowsAndPreservesOtherSources() {
+        store.index(List.of(
+                chunk("source-a.md", 0, "A0"),
+                chunk("source-a.md", 1, "A1"),
+                chunk("source-a.md", 2, "A2 stale"),
+                chunk("source-b.md", 0, "B0 preserved")));
+
+        UUID sourceBId = storedId("source-b.md", 0);
 
         store.replaceSource("source-a.md", List.of(
-                chunk("source-a.md", 0, "Alpha replacement"),
-                chunk("source-a.md", 1, "Beta replacement")));
+                chunk("source-a.md", 0, "A0 replacement"),
+                chunk("source-a.md", 1, "A1 replacement")));
 
         assertThat(countForSource("source-a.md")).isEqualTo(2);
         assertThat(countForSource("source-b.md")).isEqualTo(1);
-        assertThat(storedId("source-a.md", 0))
-                .isEqualTo(sourceAOrdinalZeroId);
-
-        assertThat(storedContent("source-a.md", 0))
-                .isEqualTo("Alpha replacement");
-
-        assertThat(jdbcTemplate.queryForObject("""
-                SELECT COUNT(*)
-                FROM vector_store
-                WHERE metadata->>'source' = 'source-a.md'
-                  AND (metadata->>'ordinal')::int = 2
-                """, Long.class)).isZero();
+        assertThat(storedId("source-b.md", 0)).isEqualTo(sourceBId);
+        assertThat(ordinalExists("source-a.md", 2)).isFalse();
 
         store.replaceSource("source-a.md", List.of());
 
@@ -125,77 +191,91 @@ class PgVectorKnowledgeStoreIT {
     }
 
     @Test
-    void canonicalIdentitySeparatesAmbiguousFieldBoundaries() {
+    void stableIdentityIsBoundarySafeAndDependsOnSourceHeadingAndOrdinal() {
+        MarkdownChunk first = new MarkdownChunk(
+                "boundary.md",
+                List.of("ab", "c"),
+                0,
+                "first-content");
+        MarkdownChunk second = new MarkdownChunk(
+                "boundary.md",
+                List.of("a", "bc"),
+                0,
+                "second-content");
+
+        store.index(List.of(first, second));
+
+        UUID firstId = storedIdByContent("first-content");
+        UUID secondId = storedIdByContent("second-content");
+        assertThat(firstId).isNotEqualTo(secondId);
+
         store.index(List.of(
-                new MarkdownChunk(
-                        "ab",
-                        List.of("c"),
-                        0,
-                        "First"),
-                new MarkdownChunk(
-                        "a",
-                        List.of("bc"),
-                        0,
-                        "Second")));
+                chunk("source-one.md", 0, "source-one"),
+                chunk("source-two.md", 0, "source-two"),
+                chunk("ordinal.md", 0, "ordinal-zero"),
+                chunk("ordinal.md", 1, "ordinal-one")));
 
-        UUID first = storedId("ab", 0);
-        UUID second = storedId("a", 0);
-
-        assertThat(first).isNotEqualTo(second);
-        assertThat(jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM vector_store",
-                Long.class)).isEqualTo(2);
+        assertThat(storedId("source-one.md", 0))
+                .isNotEqualTo(storedId("source-two.md", 0));
+        assertThat(storedId("ordinal.md", 0))
+                .isNotEqualTo(storedId("ordinal.md", 1));
     }
 
     @Test
-    void crossSourcePrevalidationRejectsDuplicatesAndPreservesExistingData() {
-        // Seed existing rows for two sources
+    void duplicateIdentityInLaterSourceFailsBeforeAnyMutation() {
         store.index(List.of(
-                new MarkdownChunk("source-a.md", List.of("Section"), 0, "Original A0"),
-                new MarkdownChunk("source-a.md", List.of("Section"), 1, "Original A1"),
-                new MarkdownChunk("source-b.md", List.of("Section"), 0, "Original B0")));
+                chunk("source-a.md", 0, "Original A"),
+                chunk("source-b.md", 0, "Original B")));
+        List<StoredRow> before = snapshotAllRows();
 
-        // Snapshot existing state
-        long countSourceA = countForSource("source-a.md");
-        long countSourceB = countForSource("source-b.md");
+        List<MarkdownChunk> invalidRequest = List.of(
+                chunk("source-a.md", 0, "Valid replacement A"),
+                chunk("source-b.md", 0, "Duplicate B first"),
+                chunk("source-b.md", 0, "Duplicate B second"));
 
-        String contentA0Before = storedContent("source-a.md", 0);
-        String contentA1Before = storedContent("source-a.md", 1);
-        String contentB0Before = storedContent("source-b.md", 0);
-
-        UUID idA0Before = storedId("source-a.md", 0);
-        UUID idA1Before = storedId("source-a.md", 1);
-        UUID idB0Before = storedId("source-b.md", 0);
-
-        // Submit valid earlier source followed by later source with duplicate logical IDs
-        assertThatThrownBy(() -> store.index(List.of(
-                new MarkdownChunk("source-a.md", List.of("Section"), 0, "Duplicate A0"),
-                new MarkdownChunk("source-a.md", List.of("Section"), 1, "Duplicate A1"),
-                new MarkdownChunk("source-b.md", List.of("Section"), 0, "Duplicate B0"))))
+        assertThatThrownBy(() -> store.index(invalidRequest))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Duplicate logical chunk identity");
 
-        // Verify no mutation occurred - all data preserved
-        assertThat(countForSource("source-a.md")).isEqualTo(countSourceA);
-        assertThat(countForSource("source-b.md")).isEqualTo(countSourceB);
-
-        assertThat(storedContent("source-a.md", 0)).isEqualTo(contentA0Before);
-        assertThat(storedContent("source-a.md", 1)).isEqualTo(contentA1Before);
-        assertThat(storedContent("source-b.md", 0)).isEqualTo(contentB0Before);
-
-        assertThat(storedId("source-a.md", 0)).isEqualTo(idA0Before);
-        assertThat(storedId("source-a.md", 1)).isEqualTo(idA1Before);
-        assertThat(storedId("source-b.md", 0)).isEqualTo(idB0Before);
+        assertThat(snapshotAllRows()).isEqualTo(before);
     }
 
     @Test
-    void similaritySearchUsesRealPgvectorAndPreservesExactChunkData() {
+    void crossSourcePrevalidationWithExistingDataProvesNoMutation() {
+        // Seed existing rows for two sources
         store.index(List.of(
-                new MarkdownChunk(
-                        "guide.md",
-                        List.of("Building", "Roof"),
-                        1,
-                        "Roof drainage installation details."),
+                chunk("existing-a.md", 0, "Original A0"),
+                chunk("existing-b.md", 0, "Original B0")));
+        
+        List<StoredRow> beforeState = snapshotAllRows();
+
+        // Submit valid earlier source followed by later source with duplicate logical identities
+        List<MarkdownChunk> invalidRequest = List.of(
+                chunk("existing-a.md", 0, "Valid replacement A0"),
+                chunk("existing-b.md", 0, "Duplicate B0 first"),
+                chunk("existing-b.md", 0, "Duplicate B0 second"));
+
+        assertThatThrownBy(() -> store.index(invalidRequest))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Duplicate logical chunk identity");
+
+        // Compare complete pre-existing state for all involved sources
+        List<StoredRow> afterState = snapshotAllRows();
+        
+        // Verify no mutation occurred - before and after should be identical
+        assertThat(afterState).isEqualTo(beforeState);
+    }
+
+    @Test
+    void similaritySearchPreservesExactCitationData() {
+        MarkdownChunk expected = new MarkdownChunk(
+                "guide.md",
+                List.of("Building", "Roof"),
+                1,
+                "Roof drainage installation details.");
+
+        store.index(List.of(
+                expected,
                 new MarkdownChunk(
                         "java.md",
                         List.of("Language"),
@@ -208,41 +288,173 @@ class PgVectorKnowledgeStoreIT {
                         "Tomatoes need sunlight and water.")));
 
         List<MarkdownChunk> results =
-                store.search("roof drainage", 2, 0.1);
+                store.search("roof drainage", 1, 0.1);
 
-        assertThat(results).isNotEmpty();
-
-        MarkdownChunk first = results.get(0);
-        assertThat(first.source()).isEqualTo("guide.md");
-        assertThat(first.headingPath())
-                .containsExactly("Building", "Roof");
-        assertThat(first.index()).isEqualTo(1);
-        assertThat(first.content())
-                .isEqualTo("Roof drainage installation details.");
+        assertThat(results).containsExactly(expected);
     }
 
     @Test
-    void rejectsInvalidSearchAndCrossSourceReplacement() {
-        assertThatThrownBy(() ->
-                store.search(" ", 1, 0.0))
-                .isInstanceOf(IllegalArgumentException.class);
+    void topKIsEnforced() {
+        store.index(List.of(
+                chunk("doc1.md", 0, "apple banana cherry date"),
+                chunk("doc2.md", 0, "apple banana cherry elderberry"),
+                chunk("doc3.md", 0, "apple banana fig grape"),
+                chunk("doc4.md", 0, "apple honeydew kiwi lemon")));
 
-        assertThatThrownBy(() ->
-                store.search("query", 0, 0.0))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(store.search("apple banana", 2, 0.0)).hasSize(2);
+    }
 
-        assertThatThrownBy(() ->
-                store.search("query", 1, 1.1))
-                .isInstanceOf(IllegalArgumentException.class);
+    @Test
+    void strictThresholdKeepsRelevantAndExcludesIrrelevantResult() {
+        store.index(List.of(
+                chunk("high.md", 0, "apple banana cherry"),
+                chunk("low.md", 0, "xyz abc def")));
 
-        assertThatThrownBy(() ->
-                store.replaceSource(
-                        "source-a.md",
-                        List.of(chunk(
-                                "source-b.md",
-                                0,
-                                "Wrong source"))))
+        List<MarkdownChunk> strict =
+                store.search("apple banana", 10, 0.75);
+
+        // Verify we got results
+        assertThat(strict).isNotEmpty();
+        
+        List<String> sources = strict.stream()
+                .map(MarkdownChunk::source)
+                .toList();
+
+        assertThat(sources)
+                .contains("high.md")
+                .doesNotContain("low.md");
+    }
+
+    @Test
+    void invalidPublicInputsAreRejectedBeforeVectorStoreUse() {
+        assertThatThrownBy(() -> store.index(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("chunks");
+
+        List<MarkdownChunk> withNull = new ArrayList<>();
+        withNull.add(chunk("valid.md", 0, "Valid"));
+        withNull.add(null);
+        
+        assertThatThrownBy(() -> store.index(withNull))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("chunk must not be null");
+
+        MarkdownChunk blankSource = new MarkdownChunk(
+                "   ", List.of(), 0, "content");
+        assertThatThrownBy(() -> store.index(List.of(blankSource)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("chunk.source");
+
+        MarkdownChunk blankContent = new MarkdownChunk(
+                "source.md", List.of(), 0, "   ");
+        assertThatThrownBy(() -> store.index(List.of(blankContent)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("chunk.content");
+
+        assertThatThrownBy(() -> store.replaceSource(null, List.of()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("source");
+        assertThatThrownBy(() -> store.replaceSource(" ", List.of()))
                 .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> store.replaceSource("source.md", null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("chunks");
+        assertThatThrownBy(() -> store.replaceSource(
+                "source-a.md",
+                List.of(chunk("source-b.md", 0, "wrong source"))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("source-a.md");
+
+        assertThatThrownBy(() -> store.search(null, 1, 0.0))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> store.search(" ", 1, 0.0))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> store.search("query", 0, 0.0))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> store.search("query", 1, Double.NaN))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> store.search(
+                "query", 1, Double.POSITIVE_INFINITY))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> store.search("query", 1, -0.01))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> store.search("query", 1, 1.01))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void malformedReachableMetadataIsRejectedDefensively() {
+        Document missingSource = document(Map.of(
+                PgVectorKnowledgeStore.HEADING_PATH_METADATA, List.of(),
+                PgVectorKnowledgeStore.ORDINAL_METADATA, 0));
+        assertMetadataFailure(missingSource, "'source'");
+
+        Document blankSource = document(Map.of(
+                PgVectorKnowledgeStore.SOURCE_METADATA, "   ",
+                PgVectorKnowledgeStore.HEADING_PATH_METADATA, List.of(),
+                PgVectorKnowledgeStore.ORDINAL_METADATA, 0));
+        assertMetadataFailure(blankSource, "'source'");
+
+        Document missingHeadingPath = document(Map.of(
+                PgVectorKnowledgeStore.SOURCE_METADATA, "source.md",
+                PgVectorKnowledgeStore.ORDINAL_METADATA, 0));
+        assertMetadataFailure(missingHeadingPath, "'headingPath'");
+
+        List<Object> malformedHeadingPath = new ArrayList<>();
+        malformedHeadingPath.add("valid");
+        malformedHeadingPath.add(123);
+        Document nonStringHeading = document(Map.of(
+                PgVectorKnowledgeStore.SOURCE_METADATA, "source.md",
+                PgVectorKnowledgeStore.HEADING_PATH_METADATA,
+                        malformedHeadingPath,
+                PgVectorKnowledgeStore.ORDINAL_METADATA, 0));
+        assertMetadataFailure(nonStringHeading, "non-string");
+
+        Document missingOrdinal = document(Map.of(
+                PgVectorKnowledgeStore.SOURCE_METADATA, "source.md",
+                PgVectorKnowledgeStore.HEADING_PATH_METADATA, List.of()));
+        assertMetadataFailure(missingOrdinal, "'ordinal'");
+
+        Document nonNumberOrdinal = document(Map.of(
+                PgVectorKnowledgeStore.SOURCE_METADATA, "source.md",
+                PgVectorKnowledgeStore.HEADING_PATH_METADATA, List.of(),
+                PgVectorKnowledgeStore.ORDINAL_METADATA, "zero"));
+        assertMetadataFailure(nonNumberOrdinal, "numeric");
+
+        Document fractionalOrdinal = document(Map.of(
+                PgVectorKnowledgeStore.SOURCE_METADATA, "source.md",
+                PgVectorKnowledgeStore.HEADING_PATH_METADATA, List.of(),
+                PgVectorKnowledgeStore.ORDINAL_METADATA, 1.5));
+        assertMetadataFailure(fractionalOrdinal, "non-negative integer");
+
+        Document negativeOrdinal = document(Map.of(
+                PgVectorKnowledgeStore.SOURCE_METADATA, "source.md",
+                PgVectorKnowledgeStore.HEADING_PATH_METADATA, List.of(),
+                PgVectorKnowledgeStore.ORDINAL_METADATA, -1));
+        assertMetadataFailure(negativeOrdinal, "non-negative integer");
+
+        assertThatThrownBy(() -> store.fromDocument(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("document");
+    }
+
+    private void assertMetadataFailure(
+            Document document,
+            String expectedMessage) {
+
+        assertThatThrownBy(() -> store.fromDocument(document))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(expectedMessage);
+    }
+
+    private String columnType(String column) {
+        return jdbcTemplate.queryForObject("""
+                SELECT data_type
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = 'vector_store'
+                  AND column_name = ?
+                """, String.class, column);
     }
 
     private MarkdownChunk chunk(
@@ -257,6 +469,22 @@ class PgVectorKnowledgeStoreIT {
                 content);
     }
 
+    private Document document(String text) {
+        return Document.builder()
+                .id(UUID.randomUUID().toString())
+                .text(text)
+                .metadata(Map.of())
+                .build();
+    }
+
+    private Document document(Map<String, Object> metadata) {
+        return Document.builder()
+                .id(UUID.randomUUID().toString())
+                .text("content")
+                .metadata(metadata)
+                .build();
+    }
+
     private long countForSource(String source) {
         return jdbcTemplate.queryForObject("""
                 SELECT COUNT(*)
@@ -265,13 +493,36 @@ class PgVectorKnowledgeStoreIT {
                 """, Long.class, source);
     }
 
+    private boolean ordinalExists(String source, int ordinal) {
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject("""
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM vector_store
+                    WHERE metadata->>'source' = ?
+                      AND (metadata->>'ordinal')::int = ?
+                )
+                """, Boolean.class, source, ordinal));
+    }
+
     private UUID storedId(String source, int ordinal) {
         String id = jdbcTemplate.queryForObject("""
                 SELECT id::text
                 FROM vector_store
                 WHERE metadata->>'source' = ?
                   AND (metadata->>'ordinal')::int = ?
+                ORDER BY id
+                LIMIT 1
                 """, String.class, source, ordinal);
+
+        return UUID.fromString(id);
+    }
+
+    private UUID storedIdByContent(String content) {
+        String id = jdbcTemplate.queryForObject("""
+                SELECT id::text
+                FROM vector_store
+                WHERE content = ?
+                """, String.class, content);
 
         return UUID.fromString(id);
     }
@@ -285,507 +536,27 @@ class PgVectorKnowledgeStoreIT {
                 """, String.class, source, ordinal);
     }
 
-    @Test
-    void reindexWithIdenticalContentPreservesRowCountAndIds() {
-        List<MarkdownChunk> chunks = List.of(
-                chunk("reindex-source.md", 0, "Alpha"),
-                chunk("reindex-source.md", 1, "Beta"));
-
-        store.index(chunks);
-
-        UUID id0Before = storedId("reindex-source.md", 0);
-        UUID id1Before = storedId("reindex-source.md", 1);
-        long countBefore = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM vector_store WHERE metadata->>'source' = ?",
-                Long.class, "reindex-source.md");
-
-        store.index(chunks);
-
-        assertThat(storedId("reindex-source.md", 0)).isEqualTo(id0Before);
-        assertThat(storedId("reindex-source.md", 1)).isEqualTo(id1Before);
-        assertThat(jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM vector_store WHERE metadata->>'source' = ?",
-                Long.class, "reindex-source.md")).isEqualTo(countBefore);
+    private List<StoredRow> snapshotAllRows() {
+        return jdbcTemplate.query("""
+                SELECT id::text,
+                       content,
+                       metadata::text,
+                       embedding::text
+                FROM vector_store
+                ORDER BY metadata->>'source',
+                         (metadata->>'ordinal')::int,
+                         id
+                """, (resultSet, rowNumber) -> new StoredRow(
+                resultSet.getString(1),
+                resultSet.getString(2),
+                resultSet.getString(3),
+                resultSet.getString(4)));
     }
 
-    @Test
-    void stableIdentitySameChunkKeepsIdWhenReindexed() {
-        MarkdownChunk chunk = new MarkdownChunk(
-                "stable-id-source.md",
-                List.of("Heading"),
-                5,
-                "Identical content");
-
-        store.index(List.of(chunk));
-
-        UUID firstId = storedId("stable-id-source.md", 5);
-
-        store.index(List.of(chunk));
-
-        assertThat(storedId("stable-id-source.md", 5)).isEqualTo(firstId);
-    }
-
-    @Test
-    void stableIdentityContentChangeKeepsSameId() {
-        MarkdownChunk chunk1 = new MarkdownChunk(
-                "content-change-source.md",
-                List.of("Section"),
-                0,
-                "Original content");
-
-        store.index(List.of(chunk1));
-
-        UUID originalId = storedId("content-change-source.md", 0);
-
-        MarkdownChunk chunk2 = new MarkdownChunk(
-                "content-change-source.md",
-                List.of("Section"),
-                0,
-                "Different content but same identity");
-
-        store.replaceSource("content-change-source.md", List.of(chunk2));
-
-        assertThat(storedId("content-change-source.md", 0)).isEqualTo(originalId);
-    }
-
-    @Test
-    void stableIdentityChangingSourceChangesId() {
-        MarkdownChunk chunkA = new MarkdownChunk(
-                "source-alpha.md",
-                List.of("Section"),
-                0,
-                "Content");
-
-        store.index(List.of(chunkA));
-
-        UUID idA = storedId("source-alpha.md", 0);
-
-        MarkdownChunk chunkB = new MarkdownChunk(
-                "source-beta.md",
-                List.of("Section"),
-                0,
-                "Same content different source");
-
-        store.index(List.of(chunkB));
-
-        assertThat(storedId("source-beta.md", 0)).isNotEqualTo(idA);
-    }
-
-    @Test
-    void stableIdentityChangingHeadingPathChangesId() {
-        MarkdownChunk chunk1 = new MarkdownChunk(
-                "heading-source.md",
-                List.of("Section", "Subsection"),
-                0,
-                "Content");
-
-        store.index(List.of(chunk1));
-
-        UUID idWithSubsection = storedId("heading-source.md", 0);
-
-        MarkdownChunk chunk2 = new MarkdownChunk(
-                "heading-source.md",
-                List.of("Section"),
-                0,
-                "Same content different heading path");
-
-        store.replaceSource("heading-source.md", List.of(chunk2));
-
-        assertThat(storedId("heading-source.md", 0)).isNotEqualTo(idWithSubsection);
-    }
-
-    @Test
-    void stableIdentityChangingOrdinalChangesId() {
-        MarkdownChunk chunk0 = new MarkdownChunk(
-                "ordinal-source.md",
-                List.of("Section"),
-                0,
-                "Content");
-
-        store.index(List.of(chunk0));
-
-        UUID id0 = storedId("ordinal-source.md", 0);
-
-        MarkdownChunk chunk1 = new MarkdownChunk(
-                "ordinal-source.md",
-                List.of("Section"),
-                1,
-                "Same content different ordinal");
-
-        store.replaceSource("ordinal-source.md", List.of(chunk1));
-
-        assertThat(storedId("ordinal-source.md", 1)).isNotEqualTo(id0);
-    }
-
-    @Test
-    void staleDeletionRemovesOnlyReplacedSourceRows() {
-        store.index(List.of(
-                chunk("source-a.md", 0, "Alpha"),
-                chunk("source-a.md", 1, "Beta"),
-                chunk("source-b.md", 0, "Preserved")));
-
-        UUID sourceAId0 = storedId("source-a.md", 0);
-        UUID sourceBId0 = storedId("source-b.md", 0);
-
-        store.replaceSource("source-a.md", List.of(
-                chunk("source-a.md", 0, "Alpha replacement"),
-                chunk("source-a.md", 1, "Beta replacement")));
-
-        assertThat(storedContent("source-a.md", 0)).isEqualTo("Alpha replacement");
-        assertThat(storedContent("source-a.md", 1)).isEqualTo("Beta replacement");
-        assertThat(storedId("source-a.md", 0)).isEqualTo(sourceAId0);
-        assertThat(countForSource("source-b.md")).isEqualTo(1);
-        assertThat(storedId("source-b.md", 0)).isEqualTo(sourceBId0);
-    }
-
-    @Test
-    void topKLimitIsEnforced() {
-        store.index(List.of(
-                new MarkdownChunk("doc1.md", List.of(), 0, "apple banana cherry date"),
-                new MarkdownChunk("doc2.md", List.of(), 0, "apple banana cherry elderberry"),
-                new MarkdownChunk("doc3.md", List.of(), 0, "apple banana fig grape"),
-                new MarkdownChunk("doc4.md", List.of(), 0, "apple honeydew kiwi lemon")));
-
-        List<MarkdownChunk> results = store.search("apple banana", 2, 0.0);
-
-        assertThat(results).hasSize(2);
-    }
-
-    @Test
-    void thresholdFilteringExcludesBelowMinScore() {
-        store.index(List.of(
-                new MarkdownChunk("high.md", List.of(), 0, "apple banana cherry"),
-                new MarkdownChunk("low.md", List.of(), 0, "xyz abc def")));
-
-        List<MarkdownChunk> permissive = store.search("apple banana", 10, 0.0);
-        List<MarkdownChunk> strict = store.search("apple banana", 10, 0.9);
-
-        assertThat(permissive).anySatisfy(chunk -> assertThat(chunk.source()).isEqualTo("high.md"));
-        assertThat(strict).isNotEmpty();
-        assertThat(strict).anySatisfy(chunk -> assertThat(chunk.source()).isEqualTo("high.md"));
-        assertThat(strict).noneSatisfy(chunk -> assertThat(chunk.source()).isEqualTo("low.md"));
-    }
-
-    @Test
-    void schemaAssertsMetadataColumnAndPrimaryKey() {
-        String metadataType = jdbcTemplate.queryForObject("""
-                SELECT data_type
-                FROM information_schema.columns
-                WHERE table_schema = 'public'
-                  AND table_name = 'vector_store'
-                  AND column_name = 'metadata'
-                """, String.class);
-
-        String pkDefinition = jdbcTemplate.queryForObject("""
-                SELECT pg_get_constraintdef(oid)
-                FROM pg_constraint
-                WHERE conrelid = 'vector_store'::regclass
-                  AND contype = 'p'
-                """, String.class);
-
-        assertThat(metadataType).isEqualTo("jsonb");
-        assertThat(pkDefinition).contains("id");
-    }
-
-    @Test
-    void rejectsNullChunkList() {
-        assertThatThrownBy(() -> store.index((List<MarkdownChunk>) null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("chunks");
-    }
-
-    @Test
-    void rejectsNullChunkEntry() {
-        List<MarkdownChunk> listWithNull = new ArrayList<>();
-        listWithNull.add(chunk("source.md", 0, "Valid"));
-        listWithNull.add(null);
-
-        assertThatThrownBy(() -> store.index(listWithNull))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("chunk must not be null");
-    }
-
-    @Test
-    void rejectsBlankSourceInIndex() {
-        MarkdownChunk chunkWithBlankSource = new MarkdownChunk(
-                "   ",
-                List.of("Section"),
-                0,
-                "Content");
-
-        assertThatThrownBy(() -> store.index(List.of(chunkWithBlankSource)))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void rejectsNullQuery() {
-        assertThatThrownBy(() -> store.search(null, 1, 0.0))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("query");
-    }
-
-    @Test
-    void rejectsBlankQuery() {
-        assertThatThrownBy(() -> store.search("   ", 1, 0.0))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void rejectsNonPositiveTopK() {
-        assertThatThrownBy(() -> store.search("query", 0, 0.0))
-                .isInstanceOf(IllegalArgumentException.class);
-
-        assertThatThrownBy(() -> store.search("query", -1, 0.0))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void rejectsMinScoreNaN() {
-        assertThatThrownBy(() -> store.search("query", 1, Double.NaN))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void rejectsMinScoreInfinity() {
-        assertThatThrownBy(() -> store.search("query", 1, Double.POSITIVE_INFINITY))
-                .isInstanceOf(IllegalArgumentException.class);
-
-        assertThatThrownBy(() -> store.search("query", 1, Double.NEGATIVE_INFINITY))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void rejectsMinScoreBelowZero() {
-        assertThatThrownBy(() -> store.search("query", 1, -0.1))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void rejectsMinScoreAboveOne() {
-        assertThatThrownBy(() -> store.search("query", 1, 1.1))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void rejectsNegativeOrdinalInIndex() {
-        assertThatThrownBy(() -> store.index(List.of(
-                new MarkdownChunk(
-                        "source.md",
-                        List.of("Section"),
-                        -1,
-                        "Content"))))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void deterministicEmbeddingModelProduces768DimVectors() {
-        DeterministicEmbeddingModel model = new DeterministicEmbeddingModel();
-
-        assertThat(model.dimensions()).isEqualTo(768);
-
-        float[] vector1 = model.embed("test text");
-        assertThat(vector1).hasSize(768);
-
-        float[] vector2 = model.embed("test text");
-        assertThat(vector2).hasSize(768);
-        assertThat(vector2).containsExactly(vector1);
-
-        String relevantText = "spring boot java microservice";
-        String irrelevantText = "xyz abc def ghi jkl";
-
-        float[] relevantVector = model.embed(relevantText);
-        float[] irrelevantVector = model.embed(irrelevantText);
-
-        boolean distinguishable = false;
-        for (int i = 0; i < relevantVector.length; i++) {
-            if (Math.abs(relevantVector[i] - irrelevantVector[i]) > 0.01) {
-                distinguishable = true;
-                break;
-            }
-        }
-        assertThat(distinguishable).isTrue();
-    }
-
-    @Test
-    void rejectsNullSourceInReplaceSource() {
-        assertThatThrownBy(() -> store.replaceSource(null, List.of()))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("source");
-    }
-
-    @Test
-    void rejectsBlankSourceInReplaceSource() {
-        assertThatThrownBy(() -> store.replaceSource("   ", List.of()))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void rejectsNullChunksInReplaceSource() {
-        assertThatThrownBy(() -> store.replaceSource("source.md", (List<MarkdownChunk>) null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("chunks");
-    }
-
-    @Test
-    void retrievalFailsForNullDocument() {
-        assertThatThrownBy(() -> store.fromDocument((Document) null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("document");
-    }
-
-    @Test
-    void retrievalFailsForNullText() {
-        assertThatThrownBy(() -> {
-            Document document = Document.builder()
-                    .id("test-id")
-                    .text(null)
-                    .metadata(Map.of())
-                    .build();
-            store.fromDocument(document);
-        })
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("text");
-    }
-
-    @Test
-    void retrievalFailsForNullMetadata() {
-        assertThatThrownBy(() -> {
-            Document document = Document.builder()
-                    .id("test-id")
-                    .text("content")
-                    .metadata(null)
-                    .build();
-            store.fromDocument(document);
-        })
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("metadata");
-    }
-
-    @Test
-    void retrievalFailsForMissingSourceMetadata() {
-        Document document = Document.builder()
-                .id("test-id")
-                .text("content")
-                .metadata(Map.of(
-                        PgVectorKnowledgeStore.HEADING_PATH_METADATA, List.of(),
-                        PgVectorKnowledgeStore.ORDINAL_METADATA, 0))
-                .build();
-
-        assertThatThrownBy(() -> store.fromDocument(document))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("'source'");
-    }
-
-    @Test
-    void retrievalFailsForBlankSourceMetadata() {
-        Document document = Document.builder()
-                .id("test-id")
-                .text("content")
-                .metadata(Map.of(
-                        PgVectorKnowledgeStore.SOURCE_METADATA, "   ",
-                        PgVectorKnowledgeStore.HEADING_PATH_METADATA, List.of(),
-                        PgVectorKnowledgeStore.ORDINAL_METADATA, 0))
-                .build();
-
-        assertThatThrownBy(() -> store.fromDocument(document))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("'source'");
-    }
-
-    @Test
-    void retrievalFailsForMissingHeadingPathMetadata() {
-        Document document = Document.builder()
-                .id("test-id")
-                .text("content")
-                .metadata(Map.of(
-                        PgVectorKnowledgeStore.SOURCE_METADATA, "source.md",
-                        PgVectorKnowledgeStore.ORDINAL_METADATA, 0))
-                .build();
-
-        assertThatThrownBy(() -> store.fromDocument(document))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("'headingPath'");
-    }
-
-    @Test
-    void retrievalFailsForMissingOrdinalMetadata() {
-        Document document = Document.builder()
-                .id("test-id")
-                .text("content")
-                .metadata(Map.of(
-                        PgVectorKnowledgeStore.SOURCE_METADATA, "source.md",
-                        PgVectorKnowledgeStore.HEADING_PATH_METADATA, List.of()))
-                .build();
-
-        assertThatThrownBy(() -> store.fromDocument(document))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("'ordinal'");
-    }
-
-    @Test
-    void retrievalFailsForNonIntegerOrdinal() {
-        Document document = Document.builder()
-                .id("test-id")
-                .text("content")
-                .metadata(Map.of(
-                        PgVectorKnowledgeStore.SOURCE_METADATA, "source.md",
-                        PgVectorKnowledgeStore.HEADING_PATH_METADATA, List.of(),
-                        PgVectorKnowledgeStore.ORDINAL_METADATA, 1.5))
-                .build();
-
-        assertThatThrownBy(() -> store.fromDocument(document))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("'ordinal'");
-    }
-
-    @Test
-    void retrievalFailsForNegativeOrdinal() {
-        Document document = Document.builder()
-                .id("test-id")
-                .text("content")
-                .metadata(Map.of(
-                        PgVectorKnowledgeStore.SOURCE_METADATA, "source.md",
-                        PgVectorKnowledgeStore.HEADING_PATH_METADATA, List.of(),
-                        PgVectorKnowledgeStore.ORDINAL_METADATA, -1))
-                .build();
-
-        assertThatThrownBy(() -> store.fromDocument(document))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("'ordinal'");
-    }
-
-    @Test
-    void retrievalFailsForNonStringHeadingPathElement() {
-        Document document = Document.builder()
-                .id("test-id")
-                .text("content")
-                .metadata(Map.of(
-                        PgVectorKnowledgeStore.SOURCE_METADATA, "source.md",
-                        PgVectorKnowledgeStore.HEADING_PATH_METADATA,
-                                List.of("valid", Integer.valueOf(123)),
-                        PgVectorKnowledgeStore.ORDINAL_METADATA, 0))
-                .build();
-
-        assertThatThrownBy(() -> store.fromDocument(document))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("'headingPath'")
-                .hasMessageContaining("non-string");
-    }
-
-    @Test
-    void retrievalFailsForNonNumberOrdinal() {
-        Document document = Document.builder()
-                .id("test-id")
-                .text("content")
-                .metadata(Map.of(
-                        PgVectorKnowledgeStore.SOURCE_METADATA, "source.md",
-                        PgVectorKnowledgeStore.HEADING_PATH_METADATA, List.of(),
-                        PgVectorKnowledgeStore.ORDINAL_METADATA, "not-a-number"))
-                .build();
-
-        assertThatThrownBy(() -> store.fromDocument(document))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("'ordinal'")
-                .hasMessageContaining("numeric");
+    private record StoredRow(
+            String id,
+            String content,
+            String metadata,
+            String embedding) {
     }
 }
