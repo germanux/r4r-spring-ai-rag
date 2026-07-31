@@ -1,7 +1,9 @@
 from pathlib import Path
 import json
+import os
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from r4r_codex_agent.contracts import Task, TaskPlan
 from r4r_codex_agent.diagnostics import GateDiagnostics
@@ -591,6 +593,93 @@ class RunnerTest(unittest.TestCase):
 
             with self.assertRaisesRegex(RuntimeError, "out-of-scope paths"):
                 runner._validate_unlocked_resume(("pom.xml",), task)
+
+
+    def test_unlocked_resume_accepts_downloaded_r4r_artifacts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runner = self._selection_runner(Path(directory))
+            task = runner._select_task()
+
+            runner._validate_unlocked_resume((
+                "r4r-laptop.zip",
+                "r4r-spring-ai.zip",
+                "fix-r4r-opencode-baseurls-v1.sh",
+                "payload/py-codex-agent/runner.py",
+                "SHA256SUMS.txt",
+            ), task)
+
+    def test_scoped_commit_excludes_downloaded_archive(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            self._init_repo(repo)
+            product = repo / "src" / "main" / "App.java"
+            product.parent.mkdir(parents=True)
+            product.write_text("class App {}\n", encoding="utf-8")
+            archive = repo / "r4r-laptop.zip"
+            archive.write_bytes(b"not product")
+            run_command(("git", "add", "r4r-laptop.zip"), repo)
+
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner.timeout = 30
+            commit = runner._commit_if_needed("task commit", ("src/**",))
+
+            self.assertIsNotNone(commit)
+            committed = run_command(
+                ("git", "show", "--name-only", "--pretty=", "HEAD"), repo
+            ).stdout.splitlines()
+            self.assertEqual(["src/main/App.java"], committed)
+            status = run_command(("git", "status", "--short"), repo).stdout
+            self.assertIn("r4r-laptop.zip", status)
+
+    def test_opencode_runtime_config_rejects_unresolved_url(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            agents = repo / ".opencode" / "agents"
+            agents.mkdir(parents=True)
+            (agents / "r4r-pc.md").write_text(
+                "model: ollama-pc/model\n", encoding="utf-8"
+            )
+            config = repo / "opencode.jsonc"
+            config.write_text(json.dumps({
+                "provider": {
+                    "ollama-pc": {
+                        "options": {"baseURL": "{env:MISSING}"},
+                        "models": {"model": {}},
+                    }
+                }
+            }), encoding="utf-8")
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner.opencode_agent = "r4r-pc"
+
+            with patch.dict(os.environ, {"OPENCODE_CONFIG": str(config)}):
+                with self.assertRaisesRegex(RuntimeError, "unresolved baseURL"):
+                    runner._validate_opencode_runtime_config()
+
+    def test_opencode_runtime_config_accepts_absolute_url(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            agents = repo / ".opencode" / "agents"
+            agents.mkdir(parents=True)
+            (agents / "r4r-pc.md").write_text(
+                "model: ollama-pc/model\n", encoding="utf-8"
+            )
+            config = repo / "opencode.jsonc"
+            config.write_text(json.dumps({
+                "provider": {
+                    "ollama-pc": {
+                        "options": {"baseURL": "http://127.0.0.1:11434/v1"},
+                        "models": {"model": {}},
+                    }
+                }
+            }), encoding="utf-8")
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner.opencode_agent = "r4r-pc"
+
+            with patch.dict(os.environ, {"OPENCODE_CONFIG": str(config)}):
+                runner._validate_opencode_runtime_config()
 
     @staticmethod
     def _init_repo(repo: Path) -> None:
