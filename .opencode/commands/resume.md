@@ -5,5 +5,5 @@ may adopt commits whose paths are entirely inside the active task; it must rejec
 out-of-scope commit.
 
 Before manual recovery, inspect only `./scripts/run-codex-agent.sh --status`,
-`runtime/locks/active-task.json` and the latest `state.json`. Do not reset, clean or
+`.opencode/progress.json` and the latest `state.json`. Do not reset, clean or
 commit merely to satisfy the lock.

@@ -61,47 +61,15 @@ public class PgVectorKnowledgeStore {
                     .add(chunk);
         }
 
-        // Prevalidation: build all Documents and check for duplicates across ALL sources before any mutation
         Map<String, List<Document>> preparedBatches = new LinkedHashMap<>();
-        Set<String> globalIds = new HashSet<>();
-
         for (Map.Entry<String, List<MarkdownChunk>> entry
                 : chunksBySource.entrySet()) {
 
-            String source = entry.getKey();
-            List<MarkdownChunk> sourceChunks = entry.getValue();
-
-            // Validate and prepare documents for this source
-            Set<String> sourceIds = new HashSet<>();
-            List<Document> sourceDocuments = new ArrayList<>(sourceChunks.size());
-
-            for (MarkdownChunk chunk : sourceChunks) {
-                Document document = toDocument(chunk);
-                String docId = document.getId();
-                
-                // Check for duplicate logical IDs within the same source
-                if (!sourceIds.add(docId)) {
-                    throw new IllegalArgumentException(
-                            "Duplicate logical chunk identity for source "
-                                    + source
-                                    + ": ordinal "
-                                    + chunk.index());
-                }
-                
-                // Check for duplicate logical IDs across all sources in this request
-                if (!globalIds.add(docId)) {
-                    throw new IllegalArgumentException(
-                            "Duplicate logical chunk identity across sources: "
-                                    + docId);
-                }
-                
-                sourceDocuments.add(document);
-            }
-
-            preparedBatches.put(source, List.copyOf(sourceDocuments));
+            preparedBatches.put(
+                    entry.getKey(),
+                    prepareDocuments(entry.getKey(), entry.getValue()));
         }
 
-        // All validation passed - now perform mutations
         for (Map.Entry<String, List<Document>> entry
                 : preparedBatches.entrySet()) {
 

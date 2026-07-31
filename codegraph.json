@@ -7,12 +7,6 @@
     "runtime/**",
     "docker-postgres/data/**",
     "docker-postgres/backups/**",
-    ".codegraph/**",
-    "patches-applied/**",
-    "**/*.zip",
-    "r4r-agent-update-v*/**",
-    "r4r-agent-hotfix-v*/**",
-    "r4r-self-recovery*/**",
-    "src/**/r4r-rollback-fix*/**"
+    ".codegraph/**"
   ]
 }
