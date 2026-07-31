@@ -5,7 +5,11 @@ DEST=""
 QUIET=0
 while (($#)); do
   case "$1" in
-    --destination) DEST="${2:-}"; shift 2 ;;
+    --destination)
+      [[ $# -ge 2 ]] || { echo "ERROR: falta valor para --destination" >&2; exit 2; }
+      DEST="${2^^}"
+      shift 2
+      ;;
     --quiet) QUIET=1; shift ;;
     -h|--help) echo "Uso: $0 --destination LP|PC"; exit 0 ;;
     *) echo "ERROR: opción desconocida: $1" >&2; exit 2 ;;
@@ -32,6 +36,13 @@ upsert() {
   mv "$tmp" "$file"
 }
 
+pc_url="$(grep '^R4R_OPENCODE_PC_BASE_URL=' .env | tail -n1 | cut -d= -f2- || true)"
+lp_url="$(grep '^R4R_OPENCODE_LP_BASE_URL=' .env | tail -n1 | cut -d= -f2- || true)"
+[[ "$pc_url" =~ ^https?:// ]] || pc_url="http://127.0.0.1:11434/v1"
+[[ "$lp_url" =~ ^https?:// ]] || lp_url="http://192.168.1.9:11434/v1"
+upsert .env R4R_OPENCODE_PC_BASE_URL "${pc_url%/}"
+upsert .env R4R_OPENCODE_LP_BASE_URL "${lp_url%/}"
+
 if [[ "$DEST" == LP ]]; then
   agent="r4r-laptop"
   gallery="r4r-gallery-laptop"
@@ -39,18 +50,8 @@ else
   agent="r4r-pc"
   gallery="r4r-gallery-pc"
 fi
-
 upsert .env R4R_OPENCODE_AGENT "$agent"
 upsert .env R4R_GALLERY_AGENT "$gallery"
 
-python3 - "$agent" <<'PY'
-import json
-from pathlib import Path
-import sys
-path = Path("opencode.jsonc")
-data = json.loads(path.read_text(encoding="utf-8"))
-data["default_agent"] = sys.argv[1]
-path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-PY
-
-(( QUIET )) || printf 'Destino=%s\nAgente=%s\nGalería=%s\n' "$DEST" "$agent" "$gallery"
+(( QUIET )) || printf 'Destino=%s\nAgente=%s\nGalería=%s\n' \
+  "$DEST" "$agent" "$gallery"

@@ -2,7 +2,7 @@
 description: Execute one compact Java R4R task with remote laptop Qwen3 30B
 mode: primary
 model: ollama-laptop/qwen3-30b-coder-28k-6k-t33:latest
-steps: 36
+steps: 32
 temperature: 0.33
 permission:
   "*": deny
@@ -32,7 +32,7 @@ permission:
   grep: allow
   list: allow
   bash: allow
-  codegraph_*: allow
+  codegraph_*: deny
   playwright_*: deny
   question: deny
   task: deny

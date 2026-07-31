@@ -71,3 +71,16 @@ __pycache__/
 
 runtime/installer/
 runtime/
+/.opencode/progress.json
+
+# BEGIN R4R stable agent repair artifacts
+/r4r-*.zip
+/r4r-*.zip.sha256
+/r4r-*.sha256
+/apply-r4r-*.sh
+/fix-r4r-*.sh
+/install-r4r-*.sh
+/SHA256SUMS.txt
+/README.txt
+/payload/
+# END R4R stable agent repair artifacts
