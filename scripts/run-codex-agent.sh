@@ -33,11 +33,15 @@ PY2
 agent="${values[0]}"; model="${values[1]}"; base_url="${values[2]%/}"; worker="${values[3]}"
 plan="${values[4]}"; progress="${values[5]}"; memory="${values[6]}"; control_dir="${values[7]}"; resolved_config="${values[8]}"; peer_paths_json="${values[9]}"
 export OPENCODE_CONFIG="$ROOT/$resolved_config"
-export OPENCODE_CONFIG_DIR="$ROOT/.opencode"
 [[ -s "$OPENCODE_CONFIG" ]] || {
   echo "ERROR: configuración resuelta vacía o inexistente: $OPENCODE_CONFIG" >&2
   exit 2
 }
+
+# Keep the normal project agent directory, but inject the fully resolved JSON
+# as the runtime layer. This avoids relying on OPENCODE_CONFIG_DIR to load a
+# second opencode.json, which is inconsistent across OpenCode 1.x releases.
+export OPENCODE_CONFIG_DIR="$ROOT/.opencode"
 export OPENCODE_CONFIG_CONTENT
 OPENCODE_CONFIG_CONTENT="$(cat "$OPENCODE_CONFIG")"
 export R4R_WORKER_ID="$DEST" R4R_OPENCODE_AGENT="$agent" R4R_PLAN_DISPLAY="$plan" R4R_MEMORY_PATH="$memory" R4R_PEER_PATHS_JSON="$peer_paths_json"
@@ -69,15 +73,35 @@ fi
 if (( ! SKIP_ENDPOINT )) && [[ "${R4R_OPENCODE_ENDPOINT_CHECK:-true}" == true ]]; then
   ./scripts/probe-r4r-model.sh --base-url "$base_url" --model "$model" --out "$ROOT/$control_dir/models.json"
 fi
-effective_models="$(${R4R_OPENCODE_BIN} models 2>&1)" || {
-  echo "ERROR: OpenCode no pudo cargar la configuración efectiva" >&2
+# First validate the generated JSON itself.
+python3 - "$OPENCODE_CONFIG" "$full_model" <<'PYCONFIG'
+import json, sys
+path, full = sys.argv[1], sys.argv[2]
+provider, model = full.split('/', 1)
+with open(path, encoding='utf-8') as handle:
+    data = json.load(handle)
+try:
+    data['provider'][provider]['models'][model]
+except KeyError as exc:
+    raise SystemExit(f"Resolved config does not contain {full}: missing {exc}")
+PYCONFIG
+
+provider_id="${full_model%%/*}"
+effective_models="$(${R4R_OPENCODE_BIN} --pure models "$provider_id" 2>&1)" || {
+  echo "ERROR: OpenCode no pudo cargar el proveedor efectivo: $provider_id" >&2
   printf '%s\n' "$effective_models" >&2
   exit 2
 }
-if ! grep -Fxq "$full_model" <<<"$effective_models"; then
+# Remove ANSI control sequences before exact comparison.
+clean_models="$(printf '%s\n' "$effective_models" | sed -E $'s/\x1B\[[0-9;]*[[:alpha:]]//g' | tr -d '\r')"
+if ! grep -Fxq "$full_model" <<<"$clean_models"; then
   echo "ERROR: OpenCode no publica el modelo resuelto: $full_model" >&2
-  echo "Config efectiva: $OPENCODE_CONFIG" >&2
-  printf '%s\n' "$effective_models" | grep -E 'ollama|qwen' >&2 || true
+  echo "Config resuelta: $OPENCODE_CONFIG" >&2
+  echo "OPENCODE_CONFIG_DIR: $OPENCODE_CONFIG_DIR" >&2
+  echo "Salida completa de: opencode models $provider_id" >&2
+  printf '%s\n' "$clean_models" >&2
+  echo "Diagnóstico recomendado:" >&2
+  echo "  OPENCODE_CONFIG='$OPENCODE_CONFIG' OPENCODE_CONFIG_DIR='$OPENCODE_CONFIG_DIR' OPENCODE_CONFIG_CONTENT='...' opencode --pure --print-logs --log-level DEBUG debug config" >&2
   exit 2
 fi
 echo "OK: modelo visible en OpenCode: $full_model"
