@@ -37,8 +37,10 @@ def load_json(path: Path) -> dict:
 
 
 def resolve_active_task(repo: Path) -> ActiveTask:
-    progress = load_json(repo / '.opencode' / 'progress.json')
-    plan = load_json(repo / '.opencode' / 'task-plan.json')
+    progress_rel = os.environ.get('R4R_PROGRESS_PATH', '.opencode/progress.frontend.json')
+    plan_rel = os.environ.get('R4R_PLAN_PATH', '.opencode/task-plan.frontend.json')
+    progress = load_json(repo / progress_rel)
+    plan = load_json(repo / plan_rel)
     active = progress.get('active_task')
     if not isinstance(active, str) or not active:
         for item in progress.get('tasks', []):

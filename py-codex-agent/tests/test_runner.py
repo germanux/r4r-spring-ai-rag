@@ -86,6 +86,22 @@ class RunnerTest(unittest.TestCase):
 
             self.assertEqual(("src/main/App.java",), changed)
 
+    def test_fingerprint_ignores_peer_owned_paths(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            self._init_repo(repo)
+            backend = repo / "src" / "main" / "App.java"
+            frontend = repo / "frontend" / "src" / "app.ts"
+            backend.parent.mkdir(parents=True, exist_ok=True)
+            frontend.parent.mkdir(parents=True, exist_ok=True)
+            backend.write_text("class App {}\n", encoding="utf-8")
+            frontend.write_text("export const x = 1;\n", encoding="utf-8")
+            before = git_worktree_fingerprint(repo, ("frontend/**",))
+            frontend.write_text("export const x = 2;\n", encoding="utf-8")
+            self.assertEqual(before, git_worktree_fingerprint(repo, ("frontend/**",)))
+            backend.write_text("class App { int x; }\n", encoding="utf-8")
+            self.assertNotEqual(before, git_worktree_fingerprint(repo, ("frontend/**",)))
+
     def test_builds_read_only_codex_command(self):
         command = codex_exec_command("codex", Path("schema.json"), Path("out.json"), "gpt-test")
         self.assertIn("read-only", command)

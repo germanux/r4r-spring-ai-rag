@@ -1,12 +1,24 @@
 {
   "private": true,
   "scripts": {
+    "config:check": "node ./scripts/resolve-r4r-config.mjs --destination PC --print && node ./scripts/resolve-r4r-config.mjs --destination LP --print",
+    "agent:pc": "bash ./scripts/run-codex-agent.sh --destination PC",
+    "agent:lp": "bash ./scripts/run-codex-agent.sh --destination LP",
+    "agent:both": "bash ./scripts/run-r4r-agents-both.sh",
+    "agent:status:pc": "bash ./scripts/run-codex-agent.sh --destination PC --status",
+    "agent:status:lp": "bash ./scripts/run-codex-agent.sh --destination LP --status",
+    "repos:list": "node ./scripts/sync-code-repositories.mjs --list",
+    "repos:sync": "node ./scripts/sync-code-repositories.mjs",
+    "code:index": "node ./scripts/index-code-repositories.mjs",
+    "code:index:cgr": "node ./scripts/index-code-repositories.mjs --cgr-only",
+    "code:index:codegraph": "node ./scripts/index-code-repositories.mjs --codegraph-only",
     "cgr:doctor": "bash ./scripts/cgr.sh doctor",
     "cgr:up": "bash ./scripts/cgr.sh up",
     "cgr:down": "bash ./scripts/cgr.sh down",
     "cgr:index": "bash ./scripts/cgr.sh index",
     "cgr:index:clean": "bash ./scripts/cgr.sh index-clean",
     "cgr:query": "bash ./scripts/cgr.sh query",
+    "cgr:query:workspace": "bash ./scripts/cgr.sh query-workspace r4r-code",
     "cgr:mcp": "bash ./scripts/cgr.sh mcp"
   }
 }

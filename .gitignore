@@ -72,3 +72,14 @@ runtime/
 .cgr-dir-mtimes.json
 # Local agent sessions
 .tmp/session_*.log
+.env.r4r.local
+/.r4r/reference-repositories/
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.angular/
+/frontend/test-results/
+/frontend/playwright-report/
+/.opencode/progress.*.json
+/.opencode/memory.*.md
+
+progress.json

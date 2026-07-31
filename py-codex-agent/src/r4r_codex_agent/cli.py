@@ -24,6 +24,8 @@ def main() -> None:
     repo = args.repo.resolve()
     plan_path = args.plan if args.plan.is_absolute() else repo / args.plan
     progress_path = args.progress if args.progress.is_absolute() else repo / args.progress
+    os.environ.setdefault("R4R_PLAN_PATH", str(plan_path.relative_to(repo) if plan_path.is_relative_to(repo) else plan_path))
+    os.environ.setdefault("R4R_PROGRESS_PATH", str(progress_path.relative_to(repo) if progress_path.is_relative_to(repo) else progress_path))
     runner: AutomaticRunner | None = None
     try:
         runner = AutomaticRunner(repo, load_task_plan(plan_path), progress_path)
