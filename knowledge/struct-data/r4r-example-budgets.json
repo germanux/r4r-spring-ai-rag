@@ -1,0 +1,191 @@
+{
+  "version": "1.0",
+  "updated_at": "2026-07-27",
+  "budgets": [
+    {
+      "id": "B-001",
+      "name": "Reforma integral de vivienda de 80 m2",
+      "status": "synthetic_non_binding",
+      "low": 32000,
+      "base": 42000,
+      "high": 52000,
+      "basis": [
+        "P-001",
+        "SRC-HAB-VIVIENDA"
+      ],
+      "assumptions": [
+        "calidad media",
+        "sin estructura",
+        "distribución moderada",
+        "acceso normal"
+      ],
+      "exclusions": [
+        "IVA",
+        "proyecto cuando proceda",
+        "tasas",
+        "amianto",
+        "daños estructurales"
+      ],
+      "explanation": "80 m2 multiplicados por el rango de 400–650 EUR/m2; la base se aproxima al ejemplo publicado desde 40.000 EUR."
+    },
+    {
+      "id": "B-002",
+      "name": "Casa antigua de 120 m2 sin refuerzo estructural",
+      "status": "synthetic_non_binding",
+      "low": 42000,
+      "base": 50000,
+      "high": 54000,
+      "basis": [
+        "P-002",
+        "SRC-HAB-ANTIGUA"
+      ],
+      "assumptions": [
+        "sin estructura",
+        "sin redistribución amplia",
+        "calidades medias"
+      ],
+      "exclusions": [
+        "cubierta completa",
+        "cimentación",
+        "humedad estructural",
+        "proyecto y tasas"
+      ],
+      "explanation": "120 m2 por 350–450 EUR/m2. La fuente publica un desglose de 41.900 EUR como ejemplo."
+    },
+    {
+      "id": "B-003",
+      "name": "Casa antigua de 120 m2 con estructura y redistribución",
+      "status": "synthetic_non_binding",
+      "low": 64000,
+      "base": 72000,
+      "high": 100000,
+      "basis": [
+        "P-003",
+        "P-004",
+        "SRC-HAB-ANTIGUA"
+      ],
+      "assumptions": [
+        "refuerzo localizado",
+        "redistribución",
+        "instalaciones completas"
+      ],
+      "exclusions": [
+        "patologías graves no detectadas",
+        "cubierta integral",
+        "cimentación especial"
+      ],
+      "explanation": "Las referencias publicadas alcanzan 533–600 EUR/m2 y la propia guía señala que una intervención profunda puede llegar a 100.000 EUR."
+    },
+    {
+      "id": "B-004",
+      "name": "Cocina de 7 m2, calidad media",
+      "status": "synthetic_non_binding",
+      "low": 5600,
+      "base": 6500,
+      "high": 9000,
+      "basis": [
+        "P-006"
+      ],
+      "assumptions": [
+        "mobiliario básico",
+        "sin muro de carga",
+        "instalaciones cercanas"
+      ],
+      "exclusions": [
+        "electrodomésticos premium",
+        "encimera premium",
+        "apertura al salón"
+      ],
+      "explanation": "Rango directo de la guía de precios consultada."
+    },
+    {
+      "id": "B-005",
+      "name": "Baño de 5 m2, calidad media",
+      "status": "synthetic_non_binding",
+      "low": 4250,
+      "base": 5200,
+      "high": 7500,
+      "basis": [
+        "P-012",
+        "P-013"
+      ],
+      "assumptions": [
+        "distribución conservada",
+        "impermeabilización estándar",
+        "sanitarios medios"
+      ],
+      "exclusions": [
+        "cambio de bajante",
+        "daños de forjado",
+        "mobiliario de lujo"
+      ],
+      "explanation": "La base amplía la tabla publicada para incluir contingencias habituales no uniformes entre proyectos."
+    },
+    {
+      "id": "B-006",
+      "name": "Suelo laminado en 70 m2",
+      "status": "synthetic_non_binding",
+      "low": 1750,
+      "base": 2100,
+      "high": 4550,
+      "basis": [
+        "P-014",
+        "P-015"
+      ],
+      "assumptions": [
+        "soporte razonablemente plano",
+        "calidad media"
+      ],
+      "exclusions": [
+        "retirada",
+        "nivelación intensa",
+        "rodapié especial",
+        "recorte de puertas"
+      ],
+      "explanation": "70 m2 multiplicados por 25–30 EUR/m2; extremo alto según rango general de 65 EUR/m2."
+    },
+    {
+      "id": "B-007",
+      "name": "Pintura blanca de piso de 100 m2",
+      "status": "synthetic_non_binding",
+      "low": 1000,
+      "base": 1300,
+      "high": 2800,
+      "basis": [
+        "P-016",
+        "P-017"
+      ],
+      "assumptions": [
+        "paredes razonables",
+        "protección estándar"
+      ],
+      "exclusions": [
+        "humedad activa",
+        "alisar toda la vivienda",
+        "pintura decorativa"
+      ],
+      "explanation": "La base usa el ejemplo de 1.300 EUR; el extremo alto contempla preparación y reparación adicional."
+    },
+    {
+      "id": "B-008",
+      "name": "Demolición de 30 m2 de alicatado",
+      "status": "synthetic_non_binding",
+      "low": 267,
+      "base": 650,
+      "high": 1200,
+      "basis": [
+        "P-018"
+      ],
+      "assumptions": [
+        "demolición manual",
+        "acceso normal"
+      ],
+      "exclusions": [
+        "contenedor y tasas si no se indican",
+        "protecciones complejas",
+        "retirada de instalaciones"
+      ],
+      "explanation": "El mínimo es 30 × 8,90 EUR/m2 según unidad técnica; base y alto añaden logística, protección y gestión real de obra."
+    }
+  ]
+}
