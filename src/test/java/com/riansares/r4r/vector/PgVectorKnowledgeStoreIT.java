@@ -148,6 +148,47 @@ class PgVectorKnowledgeStoreIT {
     }
 
     @Test
+    void crossSourcePrevalidationRejectsDuplicatesAndPreservesExistingData() {
+        // Seed existing rows for two sources
+        store.index(List.of(
+                new MarkdownChunk("source-a.md", List.of("Section"), 0, "Original A0"),
+                new MarkdownChunk("source-a.md", List.of("Section"), 1, "Original A1"),
+                new MarkdownChunk("source-b.md", List.of("Section"), 0, "Original B0")));
+
+        // Snapshot existing state
+        long countSourceA = countForSource("source-a.md");
+        long countSourceB = countForSource("source-b.md");
+
+        String contentA0Before = storedContent("source-a.md", 0);
+        String contentA1Before = storedContent("source-a.md", 1);
+        String contentB0Before = storedContent("source-b.md", 0);
+
+        UUID idA0Before = storedId("source-a.md", 0);
+        UUID idA1Before = storedId("source-a.md", 1);
+        UUID idB0Before = storedId("source-b.md", 0);
+
+        // Submit valid earlier source followed by later source with duplicate logical IDs
+        assertThatThrownBy(() -> store.index(List.of(
+                new MarkdownChunk("source-a.md", List.of("Section"), 0, "Duplicate A0"),
+                new MarkdownChunk("source-a.md", List.of("Section"), 1, "Duplicate A1"),
+                new MarkdownChunk("source-b.md", List.of("Section"), 0, "Duplicate B0"))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Duplicate logical chunk identity");
+
+        // Verify no mutation occurred - all data preserved
+        assertThat(countForSource("source-a.md")).isEqualTo(countSourceA);
+        assertThat(countForSource("source-b.md")).isEqualTo(countSourceB);
+
+        assertThat(storedContent("source-a.md", 0)).isEqualTo(contentA0Before);
+        assertThat(storedContent("source-a.md", 1)).isEqualTo(contentA1Before);
+        assertThat(storedContent("source-b.md", 0)).isEqualTo(contentB0Before);
+
+        assertThat(storedId("source-a.md", 0)).isEqualTo(idA0Before);
+        assertThat(storedId("source-a.md", 1)).isEqualTo(idA1Before);
+        assertThat(storedId("source-b.md", 0)).isEqualTo(idB0Before);
+    }
+
+    @Test
     void similaritySearchUsesRealPgvectorAndPreservesExactChunkData() {
         store.index(List.of(
                 new MarkdownChunk(
@@ -420,6 +461,8 @@ class PgVectorKnowledgeStoreIT {
         List<MarkdownChunk> strict = store.search("apple banana", 10, 0.9);
 
         assertThat(permissive).anySatisfy(chunk -> assertThat(chunk.source()).isEqualTo("high.md"));
+        assertThat(strict).isNotEmpty();
+        assertThat(strict).anySatisfy(chunk -> assertThat(chunk.source()).isEqualTo("high.md"));
         assertThat(strict).noneSatisfy(chunk -> assertThat(chunk.source()).isEqualTo("low.md"));
     }
 
@@ -453,12 +496,11 @@ class PgVectorKnowledgeStoreIT {
 
     @Test
     void rejectsNullChunkEntry() {
-        assertThatThrownBy(() -> {
-            List<MarkdownChunk> listWithNull = new ArrayList<>();
-            listWithNull.add(chunk("source.md", 0, "Valid"));
-            listWithNull.add(null);
-            store.index(listWithNull);
-        })
+        List<MarkdownChunk> listWithNull = new ArrayList<>();
+        listWithNull.add(chunk("source.md", 0, "Valid"));
+        listWithNull.add(null);
+
+        assertThatThrownBy(() -> store.index(listWithNull))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("chunk must not be null");
     }
@@ -533,6 +575,35 @@ class PgVectorKnowledgeStoreIT {
                         -1,
                         "Content"))))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void deterministicEmbeddingModelProduces768DimVectors() {
+        DeterministicEmbeddingModel model = new DeterministicEmbeddingModel();
+
+        assertThat(model.dimensions()).isEqualTo(768);
+
+        float[] vector1 = model.embed("test text");
+        assertThat(vector1).hasSize(768);
+
+        float[] vector2 = model.embed("test text");
+        assertThat(vector2).hasSize(768);
+        assertThat(vector2).containsExactly(vector1);
+
+        String relevantText = "spring boot java microservice";
+        String irrelevantText = "xyz abc def ghi jkl";
+
+        float[] relevantVector = model.embed(relevantText);
+        float[] irrelevantVector = model.embed(irrelevantText);
+
+        boolean distinguishable = false;
+        for (int i = 0; i < relevantVector.length; i++) {
+            if (Math.abs(relevantVector[i] - irrelevantVector[i]) > 0.01) {
+                distinguishable = true;
+                break;
+            }
+        }
+        assertThat(distinguishable).isTrue();
     }
 
     @Test
@@ -681,5 +752,40 @@ class PgVectorKnowledgeStoreIT {
         assertThatThrownBy(() -> store.fromDocument(document))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("'ordinal'");
+    }
+
+    @Test
+    void retrievalFailsForNonStringHeadingPathElement() {
+        Document document = Document.builder()
+                .id("test-id")
+                .text("content")
+                .metadata(Map.of(
+                        PgVectorKnowledgeStore.SOURCE_METADATA, "source.md",
+                        PgVectorKnowledgeStore.HEADING_PATH_METADATA,
+                                List.of("valid", Integer.valueOf(123)),
+                        PgVectorKnowledgeStore.ORDINAL_METADATA, 0))
+                .build();
+
+        assertThatThrownBy(() -> store.fromDocument(document))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("'headingPath'")
+                .hasMessageContaining("non-string");
+    }
+
+    @Test
+    void retrievalFailsForNonNumberOrdinal() {
+        Document document = Document.builder()
+                .id("test-id")
+                .text("content")
+                .metadata(Map.of(
+                        PgVectorKnowledgeStore.SOURCE_METADATA, "source.md",
+                        PgVectorKnowledgeStore.HEADING_PATH_METADATA, List.of(),
+                        PgVectorKnowledgeStore.ORDINAL_METADATA, "not-a-number"))
+                .build();
+
+        assertThatThrownBy(() -> store.fromDocument(document))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("'ordinal'")
+                .hasMessageContaining("numeric");
     }
 }

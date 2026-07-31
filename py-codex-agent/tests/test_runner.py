@@ -8,10 +8,12 @@ from r4r_codex_agent.runner import (
     AutomaticRunner,
     CommandResult,
     codex_exec_command,
+    extract_codegraph_tool_calls,
     extract_opencode_text,
     git_product_changed_paths,
     git_worktree_fingerprint,
     is_controller_runtime_path,
+    is_lock_auto_advance_path,
     path_is_allowed,
     run_command,
 )
@@ -26,6 +28,35 @@ class RunnerTest(unittest.TestCase):
     def test_matches_allowed_paths(self):
         self.assertTrue(path_is_allowed("src/main/App.java", ("src/**",)))
         self.assertFalse(path_is_allowed("scripts/task-gate.sh", ("src/**",)))
+
+    def test_lock_auto_advance_accepts_canonical_and_packaged_maintenance_paths(self):
+        self.assertTrue(
+            is_lock_auto_advance_path(
+                "py-codex-agent/src/r4r_codex_agent/runner.py"
+            )
+        )
+        self.assertTrue(
+            is_lock_auto_advance_path(
+                "r4r-agent-update-v2/py-codex-agent/src/r4r_codex_agent/runner.py"
+            )
+        )
+        self.assertTrue(
+            is_lock_auto_advance_path(
+                "r4r-self-recovery/scripts/run-codex-agent.sh"
+            )
+        )
+        self.assertTrue(is_lock_auto_advance_path("r4r-agent-update-v2.zip"))
+        self.assertTrue(
+            is_lock_auto_advance_path("install-r4r-agent-hotfix-v3.sh")
+        )
+
+    def test_lock_auto_advance_rejects_product_files_inside_bundle_directory(self):
+        self.assertFalse(
+            is_lock_auto_advance_path(
+                "r4r-agent-update-v2/src/main/java/example/App.java"
+            )
+        )
+        self.assertFalse(is_lock_auto_advance_path("todos.zip"))
 
     def test_controller_runtime_paths_are_not_product_scope(self):
         self.assertTrue(
@@ -192,7 +223,12 @@ class RunnerTest(unittest.TestCase):
             )
             gate = CommandResult(task.gate, 0, "green", "")
 
-            prompt = runner._opencode_prompt(task, gate, "Fix tests.")
+            prompt = runner._opencode_prompt(
+                task,
+                gate,
+                "Fix tests.",
+                "# CodeGraph reconnaissance report\nFound KnowledgeService callers.",
+            )
 
             self.assertIn("Assert exact ordered heading paths.", prompt)
             self.assertIn(
@@ -200,7 +236,179 @@ class RunnerTest(unittest.TestCase):
                 prompt,
             )
             self.assertIn("Do not add a pipeline", prompt)
+            self.assertIn("MANDATORY CODEGRAPH RECONNAISSANCE EVIDENCE", prompt)
+            self.assertIn("Found KnowledgeService callers", prompt)
 
+    def test_extracts_actual_codegraph_tool_calls_from_nested_jsonl(self):
+        stdout = "\n".join([
+            json.dumps({
+                "type": "tool",
+                "part": {
+                    "type": "tool",
+                    "tool": "codegraph_search",
+                    "state": {"status": "completed"},
+                },
+            }),
+            json.dumps({
+                "type": "text",
+                "part": {
+                    "type": "text",
+                    "text": "I mention codegraph_fake in prose only.",
+                },
+            }),
+        ])
+
+        calls = extract_codegraph_tool_calls(stdout)
+
+        self.assertEqual(("codegraph_search",), calls)
+
+    def test_codegraph_prompt_requires_verified_mcp_call(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            self._init_repo(repo)
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            task = Task(
+                "task-03",
+                "task-03.md",
+                "pgvector",
+                ("src/**",),
+                ("true",),
+                "commit",
+            )
+            gate = CommandResult(task.gate, 1, "", "compile failure")
+
+            prompt = runner._codegraph_reconnaissance_prompt(task, gate, 2)
+
+            self.assertIn("one actual tool call", prompt)
+            self.assertIn("codegraph_*", prompt)
+            self.assertIn("prose about CodeGraph does not count", prompt)
+
+    def test_codegraph_reconnaissance_persists_verified_tool_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            self._init_repo(repo)
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner.codegraph_bin = "codegraph"
+            runner.opencode_bin = "opencode"
+            runner.opencode_agent = "r4r-pc"
+            runner.codegraph_retries = 0
+            task = Task(
+                "task-03",
+                "task-03.md",
+                "pgvector",
+                ("src/**",),
+                ("true",),
+                "commit",
+            )
+            gate = CommandResult(task.gate, 1, "", "red")
+            attempt = repo / "runtime" / "attempt-01"
+            results = iter((
+                CommandResult(("codegraph", "sync"), 0, "", ""),
+                CommandResult(
+                    ("opencode",),
+                    0,
+                    "\n".join((
+                        json.dumps({
+                            "type": "tool",
+                            "part": {
+                                "type": "tool",
+                                "tool": "codegraph_search",
+                            },
+                        }),
+                        json.dumps({
+                            "type": "text",
+                            "part": {
+                                "type": "text",
+                                "text": "# CodeGraph reconnaissance report\nFound PgVectorKnowledgeStore.",
+                            },
+                        }),
+                    )),
+                    "",
+                ),
+            ))
+            runner._run_logged = lambda *args, **kwargs: next(results)
+
+            report = runner._run_codegraph_reconnaissance(
+                task,
+                gate,
+                attempt,
+            )
+
+            self.assertIn("PgVectorKnowledgeStore", report)
+            calls = json.loads(
+                (attempt / "evidence" / "codegraph-tool-calls.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(["codegraph_search"], calls["calls"])
+            self.assertTrue(calls["required"])
+
+    def test_codegraph_reconnaissance_rejects_prose_only_claim(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            self._init_repo(repo)
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner.codegraph_bin = "codegraph"
+            runner.opencode_bin = "opencode"
+            runner.opencode_agent = "r4r-pc"
+            runner.codegraph_retries = 0
+            task = Task(
+                "task-03",
+                "task-03.md",
+                "pgvector",
+                ("src/**",),
+                ("true",),
+                "commit",
+            )
+            gate = CommandResult(task.gate, 1, "", "red")
+            results = iter((
+                CommandResult(("codegraph", "sync"), 0, "", ""),
+                CommandResult(
+                    ("opencode",),
+                    0,
+                    json.dumps({
+                        "type": "text",
+                        "part": {
+                            "type": "text",
+                            "text": "I looked at CodeGraph without calling a tool.",
+                        },
+                    }),
+                    "",
+                ),
+            ))
+            runner._run_logged = lambda *args, **kwargs: next(results)
+
+            with self.assertRaisesRegex(RuntimeError, "no actual codegraph"):
+                runner._run_codegraph_reconnaissance(
+                    task,
+                    gate,
+                    repo / "runtime" / "attempt-01",
+                )
+
+    def test_record_unhandled_failure_writes_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            self._init_repo(repo)
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner.run_id = "20260730T235900Z"
+            runner.run_dir = repo / "runtime" / "runs" / runner.run_id
+            runner.run_dir.mkdir(parents=True)
+
+            exit_code = runner.record_unhandled_failure(
+                RuntimeError("out-of-scope maintenance files")
+            )
+
+            self.assertEqual(2, exit_code)
+            state = json.loads(
+                (runner.run_dir / "state.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual("CONTROLLER_EXCEPTION", state["status"])
+            self.assertEqual("RuntimeError", state["error_type"])
+            self.assertIn("out-of-scope", state["error"])
 
     def test_compact_revision_context_omits_long_companion_but_keeps_manifest(self):
         with tempfile.TemporaryDirectory() as directory:

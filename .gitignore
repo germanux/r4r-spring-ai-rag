@@ -55,3 +55,16 @@ dist/
 !/docker-postgres/backups/.gitkeep
 
 patches-applied/
+
+# R4R agent update artifacts
+/todos.zip
+/r4r-agent-update-v*.zip
+/r4r-agent-hotfix-v*.zip
+/r4r-self-recovery-files.zip
+/r4r-agent-update-v*/
+/r4r-agent-hotfix-v*/
+/r4r-self-recovery/
+/install-r4r-agent-update-v*.sh
+/install-r4r-agent-hotfix-v*.sh
+__pycache__/
+*.py[cod]
