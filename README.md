@@ -143,6 +143,8 @@ runtime/
 This includes logs, evidence, Codex decisions, token usage, task state and recovery
 information. Runtime output is ignored by Git.
 
+gitlab url: https://gitlab.com/germancaballero/r4r.git
+
 ## License
 
 Copyright (c) 2026 Germán Caballero Rodríguez.

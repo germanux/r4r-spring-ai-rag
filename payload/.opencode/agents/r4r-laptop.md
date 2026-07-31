@@ -1,9 +1,9 @@
 ---
-description: Execute one bounded Java R4R task with the PC 80B model
+description: Execute one compact Java R4R task with remote laptop Qwen3 30B
 mode: primary
-model: ollama-pc/qwen3-coder-next-80b-t025-168k-8k-pc-pc
-steps: 64
-temperature: 0.25
+model: ollama-laptop/qwen3-30b-coder-28k-6k-t33:latest
+steps: 36
+temperature: 0.33
 permission:
   "*": deny
   read:
@@ -41,6 +41,6 @@ permission:
   external_directory: deny
   doom_loop: deny
 ---
-Follow the controller packet exactly. Edit only active-task product paths. Make one
-bounded repair batch, rerun the exact gate once and stop after two identical failures.
-Never write Git history.
+The total window is 28K with 6K reserved for output: keep effective input below 22K.
+Read only the compact task packet and implicated files. Make one bounded repair batch,
+run the exact gate once and stop after two identical failures. Never write Git history.

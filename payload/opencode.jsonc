@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "default_agent": "r4r-laptop",
+  "default_agent": "r4r-pc",
   "share": "disabled",
   "snapshot": true,
   "provider": {
@@ -16,10 +16,7 @@
         "qwen3-coder-next-80b-t025-168k-8k-pc-pc": {
           "name": "Qwen3-Coder-Next 80B PC 168K/8K",
           "temperature": true,
-          "limit": {
-            "context": 172032,
-            "output": 8192
-          }
+          "limit": { "context": 172032, "output": 8192 }
         }
       }
     },
@@ -35,10 +32,7 @@
         "qwen3-30b-coder-28k-6k-t33:latest": {
           "name": "Qwen3 Coder 30B Laptop 28K/6K t33",
           "temperature": true,
-          "limit": {
-            "context": 28672,
-            "output": 6144
-          }
+          "limit": { "context": 28672, "output": 6144 }
         }
       }
     }
@@ -50,31 +44,19 @@
   "mcp": {
     "codegraph": {
       "type": "local",
-      "command": [
-        "codegraph",
-        "serve",
-        "--mcp"
-      ],
+      "command": ["codegraph", "serve", "--mcp"],
       "enabled": true,
       "timeout": 15000
     },
     "playwright": {
       "type": "local",
       "command": [
-        "npx",
-        "-y",
-        "@playwright/mcp@latest",
-        "--headless",
-        "--isolated",
-        "--block-service-workers",
-        "--image-responses",
-        "omit",
-        "--viewport-size",
-        "1440x1000",
-        "--timeout-navigation",
-        "90000",
-        "--output-dir",
-        "runtime/playwright"
+        "npx", "-y", "@playwright/mcp@latest",
+        "--headless", "--isolated", "--block-service-workers",
+        "--image-responses", "omit",
+        "--viewport-size", "1440x1000",
+        "--timeout-navigation", "90000",
+        "--output-dir", "runtime/playwright"
       ],
       "enabled": true,
       "timeout": 30000
@@ -82,17 +64,9 @@
   },
   "watcher": {
     "ignore": [
-      ".git/**",
-      ".codegraph/**",
-      "runtime/**",
-      "target/**",
-      "dist/**",
-      "node_modules/**",
-      "docker-postgres/data/**",
-      "patches-applied/**",
-      "**/*.zip",
-      "r4r-agent-update-v*/**",
-      "r4r-agent-hotfix-v*/**"
+      ".git/**", ".codegraph/**", "runtime/**", "target/**", "dist/**",
+      "node_modules/**", "docker-postgres/data/**", "patches-applied/**",
+      "**/*.zip", "r4r-agent-update-v*/**", "r4r-agent-hotfix-v*/**"
     ]
   }
 }
