@@ -1,8 +1,8 @@
 ---
-description: Execute one compact Java R4R task with remote laptop Qwen3 30B
+description: Execute one compact R4R task with remote laptop Qwen3 30B
 mode: primary
 model: ollama-laptop/qwen3-30b-coder-28k-6k-t33:latest
-steps: 32
+steps: 120
 temperature: 0.33
 permission:
   "*": deny
@@ -41,6 +41,7 @@ permission:
   external_directory: deny
   doom_loop: deny
 ---
-The total window is 28K with 6K reserved for output: keep effective input below 22K.
-Read only the compact task packet and implicated files. Make one bounded repair batch,
-run the exact gate once and stop after two identical failures. Never write Git history.
+The laptop route uses the repository's compact direct worker instead of the full
+OpenCode tool loop. The worker receives a bounded Codex packet and selected source
+files, returns complete task-scoped file contents, validates every path locally and
+lets the Python controller run the exact gate. It never writes Git history.
