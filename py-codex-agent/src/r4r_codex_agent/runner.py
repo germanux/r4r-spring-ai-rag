@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from fnmatch import fnmatch
+import fcntl
 import hashlib
 import json
 import os
@@ -34,6 +36,7 @@ class CommandResult:
 def run_command(
     command: Sequence[str], cwd: Path, input_text: str | None = None,
     timeout_seconds: int | None = None, stream: bool = False,
+    env: dict[str, str] | None = None,
 ) -> CommandResult:
     if not command:
         raise ValueError("Command cannot be empty")
@@ -41,7 +44,7 @@ def run_command(
         list(command), cwd=cwd,
         stdin=subprocess.PIPE if input_text is not None else None,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        text=True, bufsize=1, start_new_session=True,
+        text=True, bufsize=1, start_new_session=True, env=env,
     )
     stdout_parts: list[str] = []
     stderr_parts: list[str] = []
@@ -105,8 +108,9 @@ def git_worktree_fingerprint(
     ignored_patterns: Sequence[str] = (),
 ) -> str:
     """Fingerprint current non-maintenance changes while ignoring peer-owned paths."""
+    # Git history is validated independently. Keeping HEAD out of this digest
+    # prevents a safe peer commit from looking like a local file write.
     digest = hashlib.sha256()
-    digest.update((git_head(repo) or "<no-head>").encode("utf-8"))
     for relative in git_changed_paths(repo):
         if is_controller_runtime_path(relative) or is_lock_auto_advance_path(relative):
             continue
@@ -215,13 +219,37 @@ def is_lock_auto_advance_path(path: str) -> bool:
 
 
 def git_paths_between(repo: Path, base: str, head: str) -> tuple[str, ...]:
-    result = run_command(("git", "diff", "--name-only", "-z", f"{base}..{head}"), repo)
-    return tuple(sorted(_nul_paths(result)))
+    # Inspect every commit in the fast-forward range, not only the net tree diff.
+    # This prevents an unsafe path changed and later reverted from disappearing.
+    result = run_command(
+        ("git", "log", "--format=", "--name-only", "-z", f"{base}..{head}"),
+        repo,
+    )
+    if result.exit_code != 0:
+        raise RuntimeError(result.stderr.strip() or "Git history path query failed")
+    paths = {
+        value.strip("\n")
+        for value in result.stdout.split("\0")
+        if value.strip("\n")
+    }
+    return tuple(sorted(paths))
 
 
 def git_is_ancestor(repo: Path, ancestor: str, descendant: str) -> bool:
     result = run_command(("git", "merge-base", "--is-ancestor", ancestor, descendant), repo)
     return result.exit_code == 0
+
+
+@contextmanager
+def exclusive_file_lock(path: Path):
+    """Serialize cooperating controller Git index/history writes."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a+", encoding="utf-8") as handle:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
 
 def codex_exec_command(binary: str, schema: Path, output: Path, model: str | None = None) -> tuple[str, ...]:
@@ -295,6 +323,25 @@ class AutomaticRunner:
     def __init__(self, repo: Path, plan: TaskPlan, progress_path: Path):
         self.repo = repo.resolve()
         self.worker_id = os.environ.get("R4R_WORKER_ID", "PC").strip().upper() or "PC"
+        self.git_author_name = os.environ.get(
+            "R4R_GIT_AUTHOR_NAME", ""
+        ).strip()
+        self.git_author_email = os.environ.get(
+            "R4R_GIT_AUTHOR_EMAIL", ""
+        ).strip()
+        if (
+            not self.git_author_name
+            or not self.git_author_email
+            or "\n" in self.git_author_name
+            or "\r" in self.git_author_name
+            or "\n" in self.git_author_email
+            or "\r" in self.git_author_email
+            or "@" not in self.git_author_email
+        ):
+            raise ValueError(
+                "R4R_GIT_AUTHOR_NAME and R4R_GIT_AUTHOR_EMAIL must define "
+                f"a valid single-line Git identity for worker {self.worker_id}"
+            )
         try:
             peer_value = json.loads(os.environ.get("R4R_PEER_PATHS_JSON", "[]"))
         except json.JSONDecodeError as exception:
@@ -357,6 +404,9 @@ class AutomaticRunner:
         # Legacy path is retained only so old locks can be deleted safely.
         # Task continuation is recorded in .opencode/progress.json.
         self.lock_path = self.repo / "runtime" / "locks" / "active-task.json"
+        self.git_commit_lock_path = (
+            self.repo / "runtime" / "locks" / "git-commit.lock"
+        )
         self.active_task_lock_enabled = False
         memory_value = Path(os.environ.get("R4R_MEMORY_PATH", ".opencode/memory.md"))
         self.memory_path = memory_value if memory_value.is_absolute() else self.repo / memory_value
@@ -371,6 +421,55 @@ class AutomaticRunner:
 
     def _worktree_fingerprint(self) -> str:
         return git_worktree_fingerprint(self.repo, getattr(self, "peer_paths", ()))
+
+    def _accept_safe_external_head_change(
+        self,
+        before_head: str | None,
+        phase: str,
+    ) -> bool:
+        """Accept only fast-forward commits confined to peer/maintenance paths.
+
+        This avoids falsely blaming the current OpenCode session when the other
+        worker or a human maintenance commit advances the shared worktree HEAD.
+        Worker-owned product commits, rewrites and branch switches remain fatal.
+        """
+        after_head = git_head(self.repo)
+        if after_head == before_head:
+            return False
+        if before_head is None or after_head is None:
+            raise RuntimeError(
+                f"{phase}: Git HEAD became unavailable or was newly created"
+            )
+        if not git_is_ancestor(self.repo, before_head, after_head):
+            raise RuntimeError(
+                f"{phase}: non-fast-forward Git history change detected "
+                f"({before_head} -> {after_head})"
+            )
+
+        committed_paths = git_paths_between(self.repo, before_head, after_head)
+        safe_patterns = (
+            *getattr(self, "peer_paths", ()),
+            *MAINTENANCE_PATHS,
+        )
+        unsafe_paths = tuple(
+            path
+            for path in committed_paths
+            if not is_controller_runtime_path(path)
+            and not path_is_allowed(path, safe_patterns)
+        )
+        if unsafe_paths:
+            raise RuntimeError(
+                f"{phase}: Git HEAD advanced through worker-owned or mixed paths: "
+                f"{list(unsafe_paths)}"
+            )
+
+        print(
+            f"[r4r] safe external fast-forward during {phase}: "
+            f"{before_head[:12]} -> {after_head[:12]}; "
+            f"paths={list(committed_paths)}",
+            flush=True,
+        )
+        return True
 
     def execute(self) -> int:
         self._require_binary(self.opencode_bin)
@@ -492,6 +591,38 @@ class AutomaticRunner:
         )
         return any(marker in text for marker in markers)
 
+    def _manual_commit_paths(self, task: Task) -> tuple[str, ...]:
+        # Return only dirty product paths owned by the selected task.
+        return tuple(
+            path for path in git_changed_paths(self.repo)
+            if not is_controller_runtime_path(path)
+            and not is_lock_auto_advance_path(path)
+            and not path_is_allowed(path, getattr(self, "peer_paths", ()))
+            and path_is_allowed(path, task.allowed_paths)
+        )
+
+    @staticmethod
+    def _manual_commit_guidance(
+        task: Task, paths: Sequence[str],
+    ) -> str:
+        # Build safe, copyable manual Git commands without executing them.
+        unique_paths = tuple(dict.fromkeys(paths))
+        lines = [
+            f"Suggested commit message: {task.commit_message}",
+            "Changed product paths:",
+        ]
+        lines.extend(f"  - {path}" for path in unique_paths)
+        lines.append("Suggested commands:")
+        if unique_paths:
+            quoted_paths = " ".join(shlex.quote(path) for path in unique_paths)
+            lines.append(f"  git add -- {quoted_paths}")
+        else:
+            lines.append("  # No task-owned product path is currently dirty.")
+        lines.append(
+            f"  git commit -m {shlex.quote(task.commit_message)}"
+        )
+        return "\n".join(lines)
+
     def _can_bootstrap(self, dirty: Sequence[str]) -> bool:
         return bool(self.bootstrap_commit) and all(
             item["status"] == "PENDING" for item in self.progress["tasks"]
@@ -508,7 +639,18 @@ class AutomaticRunner:
         self._write_progress(None)
         self._write_memory()
         if not self.auto_commit:
-            return self._finish("BOOTSTRAP_READY_COMMIT_REQUIRED", 0, {"task": task.id})
+            manual_paths = self._manual_commit_paths(task)
+            guidance = self._manual_commit_guidance(task, manual_paths)
+            print(f"\n[r4r] manual commit required\n{guidance}", flush=True)
+            return self._finish(
+                "BOOTSTRAP_READY_COMMIT_REQUIRED",
+                0,
+                {
+                    "task": task.id,
+                    "suggested_commit_message": task.commit_message,
+                    "commit_paths": manual_paths,
+                },
+            )
         if self._commit_if_needed(
                 task.commit_message,
                 (*task.allowed_paths, str(self.progress_path.relative_to(self.repo)), str(self.memory_path.relative_to(self.repo))),
@@ -534,10 +676,51 @@ class AutomaticRunner:
         if not product_dirty:
             return
         if task is None:
-            raise RuntimeError(
-                "Completed plan has uncommitted product paths: "
-                f"{list(product_dirty)}"
+            # AUTO_COMMIT_COMPLETED_PLAN_RECOVERY_V1
+            if not self.auto_commit:
+                raise RuntimeError(
+                    "Completed plan has uncommitted product paths: "
+                    f"{list(product_dirty)}"
+                )
+
+            commit_task = next(
+                (
+                    candidate
+                    for candidate in reversed(self.plan.tasks)
+                    if all(
+                        path_is_allowed(path, candidate.allowed_paths)
+                        for path in product_dirty
+                    )
+                ),
+                None,
             )
+            if commit_task is None:
+                raise RuntimeError(
+                    "Completed plan has dirty paths that do not belong entirely "
+                    f"to one accepted task: {list(product_dirty)}"
+                )
+
+            committed_head = self._commit_if_needed(
+                commit_task.commit_message,
+                (
+                    *commit_task.allowed_paths,
+                    str(self.progress_path.relative_to(self.repo)),
+                    str(self.memory_path.relative_to(self.repo)),
+                ),
+            )
+            if committed_head is None:
+                raise RuntimeError(
+                    "Automatic recovery commit failed for accepted task "
+                    f"{commit_task.id}: {list(product_dirty)}"
+                )
+
+            print(
+                "[r4r] recovered accepted task with automatic commit: "
+                f"{commit_task.id} -> {committed_head}",
+                flush=True,
+            )
+            return
+
         disallowed = [
             path for path in product_dirty
             if not path_is_allowed(path, task.allowed_paths)
@@ -710,11 +893,15 @@ class AutomaticRunner:
                 else:
                     no_progress_cycles += 1
 
-                if git_head(self.repo) != before_head:
+                try:
+                    self._accept_safe_external_head_change(
+                        before_head, "OpenCode edit"
+                    )
+                except RuntimeError as exception:
                     return self._finish(
                         "OPENCODE_GIT_WRITE_VIOLATION",
                         69,
-                        {"task": task.id},
+                        {"task": task.id, "error": str(exception)},
                     )
 
                 all_changed = git_changed_paths(self.repo)
@@ -811,11 +998,20 @@ class AutomaticRunner:
                 if assimilation.exit_code != 0:
                     self._write_failed_local_understanding(attempt_dir, assimilation)
                 else:
-                    if git_head(self.repo) != assimilation_before_head:
+                    try:
+                        self._accept_safe_external_head_change(
+                            assimilation_before_head,
+                            "OpenCode assimilation",
+                        )
+                    except RuntimeError as exception:
                         return self._finish(
                             "OPENCODE_ASSIMILATION_GIT_WRITE_VIOLATION",
                             69,
-                            {"task": task.id, "attempt": attempt},
+                            {
+                                "task": task.id,
+                                "attempt": attempt,
+                                "error": str(exception),
+                            },
                         )
                     if (
                         self._worktree_fingerprint()
@@ -880,10 +1076,22 @@ class AutomaticRunner:
                 self._write_progress(None)
                 self._write_memory()
                 if not self.auto_commit:
+                    manual_paths = self._manual_commit_paths(task)
+                    guidance = self._manual_commit_guidance(
+                        task, manual_paths,
+                    )
+                    print(
+                        f"\n[r4r] manual commit required\n{guidance}",
+                        flush=True,
+                    )
                     return self._finish(
                         "TASK_ACCEPTED_COMMIT_REQUIRED",
                         0,
-                        {"task": task.id},
+                        {
+                            "task": task.id,
+                            "suggested_commit_message": task.commit_message,
+                            "commit_paths": manual_paths,
+                        },
                     )
                 if self._commit_if_needed(
                     task.commit_message,
@@ -1167,8 +1375,9 @@ Do not propose code yet. Do not claim that an infrastructure outage is a Java bu
                 "use the deterministic diagnostic bundle directly.\n"
             )
         else:
-            if git_head(self.repo) != before_head:
-                raise RuntimeError("Pre-edit understanding performed a forbidden Git write")
+            self._accept_safe_external_head_change(
+                before_head, "pre-edit understanding"
+            )
             if self._worktree_fingerprint() != before_fingerprint:
                 raise RuntimeError("Pre-edit understanding modified repository files")
             report = extract_opencode_text(result.stdout).strip() or (
@@ -1532,8 +1741,9 @@ executed. The controller verifies OpenCode JSONL events and rejects prose-only c
                 "CodeGraph index synchronization failed: "
                 + (diagnostic or f"exit {sync.exit_code}")
             )
-        if git_head(self.repo) != sync_before_head:
-            raise RuntimeError("CodeGraph synchronization performed a forbidden Git write")
+        self._accept_safe_external_head_change(
+            sync_before_head, "CodeGraph synchronization"
+        )
         if self._worktree_fingerprint() != sync_before_fingerprint:
             raise RuntimeError(
                 "CodeGraph synchronization modified tracked or untracked product files"
@@ -1570,10 +1780,9 @@ executed. The controller verifies OpenCode JSONL events and rejects prose-only c
                     f"{(result.stderr or result.stdout)[-1000:].strip()}"
                 )
                 continue
-            if git_head(self.repo) != before_head:
-                raise RuntimeError(
-                    "CodeGraph reconnaissance performed a forbidden Git write"
-                )
+            self._accept_safe_external_head_change(
+                before_head, "CodeGraph reconnaissance"
+            )
             if self._worktree_fingerprint() != before_fingerprint:
                 raise RuntimeError(
                     "CodeGraph reconnaissance modified repository files"
@@ -1965,35 +2174,118 @@ next instruction packet.
         message: str,
         allowed_patterns: Sequence[str] | None = None,
     ) -> str | None:
-        changed = git_changed_paths(self.repo)
-        if allowed_patterns is None:
-            selected = changed
-        else:
-            selected = tuple(
-                path for path in changed
-                if path_is_allowed(path, allowed_patterns)
-            )
-        if not selected:
-            return git_head(self.repo)
+        # PC and LP share the same Git index and HEAD in the current topology.
+        # Serialize only the short add/check/commit section; model work and gates
+        # remain concurrent. Manual Git commands do not honor this cooperative lock.
+        with exclusive_file_lock(self.git_commit_lock_path):
+            changed = git_changed_paths(self.repo)
+            if allowed_patterns is None:
+                selected = changed
+            else:
+                selected = tuple(
+                    path for path in changed
+                    if path_is_allowed(path, allowed_patterns)
+                )
+            if not selected:
+                return git_head(self.repo)
 
-        add = run_command(("git", "add", "-A", "--", *selected), self.repo)
-        if add.exit_code != 0:
-            return None
-        check = run_command(
-            ("git", "diff", "--cached", "--check", "--", *selected),
-            self.repo,
-        )
-        if check.exit_code != 0:
-            return None
-        # --only commits the selected task/progress paths and deliberately leaves
-        # downloaded ZIPs, installers and unrelated staged work untouched.
-        commit = run_command(
-            ("git", "commit", "--only", "-m", message, "--", *selected),
-            self.repo,
-            timeout_seconds=self.timeout,
-            stream=True,
-        )
-        return git_head(self.repo) if commit.exit_code == 0 else None
+            add = run_command(("git", "add", "-A", "--", *selected), self.repo)
+            if add.exit_code != 0:
+                print(
+                    "[r4r] git add failed\n"
+                    + add.stdout + add.stderr,
+                    file=sys.stderr,
+                    flush=True,
+                )
+                return None
+            check = run_command(
+                ("git", "diff", "--cached", "--check", "--", *selected),
+                self.repo,
+            )
+            if check.exit_code != 0:
+                print(
+                    "[r4r] git diff --cached --check failed\n"
+                    + check.stdout + check.stderr,
+                    file=sys.stderr,
+                    flush=True,
+                )
+                return None
+
+            # --only commits the selected task/progress paths and deliberately
+            # leaves peer work, downloads and unrelated staged paths untouched.
+            # Per-command identity avoids races through shared .git/config.
+            commit_env = os.environ.copy()
+            commit_env.update(
+                {
+                    "GIT_AUTHOR_NAME": self.git_author_name,
+                    "GIT_AUTHOR_EMAIL": self.git_author_email,
+                    "GIT_COMMITTER_NAME": self.git_author_name,
+                    "GIT_COMMITTER_EMAIL": self.git_author_email,
+                }
+            )
+            commit = run_command(
+                (
+                    "git",
+                    "-c",
+                    f"user.name={self.git_author_name}",
+                    "-c",
+                    f"user.email={self.git_author_email}",
+                    "commit",
+                    "--only",
+                    "-m",
+                    message,
+                    "--",
+                    *selected,
+                ),
+                self.repo,
+                timeout_seconds=self.timeout,
+                stream=True,
+                env=commit_env,
+            )
+            if commit.exit_code != 0:
+                print(
+                    "[r4r] git commit failed\n"
+                    + commit.stdout + commit.stderr,
+                    file=sys.stderr,
+                    flush=True,
+                )
+                return None
+
+            identity = run_command(
+                (
+                    "git",
+                    "show",
+                    "-s",
+                    "--format=%an%x00%ae%x00%cn%x00%ce",
+                    "HEAD",
+                ),
+                self.repo,
+            )
+            observed = identity.stdout.rstrip("\n").split("\0")
+            expected = [
+                self.git_author_name,
+                self.git_author_email,
+                self.git_author_name,
+                self.git_author_email,
+            ]
+            if identity.exit_code != 0 or observed != expected:
+                print(
+                    "[r4r] committed Git identity mismatch\n"
+                    f"expected={expected!r}\n"
+                    f"observed={observed!r}\n"
+                    + identity.stderr,
+                    file=sys.stderr,
+                    flush=True,
+                )
+                return None
+
+            head = git_head(self.repo)
+            print(
+                f"[r4r] committed {head} as "
+                f"{self.git_author_name} <{self.git_author_email}>",
+                flush=True,
+            )
+            return head
 
     def _task_by_id(self, task_id: str) -> Task:
         for task in self.plan.tasks:
@@ -2009,6 +2301,8 @@ next instruction packet.
             "exit_code": exit_code,
             "finished_at": datetime.now(timezone.utc).isoformat(),
             "git_head": git_head(self.repo),
+            "git_author_name": self.git_author_name,
+            "git_author_email": self.git_author_email,
             "changed_paths": git_changed_paths(self.repo),
         }
         if extra:

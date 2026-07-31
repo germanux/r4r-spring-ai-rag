@@ -38,11 +38,6 @@ class RagQueryControllerTest {
 
     @Test
     void returnsAnswerWithCitations() throws Exception {
-        List<RagQueryResponse.Citation> citations = List.of(
-                new RagQueryResponse.Citation("doc1.md", List.of("Section"), 0),
-                new RagQueryResponse.Citation("doc2.md", List.of("Other"), 1)
-        );
-        
         when(citedRagService.answer(anyString())).thenReturn(
                 new com.riansares.r4r.rag.RagResult(
                         "Generated answer",
@@ -55,7 +50,7 @@ class RagQueryControllerTest {
         );
 
         RagQueryRequest request = new RagQueryRequest("test question");
-        
+
         mockMvc.perform(post("/api/rag/answers")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
@@ -67,21 +62,21 @@ class RagQueryControllerTest {
                 .andExpect(jsonPath("$.citations[0].headingPath", hasSize(1)))
                 .andExpect(jsonPath("$.citations[0].headingPath[0]", is("Section")))
                 .andExpect(jsonPath("$.citations[0].ordinal", is(0)))
+                .andExpect(jsonPath("$.citations[0].label", is("[S1]")))
                 .andExpect(jsonPath("$.citations[1].source", is("doc2.md")))
                 .andExpect(jsonPath("$.citations[1].headingPath[0]", is("Other")))
-                .andExpect(jsonPath("$.citations[1].ordinal", is(1)));
+                .andExpect(jsonPath("$.citations[1].ordinal", is(1)))
+                .andExpect(jsonPath("$.citations[1].label", is("[S2]")));
     }
 
     @Test
     void returnsAbstentionWhenServiceReturnsEmptyResult() throws Exception {
-        List<RagQueryResponse.Citation> citations = List.of();
-
         when(citedRagService.answer(anyString())).thenReturn(
                 com.riansares.r4r.rag.RagResult.abstain()
         );
 
         RagQueryRequest request = new RagQueryRequest("test question");
-        
+
         mockMvc.perform(post("/api/rag/answers")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
@@ -94,7 +89,7 @@ class RagQueryControllerTest {
     @Test
     void returns400WhenQuestionIsNull() throws Exception {
         RagQueryRequest request = new RagQueryRequest(null);
-        
+
         mockMvc.perform(post("/api/rag/answers")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
@@ -104,7 +99,7 @@ class RagQueryControllerTest {
     @Test
     void returns400WhenQuestionIsBlank() throws Exception {
         RagQueryRequest request = new RagQueryRequest("   ");
-        
+
         mockMvc.perform(post("/api/rag/answers")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
@@ -112,10 +107,18 @@ class RagQueryControllerTest {
     }
 
     @Test
-    void returns400WhenRequestIsNull() throws Exception {
+    void returns400WhenRequestBodyIsAbsent() throws Exception {
+        mockMvc.perform(post("/api/rag/answers")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void returns400WhenRequestBodyIsMalformedJson() throws Exception {
+        String malformedJson = "{invalid json content}";
         mockMvc.perform(post("/api/rag/answers")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{}"))
+                .content(malformedJson))
                 .andExpect(status().isBadRequest());
     }
 }

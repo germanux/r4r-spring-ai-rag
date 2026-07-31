@@ -1,7 +1,5 @@
 package com.riansares.r4r.rag.api;
 
-import java.util.List;
-
 /**
  * Request DTO for the RAG query endpoint.
  */

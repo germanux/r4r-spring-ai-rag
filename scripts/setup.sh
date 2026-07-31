@@ -9,6 +9,13 @@ set -a
 source .env
 set +a
 
+if [[ -f .env.r4r.local ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env.r4r.local
+  set +a
+fi
+
 if [[ "${EUID}" -eq 0 ]]; then
   SUDO=()
 else
@@ -100,6 +107,41 @@ ensure_codegraph_capabilities() {
   codegraph serve --help 2>&1 | grep -q -- "--mcp" || { echo "codegraph lacks serve --mcp" >&2; exit 2; }
 }
 
+ensure_local_env_var() {
+  local key="$1"
+  local default_value="$2"
+  local local_env="$ROOT/.env.r4r.local"
+
+  touch "$local_env"
+  chmod 600 "$local_env" 2>/dev/null || true
+
+  if grep -Eq "^[[:space:]]*(export[[:space:]]+)?${key}=" "$local_env"; then
+    return 0
+  fi
+
+  printf '%s=%q\n' "$key" "$default_value" >> "$local_env"
+}
+
+ensure_worker_git_identities() {
+  ensure_local_env_var \
+    R4R_PC_GIT_AUTHOR_NAME \
+    "${R4R_PC_GIT_AUTHOR_NAME:-GermanGPT PC Agent}"
+  ensure_local_env_var \
+    R4R_PC_GIT_AUTHOR_EMAIL \
+    "${R4R_PC_GIT_AUTHOR_EMAIL:-germanux@gmail.com}"
+  ensure_local_env_var \
+    R4R_LP_GIT_AUTHOR_NAME \
+    "${R4R_LP_GIT_AUTHOR_NAME:-GermanGPT LP Agent}"
+  ensure_local_env_var \
+    R4R_LP_GIT_AUTHOR_EMAIL \
+    "${R4R_LP_GIT_AUTHOR_EMAIL:-germanux@gmail.com}"
+
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/.env.r4r.local"
+  set +a
+}
+
 
 apt_install_missing
 if [[ -d /usr/lib/jvm/java-21-openjdk-amd64 ]]; then
@@ -109,6 +151,8 @@ fi
 for command in java javac mvn docker npm node python3 git; do
   command -v "$command" >/dev/null 2>&1 || { echo "Required command unavailable: $command" >&2; exit 2; }
 done
+
+ensure_worker_git_identities
 [[ "$(javac -version 2>&1)" == javac\ 21* ]] || { echo "Java 21 is required." >&2; exit 2; }
 if ! docker compose version >/dev/null 2>&1 && ! command -v docker-compose >/dev/null 2>&1; then
   echo "Docker Compose is unavailable." >&2; exit 2
@@ -140,6 +184,12 @@ fi
 ./scripts/verify.sh unit
 
 echo "Setup complete."
+printf 'PC Git author: %s <%s>\n' \
+  "${R4R_PC_GIT_AUTHOR_NAME:-GermanGPT PC Agent}" \
+  "${R4R_PC_GIT_AUTHOR_EMAIL:-germanux@gmail.com}"
+printf 'LP Git author: %s <%s>\n' \
+  "${R4R_LP_GIT_AUTHOR_NAME:-GermanGPT LP Agent}" \
+  "${R4R_LP_GIT_AUTHOR_EMAIL:-germanux@gmail.com}"
 echo "PostgreSQL runs only in Docker."
 echo "If Docker group membership was added, log out and back in to avoid sudo fallback."
 if ! "${R4R_CODEX_BIN:-codex}" login status >/dev/null 2>&1; then

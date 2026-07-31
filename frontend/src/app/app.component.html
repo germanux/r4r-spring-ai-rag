@@ -1,0 +1,6 @@
+<div class="container">
+  <h1>Angular 17 Standalone App</h1>
+  <p>Backend URL: {{ backendUrl }}</p>
+  <button (click)="testApiCall()">Test API Call</button>
+  <div *ngIf="apiResult">API Result: {{ apiResult | json }}</div>
+</div>

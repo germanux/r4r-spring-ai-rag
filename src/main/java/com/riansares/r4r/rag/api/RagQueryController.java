@@ -1,9 +1,11 @@
 package com.riansares.r4r.rag.api;
 
 import com.riansares.r4r.rag.CitedRagService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -22,17 +24,17 @@ public class RagQueryController {
         if (request == null || request.question() == null || request.question().isBlank()) {
             return ResponseEntity.badRequest().build();
         }
-        
+
         com.riansares.r4r.rag.RagResult result = citedRagService.answer(request.question());
-        
+
         List<RagQueryResponse.Citation> citations = convertCitations(result.citations());
-        
+
         RagQueryResponse response = new RagQueryResponse(
                 result.answer(),
                 result.abstention(),
                 citations
         );
-        
+
         return ResponseEntity.ok(response);
     }
 
