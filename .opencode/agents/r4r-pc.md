@@ -1,7 +1,7 @@
 ---
 description: Execute one bounded Java R4R task with the PC 80B model
 mode: primary
-model: ollama-pc/qwen3-coder-next-80b-t025-168k-8k-pc-pc
+model: ollama-pc/qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest
 steps: 64
 temperature: 0.25
 permission:

@@ -8,12 +8,12 @@
       "npm": "@ai-sdk/openai-compatible",
       "name": "Ollama PC - R4R",
       "options": {
-        "baseURL": "{env:R4R_OPENCODE_PC_BASE_URL}",
+        "baseURL": "http://127.0.0.1:11434/v1",
         "timeout": 14400000,
         "chunkTimeout": 600000
       },
       "models": {
-        "qwen3-coder-next-80b-t025-168k-8k-pc-pc": {
+        "qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest": {
           "name": "Qwen3-Coder-Next 80B PC 168K/8K",
           "temperature": true,
           "limit": {
@@ -27,7 +27,7 @@
       "npm": "@ai-sdk/openai-compatible",
       "name": "Ollama Laptop - R4R",
       "options": {
-        "baseURL": "{env:R4R_OPENCODE_LP_BASE_URL}",
+        "baseURL": "http://192.168.1.9:11434/v1",
         "timeout": 14400000,
         "chunkTimeout": 600000
       },
@@ -76,7 +76,7 @@
         "--output-dir",
         "runtime/playwright"
       ],
-      "enabled": true,
+      "enabled": false,
       "timeout": 30000
     }
   },

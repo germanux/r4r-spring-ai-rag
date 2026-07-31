@@ -16,6 +16,7 @@ import sys
 import threading
 import time
 from typing import Any, Sequence
+from urllib.parse import urlparse
 
 from .contracts import Task, TaskPlan, load_progress, task_progress, validate_structured_result
 from .diagnostics import GateDiagnostics, build_gate_diagnostics
@@ -156,8 +157,14 @@ MAINTENANCE_PATHS = (
     "opencode.jsonc",
     "codegraph.json",
     ".gitignore",
+    "patches-applied/**",
+    "payload/**",
     "install-r4r-*.sh",
+    "apply-r4r-*.sh",
+    "fix-r4r-*.sh",
     "r4r-agent-*.zip",
+    "README.txt",
+    "SHA256SUMS.txt",
 )
 
 # Backward-compatible alias used by existing diagnostics/tests. There is no active
@@ -173,7 +180,11 @@ _MAINTENANCE_BUNDLE_PREFIX = re.compile(
     r"^(?:r4r-agent-[^/]+|r4r-self-recovery)/(.+)$"
 )
 _MAINTENANCE_ARTIFACT_PATH = re.compile(
-    r"^(?:install-r4r-[^/]+\.sh|r4r-agent-[^/]+\.zip)$"
+    r"^(?:(?:install|apply|fix)-r4r-[^/]+\.sh"
+    r"|r4r-[^/]+\.zip(?:\.sha256)?"
+    r"|r4r-[^/]+\.sha256"
+    r"|r4r-[^/]+\.patch"
+    r"|SHA256SUMS\.txt|README\.txt)$"
 )
 
 
@@ -294,6 +305,13 @@ class AutomaticRunner:
         self.bootstrap_commit = os.environ.get("R4R_BOOTSTRAP_COMMIT", "true").lower() == "true"
         self.opencode_bin = os.environ.get("R4R_OPENCODE_BIN", "opencode")
         self.opencode_agent = os.environ.get("R4R_OPENCODE_AGENT", "r4r-pc")
+        self.compact_local_worker = (
+            os.environ.get(
+                "R4R_COMPACT_LOCAL_WORKER",
+                "true" if self.opencode_agent == "r4r-laptop" else "false",
+            ).lower()
+            == "true"
+        )
         self.codex_bin = os.environ.get("R4R_CODEX_BIN", "codex")
         self.codex_model = os.environ.get("R4R_CODEX_MODEL", "").strip() or None
         self.codegraph_bin = os.environ.get("R4R_CODEGRAPH_BIN", "codegraph")
@@ -334,6 +352,7 @@ class AutomaticRunner:
         self._require_binary(self.codex_bin)
         if self.require_codegraph and self.codegraph_policy != "off":
             self._require_binary(self.codegraph_bin)
+        self._validate_opencode_runtime_config()
         # Active-task lock control is intentionally disabled. A stale legacy lock
         # must never prevent a run or bind progress to an obsolete Git commit.
         self.lock_path.unlink(missing_ok=True)
@@ -352,7 +371,10 @@ class AutomaticRunner:
                 self._write_progress(None)
                 self._write_memory()
                 if self.auto_commit:
-                    self._commit_if_needed("chore: record completed R4R task plan")
+                    self._commit_if_needed(
+                        "chore: record completed R4R task plan",
+                        (".opencode/progress.json", ".opencode/memory.md"),
+                    )
                 return self._finish("ALL_TASKS_ACCEPTED", 0)
             if self.max_tasks and completed >= self.max_tasks:
                 return self._finish("TASK_LIMIT_REACHED", 0, {"next_task": task.id})
@@ -384,6 +406,67 @@ class AutomaticRunner:
         if shutil.which(binary) is None:
             raise RuntimeError(f"Required executable not found: {binary}. Run ./scripts/setup.sh")
 
+    def _validate_opencode_runtime_config(self) -> None:
+        configured = os.environ.get("OPENCODE_CONFIG", "").strip()
+        path = Path(configured) if configured else self.repo / "opencode.jsonc"
+        if not path.is_absolute():
+            path = (self.repo / path).resolve()
+        if not path.is_file():
+            raise RuntimeError(f"OpenCode config not found: {path}")
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exception:
+            raise RuntimeError(f"Invalid OpenCode config {path}: {exception}") from exception
+
+        providers = data.get("provider")
+        if not isinstance(providers, dict) or not providers:
+            raise RuntimeError(f"OpenCode config has no providers: {path}")
+        for provider_id, provider in providers.items():
+            options = provider.get("options") if isinstance(provider, dict) else None
+            base_url = options.get("baseURL") if isinstance(options, dict) else None
+            if not isinstance(base_url, str) or "{env:" in base_url:
+                raise RuntimeError(
+                    f"OpenCode provider {provider_id} has unresolved baseURL: {base_url!r}"
+                )
+            parsed = urlparse(base_url)
+            if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+                raise RuntimeError(
+                    f"OpenCode provider {provider_id} baseURL is not absolute: {base_url!r}"
+                )
+
+        agent_path = self.repo / ".opencode" / "agents" / f"{self.opencode_agent}.md"
+        if not agent_path.is_file():
+            raise RuntimeError(f"OpenCode agent not found: {agent_path}")
+        match = re.search(
+            r"^model:\s*([^/\s]+)/([^\s]+)\s*$",
+            agent_path.read_text(encoding="utf-8"),
+            flags=re.MULTILINE,
+        )
+        if match is None:
+            raise RuntimeError(f"OpenCode agent has no valid model declaration: {agent_path}")
+        provider_id, model_id = match.groups()
+        provider = providers.get(provider_id)
+        models = provider.get("models") if isinstance(provider, dict) else None
+        if not isinstance(models, dict) or model_id not in models:
+            raise RuntimeError(
+                f"OpenCode agent {self.opencode_agent} references unknown model "
+                f"{provider_id}/{model_id}"
+            )
+
+    @staticmethod
+    def _non_transient_opencode_failure(result: CommandResult) -> bool:
+        text = (result.stdout + "\n" + result.stderr).lower()
+        markers = (
+            "cannot be parsed as a url",
+            "baseurl is not absolute",
+            "unresolved baseurl",
+            "invalid opencode config",
+            "references unknown model",
+            "unknown provider",
+            "no such model",
+        )
+        return any(marker in text for marker in markers)
+
     def _can_bootstrap(self, dirty: Sequence[str]) -> bool:
         return bool(self.bootstrap_commit) and all(
             item["status"] == "PENDING" for item in self.progress["tasks"]
@@ -401,7 +484,10 @@ class AutomaticRunner:
         self._write_memory()
         if not self.auto_commit:
             return self._finish("BOOTSTRAP_READY_COMMIT_REQUIRED", 0, {"task": task.id})
-        if self._commit_if_needed(task.commit_message) is None:
+        if self._commit_if_needed(
+                task.commit_message,
+                (*task.allowed_paths, ".opencode/progress.json", ".opencode/memory.md"),
+            ) is None:
             return self._finish("BOOTSTRAP_COMMIT_FAILED", 67)
         return 0
 
@@ -472,7 +558,11 @@ class AutomaticRunner:
             changed_this_attempt = False
             diagnostics = self._record_gate_diagnostics(current_gate, attempt_dir)
             codegraph_report = "CodeGraph reconnaissance is disabled."
-            if self.require_codegraph and self.codegraph_policy != "off":
+            if (
+                self.require_codegraph
+                and self.codegraph_policy != "off"
+                and not getattr(self, "compact_local_worker", False)
+            ):
                 try:
                     codegraph_report = self._run_codegraph_reconnaissance(
                         task,
@@ -546,6 +636,16 @@ class AutomaticRunner:
                     stream=True,
                 )
                 if edit.exit_code != 0:
+                    if self._non_transient_opencode_failure(edit):
+                        return self._finish(
+                            "OPENCODE_CONFIGURATION_ERROR",
+                            edit.exit_code or 78,
+                            {
+                                "task": task.id,
+                                "attempt": attempt,
+                                "diagnostic": (edit.stderr or edit.stdout)[-4000:],
+                            },
+                        )
                     transient_failures += 1
                     if transient_failures > self.max_transient_failures:
                         return self._finish(
@@ -632,51 +732,60 @@ class AutomaticRunner:
                     f"{task.id}: green gate, handing control to Codex",
                 )
 
-            # Force the local worker to explain its understanding before Codex
-            # reviews. Assimilation text is evidence, but a transient failure to
-            # produce it must not discard an otherwise reviewable implementation.
-            assimilation_before_head = git_head(self.repo)
-            assimilation_before_fingerprint = git_worktree_fingerprint(self.repo)
-            assimilation = self._run_logged(
-                "opencode-assimilation",
-                (
-                    self.opencode_bin,
-                    "run",
-                    "--dir",
-                    str(self.repo),
-                    "--agent",
-                    self.opencode_agent,
-                    "--format",
-                    "json",
-                    "--auto",
-                    self._opencode_assimilation_prompt(
-                        task,
-                        gate,
-                        codegraph_report,
-                    ),
-                ),
-                attempt_dir,
-                stream=True,
-            )
-            if assimilation.exit_code != 0:
-                self._write_failed_local_understanding(attempt_dir, assimilation)
+            # The compact laptop worker avoids a second model call. Codex reviews
+            # the exact diff and gate evidence directly. The PC worker keeps the
+            # assimilation pass as additional evidence.
+            if getattr(self, "compact_local_worker", False):
+                evidence = attempt_dir / "evidence"
+                evidence.mkdir(parents=True, exist_ok=True)
+                (evidence / "local-understanding.md").write_text(
+                    "# Local understanding report\n\n"
+                    "Compact worker assimilation skipped; inspect the exact diff and gate evidence.\n",
+                    encoding="utf-8",
+                )
             else:
-                if git_head(self.repo) != assimilation_before_head:
-                    return self._finish(
-                        "OPENCODE_ASSIMILATION_GIT_WRITE_VIOLATION",
-                        69,
-                        {"task": task.id, "attempt": attempt},
-                    )
-                if (
-                    git_worktree_fingerprint(self.repo)
-                    != assimilation_before_fingerprint
-                ):
-                    return self._finish(
-                        "OPENCODE_ASSIMILATION_FILE_WRITE_VIOLATION",
-                        65,
-                        {"task": task.id, "attempt": attempt},
-                    )
-                self._write_local_understanding(attempt_dir, assimilation.stdout)
+                assimilation_before_head = git_head(self.repo)
+                assimilation_before_fingerprint = git_worktree_fingerprint(self.repo)
+                assimilation = self._run_logged(
+                    "opencode-assimilation",
+                    (
+                        self.opencode_bin,
+                        "run",
+                        "--dir",
+                        str(self.repo),
+                        "--agent",
+                        self.opencode_agent,
+                        "--format",
+                        "json",
+                        "--auto",
+                        self._opencode_assimilation_prompt(
+                            task,
+                            gate,
+                            codegraph_report,
+                        ),
+                    ),
+                    attempt_dir,
+                    stream=True,
+                )
+                if assimilation.exit_code != 0:
+                    self._write_failed_local_understanding(attempt_dir, assimilation)
+                else:
+                    if git_head(self.repo) != assimilation_before_head:
+                        return self._finish(
+                            "OPENCODE_ASSIMILATION_GIT_WRITE_VIOLATION",
+                            69,
+                            {"task": task.id, "attempt": attempt},
+                        )
+                    if (
+                        git_worktree_fingerprint(self.repo)
+                        != assimilation_before_fingerprint
+                    ):
+                        return self._finish(
+                            "OPENCODE_ASSIMILATION_FILE_WRITE_VIOLATION",
+                            65,
+                            {"task": task.id, "attempt": attempt},
+                        )
+                    self._write_local_understanding(attempt_dir, assimilation.stdout)
 
             try:
                 review = self._codex_review(task, gate, attempt_dir)
@@ -735,7 +844,10 @@ class AutomaticRunner:
                         0,
                         {"task": task.id},
                     )
-                if self._commit_if_needed(task.commit_message) is None:
+                if self._commit_if_needed(
+                    task.commit_message,
+                    (*task.allowed_paths, ".opencode/progress.json", ".opencode/memory.md"),
+                ) is None:
                     return self._finish(
                         "AUTO_COMMIT_FAILED",
                         67,
@@ -974,6 +1086,16 @@ Do not propose code yet. Do not claim that an infrastructure outage is a Java bu
         diagnostics: GateDiagnostics,
         codegraph_report: str,
     ) -> None:
+        if getattr(self, "compact_local_worker", False):
+            evidence = attempt_dir / "evidence"
+            evidence.mkdir(parents=True, exist_ok=True)
+            (evidence / "pre-edit-understanding.md").write_text(
+                "# Pre-edit understanding report\n\n"
+                "Skipped for the compact laptop worker. Codex planning and the "
+                "deterministic gate remain authoritative.\n",
+                encoding="utf-8",
+            )
+            return
         before_head = git_head(self.repo)
         before_fingerprint = git_worktree_fingerprint(self.repo)
         result = self._run_logged(
@@ -1470,6 +1592,24 @@ executed. The controller verifies OpenCode JSONL events and rejects prose-only c
             f"- {path.relative_to(self.repo) if path.is_relative_to(self.repo) else path}"
             for path in self._instruction_files(task, include_companion)
         )
+        if getattr(self, "compact_local_worker", False):
+            return f"""Implement only {task.id}: {task.objective}
+
+Read these files before editing:
+{instruction_list}
+
+Codex plan:
+{action}
+
+Current gate exit: {gate.exit_code}
+Current blocker: {diagnostics.summary}
+Gate stderr tail:
+{gate.stderr[-1800:]}
+
+Edit only task-allowed product paths. Do not write Git history. Run exactly:
+{exact_gate}
+Stop after that exact gate result.
+"""
         return f"""Read every file in this active instruction bundle before editing:
 {instruction_list}
 
@@ -1779,17 +1919,39 @@ next instruction packet.
             lines.append(f"- {item['id']}: {item['status']} — accepted at {item.get('accepted_at') or 'not accepted'}")
         self.memory_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    def _commit_if_needed(self, message: str) -> str | None:
+    def _commit_if_needed(
+        self,
+        message: str,
+        allowed_patterns: Sequence[str] | None = None,
+    ) -> str | None:
         changed = git_changed_paths(self.repo)
-        if not changed:
+        if allowed_patterns is None:
+            selected = changed
+        else:
+            selected = tuple(
+                path for path in changed
+                if path_is_allowed(path, allowed_patterns)
+            )
+        if not selected:
             return git_head(self.repo)
-        add = run_command(("git", "add", "-A"), self.repo)
+
+        add = run_command(("git", "add", "-A", "--", *selected), self.repo)
         if add.exit_code != 0:
             return None
-        check = run_command(("git", "diff", "--cached", "--check"), self.repo)
+        check = run_command(
+            ("git", "diff", "--cached", "--check", "--", *selected),
+            self.repo,
+        )
         if check.exit_code != 0:
             return None
-        commit = run_command(("git", "commit", "-m", message), self.repo, timeout_seconds=self.timeout, stream=True)
+        # --only commits the selected task/progress paths and deliberately leaves
+        # downloaded ZIPs, installers and unrelated staged work untouched.
+        commit = run_command(
+            ("git", "commit", "--only", "-m", message, "--", *selected),
+            self.repo,
+            timeout_seconds=self.timeout,
+            stream=True,
+        )
         return git_head(self.repo) if commit.exit_code == 0 else None
 
     def _task_by_id(self, task_id: str) -> Task:
