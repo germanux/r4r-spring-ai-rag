@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "active_task": "task-04-rag",
-  "last_run": "20260731T050448Z",
+  "last_run": "20260731T111129Z",
   "tasks": [
     {
       "id": "task-01-base",
