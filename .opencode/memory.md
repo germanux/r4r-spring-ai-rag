@@ -2,10 +2,10 @@
 
 ## Current state
 
-- Last accepted task: task-03-pgvector.
-- Active task: task-04-rag.
-- Accepted: task-01-base, task-02-ingestion, task-03-pgvector.
-- Remaining: task-04-rag.
+- Last accepted task: None.
+- Active task: task-01-base.
+- Accepted: none.
+- Remaining: task-01-base, task-02-ingestion, task-03-pgvector, task-04-rag.
 - Exact plan: `.opencode/task-plan.json`.
 
 ## Fixed decisions
@@ -21,7 +21,7 @@
 
 ## Task commits
 
-- task-01-base: ACCEPTED — accepted at 2026-07-30T01:56:21.671118+00:00
-- task-02-ingestion: ACCEPTED — accepted at 2026-07-30T14:21:45.327732+00:00
-- task-03-pgvector: ACCEPTED — accepted at 2026-07-31T04:57:58.481883+00:00
+- task-01-base: PENDING — accepted at not accepted
+- task-02-ingestion: PENDING — accepted at not accepted
+- task-03-pgvector: PENDING — accepted at not accepted
 - task-04-rag: PENDING — accepted at not accepted
