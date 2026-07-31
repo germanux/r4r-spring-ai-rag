@@ -174,6 +174,8 @@ MAINTENANCE_PATHS = (
     "fix-r4r-*.sh",
     "r4r-agent-*.zip",
     "README.txt",
+    "README-DUAL-AGENTS.md",
+    "docs/dual-agent-code-intelligence.md",
     "SHA256SUMS.txt",
 )
 
@@ -187,7 +189,7 @@ LOCK_AUTO_ADVANCE_PATHS = MAINTENANCE_PATHS
 # canonical maintenance paths above. Product files under the bundle directory do
 # not qualify.
 _MAINTENANCE_BUNDLE_PREFIX = re.compile(
-    r"^(?:r4r-agent-[^/]+|r4r-self-recovery)/(.+)$"
+    r"^(?:r4r-(?:agent|dual-agent)-[^/]+|r4r-self-recovery)/(.+)$"
 )
 _MAINTENANCE_ARTIFACT_PATH = re.compile(
     r"^(?:(?:install|apply|fix)-r4r-[^/]+\.sh"

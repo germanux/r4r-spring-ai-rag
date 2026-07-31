@@ -20,6 +20,11 @@ export CYPHER_PROVIDER="${CYPHER_PROVIDER:-ollama}"
 export CYPHER_MODEL="${CYPHER_MODEL:-$ORCHESTRATOR_MODEL}"
 export CYPHER_ENDPOINT="${CYPHER_ENDPOINT:-$ORCHESTRATOR_ENDPOINT}"
 export TARGET_REPO_PATH="${TARGET_REPO_PATH:-$ROOT}"
+# The local coding LLM already occupies most of the 8 GiB GPU. Keep UniXcoder
+# embeddings on CPU by default and use small flush batches. Both values remain
+# overridable from .env.r4r.local or the process environment.
+export CGR_EMBEDDING_DEVICE="${CGR_EMBEDDING_DEVICE:-${R4R_CGR_EMBEDDING_DEVICE:-cpu}}"
+export QDRANT_BATCH_SIZE="${QDRANT_BATCH_SIZE:-${R4R_CGR_EMBEDDING_BATCH_SIZE:-8}}"
 
 cd "$RUN_DIR" # isolates CGR from the application's generic .env
 command="${1:-}"
@@ -40,6 +45,7 @@ case "$command" in
   query-workspace) workspace="${1:-r4r-code}"; shift || true; exec "${CGR[@]}" start --workspace "$workspace" "$@" ;;
   workspace-create) exec "${CGR[@]}" workspace create "${1:?workspace required}" ;;
   workspace-add) exec "${CGR[@]}" workspace add-repo "${1:?workspace required}" "${2:?repo required}" ;;
+  delete-project) exec "${CGR[@]}" delete-project --name "${1:?project name required}" ;;
   mcp) exec "${CGR[@]}" mcp-server "$@" ;;
-  *) echo "Uso: $0 {doctor|up|down|index|index-clean|index-path|query|query-workspace|workspace-create|workspace-add|mcp}" >&2; exit 2 ;;
+  *) echo "Uso: $0 {doctor|up|down|index|index-clean|index-path|query|query-workspace|workspace-create|workspace-add|delete-project|mcp}" >&2; exit 2 ;;
 esac

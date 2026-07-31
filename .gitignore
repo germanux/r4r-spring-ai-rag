@@ -83,3 +83,5 @@ runtime/
 /.opencode/memory.*.md
 
 progress.json
+/r4r-dual-agent-code-intelligence-v*/
+/r4r-dual-agent-hotfix-v*/

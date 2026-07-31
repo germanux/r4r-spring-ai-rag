@@ -48,6 +48,15 @@ class RunnerTest(unittest.TestCase):
                 "r4r-self-recovery/scripts/run-codex-agent.sh"
             )
         )
+        self.assertTrue(
+            is_lock_auto_advance_path(
+                "r4r-dual-agent-code-intelligence-v1/payload/scripts/cgr.sh"
+            )
+        )
+        self.assertTrue(is_lock_auto_advance_path("README-DUAL-AGENTS.md"))
+        self.assertTrue(
+            is_lock_auto_advance_path("docs/dual-agent-code-intelligence.md")
+        )
         self.assertTrue(is_lock_auto_advance_path("r4r-agent-update-v2.zip"))
         self.assertTrue(
             is_lock_auto_advance_path("install-r4r-agent-hotfix-v3.sh")
