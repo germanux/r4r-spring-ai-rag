@@ -88,11 +88,7 @@
         "docker-postgres/**",
         "docs/backend/**"
       ],
-      "mcp": [
-        "codegraph",
-        "code_graph_rag",
-        "playwright"
-      ]
+      "mcp": []
     }
   }
 }
