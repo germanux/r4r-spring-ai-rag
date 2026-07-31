@@ -1,20 +1,31 @@
-# py-codex-agent
+# R4R Codex/OpenCode controller
 
-Small automatic controller for the ordered R4R task plan.
+The controller runs one locked task at a time:
 
-It does not implement product code. It:
+1. exact task gate with disposable PostgreSQL when required;
+2. deterministic diagnostic classification;
+3. untruncated gate log plus compressed implicated-file bundle;
+4. focused advisory CodeGraph map;
+5. read-only local pre-edit understanding;
+6. read-only Codex plan;
+7. bounded OpenCode edit;
+8. exact task gate, local assimilation and Codex review;
+9. controlled progress/commit on green plus `ACCEPT`.
 
-1. verifies accepted tasks;
-2. selects the first pending or regressed task;
-3. requests a structured read-only Codex plan;
-4. launches OpenCode with the selected task and plan;
-5. runs the exact deterministic gate;
-6. requests a structured read-only Codex review;
-7. permits a bounded number of revisions;
-8. updates progress and memory;
-9. creates a local commit when enabled;
-10. advances automatically until complete or blocked.
+Identical diagnostic fingerprints reuse the latest Codex plan during
+`R4R_CODEX_MIN_INTERVAL_SECONDS` (default 3600). New evidence bypasses the cooldown.
+CodeGraph defaults to `R4R_CODEGRAPH_POLICY=advisory` so MCP outages do not mask Maven
+or source evidence.
 
-Runtime output is written only under `runtime/runs/`. An unfinished task keeps
-`runtime/locks/active-task.json`, allowing a later invocation to resume only when
-its dirty paths remain within that task's scope.
+Run from the repository root:
+
+```bash
+./scripts/run-codex-agent.sh
+./scripts/run-codex-agent.sh --status
+```
+
+For a manual Maven lifecycle that needs the disposable integration database:
+
+```bash
+./scripts/mvn-with-test-db.sh install
+```

@@ -40,7 +40,12 @@
       "runtime/**",
       "target/**",
       "docker-postgres/data/**",
-      "docker-postgres/backups/**"
+      "docker-postgres/backups/**",
+      "patches-applied/**",
+      "**/*.zip",
+      "r4r-agent-update-v*/**",
+      "r4r-agent-hotfix-v*/**",
+      "src/**/r4r-rollback-fix*/**"
     ]
   }
 }

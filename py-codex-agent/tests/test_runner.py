@@ -4,6 +4,7 @@ import tempfile
 import unittest
 
 from r4r_codex_agent.contracts import Task, TaskPlan
+from r4r_codex_agent.diagnostics import GateDiagnostics
 from r4r_codex_agent.runner import (
     AutomaticRunner,
     CommandResult,
@@ -223,11 +224,23 @@ class RunnerTest(unittest.TestCase):
             )
             gate = CommandResult(task.gate, 0, "green", "")
 
+            diagnostics = GateDiagnostics(
+                classification="compilation",
+                summary="Java compilation failed.",
+                fingerprint="abc",
+                source_paths=("src/main/java/example/KnowledgeService.java",),
+                related_paths=("src/main/java/example/KnowledgeService.java",),
+                log_path="runtime/log",
+                summary_path="runtime/summary",
+                manifest_path="runtime/manifest",
+                bundle_path="runtime/bundle.zip",
+            )
             prompt = runner._opencode_prompt(
                 task,
                 gate,
                 "Fix tests.",
                 "# CodeGraph reconnaissance report\nFound KnowledgeService callers.",
+                diagnostics,
             )
 
             self.assertIn("Assert exact ordered heading paths.", prompt)
@@ -236,7 +249,7 @@ class RunnerTest(unittest.TestCase):
                 prompt,
             )
             self.assertIn("Do not add a pipeline", prompt)
-            self.assertIn("MANDATORY CODEGRAPH RECONNAISSANCE EVIDENCE", prompt)
+            self.assertIn("FOCUSED CODEGRAPH EVIDENCE", prompt)
             self.assertIn("Found KnowledgeService callers", prompt)
 
     def test_extracts_actual_codegraph_tool_calls_from_nested_jsonl(self):
@@ -278,10 +291,12 @@ class RunnerTest(unittest.TestCase):
             )
             gate = CommandResult(task.gate, 1, "", "compile failure")
 
-            prompt = runner._codegraph_reconnaissance_prompt(task, gate, 2)
+            prompt = runner._codegraph_reconnaissance_prompt(
+                task, gate, 2, ("src/test/java/example/PgVectorKnowledgeStoreIT.java",)
+            )
 
-            self.assertIn("one actual tool call", prompt)
-            self.assertIn("codegraph_*", prompt)
+            self.assertIn("codegraph_", prompt)
+            self.assertIn("failing source files", prompt)
             self.assertIn("prose about CodeGraph does not count", prompt)
 
     def test_codegraph_reconnaissance_persists_verified_tool_evidence(self):
@@ -334,6 +349,7 @@ class RunnerTest(unittest.TestCase):
                 task,
                 gate,
                 attempt,
+                ("src/test/java/example/PgVectorKnowledgeStoreIT.java",),
             )
 
             self.assertIn("PgVectorKnowledgeStore", report)
@@ -386,6 +402,7 @@ class RunnerTest(unittest.TestCase):
                     task,
                     gate,
                     repo / "runtime" / "attempt-01",
+                    ("src/test/java/example/PgVectorKnowledgeStoreIT.java",),
                 )
 
     def test_record_unhandled_failure_writes_state(self):
@@ -592,7 +609,7 @@ class RunnerTest(unittest.TestCase):
             self.assertEqual(current, lock["base_commit"])
             self.assertTrue(lock["run_id"].startswith("resume-"))
 
-    def test_resume_lock_rejects_product_commit_between_base_and_head(self):
+    def test_resume_lock_adopts_in_scope_product_commit_between_base_and_head(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)
             self._init_repo(repo)
@@ -615,7 +632,34 @@ class RunnerTest(unittest.TestCase):
             run_command(("git", "add", str(product.relative_to(repo))), repo)
             run_command(("git", "commit", "-q", "-m", "product change"), repo)
 
-            with self.assertRaisesRegex(RuntimeError, "non-maintenance commits"):
+            current = run_command(("git", "rev-parse", "HEAD"), repo).stdout.strip()
+            runner._validate_resume_lock(())
+            lock = json.loads(runner.lock_path.read_text(encoding="utf-8"))
+            self.assertEqual(current, lock["base_commit"])
+
+    def test_resume_lock_rejects_out_of_scope_commit_between_base_and_head(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            self._init_repo(repo)
+            runner = self._selection_runner(repo)
+            base = run_command(("git", "rev-parse", "HEAD"), repo).stdout.strip()
+            runner.lock_path.parent.mkdir(parents=True)
+            runner.lock_path.write_text(
+                json.dumps({
+                    "schema_version": 1,
+                    "task_id": "task-02",
+                    "base_commit": base,
+                    "run_id": "test",
+                    "allowed_paths": ["src/**"],
+                }),
+                encoding="utf-8",
+            )
+            product = repo / "pom.xml"
+            product.write_text("<project/>", encoding="utf-8")
+            run_command(("git", "add", "pom.xml"), repo)
+            run_command(("git", "commit", "-q", "-m", "out of scope"), repo)
+
+            with self.assertRaisesRegex(RuntimeError, "out-of-scope commits"):
                 runner._validate_resume_lock(())
 
     @staticmethod

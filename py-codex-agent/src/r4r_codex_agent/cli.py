@@ -24,12 +24,13 @@ def main() -> None:
     repo = args.repo.resolve()
     plan_path = args.plan if args.plan.is_absolute() else repo / args.plan
     progress_path = args.progress if args.progress.is_absolute() else repo / args.progress
+    runner: AutomaticRunner | None = None
     try:
         runner = AutomaticRunner(repo, load_task_plan(plan_path), progress_path)
         exit_code = runner.status() if args.status else runner.execute()
     except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as exception:
         print(f"r4r-codex-agent: {exception}", file=sys.stderr)
-        raise SystemExit(2) from exception
+        exit_code = runner.record_unhandled_failure(exception) if runner is not None else 2
     raise SystemExit(exit_code)
 
 

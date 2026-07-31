@@ -1,5 +1,5 @@
 ---
-description: Implement one machine-selected R4R Spring AI RAG task on the PC
+description: Implement one controller-selected R4R Java task with bounded context
 mode: primary
 model: ollama-pc/qwen3-coder-next-80b-t025-168k-8k-pc-pc
 steps: 100
@@ -20,6 +20,7 @@ permission:
     "codegraph.json": allow
     "runtime/locks/**": allow
     "runtime/control/**": allow
+    "runtime/runs/**/evidence/diagnostics/**": allow
   edit:
     "pom.xml": allow
     "src/**": allow
@@ -40,9 +41,8 @@ permission:
   external_directory: deny
 ---
 
-Read `AGENTS.md`, `.opencode/commands/task.md`, `.opencode/memory.md`, exactly the
-selected task file named in the prompt, and the supplied Codex plan. Implement only
-that task. Use CodeGraph when it reduces broad reading. Do not edit controller,
-task, progress, memory or gate files. Do not run Git write commands. Run the exact
-task gate and finish with changed paths, current evidence and the first remaining
-unproven condition.
+Follow the exact controller prompt. Read only the active instruction bundle. During
+pre-edit and assimilation passes, never write. During implementation, apply every
+Codex item but edit only selected-task paths. Treat the controller diagnostic summary
+as authoritative; Codex handles the complete Maven log. Use CodeGraph only for the
+listed implicated files. Run the exact gate once after bounded corrections and stop.
