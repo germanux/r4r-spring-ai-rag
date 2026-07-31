@@ -1,3 +1,40 @@
 {
-  "$schema": "https://opencode.ai/config.json"
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ollama-laptop": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama laptop",
+      "options": {
+        "baseURL": "http://192.168.1.9:11434/v1",
+        "timeout": 600000
+      },
+      "models": {
+        "qwen3-30b-coder-28k-6k-t33": {
+          "name": "qwen3-30b-coder-28k-6k-t33",
+          "limit": {
+            "context": 28672,
+            "output": 6144
+          }
+        }
+      }
+    },
+    "ollama-pc": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama PC",
+      "options": {
+        "baseURL": "http://192.168.1.7:11434/v1",
+        "timeout": 600000
+      },
+      "models": {
+        "qwen3-coder-next-80b-t025-168k-8k-pc-pc": {
+          "name": "qwen3-coder-next-80b-t025-168k-8k-pc-pc",
+          "temperature": true,
+          "limit": {
+            "context": 172032,
+            "output": 8192
+          }
+        }
+      }
+    }
+  }
 }
