@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "default_agent": "r4r-pc",
+  "default_agent": "r4r-laptop",
   "share": "disabled",
   "snapshot": true,
   "provider": {
@@ -8,11 +8,13 @@
       "npm": "@ai-sdk/openai-compatible",
       "name": "Ollama PC - R4R",
       "options": {
-        "baseURL": "{env:R4R_OPENCODE_OLLAMA_BASE_URL}"
+        "baseURL": "{env:R4R_OPENCODE_PC_BASE_URL}",
+        "timeout": 14400000,
+        "chunkTimeout": 600000
       },
       "models": {
         "qwen3-coder-next-80b-t025-168k-8k-pc-pc": {
-          "name": "Qwen3-Coder-Next 80B 168K",
+          "name": "Qwen3-Coder-Next 80B PC 168K/8K",
           "temperature": true,
           "limit": {
             "context": 172032,
@@ -20,7 +22,30 @@
           }
         }
       }
+    },
+    "ollama-laptop": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama Laptop - R4R",
+      "options": {
+        "baseURL": "{env:R4R_OPENCODE_LP_BASE_URL}",
+        "timeout": 14400000,
+        "chunkTimeout": 600000
+      },
+      "models": {
+        "qwen3-30b-coder-28k-6k-t33:latest": {
+          "name": "Qwen3 Coder 30B Laptop 28K/6K t33",
+          "temperature": true,
+          "limit": {
+            "context": 28672,
+            "output": 6144
+          }
+        }
+      }
     }
+  },
+  "permission": {
+    "codegraph_*": "deny",
+    "playwright_*": "deny"
   },
   "mcp": {
     "codegraph": {
@@ -30,7 +55,29 @@
         "serve",
         "--mcp"
       ],
-      "enabled": true
+      "enabled": true,
+      "timeout": 15000
+    },
+    "playwright": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@playwright/mcp@latest",
+        "--headless",
+        "--isolated",
+        "--block-service-workers",
+        "--image-responses",
+        "omit",
+        "--viewport-size",
+        "1440x1000",
+        "--timeout-navigation",
+        "90000",
+        "--output-dir",
+        "runtime/playwright"
+      ],
+      "enabled": true,
+      "timeout": 30000
     }
   },
   "watcher": {
@@ -39,13 +86,13 @@
       ".codegraph/**",
       "runtime/**",
       "target/**",
+      "dist/**",
+      "node_modules/**",
       "docker-postgres/data/**",
-      "docker-postgres/backups/**",
       "patches-applied/**",
       "**/*.zip",
       "r4r-agent-update-v*/**",
-      "r4r-agent-hotfix-v*/**",
-      "src/**/r4r-rollback-fix*/**"
+      "r4r-agent-hotfix-v*/**"
     ]
   }
 }

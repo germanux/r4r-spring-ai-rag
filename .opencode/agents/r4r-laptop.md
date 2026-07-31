@@ -1,9 +1,9 @@
 ---
-description: Implement one bounded R4R task with the PC 80B worker
+description: Implement one compact R4R task with the remote laptop 30B worker
 mode: primary
-model: ollama-pc/qwen3-coder-next-80b-t025-168k-8k-pc-pc
-steps: 72
-temperature: 0.25
+model: ollama-laptop/qwen3-30b-coder-28k-6k-t33:latest
+steps: 44
+temperature: 0.33
 permission:
   "*": deny
   read:
@@ -41,6 +41,6 @@ permission:
   external_directory: deny
   doom_loop: deny
 ---
-Follow the controller packet exactly. Edit only selected-task paths. After two
-identical tool failures, stop and report the blocker instead of repeating the call.
-Never write Git history. Run the exact gate once after bounded corrections.
+The total window is 28K with up to 6K output, so keep working input below about 22K.
+Read only the active packet and implicated files. Make one bounded repair batch. After
+two identical failures, stop and report the blocker. Never write Git history.

@@ -1,82 +1,38 @@
-# R4R repository agent rules
+# R4R agent rules
 
-## Purpose
+## Scope
 
-Build the Java 21 Riansares 4R RAG incrementally. The controller owns task
-selection, evidence, progress and commits. Codex plans/reviews read-only. OpenCode
-implements exactly one selected task.
+Use one selected agent and one bounded task. PC and laptop names select inference only;
+OpenCode, Playwright, Git, builds and files run on the machine launching OpenCode.
+Never run two agents against the same worktree.
 
-## Read order
+## General discipline
 
-Before any edit, read only:
+- Read the active task file before editing.
+- Read only files needed for that task; do not crawl the repository.
+- Make the smallest coherent patch. Preserve public contracts and unrelated sections.
+- After two identical tool errors, stop and report the blocker; never repeat blindly.
+- No `sudo`, package-manager mutation, Git writes, push, deployment or secret reads.
+- Run the repository's existing deterministic checks. Do not weaken tests or gates.
 
-1. `AGENTS.md`;
-2. `.opencode/commands/task.md`;
-3. `.opencode/memory.md`;
-4. the selected task file;
-5. companions whose filename starts with the selected task stem;
-6. the current Codex instruction packet.
+## RAG controller tasks
 
-Do not read every task, historical run or knowledge document by default.
+For Tasks 01-04 follow `.opencode/task-plan.json`, the selected command and the Codex
+packet. Use CodeGraph only for implicated Java paths. Browser tools are forbidden.
+A task advances only on its exact green gate and Codex `ACCEPT`.
 
-## Mandatory execution order
+## Gallery task
 
-For every attempt:
+Canonical URL: `https://riansares4r.com/galeria-antes-despues`.
+The XPath `/html/body/main/section[2]` is only a hint. Confirm the target semantically by
+the heading `Trabajos realizados`; preserve the preceding hero and all later sections.
 
-1. run the exact task gate;
-2. classify the failure and save the complete Maven output;
-3. package only implicated source/config files into the runtime error bundle;
-4. request a focused CodeGraph map when Java paths are implicated;
-5. produce a concise read-only local understanding report;
-6. let Codex inspect the complete log and packaged files;
-7. edit only after Codex returns a bounded plan;
-8. rerun the exact gate;
-9. produce post-edit understanding and obtain Codex review.
+Use Playwright to inspect the target section, DOM, computed styles, responsive layout,
+console and directly loaded assets. Do not copy the whole site's CSS or JavaScript.
+Reuse local tokens/components first; transfer only rules or behavior required by the
+section. Do not interact with forms, WhatsApp, cookies, authentication or remote state.
 
-An identical diagnostic may reuse a Codex plan during the configured cooldown.
-Changed diagnostics bypass the cooldown. CodeGraph is advisory unless explicitly
-configured as required; missing MCP evidence must not conceal compiler/test evidence.
-
-## Product boundaries
-
-- Keep the application non-web until an explicit task changes scope.
-- No REST, Angular, Playwright, Testcontainers or browser automation in Tasks 01–04.
-- Use Spring AI abstractions; no handwritten Ollama HTTP client.
-- Keep deterministic loading, chunking, identities and tests independent of live LLMs.
-- Do not add speculative layers, retries or background daemons to product code.
-
-## PostgreSQL and tests
-
-- PostgreSQL/pgvector runs through `docker-postgres/compose.yml`.
-- `postgres-app` is persistent; `postgres-test` is disposable.
-- Flyway exclusively owns application schema.
-- Integration evidence must use real PostgreSQL/pgvector, never H2 or mocks.
-- Use `./scripts/task-gate.sh <task>`; direct `mvn install` does not start the test DB.
-- A refused connection to `127.0.0.1:55433` is infrastructure, not a Java defect.
-
-## Editing discipline
-
-- Edit only task-allowed paths.
-- While compilation is red, repair one file/method at a time and compile after each
-  bounded change.
-- Do not replace a complete Java file when a method-level patch is sufficient.
-- Keep package, imports, type declaration, fields, constructors, annotations and
-  public signatures active.
-- Temporary quarantine is allowed only inside one broken method body and must be
-  removed before the official gate.
-- Do not disable tests/plugins, weaken assertions or alter the gate to obtain green.
-
-## Tool and Git discipline
-
-- Run commands directly; no `bash -lc`, `tee`, synthetic success suffixes or hidden
-  log redirection from OpenCode.
-- No `sudo`, package managers, web search or external directories from OpenCode.
-- No Git writes from OpenCode or Codex: no add, commit, reset, checkout, branch,
-  worktree, merge, rebase, tag, clean or push.
-- Runtime evidence belongs only under `runtime/runs/` and `runtime/control/`.
-
-## Completion
-
-A task is complete only when its exact gate is green and Codex returns `ACCEPT`.
-The controller then updates progress/memory and may create a local commit. Pushes are
-manual. Report exact changed paths, gate totals and the first unproven condition.
+Edit only a local source implementation of `/galeria-antes-despues`. If that route or
+its source cannot be found in the selected source worktree, stop without creating a
+parallel website. Validate the local build and existing browser/e2e checks. Do not
+deploy; report changed files, checks, visual differences and the first unproven item.
