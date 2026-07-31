@@ -3,6 +3,7 @@ package com.riansares.r4r.ingestion;
 import com.riansares.r4r.config.KnowledgeProperties;
 import java.io.PrintStream;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -28,7 +29,7 @@ public class KnowledgeIngestionOrchestration {
             Supplier<Clock> clockSupplier) {
         this.service = Objects.requireNonNull(service, "service must not be null");
         this.propertiesSupplier = Objects.requireNonNull(propertiesSupplier, "propertiesSupplier must not be null");
-        this.outputSupplier = Objects.requireNonNull(outputSupplier, "outputSupplier must not be null");
+        this.outputSupplier =Objects.requireNonNull(outputSupplier, "outputSupplier must not be null");
         this.errorSupplier = Objects.requireNonNull(errorSupplier, "errorSupplier must not be null");
         this.clockSupplier = Objects.requireNonNull(clockSupplier, "clockSupplier must not be null");
     }
@@ -38,7 +39,7 @@ public class KnowledgeIngestionOrchestration {
         try {
             properties = propertiesSupplier.get();
         } catch (Exception e) {
-            errorSupplier.get().println("ERROR: Failed to load knowledge configuration: " + e.getMessage());
+            errorSupplier.get().println("ERROR: Failed to load knowledge configuration");
             return new IngestionResult.InvalidConfiguration(e);
         }
 
@@ -47,28 +48,35 @@ public class KnowledgeIngestionOrchestration {
             return new IngestionResult.InvalidRoot(properties.root());
         }
 
+        Clock clock = clockSupplier.get();
+        Instant start = clock.instant();
+
         KnowledgeIngestionResult result;
         try {
-            result = service.ingest(clockSupplier.get());
+            result = service.ingest(clock);
         } catch (IllegalStateException e) {
-            errorSupplier.get().println("ERROR: Ingestion failed - " + e.getMessage());
-            Throwable cause = e.getCause();
-            if (cause != null && !isInfrastructureCause(cause)) {
-                errorSupplier.get().println("ERROR: Unknown ingestion failure");
-            }
+            errorSupplier.get().println("ERROR: Ingestion failed");
             return new IngestionResult.IngestionFailure(e);
         } catch (Exception e) {
-            errorSupplier.get().println("ERROR: Ingestion failed - " + e.getMessage());
+            errorSupplier.get().println("ERROR: Ingestion failed");
             if (isInfrastructureCause(e)) {
                 errorSupplier.get().println("ERROR: Infrastructure unavailable (database/model)");
             }
             return new IngestionResult.IngestionFailure(e);
         }
 
-        String json = toJson(properties, result);
+        Instant end = clock.instant();
+        long durationMs = java.time.Duration.between(start, end).toMillis();
+
+        String json = toJson(properties, result, durationMs);
         outputSupplier.get().println("R4R_INGESTION_RESULT=" + json);
 
-        return new IngestionResult.Success(result);
+        return new IngestionResult.Success(new KnowledgeIngestionResult(
+                result.discoveredSources(),
+                result.changedSources(),
+                result.unchangedSources(),
+                result.persistedChunks(),
+                durationMs));
     }
 
     private boolean isInfrastructureCause(Throwable cause) {
@@ -77,18 +85,18 @@ public class KnowledgeIngestionOrchestration {
         return msg.toLowerCase().contains("database")
                 || msg.toLowerCase().contains("connection")
                 || msg.toLowerCase().contains("postgresql")
-                || className.contains("DataAccessException")
-                || className.contains("PostgreSQLException");
+                || msg.toLowerCase().contains("connection refused")
+                || msg.toLowerCase().contains("network") || msg.toLowerCase().contains("timeout");
     }
 
-    private String toJson(KnowledgeProperties properties, KnowledgeIngestionResult result) {
+    private String toJson(KnowledgeProperties properties, KnowledgeIngestionResult result, long durationMs) {
         return "{"
                 + "\"path\":\"" + escapeJson(properties.root().toAbsolutePath().normalize().toString()) + "\","
                 + "\"discovered\":" + result.discoveredSources() + ","
                 + "\"changed\":" + result.changedSources() + ","
                 + "\"unchanged\":" + result.unchangedSources() + ","
                 + "\"chunks\":" + result.persistedChunks() + ","
-                + "\"durationMs\":" + result.durationMs() + ","
+                + "\"durationMs\":" + durationMs + ","
                 + "\"success\":true"
                 + "}";
     }
@@ -148,9 +156,7 @@ public class KnowledgeIngestionOrchestration {
                 String className = t.getClass().getName();
                 return msg.contains("database")
                         || msg.contains("connection")
-                        || msg.contains("postgresql")
-                        || className.contains("DataAccessException")
-                        || className.contains("PostgreSQLException");
+                        || msg.contains("postgresql");
             }
         }
     }

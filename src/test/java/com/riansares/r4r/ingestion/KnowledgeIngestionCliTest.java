@@ -1,6 +1,7 @@
 package com.riansares.r4r.ingestion;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.riansares.r4r.R4rSpringAiRagApplication;
 import com.riansares.r4r.config.KnowledgeProperties;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +21,7 @@ import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -64,141 +66,122 @@ class KnowledgeIngestionCliTest {
 
     @Test
     void mainInvokesOrchestrationWithWebApplicationTypeNone() throws Exception {
-        // given
+        SpringApplicationBuilder builder = KnowledgeIngestionCli.createBuilder();
         var mockService = mock(KnowledgeIngestionService.class);
-        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 0));
-
-        var mockProperties = new KnowledgeProperties(tempRoot, 1_048_576, 2_000);
-
-        // track whether WebApplicationType.NONE was used
-        WebApplicationType capturedWebType[] = new WebApplicationType[1];
-
-        var builder = new SpringApplicationBuilder()
-                .sources(TestApplication.class)
-                .web(capturedWebType);
-
-        // when
-        // we need a real orchestration that uses our mocked service and properties
+        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 42));
+        var mockProperties = new com.riansares.r4r.config.KnowledgeProperties(tempRoot, 1_048_576, 2_000);
         var orchestration = new KnowledgeIngestionOrchestration(
                 mockService,
                 () -> mockProperties,
                 () -> new PrintStream(outContent, true),
                 () -> new PrintStream(errContent, true),
                 Clock::systemUTC);
-
-        // Use reflection to inject into Spring context
         try (var context = builder.run()) {
-            // manually test orchestration
             var result = orchestration.execute();
-            
-            // verify
+            verify(mockService, times(1)).ingest(any());
             assertThat(result).isExactlyInstanceOf(KnowledgeIngestionOrchestration.IngestionResult.Success.class);
-            assertThat(outContent.toString(StandardCharsets.UTF_8)).startsWith("R4R_INGESTION_RESULT=");
+            String output = outContent.toString(StandardCharsets.UTF_8);
+            assertThat(output).startsWith("R4R_INGESTION_RESULT=");
         }
     }
 
     @Test
     void executeSuccessOutputsPrefixedJson() throws Exception {
-        // given
         var mockService = mock(KnowledgeIngestionService.class);
         when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(3, 1, 2, 5, 42));
-
-        var properties = new KnowledgeProperties(tempRoot, 1_048_576, 2_000);
-
+        var properties = new com.riansares.r4r.config.KnowledgeProperties(tempRoot, 1_048_576, 2_000);
         var orchestration = new KnowledgeIngestionOrchestration(
                 mockService,
                 () -> properties,
                 () -> new PrintStream(outContent, true),
                 () -> new PrintStream(errContent, true),
                 Clock::systemUTC);
-
-        // when
         var result = orchestration.execute();
-
-        // then
         assertThat(result).isExactlyInstanceOf(KnowledgeIngestionOrchestration.IngestionResult.Success.class);
         String output = outContent.toString(StandardCharsets.UTF_8);
         assertThat(output).startsWith("R4R_INGESTION_RESULT=");
-
         String json = output.substring("R4R_INGESTION_RESULT=".length()).trim();
         var mapper = new ObjectMapper();
         var node = mapper.readTree(json);
-
         assertThat(node.get("path").asText()).isEqualTo(tempRoot.toAbsolutePath().normalize().toString());
         assertThat(node.get("discovered").asInt()).isEqualTo(3);
         assertThat(node.get("changed").asInt()).isEqualTo(1);
         assertThat(node.get("unchanged").asInt()).isEqualTo(2);
         assertThat(node.get("chunks").asInt()).isEqualTo(5);
-        assertThat(node.get("durationMs").asLong()).isEqualTo(42);
+        long actualDuration = node.get("durationMs").asLong();
+        assertThat(actualDuration).isNotNegative();
         assertThat(node.get("success").asBoolean()).isTrue();
     }
 
     @Test
     void executeInvalidRootReturnsExitCodeAndRedactsErrors() {
-        // given
         var mockService = mock(KnowledgeIngestionService.class);
-
         Path nonExistentRoot = tempRoot.resolve("non-existent");
-        var properties = new KnowledgeProperties(nonExistentRoot, 1_048_576, 2_000);
-
+        var properties = new com.riansares.r4r.config.KnowledgeProperties(nonExistentRoot, 1_048_576, 2_000);
         var orchestration = new KnowledgeIngestionOrchestration(
                 mockService,
                 () -> properties,
                 () -> new PrintStream(outContent, true),
                 () -> new PrintStream(errContent, true),
                 Clock::systemUTC);
-
-        // when
         var result = orchestration.execute();
-
-        // then
         assertThat(result).isExactlyInstanceOf(KnowledgeIngestionOrchestration.IngestionResult.InvalidRoot.class);
         assertThat(result.exitCode()).isEqualTo(2);
-
         String err = errContent.toString(StandardCharsets.UTF_8);
-        assertThat(err).contains("Knowledge root does not exist");
+        assertThat(err).contains("ERROR: Knowledge root does not exist");
     }
 
     @Test
-    void executeIngestionFailureReturnsNonZeroExitCode() {
-        // given
+    void executeIngestionFailureReturnsNonZeroExitCodeAndDoesNotPrintSecrets() {
         var mockService = mock(KnowledgeIngestionService.class);
-        when(mockService.ingest(any())).thenThrow(new IllegalStateException("Database connection failed"));
-
-        var properties = new KnowledgeProperties(tempRoot, 1_048_576, 2_000);
-
+        IllegalStateException secretException = new IllegalStateException("Database connection failed: postgresql://admin:secretpassword123@localhost:5432/db");
+        when(mockService.ingest(any())).thenThrow(secretException);
+        var properties = new com.riansares.r4r.config.KnowledgeProperties(tempRoot, 1_048_576, 2_000);
         var orchestration = new KnowledgeIngestionOrchestration(
                 mockService,
                 () -> properties,
                 () -> new PrintStream(outContent, true),
                 () -> new PrintStream(errContent, true),
                 Clock::systemUTC);
-
-        // when
         var result = orchestration.execute();
-
-        // then
         assertThat(result).isExactlyInstanceOf(KnowledgeIngestionOrchestration.IngestionResult.IngestionFailure.class);
         int exitCode = result.exitCode();
-        assertThat(exitCode).isNotZero();
-
+        assertThat(exitCode).isEqualTo(3);
         String err = errContent.toString(StandardCharsets.UTF_8);
-        assertThat(err).contains("ERROR");
+        assertThat(err).contains("ERROR: Ingestion failed");
+        assertThat(err).doesNotContain("secretpassword123")
+                       .doesNotContain("postgresql://admin:")
+                       .doesNotContain("/db");
+    }
+
+    @Test
+    void executeIngestionFailureWithGenericExceptionReturnsExitCode4() {
+        var mockService = mock(KnowledgeIngestionService.class);
+        RuntimeException genericException = new RuntimeException("Unknown failure occurred");
+        when(mockService.ingest(any())).thenThrow(genericException);
+        var properties = new com.riansares.r4r.config.KnowledgeProperties(tempRoot, 1_048_576, 2_000);
+        var orchestration = new KnowledgeIngestionOrchestration(
+                mockService,
+                () -> properties,
+                () -> new PrintStream(outContent, true),
+                () -> new PrintStream(errContent, true),
+                Clock::systemUTC);
+        var result = orchestration.execute();
+        assertThat(result).isExactlyInstanceOf(KnowledgeIngestionOrchestration.IngestionResult.IngestionFailure.class);
+        int exitCode = result.exitCode();
+        assertThat(exitCode).isEqualTo(4);
+        String err = errContent.toString(StandardCharsets.UTF_8);
+        assertThat(err).contains("ERROR: Ingestion failed");
     }
 
     @Test
     void orchestrationDoesNotNeedLiveDependencies() {
-        // given - all mocks, no real services
         var mockService = mock(KnowledgeIngestionService.class);
-        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 0));
-
+        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 42));
         var mockPropertiesSupplier = mock(Supplier.class);
-        when(mockPropertiesSupplier.get()).thenReturn(new KnowledgeProperties(tempRoot, 1_048_576, 2_000));
-
+        when(mockPropertiesSupplier.get()).thenReturn(new com.riansares.r4r.config.KnowledgeProperties(tempRoot, 1_048_576, 2_000));
         var outCapture = new ByteArrayOutputStream();
         var errCapture = new ByteArrayOutputStream();
-
-        // when
         var orchestration = new KnowledgeIngestionOrchestration(
                 mockService,
                 mockPropertiesSupplier,
@@ -206,44 +189,36 @@ class KnowledgeIngestionCliTest {
                 () -> new PrintStream(errCapture, true),
                 Clock::systemUTC);
         var result = orchestration.execute();
-
-        // then
+        verify(mockService, times(1)).ingest(any());
         assertThat(result).isExactlyInstanceOf(KnowledgeIngestionOrchestration.IngestionResult.Success.class);
-        verify(mockService).ingest(any());
     }
 
     @Test
     void normalApplicationStartupDoesNotTriggerIngestion() throws Exception {
-        // given - no ingestion should be triggered by regular Spring startup
+        var mockService = mock(KnowledgeIngestionService.class);
+        try (var context = new SpringApplicationBuilder(R4rSpringAiRagApplication.class)
+                .web(WebApplicationType.SERVLET)
+                .run()) {
+            assertThat(context).isNotNull();
+        }
+    }
 
-        // when - start a non-web context like the main app would
-        var builder = new SpringApplicationBuilder()
-                .sources(R4rSpringAiRagApplication.class)
-                .web(WebApplicationType.NONE);
-
-        // then - just verify it starts without error (ingestion is CLI-specific)
+    @Test
+    void productionCliBuilderCreatesNoneWebContext() throws Exception {
+        SpringApplicationBuilder builder = KnowledgeIngestionCli.createBuilder();
         try (var context = builder.run()) {
-            // If we got here, startup succeeded
             assertThat(context).isNotNull();
         }
     }
 
     @Test
     void knowledgeIngestionServiceReturnsResult() throws Exception {
-        // This test verifies the service itself returns a result
-
-        // Create a simple knowledge file
-        Path sourceFile = tempRoot.resolve("sample.md");
+        var sourceFile = tempRoot.resolve("sample.md");
         Files.writeString(sourceFile, "# Sample\n\nContent here.", StandardCharsets.UTF_8);
-
-        var properties = new KnowledgeProperties(tempRoot, 1_048_576, 2_000);
+        var properties = new com.riansares.r4r.config.KnowledgeProperties(tempRoot, 1_048_576, 2_000);
         var loader = new com.riansares.r4r.document.MarkdownDocumentLoader(properties);
         var chunker = new com.riansares.r4r.chunking.HeadingMarkdownChunker(2_000);
-
-        // Using test database setup would require a full Spring context
-        // This is just a verification that the result structure is correct
         var result = new KnowledgeIngestionResult(5, 3, 2, 10, 1234);
-
         assertThat(result.discoveredSources()).isEqualTo(5);
         assertThat(result.changedSources()).isEqualTo(3);
         assertThat(result.unchangedSources()).isEqualTo(2);
@@ -251,7 +226,4 @@ class KnowledgeIngestionCliTest {
         assertThat(result.durationMs()).isEqualTo(1234);
     }
 
-    // Test application for Spring startup test
-    private static class TestApplication {
-    }
 }

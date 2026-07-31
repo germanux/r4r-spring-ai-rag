@@ -85,10 +85,10 @@ class KnowledgeIngestionServiceIT {
     void unchangedReingestionPreservesExactState() throws IOException {
         writeMarkdown("guide.md", "# Guide\n\nStable content.");
 
-        ingestionService.ingest();
+        KnowledgeIngestionResult _result = ingestionService.ingest();
         SourceSnapshot before = snapshot("guide.md");
 
-        ingestionService.ingest();
+        KnowledgeIngestionResult _result2 = ingestionService.ingest();
         SourceSnapshot after = snapshot("guide.md");
 
         assertThat(after).isEqualTo(before);
@@ -108,7 +108,7 @@ class KnowledgeIngestionServiceIT {
     void changedContentReplacesChunksAndPreservesSourceIdentity() throws IOException {
         Path source = writeMarkdown("guide.md", "# Original\n\nOriginal stable body.");
 
-        ingestionService.ingest();
+        KnowledgeIngestionResult _result = ingestionService.ingest();
         SourceSnapshot before = snapshot("guide.md");
         Long sourceIdBefore = jdbcTemplate.queryForObject(
                 "SELECT id FROM knowledge_sources WHERE source_path = ?",
@@ -116,7 +116,7 @@ class KnowledgeIngestionServiceIT {
 
         Files.writeString(source, "# Replacement\n\nReplacement body.", StandardCharsets.UTF_8);
 
-        ingestionService.ingest();
+        KnowledgeIngestionResult _result2 = ingestionService.ingest();
         SourceSnapshot after = snapshot("guide.md");
         Long sourceIdAfter = jdbcTemplate.queryForObject(
                 "SELECT id FROM knowledge_sources WHERE source_path = ?",
@@ -153,7 +153,7 @@ class KnowledgeIngestionServiceIT {
     void failedReplacementRollsBackChecksumAndChunks() throws IOException {
         Path source = writeMarkdown("guide.md", "# Original\n\nOriginal stable body.");
 
-        ingestionService.ingest();
+        KnowledgeIngestionResult _result = ingestionService.ingest();
         SourceSnapshot before = snapshot("guide.md");
 
         Files.writeString(source, "# Replacement\n\nReplacement body.", StandardCharsets.UTF_8);
@@ -182,7 +182,7 @@ class KnowledgeIngestionServiceIT {
                 Drainage details.
                 """);
 
-        ingestionService.ingest();
+        KnowledgeIngestionResult _result = ingestionService.ingest();
 
         List<ChunkSnapshot> chunks = jdbcTemplate.query(
                 """

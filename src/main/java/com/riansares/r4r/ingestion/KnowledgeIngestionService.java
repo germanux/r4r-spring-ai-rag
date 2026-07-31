@@ -1,6 +1,7 @@
 package com.riansares.r4r.ingestion;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.riansares.r4r.chunking.HeadingMarkdownChunker;
 import com.riansares.r4r.chunking.MarkdownChunk;
 import com.riansares.r4r.document.KnowledgeDocument;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
+@Transactional
 public class KnowledgeIngestionService {
 
     private final JdbcTemplate jdbcTemplate;
@@ -39,51 +41,52 @@ public class KnowledgeIngestionService {
     }
 
     public KnowledgeIngestionResult ingest(Clock clock) {
-        long startNanos = System.nanoTime();
-        
-        List<KnowledgeDocument> documents;
         try {
-            documents = documentLoader.loadAll();
+            List<KnowledgeDocument> documents;
+            try {
+                documents = documentLoader.loadAll();
+            } catch (IllegalStateException exception) {
+                throw exception;
+            } catch (Exception exception) {
+                throw new IllegalStateException("Failed to load knowledge documents", exception);
+            }
+
+            int discoveredSources = documents.size();
+            int changedSources = 0;
+            int unchangedSources = 0;
+            int persistedChunks = 0;
+
+            for (KnowledgeDocument document : documents) {
+                byte[] documentChecksum = sha256(
+                        document.content().getBytes(StandardCharsets.UTF_8));
+
+                Long unchangedSourceId = findSourceIdByPathAndSha256(
+                        document.source(),
+                        documentChecksum);
+
+                if (unchangedSourceId != null) {
+                    unchangedSources++;
+                    continue;
+                }
+
+                long sourceId = insertOrUpdateSource(document.source(), documentChecksum);
+                changedSources++;
+
+                List<MarkdownChunk> chunks = chunker.chunk(document);
+                persistedChunks += replaceChunks(sourceId, chunks);
+            }
+
+            return new KnowledgeIngestionResult(
+                    discoveredSources,
+                    changedSources,
+                    unchangedSources,
+                    persistedChunks,
+                    0); // duration computed at orchestration level
         } catch (IllegalStateException exception) {
             throw exception;
         } catch (Exception exception) {
-            throw new IllegalStateException("Failed to load knowledge documents", exception);
+            throw new IllegalStateException("Failed to ingest knowledge documents", exception);
         }
-
-        int discoveredSources = documents.size();
-        int changedSources = 0;
-        int unchangedSources = 0;
-        int persistedChunks = 0;
-
-        for (KnowledgeDocument document : documents) {
-            byte[] documentChecksum = sha256(
-                    document.content().getBytes(StandardCharsets.UTF_8));
-
-            Long unchangedSourceId = findSourceIdByPathAndSha256(
-                    document.source(),
-                    documentChecksum);
-
-            if (unchangedSourceId != null) {
-                unchangedSources++;
-                continue;
-            }
-
-            long sourceId = insertOrUpdateSource(document.source(), documentChecksum);
-            changedSources++;
-
-            List<MarkdownChunk> chunks = chunker.chunk(document);
-            persistedChunks += replaceChunks(sourceId, chunks);
-        }
-
-        long durationNanos = System.nanoTime() - startNanos;
-        long durationMs = durationNanos / 1_000_000;
-
-        return new KnowledgeIngestionResult(
-                discoveredSources,
-                changedSources,
-                unchangedSources,
-                persistedChunks,
-                durationMs);
     }
 
     private Long findSourceIdByPathAndSha256(String sourcePath, byte[] checksum) {
@@ -130,9 +133,9 @@ public class KnowledgeIngestionService {
     }
 
     private int replaceChunks(long sourceId, List<MarkdownChunk> chunks) {
-        jdbcTemplate.update(
-                "DELETE FROM knowledge_chunks WHERE source_id = ?",
-                sourceId);
+        String deleteSql = "DELETE FROM knowledge_chunks WHERE source_id = ?";
+
+        jdbcTemplate.update(deleteSql, sourceId);
 
         String insertSql = """
                 INSERT INTO knowledge_chunks (
@@ -145,31 +148,35 @@ public class KnowledgeIngestionService {
                 VALUES (?, ?, ?, ?, ?)
                 """;
 
-        jdbcTemplate.execute((ConnectionCallback<Void>) connection -> {
-            try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
-                for (int ordinal = 0; ordinal < chunks.size(); ordinal++) {
-                    MarkdownChunk chunk = chunks.get(ordinal);
-                    Array headingPath = connection.createArrayOf(
-                            "text",
-                            chunk.headingPath().toArray(String[]::new));
+       	try {
+           	jdbcTemplate.execute((ConnectionCallback<Void>) connection -> {
+                try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
+                    for (int ordinal = 0; ordinal < chunks.size(); ordinal++) {
+                        MarkdownChunk chunk = chunks.get(ordinal);
+                        Array headingPath = connection.createArrayOf(
+                                "text",
+                                chunk.headingPath().toArray(String[]::new));
 
-                    try {
-                        statement.clearParameters();
-                        statement.setLong(1, sourceId);
-                        statement.setArray(2, headingPath);
-                        statement.setInt(3, ordinal);
-                        statement.setBytes(
-                                4,
-                                sha256(chunk.content().getBytes(StandardCharsets.UTF_8)));
-                        statement.setString(5, chunk.content());
-                        statement.executeUpdate();
-                    } finally {
-                        headingPath.free();
+                        try {
+                            statement.clearParameters();
+                            statement.setLong(1, sourceId);
+                            statement.setArray(2, headingPath);
+                            statement.setInt(3, ordinal);
+                            statement.setBytes(
+                                    4,
+                                    sha256(chunk.content().getBytes(StandardCharsets.UTF_8)));
+                            statement.setString(5, chunk.content());
+                            statement.executeUpdate();
+                        } finally {
+                            headingPath.free();
+                        }
                     }
                 }
-            }
-            return null;
-        });
+                return null;
+            });
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to replace chunks", e);
+        }
 
         return chunks.size();
     }
