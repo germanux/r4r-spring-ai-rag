@@ -51,7 +51,17 @@ build_gate() {
   npm --prefix "$FRONTEND" run build
 }
 
+resolve_chrome_bin() {
+  local resolver="$ROOT/scripts/resolve-chrome-bin.sh"
+  [[ -x "$resolver" ]] || fail "Browser resolver is missing or not executable: scripts/resolve-chrome-bin.sh"
+
+  CHROME_BIN="$("$resolver")" || fail "Unable to resolve Chrome/Chromium for Karma"
+  export CHROME_BIN
+  printf 'Using CHROME_BIN=%s\n' "$CHROME_BIN"
+}
+
 unit_gate() {
+  resolve_chrome_bin
   node - "$FRONTEND/package.json" <<'NODE'
 const fs = require('fs');
 const pkg = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
