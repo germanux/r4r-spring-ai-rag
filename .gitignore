@@ -71,3 +71,4 @@ __pycache__/
 
 runtime/installer/
 runtime/
+/.opencode/progress.json
