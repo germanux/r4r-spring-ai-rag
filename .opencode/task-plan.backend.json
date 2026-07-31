@@ -87,6 +87,75 @@
         "task-05-rag-api"
       ],
       "commit_message": "feat(task-05): expose cited RAG HTTP API"
+    },
+    {
+      "id": "task-06-production-ingestion-cli",
+      "command": ".opencode/commands/task-06-production-ingestion-cli.md",
+      "objective": "Add an explicit non-web CLI for deterministic production knowledge ingestion.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**",
+        ".env.example"
+      ],
+      "gate": [
+        "bash",
+        "-lc",
+        "rm -rf target && ./scripts/task-gate.sh all && mvn -Dtest=KnowledgeIngestionCliTest -DfailIfNoTests=true test"
+      ],
+      "commit_message": "feat(task-06): add production knowledge ingestion CLI"
+    },
+    {
+      "id": "task-07-populate-production-rag",
+      "command": ".opencode/commands/task-07-populate-production-rag.md",
+      "objective": "Populate the persistent PC pgvector database and prove idempotent ingestion.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**"
+      ],
+      "gate": [
+        "bash",
+        "-lc",
+        "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+      ],
+      "commit_message": "feat(task-07): populate and verify production RAG corpus"
+    },
+    {
+      "id": "task-08-rag-semantic-evaluation",
+      "command": ".opencode/commands/task-08-rag-semantic-evaluation.md",
+      "objective": "Add grounded retrieval, citation and abstention evaluation for the populated RAG.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**"
+      ],
+      "gate": [
+        "bash",
+        "-lc",
+        "rm -rf target && ./scripts/task-gate.sh all && mvn -Dtest=RagSemanticEvaluationTest -DfailIfNoTests=true test"
+      ],
+      "commit_message": "test(task-08): add semantic RAG evaluation"
+    },
+    {
+      "id": "task-09-production-smoke",
+      "command": ".opencode/commands/task-09-production-smoke.md",
+      "objective": "Validate the packaged production RAG through real HTTP smoke acceptance.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**"
+      ],
+      "gate": [
+        "bash",
+        "-lc",
+        "rm -rf target && ./scripts/task-gate.sh all && mvn -Dtest=RagProductionSmokeTest -DfailIfNoTests=true test"
+      ],
+      "commit_message": "test(task-09): verify packaged production RAG"
     }
   ],
   "final_gate": [
