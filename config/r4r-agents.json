@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "agents": {
+    "PC": {
+      "agentId": "r4r-backend-pc",
+      "role": "backend",
+      "provider": "ollama-pc",
+      "model": "qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest",
+      "contextTokens": 172032,
+      "outputTokens": 8192,
+      "temperature": 0.25,
+      "allowedPaths": [
+        "src/**",
+        "pom.xml",
+        "docker-postgres/**",
+        "knowledge/**",
+        "docs/backend/**"
+      ],
+      "forbiddenPaths": [
+        "frontend/**"
+      ],
+      "mcp": [
+        "codegraph_r4r",
+        "codegraph_spring_ai",
+        "code_graph_rag_workspace"
+      ]
+    },
+    "LP": {
+      "agentId": "r4r-frontend-lp",
+      "role": "frontend-angular17",
+      "provider": "ollama-laptop",
+      "model": "qwen3-30b-coder-28k-6k-t33:latest",
+      "contextTokens": 28672,
+      "outputTokens": 6144,
+      "temperature": 0.33,
+      "allowedPaths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "forbiddenPaths": [
+        "src/**",
+        "pom.xml",
+        "docker-postgres/**",
+        "knowledge/**"
+      ],
+      "mcp": [
+        "code_graph_rag_workspace",
+        "playwright"
+      ]
+    }
+  }
+}
