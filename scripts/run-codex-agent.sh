@@ -112,6 +112,34 @@ unset OPENCODE_CONFIG || true
 unset OPENCODE_CONFIG_DIR || true
 unset OPENCODE_CONFIG_CONTENT || true
 
+case "$DEST" in
+  PC)
+    export R4R_GIT_AUTHOR_NAME="${R4R_PC_GIT_AUTHOR_NAME:-GermanGPT PC Agent}"
+    export R4R_GIT_AUTHOR_EMAIL="${R4R_PC_GIT_AUTHOR_EMAIL:-germanux@gmail.com}"
+    ;;
+  LP)
+    export R4R_GIT_AUTHOR_NAME="${R4R_LP_GIT_AUTHOR_NAME:-GermanGPT LP Agent}"
+    export R4R_GIT_AUTHOR_EMAIL="${R4R_LP_GIT_AUTHOR_EMAIL:-germanux@gmail.com}"
+    ;;
+esac
+
+for identity_variable in R4R_GIT_AUTHOR_NAME R4R_GIT_AUTHOR_EMAIL; do
+  identity_value="${!identity_variable:-}"
+  [[ -n "$identity_value" ]] || {
+    echo "ERROR: $identity_variable está vacío para $DEST" >&2
+    exit 2
+  }
+  [[ "$identity_value" != *$'\n'* && "$identity_value" != *$'\r'* ]] || {
+    echo "ERROR: $identity_variable debe ocupar una sola línea" >&2
+    exit 2
+  }
+done
+
+[[ "$R4R_GIT_AUTHOR_EMAIL" == *@* ]] || {
+  echo "ERROR: identidad Git sin email válido: $R4R_GIT_AUTHOR_EMAIL" >&2
+  exit 2
+}
+
 export R4R_WORKER_ID="$DEST"
 export R4R_OPENCODE_AGENT="$agent"
 export R4R_PLAN_DISPLAY="$plan"
@@ -168,8 +196,9 @@ PYCONFIG
 echo "OK: configuración OpenCode canónica para $DEST"
 
 if (( DOCTOR_LOCAL )); then
-  printf 'Agente: %s\nModelo: %s\nEndpoint configurado: %s\nPlan: %s\nProgreso: %s\nConfig canónica: %s\nMetadata resuelta: %s\n' \
+  printf 'Agente: %s\nModelo: %s\nEndpoint configurado: %s\nPlan: %s\nProgreso: %s\nAutor Git: %s <%s>\nConfig canónica: %s\nMetadata resuelta: %s\n' \
     "$agent" "$model" "$base_url" "$plan" "$progress" \
+    "$R4R_GIT_AUTHOR_NAME" "$R4R_GIT_AUTHOR_EMAIL" \
     "$ROOT/opencode.jsonc" "$ROOT/$resolved_config"
   exit 0
 fi
@@ -205,8 +234,9 @@ echo "OK: modelo visible en OpenCode: $full_model"
 
 if (( DOCTOR )); then
   echo "OK: diagnóstico completo"
-  printf 'Agente: %s\nModelo: %s\nEndpoint: %s\nPlan: %s\nProgreso: %s\nConfig: %s\n' \
-    "$agent" "$model" "$base_url" "$plan" "$progress" "$ROOT/opencode.jsonc"
+  printf 'Agente: %s\nModelo: %s\nEndpoint: %s\nPlan: %s\nProgreso: %s\nAutor Git: %s <%s>\nConfig: %s\n' \
+    "$agent" "$model" "$base_url" "$plan" "$progress" \
+    "$R4R_GIT_AUTHOR_NAME" "$R4R_GIT_AUTHOR_EMAIL" "$ROOT/opencode.jsonc"
   exit 0
 fi
 
@@ -257,9 +287,10 @@ PYTHON="$ROOT/py-codex-agent/.venv/bin/python"
 export R4R_CODEGRAPH_POLICY="${R4R_CODEGRAPH_POLICY:-advisory}"
 export R4R_REQUIRE_CODEGRAPH="${R4R_REQUIRE_CODEGRAPH:-true}"
 
-printf '[r4r] worker=%s agent=%s endpoint=%s model=%s plan=%s auto_commit=%s bootstrap_commit=%s\n' \
+printf '[r4r] worker=%s agent=%s endpoint=%s model=%s plan=%s auto_commit=%s bootstrap_commit=%s git_author=%s<%s>\n' \
   "$DEST" "$agent" "$base_url" "$model" "$plan" \
-  "$R4R_AUTO_COMMIT" "$R4R_BOOTSTRAP_COMMIT"
+  "$R4R_AUTO_COMMIT" "$R4R_BOOTSTRAP_COMMIT" \
+  "$R4R_GIT_AUTHOR_NAME" "$R4R_GIT_AUTHOR_EMAIL"
 
 exec "$PYTHON" \
   -m r4r_codex_agent.cli \

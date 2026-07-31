@@ -34,6 +34,7 @@ class CommandResult:
 def run_command(
     command: Sequence[str], cwd: Path, input_text: str | None = None,
     timeout_seconds: int | None = None, stream: bool = False,
+    env: dict[str, str] | None = None,
 ) -> CommandResult:
     if not command:
         raise ValueError("Command cannot be empty")
@@ -41,7 +42,7 @@ def run_command(
         list(command), cwd=cwd,
         stdin=subprocess.PIPE if input_text is not None else None,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        text=True, bufsize=1, start_new_session=True,
+        text=True, bufsize=1, start_new_session=True, env=env,
     )
     stdout_parts: list[str] = []
     stderr_parts: list[str] = []
@@ -295,6 +296,25 @@ class AutomaticRunner:
     def __init__(self, repo: Path, plan: TaskPlan, progress_path: Path):
         self.repo = repo.resolve()
         self.worker_id = os.environ.get("R4R_WORKER_ID", "PC").strip().upper() or "PC"
+        self.git_author_name = os.environ.get(
+            "R4R_GIT_AUTHOR_NAME", ""
+        ).strip()
+        self.git_author_email = os.environ.get(
+            "R4R_GIT_AUTHOR_EMAIL", ""
+        ).strip()
+        if (
+            not self.git_author_name
+            or not self.git_author_email
+            or "\n" in self.git_author_name
+            or "\r" in self.git_author_name
+            or "\n" in self.git_author_email
+            or "\r" in self.git_author_email
+            or "@" not in self.git_author_email
+        ):
+            raise ValueError(
+                "R4R_GIT_AUTHOR_NAME and R4R_GIT_AUTHOR_EMAIL must define "
+                f"a valid single-line Git identity for worker {self.worker_id}"
+            )
         try:
             peer_value = json.loads(os.environ.get("R4R_PEER_PATHS_JSON", "[]"))
         except json.JSONDecodeError as exception:
@@ -2095,11 +2115,34 @@ next instruction packet.
             return None
         # --only commits the selected task/progress paths and deliberately leaves
         # downloaded ZIPs, installers and unrelated staged work untouched.
+        # Per-command identity avoids races through the shared .git/config.
+        commit_env = os.environ.copy()
+        commit_env.update(
+            {
+                "GIT_AUTHOR_NAME": self.git_author_name,
+                "GIT_AUTHOR_EMAIL": self.git_author_email,
+                "GIT_COMMITTER_NAME": self.git_author_name,
+                "GIT_COMMITTER_EMAIL": self.git_author_email,
+            }
+        )
         commit = run_command(
-            ("git", "commit", "--only", "-m", message, "--", *selected),
+            (
+                "git",
+                "-c",
+                f"user.name={self.git_author_name}",
+                "-c",
+                f"user.email={self.git_author_email}",
+                "commit",
+                "--only",
+                "-m",
+                message,
+                "--",
+                *selected,
+            ),
             self.repo,
             timeout_seconds=self.timeout,
             stream=True,
+            env=commit_env,
         )
         if commit.exit_code != 0:
             print(
@@ -2109,7 +2152,42 @@ next instruction packet.
                 flush=True,
             )
             return None
-        return git_head(self.repo)
+
+        identity = run_command(
+            (
+                "git",
+                "show",
+                "-s",
+                "--format=%an%x00%ae%x00%cn%x00%ce",
+                "HEAD",
+            ),
+            self.repo,
+        )
+        observed = identity.stdout.rstrip("\n").split("\0")
+        expected = [
+            self.git_author_name,
+            self.git_author_email,
+            self.git_author_name,
+            self.git_author_email,
+        ]
+        if identity.exit_code != 0 or observed != expected:
+            print(
+                "[r4r] committed Git identity mismatch\n"
+                f"expected={expected!r}\n"
+                f"observed={observed!r}\n"
+                + identity.stderr,
+                file=sys.stderr,
+                flush=True,
+            )
+            return None
+
+        head = git_head(self.repo)
+        print(
+            f"[r4r] committed {head} as "
+            f"{self.git_author_name} <{self.git_author_email}>",
+            flush=True,
+        )
+        return head
 
     def _task_by_id(self, task_id: str) -> Task:
         for task in self.plan.tasks:
@@ -2125,6 +2203,8 @@ next instruction packet.
             "exit_code": exit_code,
             "finished_at": datetime.now(timezone.utc).isoformat(),
             "git_head": git_head(self.repo),
+            "git_author_name": self.git_author_name,
+            "git_author_email": self.git_author_email,
             "changed_paths": git_changed_paths(self.repo),
         }
         if extra:
