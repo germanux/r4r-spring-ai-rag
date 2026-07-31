@@ -5,154 +5,242 @@ import com.riansares.r4r.vector.PgVectorKnowledgeStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.Message;
-import org.springframework.ai.chat.model.MessageResult;
-import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.chat.model.Response;
+import org.springframework.ai.prompt.Prompt;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class CitedRagServiceTest {
 
-    private PgVectorKnowledgeStore mockKnowledgeStore;
-    private ChatModel mockChatModel;
+    private PgVectorKnowledgeStore knowledgeStore;
+    private ChatModel chatModel;
     private CitedRagService service;
 
     @BeforeEach
     void setUp() {
-        mockKnowledgeStore = mock(PgVectorKnowledgeStore.class);
-        mockChatModel = mock(ChatModel.class);
-        service = new CitedRagService(mockKnowledgeStore, mockChatModel, 3, 0.5);
+        knowledgeStore = mock(PgVectorKnowledgeStore.class);
+        chatModel = mock(ChatModel.class);
+        service = new CitedRagService(knowledgeStore, chatModel);
     }
 
     @Test
-    void answerRejectsNullQuestion() {
+    void rejectsNullQuestion() {
         assertThatThrownBy(() -> service.answer(null))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Question must not be null or blank");
+                .hasMessageContaining("question");
     }
 
     @Test
-    void answerRejectsBlankQuestion() {
+    void rejectsBlankQuestion() {
         assertThatThrownBy(() -> service.answer("   "))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Question must not be null or blank");
+                .hasMessageContaining("question");
     }
 
     @Test
-    void answerReturnsAbstentionWhenNoChunksFound() {
-        when(mockKnowledgeStore.search(any(String.class), any(Integer.class), any(Double.class)))
+    void returnsAbstentionWhenNoChunksRetrieved() {
+        when(knowledgeStore.search(any(), any(Integer.class), any(Double.class)))
                 .thenReturn(List.of());
 
-        CitedRagResult result = service.answer("What is the capital of France?");
+        RagResult result = service.answer("test question");
 
-        assertThat(result.abstained()).isTrue();
-        assertThat(result.answer())
-                .isEqualTo("I cannot answer this question based on the provided evidence.");
+        assertThat(result.abstention()).isTrue();
+        assertThat(result.answer()).isEmpty();
         assertThat(result.citations()).isEmpty();
+        verify(chatModel, never()).call(any(Prompt.class));
     }
 
     @Test
-    void answerBuildsPromptWithStableLabelsAndCallsChatModel() {
-        MarkdownChunk chunk1 = new MarkdownChunk(
-                "source1.md", List.of("Section", "Heading"), 0, "Content 1");
-        MarkdownChunk chunk2 = new MarkdownChunk(
-                "source2.md", List.of("Another", "Section"), 1, "Content 2");
+    void returnsAbstentionWhenChunksDoNotMeetThreshold() {
+        when(knowledgeStore.search(any(), any(Integer.class), any(Double.class)))
+                .thenReturn(List.of());
 
-        when(mockKnowledgeStore.search(any(String.class), any(Integer.class), any(Double.class)))
+        RagResult result = service.answer("test question");
+
+        assertThat(result.abstention()).isTrue();
+        verify(chatModel, never()).call(any(Prompt.class));
+    }
+
+    @Test
+    void buildsPromptWithLabeledChunksInRetrievalOrder() {
+        MarkdownChunk chunk1 = new MarkdownChunk(
+                "doc1.md", List.of("Section"), 0, "First content");
+        MarkdownChunk chunk2 = new MarkdownChunk(
+                "doc2.md", List.of("Other"), 1, "Second content");
+
+        when(knowledgeStore.search(any(), any(Integer.class), any(Double.class)))
                 .thenReturn(List.of(chunk1, chunk2));
 
-        Message mockMessage = mock(Message.class);
-        when(mockMessage.getContent()).thenReturn("Test answer");
-        MessageResult mockMessageResult = mock(MessageResult.class);
-        when(mockMessageResult.getOutput()).thenReturn(mockMessage);
-        ChatResponse mockChatResponse = mock(ChatResponse.class);
-        when(mockChatResponse.getResult()).thenReturn(mockMessageResult);
-        when(mockChatModel.call(any(Prompt.class))).thenReturn(mockChatResponse);
+        Response response = mock(Response.class);
+        when(response.getResult()).thenReturn(mock(org.springframework.ai.chat.model.Response.Result.class));
+        when(response.getResult().getOutput().getText()).thenReturn("Combined answer");
 
-        CitedRagResult result = service.answer("What is the capital of France?");
+        when(chatModel.call(any(Prompt.class))).thenReturn(response);
 
-        assertThat(result.abstained()).isFalse();
-        assertThat(result.answer()).isEqualTo("Test answer");
-        assertThat(result.citations()).hasSize(2);
-        assertThat(result.citations().get(0).source()).isEqualTo("source1.md");
-        assertThat(result.citations().get(0).ordinal()).isEqualTo(1);
-        assertThat(result.citations().get(1).source()).isEqualTo("source2.md");
-        assertThat(result.citations().get(1).ordinal()).isEqualTo(2);
+        service.answer("test question");
+
+        verify(chatModel).call(any(Prompt.class));
     }
 
     @Test
-    void answerPropagatesAnswerFromChatModel() {
-        MarkdownChunk chunk = new MarkdownChunk(
-                "source.md", List.of("Section"), 0, "Relevant content");
+    void assignsStableCitationLabelsInRetrievalOrder() {
+        MarkdownChunk chunk1 = new MarkdownChunk(
+                "doc1.md", List.of("Section"), 0, "First content");
+        MarkdownChunk chunk2 = new MarkdownChunk(
+                "doc2.md", List.of("Other"), 1, "Second content");
 
-        when(mockKnowledgeStore.search(any(String.class), any(Integer.class), any(Double.class)))
+        when(knowledgeStore.search(any(), any(Integer.class), any(Double.class)))
+                .thenReturn(List.of(chunk1, chunk2));
+
+        Response response = mock(Response.class);
+        when(response.getResult()).thenReturn(mock(org.springframework.ai.chat.model.Response.Result.class));
+        when(response.getResult().getOutput().getText()).thenReturn("Answer");
+
+        when(chatModel.call(any(Prompt.class))).thenReturn(response);
+
+        RagResult result = service.answer("test question");
+
+        assertThat(result.citations()).hasSize(2);
+        assertThat(result.citations().get(0).label()).isEqualTo("[S1]");
+        assertThat(result.citations().get(0).source()).isEqualTo("doc1.md");
+        assertThat(result.citations().get(0).headingPath()).containsExactly("Section");
+        assertThat(result.citations().get(0).ordinal()).isEqualTo(0);
+
+        assertThat(result.citations().get(1).label()).isEqualTo("[S2]");
+        assertThat(result.citations().get(1).source()).isEqualTo("doc2.md");
+        assertThat(result.citations().get(1).headingPath()).containsExactly("Other");
+        assertThat(result.citations().get(1).ordinal()).isEqualTo(1);
+    }
+
+    @Test
+    void answerIsPropagatedFromChatModel() {
+        MarkdownChunk chunk = new MarkdownChunk(
+                "doc.md", List.of("Section"), 0, "Content");
+
+        when(knowledgeStore.search(any(), any(Integer.class), any(Double.class)))
                 .thenReturn(List.of(chunk));
 
-        Message mockMessage = mock(Message.class);
-        when(mockMessage.getContent()).thenReturn("Propagated answer");
-        MessageResult mockMessageResult = mock(MessageResult.class);
-        when(mockMessageResult.getOutput()).thenReturn(mockMessage);
-        ChatResponse mockChatResponse = mock(ChatResponse.class);
-        when(mockChatResponse.getResult()).thenReturn(mockMessageResult);
-        when(mockChatModel.call(any(Prompt.class))).thenReturn(mockChatResponse);
+        Response response = mock(Response.class);
+        when(response.getResult()).thenReturn(mock(org.springframework.ai.chat.model.Response.Result.class));
+        when(response.getResult().getOutput().getText()).thenReturn("Generated answer text");
 
-        CitedRagResult result = service.answer("What is the capital of France?");
+        when(chatModel.call(any(Prompt.class))).thenReturn(response);
 
-        assertThat(result.answer()).isEqualTo("Propagated answer");
+        RagResult result = service.answer("test question");
+
+        assertThat(result.answer()).isEqualTo("Generated answer text");
+        assertThat(result.abstention()).isFalse();
     }
 
     @Test
-    void answerReturnsExactCitationsFromRetrievedChunks() {
-        MarkdownChunk chunk1 = new MarkdownChunk(
-                "source-a.md", List.of("A", "B"), 0, "Content A");
-        MarkdownChunk chunk2 = new MarkdownChunk(
-                "source-b.md", List.of("C", "D"), 1, "Content B");
+    void citationsPreserveExactMetadataFromRetrievedChunks() {
+        MarkdownChunk chunk = new MarkdownChunk(
+                "guide.md",
+                List.of("Building", "Roof"),
+                2,
+                "Roof details");
 
-        when(mockKnowledgeStore.search(any(String.class), any(Integer.class), any(Double.class)))
-                .thenReturn(List.of(chunk1, chunk2));
+        when(knowledgeStore.search(any(), any(Integer.class), any(Double.class)))
+                .thenReturn(List.of(chunk));
 
-        Message mockMessage = mock(Message.class);
-        when(mockMessage.getContent()).thenReturn("Answer");
-        MessageResult mockMessageResult = mock(MessageResult.class);
-        when(mockMessageResult.getOutput()).thenReturn(mockMessage);
-        ChatResponse mockChatResponse = mock(ChatResponse.class);
-        when(mockChatResponse.getResult()).thenReturn(mockMessageResult);
-        when(mockChatModel.call(any(Prompt.class))).thenReturn(mockChatResponse);
+        Response response = mock(Response.class);
+        when(response.getResult()).thenReturn(mock(org.springframework.ai.chat.model.Response.Result.class));
+        when(response.getResult().getOutput().getText()).thenReturn("Answer");
 
-        CitedRagResult result = service.answer("Question");
+        when(chatModel.call(any(Prompt.class))).thenReturn(response);
 
-        assertThat(result.citations()).hasSize(2);
-        assertThat(result.citations().get(0).source()).isEqualTo("source-a.md");
-        assertThat(result.citations().get(0).headingPath()).containsExactly("A", "B");
-        assertThat(result.citations().get(0).ordinal()).isEqualTo(1);
-        assertThat(result.citations().get(1).source()).isEqualTo("source-b.md");
-        assertThat(result.citations().get(1).headingPath()).containsExactly("C", "D");
-        assertThat(result.citations().get(1).ordinal()).isEqualTo(2);
+        RagResult result = service.answer("test question");
+
+        assertThat(result.citations()).hasSize(1);
+        Citation citation = result.citations().get(0);
+        assertThat(citation.label()).isEqualTo("[S1]");
+        assertThat(citation.source()).isEqualTo("guide.md");
+        assertThat(citation.headingPath()).containsExactly("Building", "Roof");
+        assertThat(citation.ordinal()).isEqualTo(2);
     }
 
     @Test
-    void answerDoesNotCallChatModelDuringAbstention() {
-        when(mockKnowledgeStore.search(any(String.class), any(Integer.class), any(Double.class)))
+    void chatModelIsNeverCalledDuringAbstention() {
+        when(knowledgeStore.search(any(), any(Integer.class), any(Double.class)))
                 .thenReturn(List.of());
 
-        CitedRagResult result = service.answer("Question");
+        service.answer("test question");
 
-        assertThat(result.abstained()).isTrue();
-        assertThat(result.answer())
-                .isEqualTo("I cannot answer this question based on the provided evidence.");
-        assertThat(result.citations()).isEmpty();
+        verify(chatModel, never()).call(any(Prompt.class));
+    }
 
-        // Verify chat model was never called
-        // Note: This test assumes that mockChatModel.call() is not invoked during abstention.
-        // If we want to verify this more strictly, we'd need to use a more advanced mocking approach.
+    @Test
+    void returnsDefensiveCopyOfCitations() {
+        MarkdownChunk chunk = new MarkdownChunk(
+                "doc.md", List.of("Section"), 0, "Content");
+
+        when(knowledgeStore.search(any(), any(Integer.class), any(Double.class)))
+                .thenReturn(List.of(chunk));
+
+        Response response = mock(Response.class);
+        when(response.getResult()).thenReturn(mock(org.springframework.ai.chat.model.Response.Result.class));
+        when(response.getResult().getOutput().getText()).thenReturn("Answer");
+
+        when(chatModel.call(any(Prompt.class))).thenReturn(response);
+
+        RagResult result = service.answer("test question");
+
+        assertThat(result.citations()).isInstanceOf(List.class);
+        assertThatThrownBy(() -> result.citations().add(mock(Citation.class)))
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void singleChunkReturnsSingleCitation() {
+        MarkdownChunk chunk = new MarkdownChunk(
+                "doc.md", List.of("Section"), 0, "Content");
+
+        when(knowledgeStore.search(any(), any(Integer.class), any(Double.class)))
+                .thenReturn(List.of(chunk));
+
+        Response response = mock(Response.class);
+        when(response.getResult()).thenReturn(mock(org.springframework.ai.chat.model.Response.Result.class));
+        when(response.getResult().getOutput().getText()).thenReturn("Answer");
+
+        when(chatModel.call(any(Prompt.class))).thenReturn(response);
+
+        RagResult result = service.answer("test question");
+
+        assertThat(result.citations()).hasSize(1);
+        assertThat(result.citations().get(0).label()).isEqualTo("[S1]");
+    }
+
+    @Test
+    void multipleChunksGetSequentialLabels() {
+        MarkdownChunk chunk1 = new MarkdownChunk(
+                "doc1.md", List.of("A"), 0, "Content1");
+        MarkdownChunk chunk2 = new MarkdownChunk(
+                "doc2.md", List.of("B"), 1, "Content2");
+        MarkdownChunk chunk3 = new MarkdownChunk(
+                "doc3.md", List.of("C"), 2, "Content3");
+
+        when(knowledgeStore.search(any(), any(Integer.class), any(Double.class)))
+                .thenReturn(List.of(chunk1, chunk2, chunk3));
+
+        Response response = mock(Response.class);
+        when(response.getResult()).thenReturn(mock(org.springframework.ai.chat.model.Response.Result.class));
+        when(response.getResult().getOutput().getText()).thenReturn("Answer");
+
+        when(chatModel.call(any(Prompt.class))).thenReturn(response);
+
+        RagResult result = service.answer("test question");
+
+        assertThat(result.citations()).hasSize(3);
+        assertThat(result.citations().get(0).label()).isEqualTo("[S1]");
+        assertThat(result.citations().get(1).label()).isEqualTo("[S2]");
+        assertThat(result.citations().get(2).label()).isEqualTo("[S3]");
     }
 }

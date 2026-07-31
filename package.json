@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "scripts": {
+    "cgr": "uvx --from \"code-graph-rag[treesitter-full,semantic]==0.0.421\" cgr",
+
+    "cgr:doctor": "npm run -s cgr -- doctor",
+    "cgr:infra:up": "npm run -s cgr -- daemon up",
+
+    "cgr:index": "npm run -s cgr -- start --repo-path . --update-graph",
+    "cgr:index:clean": "npm run -s cgr -- start --repo-path . --update-graph --clean",
+
+    "cgr:query": "npm run -s cgr -- start --repo-path .",
+    "cgr:mcp": "npm run -s cgr -- mcp-server"
+  }
+}

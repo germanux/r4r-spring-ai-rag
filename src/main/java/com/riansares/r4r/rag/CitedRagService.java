@@ -5,99 +5,101 @@ import com.riansares.r4r.vector.PgVectorKnowledgeStore;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.chat.prompt.SystemPromptTemplate;
-import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.IntStream;
 
-@Service
+/**
+ * Cited RAG service that retrieves evidence and generates answers with citations.
+ */
 public class CitedRagService {
 
-    private static final String SYSTEM_PROMPT = """
-            You are a helpful assistant that answers questions based on provided evidence.
-            Your answer must be based only on the evidence provided in the context below.
-            If the evidence does not contain sufficient information to answer the question, respond with "I cannot answer this question based on the provided evidence."
-            Do not make up information or use prior knowledge.
-            When citing evidence, use the labels [S1], [S2], etc. exactly as they appear in the context.
-            """;
-
-    private static final String USER_PROMPT_TEMPLATE = """
-            Context:
-            %s
-            
-            Question: %s
-            """;
+    private static final int RETRIEVAL_TOP_K = 5;
+    private static final double MIN_SCORE = 0.5;
 
     private final PgVectorKnowledgeStore knowledgeStore;
     private final ChatModel chatModel;
-    private final int topK;
-    private final double minScore;
 
+    /**
+     * Creates a new cited RAG service.
+     *
+     * @param knowledgeStore the vector store for evidence retrieval
+     * @param chatModel      the chat model for answer generation
+     */
     public CitedRagService(
             PgVectorKnowledgeStore knowledgeStore,
-            ChatModel chatModel,
-            @Value("${rag.top-k:3}") int topK,
-            @Value("${rag.min-score:0.5}") double minScore) {
-
+            ChatModel chatModel) {
         this.knowledgeStore = Objects.requireNonNull(knowledgeStore, "knowledgeStore");
         this.chatModel = Objects.requireNonNull(chatModel, "chatModel");
-        if (topK <= 0) {
-            throw new IllegalArgumentException("topK must be greater than zero");
-        }
-        if (!Double.isFinite(minScore)
-                || minScore < 0.0
-                || minScore > 1.0) {
-
-            throw new IllegalArgumentException(
-                    "minScore must be finite and between 0.0 and 1.0");
-        }
-        this.topK = topK;
-        this.minScore = minScore;
     }
-/*
-    public CitedRagResult answer(String question) {
-        if (question == null || question.isBlank()) {
-            throw new IllegalArgumentException("Question must not be null or blank");
-        }
 
-        List<MarkdownChunk> chunks = knowledgeStore.search(question, topK, minScore);
+    /**
+     * Processes a question and returns a cited answer.
+     *
+     * @param question the user's question
+     * @return the result with answer, abstention flag, and citations
+     */
+    public RagResult answer(String question) {
+        validateQuestion(question);
+
+        List<MarkdownChunk> chunks = retrieveEvidence(question);
 
         if (chunks.isEmpty()) {
-            return new CitedRagResult(
-                    "I cannot answer this question based on the provided evidence.",
-                    true,
-                    List.of());
+            return RagResult.abstain();
         }
 
-        StringBuilder contextBuilder = new StringBuilder();
+        Prompt prompt = buildPrompt(question, chunks);
+        ChatResponse response = chatModel.call(prompt);
+        String answer = extractAnswer(response);
+
+        List<Citation> citations = buildCitations(chunks);
+
+        return RagResult.ofAnswer(answer, citations);
+    }
+
+    private void validateQuestion(String question) {
+        if (question == null || question.isBlank()) {
+            throw new IllegalArgumentException("question must not be blank");
+        }
+    }
+
+    private List<MarkdownChunk> retrieveEvidence(String question) {
+        return knowledgeStore.search(question, RETRIEVAL_TOP_K, MIN_SCORE);
+    }
+
+    private Prompt buildPrompt(String question, List<MarkdownChunk> chunks) {
+        StringBuilder promptText = new StringBuilder();
+
+        promptText.append("You are a helpful assistant. Use the following evidence to answer the question.\n\n");
+
         for (int i = 0; i < chunks.size(); i++) {
             MarkdownChunk chunk = chunks.get(i);
-            contextBuilder.append("[").append("S").append(i + 1).append("] ")
-                    .append(chunk.content())
-                    .append("\n\n");
+            String label = "[S" + (i + 1) + "]";
+            promptText.append(label).append("\n");
+            promptText.append(chunk.content()).append("\n\n");
         }
 
-        String userPrompt = String.format(USER_PROMPT_TEMPLATE, contextBuilder, question);
-        Prompt prompt = new Prompt(
-                new SystemPromptTemplate(SYSTEM_PROMPT).createMessage(Map.of()),
-                new Prompt(userPrompt));
+        promptText.append("Question: ").append(question).append("\n\n");
+        promptText.append("Answer with citations in the format [S1], [S2], etc.:\n");
 
-        ChatResponse response = chatModel.call(prompt);
-        String answer = response.getResult().getOutput().getText();
-
-        List<CitedRagResult.Citation> citations = IntStream.range(0, chunks.size())
-                .mapToObj(i -> new CitedRagResult.Citation(
-                        chunks.get(i).source(),
-                        chunks.get(i).headingPath(),
-                        i + 1))
-                .toList();
-
-        return new CitedRagResult(answer, false, citations);
+        return new Prompt(promptText.toString());
     }
-    */
+
+    private String extractAnswer(ChatResponse response) {
+        if (response == null || response.getResult() == null) {
+            throw new IllegalStateException("Chat model returned null response");
+        }
+        return response.getResult().getOutput().getText();
+    }
+
+    private List<Citation> buildCitations(List<MarkdownChunk> chunks) {
+        List<Citation> citations = new ArrayList<>(chunks.size());
+        for (int i = 0; i < chunks.size(); i++) {
+            MarkdownChunk chunk = chunks.get(i);
+            String label = "[S" + (i + 1) + "]";
+            citations.add(Citation.fromMarkdownChunk(label, chunk));
+        }
+        return List.copyOf(citations);
+    }
 }
