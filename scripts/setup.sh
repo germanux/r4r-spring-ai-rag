@@ -123,10 +123,18 @@ ensure_local_env_var() {
 }
 
 ensure_worker_git_identities() {
-  ensure_local_env_var     R4R_PC_GIT_AUTHOR_NAME     "${R4R_PC_GIT_AUTHOR_NAME:-GermanGPT PC Agent}"
-  ensure_local_env_var     R4R_PC_GIT_AUTHOR_EMAIL     "${R4R_PC_GIT_AUTHOR_EMAIL:-germanux@gmail.com}"
-  ensure_local_env_var     R4R_LP_GIT_AUTHOR_NAME     "${R4R_LP_GIT_AUTHOR_NAME:-GermanGPT LP Agent}"
-  ensure_local_env_var     R4R_LP_GIT_AUTHOR_EMAIL     "${R4R_LP_GIT_AUTHOR_EMAIL:-germanux@gmail.com}"
+  ensure_local_env_var \
+    R4R_PC_GIT_AUTHOR_NAME \
+    "${R4R_PC_GIT_AUTHOR_NAME:-GermanGPT PC Agent}"
+  ensure_local_env_var \
+    R4R_PC_GIT_AUTHOR_EMAIL \
+    "${R4R_PC_GIT_AUTHOR_EMAIL:-germanux@gmail.com}"
+  ensure_local_env_var \
+    R4R_LP_GIT_AUTHOR_NAME \
+    "${R4R_LP_GIT_AUTHOR_NAME:-GermanGPT LP Agent}"
+  ensure_local_env_var \
+    R4R_LP_GIT_AUTHOR_EMAIL \
+    "${R4R_LP_GIT_AUTHOR_EMAIL:-germanux@gmail.com}"
 
   set -a
   # shellcheck disable=SC1091
