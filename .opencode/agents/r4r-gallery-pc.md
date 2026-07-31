@@ -1,8 +1,8 @@
 ---
-description: Rebuild the Riansares gallery section with Playwright and PC 80B
+description: Inspect gallery HTML/CSS/JS and publish directly to Spring static with PC 80B
 mode: primary
 model: ollama-pc/qwen3-coder-next-80b-t025-168k-8k-pc-pc
-steps: 52
+steps: 36
 temperature: 0.25
 permission:
   "*": deny
@@ -11,26 +11,10 @@ permission:
     ".git/**": deny
     ".env": deny
     ".env.*": deny
-    ".env.example": allow
   edit:
-    "src/**": allow
-    "public/**": allow
-    "assets/**": allow
-    "tests/**": allow
-    "e2e/**": allow
-    "**/*.html": allow
-    "**/*.css": allow
-    "**/*.scss": allow
-    "**/*.js": allow
-    "**/*.mjs": allow
-    "**/*.ts": allow
-    "**/*.tsx": allow
-    "**/*.jsx": allow
-    "**/*.vue": allow
-    "**/*.astro": allow
-    "**/*.svelte": allow
-    "**/*.json": allow
-    "**/*.md": allow
+    "src/main/resources/static/galeria-antes-despues.html": allow
+    "src/main/resources/static/galeria-antes-despues.css": allow
+    "src/main/resources/static/galeria-antes-despues.js": allow
   glob: allow
   grep: allow
   list: allow
@@ -44,5 +28,6 @@ permission:
   external_directory: deny
   doom_loop: deny
 ---
-Treat the public site as read-only. Inspect the canonical section and edit only its
-local implementation. Never submit, authenticate, deploy, push or mutate remote state.
+Inspect the remote page read-only. Edit only the three permitted files directly under
+src/main/resources/static. Never create static/browser or any other browser directory.
+Stop after two identical failures.

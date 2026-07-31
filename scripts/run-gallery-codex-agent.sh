@@ -2,31 +2,22 @@
 set -Eeuo pipefail
 
 DEST=""
-SOURCE_ROOT=""
-SOURCE_URL=""
-CLONE_DIR="${HOME}/Desarrollo/r4r-gallery-web-agent.git"
-ALLOW_DIRTY=0
+TARGET_ROOT=""
 SKIP_PROBE=0
 
 usage() {
   cat <<'TXT'
 Uso:
-  run-gallery-codex-agent.sh --destination LP|PC --source-root /ruta/local
-  run-gallery-codex-agent.sh --destination LP|PC --source-url URL [--clone-dir RUTA]
+  run-gallery-codex-agent.sh --destination LP|PC [--target-root /ruta]
 
-Opciones:
-  --allow-dirty  Permite trabajar sobre un repositorio con cambios.
-  --skip-probe   Omite la prueba mínima del modelo seleccionado.
+Sin --target-root, publica en el repositorio donde está instalado el controlador.
 TXT
 }
 
 while (($#)); do
   case "$1" in
     --destination) DEST="${2:-}"; shift 2 ;;
-    --source-root) SOURCE_ROOT="${2:-}"; shift 2 ;;
-    --source-url) SOURCE_URL="${2:-}"; shift 2 ;;
-    --clone-dir) CLONE_DIR="${2:-}"; shift 2 ;;
-    --allow-dirty) ALLOW_DIRTY=1; shift ;;
+    --target-root) TARGET_ROOT="${2:-}"; shift 2 ;;
     --skip-probe) SKIP_PROBE=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "ERROR: opción desconocida: $1" >&2; usage >&2; exit 2 ;;
@@ -40,42 +31,20 @@ case "$DEST" in
 esac
 
 CONFIG_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$CONFIG_ROOT"
+TARGET_ROOT="${TARGET_ROOT:-$CONFIG_ROOT}"
+TARGET_ROOT="$(realpath "$TARGET_ROOT")"
 
-for tool in git opencode codex python3 curl; do
+[[ -f "$TARGET_ROOT/pom.xml" ]] || {
+  echo "ERROR: el destino no parece un proyecto Spring/Maven: $TARGET_ROOT" >&2
+  exit 2
+}
+
+for tool in opencode codex python3 curl git; do
   command -v "$tool" >/dev/null 2>&1 || {
     echo "ERROR: falta $tool en el PC coordinador" >&2
     exit 2
   }
 done
-
-if [[ -n "$SOURCE_ROOT" && "$SOURCE_ROOT" =~ ^https?:// ]]; then
-  echo "ERROR: --source-root requiere una ruta local." >&2
-  echo "Usa --source-url para clonar una URL." >&2
-  exit 2
-fi
-
-if [[ -n "$SOURCE_URL" ]]; then
-  if [[ ! -e "$CLONE_DIR" ]]; then
-    git clone "$SOURCE_URL" "$CLONE_DIR"
-  fi
-  SOURCE_ROOT="$CLONE_DIR"
-fi
-
-[[ -n "$SOURCE_ROOT" ]] || {
-  echo "ERROR: indica --source-root o --source-url" >&2
-  exit 2
-}
-SOURCE_ROOT="$(realpath "$SOURCE_ROOT")"
-git -C "$SOURCE_ROOT" rev-parse --show-toplevel >/dev/null
-
-if (( ! ALLOW_DIRTY )) \
-    && [[ -n "$(git -C "$SOURCE_ROOT" status --porcelain)" ]]; then
-  echo "ERROR: el repositorio web tiene cambios." >&2
-  git -C "$SOURCE_ROOT" status --short | head -n 24 >&2
-  echo "Usa un worktree limpio o --allow-dirty conscientemente." >&2
-  exit 5
-fi
 
 "$CONFIG_ROOT/scripts/select-r4r-destination.sh" \
   --destination "$DEST" --quiet
@@ -95,7 +64,7 @@ else
 fi
 
 run_id="$(date -u +%Y%m%dT%H%M%SZ)"
-run_dir="$CONFIG_ROOT/runtime/gallery-codex/$run_id"
+run_dir="$CONFIG_ROOT/runtime/gallery-static/$run_id"
 mkdir -p "$run_dir"
 
 if (( ! SKIP_PROBE )); then
@@ -114,41 +83,28 @@ if (( ! SKIP_PROBE )); then
   )"
   [[ "$http" == 200 ]] || {
     echo "ERROR: prueba del modelo devolvió HTTP=$http" >&2
-    cat "$run_dir/model-probe.json" >&2
     exit 6
   }
-  python3 - "$run_dir/model-probe.json" <<'PY'
-import json, sys
-data = json.load(open(sys.argv[1], encoding="utf-8"))
-print("[r4r-gallery] modelo:", data["choices"][0]["message"]["content"])
-PY
 fi
 
 task_file="$CONFIG_ROOT/.opencode/commands/task-web-gallery.md"
-[[ -f "$task_file" ]] || {
-  echo "ERROR: falta $task_file" >&2
-  exit 2
+static_root="$TARGET_ROOT/src/main/resources/static"
+mkdir -p "$static_root"
+
+[[ ! -e "$static_root/browser" ]] || {
+  echo "ERROR: existe $static_root/browser; retíralo antes de continuar." >&2
+  exit 7
 }
 
-echo "[r4r-gallery] Codex planifica en modo read-only"
-(
-  cd "$SOURCE_ROOT"
-  codex exec --sandbox read-only --ephemeral \
-    -o "$run_dir/codex-plan.md" - <<EOF
-Actúa como arquitecto/revisor principal. Planifica una única modificación acotada
-del repositorio local $SOURCE_ROOT.
-
-Objetivo:
+echo "[r4r-gallery] Codex produce un plan corto, sin explorar el repositorio"
+codex exec --sandbox read-only --ephemeral \
+  -o "$run_dir/codex-plan.md" - <<EOF
+Planifica esta tarea sin navegar por el repositorio y sin usar navegador:
 $(cat "$task_file")
 
-Inspecciona el repositorio local. No edites. No hagas Git write, push ni despliegue.
-Devuelve un plan corto con:
-1. archivos exactos;
-2. cambios mínimos;
-3. validaciones locales y Playwright;
-4. riesgos y límites.
+Destino exacto: $static_root
+Devuelve como máximo 12 líneas. No edites ni ejecutes Git.
 EOF
-)
 
 export OPENCODE_CONFIG="$CONFIG_ROOT/opencode.jsonc"
 export OPENCODE_CONFIG_DIR="$CONFIG_ROOT/.opencode"
@@ -158,45 +114,74 @@ prompt="$(
   cat "$task_file"
   printf '\n\n# Plan obligatorio de Codex\n'
   cat "$run_dir/codex-plan.md"
-  printf '\n\nEdita solo el repositorio local. '
-  printf 'No hagas commit, push ni despliegue. '
-  printf 'Ejecuta validaciones acotadas y detente.\n'
+  printf '\n\nDestino absoluto: %s\n' "$static_root"
+  printf 'No leas fuentes locales fuera del directorio static. '
+  printf 'No crees browser/. No hagas Git write.\n'
 )"
 
 echo "[r4r-gallery] OpenCode ejecuta con $agent"
 (
-  cd "$SOURCE_ROOT"
-  opencode run --dir "$SOURCE_ROOT" \
+  cd "$TARGET_ROOT"
+  opencode run --dir "$TARGET_ROOT" \
     --agent "$agent" --format json --auto "$prompt"
 ) 2>&1 | tee "$run_dir/opencode.log"
 
-git -C "$SOURCE_ROOT" diff --check
+[[ ! -e "$static_root/browser" ]] || {
+  echo "ERROR: el agente creó static/browser; ejecución rechazada." >&2
+  exit 8
+}
 
-echo "[r4r-gallery] Codex revisa el resultado"
+for name in \
+  galeria-antes-despues.html \
+  galeria-antes-despues.css \
+  galeria-antes-despues.js
+do
+  [[ -s "$static_root/$name" ]] || {
+    echo "ERROR: falta o está vacío $static_root/$name" >&2
+    exit 9
+  }
+done
+
+if grep -RInE '(^|[/"'\'' ])browser/' \
+  "$static_root/galeria-antes-despues."{html,css,js}; then
+  echo "ERROR: alguna referencia todavía apunta a browser/." >&2
+  exit 10
+fi
+
+grep -Fq '/galeria-antes-despues.css' \
+  "$static_root/galeria-antes-despues.html"
+grep -Fq '/galeria-antes-despues.js' \
+  "$static_root/galeria-antes-despues.html"
+
+git -C "$TARGET_ROOT" diff --check -- \
+  src/main/resources/static/galeria-antes-despues.html \
+  src/main/resources/static/galeria-antes-despues.css \
+  src/main/resources/static/galeria-antes-despues.js
+
+echo "[r4r-gallery] Codex revisa únicamente los tres estáticos"
 (
-  cd "$SOURCE_ROOT"
+  cd "$TARGET_ROOT"
   codex exec --sandbox read-only --ephemeral \
     -o "$run_dir/codex-review.md" - <<EOF
-Revisa en modo read-only los cambios actuales del repositorio $SOURCE_ROOT.
+Revisa solo estos tres archivos:
+- src/main/resources/static/galeria-antes-despues.html
+- src/main/resources/static/galeria-antes-despues.css
+- src/main/resources/static/galeria-antes-despues.js
 
-Objetivo:
+Contrato:
 $(cat "$task_file")
 
-Plan previo:
-$(cat "$run_dir/codex-plan.md")
-
-Inspecciona git diff, archivos modificados y pruebas disponibles. No edites ni hagas
-Git write. Devuelve exactamente:
+Comprueba que no exista ni se referencie browser/. No edites.
+Devuelve:
 DECISION: ACCEPT | REVISE | BLOCKED
 SUMMARY: una frase
-DEFECTS: lista concreta
-NEXT_ACTION: una sola acción acotada
+DEFECTS: lista breve
 EOF
 )
 
 echo
-echo "Plan:    $run_dir/codex-plan.md"
-echo "OpenCode: $run_dir/opencode.log"
-echo "Review:  $run_dir/codex-review.md"
-echo
+echo "Destino: $static_root"
+echo "Plan: $run_dir/codex-plan.md"
+echo "Log: $run_dir/opencode.log"
+echo "Revisión: $run_dir/codex-review.md"
 cat "$run_dir/codex-review.md"

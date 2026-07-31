@@ -3,7 +3,7 @@
 ## Current state
 
 - Last accepted task: task-03-pgvector.
-- Active task: None.
+- Active task: task-04-rag.
 - Accepted: task-01-base, task-02-ingestion, task-03-pgvector.
 - Remaining: task-04-rag.
 - Exact plan: `.opencode/task-plan.json`.
