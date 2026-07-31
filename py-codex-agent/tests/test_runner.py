@@ -524,12 +524,13 @@ class RunnerTest(unittest.TestCase):
             self.assertNotEqual(baseline, first)
             self.assertNotEqual(first, second)
 
-    def test_active_lock_is_authoritative_for_task_selection(self):
+    def test_progress_active_task_is_authoritative_for_task_selection(self):
         with tempfile.TemporaryDirectory() as directory:
             runner = self._selection_runner(Path(directory))
+            runner.progress["active_task"] = "task-02"
             runner.lock_path.parent.mkdir(parents=True)
             runner.lock_path.write_text(
-                json.dumps({"schema_version": 1, "task_id": "task-02"}),
+                json.dumps({"schema_version": 1, "task_id": "task-01"}),
                 encoding="utf-8",
             )
 
@@ -538,7 +539,7 @@ class RunnerTest(unittest.TestCase):
             self.assertIsNotNone(selected)
             self.assertEqual("task-02", selected.id)
 
-    def test_without_lock_selects_first_non_accepted_task(self):
+    def test_without_active_progress_selects_first_non_accepted_task(self):
         with tempfile.TemporaryDirectory() as directory:
             runner = self._selection_runner(Path(directory))
 
@@ -562,105 +563,34 @@ class RunnerTest(unittest.TestCase):
             self.assertIn("new evidence", patch)
             self.assertIn("new file mode", patch)
 
-    def test_resume_lock_auto_advances_across_maintenance_commit(self):
+    def test_unlocked_resume_accepts_maintenance_paths(self):
         with tempfile.TemporaryDirectory() as directory:
-            repo = Path(directory)
-            self._init_repo(repo)
-            runner = self._selection_runner(repo)
-            base = run_command(("git", "rev-parse", "HEAD"), repo).stdout.strip()
-            runner.lock_path.parent.mkdir(parents=True)
-            runner.lock_path.write_text(
-                json.dumps({
-                    "schema_version": 1,
-                    "task_id": "task-02",
-                    "base_commit": base,
-                    "run_id": "test",
-                    "allowed_paths": ["src/**"],
-                }),
-                encoding="utf-8",
-            )
-            script = repo / "scripts" / "run-codex-agent.sh"
-            script.parent.mkdir(parents=True)
-            script.write_text("#!/usr/bin/env bash\n", encoding="utf-8")
-            orphan_script = repo / "scripts" / "find-and-stop-r4r-orphans.sh"
-            orphan_script.write_text("#!/usr/bin/env bash\n", encoding="utf-8")
-            command = repo / ".opencode" / "commands" / "recovery.md"
-            command.parent.mkdir(parents=True)
-            command.write_text("# Recovery\n", encoding="utf-8")
-            agent = repo / ".opencode" / "agents" / "r4r-pc.md"
-            agent.parent.mkdir(parents=True)
-            agent.write_text("runtime control read permission\n", encoding="utf-8")
-            gitignore = repo / ".gitignore"
-            gitignore.write_text("/runtime/control/*\n", encoding="utf-8")
-            run_command((
-                "git", "add",
-                str(script.relative_to(repo)),
-                str(orphan_script.relative_to(repo)),
-                str(command.relative_to(repo)),
-                str(agent.relative_to(repo)),
-                str(gitignore.relative_to(repo)),
-            ), repo)
-            run_command(("git", "commit", "-q", "-m", "agent maintenance"), repo)
-            current = run_command(("git", "rev-parse", "HEAD"), repo).stdout.strip()
+            runner = self._selection_runner(Path(directory))
+            task = runner._select_task()
 
-            runner._validate_resume_lock(())
+            runner._validate_unlocked_resume((
+                "scripts/run-gallery-agent.sh",
+                "scripts/select-r4r-destination.sh",
+                "opencode.jsonc",
+            ), task)
 
-            lock = json.loads(runner.lock_path.read_text(encoding="utf-8"))
-            self.assertEqual(current, lock["base_commit"])
-            self.assertTrue(lock["run_id"].startswith("resume-"))
-
-    def test_resume_lock_adopts_in_scope_product_commit_between_base_and_head(self):
+    def test_unlocked_resume_accepts_in_scope_product_paths(self):
         with tempfile.TemporaryDirectory() as directory:
-            repo = Path(directory)
-            self._init_repo(repo)
-            runner = self._selection_runner(repo)
-            base = run_command(("git", "rev-parse", "HEAD"), repo).stdout.strip()
-            runner.lock_path.parent.mkdir(parents=True)
-            runner.lock_path.write_text(
-                json.dumps({
-                    "schema_version": 1,
-                    "task_id": "task-02",
-                    "base_commit": base,
-                    "run_id": "test",
-                    "allowed_paths": ["src/**"],
-                }),
-                encoding="utf-8",
-            )
-            product = repo / "src" / "main" / "App.java"
-            product.parent.mkdir(parents=True)
-            product.write_text("class App {}\n", encoding="utf-8")
-            run_command(("git", "add", str(product.relative_to(repo))), repo)
-            run_command(("git", "commit", "-q", "-m", "product change"), repo)
+            runner = self._selection_runner(Path(directory))
+            task = runner._select_task()
 
-            current = run_command(("git", "rev-parse", "HEAD"), repo).stdout.strip()
-            runner._validate_resume_lock(())
-            lock = json.loads(runner.lock_path.read_text(encoding="utf-8"))
-            self.assertEqual(current, lock["base_commit"])
+            runner._validate_unlocked_resume((
+                "src/main/App.java",
+                "src/test/AppTest.java",
+            ), task)
 
-    def test_resume_lock_rejects_out_of_scope_commit_between_base_and_head(self):
+    def test_unlocked_resume_rejects_out_of_scope_dirty_paths(self):
         with tempfile.TemporaryDirectory() as directory:
-            repo = Path(directory)
-            self._init_repo(repo)
-            runner = self._selection_runner(repo)
-            base = run_command(("git", "rev-parse", "HEAD"), repo).stdout.strip()
-            runner.lock_path.parent.mkdir(parents=True)
-            runner.lock_path.write_text(
-                json.dumps({
-                    "schema_version": 1,
-                    "task_id": "task-02",
-                    "base_commit": base,
-                    "run_id": "test",
-                    "allowed_paths": ["src/**"],
-                }),
-                encoding="utf-8",
-            )
-            product = repo / "pom.xml"
-            product.write_text("<project/>", encoding="utf-8")
-            run_command(("git", "add", "pom.xml"), repo)
-            run_command(("git", "commit", "-q", "-m", "out of scope"), repo)
+            runner = self._selection_runner(Path(directory))
+            task = runner._select_task()
 
-            with self.assertRaisesRegex(RuntimeError, "out-of-scope commits"):
-                runner._validate_resume_lock(())
+            with self.assertRaisesRegex(RuntimeError, "out-of-scope paths"):
+                runner._validate_unlocked_resume(("pom.xml",), task)
 
     @staticmethod
     def _init_repo(repo: Path) -> None:

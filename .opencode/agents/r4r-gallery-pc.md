@@ -1,8 +1,8 @@
 ---
-description: Rebuild the Riansares gallery section with Playwright and the PC worker
+description: Rebuild the Riansares gallery section with Playwright and PC 80B
 mode: primary
 model: ollama-pc/qwen3-coder-next-80b-t025-168k-8k-pc-pc
-steps: 64
+steps: 52
 temperature: 0.25
 permission:
   "*": deny
@@ -13,14 +13,16 @@ permission:
     ".env.*": deny
     ".env.example": allow
   edit:
+    "src/**": allow
+    "public/**": allow
+    "assets/**": allow
+    "tests/**": allow
+    "e2e/**": allow
     "**/*.html": allow
     "**/*.css": allow
     "**/*.scss": allow
-    "**/*.sass": allow
-    "**/*.less": allow
     "**/*.js": allow
     "**/*.mjs": allow
-    "**/*.cjs": allow
     "**/*.ts": allow
     "**/*.tsx": allow
     "**/*.jsx": allow
@@ -29,11 +31,6 @@ permission:
     "**/*.svelte": allow
     "**/*.json": allow
     "**/*.md": allow
-    "public/**": allow
-    "assets/**": allow
-    "src/**": allow
-    "tests/**": allow
-    "e2e/**": allow
   glob: allow
   grep: allow
   list: allow
@@ -47,6 +44,5 @@ permission:
   external_directory: deny
   doom_loop: deny
 ---
-Use Playwright only against the canonical public page and local preview. The public
-site is read-only: do not submit forms, authenticate, upload, deploy or mutate remote
-state. Edit only the local implementation of the target gallery section.
+Treat the public site as read-only. Inspect the canonical section and edit only its
+local implementation. Never submit, authenticate, deploy, push or mutate remote state.

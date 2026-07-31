@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
+
 DEST=""
 QUIET=0
 while (($#)); do
@@ -10,12 +11,15 @@ while (($#)); do
     *) echo "ERROR: opción desconocida: $1" >&2; exit 2 ;;
   esac
 done
+
 [[ -n "$DEST" ]] || read -r -p "Destino [LP/PC]: " DEST
 DEST="${DEST^^}"
 case "$DEST" in LP|PC) ;; *) echo "ERROR: destino LP o PC" >&2; exit 2 ;; esac
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 [[ -f .env ]] || cp .env.example .env
+
 upsert() {
   local file="$1" key="$2" value="$3" tmp
   tmp="$(mktemp)"
@@ -27,18 +31,26 @@ upsert() {
   ' "$file" > "$tmp"
   mv "$tmp" "$file"
 }
+
 if [[ "$DEST" == LP ]]; then
-  agent="r4r-laptop"; gallery="r4r-gallery-laptop"
+  agent="r4r-laptop"
+  gallery="r4r-gallery-laptop"
 else
-  agent="r4r-pc"; gallery="r4r-gallery-pc"
+  agent="r4r-pc"
+  gallery="r4r-gallery-pc"
 fi
+
 upsert .env R4R_OPENCODE_AGENT "$agent"
 upsert .env R4R_GALLERY_AGENT "$gallery"
+
 python3 - "$agent" <<'PY'
-import json, pathlib, sys
-path = pathlib.Path("opencode.jsonc")
-data = json.loads(path.read_text())
+import json
+from pathlib import Path
+import sys
+path = Path("opencode.jsonc")
+data = json.loads(path.read_text(encoding="utf-8"))
 data["default_agent"] = sys.argv[1]
-path.write_text(json.dumps(data, indent=2) + "\n")
+path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 PY
+
 (( QUIET )) || printf 'Destino=%s\nAgente=%s\nGalería=%s\n' "$DEST" "$agent" "$gallery"

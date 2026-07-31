@@ -29,3 +29,9 @@ For a manual Maven lifecycle that needs the disposable integration database:
 ```bash
 ./scripts/mvn-with-test-db.sh install
 ```
+
+## Resume model
+
+Active-task lock files are disabled. The controller resumes from
+`.opencode/progress.json` and accepts task-scoped dirty work plus maintenance paths.
+A stale `runtime/locks/active-task.json` is deleted on startup.

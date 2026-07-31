@@ -1,38 +1,50 @@
 # R4R agent rules
 
-## Scope
+## Roles
 
-Use one selected agent and one bounded task. PC and laptop names select inference only;
-OpenCode, Playwright, Git, builds and files run on the machine launching OpenCode.
-Never run two agents against the same worktree.
+The Python controller selects the task, runs gates, stores evidence and may commit.
+Codex plans/reviews read-only. OpenCode edits only the active task.
 
-## General discipline
+Active-task lock files are disabled. Resume ownership comes from
+`.opencode/progress.json`; stale `runtime/locks/active-task.json` is ignored/deleted.
+Controller/config files are maintenance and do not block a task resume.
 
-- Read the active task file before editing.
-- Read only files needed for that task; do not crawl the repository.
-- Make the smallest coherent patch. Preserve public contracts and unrelated sections.
-- After two identical tool errors, stop and report the blocker; never repeat blindly.
-- No `sudo`, package-manager mutation, Git writes, push, deployment or secret reads.
-- Run the repository's existing deterministic checks. Do not weaken tests or gates.
+## Read order
 
-## RAG controller tasks
+Read only `AGENTS.md`, `.opencode/commands/task.md`, `.opencode/memory.md`, the
+active task, its same-stem companions and the current Codex packet. Do not ingest
+historical runtime logs or unrelated tasks unless diagnostics name them.
 
-For Tasks 01-04 follow `.opencode/task-plan.json`, the selected command and the Codex
-packet. Use CodeGraph only for implicated Java paths. Browser tools are forbidden.
-A task advances only on its exact green gate and Codex `ACCEPT`.
+## Attempt order
 
-## Gallery task
+1. Run the exact task gate.
+2. Classify the first current failure and retain the full log.
+3. Inspect only implicated files and direct CodeGraph callers.
+4. Follow the bounded Codex plan.
+5. Edit one coherent batch; do not rewrite unrelated classes.
+6. Re-run the exact gate and hand evidence to Codex.
+7. Stop after two identical tool failures or three no-progress cycles.
 
-Canonical URL: `https://riansares4r.com/galeria-antes-despues`.
-The XPath `/html/body/main/section[2]` is only a hint. Confirm the target semantically by
-the heading `Trabajos realizados`; preserve the preceding hero and all later sections.
+## Product boundaries
 
-Use Playwright to inspect the target section, DOM, computed styles, responsive layout,
-console and directly loaded assets. Do not copy the whole site's CSS or JavaScript.
-Reuse local tokens/components first; transfer only rules or behavior required by the
-section. Do not interact with forms, WhatsApp, cookies, authentication or remote state.
+- Tasks 01–04 remain Java 21, Spring AI, Flyway and PostgreSQL/pgvector.
+- No REST/frontend/browser code in those tasks.
+- No handwritten Ollama HTTP client or live LLM dependency in deterministic tests.
+- Flyway owns schema; integration tests use the disposable real PostgreSQL service.
+- `127.0.0.1:55433 refused` is infrastructure, not a Java defect.
 
-Edit only a local source implementation of `/galeria-antes-despues`. If that route or
-its source cannot be found in the selected source worktree, stop without creating a
-parallel website. Validate the local build and existing browser/e2e checks. Do not
-deploy; report changed files, checks, visual differences and the first unproven item.
+## Editing and Git
+
+Edit only active-task product paths. Controller/config maintenance under `scripts/`,
+`py-codex-agent/`, `.opencode/`, `AGENTS.md`, `opencode.jsonc`, `.env*`,
+`codegraph.json` and `.gitignore` is outside product scope and must not block resume.
+
+While compilation is red, fix the first compiler error before broadening work. Do not
+disable tests, weaken assertions, alter gates, use sudo or run package managers.
+OpenCode and Codex never write Git history. The controller may create local commits;
+pushes remain manual.
+
+## Completion
+
+A task completes only with its exact gate green and Codex `ACCEPT`. Report changed
+paths, exact gate exit, test totals and the first unproven condition.

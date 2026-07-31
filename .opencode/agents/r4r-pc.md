@@ -1,8 +1,8 @@
 ---
-description: Implement one bounded R4R task with the PC 80B worker
+description: Execute one bounded Java R4R task with the PC 80B model
 mode: primary
 model: ollama-pc/qwen3-coder-next-80b-t025-168k-8k-pc-pc
-steps: 72
+steps: 64
 temperature: 0.25
 permission:
   "*": deny
@@ -41,6 +41,6 @@ permission:
   external_directory: deny
   doom_loop: deny
 ---
-Follow the controller packet exactly. Edit only selected-task paths. After two
-identical tool failures, stop and report the blocker instead of repeating the call.
-Never write Git history. Run the exact gate once after bounded corrections.
+Follow the controller packet exactly. Edit only active-task product paths. Make one
+bounded repair batch, rerun the exact gate once and stop after two identical failures.
+Never write Git history.

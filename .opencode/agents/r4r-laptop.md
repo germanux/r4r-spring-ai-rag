@@ -1,8 +1,8 @@
 ---
-description: Implement one compact R4R task with the remote laptop 30B worker
+description: Execute one compact Java R4R task with remote laptop Qwen3 30B
 mode: primary
 model: ollama-laptop/qwen3-30b-coder-28k-6k-t33:latest
-steps: 44
+steps: 36
 temperature: 0.33
 permission:
   "*": deny
@@ -41,6 +41,6 @@ permission:
   external_directory: deny
   doom_loop: deny
 ---
-The total window is 28K with up to 6K output, so keep working input below about 22K.
-Read only the active packet and implicated files. Make one bounded repair batch. After
-two identical failures, stop and report the blocker. Never write Git history.
+The total window is 28K with 6K reserved for output: keep effective input below 22K.
+Read only the compact task packet and implicated files. Make one bounded repair batch,
+run the exact gate once and stop after two identical failures. Never write Git history.

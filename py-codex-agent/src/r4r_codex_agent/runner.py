@@ -146,26 +146,23 @@ def git_product_changed_paths(repo: Path) -> tuple[str, ...]:
     )
 
 
-LOCK_AUTO_ADVANCE_PATHS = (
+MAINTENANCE_PATHS = (
     "AGENTS.md",
-    "scripts/run-codex-agent.sh",
-    "scripts/recover-dirty-worktree.sh",
-    "scripts/repair-active-task-lock.sh",
-    "scripts/export-evaluation.sh",
-    "scripts/notify-success.sh",
-    "scripts/find-and-stop-r4r-orphans.sh",
-    "scripts/mvn-with-test-db.sh",
-    "scripts/universfield-error-notification-03-125761.mp3",
+    "scripts/**",
     "py-codex-agent/**",
-    ".opencode/commands/*",
-    ".opencode/agents/**",
-    ".opencode/memory.md",
-    ".opencode/task-plan.json",
+    ".opencode/**",
+    ".env",
     ".env.example",
     "opencode.jsonc",
     "codegraph.json",
     ".gitignore",
+    "install-r4r-*.sh",
+    "r4r-agent-*.zip",
 )
+
+# Backward-compatible alias used by existing diagnostics/tests. There is no active
+# task lock anymore; this function now classifies controller/config maintenance.
+LOCK_AUTO_ADVANCE_PATHS = MAINTENANCE_PATHS
 
 # Browser downloads and manual extraction can accidentally commit a mirror of a
 # maintenance bundle under a top-level directory. Such a mirror is maintenance
@@ -173,23 +170,25 @@ LOCK_AUTO_ADVANCE_PATHS = (
 # canonical maintenance paths above. Product files under the bundle directory do
 # not qualify.
 _MAINTENANCE_BUNDLE_PREFIX = re.compile(
-    r"^(?:r4r-agent-update-v[0-9]+|r4r-agent-hotfix-v[0-9]+|r4r-self-recovery)/(.+)$"
+    r"^(?:r4r-agent-[^/]+|r4r-self-recovery)/(.+)$"
 )
 _MAINTENANCE_ARTIFACT_PATH = re.compile(
-    r"^(?:r4r-agent-update-v[0-9]+|r4r-agent-hotfix-v[0-9]+|r4r-self-recovery-files)\.zip$"
-    r"|^install-r4r-agent-(?:update|hotfix)-v[0-9]+\.sh$"
+    r"^(?:install-r4r-[^/]+\.sh|r4r-agent-[^/]+\.zip)$"
 )
 
 
 def is_lock_auto_advance_path(path: str) -> bool:
-    if path_is_allowed(path, LOCK_AUTO_ADVANCE_PATHS):
+    """Return True for controller/configuration maintenance paths.
+
+    The historical name is retained to avoid breaking callers, but active-task
+    lock advancement has been removed.
+    """
+    if path_is_allowed(path, MAINTENANCE_PATHS):
         return True
     if _MAINTENANCE_ARTIFACT_PATH.fullmatch(path):
         return True
     match = _MAINTENANCE_BUNDLE_PREFIX.fullmatch(path)
-    if match is None:
-        return False
-    return path_is_allowed(match.group(1), LOCK_AUTO_ADVANCE_PATHS)
+    return bool(match and path_is_allowed(match.group(1), MAINTENANCE_PATHS))
 
 
 def git_paths_between(repo: Path, base: str, head: str) -> tuple[str, ...]:
@@ -277,7 +276,7 @@ class AutomaticRunner:
         self.progress = load_progress(progress_path, (task.id for task in plan.tasks))
         self.timeout = int(os.environ.get("R4R_COMMAND_TIMEOUT_SECONDS", "14400"))
         # Every OpenCode invocation is already a fresh local-model session. Keep
-        # revising the same locked task across fresh sessions instead of stopping
+        # revising the same active task across fresh sessions instead of stopping
         # after an arbitrary two-pass limit. Set to 0 for no controller cap.
         self.max_attempts = int(os.environ.get("R4R_MAX_ATTEMPTS_PER_TASK", "12"))
         self.max_transient_failures = int(
@@ -316,7 +315,10 @@ class AutomaticRunner:
         self.run_id = stamp
         self.run_dir = self.repo / "runtime" / "runs" / stamp
         self.run_dir.mkdir(parents=True, exist_ok=False)
+        # Legacy path is retained only so old locks can be deleted safely.
+        # Task continuation is recorded in .opencode/progress.json.
         self.lock_path = self.repo / "runtime" / "locks" / "active-task.json"
+        self.active_task_lock_enabled = False
         self.memory_path = self.repo / ".opencode" / "memory.md"
         self.notify_script = self.repo / "scripts" / "notify-success.sh"
         self.control_dir = self.repo / "runtime" / "control"
@@ -332,18 +334,13 @@ class AutomaticRunner:
         self._require_binary(self.codex_bin)
         if self.require_codegraph and self.codegraph_policy != "off":
             self._require_binary(self.codegraph_bin)
+        # Active-task lock control is intentionally disabled. A stale legacy lock
+        # must never prevent a run or bind progress to an obsolete Git commit.
+        self.lock_path.unlink(missing_ok=True)
         dirty = git_changed_paths(self.repo)
-        if self.lock_path.exists():
-            # A valid lock owns the current task, even when the worktree happens
-            # to be clean. Validate it before selecting any task so a later-task
-            # failure can never reopen an already accepted task.
-            self._validate_resume_lock(dirty)
-        elif dirty:
-            if not self._can_bootstrap(dirty):
-                return self._finish("DIRTY_WORKTREE_UNOWNED", 64, {"changed_paths": dirty})
-            result = self._bootstrap()
-            if result != 0:
-                return result
+        selected = self._select_task()
+        if dirty:
+            self._validate_unlocked_resume(dirty, selected)
 
         completed = 0
         while True:
@@ -388,9 +385,9 @@ class AutomaticRunner:
             raise RuntimeError(f"Required executable not found: {binary}. Run ./scripts/setup.sh")
 
     def _can_bootstrap(self, dirty: Sequence[str]) -> bool:
-        if not self.bootstrap_commit or self.lock_path.exists():
-            return False
-        return all(item["status"] == "PENDING" for item in self.progress["tasks"])
+        return bool(self.bootstrap_commit) and all(
+            item["status"] == "PENDING" for item in self.progress["tasks"]
+        )
 
     def _bootstrap(self) -> int:
         task = self.plan.tasks[0]
@@ -408,85 +405,44 @@ class AutomaticRunner:
             return self._finish("BOOTSTRAP_COMMIT_FAILED", 67)
         return 0
 
-    def _validate_resume_lock(self, dirty: Sequence[str]) -> None:
-        lock = json.loads(self.lock_path.read_text(encoding="utf-8"))
-        task = self._task_by_id(str(lock.get("task_id")))
-        current_head = git_head(self.repo)
-        base_commit = str(lock.get("base_commit") or "")
-        if base_commit != current_head:
-            self._auto_advance_resume_lock(lock, base_commit, current_head)
+    def _validate_unlocked_resume(
+        self, dirty: Sequence[str], task: Task | None,
+    ) -> None:
+        """Allow resumable task work plus controller/config maintenance.
+
+        No Git commit ancestry or active-task lock is consulted. Product paths
+        must still fit the currently active/pending task, preserving task scope
+        without the brittle lock lifecycle.
+        """
         product_dirty = tuple(
             path for path in dirty
             if not is_controller_runtime_path(path)
+            and not is_lock_auto_advance_path(path)
         )
+        if not product_dirty:
+            return
+        if task is None:
+            raise RuntimeError(
+                "Completed plan has uncommitted product paths: "
+                f"{list(product_dirty)}"
+            )
         disallowed = [
             path for path in product_dirty
             if not path_is_allowed(path, task.allowed_paths)
         ]
         if disallowed:
-            raise RuntimeError(f"Dirty resume contains out-of-scope paths: {disallowed}")
-
-    def _auto_advance_resume_lock(
-        self, lock: dict[str, Any], base_commit: str, current_head: str | None,
-    ) -> None:
-        if not base_commit or not current_head:
-            raise RuntimeError("Active-task lock has no usable Git base commit")
-        if not git_is_ancestor(self.repo, base_commit, current_head):
             raise RuntimeError(
-                "Active-task lock diverged from current Git HEAD; manual review is required"
+                f"Dirty resume contains out-of-scope paths for {task.id}: "
+                f"{disallowed}"
             )
-
-        committed_paths = git_paths_between(self.repo, base_commit, current_head)
-        task = self._task_by_id(str(lock.get("task_id")))
-        unsafe_paths = [
-            path for path in committed_paths
-            if not is_lock_auto_advance_path(path)
-            and not path_is_allowed(path, task.allowed_paths)
-        ]
-        if unsafe_paths:
-            raise RuntimeError(
-                "Active-task lock cannot advance across out-of-scope commits: "
-                f"{unsafe_paths}"
-            )
-        task_paths = [
-            path for path in committed_paths
-            if not is_lock_auto_advance_path(path)
-        ]
-        if task_paths:
-            print(
-                "[r4r] active-task lock adopted committed in-scope task paths: "
-                + ", ".join(task_paths),
-                flush=True,
-            )
-
-        lock["base_commit"] = current_head
-        lock["run_id"] = (
-            "resume-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        )
-        temporary = self.lock_path.with_suffix(".json.tmp")
-        temporary.write_text(
-            json.dumps(lock, indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
-        temporary.replace(self.lock_path)
-        print(
-            f"[r4r] active-task lock advanced automatically to {current_head[:12]}",
-            flush=True,
-        )
 
     def _select_task(self) -> Task | None:
-        # The active lock is authoritative. It represents unfinished work that
-        # belongs to exactly one task and must be resumed before considering the
-        # progress file. In particular, tests introduced by a pending task must
-        # not cause an earlier accepted task to be reopened as a regression.
-        if self.lock_path.exists():
-            lock = json.loads(self.lock_path.read_text(encoding="utf-8"))
-            return self._task_by_id(str(lock.get("task_id")))
+        active_task = str(self.progress.get("active_task") or "").strip()
+        if active_task:
+            task = self._task_by_id(active_task)
+            if task_progress(self.progress, task.id)["status"] != "ACCEPTED":
+                return task
 
-        # Without a lock, advance monotonically to the first task that has not
-        # been accepted. Cross-task regression detection is delegated to each
-        # current task gate and to the final gate, both of which run the complete
-        # deterministic verification suite.
         for task in self.plan.tasks:
             if task_progress(self.progress, task.id)["status"] != "ACCEPTED":
                 return task
@@ -495,7 +451,8 @@ class AutomaticRunner:
     def _execute_task(self, task: Task) -> int:
         task_root = self.run_dir / task.id
         task_root.mkdir(parents=True, exist_ok=True)
-        self._write_lock(task)
+        self._write_progress(task.id)
+        self._write_memory()
         initial_gate = self._run_gate("initial-gate", task.gate, task_root, stream=True)
         next_action = self._resume_action_from_codex_extra(task)
 
@@ -629,10 +586,12 @@ class AutomaticRunner:
                 controller_runtime = tuple(
                     path for path in all_changed
                     if is_controller_runtime_path(path)
+                    or is_lock_auto_advance_path(path)
                 )
                 changed = tuple(
                     path for path in all_changed
                     if not is_controller_runtime_path(path)
+                    and not is_lock_auto_advance_path(path)
                 )
                 disallowed = [
                     path for path in changed
@@ -782,7 +741,6 @@ class AutomaticRunner:
                         67,
                         {"task": task.id},
                     )
-                self.lock_path.unlink(missing_ok=True)
                 return 0
 
             self._write_codex_extra_instructions(task, review)
@@ -831,7 +789,7 @@ class AutomaticRunner:
         return (
             f"{component} failed transiently with exit {result.exit_code}. "
             "Start a fresh local session, preserve the current worktree, diagnose "
-            "the concrete error below and continue the same locked task. Do not "
+            "the concrete error below and continue the same active task. Do not "
             "revert already validated changes.\n\n"
             f"Previous action:\n{previous_action or 'Implement the active task.'}"
             f"\n\nFailure tail:\n{details or 'No diagnostic text was produced.'}"
@@ -1772,14 +1730,8 @@ next instruction packet.
         (evidence / "changes.patch").write_text("".join(parts), encoding="utf-8")
 
     def _write_lock(self, task: Task) -> None:
-        self.lock_path.parent.mkdir(parents=True, exist_ok=True)
-        self.lock_path.write_text(json.dumps({
-            "schema_version": 1,
-            "task_id": task.id,
-            "base_commit": git_head(self.repo),
-            "run_id": self.run_id,
-            "allowed_paths": list(task.allowed_paths),
-        }, indent=2), encoding="utf-8")
+        """Compatibility no-op: active-task locks are disabled."""
+        self.lock_path.unlink(missing_ok=True)
 
     def _accept_progress(self, task: Task) -> None:
         item = task_progress(self.progress, task.id)

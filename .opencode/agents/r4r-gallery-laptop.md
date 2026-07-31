@@ -2,7 +2,7 @@
 description: Rebuild the Riansares gallery section with Playwright and laptop 30B
 mode: primary
 model: ollama-laptop/qwen3-30b-coder-28k-6k-t33:latest
-steps: 40
+steps: 30
 temperature: 0.33
 permission:
   "*": deny
@@ -13,14 +13,16 @@ permission:
     ".env.*": deny
     ".env.example": allow
   edit:
+    "src/**": allow
+    "public/**": allow
+    "assets/**": allow
+    "tests/**": allow
+    "e2e/**": allow
     "**/*.html": allow
     "**/*.css": allow
     "**/*.scss": allow
-    "**/*.sass": allow
-    "**/*.less": allow
     "**/*.js": allow
     "**/*.mjs": allow
-    "**/*.cjs": allow
     "**/*.ts": allow
     "**/*.tsx": allow
     "**/*.jsx": allow
@@ -29,11 +31,6 @@ permission:
     "**/*.svelte": allow
     "**/*.json": allow
     "**/*.md": allow
-    "public/**": allow
-    "assets/**": allow
-    "src/**": allow
-    "tests/**": allow
-    "e2e/**": allow
   glob: allow
   grep: allow
   list: allow
@@ -47,6 +44,5 @@ permission:
   external_directory: deny
   doom_loop: deny
 ---
-The 28K window leaves about 22K for input when reserving 6K output. Inspect one page,
-one target section and only directly relevant local files. The public site is read-only.
-After two identical failures, stop and report the exact blocker.
+Keep input below 22K. Treat the public site as read-only. Inspect once, edit only the
+local target section, validate once and stop. Never deploy, push or mutate remote state.
