@@ -66,7 +66,7 @@ case "$TASK" in
     "$ROOT/scripts/verify.sh" all
     ;;
   *)
-    echo "Usage: $0 {task-01-base|task-02-ingestion|task-03-pgvector|task-04-rag|task-05-rag-api|all}" >&2
+    echo "Usage: $0 {task-01-base|task-02-ingestion|task-03-pgvector|task-04-rag|task-05-rest-api|all}" >&2
     exit 2
     ;;
 esac
