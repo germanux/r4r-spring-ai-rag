@@ -13,8 +13,15 @@
         "chunkTimeout": 600000
       },
       "models": {
+        "qwen3-coder-next-80b-t025-168k-8k-pc-pc": {
+          "name": "qwen3-coder-next-80b-t025-168k-8k-pc-pc",
+          "limit": {
+            "context": 172032,
+            "output": 8192
+          }
+        },
         "qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest": {
-          "name": "Qwen3-Coder-Next 80B PC 168K/8K",
+          "name": "qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest",
           "limit": {
             "context": 172032,
             "output": 8192
@@ -31,8 +38,15 @@
         "chunkTimeout": 600000
       },
       "models": {
+        "qwen3-30b-coder-28k-6k-t33": {
+          "name": "qwen3-30b-coder-28k-6k-t33",
+          "limit": {
+            "context": 28672,
+            "output": 6144
+          }
+        },
         "qwen3-30b-coder-28k-6k-t33:latest": {
-          "name": "Qwen3 Coder 30B Laptop 28K/6K t33",
+          "name": "qwen3-30b-coder-28k-6k-t33:latest",
           "limit": {
             "context": 28672,
             "output": 6144
@@ -102,5 +116,10 @@
       "docker-postgres/data/**",
       "**/*.zip"
     ]
-  }
+  },
+  "enabled_providers": [
+    "ollama-pc",
+    "ollama-laptop"
+  ],
+  "disabled_providers": []
 }
