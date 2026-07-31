@@ -5,8 +5,6 @@ spring:
     import: optional:file:./.env[.properties]
   application:
     name: r4r-spring-ai-rag
-  main:
-    web-application-type: none
   datasource:
     url: ${RAG_DB_URL}
     username: ${RAG_DB_USER}
