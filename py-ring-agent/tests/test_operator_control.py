@@ -25,6 +25,13 @@ class OperatorControlTest(unittest.TestCase):
             self.assertEqual(final["next_state"], "")
             self.assertEqual(final["state"]["RING"], "running")
 
+    def test_maintainer_is_a_supported_target(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            control = RingCommandFile(repo, "MAINTAINER")
+            value = json.loads(_strip_jsonc(control.path.read_text()))
+            self.assertIn("MAINTAINER", value["state"])
+
 
 if __name__ == "__main__":
     unittest.main()

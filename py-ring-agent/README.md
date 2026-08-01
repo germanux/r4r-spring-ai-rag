@@ -1,29 +1,58 @@
-# R4R Ring Agent — phase 1
+# R4R Ring Agent — phases 1 and 2
 
-Everything introduced by this phase lives under `py-ring-agent/`.
-Nothing is installed under the repository root `scripts/` directory or under
-`py-codex-agent/`.
+Everything introduced by these phases lives under `py-ring-agent/`.
+The runtime control file, logs and generated maintenance reports are created only
+when the programs run.
 
-## Editable entry points
+## Entry points
 
-- `run-ring-agent.py`: launches a fresh OpenCode Ring session.
-- `run-worker-streamed.py`: launches PC or LP while mirroring the live console to disk.
+- `run-ring-agent.py`: launches fresh OpenCode Ring analysis sessions.
+- `run-worker-streamed.py`: launches PC or LP with live persistent console streaming.
+- `run-harness-maintainer.py`: every four hours launches a fresh bounded OpenCode
+  maintainer session in an isolated detached Git worktree.
 
-The main defaults are located near the top of those files and in:
+## Harness maintainer policy
 
-- `src/r4r_ring_agent/ring_loop.py`
-- `src/r4r_ring_agent/ring_process.py`
+The editable defaults are near the top of:
+
+```text
+src/r4r_ring_agent/harness_maintainer.py
+```
+
+Default policy:
+
+- one defect per pass;
+- maximum three changed files;
+- maximum 120 changed lines, additions plus deletions;
+- maximum two fresh sessions: initial attempt plus one self-correction;
+- no Java or frontend product changes;
+- no package installation or Git history changes;
+- candidate is never applied to the active worktree;
+- candidate patch and analysis are written under `.ring-agent/maintenance/<run-id>/`;
+- full streamed console logs are written under `runtime/ring-maintainer/<run-id>/`.
+
+The active worktree may contain product changes. The maintainer only blocks when an
+allowed harness path is already dirty, because it must compare its candidate against
+an unambiguous committed baseline.
 
 ## Run
 
-From the repository root:
-
 ```bash
-chmod +x py-ring-agent/run-ring-agent.py py-ring-agent/run-worker-streamed.py
+chmod +x \
+  py-ring-agent/run-ring-agent.py \
+  py-ring-agent/run-worker-streamed.py \
+  py-ring-agent/run-harness-maintainer.py
 
 ./py-ring-agent/run-ring-agent.py
 ./py-ring-agent/run-worker-streamed.py PC
 ./py-ring-agent/run-worker-streamed.py LP
+./py-ring-agent/run-harness-maintainer.py
+```
+
+One maintenance pass for validation:
+
+```bash
+./py-ring-agent/run-harness-maintainer.py --once
 ```
 
 ## Operator command file
@@ -35,7 +64,7 @@ runtime/the-ring-command.jsonc
 ```
 
 Set `next_state` to `stop`, `pause`, `continue` or `restart`, and set `target`
-to `RING`, `PC`, `LP` or `ALL`.
+to `RING`, `PC`, `LP`, `MAINTAINER` or `ALL`.
 
 ## Tests
 

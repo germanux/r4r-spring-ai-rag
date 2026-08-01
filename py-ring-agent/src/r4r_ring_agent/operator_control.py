@@ -10,7 +10,7 @@ import re
 from typing import Any
 
 
-WORKERS = ("RING", "PC", "LP")
+WORKERS = ("RING", "PC", "LP", "MAINTAINER")
 COMMANDS = ("stop", "pause", "continue", "restart")
 TARGETS = (*WORKERS, "ALL")
 HEARTBEAT_MAX_AGE_SECONDS = 20
@@ -90,7 +90,7 @@ def _render_jsonc(value: dict[str, Any]) -> str:
             "{",
             "  // Edit only next_state, target and reason.",
             '  // next_state: "stop", "pause", "continue", "restart" or "".',
-            '  // target: "RING", "PC", "LP" or "ALL".',
+            '  // target: "RING", "PC", "LP", "MAINTAINER" or "ALL".',
             *lines[1:-1],
             "}",
             "",
@@ -107,7 +107,7 @@ class OperatorCommand:
 
 
 class RingCommandFile:
-    """One human-editable JSONC file shared by Ring, PC and LP wrappers."""
+    """One human-editable JSONC file shared by Ring, PC, LP and maintainer wrappers."""
 
     def __init__(self, repo: Path, worker: str):
         worker = worker.upper()
