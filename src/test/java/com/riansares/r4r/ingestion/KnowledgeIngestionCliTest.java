@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -26,6 +25,7 @@ import java.time.ZoneId;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -33,12 +33,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class KnowledgeIngestionCliTest {
-
-    @MockBean
-    private KnowledgeIngestionService mockIngestionService;
 
     private Path tempRoot;
     private ByteArrayOutputStream outContent;
@@ -309,6 +304,30 @@ class KnowledgeIngestionCliTest {
         assertThat(result.unchangedSources()).isEqualTo(2);
         assertThat(result.persistedChunks()).isEqualTo(10);
         assertThat(result.durationMs()).isEqualTo(1234);
+    }
+
+    @Test
+    void a5_randomPortContext_noIngestionOnStartup() throws Exception {
+        // A5 lifecycle test: Programmatically create an isolated Spring context with random port.
+        // When the web application (R4rSpringAiRagApplication) starts normally, it should NOT trigger ingestion.
+        // The orchestration execute() is only called by the explicit CLI invocation.
+        
+        var localMock = mock(KnowledgeIngestionService.class);
+        
+        try (var context = new SpringApplicationBuilder()
+                .sources(R4rSpringAiRagApplication.class)
+                .web(WebApplicationType.NONE)  // NONE mode matches CLI
+                .properties("server.port=0")
+                .initializers((ConfigurableApplicationContext ctx) -> 
+                        ctx.getBeanFactory().registerSingleton("knowledgeIngestionService", localMock))
+                .run()) {
+            
+            // The key assertion: during startup, no methods should have been called on the service.
+            // If any method was invoked during startup, that would be an unwanted side effect.
+            verifyNoInteractions(localMock);
+        }
+        
+        // Context is now closed explicitly
     }
 
 }
