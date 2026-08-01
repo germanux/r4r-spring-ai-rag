@@ -6,9 +6,10 @@ set -Eeuo pipefail
 # Safety order:
 #   1. Reject PC/LP controllers accidentally running in the Ring worktree.
 #   2. Stop managed PC and LP wrappers and wait for their complete process trees.
-#   3. Require clean, correctly-bound worker worktrees.
+#   3. Snapshot and stash dirty worker state, including untracked files.
 #   4. Merge one pinned source commit into both worker branches.
-#   5. Start fresh wrappers, each bound to its authoritative worker worktree.
+#   5. Reapply and verify the preserved worker state.
+#   6. Start fresh wrappers, each bound to its authoritative worker worktree.
 #
 # A stopped wrapper cannot consume a later JSONC "restart" request. Starting a new
 # wrapper after the merge is therefore the race-free equivalent of restart.
@@ -27,6 +28,11 @@ PC_STOPPED_BY_SCRIPT=false
 LP_STOPPED_BY_SCRIPT=false
 PC_STARTED=false
 LP_STARTED=false
+SAFE_TO_RELAUNCH_ON_FAILURE=true
+SYNC_STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+BACKUP_ROOT=""
+PC_STASH_OID=""
+LP_STASH_OID=""
 
 usage() {
   cat <<'USAGE'
@@ -39,8 +45,15 @@ Usage: ./scripts/merge-worker-branches-and-restart.sh [options]
   --lp PATH         LP worker worktree.
   --wait SECONDS    Stop/start timeout. Default: 180.
   --merge-only      Merge without stopping or starting worker processes.
-  --dry-run         Validate and print the planned actions without modifying state.
+                    Workers must already be completely idle.
+  --dry-run         Validate and print the planned preservation/merge actions
+                    without modifying Git, JSONC or process state.
   -h, --help        Show this help.
+
+Dirty worker state is backed up under runtime/worker-sync-backups/<timestamp>/
+and preserved with git stash --include-untracked. A stash is dropped only after
+its content has been reapplied and verified. Conflicts remain visible and prevent
+worker restart.
 
 Environment overrides: R4R_DEVELOPMENT_ROOT, R4R_RING_WORKTREE,
 R4R_PC_WORKTREE, R4R_LP_WORKTREE, R4R_PC_BRANCH, R4R_LP_BRANCH,
@@ -67,7 +80,7 @@ while (($#)); do
 done
 
 [[ "$WAIT_SECONDS" =~ ^[1-9][0-9]*$ ]] || die "--wait must be a positive integer"
-for command in git python3 flock nohup realpath; do
+for command in git python3 flock nohup realpath tar awk; do
   command -v "$command" >/dev/null 2>&1 || die "required command unavailable: $command"
 done
 
@@ -508,13 +521,267 @@ require_quiescent() {
   fi
 }
 
-require_clean() {
-  local worker="$1" path="$2" status
-  status="$(git -C "$path" status --porcelain=v1 --untracked-files=normal)"
-  if [[ -n "$status" ]]; then
-    printf '%s\n' "$status" >&2
-    die "$worker worktree is dirty; commit or preserve its changes before merging"
+worker_dirty() {
+  [[ -n "$(git -C "$1" status --porcelain=v1 --untracked-files=all)" ]]
+}
+
+snapshot_worker_state() {
+  local worker="$1" path="$2" backup_dir="$3"
+  mkdir -p "$backup_dir"
+  git -C "$path" rev-parse HEAD >"$backup_dir/head-before.txt"
+  git -C "$path" branch --show-current >"$backup_dir/branch-before.txt"
+  git -C "$path" status --porcelain=v2 --branch --untracked-files=all \
+    >"$backup_dir/status-before.txt"
+  git -C "$path" diff --binary --full-index --no-ext-diff \
+    >"$backup_dir/unstaged.patch"
+  git -C "$path" diff --cached --binary --full-index --no-ext-diff \
+    >"$backup_dir/staged.patch"
+  git -C "$path" ls-files --others --exclude-standard -z \
+    >"$backup_dir/untracked-paths.zlist"
+
+  python3 - "$path" "$backup_dir/working-state.json" <<'PY'
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+from pathlib import Path
+import stat
+import subprocess
+import sys
+
+root = Path(sys.argv[1]).resolve()
+out = Path(sys.argv[2])
+
+
+def git_z(*args: str) -> list[str]:
+    proc = subprocess.run(
+        ["git", "-C", str(root), *args, "-z"],
+        check=True,
+        stdout=subprocess.PIPE,
+    )
+    return [
+        item.decode("utf-8", errors="surrogateescape")
+        for item in proc.stdout.split(b"\0")
+        if item
+    ]
+
+
+def digest_path(path: Path) -> dict[str, object]:
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return {"exists": False}
+    mode = stat.S_IMODE(info.st_mode)
+    if path.is_symlink():
+        payload = os.readlink(path).encode("utf-8", errors="surrogateescape")
+        kind = "symlink"
+    elif path.is_file():
+        payload = path.read_bytes()
+        kind = "file"
+    elif path.is_dir():
+        payload = b""
+        kind = "directory"
+    else:
+        payload = b""
+        kind = "other"
+    return {
+        "exists": True,
+        "kind": kind,
+        "mode": mode,
+        "sha256": hashlib.sha256(payload).hexdigest(),
+        "size": len(payload),
+    }
+
+staged = set(git_z("diff", "--cached", "--name-only", "--diff-filter=ACDMRTUXB"))
+unstaged = set(git_z("diff", "--name-only", "--diff-filter=ACDMRTUXB"))
+untracked = set(git_z("ls-files", "--others", "--exclude-standard"))
+paths = sorted(staged | unstaged | untracked)
+records: dict[str, object] = {}
+for rel in paths:
+    records[rel] = {
+        "staged": rel in staged,
+        "unstaged": rel in unstaged,
+        "untracked": rel in untracked,
+        "working_tree": digest_path(root / rel),
+    }
+
+out.write_text(
+    json.dumps({"schema_version": 1, "paths": records}, indent=2, sort_keys=True) + "\n",
+    encoding="utf-8",
+)
+PY
+
+  if [[ -s "$backup_dir/untracked-paths.zlist" ]]; then
+    tar --directory="$path" --null --no-recursion \
+      -czf "$backup_dir/untracked-files.tar.gz" \
+      --files-from="$backup_dir/untracked-paths.zlist"
+  else
+    tar -czf "$backup_dir/untracked-files.tar.gz" --files-from=/dev/null
   fi
+  chmod -R go-rwx "$backup_dir" 2>/dev/null || true
+}
+
+verify_worker_state() {
+  local worker="$1" path="$2" expected="$3" actual="$4"
+  python3 - "$path" "$expected" "$actual" <<'PY'
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+from pathlib import Path
+import stat
+import subprocess
+import sys
+
+root = Path(sys.argv[1]).resolve()
+expected_path = Path(sys.argv[2])
+actual_path = Path(sys.argv[3])
+expected = json.loads(expected_path.read_text(encoding="utf-8"))
+
+
+def git_z(*args: str) -> set[str]:
+    proc = subprocess.run(
+        ["git", "-C", str(root), *args, "-z"],
+        check=True,
+        stdout=subprocess.PIPE,
+    )
+    return {
+        item.decode("utf-8", errors="surrogateescape")
+        for item in proc.stdout.split(b"\0")
+        if item
+    }
+
+
+def digest_path(path: Path) -> dict[str, object]:
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return {"exists": False}
+    mode = stat.S_IMODE(info.st_mode)
+    if path.is_symlink():
+        payload = os.readlink(path).encode("utf-8", errors="surrogateescape")
+        kind = "symlink"
+    elif path.is_file():
+        payload = path.read_bytes()
+        kind = "file"
+    elif path.is_dir():
+        payload = b""
+        kind = "directory"
+    else:
+        payload = b""
+        kind = "other"
+    return {
+        "exists": True,
+        "kind": kind,
+        "mode": mode,
+        "sha256": hashlib.sha256(payload).hexdigest(),
+        "size": len(payload),
+    }
+
+staged = git_z("diff", "--cached", "--name-only", "--diff-filter=ACDMRTUXB")
+unstaged = git_z("diff", "--name-only", "--diff-filter=ACDMRTUXB")
+untracked = git_z("ls-files", "--others", "--exclude-standard")
+actual: dict[str, object] = {"schema_version": 1, "paths": {}}
+errors: list[str] = []
+
+for rel, before in expected.get("paths", {}).items():
+    now = {
+        "staged": rel in staged,
+        "unstaged": rel in unstaged,
+        "untracked": rel in untracked,
+        "working_tree": digest_path(root / rel),
+    }
+    actual["paths"][rel] = now
+    if now["working_tree"] != before["working_tree"]:
+        errors.append(f"content/mode mismatch: {rel}")
+    if before.get("untracked") and not now.get("untracked"):
+        errors.append(f"untracked path no longer untracked: {rel}")
+
+actual_path.write_text(
+    json.dumps(actual, indent=2, sort_keys=True) + "\n",
+    encoding="utf-8",
+)
+if errors:
+    print("\n".join(errors), file=sys.stderr)
+    raise SystemExit(1)
+PY
+}
+
+stash_ref_for_oid() {
+  local path="$1" oid="$2"
+  git -C "$path" stash list --format='%gd %H' \
+    | awk -v oid="$oid" '$2 == oid { print $1; exit }'
+}
+
+preserve_worker() {
+  local worker="$1" path="$2" backup_dir="$3" before after oid
+  if ! worker_dirty "$path"; then
+    log "$worker: worktree clean; no preservation stash required"
+    return 0
+  fi
+
+  if "$DRY_RUN"; then
+    log "$worker: dirty state would be backed up to $backup_dir"
+    git -C "$path" status --short --untracked-files=all
+    return 0
+  fi
+
+  SAFE_TO_RELAUNCH_ON_FAILURE=false
+  log "$worker: backing up dirty state to $backup_dir"
+  snapshot_worker_state "$worker" "$path" "$backup_dir"
+  before="$(git -C "$path" rev-parse -q --verify refs/stash 2>/dev/null || true)"
+  git -C "$path" stash push --include-untracked \
+    -m "r4r-sync $SYNC_STAMP $worker before $SOURCE_COMMIT" \
+    >"$backup_dir/stash-create.log"
+  after="$(git -C "$path" rev-parse -q --verify refs/stash 2>/dev/null || true)"
+  [[ -n "$after" && "$after" != "$before" ]] \
+    || die "$worker dirty state was not captured in a new stash"
+  oid="$after"
+  printf '%s\n' "$oid" >"$backup_dir/stash-oid.txt"
+  printf '%s\n' "$(stash_ref_for_oid "$path" "$oid")" >"$backup_dir/stash-ref-created.txt"
+  [[ -z "$(git -C "$path" status --porcelain=v1 --untracked-files=all)" ]] \
+    || die "$worker worktree is still dirty after preservation stash"
+
+  if [[ "$worker" == PC ]]; then
+    PC_STASH_OID="$oid"
+  else
+    LP_STASH_OID="$oid"
+  fi
+  log "$worker: preserved dirty state in stash ${oid:0:12}"
+}
+
+restore_worker() {
+  local worker="$1" path="$2" backup_dir="$3" oid="$4" ref
+  [[ -n "$oid" ]] || return 0
+  log "$worker: reapplying preserved state from stash ${oid:0:12}"
+  if ! git -C "$path" stash apply --index "$oid" \
+      >"$backup_dir/stash-apply.log" 2>&1; then
+    SAFE_TO_RELAUNCH_ON_FAILURE=false
+    git -C "$path" status --short --untracked-files=all >&2 || true
+    warn "$worker preserved state has merge conflicts"
+    warn "$worker stash retained: $oid"
+    warn "$worker backup retained: $backup_dir"
+    return 1
+  fi
+  if ! verify_worker_state "$worker" "$path" \
+      "$backup_dir/working-state.json" "$backup_dir/working-state-after.json"; then
+    SAFE_TO_RELAUNCH_ON_FAILURE=false
+    warn "$worker restored files failed integrity verification"
+    warn "$worker stash retained: $oid"
+    warn "$worker backup retained: $backup_dir"
+    return 1
+  fi
+  printf '%s\n' "verified" >"$backup_dir/restore-result.txt"
+  ref="$(stash_ref_for_oid "$path" "$oid")"
+  if [[ -n "$ref" ]]; then
+    git -C "$path" stash drop "$ref" >"$backup_dir/stash-drop.log" 2>&1 \
+      || warn "$worker verified stash could not be dropped; retained as $ref"
+  else
+    warn "$worker verified stash OID no longer appears in stash list: $oid"
+  fi
+  log "$worker: preserved state reapplied and verified"
 }
 
 merge_worker() {
@@ -594,7 +861,8 @@ best_effort_relaunch() {
 on_exit() {
   local code=$?
   trap - EXIT
-  if ((code != 0)) && ! "$DRY_RUN" && ! "$MERGE_ONLY"; then
+  if ((code != 0)) && "$SAFE_TO_RELAUNCH_ON_FAILURE" \
+      && ! "$DRY_RUN" && ! "$MERGE_ONLY"; then
     if "$PC_STOPPED_BY_SCRIPT" && ! "$PC_STARTED"; then
       best_effort_relaunch PC "$PC_WORKTREE"
     fi
@@ -632,18 +900,50 @@ fi
 # have switched or replaced a worker worktree between preflight and merge.
 require_worktree "$PC_WORKTREE" PC "$PC_BRANCH"
 require_worktree "$LP_WORKTREE" LP "$LP_BRANCH"
-require_clean PC "$PC_WORKTREE"
-require_clean LP "$LP_WORKTREE"
+BACKUP_ROOT="$RING_WORKTREE/runtime/worker-sync-backups/$SYNC_STAMP"
+
+if "$DRY_RUN"; then
+  preserve_worker PC "$PC_WORKTREE" "$BACKUP_ROOT/PC"
+  preserve_worker LP "$LP_WORKTREE" "$BACKUP_ROOT/LP"
+  merge_worker PC "$PC_WORKTREE"
+  merge_worker LP "$LP_WORKTREE"
+  log "DRY-RUN completed; no worktree, stash, JSONC or process state was changed"
+  exit 0
+fi
 
 pc_before="$(git -C "$PC_WORKTREE" rev-parse HEAD)"
 lp_before="$(git -C "$LP_WORKTREE" rev-parse HEAD)"
+mkdir -p "$BACKUP_ROOT"
+cat >"$BACKUP_ROOT/sync-context.txt" <<EOF
+sync_stamp=$SYNC_STAMP
+source_ref=$SOURCE_REF
+source_commit=$SOURCE_COMMIT
+ring_worktree=$RING_WORKTREE
+pc_worktree=$PC_WORKTREE
+lp_worktree=$LP_WORKTREE
+pc_head_before=$pc_before
+lp_head_before=$lp_before
+EOF
+chmod go-rwx "$BACKUP_ROOT/sync-context.txt" 2>/dev/null || true
+preserve_worker PC "$PC_WORKTREE" "$BACKUP_ROOT/PC"
+preserve_worker LP "$LP_WORKTREE" "$BACKUP_ROOT/LP"
 
 rollback_workers() {
-  warn "merge failed; restoring both initially clean worker branches"
+  local restore_failed=false
+  warn "merge failed; restoring original worker commits and preserved state"
   git -C "$PC_WORKTREE" merge --abort >/dev/null 2>&1 || true
   git -C "$LP_WORKTREE" merge --abort >/dev/null 2>&1 || true
   git -C "$PC_WORKTREE" reset --hard "$pc_before" >/dev/null 2>&1 || true
   git -C "$LP_WORKTREE" reset --hard "$lp_before" >/dev/null 2>&1 || true
+  restore_worker PC "$PC_WORKTREE" "$BACKUP_ROOT/PC" "$PC_STASH_OID" \
+    || restore_failed=true
+  restore_worker LP "$LP_WORKTREE" "$BACKUP_ROOT/LP" "$LP_STASH_OID" \
+    || restore_failed=true
+  if "$restore_failed"; then
+    SAFE_TO_RELAUNCH_ON_FAILURE=false
+  else
+    SAFE_TO_RELAUNCH_ON_FAILURE=true
+  fi
 }
 
 if ! merge_worker PC "$PC_WORKTREE"; then
@@ -655,11 +955,22 @@ if ! merge_worker LP "$LP_WORKTREE"; then
   die "LP merge failed"
 fi
 
+restore_failed=false
+restore_worker PC "$PC_WORKTREE" "$BACKUP_ROOT/PC" "$PC_STASH_OID" \
+  || restore_failed=true
+restore_worker LP "$LP_WORKTREE" "$BACKUP_ROOT/LP" "$LP_STASH_OID" \
+  || restore_failed=true
+if "$restore_failed"; then
+  SAFE_TO_RELAUNCH_ON_FAILURE=false
+  die "one or more preserved worker states conflicted or failed verification; workers remain stopped"
+fi
+SAFE_TO_RELAUNCH_ON_FAILURE=true
+
 log "PC HEAD: ${pc_before:0:12} -> $(git -C "$PC_WORKTREE" rev-parse --short=12 HEAD)"
 log "LP HEAD: ${lp_before:0:12} -> $(git -C "$LP_WORKTREE" rev-parse --short=12 HEAD)"
+log "Preservation backups: $BACKUP_ROOT"
 
-"$MERGE_ONLY" && { log "merge-only completed"; exit 0; }
-"$DRY_RUN" && { log "DRY-RUN completed"; exit 0; }
+"$MERGE_ONLY" && { log "merge-only completed with dirty state preserved"; exit 0; }
 
 launch_wrapper PC "$PC_WORKTREE" || die "PC wrapper could not be started"
 PC_STARTED=true
@@ -667,4 +978,4 @@ launch_wrapper LP "$LP_WORKTREE" || die "LP wrapper could not be started"
 LP_STARTED=true
 
 reject_misbound_workers
-log "completed: pinned source merged; PC and LP restarted on their authoritative worktrees"
+log "completed: pinned source merged; dirty state restored; PC and LP restarted"
