@@ -14,7 +14,7 @@ fi
 CGR_PACKAGE="${R4R_CGR_PACKAGE:-code-graph-rag[treesitter-full,semantic,ast-grep]==0.0.484}"
 CGR=(uvx --from "$CGR_PACKAGE" cgr)
 export ORCHESTRATOR_PROVIDER="${ORCHESTRATOR_PROVIDER:-ollama}"
-export ORCHESTRATOR_MODEL="${ORCHESTRATOR_MODEL:-${R4R_CGR_MODEL:-qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest}}"
+export ORCHESTRATOR_MODEL="${ORCHESTRATOR_MODEL:-${R4R_CGR_MODEL:-qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest}}"
 export ORCHESTRATOR_ENDPOINT="${ORCHESTRATOR_ENDPOINT:-${R4R_CGR_BASE_URL:-http://127.0.0.1:11434/v1}}"
 export CYPHER_PROVIDER="${CYPHER_PROVIDER:-ollama}"
 export CYPHER_MODEL="${CYPHER_MODEL:-$ORCHESTRATOR_MODEL}"

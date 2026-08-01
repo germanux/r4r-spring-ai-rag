@@ -1,7 +1,7 @@
 ---
 description: Execute the PC backend queue with Qwen3-Coder-Next 80B
 mode: primary
-model: ollama-pc/qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest
+model: ollama-pc/qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest
 steps: 96
 temperature: 0.25
 permission:

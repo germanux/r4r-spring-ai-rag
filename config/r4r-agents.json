@@ -25,7 +25,7 @@
       "endpointEnv": "R4R_CGR_BASE_URL",
       "modelEnv": "R4R_CGR_MODEL",
       "defaultEndpoint": "http://127.0.0.1:11434/v1",
-      "defaultModel": "qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest"
+      "defaultModel": "qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest"
     }
   },
   "agents": {
@@ -35,7 +35,7 @@
       "provider": "ollama-pc",
       "endpointEnv": "R4R_OPENCODE_PC_BASE_URL",
       "defaultEndpoint": "http://127.0.0.1:11434/v1",
-      "model": "qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest",
+      "model": "qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest",
       "modelLabel": "Qwen3-Coder-Next 80B PC 168K/8K",
       "contextTokens": 172032,
       "outputTokens": 8192,
