@@ -101,3 +101,9 @@ Set `next_state` to `stop`, `pause`, `continue` or `restart`, and `target` to
 PYTHONPATH=py-ring-agent/src \
 python3 -m unittest discover -s py-ring-agent/tests -p 'test_*.py'
 ```
+
+## Worktree rename recovery (phase 2.4)
+
+`prepare-worker-worktrees.py` now repairs all linked worktree `.git` pointers when
+the primary checkout has been renamed. It is safe to rerun after a partially
+completed phase 2.3 migration.
