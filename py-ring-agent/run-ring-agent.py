@@ -11,7 +11,7 @@ DEVELOPMENT_ROOT = Path.home() / "Desarrollo"
 RING_WORKTREE = DEVELOPMENT_ROOT / "r4r-ring-agent.git"
 PC_WORKTREE = DEVELOPMENT_ROOT / "r4r-pc-worker.git"
 LP_WORKTREE = DEVELOPMENT_ROOT / "r4r-lp-worker.git"
-RUN_ONCE = False
+RUN_ONCE = True
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / "src"))
