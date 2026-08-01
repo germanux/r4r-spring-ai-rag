@@ -46,13 +46,11 @@ def require_expected_branch(path: Path, expected: str, label: str) -> None:
 
 
 def select_source(old_path: Path, new_path: Path, expected_branch: str, label: str) -> Path:
-    """Prefer an already-valid short-path worktree without deleting the old path.
+    """Make the short path authoritative once it is on the expected branch.
 
-    A previous interrupted migration can leave the legacy path recreated as a
-    normal directory or stale administrative path. When the new path is already
-    the valid worktree on the expected branch, that legacy path is ignored but
-    never removed automatically. Two simultaneously valid Git worktrees remain
-    an error because choosing one silently would be ambiguous.
+    The legacy path may still be a valid worktree for another branch. That is
+    not an ambiguity for this launcher: the short path is the configured worker
+    location and the legacy worktree is preserved untouched.
     """
     if not new_path.exists():
         return old_path
@@ -61,14 +59,17 @@ def select_source(old_path: Path, new_path: Path, expected_branch: str, label: s
 
     if old_path.exists() and old_path.resolve() != new_path.resolve():
         if is_git_worktree(old_path):
-            raise RuntimeError(
-                f"{label}: both legacy and short paths are valid Git worktrees: "
-                f"{old_path} and {new_path}. Resolve this ambiguity manually."
+            legacy_branch = current_branch(old_path) or "DETACHED"
+            print(
+                f"warning: preserving legacy {label} worktree at {old_path} "
+                f"[{legacy_branch}]; using authoritative short path {new_path} "
+                f"[{expected_branch}]"
             )
-        print(
-            f"warning: ignoring non-worktree legacy path for {label}: {old_path}; "
-            "it was not deleted"
-        )
+        else:
+            print(
+                f"warning: ignoring non-worktree legacy path for {label}: {old_path}; "
+                "it was not deleted"
+            )
 
     return new_path
 
