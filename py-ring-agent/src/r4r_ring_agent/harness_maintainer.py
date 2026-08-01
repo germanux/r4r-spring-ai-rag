@@ -135,7 +135,25 @@ def _inline_config(worktree: Path) -> str:
                 "steps": 18,
                 "prompt": f"{{file:{prompt}}}",
                 "permission": {
-                    "edit": "allow",
+                    # Agent-specific rules are explicit because omitted permissions can
+                    # inherit a restrictive project profile. The last matching rule wins.
+                    "read": {
+                        "*": "allow",
+                        "*.env": "deny",
+                        "*.env.*": "deny",
+                        "**/.env": "deny",
+                        "**/.env.*": "deny",
+                        "*.env.example": "allow",
+                        "**/.env.example": "allow",
+                    },
+                    "glob": "allow",
+                    "grep": "allow",
+                    "edit": {
+                        "*": "deny",
+                        "py-ring-agent/**": "allow",
+                        "py-codex-agent/**/*.py": "allow",
+                        "scripts/**/*.sh": "allow",
+                    },
                     "webfetch": "deny",
                     "task": "deny",
                     "skill": "deny",

@@ -23,6 +23,10 @@ class HarnessMaintainerTest(unittest.TestCase):
             self.assertEqual(agent["mode"], "primary")
             self.assertEqual(agent["steps"], 18)
             self.assertEqual(agent["permission"]["task"], "deny")
+            self.assertEqual(agent["permission"]["read"]["*"], "allow")
+            self.assertEqual(agent["permission"]["read"]["**/.env.*"], "deny")
+            self.assertEqual(agent["permission"]["edit"]["*"], "deny")
+            self.assertEqual(agent["permission"]["edit"]["py-ring-agent/**"], "allow")
             self.assertEqual(agent["permission"]["bash"]["*"], "deny")
 
 

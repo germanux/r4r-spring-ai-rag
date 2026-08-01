@@ -32,6 +32,25 @@ class OperatorControlTest(unittest.TestCase):
             value = json.loads(_strip_jsonc(control.path.read_text()))
             self.assertIn("MAINTAINER", value["state"])
 
+    def test_ring_target_also_reaches_maintainer(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            control = RingCommandFile(repo, "MAINTAINER")
+            control.set_state("running", "maintenance pass")
+            value = json.loads(_strip_jsonc(control.path.read_text()))
+            value["next_state"] = "stop"
+            value["target"] = "RING"
+            control.path.write_text(json.dumps(value), encoding="utf-8")
+            request = control.poll()
+            self.assertIsNotNone(request)
+            assert request is not None
+            self.assertEqual(request.command, "stop")
+            self.assertEqual(request.target, "RING")
+            control.complete(request, "stopped", "done")
+            final = json.loads(_strip_jsonc(control.path.read_text()))
+            self.assertEqual(final["next_state"], "")
+            self.assertEqual(final["state"]["MAINTAINER"], "stopped")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -11,6 +11,7 @@ from typing import Any
 
 
 WORKERS = ("RING", "PC", "LP", "MAINTAINER")
+RING_TARGET_WORKERS = ("RING", "MAINTAINER")
 COMMANDS = ("stop", "pause", "continue", "restart")
 TARGETS = (*WORKERS, "ALL")
 HEARTBEAT_MAX_AGE_SECONDS = 20
@@ -183,6 +184,21 @@ class RingCommandFile:
         )
         temporary.replace(path)
 
+    def _target_matches(self, target: str) -> bool:
+        if target == "ALL":
+            return True
+        if target == "RING":
+            return self.worker in RING_TARGET_WORKERS
+        return target == self.worker
+
+    def _expected_targets_unlocked(self, target: str) -> list[str]:
+        active = self._active_workers_unlocked()
+        if target == "ALL":
+            return active
+        if target == "RING":
+            return [worker for worker in active if worker in RING_TARGET_WORKERS]
+        return [target]
+
     def _active_workers_unlocked(self) -> list[str]:
         now = datetime.now(timezone.utc).timestamp()
         active: list[str] = []
@@ -227,7 +243,7 @@ class RingCommandFile:
                 value["next_state"] = ""
                 self._write_unlocked(value)
                 return None
-            if target not in (self.worker, "ALL"):
+            if not self._target_matches(target):
                 return None
 
             request = value["request"]
@@ -235,7 +251,7 @@ class RingCommandFile:
             created_at = str(request.get("created_at", ""))
             if not created_at:
                 request_id += 1
-                expected = self._active_workers_unlocked() if target == "ALL" else [target]
+                expected = self._expected_targets_unlocked(target)
                 if not expected:
                     expected = [self.worker]
                 request.update(

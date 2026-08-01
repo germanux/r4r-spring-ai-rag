@@ -72,3 +72,10 @@ to `RING`, `PC`, `LP`, `MAINTAINER` or `ALL`.
 PYTHONPATH=py-ring-agent/src \
 python3 -m unittest discover -s py-ring-agent/tests -p 'test_*.py'
 ```
+
+
+## Phase 2.1 hotfix
+
+- `target: "RING"` now controls both the Ring loop and the harness maintainer.
+- The maintainer agent explicitly allows source reads while still denying real `.env` files.
+- Edits remain restricted to the bounded harness paths and are validated externally.
