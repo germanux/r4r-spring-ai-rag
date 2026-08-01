@@ -10,6 +10,7 @@ import sys
 # ---------------------------------------------------------------------------
 DEVELOPMENT_ROOT = Path.home() / "Desarrollo"
 RING_WORKTREE = DEVELOPMENT_ROOT / "r4r-ring-agent.git"
+RING_BRANCH = "agent/ring-agent-worker"
 
 OLD_PC_WORKTREE = DEVELOPMENT_ROOT / "r4r-spring-ai-rag.git"
 OLD_LP_WORKTREE = DEVELOPMENT_ROOT / "r4r-spring-ai-rag-laptop-agent.git"
@@ -24,10 +25,22 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / "src"))
 
 from r4r_ring_agent.worktrees import (  # noqa: E402
+    current_branch,
     find_repository_anchor,
     move_or_create_worker,
     repair_registered_worktrees,
+    require_git_worktree,
 )
+
+
+def require_expected_branch(path: Path, expected: str, label: str) -> None:
+    worktree = require_git_worktree(path, label)
+    actual = current_branch(worktree)
+    if actual != expected:
+        raise RuntimeError(
+            f"{label} uses branch {actual or 'DETACHED'}; expected {expected}. "
+            "This script never checks out or creates replacement branches."
+        )
 
 
 def main() -> int:
@@ -38,6 +51,10 @@ def main() -> int:
         (PC_WORKTREE, OLD_PC_WORKTREE, RING_WORKTREE, OLD_LP_WORKTREE, LP_WORKTREE)
     )
     repair_registered_worktrees(anchor)
+
+    # The Ring worktree is already configured by the operator. Never switch it;
+    # only verify that it is attached to the exact existing branch.
+    require_expected_branch(RING_WORKTREE, RING_BRANCH, "RING")
 
     print(
         move_or_create_worker(
@@ -63,7 +80,16 @@ def main() -> int:
     )
     repair_registered_worktrees(anchor)
 
-    print("Worker paths are ready.")
+    # Final invariant: the three persistent worktrees must remain attached to
+    # the three pre-existing worker branches shown in SmartGit.
+    require_expected_branch(RING_WORKTREE, RING_BRANCH, "RING")
+    require_expected_branch(PC_WORKTREE, PC_BRANCH, "PC")
+    require_expected_branch(LP_WORKTREE, LP_BRANCH, "LP")
+
+    print("Worker paths are ready with the expected existing branches:")
+    print(f"- RING: {RING_WORKTREE} [{RING_BRANCH}]")
+    print(f"- PC:   {PC_WORKTREE} [{PC_BRANCH}]")
+    print(f"- LP:   {LP_WORKTREE} [{LP_BRANCH}]")
     return 0
 
 
