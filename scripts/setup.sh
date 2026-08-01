@@ -132,26 +132,50 @@ ensure_claude_capabilities() {
   if ! command -v "$binary" >/dev/null 2>&1; then
     echo "Installing Claude Code from npm package $package..."
     npm install -g "$package" || "${SUDO[@]}" npm install -g "$package"
+    hash -r
   fi
   command -v "$binary" >/dev/null 2>&1 || {
     echo "Failed to install Claude Code executable: $binary" >&2
     exit 2
   }
 
-  local help
-  help="$($binary --help 2>&1 || true)"
+  local selected_path version help missing=() flag
+  selected_path="$(command -v "$binary")"
+  version="$($binary --version 2>&1 || true)"
+  [[ -n "$version" ]] || {
+    echo "Claude Code executable cannot report its version: $selected_path" >&2
+    exit 2
+  }
+
+  # Claude Code marks several options as print-mode-only. Some releases accept those
+  # options but omit them from the top-level `claude --help` text. Inspect both help
+  # surfaces and treat missing documentation as a warning, not as proof that the
+  # parser lacks the option. The surgical launcher is the authoritative runtime check.
+  help="$({ "$binary" --help 2>&1 || true; "$binary" -p --help 2>&1 || true; } | sed -E $'s/\x1B\[[0-9;?]*[ -\/]*[@-~]//g')"
   for flag in --output-format --max-turns --permission-mode --append-system-prompt-file; do
-    grep -q -- "$flag" <<<"$help" || {
-      echo "Claude Code lacks required option $flag; updating $package..." >&2
-      npm install -g "${package}@latest" || "${SUDO[@]}" npm install -g "${package}@latest"
-      help="$($binary --help 2>&1 || true)"
-      grep -q -- "$flag" <<<"$help" || {
-        echo "Claude Code still lacks required option: $flag" >&2
-        exit 2
-      }
-    }
+    grep -Fq -- "$flag" <<<"$help" || missing+=("$flag")
   done
-  "$binary" --version
+
+  printf 'Claude Code: %s (%s)\n' "$selected_path" "$version"
+  if (( ${#missing[@]} > 0 )); then
+    printf 'Warning: Claude Code help does not advertise print-mode option(s): %s\n' "${missing[*]}" >&2
+    echo "The installed binary is retained; hidden help entries are not a capability failure." >&2
+    echo "The first surgical run will fail closed if its parser truly rejects an option." >&2
+    if [[ "${R4R_CLAUDE_STRICT_HELP:-0}" == 1 ]]; then
+      echo "R4R_CLAUDE_STRICT_HELP=1: refusing the incomplete help surface." >&2
+      exit 2
+    fi
+  fi
+
+  # Multiple installations are a common cause of apparently stale help/version output.
+  # Report them, but do not delete or replace an operator-managed installation.
+  local paths
+  paths="$(type -a -p "$binary" 2>/dev/null | awk '!seen[$0]++')"
+  if [[ "$(wc -l <<<"$paths" | tr -d ' ')" -gt 1 ]]; then
+    echo "Warning: multiple Claude Code executables are visible in PATH:" >&2
+    sed 's/^/  - /' <<<"$paths" >&2
+    echo "Selected executable: $selected_path" >&2
+  fi
 }
 
 ensure_codegraph_capabilities() {
