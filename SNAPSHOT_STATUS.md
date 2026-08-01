@@ -1,14 +1,14 @@
 # R4R periodic development snapshot
 
-- Timestamp: `2026-08-01T04:28:43+02:00`
+- Timestamp: `2026-08-01T06:59:43+02:00`
 - Source branch: `main`
 - Source HEAD: `04ec339d531f3d1e77f44f02b8373f04b2a3b718`
 - Active task: `none`
 - Agent state: `active`
 - Compile: `OK`
 - Compile exit: `0`
-- Latest controller gate: `0`
-- Latest gate evidence: `runtime/runs/PC/20260801T011045Z/task-06-production-ingestion-cli/attempt-01/evidence/notify-task-gate-green.json`
+- Latest controller gate: `unknown`
+- Latest gate evidence: `runtime/runs/PC/20260801T011045Z/task-06-production-ingestion-cli/attempt-07/evidence/gate-diagnostics.json`
 
 ## Working-tree state
 
