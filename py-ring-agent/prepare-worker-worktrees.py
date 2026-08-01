@@ -27,6 +27,7 @@ sys.path.insert(0, str(HERE / "src"))
 from r4r_ring_agent.worktrees import (  # noqa: E402
     current_branch,
     find_repository_anchor,
+    is_git_worktree,
     move_or_create_worker,
     repair_registered_worktrees,
     require_git_worktree,
@@ -43,6 +44,34 @@ def require_expected_branch(path: Path, expected: str, label: str) -> None:
         )
 
 
+
+def select_source(old_path: Path, new_path: Path, expected_branch: str, label: str) -> Path:
+    """Prefer an already-valid short-path worktree without deleting the old path.
+
+    A previous interrupted migration can leave the legacy path recreated as a
+    normal directory or stale administrative path. When the new path is already
+    the valid worktree on the expected branch, that legacy path is ignored but
+    never removed automatically. Two simultaneously valid Git worktrees remain
+    an error because choosing one silently would be ambiguous.
+    """
+    if not new_path.exists():
+        return old_path
+
+    require_expected_branch(new_path, expected_branch, label)
+
+    if old_path.exists() and old_path.resolve() != new_path.resolve():
+        if is_git_worktree(old_path):
+            raise RuntimeError(
+                f"{label}: both legacy and short paths are valid Git worktrees: "
+                f"{old_path} and {new_path}. Resolve this ambiguity manually."
+            )
+        print(
+            f"warning: ignoring non-worktree legacy path for {label}: {old_path}; "
+            "it was not deleted"
+        )
+
+    return new_path
+
 def main() -> int:
     # Recovery-first: after an interrupted older version, the primary checkout
     # may already be renamed while every linked worktree still points to the old
@@ -56,10 +85,11 @@ def main() -> int:
     # only verify that it is attached to the exact existing branch.
     require_expected_branch(RING_WORKTREE, RING_BRANCH, "RING")
 
+    pc_source = select_source(OLD_PC_WORKTREE, PC_WORKTREE, PC_BRANCH, "PC")
     print(
         move_or_create_worker(
             repository_anchor=anchor,
-            source=OLD_PC_WORKTREE,
+            source=pc_source,
             destination=PC_WORKTREE,
             branch=PC_BRANCH,
         )
@@ -70,10 +100,11 @@ def main() -> int:
     anchor = find_repository_anchor((PC_WORKTREE, RING_WORKTREE))
     repair_registered_worktrees(anchor)
 
+    lp_source = select_source(OLD_LP_WORKTREE, LP_WORKTREE, LP_BRANCH, "LP")
     print(
         move_or_create_worker(
             repository_anchor=anchor,
-            source=OLD_LP_WORKTREE,
+            source=lp_source,
             destination=LP_WORKTREE,
             branch=LP_BRANCH,
         )
