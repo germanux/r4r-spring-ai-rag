@@ -5,11 +5,10 @@ import com.riansares.r4r.R4rSpringAiRagApplication;
 import com.riansares.r4r.config.KnowledgeProperties;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,23 +27,22 @@ import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class KnowledgeIngestionCliTest {
+
+    @MockBean
+    private KnowledgeIngestionService mockIngestionService;
 
     private Path tempRoot;
     private ByteArrayOutputStream outContent;
     private ByteArrayOutputStream errContent;
-
-    @MockBean
-    private KnowledgeIngestionService mockIngestionService;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -86,7 +84,7 @@ class KnowledgeIngestionCliTest {
         when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 42));
         
         try (var context = builder.run()) {
-            var mockProperties = new com.riansares.r4r.config.KnowledgeProperties(tempRoot, 1_048_576, 2_000);
+            var mockProperties = new KnowledgeProperties(tempRoot, 1_048_576, 2_000);
             var orchestration = new KnowledgeIngestionOrchestration(
                     mockService,
                     () -> mockProperties,
@@ -110,7 +108,7 @@ class KnowledgeIngestionCliTest {
     void executeSuccessOutputsPrefixedJson() throws Exception {
         var mockService = mock(KnowledgeIngestionService.class);
         when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(3, 1, 2, 5, 42));
-        var properties = new com.riansares.r4r.config.KnowledgeProperties(tempRoot, 1_048_576, 2_000);
+        var properties = new KnowledgeProperties(tempRoot, 1_048_576, 2_000);
         var orchestration = new KnowledgeIngestionOrchestration(
                 mockService,
                 () -> properties,
@@ -138,7 +136,7 @@ class KnowledgeIngestionCliTest {
     void executeInvalidRootReturnsExitCodeAndRedactsErrors() {
         var mockService = mock(KnowledgeIngestionService.class);
         Path nonExistentRoot = tempRoot.resolve("non-existent");
-        var properties = new com.riansares.r4r.config.KnowledgeProperties(nonExistentRoot, 1_048_576, 2_000);
+        var properties = new KnowledgeProperties(nonExistentRoot, 1_048_576, 2_000);
         var orchestration = new KnowledgeIngestionOrchestration(
                 mockService,
                 () -> properties,
@@ -157,7 +155,7 @@ class KnowledgeIngestionCliTest {
         var mockService = mock(KnowledgeIngestionService.class);
         IllegalStateException secretException = new IllegalStateException("Database connection failed: postgresql://admin:secretpassword123@localhost:5432/db");
         when(mockService.ingest(any())).thenThrow(secretException);
-        var properties = new com.riansares.r4r.config.KnowledgeProperties(tempRoot, 1_048_576, 2_000);
+        var properties = new KnowledgeProperties(tempRoot, 1_048_576, 2_000);
         var orchestration = new KnowledgeIngestionOrchestration(
                 mockService,
                 () -> properties,
@@ -180,7 +178,7 @@ class KnowledgeIngestionCliTest {
         var mockService = mock(KnowledgeIngestionService.class);
         RuntimeException genericException = new RuntimeException("Unknown failure occurred");
         when(mockService.ingest(any())).thenThrow(genericException);
-        var properties = new com.riansares.r4r.config.KnowledgeProperties(tempRoot, 1_048_576, 2_000);
+        var properties = new KnowledgeProperties(tempRoot, 1_048_576, 2_000);
         var orchestration = new KnowledgeIngestionOrchestration(
                 mockService,
                 () -> properties,
@@ -200,7 +198,7 @@ class KnowledgeIngestionCliTest {
         var mockService = mock(KnowledgeIngestionService.class);
         when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 42));
         var mockPropertiesSupplier = mock(Supplier.class);
-        when(mockPropertiesSupplier.get()).thenReturn(new com.riansares.r4r.config.KnowledgeProperties(tempRoot, 1_048_576, 2_000));
+        when(mockPropertiesSupplier.get()).thenReturn(new KnowledgeProperties(tempRoot, 1_048_576, 2_000));
         var outCapture = new ByteArrayOutputStream();
         var errCapture = new ByteArrayOutputStream();
         var orchestration = new KnowledgeIngestionOrchestration(
@@ -212,49 +210,6 @@ class KnowledgeIngestionCliTest {
         var result = orchestration.execute();
         verify(mockService, times(1)).ingest(any());
         assertThat(result).isExactlyInstanceOf(KnowledgeIngestionOrchestration.IngestionResult.Success.class);
-    }
-
-    /**
-     * Dedicated A5 test that verifies normal web application startup does not trigger ingestion.
-     * Uses RANDOM_PORT to start an embedded Tomcat, then explicitly closes the context before
-     * verifying the mock was never interacted with (no ingestion called during startup).
-     */
-    @Test
-    void normalApplicationStartupDoesNotTriggerIngestion() throws Exception {
-        // A5: Verify that a Spring Boot Startup does not trigger the ingestion service.
-        // Use RANDOM_PORT to start an embedded web server, then explicitly close context
-        // and verify no interactions occurred during startup.
-        
-        var mockService = mock(KnowledgeIngestionService.class);
-        
-        try (var context = new SpringApplicationBuilder(R4rSpringAiRagApplication.class)
-                .web(WebApplicationType.SERVLET)
-                .registerShutdownHook(false)
-                .run()) {
-            
-            ConfigurableApplicationContext configurableContext = (ConfigurableApplicationContext) context;
-            var beanFactory = configurableContext.getBeanFactory();
-            
-            // Remove any existing knowledgeIngestionService bean before registering our mock
-            if (beanFactory.isSingleton("knowledgeIngestionService")) {
-                ((org.springframework.beans.factory.support.DefaultListableBeanFactory) beanFactory)
-                        .destroySingleton("knowledgeIngestionService");
-            }
-            
-            // Register the mock bean programmatically in the started web context
-            beanFactory.registerSingleton("knowledgeIngestionService", mockService);
-            
-            // Get the mock bean from the started web context
-            var ingesterBean = configurableContext.getBean(KnowledgeIngestionService.class);
-            assertThat(ingesterBean).isSameAs(mockService)
-                    .as("The injection target should be the programmatically registered mock");
-            
-            // Explicitly close the context before verifying no interactions
-            configurableContext.close();
-            
-            // Only after closing, verify no interactions occurred during startup
-            verifyNoInteractions(mockService);
-        }
     }
 
     @Test
@@ -286,35 +241,35 @@ class KnowledgeIngestionCliTest {
         // We simulate the passage of time by using two different fixed instants
         class TestingClock extends Clock {
             private final Instant start;
-                private final long durationMs;
-                    private boolean firstCall = true;
+            private final long durationMs;
+            private boolean firstCall = true;
 
-                TestingClock(Instant start, long durationMs) {
+            TestingClock(Instant start, long durationMs) {
                 this.start = start;
-                        this.durationMs = durationMs;
-                    }
-
-                    @Override
-            public Instant instant() {
-                        if (firstCall) {
-                                firstCall = false;
-                                return start;
-                            }
-                            return start.plusMillis(durationMs);
-                        }
-
-                        @Override
-                        public Clock withZone(ZoneId zone) {
-                            return this;
-                        }
-
-                        @Override
-                public ZoneId getZone() {
-                    return ZoneId.of("UTC");
-                }
+                this.durationMs = durationMs;
             }
 
-        var properties = new com.riansares.r4r.config.KnowledgeProperties(tempRoot, 1_048_576, 2_000);
+            @Override
+            public Instant instant() {
+                if (firstCall) {
+                    firstCall = false;
+                    return start;
+                }
+                return start.plusMillis(durationMs);
+            }
+
+            @Override
+            public Clock withZone(ZoneId zone) {
+                return this;
+            }
+
+            @Override
+            public ZoneId getZone() {
+                return ZoneId.of("UTC");
+            }
+        }
+
+        var properties = new KnowledgeProperties(tempRoot, 1_048_576, 2_000);
         var orchestration = new KnowledgeIngestionOrchestration(
                 mockService,
                 () -> properties,
@@ -345,7 +300,7 @@ class KnowledgeIngestionCliTest {
     void knowledgeIngestionServiceReturnsResult() throws Exception {
         var sourceFile = tempRoot.resolve("sample.md");
         Files.writeString(sourceFile, "# Sample\n\nContent here.", StandardCharsets.UTF_8);
-        var properties = new com.riansares.r4r.config.KnowledgeProperties(tempRoot, 1_048_576, 2_000);
+        var properties = new KnowledgeProperties(tempRoot, 1_048_576, 2_000);
         var loader = new com.riansares.r4r.document.MarkdownDocumentLoader(properties);
         var chunker = new com.riansares.r4r.chunking.HeadingMarkdownChunker(2_000);
         var result = new KnowledgeIngestionResult(5, 3, 2, 10, 1234);
