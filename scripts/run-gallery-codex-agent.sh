@@ -60,7 +60,7 @@ if [[ "$DEST" == LP ]]; then
 else
   agent="r4r-gallery-pc"
   base_url="$R4R_OPENCODE_PC_BASE_URL"
-  model="qwen3-coder-next-80b-t025-168k-8k-pc-pc"
+  model="qwen3-coder-next-80b-t033-128k-8k-pc-pc"
 fi
 
 run_id="$(date -u +%Y%m%dT%H%M%SZ)"

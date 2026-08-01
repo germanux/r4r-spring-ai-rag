@@ -1,7 +1,7 @@
 ---
 description: Inspect gallery HTML/CSS/JS and publish directly to Spring static with PC 80B
 mode: primary
-model: ollama-pc/qwen3-coder-next-80b-t025-168k-8k-pc-pc
+model: ollama-pc/qwen3-coder-next-80b-t033-128k-8k-pc-pc
 steps: 36
 temperature: 0.25
 permission:

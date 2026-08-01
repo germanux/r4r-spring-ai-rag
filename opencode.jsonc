@@ -26,6 +26,13 @@
             "context": 172032,
             "output": 8192
           }
+        },
+        "qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest": {
+          "name": "qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest",
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
         }
       }
     },
