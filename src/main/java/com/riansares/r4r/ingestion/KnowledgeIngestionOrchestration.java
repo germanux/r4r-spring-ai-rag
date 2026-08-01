@@ -56,13 +56,16 @@ public class KnowledgeIngestionOrchestration {
             result = service.ingest(clock);
         } catch (IllegalStateException e) {
             errorSupplier.get().println("ERROR: Ingestion failed");
-            return new IngestionResult.IngestionFailure(e);
+            if (isInfrastructureCause(e)) {
+                errorSupplier.get().println("ERROR: Infrastructure unavailable (database/model)");
+            }
+            return new IngestionResult.IngestionFailure(e, isInfrastructureCause(e));
         } catch (Exception e) {
             errorSupplier.get().println("ERROR: Ingestion failed");
             if (isInfrastructureCause(e)) {
                 errorSupplier.get().println("ERROR: Infrastructure unavailable (database/model)");
             }
-            return new IngestionResult.IngestionFailure(e);
+            return new IngestionResult.IngestionFailure(e, isInfrastructureCause(e));
         }
 
         Instant end = clock.instant();
@@ -80,13 +83,44 @@ public class KnowledgeIngestionOrchestration {
     }
 
     private boolean isInfrastructureCause(Throwable cause) {
+        if (cause == null) return false;
+        
         String msg = cause.getMessage() != null ? cause.getMessage() : "";
         String className = cause.getClass().getName();
-        return msg.toLowerCase().contains("database")
-                || msg.toLowerCase().contains("connection")
-                || msg.toLowerCase().contains("postgresql")
-                || msg.toLowerCase().contains("connection refused")
-                || msg.toLowerCase().contains("network") || msg.toLowerCase().contains("timeout");
+        
+        // Check the entire cause chain for infrastructure indicators
+        Throwable current = cause;
+        while (current != null) {
+            String currMsg = current.getMessage() != null ? current.getMessage().toLowerCase() : "";
+            String currClass = current.getClass().getName().toLowerCase();
+            
+            // Infrastructure classification by exception type and detailed message inspection
+            if (currClass.contains("connectexception") 
+                    || currClass.contains("sqlexception")
+                    || currClass.contains("postgresql")
+                    || currClass.contains("ollama")
+                    || currClass.contains("io."))
+            {
+                return true;
+            }
+            
+            // Message-based classification with more specific patterns
+            if (currMsg.contains("connection refused") 
+                    || currMsg.contains("connection timed out")
+                    || currMsg.contains("database is running")
+                    || currMsg.contains(" database ")
+                    || currMsg.contains("postgresql://")
+                    || currMsg.contains("ollama ")
+                    || currMsg.contains("embedding ")
+                    || currMsg.contains("model "))
+            {
+                return true;
+            }
+            
+            current = current.getCause();
+        }
+        
+        return false;
     }
 
     private String toJson(KnowledgeProperties properties, KnowledgeIngestionResult result, long durationMs) {
@@ -134,9 +168,12 @@ public class KnowledgeIngestionOrchestration {
             }
         }
 
-        record IngestionFailure(Throwable cause) implements IngestionResult {
+        record IngestionFailure(Throwable cause, boolean isInfrastructure) implements IngestionResult {
             @Override
             public int exitCode() {
+                if (isInfrastructure) {
+                    return 3;
+                }
                 Throwable root = findRootCause(cause);
                 if (root != null && isDatabaseIssue(root)) {
                     return 3;
