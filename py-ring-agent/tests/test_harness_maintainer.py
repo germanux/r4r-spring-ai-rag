@@ -29,6 +29,16 @@ class HarnessMaintainerTest(unittest.TestCase):
             self.assertEqual(agent["permission"]["edit"]["py-ring-agent/**"], "allow")
             self.assertEqual(agent["permission"]["bash"]["*"], "deny")
 
+    def test_maintenance_artifacts_live_under_runtime(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            run_dir = harness_maintainer.maintenance_run_dir(repo, "20260801T000000Z")
+            self.assertEqual(
+                run_dir,
+                repo / "runtime" / "ring-agent" / "maintenance" / "20260801T000000Z",
+            )
+            self.assertNotIn(".ring-agent", run_dir.parts)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -274,18 +274,20 @@ Status: **{status}**
 """
 
 
+def maintenance_run_dir(repo: Path, run_id: str) -> Path:
+    return repo / "runtime" / "ring-agent" / "maintenance" / run_id
+
+
 def run_maintenance_once(repo: Path, control: RingCommandFile) -> MaintenanceOutcome:
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    runtime_dir = repo / "runtime" / "ring-maintainer" / run_id
-    report_dir = repo / ".ring-agent" / "maintenance" / run_id
-    runtime_dir.mkdir(parents=True, exist_ok=True)
-    report_dir.mkdir(parents=True, exist_ok=True)
+    run_dir = maintenance_run_dir(repo, run_id)
+    run_dir.mkdir(parents=True, exist_ok=True)
 
     dirty = dirty_allowed_paths(repo, ALLOWED_GLOBS)
     if dirty:
         status = "BLOCKED_DIRTY_HARNESS_PATHS"
-        _write_json(report_dir / "result.json", {"status": status, "paths": dirty})
-        (report_dir / "analysis.md").write_text(
+        _write_json(run_dir / "result.json", {"status": status, "paths": dirty})
+        (run_dir / "analysis.md").write_text(
             "# Harness maintenance result\n\n"
             f"Status: **{status}**\n\nDirty allowed paths:\n"
             + "\n".join(f"- {path}" for path in dirty)
@@ -305,7 +307,7 @@ def run_maintenance_once(repo: Path, control: RingCommandFile) -> MaintenanceOut
         correction = ""
         for attempt in range(1, MAX_ATTEMPTS + 1):
             attempts_used = attempt
-            attempt_dir = runtime_dir / f"attempt-{attempt:02d}"
+            attempt_dir = run_dir / f"attempt-{attempt:02d}"
             attempt_dir.mkdir(parents=True, exist_ok=True)
 
             def stop_poll() -> str:
@@ -392,9 +394,9 @@ def run_maintenance_once(repo: Path, control: RingCommandFile) -> MaintenanceOut
         accepted = bool(final_candidate and final_candidate.valid and final_tests_passed)
         status = "CANDIDATE_READY" if accepted else "REJECTED"
         patch_name = "candidate.patch" if accepted else "rejected.patch"
-        (report_dir / patch_name).write_text(patch, encoding="utf-8")
+        (run_dir / patch_name).write_text(patch, encoding="utf-8")
         _write_json(
-            report_dir / "result.json",
+            run_dir / "result.json",
             {
                 "status": status,
                 "run_id": run_id,
@@ -406,7 +408,7 @@ def run_maintenance_once(repo: Path, control: RingCommandFile) -> MaintenanceOut
                 "patch": patch_name,
             },
         )
-        (report_dir / "analysis.md").write_text(
+        (run_dir / "analysis.md").write_text(
             _analysis_markdown(final_result, final_candidate, final_tests_passed, status),
             encoding="utf-8",
         )

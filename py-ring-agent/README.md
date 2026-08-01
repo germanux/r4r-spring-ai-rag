@@ -28,8 +28,8 @@ Default policy:
 - no Java or frontend product changes;
 - no package installation or Git history changes;
 - candidate is never applied to the active worktree;
-- candidate patch and analysis are written under `.ring-agent/maintenance/<run-id>/`;
-- full streamed console logs are written under `runtime/ring-maintainer/<run-id>/`.
+- all maintainer artifacts are written under `runtime/ring-agent/maintenance/<run-id>/`;
+- each run contains `analysis.md`, `result.json`, the candidate/rejected patch and streamed attempt logs.
 
 The active worktree may contain product changes. The maintainer only blocks when an
 allowed harness path is already dirty, because it must compare its candidate against
@@ -79,3 +79,9 @@ python3 -m unittest discover -s py-ring-agent/tests -p 'test_*.py'
 - `target: "RING"` now controls both the Ring loop and the harness maintainer.
 - The maintainer agent explicitly allows source reads while still denying real `.env` files.
 - Edits remain restricted to the bounded harness paths and are validated externally.
+
+
+## Phase 2.2 runtime layout
+
+Harness-maintenance reports are runtime evidence and are no longer written to `.ring-agent/`.
+The complete per-run tree now lives under `runtime/ring-agent/maintenance/<run-id>/`.
