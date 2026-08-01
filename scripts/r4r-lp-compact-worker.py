@@ -19,6 +19,10 @@ FILE_BLOCK_RE = re.compile(
     r'^<<<R4R_FILE path="([^"\n]+)">>>\s*\n(.*?)\n<<<R4R_END_FILE>>>\s*$',
     re.MULTILINE | re.DOTALL,
 )
+SUMMARY_BLOCK_RE = re.compile(
+    r'^<<<R4R_SUMMARY>>>\s*\n(.*?)\n<<<R4R_END_SUMMARY>>>\s*$',
+    re.MULTILINE | re.DOTALL,
+)
 CAMEL_RE = re.compile(r'\b[A-Z][A-Za-z0-9]{6,}\b')
 PATH_RE = re.compile(r'(?<![A-Za-z0-9_.-])((?:src|docs|knowledge|docker-postgres)/[A-Za-z0-9_./-]+)')
 
@@ -238,6 +242,34 @@ def parse_file_blocks(text: str) -> list[tuple[str, str]]:
     return result
 
 
+def parse_summary(text: str, task: ActiveTask, blocks: list[tuple[str, str]]) -> str:
+    match = SUMMARY_BLOCK_RE.search(text.strip())
+    if match is not None and match.group(1).strip():
+        summary = match.group(1).strip()
+        if not summary.startswith('# Local understanding report'):
+            summary = '# Local understanding report\n\n' + summary
+        return summary.rstrip() + '\n'
+
+    changed = ', '.join(path for path, _ in blocks) or 'none'
+    return (
+        '# Local understanding report\n\n'
+        '## Task objective in my own words\n'
+        f'{task.objective or task.task_id}\n\n'
+        '## Instructions I reconciled\n'
+        'The compact LP response omitted its requested model-authored summary. '
+        'Codex must rely on the exact diff and controller gate evidence.\n\n'
+        '## Mapping from requirements to changed code and tests\n'
+        f'Changed paths reported by the compact worker: {changed}.\n\n'
+        '## Claims supported by current gate evidence\n'
+        'No post-edit gate claim was available to the model at generation time. '
+        'The controller appends the authoritative gate result.\n\n'
+        '## Uncertainties, contradictions or possible instruction defects\n'
+        'The requested summary block was missing.\n\n'
+        '## Questions or corrections requested from Codex\n'
+        'Review the exact patch and deterministic gate evidence.\n'
+    )
+
+
 def apply_files(repo: Path, task: ActiveTask, blocks: list[tuple[str, str]]) -> Path:
     for path, _ in blocks:
         if not is_allowed(path, task.allowed_paths):
@@ -327,14 +359,27 @@ You have NO tools. The controller has already supplied the exact task, Codex pla
 current gate failure and selected repository files. Produce complete replacement file
 contents only for files that must be created or changed now.
 
-Output format is strict and contains no Markdown fences or prose:
+Output format is strict and contains no Markdown fences or prose outside the blocks:
 <<<R4R_FILE path="relative/path.ext">>>
 complete file content
 <<<R4R_END_FILE>>>
 
-Repeat that block for each changed file. Never output Git commands, patches, deletions,
-controller/config files or paths outside the active task. Keep the solution minimal,
-compile-ready and consistent with the supplied source interfaces.''' 
+Repeat that block for each changed file. After the final file, output exactly one report:
+<<<R4R_SUMMARY>>>
+# Local understanding report
+## Task objective in my own words
+## Instructions I reconciled
+## Mapping from requirements to changed code and tests
+## Claims supported by current gate evidence
+## Uncertainties, contradictions or possible instruction defects
+## Questions or corrections requested from Codex
+<<<R4R_END_SUMMARY>>>
+
+The report must explain why each changed file is needed. Because the controller runs the
+post-edit gate after this response, mark post-edit test success as not yet proven.
+Never output Git commands, patches, deletions, controller/config files or paths outside
+the active task. Keep the solution minimal, compile-ready and consistent with the
+supplied source interfaces.'''
     user = f'''ACTIVE TASK: {task.task_id}
 OBJECTIVE: {task.objective}
 ALLOWED PATH PATTERNS: {list(task.allowed_paths)}
@@ -346,13 +391,14 @@ CONTROLLER/CODEX PACKET:
 BOUNDED REPOSITORY CONTEXT:
 {context}
 
-Return only complete R4R file blocks.''' 
+Return only complete R4R file blocks followed by the R4R summary block.'''
 
     request_debug = write_debug(repo, 'request.txt', system + '\n\n' + user)
     content, raw = call_model(args.base_url, args.model, system, user, args.max_tokens, args.timeout)
     response_debug = write_debug(repo, 'response.txt', content)
     write_debug(repo, 'response.json', json.dumps(raw, indent=2, ensure_ascii=False))
     blocks = parse_file_blocks(content)
+    summary = parse_summary(content, task, blocks)
     backup = apply_files(repo, task, blocks)
     emit_text(
         f'Compact LP worker wrote {len(blocks)} task-scoped file(s): '
@@ -360,6 +406,7 @@ Return only complete R4R file blocks.'''
         + f'. Backup: {backup.relative_to(repo)}. Request: {request_debug.relative_to(repo)}. '
         + f'Response: {response_debug.relative_to(repo)}.'
     )
+    emit_text(summary)
     return 0
 
 

@@ -757,6 +757,7 @@ class AutomaticRunner:
         last_review_action = ""
 
         while self.max_attempts <= 0 or attempt <= self.max_attempts:
+            edit_result: CommandResult | None = None
             attempt_dir = task_root / f"attempt-{attempt:02d}"
             attempt_dir.mkdir(parents=True, exist_ok=True)
             current_gate = (
@@ -836,7 +837,7 @@ class AutomaticRunner:
                 )
                 before_head = git_head(self.repo)
                 before_fingerprint = self._worktree_fingerprint()
-                edit = self._run_logged(
+                edit_result = self._run_logged(
                     "opencode",
                     (
                         self.opencode_bin,
@@ -853,27 +854,27 @@ class AutomaticRunner:
                     attempt_dir,
                     stream=True,
                 )
-                if edit.exit_code != 0:
-                    if self._non_transient_opencode_failure(edit):
+                if edit_result.exit_code != 0:
+                    if self._non_transient_opencode_failure(edit_result):
                         return self._finish(
                             "OPENCODE_CONFIGURATION_ERROR",
-                            edit.exit_code or 78,
+                            edit_result.exit_code or 78,
                             {
                                 "task": task.id,
                                 "attempt": attempt,
-                                "diagnostic": (edit.stderr or edit.stdout)[-4000:],
+                                "diagnostic": (edit_result.stderr or edit_result.stdout)[-4000:],
                             },
                         )
                     transient_failures += 1
                     if transient_failures > self.max_transient_failures:
                         return self._finish(
                             "OPENCODE_RETRY_EXHAUSTED",
-                            edit.exit_code,
+                            edit_result.exit_code,
                             {"task": task.id, "attempt": attempt},
                         )
                     next_action = self._transient_retry_action(
                         "OpenCode edit",
-                        edit,
+                        edit_result,
                         next_action,
                     )
                     attempt += 1
@@ -884,11 +885,10 @@ class AutomaticRunner:
                 changed_this_attempt = after_fingerprint != before_fingerprint
                 if changed_this_attempt:
                     no_progress_cycles = 0
-                    self._notify(
+                    self._notify_file_changed(
                         attempt_dir,
                         f"files-changed-{attempt:02d}",
-                        1,
-                        f"{task.id}: repository files changed",
+                        f"{task.id}: local LLM changed repository files",
                     )
                 else:
                     no_progress_cycles += 1
@@ -964,12 +964,11 @@ class AutomaticRunner:
             # the exact diff and gate evidence directly. The PC worker keeps the
             # assimilation pass as additional evidence.
             if getattr(self, "compact_local_worker", False):
-                evidence = attempt_dir / "evidence"
-                evidence.mkdir(parents=True, exist_ok=True)
-                (evidence / "local-understanding.md").write_text(
-                    "# Local understanding report\n\n"
-                    "Compact worker assimilation skipped; inspect the exact diff and gate evidence.\n",
-                    encoding="utf-8",
+                self._write_compact_local_understanding(
+                    attempt_dir,
+                    edit_result.stdout if edit_result is not None else "",
+                    task,
+                    gate,
                 )
             else:
                 assimilation_before_head = git_head(self.repo)
@@ -1968,6 +1967,48 @@ next instruction packet.
             encoding="utf-8",
         )
 
+    def _write_compact_local_understanding(
+        self,
+        attempt_dir: Path,
+        stdout: str,
+        task: Task,
+        gate: CommandResult,
+    ) -> None:
+        evidence = attempt_dir / "evidence"
+        evidence.mkdir(parents=True, exist_ok=True)
+        report = extract_opencode_text(stdout).strip()
+        if "# Local understanding report" not in report:
+            changed = git_product_changed_paths(self.repo)
+            changed_text = "\n".join(f"- {path}" for path in changed) or "- none"
+            report = (
+                "# Local understanding report\n\n"
+                "## Task objective in my own words\n"
+                f"{task.objective}\n\n"
+                "## Instructions I reconciled\n"
+                "The compact LP worker did not return its requested model-authored "
+                "summary. Codex must inspect the exact diff.\n\n"
+                "## Mapping from requirements to changed code and tests\n"
+                f"{changed_text}\n\n"
+                "## Claims supported by current gate evidence\n"
+                "See the controller-verified post-edit evidence below.\n\n"
+                "## Uncertainties, contradictions or possible instruction defects\n"
+                "Model-authored compact summary missing.\n\n"
+                "## Questions or corrections requested from Codex\n"
+                "Review the exact patch and deterministic gate evidence."
+            )
+        report = report.rstrip()
+        report += (
+            "\n\n## Controller-verified post-edit evidence\n"
+            f"- Exact task gate exit code: `{gate.exit_code}`.\n"
+            f"- Gate timed out: `{'yes' if gate.timed_out else 'no'}`.\n"
+            "- A green exit code proves only the assertions implemented by the exact gate; "
+            "Codex must still review the diff and acceptance contract.\n"
+        )
+        (evidence / "local-understanding.md").write_text(
+            report.rstrip() + "\n",
+            encoding="utf-8",
+        )
+
     def _write_failed_local_understanding(
         self,
         attempt_dir: Path,
@@ -2062,6 +2103,25 @@ next instruction packet.
         if result.exit_code == 0:
             self._notify(directory, f"{name}-green", 2, f"{name}: tests are green")
         return result
+
+    def _notify_file_changed(self, directory: Path, event: str, message: str) -> None:
+        if not self.notify_script.exists() or not os.access(self.notify_script, os.X_OK):
+            print(
+                f"[r4r] notification skipped; executable not found: {self.notify_script}",
+                file=sys.stderr,
+            )
+            return
+        result = self._run_logged(
+            f"notify-{event}",
+            (str(self.notify_script), "--file-changed", message),
+            directory,
+            stream=True,
+        )
+        if result.exit_code != 0:
+            print(
+                f"[r4r] file-change notification failed for {event}; workflow continues",
+                file=sys.stderr,
+            )
 
     def _notify(self, directory: Path, event: str, count: int, message: str) -> None:
         if not self.notify_script.exists() or not os.access(self.notify_script, os.X_OK):

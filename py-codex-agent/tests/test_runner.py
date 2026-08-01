@@ -505,6 +505,74 @@ class RunnerTest(unittest.TestCase):
             self.assertIn("task-02-ingestion-implementation-guide.md", manifest)
             self.assertIn("sha256=", manifest)
 
+    def test_compact_local_understanding_preserves_model_report_and_gate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            attempt = repo / "runtime" / "attempt-01"
+            task = Task(
+                "task-fe-01",
+                ".opencode/commands/task-fe-01.md",
+                "Bootstrap Angular",
+                ("frontend/**",),
+                ("true",),
+                "commit",
+            )
+            stdout = json.dumps(
+                {
+                    "type": "message",
+                    "part": {
+                        "type": "text",
+                        "text": (
+                            "# Local understanding report\n\n"
+                            "## Task objective in my own words\nBootstrap Angular."
+                        ),
+                    },
+                }
+            )
+            gate = CommandResult(("true",), 0, "green", "", False)
+
+            runner._write_compact_local_understanding(
+                attempt, stdout, task, gate
+            )
+
+            report = (attempt / "evidence" / "local-understanding.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("Bootstrap Angular", report)
+            self.assertIn("Controller-verified post-edit evidence", report)
+            self.assertIn("exit code: `0`", report)
+
+    def test_file_change_notification_uses_success_sound_mode(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            notify = repo / "scripts" / "notify-success.sh"
+            notify.parent.mkdir(parents=True)
+            notify.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+            notify.chmod(0o755)
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner.notify_script = notify
+            captured = []
+
+            def fake_run_logged(name, command, target, **kwargs):
+                captured.append((name, tuple(command), target, kwargs))
+                return CommandResult(tuple(command), 0, "", "", False)
+
+            runner._run_logged = fake_run_logged
+            event_dir = repo / "runtime" / "attempt-01"
+
+            runner._notify_file_changed(
+                event_dir,
+                "files-changed-01",
+                "task-fe-01: local LLM changed repository files",
+            )
+
+            self.assertEqual(1, len(captured))
+            self.assertEqual("--file-changed", captured[0][1][1])
+            self.assertIn("local LLM changed", captured[0][1][2])
+
     def test_failed_assimilation_becomes_reviewable_evidence(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -52,12 +53,18 @@ def make_repo(root: Path) -> None:
 
 
 def invoke(repo: Path, port: int) -> subprocess.CompletedProcess[str]:
+    env = dict(os.environ)
+    env.update({
+        'R4R_PROGRESS_PATH': '.opencode/progress.json',
+        'R4R_PLAN_PATH': '.opencode/task-plan.json',
+    })
     return subprocess.run(
         [
             'python3', str(WORKER), '--repo', str(repo),
             '--base-url', f'http://127.0.0.1:{port}/v1',
             '--model', 'selftest', '--prompt', 'Implement task-x',
         ],
+        env=env,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -76,7 +83,22 @@ def main() -> int:
             Handler.content = (
                 '<<<R4R_FILE path="src/main/java/x/New.java">>>\n'
                 'package x;\npublic class New {}\n'
-                '<<<R4R_END_FILE>>>'
+                '<<<R4R_END_FILE>>>\n'
+                '<<<R4R_SUMMARY>>>\n'
+                '# Local understanding report\n'
+                '## Task objective in my own words\n'
+                'Create the focused Java file.\n'
+                '## Instructions I reconciled\n'
+                'Used the active task scope.\n'
+                '## Mapping from requirements to changed code and tests\n'
+                'Created New.java.\n'
+                '## Claims supported by current gate evidence\n'
+                'Post-edit gate not yet run.\n'
+                '## Uncertainties, contradictions or possible instruction defects\n'
+                'None.\n'
+                '## Questions or corrections requested from Codex\n'
+                'Review the exact diff.\n'
+                '<<<R4R_END_SUMMARY>>>'
             )
             result = invoke(repo, server.server_port)
             if result.returncode != 0:
@@ -84,6 +106,10 @@ def main() -> int:
             target = repo / 'src/main/java/x/New.java'
             if target.read_text(encoding='utf-8') != 'package x;\npublic class New {}\n':
                 raise RuntimeError('Allowed file content mismatch')
+            if '# Local understanding report' not in result.stdout:
+                raise RuntimeError('Compact LP summary was not emitted')
+            if 'Create the focused Java file.' not in result.stdout:
+                raise RuntimeError('Model-authored compact LP summary was not preserved')
 
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)

@@ -3,10 +3,14 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ERROR_SOUND="$SCRIPT_DIR/universfield-error-notification-03-125761.mp3"
+SUCCESS_SOUND="${R4R_SUCCESS_SOUND:-$SCRIPT_DIR/u-freesound_community-success-1-6297.mp3}"
 
-play_error_sound() {
-  if [[ ! -f "$ERROR_SOUND" ]]; then
-    echo "Error sound not found: $ERROR_SOUND" >&2
+play_sound() {
+  local sound_file="$1"
+  local label="$2"
+
+  if [[ ! -f "$sound_file" ]]; then
+    echo "$label not found: $sound_file" >&2
     printf '\a'
     return 0
   fi
@@ -16,7 +20,7 @@ play_error_sound() {
       -nodisp \
       -autoexit \
       -loglevel error \
-      "$ERROR_SOUND" </dev/null
+      "$sound_file" </dev/null
     return
   fi
 
@@ -24,7 +28,7 @@ play_error_sound() {
     mpv \
       --no-video \
       --really-quiet \
-      "$ERROR_SOUND"
+      "$sound_file"
     return
   fi
 
@@ -33,7 +37,7 @@ play_error_sound() {
       --intf dummy \
       --play-and-exit \
       --quiet \
-      "$ERROR_SOUND"
+      "$sound_file"
     return
   fi
 
@@ -44,9 +48,22 @@ play_error_sound() {
 if [[ "${1:-}" == "--error" ]]; then
   MESSAGE="${2:-R4R error}"
 
-  play_error_sound
+  play_sound "$ERROR_SOUND" "Error sound"
 
   printf 'R4R error: %s at %s\n' \
+    "$MESSAGE" \
+    "$(date --iso-8601=seconds)"
+
+  exit 0
+fi
+
+
+if [[ "${1:-}" == "--file-changed" ]]; then
+  MESSAGE="${2:-Local LLM changed repository files}"
+
+  play_sound "$SUCCESS_SOUND" "Success sound"
+
+  printf 'R4R file-change notification: %s at %s\n' \
     "$MESSAGE" \
     "$(date --iso-8601=seconds)"
 
@@ -62,6 +79,7 @@ if [[ ! "$COUNT" =~ ^[0-9]+$ ]] \
 
   echo "Usage:" >&2
   echo "  $0 [count:1-20] [message]" >&2
+  echo "  $0 --file-changed [message]" >&2
   echo "  $0 --error [message]" >&2
   exit 2
 fi
