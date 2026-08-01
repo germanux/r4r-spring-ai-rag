@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.ConfigurableApplicationContext;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -16,6 +17,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -195,11 +198,13 @@ class KnowledgeIngestionCliTest {
 
     @Test
     void normalApplicationStartupDoesNotTriggerIngestion() throws Exception {
-        var mockService = mock(KnowledgeIngestionService.class);
+        // Normal web startup should succeed without requiring ingestion service to be called.
+        // We verify this by checking the context starts and no exceptions are thrown.
         try (var context = new SpringApplicationBuilder(R4rSpringAiRagApplication.class)
                 .web(WebApplicationType.SERVLET)
                 .run()) {
             assertThat(context).isNotNull();
+            assertThat(context.getParent()).isNull();  // Root application context
         }
     }
 
@@ -208,7 +213,52 @@ class KnowledgeIngestionCliTest {
         SpringApplicationBuilder builder = KnowledgeIngestionCli.createBuilder();
         try (var context = builder.run()) {
             assertThat(context).isNotNull();
+
+            // Assert the context is not a WebApplicationContext or ServletWebServerApplicationContext
+            org.springframework.web.context.WebApplicationContext webCtx =
+                    org.springframework.web.context.ContextLoader.getCurrentWebApplicationContext();
+            // The context created with WebApplicationType.NONE should NOT be a WebApplicationContext
+            assertThat(context instanceof org.springframework.web.context.WebApplicationContext)
+                    .as("Context should not be an instance of WebApplicationContext")
+                    .isFalse();
+
+            // Also verify no WebServer bean exists
+            String[] webBeanNames = context.getBeanNamesForType(org.springframework.boot.web.servlet.server.ServletWebServerFactory.class);
+            assertThat(webBeanNames).as("No ServletWebServerFactory bean should exist").isEmpty();
         }
+    }
+
+    @Test
+    void deterministicClockReturnsExpectedDurationInResultAndJson() throws Exception {
+        Instant fixedStart = Instant.parse("2026-08-01T00:00:00Z");
+
+        var mockService = mock(KnowledgeIngestionService.class);
+        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(3, 1, 2, 5, 0));
+
+        // For deterministic testing, create a fixed clock that returns the same instant
+        Clock fixedClock = Clock.fixed(fixedStart, ZoneId.of("UTC"));
+
+        var properties = new com.riansares.r4r.config.KnowledgeProperties(tempRoot, 1_048_576, 2_000);
+        var orchestration = new KnowledgeIngestionOrchestration(
+                mockService,
+                () -> properties,
+                () -> new PrintStream(outContent, true),
+                () -> new PrintStream(errContent, true),
+                () -> fixedClock);
+
+        var result = orchestration.execute();
+        assertThat(result).isExactlyInstanceOf(KnowledgeIngestionOrchestration.IngestionResult.Success.class);
+
+        String output = outContent.toString(StandardCharsets.UTF_8);
+        assertThat(output).startsWith("R4R_INGESTION_RESULT=");
+
+        String json = output.substring("R4R_INGESTION_RESULT=".length()).trim();
+        var mapper = new ObjectMapper();
+        var node = mapper.readTree(json);
+
+        // With a fixed clock, duration should be 0 since start == end
+        long actualDuration = node.get("durationMs").asLong();
+        assertThat(actualDuration).isEqualTo(0);
     }
 
     @Test

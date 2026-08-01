@@ -83,7 +83,7 @@ public class KnowledgeIngestionService {
                     persistedChunks,
                     0); // duration computed at orchestration level
         } catch (IllegalStateException exception) {
-            throw exception;
+            throw new IllegalStateException("Failed to ingest knowledge documents", exception);
         } catch (Exception exception) {
             throw new IllegalStateException("Failed to ingest knowledge documents", exception);
         }

@@ -4,13 +4,22 @@ import com.riansares.r4r.R4rSpringAiRagApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 
-import java.util.Objects;
-
+/**
+ * CLI entry point for deterministic production knowledge ingestion.
+ * <p>
+ * This class creates a non-web Spring context, executes the ingestion orchestration
+ * and terminates with an appropriate exit code. The {@link #execute(String[])} method
+ * provides a testable adapter that returns the categorized exit code without calling
+ * System.exit, allowing proper resource cleanup via try-with-resources.
+ */
 public class KnowledgeIngestionCli {
 
     private static final int EXIT_CODE_SUCCESS = 0;
-    private static final int EXIT_CODE_APP_FAILURE = 5;
+    private static final int EXIT_CODE_INVALID_CONFIGURATION = 1;
+    private static final int EXIT_CODE_INVALID_ROOT = 2;
+    private static final int EXIT_CODE_INFRASTRUCTURE_FAILURE = 3;
     private static final int EXIT_CODE_INGESTION_FAILURE = 4;
+    private static final int EXIT_CODE_APP_FAILURE = 5;
 
     /**
      * Exposes the builder configuration seam for testing.
@@ -24,32 +33,38 @@ public class KnowledgeIngestionCli {
     }
 
     /**
+     * Testable adapter that executes ingestion and returns the exit code.
+     * <p>
+     * This method creates the context, executes orchestration and properly closes
+     * the context before returning. It does not call System.exit, making it suitable
+     * for testing.
+     *
+     * @param args command line arguments (ignored)
+     * @return categorized exit code
+     */
+    static int execute(String[] args) {
+        try (var context = createBuilder().run(args)) {
+            var orchestration = context.getBean(KnowledgeIngestionOrchestration.class);
+            if (orchestration == null) {
+                System.err.println("ERROR: KnowledgeIngestionOrchestration bean not found");
+                return EXIT_CODE_APP_FAILURE;
+            }
+
+            var result = orchestration.execute();
+            return result.exitCode();
+        } catch (Exception e) {
+            System.err.println("ERROR: Application startup failure");
+            return EXIT_CODE_APP_FAILURE;
+        }
+    }
+
+    /**
      * Entry point for deterministic production knowledge ingestion.
      *
      * @param args command line arguments (ignored)
      */
     public static void main(String[] args) {
-        try (var context = createBuilder().run(args)) {
-
-            var orchestration = context.getBean(KnowledgeIngestionOrchestration.class);
-            Objects.requireNonNull(orchestration, "KnowledgeIngestionOrchestration bean not found");
-
-            KnowledgeIngestionOrchestration.IngestionResult result;
-            try {
-                result = orchestration.execute();
-            } catch (Exception e) {
-                // Capture any unexpected exception and show concise error
-                System.err.println("ERROR: Unexpected ingestion failure");
-                System.exit(EXIT_CODE_APP_FAILURE);
-                return;
-            }
-
-            if (result.exitCode() != EXIT_CODE_SUCCESS) {
-                System.exit(result.exitCode());
-            }
-        } catch (Exception e) {
-            System.err.println("ERROR: Application startup failure - " + e.getMessage());
-            System.exit(EXIT_CODE_APP_FAILURE);
-        }
+        int exitCode = execute(args);
+        System.exit(exitCode);
     }
 }
