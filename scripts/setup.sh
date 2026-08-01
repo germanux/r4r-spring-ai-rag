@@ -3,6 +3,33 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+
+TOOLS_ONLY=false
+SKIP_DB=false
+SKIP_VERIFY=false
+
+usage() {
+  cat <<'EOF'
+Usage: ./scripts/setup.sh [options]
+
+Options:
+  --tools-only   Install/verify CLIs and the Python controller only.
+  --skip-db      Do not start the PostgreSQL application container.
+  --skip-verify  Do not run the unit verification pass.
+  -h, --help     Show this help.
+EOF
+}
+
+while (($#)); do
+  case "$1" in
+    --tools-only) TOOLS_ONLY=true; SKIP_DB=true; SKIP_VERIFY=true; shift ;;
+    --skip-db) SKIP_DB=true; shift ;;
+    --skip-verify) SKIP_VERIFY=true; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown setup option: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
 [[ -f .env ]] || cp .env.example .env
 set -a
 # shellcheck disable=SC1091
@@ -98,6 +125,35 @@ ensure_codex_capabilities() {
   "$binary" exec --help 2>&1 | grep -q -- "--sandbox" || { echo "$binary lacks --sandbox" >&2; exit 2; }
 }
 
+ensure_claude_capabilities() {
+  local binary="${R4R_CLAUDE_BIN:-claude}"
+  local package="${R4R_CLAUDE_NPM_PACKAGE:-@anthropic-ai/claude-code}"
+
+  if ! command -v "$binary" >/dev/null 2>&1; then
+    echo "Installing Claude Code from npm package $package..."
+    npm install -g "$package" || "${SUDO[@]}" npm install -g "$package"
+  fi
+  command -v "$binary" >/dev/null 2>&1 || {
+    echo "Failed to install Claude Code executable: $binary" >&2
+    exit 2
+  }
+
+  local help
+  help="$($binary --help 2>&1 || true)"
+  for flag in --output-format --max-turns --permission-mode --append-system-prompt-file; do
+    grep -q -- "$flag" <<<"$help" || {
+      echo "Claude Code lacks required option $flag; updating $package..." >&2
+      npm install -g "${package}@latest" || "${SUDO[@]}" npm install -g "${package}@latest"
+      help="$($binary --help 2>&1 || true)"
+      grep -q -- "$flag" <<<"$help" || {
+        echo "Claude Code still lacks required option: $flag" >&2
+        exit 2
+      }
+    }
+  done
+  "$binary" --version
+}
+
 ensure_codegraph_capabilities() {
   local package="${R4R_CODEGRAPH_NPM_PACKAGE:-@colbymchenry/codegraph}"
   if ! codegraph serve --help 2>&1 | grep -q -- "--mcp"; then
@@ -120,6 +176,39 @@ ensure_local_env_var() {
   fi
 
   printf '%s=%q\n' "$key" "$default_value" >> "$local_env"
+}
+
+ensure_project_env_var() {
+  local key="$1"
+  local default_value="$2"
+  local project_env="$ROOT/.env"
+
+  touch "$project_env"
+  chmod 600 "$project_env" 2>/dev/null || true
+  if grep -Eq "^[[:space:]]*(export[[:space:]]+)?${key}=" "$project_env"; then
+    return 0
+  fi
+  printf '%s=%q\n' "$key" "$default_value" >> "$project_env"
+}
+
+ensure_database_env_defaults() {
+  # These values are local-development defaults. Existing values are never replaced.
+  ensure_project_env_var POSTGRES_IMAGE "${POSTGRES_IMAGE:-pgvector/pgvector:pg16}"
+  ensure_project_env_var POSTGRES_APP_CONTAINER "${POSTGRES_APP_CONTAINER:-r4r-postgres-app}"
+  ensure_project_env_var POSTGRES_APP_DB "${POSTGRES_APP_DB:-r4r_rag}"
+  ensure_project_env_var POSTGRES_APP_USER "${POSTGRES_APP_USER:-r4r}"
+  ensure_project_env_var POSTGRES_APP_PASSWORD "${POSTGRES_APP_PASSWORD:-r4r_local_only}"
+  ensure_project_env_var POSTGRES_APP_PORT "${POSTGRES_APP_PORT:-5432}"
+  ensure_project_env_var POSTGRES_TEST_CONTAINER "${POSTGRES_TEST_CONTAINER:-r4r-postgres-test}"
+  ensure_project_env_var POSTGRES_TEST_DB "${POSTGRES_TEST_DB:-r4r_rag_test}"
+  ensure_project_env_var POSTGRES_TEST_USER "${POSTGRES_TEST_USER:-r4r_test}"
+  ensure_project_env_var POSTGRES_TEST_PASSWORD "${POSTGRES_TEST_PASSWORD:-r4r_test_local_only}"
+  ensure_project_env_var POSTGRES_TEST_PORT "${POSTGRES_TEST_PORT:-55432}"
+
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/.env"
+  set +a
 }
 
 ensure_worker_git_identities() {
@@ -152,6 +241,7 @@ for command in java javac mvn docker npm node python3 git; do
   command -v "$command" >/dev/null 2>&1 || { echo "Required command unavailable: $command" >&2; exit 2; }
 done
 
+ensure_database_env_defaults
 ensure_worker_git_identities
 [[ "$(javac -version 2>&1)" == javac\ 21* ]] || { echo "Java 21 is required." >&2; exit 2; }
 if ! docker compose version >/dev/null 2>&1 && ! command -v docker-compose >/dev/null 2>&1; then
@@ -167,6 +257,7 @@ install_npm_cli "${R4R_CODEX_BIN:-codex}" "${R4R_CODEX_NPM_PACKAGE:-@openai/code
 install_npm_cli codegraph "${R4R_CODEGRAPH_NPM_PACKAGE:-@colbymchenry/codegraph}"
 ensure_opencode_capabilities
 ensure_codex_capabilities
+ensure_claude_capabilities
 ensure_codegraph_capabilities
 
 mkdir -p docker-postgres/data/app docker-postgres/backups runtime/runs runtime/locks
@@ -174,14 +265,25 @@ python3 -m venv py-codex-agent/.venv
 py-codex-agent/.venv/bin/python -m pip install --upgrade pip
 py-codex-agent/.venv/bin/python -m pip install -e py-codex-agent
 
-if [[ -d .codegraph ]]; then
-  codegraph sync . --quiet || echo "Warning: CodeGraph sync failed" >&2
-else
-  codegraph init .
+if [[ "$TOOLS_ONLY" == false ]]; then
+  if [[ -d .codegraph ]]; then
+    codegraph sync . --quiet || echo "Warning: CodeGraph sync failed" >&2
+  else
+    codegraph init .
+  fi
 fi
 
-./scripts/db.sh up
-./scripts/verify.sh unit
+if [[ "$SKIP_DB" == false ]]; then
+  if [[ -f "$ROOT/docker-postgres/compose.yml" ]]; then
+    ./scripts/db.sh up
+  else
+    echo "Warning: docker-postgres/compose.yml is absent; database startup skipped." >&2
+  fi
+fi
+
+if [[ "$SKIP_VERIFY" == false ]]; then
+  ./scripts/verify.sh unit
+fi
 
 echo "Setup complete."
 printf 'PC Git author: %s <%s>\n' \
@@ -195,4 +297,9 @@ echo "If Docker group membership was added, log out and back in to avoid sudo fa
 if ! "${R4R_CODEX_BIN:-codex}" login status >/dev/null 2>&1; then
   echo "Codex CLI is installed but may not be authenticated. Run: codex login"
 fi
+if ! "${R4R_CLAUDE_BIN:-claude}" auth status >/dev/null 2>&1; then
+  echo "Claude Code is installed but not authenticated. Run: claude"
+fi
+echo "Claude surgical runs create their own detached temporary worktree."
 echo "Next: ./scripts/verify.sh all && ./scripts/run-codex-agent.sh"
+echo "Audit: ./scripts/run-opencode-claude-surgical-review.sh --repo . --branch "$(git branch --show-current 2>/dev/null || echo r4r-chatgpt)" --mode review"
