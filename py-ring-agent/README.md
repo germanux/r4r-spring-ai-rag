@@ -1,70 +1,99 @@
-# R4R Ring Agent — phases 1 and 2
+# R4R Ring Agent — phase 2.3
 
-Everything introduced by these phases lives under `py-ring-agent/`.
-The runtime control file, logs and generated maintenance reports are created only
-when the programs run.
+Everything introduced here lives under `py-ring-agent/`. Runtime evidence remains
+under the Ring repository's ignored `runtime/` tree.
+
+## Fixed worktree names
+
+The launchers use these defaults at the top of each root script:
+
+```text
+~/Desarrollo/r4r-ring-agent.git
+~/Desarrollo/r4r-pc-worker.git
+~/Desarrollo/r4r-lp-worker.git
+```
+
+Edit those variables directly when the development root differs. No required
+command-line parameters are used.
+
+## Prepare the short worker paths
+
+The migration script preserves the current branches and worktrees:
+
+```bash
+./py-ring-agent/prepare-worker-worktrees.py
+```
+
+By default it moves:
+
+```text
+r4r-spring-ai-rag.git              -> r4r-pc-worker.git
+r4r-spring-ai-rag-laptop-agent.git -> r4r-lp-worker.git
+```
+
+If an old path is absent, it creates the corresponding linked worktree from:
+
+```text
+agent/pc-qwen3-worker
+agent/laptop-qwen3-worker
+```
+
+Do not run PC or LP while moving their worktree directories.
 
 ## Entry points
 
-- `run-ring-agent.py`: launches fresh OpenCode Ring analysis sessions.
-- `run-worker-streamed.py`: launches PC or LP with live persistent console streaming.
-- `run-harness-maintainer.py`: every four hours launches a fresh bounded OpenCode
-  maintainer session in an isolated detached Git worktree.
-
-## Harness maintainer policy
-
-The editable defaults are near the top of:
-
-```text
-src/r4r_ring_agent/harness_maintainer.py
-```
-
-Default policy:
-
-- one defect per pass;
-- maximum three changed files;
-- maximum 120 changed lines, additions plus deletions;
-- maximum two fresh sessions: initial attempt plus one self-correction;
-- no Java or frontend product changes;
-- no package installation or Git history changes;
-- candidate is never applied to the active worktree;
-- all maintainer artifacts are written under `runtime/ring-agent/maintenance/<run-id>/`;
-- each run contains `analysis.md`, `result.json`, the candidate/rejected patch and streamed attempt logs.
-
-The active worktree may contain product changes. The maintainer only blocks when an
-allowed harness path is already dirty, because it must compare its candidate against
-an unambiguous committed baseline.
+- `run-ring-agent.py`: runs The Ring from `r4r-ring-agent.git` and captures Git
+  evidence from the Ring, PC and LP worktrees before each fresh session.
+- `run-worker-streamed.py`: runs the PC or LP controller inside its own worktree;
+  logs and operator control remain centralized in the Ring worktree.
+- `run-harness-maintainer.py`: repairs only the Ring harness inside an isolated
+  detached temporary worktree.
+- `prepare-worker-worktrees.py`: moves or creates the two short worker paths.
 
 ## Run
 
 ```bash
-chmod +x \
-  py-ring-agent/run-ring-agent.py \
-  py-ring-agent/run-worker-streamed.py \
-  py-ring-agent/run-harness-maintainer.py
+chmod +x py-ring-agent/*.py
 
+./py-ring-agent/prepare-worker-worktrees.py
 ./py-ring-agent/run-ring-agent.py
 ./py-ring-agent/run-worker-streamed.py PC
 ./py-ring-agent/run-worker-streamed.py LP
-./py-ring-agent/run-harness-maintainer.py
+./py-ring-agent/run-harness-maintainer.py --once
 ```
 
-One maintenance pass for validation:
+`run-worker-streamed.py` keeps the optional `PC`/`LP` argument as a shortcut. You
+can instead edit `DESTINATION` at the top and run it without arguments.
 
-```bash
-./py-ring-agent/run-harness-maintainer.py --once
+## Layout
+
+```text
+r4r-ring-agent.git/
+├── py-ring-agent/
+├── .ring-agent/
+└── runtime/ring-agent/
+    ├── ring/
+    ├── pc/
+    ├── lp/
+    └── maintenance/
+
+r4r-pc-worker.git/
+└── backend worker and its own controller
+
+r4r-lp-worker.git/
+└── frontend worker and its own controller
 ```
 
 ## Operator command file
 
-The processes share:
+All processes share the Ring file:
 
 ```text
-runtime/the-ring-command.jsonc
+r4r-ring-agent.git/runtime/the-ring-command.jsonc
 ```
 
-Set `next_state` to `stop`, `pause`, `continue` or `restart`, and set `target`
-to `RING`, `PC`, `LP`, `MAINTAINER` or `ALL`.
+Set `next_state` to `stop`, `pause`, `continue` or `restart`, and `target` to
+`RING`, `PC`, `LP`, `MAINTAINER` or `ALL`.
 
 ## Tests
 
@@ -72,16 +101,3 @@ to `RING`, `PC`, `LP`, `MAINTAINER` or `ALL`.
 PYTHONPATH=py-ring-agent/src \
 python3 -m unittest discover -s py-ring-agent/tests -p 'test_*.py'
 ```
-
-
-## Phase 2.1 hotfix
-
-- `target: "RING"` now controls both the Ring loop and the harness maintainer.
-- The maintainer agent explicitly allows source reads while still denying real `.env` files.
-- Edits remain restricted to the bounded harness paths and are validated externally.
-
-
-## Phase 2.2 runtime layout
-
-Harness-maintenance reports are runtime evidence and are no longer written to `.ring-agent/`.
-The complete per-run tree now lives under `runtime/ring-agent/maintenance/<run-id>/`.
