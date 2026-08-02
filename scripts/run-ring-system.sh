@@ -1,16 +1,34 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-ROOT="${R4R_RING_WORKTREE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-PYTHON="$ROOT/py-ring-agent/run-ring-system.py"
-RUNTIME="$ROOT/runtime/ring-system"
+# CODE_ROOT is the worktree that contains the Phase-3 supervisor implementation.
+# RING_ROOT is the authoritative operational worktree whose runtime, heartbeats and
+# worker launcher are supervised. They may intentionally be different worktrees.
+CODE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+RING_ROOT="${R4R_RING_WORKTREE:-$CODE_ROOT}"
+RUNTIME_ENV_HELPER="$CODE_ROOT/scripts/r4r-runtime-env.sh"
+PYTHON="$CODE_ROOT/py-ring-agent/run-ring-system.py"
+GUARDIAN="$CODE_ROOT/scripts/ensure-r4r-workers.sh"
+RUNTIME="$RING_ROOT/runtime/ring-system"
 PID_FILE="$RUNTIME/supervisor.pid"
 LOG_FILE="$RUNTIME/supervisor.log"
 ACTION="${1:-start}"
 shift || true
 
+RING_ROOT="$(realpath -e "$RING_ROOT" 2>/dev/null)" || {
+  echo "ERROR: Ring worktree does not exist: $RING_ROOT" >&2
+  exit 2
+}
+export R4R_RING_WORKTREE="$RING_ROOT"
+if [[ -r "$RUNTIME_ENV_HELPER" ]]; then
+  # shellcheck disable=SC1090
+  source "$RUNTIME_ENV_HELPER"
+  r4r_runtime_bootstrap "$RING_ROOT"
+fi
+
 mkdir -p "$RUNTIME"
 [[ -f "$PYTHON" ]] || { echo "ERROR: missing $PYTHON" >&2; exit 2; }
+[[ -x "$GUARDIAN" ]] || { echo "ERROR: missing executable $GUARDIAN" >&2; exit 2; }
 
 pid_alive() {
   [[ -s "$PID_FILE" ]] || return 1
@@ -27,11 +45,11 @@ case "$ACTION" in
       exit 0
     fi
     rm -f "$PID_FILE"
-    nohup python3 "$PYTHON" --ring "$ROOT" "$@" >>"$LOG_FILE" 2>&1 &
+    nohup python3 "$PYTHON" --ring "$RING_ROOT" --guardian "$GUARDIAN" "$@" >>"$LOG_FILE" 2>&1 &
     launcher_pid=$!
     for _ in $(seq 1 40); do
       if pid_alive; then
-        echo "[r4r-system] started pid=$(cat "$PID_FILE") log=$LOG_FILE"
+        echo "[r4r-system] started pid=$(cat "$PID_FILE") log=$LOG_FILE code=$CODE_ROOT ring=$RING_ROOT"
         exit 0
       fi
       kill -0 "$launcher_pid" 2>/dev/null || break
@@ -58,19 +76,19 @@ case "$ACTION" in
     ;;
   status)
     if pid_alive; then
-      echo "[r4r-system] running pid=$(cat "$PID_FILE")"
-      "$ROOT/scripts/ensure-r4r-workers.sh" --check-only --ring "$ROOT" || true
+      echo "[r4r-system] running pid=$(cat "$PID_FILE") code=$CODE_ROOT ring=$RING_ROOT"
+      "$GUARDIAN" --check-only --ring "$RING_ROOT" || true
       exit 0
     fi
-    echo "[r4r-system] stopped"
-    "$ROOT/scripts/ensure-r4r-workers.sh" --check-only --ring "$ROOT" || true
+    echo "[r4r-system] stopped code=$CODE_ROOT ring=$RING_ROOT"
+    "$GUARDIAN" --check-only --ring "$RING_ROOT" || true
     exit 1
     ;;
   foreground)
-    exec python3 "$PYTHON" --ring "$ROOT" "$@"
+    exec python3 "$PYTHON" --ring "$RING_ROOT" --guardian "$GUARDIAN" "$@"
     ;;
   once)
-    exec python3 "$PYTHON" --ring "$ROOT" --once "$@"
+    exec python3 "$PYTHON" --ring "$RING_ROOT" --guardian "$GUARDIAN" --once "$@"
     ;;
   *)
     echo "Usage: $0 {start|stop|status|foreground|once} [supervisor options]" >&2

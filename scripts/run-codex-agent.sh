@@ -4,6 +4,12 @@ set -Eeuo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+if [[ -r "$ROOT/scripts/r4r-runtime-env.sh" ]]; then
+  # shellcheck disable=SC1091
+  source "$ROOT/scripts/r4r-runtime-env.sh"
+  r4r_runtime_bootstrap "$ROOT"
+fi
+
 DEST=""
 DOCTOR=0
 DOCTOR_LOCAL=0
@@ -64,12 +70,13 @@ for env_file in .env .env.r4r.local; do
   fi
 done
 
-command -v node >/dev/null 2>&1 || {
-  echo "Node.js no está en PATH" >&2
+NODE_BIN="${R4R_NODE_BIN:-node}"
+command -v "$NODE_BIN" >/dev/null 2>&1 || {
+  echo "Node.js no está disponible: $NODE_BIN" >&2
   exit 2
 }
 
-metadata_path="$(node ./scripts/resolve-r4r-config.mjs --destination "$DEST")"
+metadata_path="$("$NODE_BIN" ./scripts/resolve-r4r-config.mjs --destination "$DEST")"
 
 readarray -t values < <(
   python3 - "$metadata_path" <<'PYMETA'

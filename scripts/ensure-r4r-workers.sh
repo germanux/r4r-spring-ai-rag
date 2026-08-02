@@ -9,6 +9,7 @@ DEVELOPMENT_ROOT="${R4R_DEVELOPMENT_ROOT:-$HOME/Desarrollo}"
 RING_WORKTREE="${R4R_RING_WORKTREE:-$DEVELOPMENT_ROOT/r4r-ring-agent.git}"
 PC_WORKTREE="${R4R_PC_WORKTREE:-$DEVELOPMENT_ROOT/r4r-pc-worker.git}"
 LP_WORKTREE="${R4R_LP_WORKTREE:-$DEVELOPMENT_ROOT/r4r-lp-worker.git}"
+RUNTIME_ENV_HELPER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/r4r-runtime-env.sh"
 WAIT_SECONDS="${R4R_WORKER_START_WAIT_SECONDS:-120}"
 HEARTBEAT_MAX_AGE="${R4R_WORKER_HEARTBEAT_MAX_AGE:-25}"
 WATCH=false
@@ -76,6 +77,12 @@ done
 RING_WORKTREE="$(realpath -e "$RING_WORKTREE" 2>/dev/null)" || die "Ring worktree does not exist"
 PC_WORKTREE="$(realpath -e "$PC_WORKTREE" 2>/dev/null)" || die "PC worktree does not exist"
 LP_WORKTREE="$(realpath -e "$LP_WORKTREE" 2>/dev/null)" || die "LP worktree does not exist"
+
+if [[ -r "$RUNTIME_ENV_HELPER" ]]; then
+  # shellcheck disable=SC1090
+  source "$RUNTIME_ENV_HELPER"
+  r4r_runtime_bootstrap "$RING_WORKTREE"
+fi
 WRAPPER="$RING_WORKTREE/py-ring-agent/run-worker-streamed.py"
 [[ -f "$WRAPPER" ]] || die "worker wrapper missing: $WRAPPER"
 
@@ -176,6 +183,10 @@ json_field() {
   python3 -c 'import json,sys; value=json.load(sys.stdin); print(value.get(sys.argv[1], ""))' "$1"
 }
 
+json_float_one_decimal() {
+  python3 -c 'import json,sys; value=json.load(sys.stdin); print(format(float(value.get(sys.argv[1], 0.0)), ".1f"))' "$1"
+}
+
 prepare_python_runtime() {
   local worker="$1" worktree="$2" venv python src_root purelib pth tmp
   venv="$worktree/py-codex-agent/.venv"
@@ -207,26 +218,47 @@ PY
 }
 
 spawn_wrapper() {
-  local worker="$1" worktree="$2" stamp log_path pid
+  local worker="$1" worktree="$2" stamp log_path pid required resolved
+  for required in node opencode codex; do
+    case "$required" in
+      node) resolved="${R4R_NODE_BIN:-node}" ;;
+      opencode) resolved="${R4R_OPENCODE_BIN:-opencode}" ;;
+      codex) resolved="${R4R_CODEX_BIN:-codex}" ;;
+    esac
+    command -v "$resolved" >/dev/null 2>&1 || {
+      warn "$worker: required CLI unavailable in non-interactive PATH: $required ($resolved)"
+      warn "$worker: PATH=$PATH"
+      return 1
+    }
+  done
   stamp="$(date -u +%Y%m%dT%H%M%SZ)"
   log_path="$RING_WORKTREE/runtime/ring-agent/guardian/${stamp}-${worker}.log"
   prepare_python_runtime "$worker" "$worktree"
-  pid="$(python3 - "$WRAPPER" "$worker" "$log_path" <<'PY'
+  pid="$(python3 - "$WRAPPER" "$worker" "$log_path" \
+      "$RING_WORKTREE" "$PC_WORKTREE" "$LP_WORKTREE" <<'PY'
 from pathlib import Path
 import os
 import subprocess
 import sys
 
-wrapper, worker, log_path = sys.argv[1:4]
+wrapper, worker, log_path, ring_root, pc_root, lp_root = sys.argv[1:7]
 Path(log_path).parent.mkdir(parents=True, exist_ok=True)
 log = open(log_path, "ab", buffering=0)
+env = {
+    **os.environ,
+    "PYTHONUNBUFFERED": "1",
+    "R4R_RING_WORKTREE": ring_root,
+    "R4R_PC_WORKTREE": pc_root,
+    "R4R_LP_WORKTREE": lp_root,
+}
 process = subprocess.Popen(
     [sys.executable, wrapper, worker],
+    cwd=ring_root,
     stdin=subprocess.DEVNULL,
     stdout=log,
     stderr=subprocess.STDOUT,
     start_new_session=True,
-    env={**os.environ, "PYTHONUNBUFFERED": "1"},
+    env=env,
 )
 print(process.pid)
 PY
@@ -255,14 +287,15 @@ wait_healthy() {
 }
 
 ensure_one() {
-  local worker="$1" worktree state healthy count log_file
+  local worker="$1" worktree state healthy count log_file age
   worktree="$(worker_worktree "$worker")"
   state="$(worker_state_json "$worker")"
   healthy="$(json_field healthy <<<"$state")"
   count="$(python3 -c 'import json,sys; print(len(json.load(sys.stdin).get("live_wrappers", [])))' <<<"$state")"
 
   if [[ "$healthy" == True ]]; then
-    log "$worker: healthy (pid=$(json_field heartbeat_pid <<<"$state"), age=$(printf '%.1f' "$(json_field heartbeat_age <<<"$state")")s)"
+    age="$(json_float_one_decimal heartbeat_age <<<"$state")"
+    log "$worker: healthy (pid=$(json_field heartbeat_pid <<<"$state"), age=${age}s)"
     return 0
   fi
   if ((count > 0)); then
