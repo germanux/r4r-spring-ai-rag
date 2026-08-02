@@ -417,6 +417,22 @@ class AutomaticRunner:
             self.control_dir / "codex-qwen3-extra-instructions.md"
         )
         self.codex_plan_cache_path = self.control_dir / "codex-plan-cache.json"
+        ring_value = os.environ.get("R4R_RING_WORKTREE", "").strip()
+        self.ring_worktree = (
+            Path(ring_value).expanduser().resolve() if ring_value else None
+        )
+        self.ring_directive_path = (
+            self.ring_worktree
+            / "runtime"
+            / "control"
+            / self.worker_id
+            / "ring-qwen3-directive.json"
+            if self.ring_worktree is not None
+            else None
+        )
+        self.ring_directive_max_age_seconds = int(
+            os.environ.get("R4R_RING_DIRECTIVE_MAX_AGE_SECONDS", "10800")
+        )
         self.verified_green: set[str] = set()
 
     def _worktree_fingerprint(self) -> str:
@@ -1297,8 +1313,12 @@ class AutomaticRunner:
         source_list = "\n".join(
             f"- {path}" for path in diagnostics.source_paths
         ) or "- none"
+        ring_directive = self._current_ring_directive(task)
         return f"""This is a read-only pre-edit understanding pass for {task.id}.
 Do not edit files, do not run Git write commands and do not run Maven.
+
+CURRENT THE-RING ADVISORY DIRECTIVE:
+{ring_directive}
 
 Read only AGENTS.md, .opencode/commands/task.md, the selected task file, the
 current diagnostic summary and the focused CodeGraph report. Do not read the full
@@ -1604,6 +1624,7 @@ Do not propose code yet. Do not claim that an infrastructure outage is a Java bu
             else "No verified CodeGraph reconnaissance was produced."
         )
         extra_instructions = self._current_codex_extra_instructions()
+        ring_directive = self._current_ring_directive(task)
         include_companion = self._use_full_instruction_bundle(stage)
         context_mode = (
             "full canonical bundle"
@@ -1641,7 +1662,12 @@ Do not propose code yet. Do not claim that an infrastructure outage is a Java bu
             + "Codex must inspect the complete log and every packaged source file before returning a plan or review.\n"
             + "\n\nCURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS\n"
             + extra_instructions
-            + f"\n\nTASK ID\n{task.id}"
+            + "\n\nCURRENT THE-RING ADVISORY DIRECTIVE\n"
+            + ring_directive
+            + "\n\nDIRECTIVE PRECEDENCE\n"
+            + "The exact task, deterministic gate and current Codex correction packet override The-Ring. "
+            + "Treat The-Ring as cross-stack advisory evidence only.\n"
+            + f"\nTASK ID\n{task.id}"
             + f"\nEVIDENCE DIRECTORY\n{evidence_dir.relative_to(self.repo)}"
             + f"\n\nCURRENT GATE EXIT\n{gate.exit_code}"
             + f"\nFULL GATE STDOUT (UNTRUNCATED)\n{gate.stdout}"
@@ -1652,6 +1678,70 @@ Do not propose code yet. Do not claim that an infrastructure outage is a Java bu
         if not self.codex_extra_instructions_path.exists():
             return "No active Codex-to-local extra instructions."
         return self.codex_extra_instructions_path.read_text(encoding="utf-8").strip()
+
+    @staticmethod
+    def _ring_timestamp(value: Any) -> datetime | None:
+        if not isinstance(value, str) or not value.strip():
+            return None
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        if parsed.tzinfo is None:
+            return None
+        return parsed.astimezone(timezone.utc)
+
+    def _current_ring_directive(self, task: Task) -> str:
+        path = getattr(self, "ring_directive_path", None)
+        if path is None or not Path(path).is_file():
+            return "No active The-Ring directive for this worker."
+        try:
+            value = json.loads(Path(path).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exception:
+            return f"Ignored malformed The-Ring directive: {exception}."
+        if not isinstance(value, dict) or value.get("schema_version") != 1:
+            return "Ignored The-Ring directive with unsupported schema."
+        target = str(value.get("target", "")).upper()
+        if target != getattr(self, "worker_id", "").upper():
+            return f"Ignored The-Ring directive for target {target or 'unknown'}."
+        directive_task = str(value.get("task_id", "")).strip()
+        if directive_task != task.id:
+            return (
+                f"Ignored The-Ring directive for task {directive_task or 'unknown'}; "
+                f"active task is {task.id}."
+            )
+        if str(value.get("priority", "")).lower() != "advisory":
+            return "Ignored The-Ring directive because priority is not advisory."
+        generated_at = self._ring_timestamp(value.get("generated_at"))
+        if generated_at is None:
+            return "Ignored The-Ring directive with invalid generated_at."
+        age = (datetime.now(timezone.utc) - generated_at).total_seconds()
+        max_age = int(getattr(self, "ring_directive_max_age_seconds", 10800))
+        if age > max_age:
+            return f"Ignored stale The-Ring directive ({int(age)} seconds old)."
+        if age < -300:
+            return "Ignored The-Ring directive generated in the future."
+        next_action = str(value.get("next_action", "")).strip()
+        if not next_action:
+            return "Ignored The-Ring directive without a next_action."
+        evidence = value.get("evidence_paths") or []
+        constraints = value.get("constraints") or []
+        if not isinstance(evidence, list):
+            evidence = []
+        if not isinstance(constraints, list):
+            constraints = []
+        evidence_lines = "\n".join(f"- {item}" for item in evidence) or "- none supplied"
+        constraint_lines = "\n".join(f"- {item}" for item in constraints) or "- none supplied"
+        return (
+            f"Directive source: {path}\n"
+            f"Generated: {value.get('generated_at')}\n"
+            f"Summary: {str(value.get('summary', '')).strip() or 'none'}\n"
+            f"Focused next action: {next_action}\n"
+            f"Avoid repeating: {str(value.get('avoid_repeating', '')).strip() or 'none'}\n"
+            f"Evidence paths:\n{evidence_lines}\n"
+            f"Constraints:\n{constraint_lines}\n"
+            "Authority: advisory only; the exact task, gate and current Codex corrections override it."
+        )
 
     def _resume_action_from_codex_extra(self, task: Task) -> str | None:
         if not self.codex_extra_instructions_path.exists():
@@ -1835,6 +1925,7 @@ executed. The controller verifies OpenCode JSONL events and rejects prose-only c
     ) -> str:
         action = next_action or "Implement the selected task completely."
         extra_instructions = self._current_codex_extra_instructions()
+        ring_directive = self._current_ring_directive(task)
         exact_gate = shlex.join(task.gate)
         include_companion = self._use_full_instruction_bundle("edit")
         instruction_list = "\n".join(
@@ -1849,6 +1940,11 @@ Read these files before editing:
 
 Codex plan:
 {action}
+
+The-Ring advisory directive:
+{ring_directive}
+
+Precedence: the exact task, exact gate and Codex plan override The-Ring.
 
 Current gate exit: {gate.exit_code}
 Current blocker: {diagnostics.summary}
@@ -1869,6 +1965,13 @@ CODEX PLAN OR REVISION ACTION:
 
 CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS:
 {extra_instructions}
+
+CURRENT THE-RING CROSS-STACK DIRECTIVE (ADVISORY):
+{ring_directive}
+
+DIRECTIVE PRECEDENCE:
+The exact task, deterministic gate and current Codex correction packet override The-Ring.
+Use The-Ring only to preserve cross-stack coordination and avoid repeated failed approaches.
 
 FOCUSED CODEGRAPH EVIDENCE (ADVISORY):
 {codegraph_report}
@@ -1914,6 +2017,7 @@ The Python controller captures the gate output. Stop after the exact gate result
             or "- none"
         )
         extra_instructions = self._current_codex_extra_instructions()
+        ring_directive = self._current_ring_directive(task)
         return f"""This is a read-only assimilation pass for {task.id}. Do not edit any file,
 do not run Git write commands and do not run the task gate.
 
@@ -1922,6 +2026,9 @@ Read every instruction file in full:
 
 CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS:
 {extra_instructions}
+
+CURRENT THE-RING ADVISORY DIRECTIVE:
+{ring_directive}
 
 VERIFIED CODEGRAPH RECONNAISSANCE:
 {codegraph_report}
