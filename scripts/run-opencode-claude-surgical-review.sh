@@ -15,6 +15,7 @@ PROMPT=""
 PROMPT_FILE=""
 MODEL=""
 MAX_TURNS=36
+OPENCODE_RETRIES=2
 KEEP_WORKTREE=false
 RUN_CODEX_REVIEW=false
 WORK_ROOT="${R4R_CLAUDE_WORK_ROOT:-/tmp/r4r-claude-surgical}"
@@ -38,6 +39,7 @@ Options:
   --prompt-file PATH      Read the additional objective from a file.
   --model MODEL           Claude model alias or full model ID.
   --max-turns N           Claude Code agentic turn limit (default: $MAX_TURNS).
+  --opencode-retries N     OpenCode architecture attempts (default: $OPENCODE_RETRIES).
   --output-root PATH      Result directory root (default: REPO/runtime/claude-surgical).
   --codex-review          Run a final read-only Codex assessment when codex is installed.
   --keep-worktree         Preserve the temporary worktree for manual inspection.
@@ -66,6 +68,7 @@ while (($#)); do
     --prompt-file) PROMPT_FILE="${2:?missing --prompt-file value}"; shift 2 ;;
     --model) MODEL="${2:?missing --model value}"; shift 2 ;;
     --max-turns) MAX_TURNS="${2:?missing --max-turns value}"; shift 2 ;;
+    --opencode-retries) OPENCODE_RETRIES="${2:?missing --opencode-retries value}"; shift 2 ;;
     --output-root) OUTPUT_ROOT="${2:?missing --output-root value}"; shift 2 ;;
     --codex-review) RUN_CODEX_REVIEW=true; shift ;;
     --keep-worktree) KEEP_WORKTREE=true; shift ;;
@@ -77,10 +80,16 @@ done
 [[ -n "$BRANCH" ]] || { usage >&2; die '--branch is required'; }
 [[ "$MODE" == review || "$MODE" == patch ]] || die '--mode must be review or patch'
 [[ "$MAX_TURNS" =~ ^[1-9][0-9]*$ ]] || die '--max-turns must be a positive integer'
+[[ "$OPENCODE_RETRIES" =~ ^[1-9][0-9]*$ ]] || die '--opencode-retries must be a positive integer'
 
 for command in git python3 opencode claude; do
   command -v "$command" >/dev/null 2>&1 || die "required command not found: $command"
 done
+GIT_BIN="$(command -v git)"
+PYTHON_BIN="$(command -v python3)"
+OPENCODE_BIN="$(command -v opencode)"
+CLAUDE_BIN="$(command -v claude)"
+CODEX_BIN="$(command -v codex 2>/dev/null || true)"
 
 REPO="$(git -C "$REPO" rev-parse --show-toplevel 2>/dev/null)" || die "not a Git repository: $REPO"
 REF_COMMIT="$(git -C "$REPO" rev-parse --verify "${BRANCH}^{commit}" 2>/dev/null)" \
@@ -129,6 +138,11 @@ source_head=$SOURCE_HEAD
 selected_ref=$BRANCH
 selected_commit=$REF_COMMIT
 mode=$MODE
+git_bin=$GIT_BIN
+python_bin=$PYTHON_BIN
+opencode_bin=$OPENCODE_BIN
+claude_bin=$CLAUDE_BIN
+codex_bin=${CODEX_BIN:-<missing>}
 
 SOURCE WORKTREE STATUS
 ${SOURCE_STATUS:-<clean>}
@@ -213,19 +227,31 @@ EOF
 )
 
 log 'running OpenCode whole-repository architecture pass'
-set +e
-(
-  cd "$WORKTREE"
-  opencode run --dir "$WORKTREE" --agent r4r-surgical-architect --format json --auto "$ARCH_PROMPT"
-) > "$RUN_DIR/opencode.raw.jsonl" 2> "$RUN_DIR/opencode.stderr.log"
-OPENCODE_EXIT=$?
-set -e
-printf '%s\n' "$OPENCODE_EXIT" > "$RUN_DIR/opencode.exit-code"
+OPENCODE_EXIT=125
+OPENCODE_PARSE_EXIT=125
+OPENCODE_ATTEMPT=0
+OPENCODE_OK=false
+: > "$RUN_DIR/opencode-attempts.tsv"
 
-python3 - "$RUN_DIR/opencode.raw.jsonl" "$RUN_DIR/opencode-analysis.md" <<'PY'
+for ((attempt = 1; attempt <= OPENCODE_RETRIES; attempt++)); do
+  OPENCODE_ATTEMPT=$attempt
+  attempt_raw="$RUN_DIR/opencode.attempt-${attempt}.raw.jsonl"
+  attempt_err="$RUN_DIR/opencode.attempt-${attempt}.stderr.log"
+  attempt_analysis="$RUN_DIR/opencode.attempt-${attempt}.analysis.md"
+
+  log "OpenCode architecture attempt $attempt/$OPENCODE_RETRIES"
+  set +e
+  (
+    cd "$WORKTREE"
+    "$OPENCODE_BIN" run --dir "$WORKTREE" --agent r4r-surgical-architect --format json --auto "$ARCH_PROMPT"
+  ) > "$attempt_raw" 2> "$attempt_err"
+  OPENCODE_EXIT=$?
+
+  "$PYTHON_BIN" - "$attempt_raw" "$attempt_analysis" <<'PY'
 import json
 import pathlib
 import sys
+
 source = pathlib.Path(sys.argv[1])
 target = pathlib.Path(sys.argv[2])
 parts: list[str] = []
@@ -240,10 +266,35 @@ for raw in source.read_text(errors="replace").splitlines():
         if isinstance(text, str) and text.strip():
             parts.append(text.strip())
 if not parts:
-    parts.append("OpenCode did not emit a parseable text report. Inspect opencode.raw.jsonl and opencode.stderr.log.")
+    target.write_text(
+        "OpenCode did not emit a parseable text report. "
+        "Inspect the raw JSONL and stderr for this attempt.\n"
+    )
+    raise SystemExit(3)
 target.write_text("\n\n".join(parts) + "\n")
 PY
+  OPENCODE_PARSE_EXIT=$?
+  set -e
 
+  printf '%s\t%s\t%s\n' "$attempt" "$OPENCODE_EXIT" "$OPENCODE_PARSE_EXIT" >> "$RUN_DIR/opencode-attempts.tsv"
+  cp -f "$attempt_raw" "$RUN_DIR/opencode.raw.jsonl"
+  cp -f "$attempt_err" "$RUN_DIR/opencode.stderr.log"
+  cp -f "$attempt_analysis" "$RUN_DIR/opencode-analysis.md"
+
+  if (( OPENCODE_EXIT == 0 && OPENCODE_PARSE_EXIT == 0 )); then
+    OPENCODE_OK=true
+    break
+  fi
+
+  if (( attempt < OPENCODE_RETRIES )); then
+    log "OpenCode attempt $attempt failed (exit=$OPENCODE_EXIT parse=$OPENCODE_PARSE_EXIT); retrying"
+    sleep "$attempt"
+  fi
+done
+
+printf '%s\n' "$OPENCODE_EXIT" > "$RUN_DIR/opencode.exit-code"
+printf '%s\n' "$OPENCODE_PARSE_EXIT" > "$RUN_DIR/opencode.parse-exit-code"
+printf '%s\n' "$OPENCODE_ATTEMPT" > "$RUN_DIR/opencode.final-attempt"
 if [[ "$TEMP_AGENT_EXISTED" == true ]]; then
   cp -a "$RUN_DIR/original-r4r-surgical-architect.md" "$TEMP_AGENT"
 else
@@ -320,36 +371,58 @@ else
   )
 fi
 
-log "running Claude Code in $MODE mode"
-set +e
-(
-  cd "$WORKTREE"
-  claude "${CLAUDE_ARGS[@]}" "$(cat "$CLAUDE_PROMPT")"
-) > "$RUN_DIR/claude-result.json" 2> "$RUN_DIR/claude.stderr.log"
-CLAUDE_EXIT=$?
-set -e
-printf '%s\n' "$CLAUDE_EXIT" > "$RUN_DIR/claude.exit-code"
+CLAUDE_EXIT=125
+CLAUDE_PARSE_EXIT=125
+CLAUDE_OK=false
 
-python3 - "$RUN_DIR/claude-result.json" "$RUN_DIR/claude-summary.md" <<'PY'
+if [[ "$OPENCODE_OK" == true ]]; then
+  log "running Claude Code in $MODE mode"
+  set +e
+  (
+    cd "$WORKTREE"
+    "$CLAUDE_BIN" "${CLAUDE_ARGS[@]}" "$(cat "$CLAUDE_PROMPT")"
+  ) > "$RUN_DIR/claude-result.json" 2> "$RUN_DIR/claude.stderr.log"
+  CLAUDE_EXIT=$?
+
+  "$PYTHON_BIN" - "$RUN_DIR/claude-result.json" "$RUN_DIR/claude-summary.md" <<'PY'
 import json
 import pathlib
 import sys
+
 source = pathlib.Path(sys.argv[1])
 target = pathlib.Path(sys.argv[2])
 raw = source.read_text(errors="replace")
+if not raw.strip():
+    target.write_text("Claude Code produced no result. Inspect claude.stderr.log.\n")
+    raise SystemExit(3)
 try:
     obj = json.loads(raw)
 except json.JSONDecodeError:
     target.write_text(raw if raw.endswith("\n") else raw + "\n")
-    raise SystemExit(0)
+    raise SystemExit(4)
+if isinstance(obj, dict) and (obj.get("is_error") is True or obj.get("type") == "error"):
+    target.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n")
+    raise SystemExit(5)
 for key in ("result", "text", "content", "message"):
     value = obj.get(key) if isinstance(obj, dict) else None
     if isinstance(value, str) and value.strip():
         target.write_text(value.strip() + "\n")
-        break
-else:
-    target.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n")
+        raise SystemExit(0)
+target.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n")
+raise SystemExit(6)
 PY
+  CLAUDE_PARSE_EXIT=$?
+  set -e
+  if (( CLAUDE_EXIT == 0 && CLAUDE_PARSE_EXIT == 0 )); then
+    CLAUDE_OK=true
+  fi
+else
+  printf '%s\n' 'Claude Code was not started because the OpenCode architecture pass failed.' > "$RUN_DIR/claude-summary.md"
+  : > "$RUN_DIR/claude-result.json"
+  : > "$RUN_DIR/claude.stderr.log"
+fi
+printf '%s\n' "$CLAUDE_EXIT" > "$RUN_DIR/claude.exit-code"
+printf '%s\n' "$CLAUDE_PARSE_EXIT" > "$RUN_DIR/claude.parse-exit-code"
 
 # Restore masked tracked credentials and remove untracked masked credentials so they
 # cannot contaminate the generated patch.
@@ -387,39 +460,75 @@ rm -rf "$WORKTREE/runtime/claude-surgical" >/dev/null 2>&1 || true
     ':(exclude)**/.angular/**' ':(exclude).r4r/**'
 ) > "$RUN_DIR/changed-paths.txt"
 
-if [[ "$MODE" == patch ]]; then
+SHELL_SYNTAX_EXIT=125
+PYTHON_COMPILE_EXIT=125
+PYTHON_TESTS_EXIT=125
+VALIDATION_OK=true
+VALIDATION_PYTHON="$PYTHON_BIN"
+if [[ -x "$REPO/py-codex-agent/.venv/bin/python" ]]; then
+  VALIDATION_PYTHON="$REPO/py-codex-agent/.venv/bin/python"
+fi
+printf '%s\n' "$VALIDATION_PYTHON" > "$RUN_DIR/validation-python.txt"
+
+if [[ "$MODE" == patch && "$CLAUDE_OK" == true ]]; then
   log 'running deterministic syntax and focused controller checks'
+
+  set +e
   {
     printf 'COMMAND: bash -n scripts/*.sh scripts/lib/*.sh (existing files only)\n'
     mapfile -t shell_files < <(find "$WORKTREE/scripts" -maxdepth 2 -type f -name '*.sh' -print 2>/dev/null | sort)
     if ((${#shell_files[@]})); then
       bash -n "${shell_files[@]}"
+    else
+      printf 'No shell scripts found.\n'
     fi
-  } > "$RUN_DIR/shell-syntax.log" 2>&1 || true
+  } > "$RUN_DIR/shell-syntax.log" 2>&1
+  SHELL_SYNTAX_EXIT=$?
 
   {
     printf 'COMMAND: Python compile checks\n'
+    printf 'PYTHON: %s\n' "$VALIDATION_PYTHON"
     mapfile -t py_files < <(find "$WORKTREE/py-ring-agent" "$WORKTREE/py-codex-agent" "$WORKTREE/scripts" \
       -type f -name '*.py' -not -path '*/.venv/*' -not -path '*/__pycache__/*' 2>/dev/null | sort)
     if ((${#py_files[@]})); then
-      python3 -m py_compile "${py_files[@]}"
+      "$VALIDATION_PYTHON" -m py_compile "${py_files[@]}"
+    else
+      printf 'No Python files found.\n'
     fi
-  } > "$RUN_DIR/python-compile.log" 2>&1 || true
+  } > "$RUN_DIR/python-compile.log" 2>&1
+  PYTHON_COMPILE_EXIT=$?
 
   {
-    printf 'COMMAND: focused Python unit tests\n'
-    if command -v pytest >/dev/null 2>&1; then
-      cd "$WORKTREE"
-      pytest -q py-ring-agent/tests py-codex-agent/tests
-    else
-      printf 'pytest not installed; skipped\n'
-    fi
-  } > "$RUN_DIR/python-tests.log" 2>&1 || true
+    printf 'COMMAND: unittest discovery for both controllers\n'
+    printf 'PYTHON: %s\n' "$VALIDATION_PYTHON"
+    cd "$WORKTREE"
+    export PYTHONPATH="$WORKTREE/py-codex-agent/src:$WORKTREE/py-ring-agent/src${PYTHONPATH:+:$PYTHONPATH}"
+    "$VALIDATION_PYTHON" -m unittest discover -s py-codex-agent/tests -p 'test*.py'
+    "$VALIDATION_PYTHON" -m unittest discover -s py-ring-agent/tests -p 'test*.py'
+  } > "$RUN_DIR/python-tests.log" 2>&1
+  PYTHON_TESTS_EXIT=$?
+  set -e
+
+  printf '%s\n' "$SHELL_SYNTAX_EXIT" > "$RUN_DIR/shell-syntax.exit-code"
+  printf '%s\n' "$PYTHON_COMPILE_EXIT" > "$RUN_DIR/python-compile.exit-code"
+  printf '%s\n' "$PYTHON_TESTS_EXIT" > "$RUN_DIR/python-tests.exit-code"
+
+  if (( SHELL_SYNTAX_EXIT != 0 || PYTHON_COMPILE_EXIT != 0 || PYTHON_TESTS_EXIT != 0 )); then
+    VALIDATION_OK=false
+  fi
+else
+  printf '%s\n' 'Validation skipped because patch mode was not active or Claude Code failed.' > "$RUN_DIR/validation-skipped.txt"
 fi
 
+CODEX_EXIT=125
+CODEX_OK=true
 if [[ "$RUN_CODEX_REVIEW" == true ]]; then
-  if command -v codex >/dev/null 2>&1; then
+  if [[ "$OPENCODE_OK" != true || "$CLAUDE_OK" != true ]]; then
+    printf '%s\n' 'Codex review skipped because a prerequisite model stage failed.' > "$RUN_DIR/codex-review.md"
+    CODEX_OK=false
+  elif [[ -n "$CODEX_BIN" ]]; then
     log 'running final Codex read-only assessment'
+    set +e
     {
       cat <<EOF
 Review the isolated whole-repository surgical pass at commit $REF_COMMIT.
@@ -431,6 +540,7 @@ Do not edit files or Git history. Inspect:
 - $RUN_DIR/shell-syntax.log
 - $RUN_DIR/python-compile.log
 - $RUN_DIR/python-tests.log
+- the corresponding *.exit-code files
 
 Return a strict ACCEPT, REVISE or BLOCKED assessment with exact paths and one bounded
 next action. Reject broad rewrites, unsupported claims, unsafe Git operations and any
@@ -438,39 +548,84 @@ change outside the stated operator objective.
 EOF
     } | (
       cd "$WORKTREE"
-      codex exec --sandbox read-only --ephemeral -o "$RUN_DIR/codex-review.md" -
-    ) > "$RUN_DIR/codex.stdout.log" 2> "$RUN_DIR/codex.stderr.log" || true
+      "$CODEX_BIN" exec --sandbox read-only --ephemeral -o "$RUN_DIR/codex-review.md" -
+    ) > "$RUN_DIR/codex.stdout.log" 2> "$RUN_DIR/codex.stderr.log"
+    CODEX_EXIT=$?
+    set -e
+    (( CODEX_EXIT == 0 )) || CODEX_OK=false
   else
-    printf 'codex command not installed; skipped\n' > "$RUN_DIR/codex-review.md"
+    printf '%s\n' 'codex command not installed; skipped' > "$RUN_DIR/codex-review.md"
+    CODEX_OK=false
   fi
+fi
+printf '%s\n' "$CODEX_EXIT" > "$RUN_DIR/codex.exit-code"
+
+PATCH_BYTES="$(wc -c < "$RUN_DIR/changes.patch" | tr -d ' ')"
+CHANGED_PATH_COUNT="$(awk 'NF {count++} END {print count+0}' "$RUN_DIR/changed-paths.txt")"
+STATUS=SUCCESS
+EXIT_CODE=0
+if [[ "$OPENCODE_OK" != true ]]; then
+  STATUS=BLOCKED_OPENCODE
+  EXIT_CODE=70
+elif [[ "$CLAUDE_OK" != true ]]; then
+  STATUS=BLOCKED_CLAUDE
+  EXIT_CODE=71
+elif [[ "$MODE" == patch && "$VALIDATION_OK" != true ]]; then
+  STATUS=VALIDATION_FAILED
+  EXIT_CODE=72
+elif [[ "$RUN_CODEX_REVIEW" == true && "$CODEX_OK" != true ]]; then
+  STATUS=CODEX_REVIEW_FAILED
+  EXIT_CODE=73
+elif [[ "$MODE" == patch && "$PATCH_BYTES" == 0 ]]; then
+  STATUS=SUCCESS_NO_CHANGES
 fi
 
 cat > "$RUN_DIR/RESULT.txt" <<EOF
 R4R OpenCode -> Claude Code surgical run
 
+Status:           $STATUS
 Repository:       $REPO
 Selected ref:     $BRANCH
 Selected commit:  $REF_COMMIT
 Mode:             $MODE
+OpenCode attempts:$OPENCODE_ATTEMPT/$OPENCODE_RETRIES
 OpenCode exit:    $OPENCODE_EXIT
+OpenCode parse:   $OPENCODE_PARSE_EXIT
 Claude Code exit: $CLAUDE_EXIT
+Claude parse:     $CLAUDE_PARSE_EXIT
+Shell syntax:     $SHELL_SYNTAX_EXIT
+Python compile:   $PYTHON_COMPILE_EXIT
+Python tests:     $PYTHON_TESTS_EXIT
+Codex exit:       $CODEX_EXIT
+Changed paths:    $CHANGED_PATH_COUNT
+Patch bytes:      $PATCH_BYTES
 Temporary tree:   $WORKTREE
 Worktree kept:    $KEEP_WORKTREE
 
 Primary artifacts:
+- opencode-attempts.tsv
 - opencode-analysis.md
+- opencode.raw.jsonl
+- opencode.stderr.log
 - claude-summary.md
+- claude-result.json
+- claude.stderr.log
 - changed-paths.txt
 - changes.patch
 - git-status.txt
+- shell-syntax.log and .exit-code
+- python-compile.log and .exit-code
+- python-tests.log and .exit-code
+- codex-review.md and codex.exit-code
 - masked-sensitive-paths.txt
 EOF
 
 if [[ "$KEEP_WORKTREE" == true ]]; then
   log "temporary worktree preserved: $WORKTREE"
 fi
-log "completed; inspect $RUN_DIR/RESULT.txt"
-
-if (( OPENCODE_EXIT != 0 || CLAUDE_EXIT != 0 )); then
-  exit 1
+if (( EXIT_CODE == 0 )); then
+  log "completed successfully ($STATUS); inspect $RUN_DIR/RESULT.txt"
+else
+  log "finished with $STATUS (exit $EXIT_CODE); inspect $RUN_DIR/RESULT.txt"
 fi
+exit "$EXIT_CODE"
