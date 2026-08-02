@@ -234,22 +234,31 @@ spawn_wrapper() {
   stamp="$(date -u +%Y%m%dT%H%M%SZ)"
   log_path="$RING_WORKTREE/runtime/ring-agent/guardian/${stamp}-${worker}.log"
   prepare_python_runtime "$worker" "$worktree"
-  pid="$(python3 - "$WRAPPER" "$worker" "$log_path" <<'PY'
+  pid="$(python3 - "$WRAPPER" "$worker" "$log_path" \
+      "$RING_WORKTREE" "$PC_WORKTREE" "$LP_WORKTREE" <<'PY'
 from pathlib import Path
 import os
 import subprocess
 import sys
 
-wrapper, worker, log_path = sys.argv[1:4]
+wrapper, worker, log_path, ring_root, pc_root, lp_root = sys.argv[1:7]
 Path(log_path).parent.mkdir(parents=True, exist_ok=True)
 log = open(log_path, "ab", buffering=0)
+env = {
+    **os.environ,
+    "PYTHONUNBUFFERED": "1",
+    "R4R_RING_WORKTREE": ring_root,
+    "R4R_PC_WORKTREE": pc_root,
+    "R4R_LP_WORKTREE": lp_root,
+}
 process = subprocess.Popen(
     [sys.executable, wrapper, worker],
+    cwd=ring_root,
     stdin=subprocess.DEVNULL,
     stdout=log,
     stderr=subprocess.STDOUT,
     start_new_session=True,
-    env={**os.environ, "PYTHONUNBUFFERED": "1"},
+    env=env,
 )
 print(process.pid)
 PY

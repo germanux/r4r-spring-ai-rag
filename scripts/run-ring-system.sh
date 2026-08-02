@@ -19,6 +19,7 @@ RING_ROOT="$(realpath -e "$RING_ROOT" 2>/dev/null)" || {
   echo "ERROR: Ring worktree does not exist: $RING_ROOT" >&2
   exit 2
 }
+export R4R_RING_WORKTREE="$RING_ROOT"
 if [[ -r "$RUNTIME_ENV_HELPER" ]]; then
   # shellcheck disable=SC1090
   source "$RUNTIME_ENV_HELPER"

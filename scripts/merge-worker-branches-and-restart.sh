@@ -15,14 +15,19 @@ set -Eeuo pipefail
 # A stopped wrapper cannot consume a later JSONC "restart" request. Starting a new
 # wrapper after the merge is therefore the race-free equivalent of restart.
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEVELOPMENT_ROOT="${R4R_DEVELOPMENT_ROOT:-$HOME/Desarrollo}"
 RING_WORKTREE="${R4R_RING_WORKTREE:-$DEVELOPMENT_ROOT/r4r-ring-agent.git}"
+RUNTIME_ENV_HELPER="$SCRIPT_DIR/r4r-runtime-env.sh"
 PC_WORKTREE="${R4R_PC_WORKTREE:-$DEVELOPMENT_ROOT/r4r-pc-worker.git}"
 LP_WORKTREE="${R4R_LP_WORKTREE:-$DEVELOPMENT_ROOT/r4r-lp-worker.git}"
 PC_BRANCH="${R4R_PC_BRANCH:-agent/pc-qwen3-worker}"
 LP_BRANCH="${R4R_LP_BRANCH:-agent/laptop-qwen3-worker}"
 SOURCE_REF="${R4R_MERGE_SOURCE_REF:-}"
 WAIT_SECONDS="${R4R_RESTART_WAIT_SECONDS:-180}"
+FORCE_STOP_AFTER_SECONDS="${R4R_FORCE_STOP_AFTER_SECONDS:-45}"
+TERM_WAIT_SECONDS="${R4R_TERM_WAIT_SECONDS:-15}"
+KILL_WAIT_SECONDS="${R4R_KILL_WAIT_SECONDS:-5}"
 DRY_RUN=false
 MERGE_ONLY=false
 PC_STOPPED_BY_SCRIPT=false
@@ -58,7 +63,8 @@ worker restart.
 
 Environment overrides: R4R_DEVELOPMENT_ROOT, R4R_RING_WORKTREE,
 R4R_PC_WORKTREE, R4R_LP_WORKTREE, R4R_PC_BRANCH, R4R_LP_BRANCH,
-R4R_MERGE_SOURCE_REF and R4R_RESTART_WAIT_SECONDS.
+R4R_MERGE_SOURCE_REF, R4R_RESTART_WAIT_SECONDS,
+R4R_FORCE_STOP_AFTER_SECONDS, R4R_TERM_WAIT_SECONDS and R4R_KILL_WAIT_SECONDS.
 USAGE
 }
 
@@ -81,13 +87,24 @@ while (($#)); do
 done
 
 [[ "$WAIT_SECONDS" =~ ^[1-9][0-9]*$ ]] || die "--wait must be a positive integer"
-for command in git python3 flock nohup realpath tar awk; do
+[[ "$FORCE_STOP_AFTER_SECONDS" =~ ^[0-9]+$ ]] || die "R4R_FORCE_STOP_AFTER_SECONDS must be a non-negative integer"
+[[ "$TERM_WAIT_SECONDS" =~ ^[1-9][0-9]*$ ]] || die "R4R_TERM_WAIT_SECONDS must be positive"
+[[ "$KILL_WAIT_SECONDS" =~ ^[1-9][0-9]*$ ]] || die "R4R_KILL_WAIT_SECONDS must be positive"
+for command in git python3 flock realpath tar awk; do
   command -v "$command" >/dev/null 2>&1 || die "required command unavailable: $command"
 done
 
 RING_WORKTREE="$(realpath -e "$RING_WORKTREE" 2>/dev/null)" || die "Ring worktree does not exist"
 PC_WORKTREE="$(realpath -e "$PC_WORKTREE" 2>/dev/null)" || die "PC worktree does not exist"
 LP_WORKTREE="$(realpath -e "$LP_WORKTREE" 2>/dev/null)" || die "LP worktree does not exist"
+export R4R_RING_WORKTREE="$RING_WORKTREE"
+export R4R_PC_WORKTREE="$PC_WORKTREE"
+export R4R_LP_WORKTREE="$LP_WORKTREE"
+if [[ -r "$RUNTIME_ENV_HELPER" ]]; then
+  # shellcheck disable=SC1090
+  source "$RUNTIME_ENV_HELPER"
+  r4r_runtime_bootstrap "$RING_WORKTREE"
+fi
 PY_RING_SRC="$RING_WORKTREE/py-ring-agent/src"
 WRAPPER="$RING_WORKTREE/py-ring-agent/run-worker-streamed.py"
 CONTROL_FILE="$RING_WORKTREE/runtime/the-ring-command.jsonc"
@@ -448,39 +465,154 @@ wrapper_is_live() {
   ((wrappers > 0))
 }
 
-wait_fully_stopped() {
-  local worker="$1" worktree="$2" deadline=$((SECONDS + WAIT_SECONDS))
-  local quiet_since=-1 snapshot state pending target rows count
+signal_managed_worker_tree() {
+  local worker="$1" worktree="$2" signal_name="$3" rows count
+  rows="$(worker_processes "$worker" "$worktree")"
+  count="$(json_count <<<"$rows")"
+  ((count > 0)) || return 0
+  warn "$worker: sending SIG${signal_name} to the managed wrapper/controller tree"
+  python3 - "$signal_name" "$rows" <<'PY_SIGNAL'
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+import signal
+import sys
+
+signal_name = sys.argv[1].upper()
+sig = getattr(signal, f"SIG{signal_name}")
+rows = json.loads(sys.argv[2])
+roots = {int(row["pid"]) for row in rows if int(row.get("pid", 0)) > 1}
+wrapper_roots = {
+    int(row["pid"])
+    for row in rows
+    if row.get("kind") == "wrapper" and int(row.get("pid", 0)) > 1
+}
+
+
+def process_parent(pid: int) -> int | None:
+    try:
+        raw = Path(f"/proc/{pid}/stat").read_text(encoding="utf-8")
+        tail = raw[raw.rfind(")") + 2 :].split()
+        return int(tail[1])
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+parent_of: dict[int, int] = {}
+for entry in Path("/proc").iterdir():
+    if entry.name.isdigit():
+        pid = int(entry.name)
+        parent = process_parent(pid)
+        if parent is not None:
+            parent_of[pid] = parent
+
+targets = set(roots)
+changed = True
+while changed:
+    changed = False
+    for pid, parent in parent_of.items():
+        if parent in targets and pid not in targets:
+            targets.add(pid)
+            changed = True
+
+protected = {1, os.getpid(), os.getppid()}
+targets.difference_update(protected)
+current_pgrp = os.getpgrp()
+signalled: set[int] = set()
+
+# Wrappers started by the guardian are session/process-group leaders. Signalling that
+# group is the most reliable way to include Maven, Node, OpenCode and Codex children.
+for pid in sorted(wrapper_roots):
+    try:
+        pgid = os.getpgid(pid)
+    except ProcessLookupError:
+        continue
+    if pgid == pid and pgid != current_pgrp:
+        try:
+            os.killpg(pgid, sig)
+        except (ProcessLookupError, PermissionError):
+            pass
+        else:
+            for candidate in targets:
+                try:
+                    if os.getpgid(candidate) == pgid:
+                        signalled.add(candidate)
+                except ProcessLookupError:
+                    pass
+
+
+def depth(pid: int) -> int:
+    value = 0
+    seen: set[int] = set()
+    while pid in parent_of and pid not in seen:
+        seen.add(pid)
+        pid = parent_of[pid]
+        value += 1
+    return value
+
+
+for pid in sorted(targets - signalled, key=depth, reverse=True):
+    try:
+        os.kill(pid, sig)
+    except (ProcessLookupError, PermissionError):
+        pass
+PY_SIGNAL
+}
+
+wait_process_tree_gone() {
+  local worker="$1" worktree="$2" seconds="$3" deadline=$((SECONDS + seconds))
+  local rows count snapshot state pending
   while ((SECONDS < deadline)); do
-    snapshot="$(control_py snapshot "$worker")"
-    state="$(json_field state <<<"$snapshot")"
-    pending="$(json_field next_state <<<"$snapshot")"
-    target="$(json_field target <<<"$snapshot")"
     rows="$(worker_processes "$worker" "$worktree")"
     count="$(json_count <<<"$rows")"
-
     if ((count == 0)); then
-      if [[ "$state" == stopped && -z "$pending" ]]; then
-        return 0
-      fi
-      if ((quiet_since < 0)); then
-        quiet_since=$SECONDS
-      elif ((SECONDS - quiet_since >= 3)); then
-        warn "$worker process tree is gone but control state was not finalized; settling stale stop request"
+      snapshot="$(control_py snapshot "$worker")"
+      state="$(json_field state <<<"$snapshot")"
+      pending="$(json_field next_state <<<"$snapshot")"
+      if [[ "$state" != stopped || -n "$pending" ]]; then
         control_py settle-stopped "$worker" \
-          "STOPPED: process tree exited before final acknowledgement"
-        return 0
+          "STOPPED: managed process tree is no longer running"
       fi
-    else
-      quiet_since=-1
+      return 0
     fi
     sleep 1
   done
+  return 1
+}
 
-  warn "$worker did not stop completely within ${WAIT_SECONDS}s"
+wait_fully_stopped() {
+  local worker="$1" worktree="$2" graceful_wait="$WAIT_SECONDS"
+  if ((FORCE_STOP_AFTER_SECONDS > 0 && FORCE_STOP_AFTER_SECONDS < graceful_wait)); then
+    graceful_wait="$FORCE_STOP_AFTER_SECONDS"
+  fi
+  if wait_process_tree_gone "$worker" "$worktree" "$graceful_wait"; then
+    return 0
+  fi
+
+  if ((FORCE_STOP_AFTER_SECONDS == 0)); then
+    warn "$worker did not stop completely within ${WAIT_SECONDS}s"
+    warn "control snapshot: $(control_py snapshot "$worker")"
+    pretty_processes <<<"$(worker_processes "$worker" "$worktree")" >&2 || true
+    return 1
+  fi
+
+  warn "$worker did not acknowledge stop within ${graceful_wait}s; terminating only its managed process tree"
+  signal_managed_worker_tree "$worker" "$worktree" TERM
+  if wait_process_tree_gone "$worker" "$worktree" "$TERM_WAIT_SECONDS"; then
+    return 0
+  fi
+
+  warn "$worker process tree ignored SIGTERM; escalating to SIGKILL"
+  signal_managed_worker_tree "$worker" "$worktree" KILL
+  if wait_process_tree_gone "$worker" "$worktree" "$KILL_WAIT_SECONDS"; then
+    return 0
+  fi
+
+  warn "$worker could not be stopped after TERM/KILL escalation"
   warn "control snapshot: $(control_py snapshot "$worker")"
-  rows="$(worker_processes "$worker" "$worktree")"
-  pretty_processes <<<"$rows" >&2 || true
+  pretty_processes <<<"$(worker_processes "$worker" "$worktree")" >&2 || true
   return 1
 }
 
@@ -853,9 +985,22 @@ PYRUNTIME
 
 launch_wrapper() {
   local worker="$1" worktree="$2" stamp log_path pid_file pid deadline
-  local heartbeat_path heartbeat_pid heartbeat_age rows controllers wrappers
+  local heartbeat_path heartbeat_pid heartbeat_age rows controllers wrappers required resolved
 
   require_quiescent "$worker" "$worktree"
+  for required in node opencode codex; do
+    case "$required" in
+      node) resolved="${R4R_NODE_BIN:-node}" ;;
+      opencode) resolved="${R4R_OPENCODE_BIN:-opencode}" ;;
+      codex) resolved="${R4R_CODEX_BIN:-codex}" ;;
+    esac
+    if [[ "$resolved" == */* ]]; then
+      [[ -x "$resolved" ]] || die "$worker runtime CLI is not executable: $required=$resolved"
+    else
+      command -v "$resolved" >/dev/null 2>&1 \
+        || die "$worker runtime CLI is unavailable: $required=$resolved PATH=$PATH"
+    fi
+  done
   stamp="$(date -u +%Y%m%dT%H%M%SZ)"
   log_path="$RING_WORKTREE/runtime/ring-agent/bootstrap/${stamp}-${worker}.log"
   pid_file="$RING_WORKTREE/runtime/ring-agent/bootstrap/${worker}.pid"
@@ -863,8 +1008,35 @@ launch_wrapper() {
   mkdir -p "$(dirname "$log_path")"
   log "$worker: starting fresh wrapper after merge; log=$log_path"
 
-  nohup env PYTHONUNBUFFERED=1 python3 "$WRAPPER" "$worker" >"$log_path" 2>&1 &
-  pid=$!
+  pid="$(python3 - "$WRAPPER" "$worker" "$log_path" \
+      "$RING_WORKTREE" "$PC_WORKTREE" "$LP_WORKTREE" <<'PY_LAUNCH'
+from pathlib import Path
+import os
+import subprocess
+import sys
+
+wrapper, worker, log_path, ring_root, pc_root, lp_root = sys.argv[1:7]
+Path(log_path).parent.mkdir(parents=True, exist_ok=True)
+log = open(log_path, "ab", buffering=0)
+env = {
+    **os.environ,
+    "PYTHONUNBUFFERED": "1",
+    "R4R_RING_WORKTREE": ring_root,
+    "R4R_PC_WORKTREE": pc_root,
+    "R4R_LP_WORKTREE": lp_root,
+}
+process = subprocess.Popen(
+    [sys.executable, wrapper, worker],
+    cwd=ring_root,
+    stdin=subprocess.DEVNULL,
+    stdout=log,
+    stderr=subprocess.STDOUT,
+    start_new_session=True,
+    env=env,
+)
+print(process.pid)
+PY_LAUNCH
+  )"
   printf '%s\n' "$pid" >"$pid_file"
   deadline=$((SECONDS + WAIT_SECONDS))
 

@@ -57,9 +57,12 @@ def main() -> int:
     (runtime / "supervisor.pid").write_text(f"{os.getpid()}\n", encoding="utf-8")
 
     def iteration() -> int:
+        env = dict(os.environ)
+        env["R4R_RING_WORKTREE"] = str(ring)
         completed = subprocess.run(
             [str(guardian), "--once", "--ring", str(ring)],
             cwd=ring,
+            env=env,
             text=True,
         )
         return completed.returncode

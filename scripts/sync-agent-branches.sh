@@ -16,7 +16,8 @@ CANONICAL_RING_WORKTREE="${R4R_RING_WORKTREE:-$DEVELOPMENT_ROOT/r4r-ring-agent.g
 REPOSITORY="${R4R_REPOSITORY:-$ROOT}"
 SOURCE_BRANCH="${R4R_INTEGRATION_BRANCH:-agent/integration}"
 REMOTE="${R4R_SYNC_REMOTE:-origin}"
-PUSH=true
+PUSH_POLICY="strict"
+PUSH_AVAILABLE=true
 FETCH=false
 DRY_RUN=false
 SYNC_WORKERS=true
@@ -27,6 +28,7 @@ TMP_ROOT=""
 FAILED=()
 UPDATED=()
 SKIPPED=()
+WORKER_SYNC_OK=true
 
 usage() {
   cat <<'USAGE'
@@ -36,7 +38,9 @@ Usage: ./scripts/sync-agent-branches.sh [options]
   --target BRANCH       Synchronize only this target; repeatable.
   --remote NAME         Push remote (default: origin).
   --fetch               Fetch/prune the remote before pinning the source.
-  --push                Push updated branches (default; accepted explicitly).
+  --push                Push updated branches and fail on push errors (default).
+  --push-if-available   Push non-interactively when credentials are available;
+                        otherwise continue with local synchronization.
   --no-push             Do not push updated branches.
   --no-workers          Do not merge/restart PC and LP.
   --no-guardian         Do not start/check the PC+LP guardian.
@@ -66,8 +70,9 @@ while (($#)); do
     --target) (($# >= 2)) || die "--target requires a branch"; TARGETS+=("$2"); TARGETS_EXPLICIT=true; shift 2 ;;
     --remote) (($# >= 2)) || die "--remote requires a name"; REMOTE="$2"; shift 2 ;;
     --fetch) FETCH=true; shift ;;
-    --push) PUSH=true; shift ;;
-    --no-push) PUSH=false; shift ;;
+    --push) PUSH_POLICY="strict"; shift ;;
+    --push-if-available) PUSH_POLICY="best-effort"; shift ;;
+    --no-push) PUSH_POLICY="off"; shift ;;
     --no-workers) SYNC_WORKERS=false; shift ;;
     --no-guardian) START_GUARDIAN=false; shift ;;
     --dry-run) DRY_RUN=true; shift ;;
@@ -143,12 +148,10 @@ valid_common_worktree() {
 
 resolve_ring_runtime_worktree() {
   local candidate
-  candidate="$(worktree_for_branch agent/ring-agent-worker || true)"
-  if [[ -n "$candidate" ]] && valid_common_worktree "$candidate" \
-      && [[ -f "$candidate/py-ring-agent/run-worker-streamed.py" ]]; then
-    realpath -e "$candidate"
-    return 0
-  fi
+  # Runtime identity is a path contract, not a branch-name contract. Prefer the
+  # canonical operational Ring root even when it currently checks out r4r-chatgpt.
+  # Selecting another worktree merely because it checks out agent/ring-agent-worker
+  # splits JSONC control, heartbeats and logs across two runtime directories.
   for candidate in "$CANONICAL_RING_WORKTREE" "$ROOT"; do
     if valid_common_worktree "$candidate" \
         && [[ -f "$candidate/py-ring-agent/run-worker-streamed.py" ]]; then
@@ -156,6 +159,12 @@ resolve_ring_runtime_worktree() {
       return 0
     fi
   done
+  candidate="$(worktree_for_branch agent/ring-agent-worker || true)"
+  if [[ -n "$candidate" ]] && valid_common_worktree "$candidate" \
+      && [[ -f "$candidate/py-ring-agent/run-worker-streamed.py" ]]; then
+    realpath -e "$candidate"
+    return 0
+  fi
   return 1
 }
 
@@ -172,14 +181,37 @@ remote_exists() {
 }
 
 push_branch() {
-  local branch="$1"
-  "$PUSH" || return 0
-  remote_exists || { warn "remote $REMOTE is unavailable; cannot push $branch"; return 1; }
-  if "$DRY_RUN"; then
-    log "DRY-RUN: git push $REMOTE refs/heads/$branch:refs/heads/$branch"
+  local branch="$1" output
+  [[ "$PUSH_POLICY" != off ]] || return 0
+  if [[ "$PUSH_POLICY" == best-effort && "$PUSH_AVAILABLE" != true ]]; then
     return 0
   fi
-  git -C "$REPOSITORY" push "$REMOTE" "refs/heads/$branch:refs/heads/$branch"
+  if ! remote_exists; then
+    if [[ "$PUSH_POLICY" == best-effort ]]; then
+      warn "remote $REMOTE is unavailable; continuing without remote pushes"
+      PUSH_AVAILABLE=false
+      return 0
+    fi
+    warn "remote $REMOTE is unavailable; cannot push $branch"
+    return 1
+  fi
+  if "$DRY_RUN"; then
+    log "DRY-RUN: git push $REMOTE refs/heads/$branch:refs/heads/$branch ($PUSH_POLICY)"
+    return 0
+  fi
+  if output="$(GIT_TERMINAL_PROMPT=0 git -C "$REPOSITORY" push "$REMOTE" \
+      "refs/heads/$branch:refs/heads/$branch" 2>&1)"; then
+    [[ -z "$output" ]] || printf '%s\n' "$output"
+    return 0
+  fi
+  if [[ "$PUSH_POLICY" == best-effort ]]; then
+    warn "non-interactive push is unavailable; local branches remain synchronized"
+    [[ -z "$output" ]] || printf '%s\n' "$output" >&2
+    PUSH_AVAILABLE=false
+    return 0
+  fi
+  [[ -z "$output" ]] || printf '%s\n' "$output" >&2
+  return 1
 }
 
 merge_regular_branch() {
@@ -284,6 +316,7 @@ if "$SYNC_WORKERS" && { "$pc_selected" || "$lp_selected"; }; then
     if [[ -z "$RING_WORKTREE" || -z "$PC_WORKTREE" || -z "$LP_WORKTREE" ]]; then
       warn "authoritative worktree resolution failed: Ring=${RING_WORKTREE:-MISSING} PC=${PC_WORKTREE:-MISSING} LP=${LP_WORKTREE:-MISSING}"
       FAILED+=("workers:missing-worktree")
+      WORKER_SYNC_OK=false
     fi
     if [[ -n "$RING_WORKTREE" && -n "$PC_WORKTREE" && -n "$LP_WORKTREE" ]]; then
       log "worker runtime roots: Ring=$RING_WORKTREE PC=$PC_WORKTREE LP=$LP_WORKTREE"
@@ -298,6 +331,7 @@ if "$SYNC_WORKERS" && { "$pc_selected" || "$lp_selected"; }; then
           push_branch "$LP_BRANCH" || FAILED+=("$LP_BRANCH:push")
         else
           FAILED+=("workers:merge-or-restart")
+          WORKER_SYNC_OK=false
         fi
       fi
     fi
@@ -305,17 +339,21 @@ if "$SYNC_WORKERS" && { "$pc_selected" || "$lp_selected"; }; then
 fi
 
 if "$START_GUARDIAN" && ! "$DRY_RUN"; then
-  RING_WORKTREE="$(resolve_ring_runtime_worktree || true)"
-  if [[ -n "$RING_WORKTREE" && -x "$ROOT/scripts/run-ring-system.sh" ]]; then
-    if ! R4R_RING_WORKTREE="$RING_WORKTREE" "$ROOT/scripts/run-ring-system.sh" start; then
-      FAILED+=("guardian:start")
-    fi
-  elif [[ -n "$RING_WORKTREE" && -x "$ROOT/scripts/ensure-r4r-workers.sh" ]]; then
-    warn "persistent supervisor unavailable; performing one immediate guardian check"
-    R4R_RING_WORKTREE="$RING_WORKTREE" \
-      "$ROOT/scripts/ensure-r4r-workers.sh" --once || FAILED+=("guardian:check")
+  if [[ "$WORKER_SYNC_OK" != true ]]; then
+    warn "worker synchronization failed; supervisor start is skipped to avoid a restart race"
   else
-    FAILED+=("guardian:missing")
+    RING_WORKTREE="$(resolve_ring_runtime_worktree || true)"
+    if [[ -n "$RING_WORKTREE" && -x "$ROOT/scripts/run-ring-system.sh" ]]; then
+      if ! R4R_RING_WORKTREE="$RING_WORKTREE" "$ROOT/scripts/run-ring-system.sh" start; then
+        FAILED+=("guardian:start")
+      fi
+    elif [[ -n "$RING_WORKTREE" && -x "$ROOT/scripts/ensure-r4r-workers.sh" ]]; then
+      warn "persistent supervisor unavailable; performing one immediate guardian check"
+      R4R_RING_WORKTREE="$RING_WORKTREE" \
+        "$ROOT/scripts/ensure-r4r-workers.sh" --once || FAILED+=("guardian:check")
+    else
+      FAILED+=("guardian:missing")
+    fi
   fi
 fi
 
