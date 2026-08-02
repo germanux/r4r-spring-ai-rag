@@ -16,6 +16,9 @@ PROMPT_FILE=""
 MODEL=""
 MAX_TURNS=36
 OPENCODE_RETRIES=2
+OPENCODE_MODEL="${R4R_SURGICAL_OPENCODE_MODEL:-auto}"
+CLAUDE_BIN_OPTION="${R4R_CLAUDE_BIN:-}"
+ALLOW_OPENCODE_FALLBACK=false
 KEEP_WORKTREE=false
 RUN_CODEX_REVIEW=false
 WORK_ROOT="${R4R_CLAUDE_WORK_ROOT:-/tmp/r4r-claude-surgical}"
@@ -40,6 +43,9 @@ Options:
   --model MODEL           Claude model alias or full model ID.
   --max-turns N           Claude Code agentic turn limit (default: $MAX_TURNS).
   --opencode-retries N     OpenCode architecture attempts (default: $OPENCODE_RETRIES).
+  --opencode-model MODEL    OpenCode provider/model, or auto from config/r4r-agents.json.
+  --claude-bin PATH         Exact Claude Code executable to use.
+  --allow-opencode-fallback Continue with Claude after recorded OpenCode provider failure.
   --output-root PATH      Result directory root (default: REPO/runtime/claude-surgical).
   --codex-review          Run a final read-only Codex assessment when codex is installed.
   --keep-worktree         Preserve the temporary worktree for manual inspection.
@@ -69,6 +75,9 @@ while (($#)); do
     --model) MODEL="${2:?missing --model value}"; shift 2 ;;
     --max-turns) MAX_TURNS="${2:?missing --max-turns value}"; shift 2 ;;
     --opencode-retries) OPENCODE_RETRIES="${2:?missing --opencode-retries value}"; shift 2 ;;
+    --opencode-model) OPENCODE_MODEL="${2:?missing --opencode-model value}"; shift 2 ;;
+    --claude-bin) CLAUDE_BIN_OPTION="${2:?missing --claude-bin value}"; shift 2 ;;
+    --allow-opencode-fallback) ALLOW_OPENCODE_FALLBACK=true; shift ;;
     --output-root) OUTPUT_ROOT="${2:?missing --output-root value}"; shift 2 ;;
     --codex-review) RUN_CODEX_REVIEW=true; shift ;;
     --keep-worktree) KEEP_WORKTREE=true; shift ;;
@@ -82,14 +91,50 @@ done
 [[ "$MAX_TURNS" =~ ^[1-9][0-9]*$ ]] || die '--max-turns must be a positive integer'
 [[ "$OPENCODE_RETRIES" =~ ^[1-9][0-9]*$ ]] || die '--opencode-retries must be a positive integer'
 
-for command in git python3 opencode claude; do
+for command in git python3 opencode; do
   command -v "$command" >/dev/null 2>&1 || die "required command not found: $command"
 done
 GIT_BIN="$(command -v git)"
 PYTHON_BIN="$(command -v python3)"
 OPENCODE_BIN="$(command -v opencode)"
-CLAUDE_BIN="$(command -v claude)"
 CODEX_BIN="$(command -v codex 2>/dev/null || true)"
+
+select_claude_bin() {
+  local candidate resolved
+  local -a candidates=()
+  if [[ -n "$CLAUDE_BIN_OPTION" ]]; then
+    [[ -x "$CLAUDE_BIN_OPTION" ]] || die "Claude executable is not executable: $CLAUDE_BIN_OPTION"
+    printf '%s\n' "$CLAUDE_BIN_OPTION"
+    return
+  fi
+
+  while IFS= read -r candidate; do
+    [[ -n "$candidate" && -x "$candidate" ]] || continue
+    resolved="$(readlink -f "$candidate" 2>/dev/null || printf '%s' "$candidate")"
+    if [[ " ${candidates[*]-} " != *" $resolved "* ]]; then
+      candidates+=("$resolved")
+    fi
+  done < <(type -a -p claude 2>/dev/null || true)
+
+  ((${#candidates[@]})) || die "required command not found: claude"
+
+  for candidate in "${candidates[@]}"; do
+    if "$candidate" auth status >/dev/null 2>&1; then
+      printf '%s\n' "$candidate"
+      return
+    fi
+  done
+  printf '%s\n' "${candidates[0]}"
+}
+
+CLAUDE_BIN="$(select_claude_bin)"
+CLAUDE_AUTH_OK=false
+if "$CLAUDE_BIN" auth status >/dev/null 2>&1; then
+  CLAUDE_AUTH_OK=true
+elif [[ -n "${ANTHROPIC_API_KEY:-}${ANTHROPIC_AUTH_TOKEN:-}${CLAUDE_CODE_OAUTH_TOKEN:-}"      || -n "${CLAUDE_CODE_USE_BEDROCK:-}${CLAUDE_CODE_USE_VERTEX:-}${CLAUDE_CODE_USE_FOUNDRY:-}" ]]; then
+  CLAUDE_AUTH_OK=true
+fi
+[[ "$CLAUDE_AUTH_OK" == true ]] || die "Claude Code is not authenticated for $CLAUDE_BIN. Run: $CLAUDE_BIN auth login, or pass --claude-bin PATH to an authenticated installation."
 
 REPO="$(git -C "$REPO" rev-parse --show-toplevel 2>/dev/null)" || die "not a Git repository: $REPO"
 REF_COMMIT="$(git -C "$REPO" rev-parse --verify "${BRANCH}^{commit}" 2>/dev/null)" \
@@ -97,6 +142,55 @@ REF_COMMIT="$(git -C "$REPO" rev-parse --verify "${BRANCH}^{commit}" 2>/dev/null
 SOURCE_BRANCH="$(git -C "$REPO" branch --show-current 2>/dev/null || true)"
 SOURCE_HEAD="$(git -C "$REPO" rev-parse HEAD)"
 SOURCE_STATUS="$(git -C "$REPO" status --short)"
+
+resolve_opencode_model() {
+  if [[ -n "$OPENCODE_MODEL" && "$OPENCODE_MODEL" != auto ]]; then
+    printf '%s\n' "$OPENCODE_MODEL"
+    return
+  fi
+
+  local config_json ring_agent resolved
+  config_json="$(git -C "$REPO" show "$REF_COMMIT:config/r4r-agents.json" 2>/dev/null || true)"
+  if [[ -n "$config_json" ]]; then
+    resolved="$(
+      printf '%s' "$config_json" | "$PYTHON_BIN" -c '
+import json, sys
+data = json.load(sys.stdin)
+pc = data.get("agents", {}).get("PC", {})
+provider = str(pc.get("provider", "")).strip()
+model = str(pc.get("model", "")).strip()
+if provider and model:
+    print(f"{provider}/{model}")
+'
+    )"
+    if [[ -n "$resolved" ]]; then
+      printf '%s\n' "$resolved"
+      return
+    fi
+  fi
+
+  ring_agent="$(git -C "$REPO" show "$REF_COMMIT:.opencode/agents/r4r-ring.md" 2>/dev/null || true)"
+  if [[ -n "$ring_agent" ]]; then
+    resolved="$(
+      printf '%s' "$ring_agent" | "$PYTHON_BIN" -c '
+import re, sys
+text = sys.stdin.read()
+m = re.search(r"(?m)^model:\s*[\"'\"']?([^\"'\"'\n]+)", text)
+if m:
+    print(m.group(1).strip())
+'
+    )"
+    if [[ -n "$resolved" ]]; then
+      printf '%s\n' "$resolved"
+      return
+    fi
+  fi
+
+  return 1
+}
+
+OPENCODE_MODEL_RESOLVED="$(resolve_opencode_model)" \
+  || die "unable to resolve OpenCode model from selected commit; pass --opencode-model provider/model"
 
 if [[ -n "$PROMPT_FILE" ]]; then
   [[ -f "$PROMPT_FILE" ]] || die "prompt file not found: $PROMPT_FILE"
@@ -143,6 +237,8 @@ python_bin=$PYTHON_BIN
 opencode_bin=$OPENCODE_BIN
 claude_bin=$CLAUDE_BIN
 codex_bin=${CODEX_BIN:-<missing>}
+opencode_model=$OPENCODE_MODEL_RESOLVED
+allow_opencode_fallback=$ALLOW_OPENCODE_FALLBACK
 
 SOURCE WORKTREE STATUS
 ${SOURCE_STATUS:-<clean>}
@@ -177,10 +273,12 @@ if [[ -e "$TEMP_AGENT" ]]; then
   TEMP_AGENT_EXISTED=true
   cp -a "$TEMP_AGENT" "$RUN_DIR/original-r4r-surgical-architect.md"
 fi
-cat > "$TEMP_AGENT" <<'AGENT'
+{
+  cat <<EOF
 ---
 description: Whole-repository R4R architecture and agent-process auditor
 mode: primary
+model: "$OPENCODE_MODEL_RESOLVED"
 temperature: 0.15
 permission:
   read: allow
@@ -194,6 +292,8 @@ permission:
   webfetch: deny
   websearch: deny
 ---
+EOF
+  cat <<'AGENT'
 
 Inspect the complete current repository, not only product code. Reconstruct the actual
 agentic system from source and configuration. Concentrate on `.opencode/**`,
@@ -210,6 +310,7 @@ implementation defects from instruction defects and infrastructure prerequisites
 Return a bounded surgical plan ordered by risk and dependency. Do not edit anything and
 do not claim that a gate passed unless direct repository evidence proves it.
 AGENT
+} > "$TEMP_AGENT"
 
 DEFAULT_OBJECTIVE='Audit the entire selected branch and surgically correct the agentic process architecture. Preserve product behavior unless a product change is necessary to make an exact gate meaningful. Eliminate false success, stale-worktree reads, repeated permission loops, incomplete evidence bundles, unsafe Git attribution and non-deterministic restart behavior.'
 OBJECTIVE="${PROMPT:-$DEFAULT_OBJECTIVE}"
@@ -243,7 +344,7 @@ for ((attempt = 1; attempt <= OPENCODE_RETRIES; attempt++)); do
   set +e
   (
     cd "$WORKTREE"
-    "$OPENCODE_BIN" run --dir "$WORKTREE" --agent r4r-surgical-architect --format json --auto "$ARCH_PROMPT"
+    "$OPENCODE_BIN" run --dir "$WORKTREE" --agent r4r-surgical-architect --model "$OPENCODE_MODEL_RESOLVED" --format json --auto "$ARCH_PROMPT"
   ) > "$attempt_raw" 2> "$attempt_err"
   OPENCODE_EXIT=$?
 
@@ -295,6 +396,26 @@ done
 printf '%s\n' "$OPENCODE_EXIT" > "$RUN_DIR/opencode.exit-code"
 printf '%s\n' "$OPENCODE_PARSE_EXIT" > "$RUN_DIR/opencode.parse-exit-code"
 printf '%s\n' "$OPENCODE_ATTEMPT" > "$RUN_DIR/opencode.final-attempt"
+OPENCODE_FALLBACK_USED=false
+if [[ "$OPENCODE_OK" != true && "$ALLOW_OPENCODE_FALLBACK" == true ]]; then
+  OPENCODE_FALLBACK_USED=true
+  cat > "$RUN_DIR/opencode-analysis.md" <<EOF
+# OpenCode provider stage unavailable
+
+OpenCode failed after $OPENCODE_ATTEMPT attempt(s).
+
+- Selected model: $OPENCODE_MODEL_RESOLVED
+- Final process exit: $OPENCODE_EXIT
+- Final parse exit: $OPENCODE_PARSE_EXIT
+- Raw events: opencode.raw.jsonl
+- Standard error: opencode.stderr.log
+
+Claude Code must independently inspect the repository and treat the missing OpenCode
+analysis as an explicit evidence limitation. Do not infer that a no-op is correct.
+EOF
+fi
+printf '%s\n' "$OPENCODE_MODEL_RESOLVED" > "$RUN_DIR/opencode.model"
+printf '%s\n' "$OPENCODE_FALLBACK_USED" > "$RUN_DIR/opencode.fallback-used"
 if [[ "$TEMP_AGENT_EXISTED" == true ]]; then
   cp -a "$RUN_DIR/original-r4r-surgical-architect.md" "$TEMP_AGENT"
 else
@@ -375,12 +496,12 @@ CLAUDE_EXIT=125
 CLAUDE_PARSE_EXIT=125
 CLAUDE_OK=false
 
-if [[ "$OPENCODE_OK" == true ]]; then
+if [[ "$OPENCODE_OK" == true || "$OPENCODE_FALLBACK_USED" == true ]]; then
   log "running Claude Code in $MODE mode"
   set +e
   (
     cd "$WORKTREE"
-    "$CLAUDE_BIN" "${CLAUDE_ARGS[@]}" "$(cat "$CLAUDE_PROMPT")"
+    "$CLAUDE_BIN" "${CLAUDE_ARGS[@]}" --input-format text       "Execute the complete surgical task specification provided through standard input."       < "$CLAUDE_PROMPT"
   ) > "$RUN_DIR/claude-result.json" 2> "$RUN_DIR/claude.stderr.log"
   CLAUDE_EXIT=$?
 
@@ -417,7 +538,7 @@ PY
     CLAUDE_OK=true
   fi
 else
-  printf '%s\n' 'Claude Code was not started because the OpenCode architecture pass failed.' > "$RUN_DIR/claude-summary.md"
+  printf '%s\n' 'Claude Code was not started because the OpenCode architecture pass failed and fallback was not enabled.' > "$RUN_DIR/claude-summary.md"
   : > "$RUN_DIR/claude-result.json"
   : > "$RUN_DIR/claude.stderr.log"
 fi
@@ -523,7 +644,7 @@ fi
 CODEX_EXIT=125
 CODEX_OK=true
 if [[ "$RUN_CODEX_REVIEW" == true ]]; then
-  if [[ "$OPENCODE_OK" != true || "$CLAUDE_OK" != true ]]; then
+  if [[ "$CLAUDE_OK" != true || ( "$OPENCODE_OK" != true && "$OPENCODE_FALLBACK_USED" != true ) ]]; then
     printf '%s\n' 'Codex review skipped because a prerequisite model stage failed.' > "$RUN_DIR/codex-review.md"
     CODEX_OK=false
   elif [[ -n "$CODEX_BIN" ]]; then
@@ -564,7 +685,7 @@ PATCH_BYTES="$(wc -c < "$RUN_DIR/changes.patch" | tr -d ' ')"
 CHANGED_PATH_COUNT="$(awk 'NF {count++} END {print count+0}' "$RUN_DIR/changed-paths.txt")"
 STATUS=SUCCESS
 EXIT_CODE=0
-if [[ "$OPENCODE_OK" != true ]]; then
+if [[ "$OPENCODE_OK" != true && "$OPENCODE_FALLBACK_USED" != true ]]; then
   STATUS=BLOCKED_OPENCODE
   EXIT_CODE=70
 elif [[ "$CLAUDE_OK" != true ]]; then
@@ -579,6 +700,13 @@ elif [[ "$RUN_CODEX_REVIEW" == true && "$CODEX_OK" != true ]]; then
 elif [[ "$MODE" == patch && "$PATCH_BYTES" == 0 ]]; then
   STATUS=SUCCESS_NO_CHANGES
 fi
+if [[ "$OPENCODE_FALLBACK_USED" == true && "$EXIT_CODE" == 0 ]]; then
+  if [[ "$STATUS" == SUCCESS_NO_CHANGES ]]; then
+    STATUS=SUCCESS_NO_CHANGES_WITH_OPENCODE_FALLBACK
+  else
+    STATUS=SUCCESS_WITH_OPENCODE_FALLBACK
+  fi
+fi
 
 cat > "$RUN_DIR/RESULT.txt" <<EOF
 R4R OpenCode -> Claude Code surgical run
@@ -588,7 +716,9 @@ Repository:       $REPO
 Selected ref:     $BRANCH
 Selected commit:  $REF_COMMIT
 Mode:             $MODE
+OpenCode model:   $OPENCODE_MODEL_RESOLVED
 OpenCode attempts:$OPENCODE_ATTEMPT/$OPENCODE_RETRIES
+OpenCode fallback:$OPENCODE_FALLBACK_USED
 OpenCode exit:    $OPENCODE_EXIT
 OpenCode parse:   $OPENCODE_PARSE_EXIT
 Claude Code exit: $CLAUDE_EXIT
@@ -604,6 +734,7 @@ Worktree kept:    $KEEP_WORKTREE
 
 Primary artifacts:
 - opencode-attempts.tsv
+- opencode.model and opencode.fallback-used
 - opencode-analysis.md
 - opencode.raw.jsonl
 - opencode.stderr.log
