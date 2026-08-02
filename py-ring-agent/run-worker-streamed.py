@@ -10,10 +10,18 @@ import time
 # ---------------------------------------------------------------------------
 # EDIT THESE VALUES HERE. The optional PC/LP argument remains only a shortcut.
 # ---------------------------------------------------------------------------
-DEVELOPMENT_ROOT = Path.home() / "Desarrollo"
-RING_WORKTREE = DEVELOPMENT_ROOT / "r4r-ring-agent.git"
-PC_WORKTREE = DEVELOPMENT_ROOT / "r4r-pc-worker.git"
-LP_WORKTREE = DEVELOPMENT_ROOT / "r4r-lp-worker.git"
+DEVELOPMENT_ROOT = Path(
+    os.environ.get("R4R_DEVELOPMENT_ROOT", str(Path.home() / "Desarrollo"))
+).expanduser()
+RING_WORKTREE = Path(
+    os.environ.get("R4R_RING_WORKTREE", str(DEVELOPMENT_ROOT / "r4r-ring-agent.git"))
+).expanduser()
+PC_WORKTREE = Path(
+    os.environ.get("R4R_PC_WORKTREE", str(DEVELOPMENT_ROOT / "r4r-pc-worker.git"))
+).expanduser()
+LP_WORKTREE = Path(
+    os.environ.get("R4R_LP_WORKTREE", str(DEVELOPMENT_ROOT / "r4r-lp-worker.git"))
+).expanduser()
 DESTINATION = "PC"  # PC or LP
 RUNNER = ("./scripts/run-codex-agent.sh", "--destination")
 SESSION_TIMEOUT_SECONDS = None  # The inner harness owns its session TTL.
