@@ -67,3 +67,20 @@ report to Codex. The report is stored per attempt at:
 ```text
 runtime/runs/LP/<RUN-ID>/<TASK-ID>/attempt-XX/evidence/local-understanding.md
 ```
+
+## Notification policy
+
+`R4R_NOTIFICATION_MODE` controls audible notifications:
+
+- `changes` (default): play only the success MP3 after a real local-LLM file change;
+- `important`: file-change and rate-limited error MP3s;
+- `errors`: only rate-limited error MP3s;
+- `all`: legacy behavior, including gate and Codex-handoff terminal bells;
+- `off`: log notification events without producing sound.
+
+Error sounds are rate-limited by `R4R_ERROR_SOUND_COOLDOWN_SECONDS` (default 900).
+The current effective policy can be inspected with:
+
+```bash
+./scripts/notify-success.sh --status
+```
