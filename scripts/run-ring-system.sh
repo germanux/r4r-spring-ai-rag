@@ -6,6 +6,7 @@ set -Eeuo pipefail
 # worker launcher are supervised. They may intentionally be different worktrees.
 CODE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RING_ROOT="${R4R_RING_WORKTREE:-$CODE_ROOT}"
+RUNTIME_ENV_HELPER="$CODE_ROOT/scripts/r4r-runtime-env.sh"
 PYTHON="$CODE_ROOT/py-ring-agent/run-ring-system.py"
 GUARDIAN="$CODE_ROOT/scripts/ensure-r4r-workers.sh"
 RUNTIME="$RING_ROOT/runtime/ring-system"
@@ -18,6 +19,12 @@ RING_ROOT="$(realpath -e "$RING_ROOT" 2>/dev/null)" || {
   echo "ERROR: Ring worktree does not exist: $RING_ROOT" >&2
   exit 2
 }
+if [[ -r "$RUNTIME_ENV_HELPER" ]]; then
+  # shellcheck disable=SC1090
+  source "$RUNTIME_ENV_HELPER"
+  r4r_runtime_bootstrap "$RING_ROOT"
+fi
+
 mkdir -p "$RUNTIME"
 [[ -f "$PYTHON" ]] || { echo "ERROR: missing $PYTHON" >&2; exit 2; }
 [[ -x "$GUARDIAN" ]] || { echo "ERROR: missing executable $GUARDIAN" >&2; exit 2; }

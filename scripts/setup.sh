@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+RUNTIME_ENV_HELPER="$ROOT/scripts/r4r-runtime-env.sh"
 
 TOOLS_ONLY=false
 SKIP_DB=false
@@ -288,6 +289,20 @@ if "$WITH_CLAUDE"; then
   ensure_claude_capabilities
 fi
 ensure_codegraph_capabilities
+
+if [[ -r "$RUNTIME_ENV_HELPER" ]]; then
+  # shellcheck disable=SC1091
+  source "$RUNTIME_ENV_HELPER"
+  r4r_runtime_bootstrap "$ROOT"
+fi
+ensure_local_env_var R4R_NODE_BIN "$(command -v node)"
+ensure_local_env_var R4R_NPM_BIN "$(command -v npm)"
+ensure_local_env_var R4R_OPENCODE_BIN "$(command -v "${R4R_OPENCODE_BIN:-opencode}")"
+ensure_local_env_var R4R_CODEX_BIN "$(command -v "${R4R_CODEX_BIN:-codex}")"
+set -a
+# shellcheck disable=SC1091
+source "$ROOT/.env.r4r.local"
+set +a
 
 mkdir -p docker-postgres/data/app docker-postgres/backups runtime/runs runtime/locks
 python3 -m venv py-codex-agent/.venv
