@@ -11,6 +11,8 @@ set -Eeuo pipefail
 # an inactive laptop worker is recovered even when no new merge was necessary.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DEVELOPMENT_ROOT="${R4R_DEVELOPMENT_ROOT:-$HOME/Desarrollo}"
+CANONICAL_RING_WORKTREE="${R4R_RING_WORKTREE:-$DEVELOPMENT_ROOT/r4r-ring-agent.git}"
 REPOSITORY="${R4R_REPOSITORY:-$ROOT}"
 SOURCE_BRANCH="${R4R_INTEGRATION_BRANCH:-agent/integration}"
 REMOTE="${R4R_SYNC_REMOTE:-origin}"
@@ -34,6 +36,7 @@ Usage: ./scripts/sync-agent-branches.sh [options]
   --target BRANCH       Synchronize only this target; repeatable.
   --remote NAME         Push remote (default: origin).
   --fetch               Fetch/prune the remote before pinning the source.
+  --push                Push updated branches (default; accepted explicitly).
   --no-push             Do not push updated branches.
   --no-workers          Do not merge/restart PC and LP.
   --no-guardian         Do not start/check the PC+LP guardian.
@@ -63,6 +66,7 @@ while (($#)); do
     --target) (($# >= 2)) || die "--target requires a branch"; TARGETS+=("$2"); TARGETS_EXPLICIT=true; shift 2 ;;
     --remote) (($# >= 2)) || die "--remote requires a name"; REMOTE="$2"; shift 2 ;;
     --fetch) FETCH=true; shift ;;
+    --push) PUSH=true; shift ;;
     --no-push) PUSH=false; shift ;;
     --no-workers) SYNC_WORKERS=false; shift ;;
     --no-guardian) START_GUARDIAN=false; shift ;;
@@ -124,6 +128,34 @@ worktree_for_branch() {
         ;;
     esac
   done < <(git -C "$REPOSITORY" worktree list --porcelain)
+  return 1
+}
+
+valid_common_worktree() {
+  local path="$1" common
+  [[ -d "$path" ]] || return 1
+  git -C "$path" rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 1
+  common="$(git -C "$path" rev-parse --git-common-dir 2>/dev/null)" || return 1
+  [[ "$common" == /* ]] || common="$path/$common"
+  common="$(realpath -e "$common" 2>/dev/null)" || return 1
+  [[ "$common" == "$COMMON_DIR" ]]
+}
+
+resolve_ring_runtime_worktree() {
+  local candidate
+  candidate="$(worktree_for_branch agent/ring-agent-worker || true)"
+  if [[ -n "$candidate" ]] && valid_common_worktree "$candidate" \
+      && [[ -f "$candidate/py-ring-agent/run-worker-streamed.py" ]]; then
+    realpath -e "$candidate"
+    return 0
+  fi
+  for candidate in "$CANONICAL_RING_WORKTREE" "$ROOT"; do
+    if valid_common_worktree "$candidate" \
+        && [[ -f "$candidate/py-ring-agent/run-worker-streamed.py" ]]; then
+      realpath -e "$candidate"
+      return 0
+    fi
+  done
   return 1
 }
 
@@ -246,14 +278,15 @@ if "$SYNC_WORKERS" && { "$pc_selected" || "$lp_selected"; }; then
   elif branch_contains_source "$PC_BRANCH" && branch_contains_source "$LP_BRANCH"; then
     log "PC and LP already contain ${SOURCE_COMMIT:0:12}; no merge/restart required"
   else
-    RING_WORKTREE="$(worktree_for_branch agent/ring-agent-worker || true)"
+    RING_WORKTREE="$(resolve_ring_runtime_worktree || true)"
     PC_WORKTREE="$(worktree_for_branch "$PC_BRANCH" || true)"
     LP_WORKTREE="$(worktree_for_branch "$LP_BRANCH" || true)"
-    [[ -n "$RING_WORKTREE" && -n "$PC_WORKTREE" && -n "$LP_WORKTREE" ]] || {
-      warn "authoritative Ring/PC/LP worktrees were not all found"
+    if [[ -z "$RING_WORKTREE" || -z "$PC_WORKTREE" || -z "$LP_WORKTREE" ]]; then
+      warn "authoritative worktree resolution failed: Ring=${RING_WORKTREE:-MISSING} PC=${PC_WORKTREE:-MISSING} LP=${LP_WORKTREE:-MISSING}"
       FAILED+=("workers:missing-worktree")
-    }
+    fi
     if [[ -n "$RING_WORKTREE" && -n "$PC_WORKTREE" && -n "$LP_WORKTREE" ]]; then
+      log "worker runtime roots: Ring=$RING_WORKTREE PC=$PC_WORKTREE LP=$LP_WORKTREE"
       MERGER="$ROOT/scripts/merge-worker-branches-and-restart.sh"
       [[ -x "$MERGER" ]] || { warn "worker merger is unavailable: $MERGER"; FAILED+=("workers:missing-merger"); }
       if [[ -x "$MERGER" ]]; then
@@ -272,14 +305,14 @@ if "$SYNC_WORKERS" && { "$pc_selected" || "$lp_selected"; }; then
 fi
 
 if "$START_GUARDIAN" && ! "$DRY_RUN"; then
-  RING_WORKTREE="$(worktree_for_branch agent/ring-agent-worker || true)"
-  if [[ -n "$RING_WORKTREE" && -x "$RING_WORKTREE/scripts/run-ring-system.sh" ]]; then
-    if ! R4R_RING_WORKTREE="$RING_WORKTREE" "$RING_WORKTREE/scripts/run-ring-system.sh" start; then
+  RING_WORKTREE="$(resolve_ring_runtime_worktree || true)"
+  if [[ -n "$RING_WORKTREE" && -x "$ROOT/scripts/run-ring-system.sh" ]]; then
+    if ! R4R_RING_WORKTREE="$RING_WORKTREE" "$ROOT/scripts/run-ring-system.sh" start; then
       FAILED+=("guardian:start")
     fi
-  elif [[ -x "$ROOT/scripts/ensure-r4r-workers.sh" ]]; then
-    warn "Ring branch does not yet contain run-ring-system.sh; performing one immediate guardian check"
-    R4R_RING_WORKTREE="${RING_WORKTREE:-$HOME/Desarrollo/r4r-ring-agent.git}" \
+  elif [[ -n "$RING_WORKTREE" && -x "$ROOT/scripts/ensure-r4r-workers.sh" ]]; then
+    warn "persistent supervisor unavailable; performing one immediate guardian check"
+    R4R_RING_WORKTREE="$RING_WORKTREE" \
       "$ROOT/scripts/ensure-r4r-workers.sh" --once || FAILED+=("guardian:check")
   else
     FAILED+=("guardian:missing")

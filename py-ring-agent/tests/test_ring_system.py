@@ -37,6 +37,42 @@ class RingSystemTests(unittest.TestCase):
             self.assertEqual(marker.read_text(encoding="utf-8"), "ran")
             self.assertFalse((ring / "runtime/ring-system/supervisor.pid").exists())
 
+    def test_once_accepts_guardian_from_another_worktree(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            ring = base / "ring"
+            code = base / "code"
+            ring.mkdir()
+            code.mkdir()
+            marker = ring / "external-guardian-ran.txt"
+            guardian = code / "ensure-r4r-workers.sh"
+            guardian.write_text(
+                "#!/usr/bin/env bash\n"
+                "set -eu\n"
+                f"printf external > {marker!s}\n",
+                encoding="utf-8",
+            )
+            guardian.chmod(0o755)
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--once",
+                    "--ring",
+                    str(ring),
+                    "--guardian",
+                    str(guardian),
+                ],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stdout)
+            self.assertEqual(marker.read_text(encoding="utf-8"), "external")
+            self.assertFalse((ring / "runtime/ring-system/supervisor.pid").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

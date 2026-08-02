@@ -23,6 +23,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ring", type=Path, default=Path.home() / "Desarrollo" / "r4r-ring-agent.git")
     parser.add_argument("--interval", type=int, default=DEFAULT_INTERVAL_SECONDS)
+    parser.add_argument("--guardian", type=Path, default=None)
     parser.add_argument("--once", action="store_true")
     return parser.parse_args()
 
@@ -32,7 +33,7 @@ def main() -> int:
     if args.interval < 1:
         raise SystemExit("--interval must be positive")
     ring = args.ring.expanduser().resolve()
-    guardian = ring / "scripts" / "ensure-r4r-workers.sh"
+    guardian = (args.guardian.expanduser().resolve() if args.guardian else ring / "scripts" / "ensure-r4r-workers.sh")
     if not guardian.is_file():
         raise SystemExit(f"worker guardian missing: {guardian}")
 
