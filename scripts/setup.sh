@@ -7,6 +7,7 @@ cd "$ROOT"
 TOOLS_ONLY=false
 SKIP_DB=false
 SKIP_VERIFY=false
+WITH_CLAUDE=false
 
 usage() {
   cat <<'EOF'
@@ -16,6 +17,7 @@ Options:
   --tools-only   Install/verify CLIs and the Python controller only.
   --skip-db      Do not start the PostgreSQL application container.
   --skip-verify  Do not run the unit verification pass.
+  --with-claude  Optionally install/verify Claude Code (not required).
   -h, --help     Show this help.
 EOF
 }
@@ -25,6 +27,7 @@ while (($#)); do
     --tools-only) TOOLS_ONLY=true; SKIP_DB=true; SKIP_VERIFY=true; shift ;;
     --skip-db) SKIP_DB=true; shift ;;
     --skip-verify) SKIP_VERIFY=true; shift ;;
+    --with-claude) WITH_CLAUDE=true; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown setup option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -281,7 +284,9 @@ install_npm_cli "${R4R_CODEX_BIN:-codex}" "${R4R_CODEX_NPM_PACKAGE:-@openai/code
 install_npm_cli codegraph "${R4R_CODEGRAPH_NPM_PACKAGE:-@colbymchenry/codegraph}"
 ensure_opencode_capabilities
 ensure_codex_capabilities
-ensure_claude_capabilities
+if "$WITH_CLAUDE"; then
+  ensure_claude_capabilities
+fi
 ensure_codegraph_capabilities
 
 mkdir -p docker-postgres/data/app docker-postgres/backups runtime/runs runtime/locks
@@ -321,9 +326,9 @@ echo "If Docker group membership was added, log out and back in to avoid sudo fa
 if ! "${R4R_CODEX_BIN:-codex}" login status >/dev/null 2>&1; then
   echo "Codex CLI is installed but may not be authenticated. Run: codex login"
 fi
-if ! "${R4R_CLAUDE_BIN:-claude}" auth status >/dev/null 2>&1; then
-  echo "Claude Code is installed but not authenticated. Run: claude"
+if "$WITH_CLAUDE" && ! "${R4R_CLAUDE_BIN:-claude}" auth status >/dev/null 2>&1; then
+  echo "Claude Code was requested but is not authenticated. Run: claude"
 fi
-echo "Claude surgical runs create their own detached temporary worktree."
+echo "Claude Code is optional; the supported surgical path uses two local OpenCode agents."
 echo "Next: ./scripts/verify.sh all && ./scripts/run-codex-agent.sh"
-echo "Audit: ./scripts/run-opencode-claude-surgical-review.sh --repo . --branch "$(git branch --show-current 2>/dev/null || echo r4r-chatgpt)" --mode review"
+echo "Audit: ./scripts/run-opencode-dual-surgical-review.sh --repo . --branch "$(git branch --show-current 2>/dev/null || echo r4r-chatgpt)" --mode review"
