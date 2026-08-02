@@ -12,6 +12,8 @@ GUARDIAN="$CODE_ROOT/scripts/ensure-r4r-workers.sh"
 RUNTIME="$RING_ROOT/runtime/ring-system"
 PID_FILE="$RUNTIME/supervisor.pid"
 LOG_FILE="$RUNTIME/supervisor.log"
+RING_AGENT_PID_FILE="$RUNTIME/ring-agent.pid"
+RING_AGENT_LOG_FILE="$RUNTIME/ring-agent.console.log"
 ACTION="${1:-start}"
 shift || true
 
@@ -30,12 +32,21 @@ mkdir -p "$RUNTIME"
 [[ -f "$PYTHON" ]] || { echo "ERROR: missing $PYTHON" >&2; exit 2; }
 [[ -x "$GUARDIAN" ]] || { echo "ERROR: missing executable $GUARDIAN" >&2; exit 2; }
 
-pid_alive() {
-  [[ -s "$PID_FILE" ]] || return 1
+pid_alive_file() {
+  local file="$1"
+  [[ -s "$file" ]] || return 1
   local pid
-  pid="$(cat "$PID_FILE")"
+  pid="$(cat "$file")"
   [[ "$pid" =~ ^[1-9][0-9]*$ ]] || return 1
   kill -0 "$pid" 2>/dev/null
+}
+
+pid_alive() {
+  pid_alive_file "$PID_FILE"
+}
+
+ring_agent_alive() {
+  pid_alive_file "$RING_AGENT_PID_FILE"
 }
 
 case "$ACTION" in
@@ -77,10 +88,18 @@ case "$ACTION" in
   status)
     if pid_alive; then
       echo "[r4r-system] running pid=$(cat "$PID_FILE") code=$CODE_ROOT ring=$RING_ROOT"
+      if ring_agent_alive; then
+        echo "[r4r-system] The-Ring cognitive loop: running pid=$(cat "$RING_AGENT_PID_FILE") log=$RING_AGENT_LOG_FILE"
+      else
+        echo "[r4r-system] The-Ring cognitive loop: not running"
+      fi
       "$GUARDIAN" --check-only --ring "$RING_ROOT" || true
       exit 0
     fi
     echo "[r4r-system] stopped code=$CODE_ROOT ring=$RING_ROOT"
+    if ring_agent_alive; then
+      echo "[r4r-system] WARNING: The-Ring cognitive loop still runs pid=$(cat "$RING_AGENT_PID_FILE")"
+    fi
     "$GUARDIAN" --check-only --ring "$RING_ROOT" || true
     exit 1
     ;;

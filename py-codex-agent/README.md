@@ -84,3 +84,11 @@ The current effective policy can be inspected with:
 ```bash
 ./scripts/notify-success.sh --status
 ```
+
+## The-Ring advisory directive
+
+When `R4R_RING_WORKTREE` is set, the controller reads the current worker directive
+from `runtime/control/<PC|LP>/ring-qwen3-directive.json` in the Ring worktree. A
+directive is used only for the matching active task, must be recent and must declare
+`priority: advisory`. It is included in Qwen3 and Codex contexts but cannot override
+the task specification, exact gate or current Codex correction packet.

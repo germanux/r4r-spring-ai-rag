@@ -107,3 +107,29 @@ python3 -m unittest discover -s py-ring-agent/tests -p 'test_*.py'
 `prepare-worker-worktrees.py` now repairs all linked worktree `.git` pointers when
 the primary checkout has been renamed. It is safe to rerun after a partially
 completed phase 2.3 migration.
+
+## The-Ring ↔ Qwen3 exchange (phase 2.25)
+
+`run-ring-system.py` now supervises three long-lived processes: the deterministic
+PC/LP guardian and the separately locked cognitive `run-ring-agent.py` loop.
+Every Ring cycle copies a bounded snapshot of the latest PC and LP controller
+artifacts into its evidence directory, then writes one advisory JSON directive per
+worker:
+
+```text
+runtime/control/PC/ring-qwen3-directive.json
+runtime/control/LP/ring-qwen3-directive.json
+```
+
+The worker controller accepts a directive only when its schema, target, active task,
+timestamp and `priority=advisory` are valid. It injects the accepted directive into
+Qwen3 pre-edit, edit and assimilation prompts and into the next Codex plan/review
+context. The exact task, deterministic gate and current Codex correction packet
+always override The-Ring.
+
+The default review interval is one hour and can be changed with:
+
+```bash
+export R4R_RING_REVIEW_INTERVAL_SECONDS=3600
+export R4R_RING_DIRECTIVE_MAX_AGE_SECONDS=10800
+```

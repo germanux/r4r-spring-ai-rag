@@ -1,17 +1,26 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import sys
 
 # ---------------------------------------------------------------------------
-# EDIT THESE PATHS HERE. No command-line parameters are required.
+# Environment-aware canonical worktrees. No command-line parameters required.
 # ---------------------------------------------------------------------------
-DEVELOPMENT_ROOT = Path.home() / "Desarrollo"
-RING_WORKTREE = DEVELOPMENT_ROOT / "r4r-ring-agent.git"
-PC_WORKTREE = DEVELOPMENT_ROOT / "r4r-pc-worker.git"
-LP_WORKTREE = DEVELOPMENT_ROOT / "r4r-lp-worker.git"
-RUN_ONCE = True
+DEVELOPMENT_ROOT = Path(
+    os.environ.get("R4R_DEVELOPMENT_ROOT", str(Path.home() / "Desarrollo"))
+).expanduser()
+RING_WORKTREE = Path(
+    os.environ.get("R4R_RING_WORKTREE", str(DEVELOPMENT_ROOT / "r4r-ring-agent.git"))
+).expanduser()
+PC_WORKTREE = Path(
+    os.environ.get("R4R_PC_WORKTREE", str(DEVELOPMENT_ROOT / "r4r-pc-worker.git"))
+).expanduser()
+LP_WORKTREE = Path(
+    os.environ.get("R4R_LP_WORKTREE", str(DEVELOPMENT_ROOT / "r4r-lp-worker.git"))
+).expanduser()
+RUN_ONCE = os.environ.get("R4R_RING_RUN_ONCE", "false").lower() == "true"
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / "src"))

@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import datetime, timedelta, timezone
 import json
 import os
 import tempfile
@@ -279,6 +280,67 @@ class RunnerTest(unittest.TestCase):
             self.assertIn("FOCUSED CODEGRAPH EVIDENCE", prompt)
             self.assertIn("Found KnowledgeService callers", prompt)
 
+    def test_ring_directive_is_injected_only_for_matching_fresh_task(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            ring = repo / "ring"
+            directive = ring / "runtime" / "control" / "PC" / "ring-qwen3-directive.json"
+            directive.parent.mkdir(parents=True)
+            directive.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "target": "PC",
+                        "task_id": "task-02",
+                        "generated_at": datetime.now(timezone.utc).isoformat(),
+                        "priority": "advisory",
+                        "summary": "Backend contract is green but handoff is stale.",
+                        "next_action": "Regenerate the REST contract evidence.",
+                        "evidence_paths": ["runtime/runs/PC/latest/codex-review.json"],
+                        "constraints": ["Run the exact task gate."],
+                        "avoid_repeating": "Do not change frontend paths.",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            runner = object.__new__(AutomaticRunner)
+            runner.worker_id = "PC"
+            runner.ring_directive_path = directive
+            runner.ring_directive_max_age_seconds = 10800
+            task = Task("task-02", "task.md", "objective", ("src/**",), ("true",), "commit")
+            other = Task("task-03", "task.md", "objective", ("src/**",), ("true",), "commit")
+
+            current = runner._current_ring_directive(task)
+            ignored = runner._current_ring_directive(other)
+
+            self.assertIn("Regenerate the REST contract evidence", current)
+            self.assertIn("advisory only", current)
+            self.assertIn("active task is task-03", ignored)
+
+    def test_ring_directive_rejects_stale_and_non_advisory_content(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directive = Path(directory) / "ring-qwen3-directive.json"
+            runner = object.__new__(AutomaticRunner)
+            runner.worker_id = "LP"
+            runner.ring_directive_path = directive
+            runner.ring_directive_max_age_seconds = 60
+            task = Task("task-fe-03", "task.md", "objective", ("frontend/**",), ("true",), "commit")
+            value = {
+                "schema_version": 1,
+                "target": "LP",
+                "task_id": "task-fe-03",
+                "generated_at": (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),
+                "priority": "advisory",
+                "next_action": "Fix the DOM assertion.",
+            }
+            directive.write_text(json.dumps(value), encoding="utf-8")
+            self.assertIn("Ignored stale", runner._current_ring_directive(task))
+
+            value["generated_at"] = datetime.now(timezone.utc).isoformat()
+            value["priority"] = "mandatory"
+            directive.write_text(json.dumps(value), encoding="utf-8")
+            self.assertIn("priority is not advisory", runner._current_ring_directive(task))
+
     def test_extracts_actual_codegraph_tool_calls_from_nested_jsonl(self):
         stdout = "\n".join([
             json.dumps({
@@ -441,6 +503,8 @@ class RunnerTest(unittest.TestCase):
             runner.run_id = "20260730T235900Z"
             runner.run_dir = repo / "runtime" / "runs" / runner.run_id
             runner.run_dir.mkdir(parents=True)
+            runner.git_author_name = "R4R Agent"
+            runner.git_author_email = "r4r@example.invalid"
 
             exit_code = runner.record_unhandled_failure(
                 RuntimeError("out-of-scope maintenance files")
@@ -715,6 +779,9 @@ class RunnerTest(unittest.TestCase):
             runner = object.__new__(AutomaticRunner)
             runner.repo = repo
             runner.timeout = 30
+            runner.git_commit_lock_path = repo / "runtime" / "locks" / "git-commit.lock"
+            runner.git_author_name = "R4R Agent"
+            runner.git_author_email = "r4r@example.invalid"
             commit = runner._commit_if_needed("task commit", ("src/**",))
 
             self.assertIsNotNone(commit)
