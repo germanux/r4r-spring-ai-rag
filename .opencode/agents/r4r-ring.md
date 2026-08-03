@@ -70,13 +70,19 @@ state.json must be valid JSON with this structure:
       "action": "START | CONTINUE | HOLD | REVIEW | STOP | NO_ACTION",
       "task_id": "string or null",
       "reason": "non-empty evidence-grounded reason",
-      "acceptance_gates": ["one or more explicit gates"]
+      "next_action": "one focused action for one worker pass",
+      "evidence_paths": ["one or more existing paths inside RUN_DIR"],
+      "acceptance_gates": ["one or more exact gates or Codex constraints"],
+      "avoid_repeating": "the last failed or wasteful approach to avoid"
     },
     "LP": {
       "action": "START | CONTINUE | HOLD | REVIEW | STOP | NO_ACTION",
       "task_id": "string or null",
       "reason": "non-empty evidence-grounded reason",
-      "acceptance_gates": ["one or more explicit gates"]
+      "next_action": "one focused action for one worker pass",
+      "evidence_paths": ["one or more existing paths inside RUN_DIR"],
+      "acceptance_gates": ["one or more exact gates or Codex constraints"],
+      "avoid_repeating": "the last failed or wasteful approach to avoid"
     }
   },
   "integration_risks": ["zero or more evidence-grounded risks"],
@@ -87,5 +93,8 @@ Each Markdown file must be substantive, evidence-grounded, and contain explicit 
 bounded actions and acceptance conditions where relevant. Do not write placeholders,
 TODO-only documents, or claims based on unavailable evidence.
 
-Finish immediately after all six staged artifacts have been written. The Python
-supervisor validates them and promotes them atomically only after a complete success.
+Do not write `runtime/control/**` directly. The Python supervisor derives the PC and LP
+advisory directive JSON files from the validated `state.json`, then promotes all
+versioned summaries atomically only after a complete success.
+
+Finish immediately after all six staged artifacts have been written.
