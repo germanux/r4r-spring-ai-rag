@@ -102,8 +102,10 @@ next actions and acceptance conditions where relevant. Do not write placeholders
 TODO-only documents.
 
 Do not write `runtime/control/**` directly during the staged review. The Python
-supervisor derives PC and LP advisory directives from the validated `state.json`, then
-promotes the versioned summaries and directives atomically after complete success.
+supervisor derives PC and LP advisory directives from the validated `state.json`,
+publishes the Markdown summaries plus an append-only decision ledger below
+`docs/agent-coordination/`, commits only those versioned coordination documents, and
+then promotes the runtime directives after complete success.
 
 Finish the cycle after the six staged artifacts and any explicitly justified,
 non-destructive repository edits have been written.

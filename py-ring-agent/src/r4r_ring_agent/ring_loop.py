@@ -373,6 +373,127 @@ def _atomic_write_text(path: Path, content: str) -> None:
     os.replace(temporary, path)
 
 
+def _decision_ledger_entry(run_id: str, state: dict[str, Any]) -> str:
+    lines = [
+        f"## Cycle `{run_id}` — {state['overall_status']}",
+        "",
+    ]
+    for worker in ("PC", "LP"):
+        decision = state["decisions"][worker]
+        lines.extend(
+            [
+                f"### {worker}",
+                "",
+                f"- Decision: `{decision['action']}`",
+                f"- Task: `{decision['task_id'] or 'NO_ACTIVE_TASK'}`",
+                f"- Reason: {decision['reason']}",
+                f"- Next action: {decision['next_action']}",
+                f"- Avoid repeating: {decision['avoid_repeating']}",
+                "- Acceptance gates:",
+                *[f"  - {gate}" for gate in decision["acceptance_gates"]],
+                "- Evidence:",
+                *[f"  - `{path}`" for path in decision["evidence_paths"]],
+                "",
+            ]
+        )
+    lines.append("### Integration risks")
+    lines.append("")
+    risks = state["integration_risks"] or ["None recorded."]
+    lines.extend(f"- {risk}" for risk in risks)
+    lines.extend(["", "### Evidence limitations", ""])
+    limitations = state["evidence_limitations"] or ["None recorded."]
+    lines.extend(f"- {limitation}" for limitation in limitations)
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _append_decision_ledger(
+    destination: Path,
+    run_id: str,
+    state: dict[str, Any],
+) -> None:
+    marker = f"## Cycle `{run_id}`"
+    if destination.is_file():
+        existing = destination.read_text(encoding="utf-8")
+    else:
+        existing = (
+            "# R4R agent coordination decisions\n\n"
+            "Append-only ledger generated after each validated Ring cycle.\n"
+        )
+    if marker in existing:
+        return
+    content = existing.rstrip() + "\n\n" + _decision_ledger_entry(run_id, state)
+    _atomic_write_text(destination, content)
+
+
+def _commit_coordination_files(
+    repo: Path,
+    files: Sequence[Path],
+    run_id: str,
+) -> dict[str, Any]:
+    result: dict[str, Any] = {"status": "not-run", "commit": None, "detail": ""}
+    if _git(repo, ["rev-parse", "--is-inside-work-tree"]).strip() != "true":
+        result.update(status="not-git-worktree", detail="coordination files remain written")
+        return result
+
+    relative_paths = [str(path.relative_to(repo)) for path in files]
+    add = subprocess.run(
+        ["git", "add", "--", *relative_paths],
+        cwd=repo,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    if add.returncode != 0:
+        result.update(status="failed", detail=add.stdout.strip())
+        return result
+
+    changed = subprocess.run(
+        ["git", "diff", "--cached", "--quiet", "--", *relative_paths],
+        cwd=repo,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    if changed.returncode == 0:
+        result.update(status="no-changes", detail="coordination documents unchanged")
+        return result
+    if changed.returncode != 1:
+        result.update(
+            status="failed",
+            detail=f"git diff exited {changed.returncode}",
+        )
+        return result
+
+    commit = subprocess.run(
+        [
+            "git",
+            "-c",
+            "commit.gpgSign=false",
+            "commit",
+            "--only",
+            "-m",
+            f"docs(ring): record coordination cycle {run_id}",
+            "--",
+            *relative_paths,
+        ],
+        cwd=repo,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    if commit.returncode != 0:
+        result.update(status="failed", detail=commit.stdout.strip())
+        return result
+    result.update(
+        status="committed",
+        commit=_git(repo, ["rev-parse", "HEAD"]).strip(),
+        detail=commit.stdout.strip(),
+    )
+    return result
+
+
 def _path_within(root: Path, candidate: Path) -> bool:
     try:
         candidate.relative_to(root)
@@ -519,6 +640,8 @@ def _publish_staged_outputs(
         "published": False,
         "reason": "not-run",
         "promoted_files": {},
+        "versioned_files": {},
+        "coordination_commit": {"status": "not-run"},
         "directive_files": {},
     }
     missing = [
@@ -549,7 +672,7 @@ def _publish_staged_outputs(
         )
         return result
 
-    destinations = {
+    operational_destinations = {
         "state.json": paths.ring / ".ring-agent" / "state.json",
         "code-pc-review.md": paths.ring / ".ring-agent" / "code-pc-review.md",
         "code-lp-review.md": paths.ring / ".ring-agent" / "code-lp-review.md",
@@ -561,7 +684,7 @@ def _publish_staged_outputs(
             paths.ring / ".opencode" / "current" / "ring" / "worker-understanding.md"
         ),
     }
-    for name, destination in destinations.items():
+    for name, destination in operational_destinations.items():
         if name == "state.json":
             content = json.dumps(
                 normalized_state,
@@ -572,6 +695,38 @@ def _publish_staged_outputs(
             content = (output_dir / name).read_text(encoding="utf-8")
         _atomic_write_text(destination, content)
         result["promoted_files"][name] = str(destination)
+
+    coordination_dir = paths.ring / "docs" / "agent-coordination"
+    versioned_destinations = {
+        "code-pc-review.md": coordination_dir / "PC-WORKER.md",
+        "code-lp-review.md": coordination_dir / "LAPTOP-WORKER.md",
+        "backend-frontend-handoff.md": coordination_dir / "RING-HANDOFF.md",
+        "worker-understanding.md": coordination_dir / "WORKER-UNDERSTANDING.md",
+        "global-summary.md": coordination_dir / "CURRENT-STATE.md",
+    }
+    for name, destination in versioned_destinations.items():
+        _atomic_write_text(
+            destination,
+            (output_dir / name).read_text(encoding="utf-8"),
+        )
+        result["versioned_files"][name] = str(destination)
+
+    decisions_path = coordination_dir / "DECISIONS.md"
+    _append_decision_ledger(decisions_path, run_id, normalized_state)
+    result["versioned_files"]["decisions"] = str(decisions_path)
+    commit_result = _commit_coordination_files(
+        paths.ring,
+        [*versioned_destinations.values(), decisions_path],
+        run_id,
+    )
+    result["coordination_commit"] = commit_result
+    if commit_result["status"] == "failed":
+        result["reason"] = "coordination-commit-failed"
+        (run_dir / "ring-output-publication.json").write_text(
+            json.dumps(result, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        return result
 
     generated_at = datetime.now(timezone.utc)
     expires_at = generated_at + timedelta(seconds=DIRECTIVE_MAX_AGE_SECONDS)
@@ -650,9 +805,10 @@ Write these six staged files below OUTPUT_DIR on every successful cycle:
 
 You may additionally make bounded, non-destructive edits inside RING_WORKTREE. Document
 those edits and their evidence in the staged summaries. The Python supervisor validates
-the staged files, promotes the versioned summaries atomically, and deterministically
-creates the PC/LP advisory directive JSON files. Do not write `runtime/control/**`
-yourself during the staged review.
+the staged files, publishes current snapshots plus an append-only decision ledger below
+`docs/agent-coordination/`, commits only those coordination documents, and then creates
+the PC/LP advisory directive JSON files. Do not write `runtime/control/**` yourself
+during the staged review.
 
 state.json must be valid JSON with this exact structure:
 {{

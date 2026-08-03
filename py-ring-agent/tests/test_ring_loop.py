@@ -31,6 +31,7 @@ class RingLoopTest(unittest.TestCase):
             self.assertNotIn(str(paths.lp), prompt)
             self.assertIn("never delete, unlink, remove, rename or move", prompt)
             self.assertIn("may additionally make bounded, non-destructive edits", prompt)
+            self.assertIn("`docs/agent-coordination/`", prompt)
 
     def test_directive_validation_accepts_current_advisory_json(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -159,6 +160,22 @@ class RingLoopTest(unittest.TestCase):
             self.assertTrue(
                 (ring / ".opencode/current/ring/worker-understanding.md").is_file()
             )
+            coordination = ring / "docs" / "agent-coordination"
+            self.assertTrue((coordination / "CURRENT-STATE.md").is_file())
+            self.assertTrue((coordination / "PC-WORKER.md").is_file())
+            self.assertTrue((coordination / "LAPTOP-WORKER.md").is_file())
+            self.assertTrue((coordination / "RING-HANDOFF.md").is_file())
+            self.assertTrue((coordination / "WORKER-UNDERSTANDING.md").is_file())
+            decisions = (coordination / "DECISIONS.md").read_text(encoding="utf-8")
+            self.assertIn(f"## Cycle `{run_id}`", decisions)
+            self.assertIn("Decision: `CONTINUE`", decisions)
+            self.assertEqual(
+                publication["coordination_commit"]["status"],
+                "not-git-worktree",
+            )
+            ring_loop._publish_staged_outputs(paths, run_dir, run_id)
+            decisions = (coordination / "DECISIONS.md").read_text(encoding="utf-8")
+            self.assertEqual(decisions.count(f"## Cycle `{run_id}`"), 1)
             for worker in ("PC", "LP"):
                 directive_path = (
                     ring / "runtime" / "control" / worker / "ring-qwen3-directive.json"
@@ -170,6 +187,54 @@ class RingLoopTest(unittest.TestCase):
                 self.assertTrue(directive["next_action"])
                 self.assertTrue(directive["evidence_paths"])
                 self.assertIsNotNone(datetime.fromisoformat(directive["expires_at"]))
+
+    def test_coordination_commit_preserves_unrelated_staged_changes(self) -> None:
+        import subprocess
+
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+            subprocess.run(
+                ["git", "config", "user.name", "R4R test"],
+                cwd=repo,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "r4r@example.invalid"],
+                cwd=repo,
+                check=True,
+            )
+            unrelated = repo / "unrelated.txt"
+            unrelated.write_text("preserve me\n", encoding="utf-8")
+            subprocess.run(["git", "add", "unrelated.txt"], cwd=repo, check=True)
+            coordination = repo / "docs" / "agent-coordination" / "CURRENT-STATE.md"
+            coordination.parent.mkdir(parents=True)
+            coordination.write_text("# current state\n", encoding="utf-8")
+
+            result = ring_loop._commit_coordination_files(
+                repo,
+                [coordination],
+                "run-1",
+            )
+
+            self.assertEqual(result["status"], "committed", result)
+            committed = subprocess.run(
+                ["git", "show", "--pretty=format:", "--name-only", "HEAD"],
+                cwd=repo,
+                text=True,
+                stdout=subprocess.PIPE,
+                check=True,
+            ).stdout
+            self.assertIn("docs/agent-coordination/CURRENT-STATE.md", committed)
+            self.assertNotIn("unrelated.txt", committed)
+            staged = subprocess.run(
+                ["git", "diff", "--cached", "--name-only"],
+                cwd=repo,
+                text=True,
+                stdout=subprocess.PIPE,
+                check=True,
+            ).stdout
+            self.assertIn("unrelated.txt", staged)
 
 
 
