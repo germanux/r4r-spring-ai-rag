@@ -32,7 +32,7 @@
     {
       "id": "task-fe-03-rag-ui",
       "command": ".opencode/commands/task-fe-03-rag-ui.md",
-      "objective": "Build the Angular question, answer, abstention and citation experience.",
+      "objective": "Stabilize and commit the current compilable Angular RAG page baseline.",
       "allowed_paths": [
         "frontend/**",
         "docs/frontend/**"
@@ -41,7 +41,77 @@
         "./scripts/frontend-task-gate.sh",
         "task-fe-03-rag-ui"
       ],
-      "commit_message": "feat(frontend-03): add cited RAG user interface"
+      "commit_message": "chore(rag-ui): checkpoint compilable RAG page baseline"
+    },
+    {
+      "id": "task-fe-03b-answer-abstention",
+      "command": ".opencode/commands/task-fe-03b-answer-abstention.md",
+      "objective": "Render deterministic answer, abstention and error states.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-03b-answer-abstention"
+      ],
+      "commit_message": "feat(rag-ui): render answer and abstention states"
+    },
+    {
+      "id": "task-fe-03c-citations",
+      "command": ".opencode/commands/task-fe-03c-citations.md",
+      "objective": "Render ordered structured citations without parsing model text.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-03c-citations"
+      ],
+      "commit_message": "feat(rag-ui): render structured citations"
+    },
+    {
+      "id": "task-fe-03d-dom-state-tests",
+      "command": ".opencode/commands/task-fe-03d-dom-state-tests.md",
+      "objective": "Prove loading, disabled, error, answer and reset behavior through the DOM.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-03d-dom-state-tests"
+      ],
+      "commit_message": "test(rag-ui): verify DOM interaction states"
+    },
+    {
+      "id": "task-fe-03e-security-accessibility",
+      "command": ".opencode/commands/task-fe-03e-security-accessibility.md",
+      "objective": "Prove safe escaping and accessible rendered semantics.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-03e-security-accessibility"
+      ],
+      "commit_message": "test(rag-ui): verify safe accessible rendering"
+    },
+    {
+      "id": "task-fe-03f-final-validation",
+      "command": ".opencode/commands/task-fe-03f-final-validation.md",
+      "objective": "Complete the Angular RAG page build and deterministic unit validation.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-03f-final-validation"
+      ],
+      "commit_message": "test(rag-ui): complete RAG page validation"
     },
     {
       "id": "task-fe-04-playwright",

@@ -78,16 +78,50 @@ def load_progress(path: Path, task_ids: Iterable[str]) -> dict[str, Any]:
     expected = tuple(task_ids)
     if not path.exists():
         return default_progress(expected)
+
     raw: Any = json.loads(path.read_text(encoding="utf-8"))
     if raw.get("schema_version") != 1 or not isinstance(raw.get("tasks"), list):
         raise ValueError("Invalid progress file")
-    actual = tuple(str(item.get("id")) for item in raw["tasks"] if isinstance(item, dict))
-    if actual != expected:
-        raise ValueError("Progress task order does not match task plan")
+
     valid = {"PENDING", "ACTIVE", "ACCEPTED", "REGRESSION", "BLOCKED"}
-    for item in raw["tasks"]:
+    by_id: dict[str, dict[str, Any]] = {}
+    for index, item in enumerate(raw["tasks"]):
+        if not isinstance(item, dict):
+            raise ValueError(f"progress.tasks[{index}] must be an object")
+        task_id = str(item.get("id") or "").strip()
+        if not task_id:
+            raise ValueError(f"progress.tasks[{index}] requires a non-empty id")
+        if task_id in by_id:
+            raise ValueError(f"Duplicate progress task id: {task_id}")
         if item.get("status") not in valid:
             raise ValueError(f"Invalid task status: {item.get('status')}")
+        by_id[task_id] = item
+
+    unknown = sorted(set(by_id).difference(expected))
+    if unknown:
+        raise ValueError(
+            "Progress contains tasks that are absent from the task plan: "
+            + ", ".join(unknown)
+        )
+
+    # Task plans may evolve by inserting new commit-sized subtasks. Preserve every
+    # existing task record by id, reorder it to the current plan and initialize only
+    # the newly inserted tasks as PENDING. This keeps accepted history and an active
+    # legacy task intact while allowing additive plan refinement.
+    raw["tasks"] = [
+        by_id.get(task_id, {
+            "id": task_id,
+            "status": "PENDING",
+            "accepted_at": None,
+        })
+        for task_id in expected
+    ]
+
+    active_task = raw.get("active_task")
+    if active_task is not None and str(active_task) not in expected:
+        raise ValueError(
+            f"Active progress task is absent from the task plan: {active_task}"
+        )
     return raw
 
 
