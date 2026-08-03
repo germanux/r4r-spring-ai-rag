@@ -32,7 +32,21 @@ class StreamedResult:
         return self.finished_at_monotonic - self.started_at_monotonic
 
 
+def _proc_state_and_group(pid: int) -> tuple[str, int] | None:
+    try:
+        stat = (Path("/proc") / str(pid) / "stat").read_text(encoding="utf-8")
+        right = stat.rfind(")")
+        fields = stat[right + 2 :].split()
+        return fields[0], int(fields[2])
+    except (OSError, ValueError, IndexError):
+        return None
+
+
 def _is_alive(pid: int) -> bool:
+    state_group = _proc_state_and_group(pid)
+    if state_group is not None:
+        state, _group = state_group
+        return state != "Z"
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
@@ -72,15 +86,48 @@ def _descendants(root_pid: int) -> set[int]:
     return found
 
 
-def _signal_tree(root_pid: int, sig: signal.Signals) -> None:
+def _process_groups(root_pid: int) -> set[int]:
+    """Return every process group currently visible below ``root_pid``."""
     pids = _descendants(root_pid) | {root_pid}
-    pgids: set[int] = set()
+    current_group = os.getpgrp()
+    groups: set[int] = set()
     for pid in pids:
         try:
-            pgids.add(os.getpgid(pid))
+            pgid = os.getpgid(pid)
         except ProcessLookupError:
             continue
+        if pgid > 1 and pgid != current_group:
+            groups.add(pgid)
+    return groups
+
+
+def _process_group_alive(pgid: int) -> bool:
+    proc = Path("/proc")
+    if proc.exists():
+        for entry in proc.iterdir():
+            if not entry.name.isdigit():
+                continue
+            state_group = _proc_state_and_group(int(entry.name))
+            if state_group is None:
+                continue
+            state, candidate_group = state_group
+            if candidate_group == pgid and state != "Z":
+                return True
+        return False
+    try:
+        os.killpg(pgid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _signal_groups(pgids: set[int], sig: signal.Signals) -> None:
+    current_group = os.getpgrp()
     for pgid in sorted(pgids, reverse=True):
+        if pgid <= 1 or pgid == current_group:
+            continue
         try:
             os.killpg(pgid, sig)
         except ProcessLookupError:
@@ -88,24 +135,53 @@ def _signal_tree(root_pid: int, sig: signal.Signals) -> None:
 
 
 def terminate_process_tree(process: subprocess.Popen[bytes]) -> None:
-    """Stop the controller plus detached OpenCode descendants, then let pipes drain."""
-    if process.poll() is not None:
+    """Stop the controller and all detached process groups observed below it.
+
+    OpenCode starts in its own session. If the Python parent exits first, waiting only
+    for the root PID leaves OpenCode alive. Capture every descendant process group
+    before signalling and continue until both the root and those groups are gone.
+    """
+    known_groups = _process_groups(process.pid)
+    if process.poll() is not None and not any(
+        _process_group_alive(pgid) for pgid in known_groups
+    ):
         return
+
     for sig, grace in (
         (signal.SIGINT, SIGINT_GRACE_SECONDS),
         (signal.SIGTERM, SIGTERM_GRACE_SECONDS),
     ):
-        _signal_tree(process.pid, sig)
+        if _is_alive(process.pid):
+            known_groups.update(_process_groups(process.pid))
+        _signal_groups(known_groups, sig)
         deadline = time.monotonic() + grace
         while time.monotonic() < deadline:
-            if process.poll() is not None:
+            if _is_alive(process.pid):
+                known_groups.update(_process_groups(process.pid))
+            known_groups = {
+                pgid for pgid in known_groups if _process_group_alive(pgid)
+            }
+            if process.poll() is not None and not known_groups:
                 return
             time.sleep(0.1)
-    _signal_tree(process.pid, signal.SIGKILL)
+
+    if _is_alive(process.pid):
+        known_groups.update(_process_groups(process.pid))
+    _signal_groups(known_groups, signal.SIGKILL)
     try:
         process.wait(timeout=5)
     except subprocess.TimeoutExpired:
         pass
+
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        known_groups = {
+            pgid for pgid in known_groups if _process_group_alive(pgid)
+        }
+        if not known_groups:
+            return
+        _signal_groups(known_groups, signal.SIGKILL)
+        time.sleep(0.1)
 
 
 def run_streamed(

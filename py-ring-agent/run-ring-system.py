@@ -42,32 +42,154 @@ def _read_live_pid(path: Path) -> int | None:
         return None
 
 
-def _terminate_managed_process(pid: int, timeout_seconds: float = 15.0) -> None:
+def _proc_state_and_group(pid: int) -> tuple[str, int] | None:
     try:
-        pgid = os.getpgid(pid)
+        stat = (Path("/proc") / str(pid) / "stat").read_text(encoding="utf-8")
+        right = stat.rfind(")")
+        fields = stat[right + 2 :].split()
+        return fields[0], int(fields[2])
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def _is_alive(pid: int) -> bool:
+    state_group = _proc_state_and_group(pid)
+    if state_group is not None:
+        state, _group = state_group
+        return state != "Z"
+    try:
+        os.kill(pid, 0)
     except ProcessLookupError:
-        return
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _reap_child(pid: int) -> bool:
     try:
-        if pgid == pid:
-            os.killpg(pgid, signal.SIGTERM)
-        else:
+        reaped, _status = os.waitpid(pid, os.WNOHANG)
+    except ChildProcessError:
+        return False
+    return reaped == pid
+
+
+def _descendants(root_pid: int) -> set[int]:
+    children_by_parent: dict[int, list[int]] = {}
+    proc = Path("/proc")
+    if not proc.exists():
+        return set()
+    for entry in proc.iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            stat = (entry / "stat").read_text(encoding="utf-8")
+            right = stat.rfind(")")
+            fields = stat[right + 2 :].split()
+            pid = int(entry.name)
+            ppid = int(fields[1])
+        except (OSError, ValueError, IndexError):
+            continue
+        children_by_parent.setdefault(ppid, []).append(pid)
+
+    found: set[int] = set()
+    stack = list(children_by_parent.get(root_pid, ()))
+    while stack:
+        candidate = stack.pop()
+        if candidate in found:
+            continue
+        found.add(candidate)
+        stack.extend(children_by_parent.get(candidate, ()))
+    return found
+
+
+def _process_groups(root_pid: int) -> set[int]:
+    current_group = os.getpgrp()
+    groups: set[int] = set()
+    for candidate in _descendants(root_pid) | {root_pid}:
+        try:
+            pgid = os.getpgid(candidate)
+        except ProcessLookupError:
+            continue
+        if pgid > 1 and pgid != current_group:
+            groups.add(pgid)
+    return groups
+
+
+def _group_alive(pgid: int) -> bool:
+    proc = Path("/proc")
+    if proc.exists():
+        for entry in proc.iterdir():
+            if not entry.name.isdigit():
+                continue
+            state_group = _proc_state_and_group(int(entry.name))
+            if state_group is None:
+                continue
+            state, candidate_group = state_group
+            if candidate_group == pgid and state != "Z":
+                return True
+        return False
+    try:
+        os.killpg(pgid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _signal_groups(groups: set[int], sig: signal.Signals) -> None:
+    current_group = os.getpgrp()
+    for pgid in sorted(groups, reverse=True):
+        if pgid <= 1 or pgid == current_group:
+            continue
+        try:
+            os.killpg(pgid, sig)
+        except ProcessLookupError:
+            pass
+
+
+def _terminate_managed_process(pid: int, timeout_seconds: float = 20.0) -> None:
+    """Terminate the Ring launcher plus detached OpenCode process groups."""
+    groups = _process_groups(pid)
+    _reap_child(pid)
+    if not _is_alive(pid) and not any(_group_alive(group) for group in groups):
+        return
+
+    _signal_groups(groups, signal.SIGTERM)
+    if _is_alive(pid):
+        try:
             os.kill(pid, signal.SIGTERM)
-    except ProcessLookupError:
-        return
+        except ProcessLookupError:
+            pass
+
     deadline = time.monotonic() + timeout_seconds
     while time.monotonic() < deadline:
-        try:
-            os.kill(pid, 0)
-        except ProcessLookupError:
+        _reap_child(pid)
+        if _is_alive(pid):
+            groups.update(_process_groups(pid))
+        groups = {group for group in groups if _group_alive(group)}
+        if not _is_alive(pid) and not groups:
             return
         time.sleep(0.25)
-    try:
-        if pgid == pid:
-            os.killpg(pgid, signal.SIGKILL)
-        else:
+
+    if _is_alive(pid):
+        groups.update(_process_groups(pid))
+    _signal_groups(groups, signal.SIGKILL)
+    if _is_alive(pid):
+        try:
             os.kill(pid, signal.SIGKILL)
-    except ProcessLookupError:
-        pass
+        except ProcessLookupError:
+            pass
+
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        _reap_child(pid)
+        groups = {group for group in groups if _group_alive(group)}
+        if not _is_alive(pid) and not groups:
+            return
+        _signal_groups(groups, signal.SIGKILL)
+        time.sleep(0.1)
 
 
 def main() -> int:

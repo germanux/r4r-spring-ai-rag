@@ -8,7 +8,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import time
-from typing import Any, Sequence
+from typing import Any, Callable, Sequence
 
 from .operator_control import OperatorCommand, RingCommandFile
 from .ring_process import run_streamed
@@ -346,74 +346,354 @@ def _validate_directives(ring: Path, run_dir: Path) -> None:
     )
 
 
-def _prompt(paths: WorktreePaths, run_dir: Path) -> str:
+
+STAGED_OUTPUT_NAMES = (
+    "state.json",
+    "code-pc-review.md",
+    "code-lp-review.md",
+    "backend-frontend-handoff.md",
+    "worker-understanding.md",
+    "global-summary.md",
+)
+VALID_RING_ACTIONS = {
+    "START",
+    "CONTINUE",
+    "HOLD",
+    "REVIEW",
+    "STOP",
+    "NO_ACTION",
+}
+VALID_OVERALL_STATUSES = {"READY", "BLOCKED", "NO_ACTION"}
+
+
+def _atomic_write_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.tmp-{os.getpid()}")
+    temporary.write_text(content, encoding="utf-8")
+    os.replace(temporary, path)
+
+
+def _path_within(root: Path, candidate: Path) -> bool:
+    try:
+        candidate.relative_to(root)
+    except ValueError:
+        return False
+    return True
+
+
+def _non_empty_strings(value: Any, field: str) -> list[str]:
+    if not isinstance(value, list) or not value:
+        raise ValueError(f"{field} must be a non-empty list")
+    result: list[str] = []
+    for item in value:
+        if not isinstance(item, str) or not item.strip():
+            raise ValueError(f"{field} must contain only non-empty strings")
+        result.append(item.strip())
+    return result
+
+
+def _validate_staged_state(
+    state_path: Path,
+    run_dir: Path,
+    run_id: str,
+) -> dict[str, Any]:
+    try:
+        value = json.loads(state_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exception:
+        raise ValueError(f"invalid state.json: {exception}") from exception
+    if not isinstance(value, dict):
+        raise ValueError("state.json root must be an object")
+    if value.get("schema_version") != 1:
+        raise ValueError("state.json schema_version must be 1")
+    if value.get("run_id") != run_id:
+        raise ValueError(
+            f"state.json run_id must be {run_id!r}, got {value.get('run_id')!r}"
+        )
+    overall_status = str(value.get("overall_status", "")).upper()
+    if overall_status not in VALID_OVERALL_STATUSES:
+        raise ValueError(
+            "state.json overall_status must be READY, BLOCKED or NO_ACTION"
+        )
+    decisions = value.get("decisions")
+    if not isinstance(decisions, dict):
+        raise ValueError("state.json decisions must be an object")
+
+    normalized_decisions: dict[str, dict[str, Any]] = {}
+    resolved_run_dir = run_dir.resolve()
+    for worker in ("PC", "LP"):
+        decision = decisions.get(worker)
+        if not isinstance(decision, dict):
+            raise ValueError(f"state.json decisions.{worker} must be an object")
+        action = str(decision.get("action", "")).upper()
+        if action not in VALID_RING_ACTIONS:
+            raise ValueError(
+                f"state.json decisions.{worker}.action is invalid: {action!r}"
+            )
+        raw_task_id = decision.get("task_id")
+        if raw_task_id is not None and (
+            not isinstance(raw_task_id, str) or not raw_task_id.strip()
+        ):
+            raise ValueError(
+                f"state.json decisions.{worker}.task_id must be null or non-empty"
+            )
+        reason = str(decision.get("reason", "")).strip()
+        next_action = str(decision.get("next_action", "")).strip()
+        avoid_repeating = str(decision.get("avoid_repeating", "")).strip()
+        if not reason:
+            raise ValueError(
+                f"state.json decisions.{worker}.reason must be non-empty"
+            )
+        if not next_action:
+            raise ValueError(
+                f"state.json decisions.{worker}.next_action must be non-empty"
+            )
+        if not avoid_repeating:
+            raise ValueError(
+                f"state.json decisions.{worker}.avoid_repeating must be non-empty"
+            )
+
+        acceptance_gates = _non_empty_strings(
+            decision.get("acceptance_gates"),
+            f"state.json decisions.{worker}.acceptance_gates",
+        )
+        evidence_paths = _non_empty_strings(
+            decision.get("evidence_paths"),
+            f"state.json decisions.{worker}.evidence_paths",
+        )
+        normalized_evidence: list[str] = []
+        for evidence in evidence_paths:
+            candidate = Path(evidence)
+            if not candidate.is_absolute():
+                candidate = resolved_run_dir / candidate
+            candidate = candidate.resolve()
+            if not _path_within(resolved_run_dir, candidate):
+                raise ValueError(
+                    f"state.json decisions.{worker}.evidence_paths escapes RUN_DIR: "
+                    f"{evidence!r}"
+                )
+            if not candidate.exists():
+                raise ValueError(
+                    f"state.json decisions.{worker}.evidence_paths does not exist: "
+                    f"{evidence!r}"
+                )
+            normalized_evidence.append(str(candidate))
+
+        normalized_decisions[worker] = {
+            "action": action,
+            "task_id": raw_task_id.strip() if isinstance(raw_task_id, str) else None,
+            "reason": reason,
+            "next_action": next_action,
+            "avoid_repeating": avoid_repeating,
+            "acceptance_gates": acceptance_gates,
+            "evidence_paths": normalized_evidence,
+        }
+
+    return {
+        "schema_version": 1,
+        "run_id": run_id,
+        "overall_status": overall_status,
+        "decisions": normalized_decisions,
+        "integration_risks": [
+            str(item).strip()
+            for item in value.get("integration_risks", [])
+            if isinstance(item, str) and item.strip()
+        ],
+        "evidence_limitations": [
+            str(item).strip()
+            for item in value.get("evidence_limitations", [])
+            if isinstance(item, str) and item.strip()
+        ],
+    }
+
+
+def _publish_staged_outputs(
+    paths: WorktreePaths,
+    run_dir: Path,
+    run_id: str,
+) -> dict[str, Any]:
+    output_dir = run_dir / "output"
+    result: dict[str, Any] = {
+        "schema_version": 1,
+        "run_id": run_id,
+        "output_dir": str(output_dir),
+        "published": False,
+        "reason": "not-run",
+        "promoted_files": {},
+        "directive_files": {},
+    }
+    missing = [
+        name
+        for name in STAGED_OUTPUT_NAMES
+        if not (output_dir / name).is_file()
+        or not (output_dir / name).read_text(encoding="utf-8").strip()
+    ]
+    if missing:
+        result["reason"] = f"missing-or-empty: {', '.join(missing)}"
+        (run_dir / "ring-output-publication.json").write_text(
+            json.dumps(result, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        return result
+
+    try:
+        normalized_state = _validate_staged_state(
+            output_dir / "state.json",
+            run_dir,
+            run_id,
+        )
+    except ValueError as exception:
+        result["reason"] = str(exception)
+        (run_dir / "ring-output-publication.json").write_text(
+            json.dumps(result, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        return result
+
+    destinations = {
+        "state.json": paths.ring / ".ring-agent" / "state.json",
+        "code-pc-review.md": paths.ring / ".ring-agent" / "code-pc-review.md",
+        "code-lp-review.md": paths.ring / ".ring-agent" / "code-lp-review.md",
+        "backend-frontend-handoff.md": (
+            paths.ring / ".ring-agent" / "backend-frontend-handoff.md"
+        ),
+        "global-summary.md": paths.ring / ".ring-agent" / "global-summary.md",
+        "worker-understanding.md": (
+            paths.ring / ".opencode" / "current" / "ring" / "worker-understanding.md"
+        ),
+    }
+    for name, destination in destinations.items():
+        if name == "state.json":
+            content = json.dumps(
+                normalized_state,
+                indent=2,
+                ensure_ascii=False,
+            ) + "\n"
+        else:
+            content = (output_dir / name).read_text(encoding="utf-8")
+        _atomic_write_text(destination, content)
+        result["promoted_files"][name] = str(destination)
+
     generated_at = datetime.now(timezone.utc)
     expires_at = generated_at + timedelta(seconds=DIRECTIVE_MAX_AGE_SECONDS)
+    for worker in ("PC", "LP"):
+        decision = normalized_state["decisions"][worker]
+        directive = {
+            "schema_version": 1,
+            "target": worker,
+            "task_id": decision["task_id"] or "NO_ACTIVE_TASK",
+            "generated_at": generated_at.isoformat(),
+            "expires_at": expires_at.isoformat(),
+            "priority": "advisory",
+            "summary": decision["reason"],
+            "next_action": decision["next_action"],
+            "evidence_paths": decision["evidence_paths"],
+            "constraints": decision["acceptance_gates"],
+            "avoid_repeating": decision["avoid_repeating"],
+        }
+        destination = _directive_path(paths.ring, worker)
+        _atomic_write_text(
+            destination,
+            json.dumps(directive, indent=2, ensure_ascii=False) + "\n",
+        )
+        result["directive_files"][worker] = str(destination)
+
+    result["published"] = True
+    result["reason"] = "ok"
+    (run_dir / "ring-output-publication.json").write_text(
+        json.dumps(result, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return result
+
+
+def _prompt(paths: WorktreePaths, run_dir: Path, run_id: str) -> str:
+    output_dir = run_dir / "output"
     return f"""You are The Ring, the cross-stack commander for R4R.
 This is a fresh OpenCode session. Do not resume another transcript.
 
-Worktrees:
-- RING: {paths.ring}
-- PC backend worker: {paths.pc}
-- LP frontend worker: {paths.lp}
+The deterministic supervisor has copied the complete bounded evidence for this run to:
+- RUN_DIR: {run_dir}
+- OUTPUT_DIR: {output_dir}
+- RUN_ID: {run_id}
 
-Fresh deterministic evidence for all three worktrees and the latest worker runtime
-artifacts is stored under:
-- {run_dir}
+Read only files below RUN_DIR. Do not read the live Ring, PC or LP worktrees directly.
+Do not read `opencode.console.log`. Do not perform unbounded searches.
 
-Read the Ring, PC and LP commit/status/diff evidence. Then read both worker-runtime
-subdirectories, including progress, worker memory, latest gate-green checkpoint,
-latest Codex plan/review, local understanding, CodeGraph report, gate summary and the
-previous Ring directive when present. Also read `worker-request-manifest.json` and
-`worker-requests/*.json`: these are event-triggered requests from the deterministic
-controllers and identify what changed since the previous Ring cycle.
+Review the Ring, PC and LP commit/status/diff evidence and both worker-runtime
+subdirectories. Prefer the newest authoritative evidence inside this RUN_DIR:
+progress, worker memory, checkpoint, Codex plan/review, correction packet,
+local understanding, CodeGraph report, gate summary and prior Ring directive.
+
 Identify the first current defect for PC and LP. Prefer correction before new
-implementation. Read Java, Angular, tests, Python and shell only when needed.
-Do not perform unbounded searches.
+implementation. Do not claim a test passed, a task completed, Codex accepted, or a
+worker started unless direct evidence in RUN_DIR proves it.
 
-Update only these versioned files in the RING worktree:
-- .ring-agent/global-summary.md
-- .ring-agent/code-pc-review.md
-- .ring-agent/code-lp-review.md
-- .ring-agent/backend-frontend-handoff.md
-- .ring-agent/state.json
-- .opencode/current/ring/**
+Write exactly these six staged files below OUTPUT_DIR and nowhere else:
+- {output_dir}/state.json
+- {output_dir}/code-pc-review.md
+- {output_dir}/code-lp-review.md
+- {output_dir}/backend-frontend-handoff.md
+- {output_dir}/worker-understanding.md
+- {output_dir}/global-summary.md
 
-Also write exactly one current advisory directive for each Qwen3 worker:
-- {paths.ring}/runtime/control/PC/ring-qwen3-directive.json
-- {paths.ring}/runtime/control/LP/ring-qwen3-directive.json
+The Python supervisor validates these files, promotes the versioned summaries
+atomically, and deterministically creates the PC/LP advisory directive JSON files.
+Do not write `runtime/control/**` yourself.
 
-Each directive must be valid JSON with this exact shape:
+state.json must be valid JSON with this exact structure:
 {{
   "schema_version": 1,
-  "target": "PC or LP",
-  "task_id": "the exact active task id from progress/evidence",
-  "generated_at": "timezone-aware ISO-8601 timestamp; use {generated_at.isoformat()}",
-  "expires_at": "timezone-aware ISO-8601 timestamp; use {expires_at.isoformat()}",
-  "priority": "advisory",
-  "summary": "short diagnosis",
-  "next_action": "one focused action",
-  "evidence_paths": ["exact paths supporting the decision"],
-  "constraints": ["task/gate/Codex constraints that must remain true"],
-  "avoid_repeating": "the last failed or wasteful approach to avoid"
+  "run_id": "{run_id}",
+  "overall_status": "READY | BLOCKED | NO_ACTION",
+  "decisions": {{
+    "PC": {{
+      "action": "START | CONTINUE | HOLD | REVIEW | STOP | NO_ACTION",
+      "task_id": "exact active task id or null",
+      "reason": "non-empty evidence-grounded diagnosis",
+      "next_action": "one focused action for one worker pass",
+      "evidence_paths": [
+        "one or more existing paths inside RUN_DIR supporting the decision"
+      ],
+      "acceptance_gates": [
+        "one or more exact task, gate or Codex constraints"
+      ],
+      "avoid_repeating": "the last failed or wasteful approach to avoid"
+    }},
+    "LP": {{
+      "action": "START | CONTINUE | HOLD | REVIEW | STOP | NO_ACTION",
+      "task_id": "exact active task id or null",
+      "reason": "non-empty evidence-grounded diagnosis",
+      "next_action": "one focused action for one worker pass",
+      "evidence_paths": [
+        "one or more existing paths inside RUN_DIR supporting the decision"
+      ],
+      "acceptance_gates": [
+        "one or more exact task, gate or Codex constraints"
+      ],
+      "avoid_repeating": "the last failed or wasteful approach to avoid"
+    }}
+  }},
+  "integration_risks": ["zero or more evidence-grounded risks"],
+  "evidence_limitations": ["zero or more explicit limitations"]
 }}
 
 The exact task specification, deterministic gate and current Codex correction packet
-are authoritative and override a Ring suggestion. Do not ask Qwen3 to bypass a gate,
-change task scope, edit controller files, write Git history or repeat an already failed
-approach. Keep each directive focused enough for one local-model pass.
+are authoritative and override Ring advice. Do not ask workers to bypass a gate,
+change task scope, edit controller files, write Git history, or repeat an already
+failed approach.
 
-Do not edit product Java or Angular. Do not edit PC or LP worktrees. Do not write Git
-history. Do not install packages. Do not run find, recursive grep, git add, commit,
-reset, checkout, merge, rebase, push or clean.
+Do not edit Java or Angular. Do not edit PC or LP worktrees. Do not write Git history.
+Do not install packages. Do not run shell commands.
 
-The PC and LP directives must each contain one focused next action, exact evidence,
-paths to inspect, the exact gate and a strategy that does not repeat the last failed
-approach. Detect a newly compilable REST contract and update the frontend handoff.
+Finish immediately after all six staged files are written.
 """
 
 
-def _command(paths: WorktreePaths, run_dir: Path) -> tuple[str, ...]:
+def _command(
+    paths: WorktreePaths,
+    run_dir: Path,
+    run_id: str,
+) -> tuple[str, ...]:
     return (
         OPENCODE_BIN,
         "run",
@@ -426,11 +706,16 @@ def _command(paths: WorktreePaths, run_dir: Path) -> tuple[str, ...]:
         "--format",
         "json",
         "--auto",
-        _prompt(paths, run_dir),
+        _prompt(paths, run_dir, run_id),
     )
 
 
-def run_ring_loop(paths: WorktreePaths, *, once: bool = False) -> int:
+def run_ring_loop(
+    paths: WorktreePaths,
+    *,
+    once: bool = False,
+    stop_requested: Callable[[], bool] | None = None,
+) -> int:
     if REVIEW_INTERVAL_SECONDS < 1:
         raise ValueError("R4R_RING_REVIEW_INTERVAL_SECONDS must be positive")
     if SESSION_TIMEOUT_SECONDS < 1:
@@ -464,6 +749,10 @@ def run_ring_loop(paths: WorktreePaths, *, once: bool = False) -> int:
 
     try:
         while True:
+            if stop_requested is not None and stop_requested():
+                control.set_state("stopped", "The Ring stopped by system signal")
+                return 0
+
             request = control.poll()
             if request is not None:
                 if request.command == "stop":
@@ -479,6 +768,9 @@ def run_ring_loop(paths: WorktreePaths, *, once: bool = False) -> int:
                     next_run = time.monotonic()
 
             if control.current_state() == "paused":
+                if stop_requested is not None and stop_requested():
+                    control.set_state("stopped", "The Ring stopped by system signal")
+                    return 0
                 control.heartbeat("paused")
                 time.sleep(1)
                 continue
@@ -509,6 +801,8 @@ def run_ring_loop(paths: WorktreePaths, *, once: bool = False) -> int:
             def stop_poll() -> str:
                 nonlocal active_command
                 control.heartbeat("running")
+                if stop_requested is not None and stop_requested():
+                    return "system-stop"
                 request = control.poll()
                 if request is None or request.command == "continue":
                     if request is not None:
@@ -518,19 +812,47 @@ def run_ring_loop(paths: WorktreePaths, *, once: bool = False) -> int:
                 return request.command
 
             result = run_streamed(
-                _command(paths, run_dir),
+                _command(paths, run_dir, run_id),
                 paths.ring,
                 run_dir / "opencode.console.log",
                 timeout_seconds=SESSION_TIMEOUT_SECONDS,
                 stop_poll=stop_poll,
             )
+            publication = (
+                _publish_staged_outputs(paths, run_dir, run_id)
+                if result.exit_code == 0 and not result.stop_reason
+                else {
+                    "schema_version": 1,
+                    "run_id": run_id,
+                    "published": False,
+                    "reason": (
+                        f"session-not-publishable: exit={result.exit_code} "
+                        f"stop_reason={result.stop_reason!r}"
+                    ),
+                }
+            )
+            if not (run_dir / "ring-output-publication.json").exists():
+                (run_dir / "ring-output-publication.json").write_text(
+                    json.dumps(publication, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8",
+                )
             _validate_directives(paths.ring, run_dir)
+            effective_exit_code = result.exit_code
+            if (
+                effective_exit_code == 0
+                and not result.stop_reason
+                and not publication.get("published", False)
+            ):
+                effective_exit_code = 65
+
             (run_dir / "session-result.json").write_text(
                 json.dumps(
                     {
                         "run_id": run_id,
                         "exit_code": result.exit_code,
+                        "effective_exit_code": effective_exit_code,
                         "duration_seconds": result.duration_seconds,
+                        "publication": publication,
                         "stop_reason": result.stop_reason,
                         "agent": RING_AGENT,
                         "model": RING_MODEL,
@@ -549,6 +871,10 @@ def run_ring_loop(paths: WorktreePaths, *, once: bool = False) -> int:
                 encoding="utf-8",
             )
 
+            if result.stop_reason == "system-stop":
+                control.set_state("stopped", "Ring session stopped by system signal")
+                return 0
+
             if active_command is not None:
                 if active_command.command == "stop":
                     control.complete(active_command, "stopped", "Ring session stopped and log finalized")
@@ -564,11 +890,20 @@ def run_ring_loop(paths: WorktreePaths, *, once: bool = False) -> int:
                     "running",
                     f"Ring session reached {SESSION_TIMEOUT_SECONDS}s; next session will be fresh",
                 )
+            elif not publication.get("published", False):
+                control.set_state(
+                    "running",
+                    "Ring session output rejected: "
+                    f"{publication.get('reason', 'unknown publication failure')}",
+                )
             else:
-                control.set_state("running", f"Ring session finished with exit {result.exit_code}")
+                control.set_state(
+                    "running",
+                    f"Ring session finished with exit {effective_exit_code}",
+                )
 
             if once:
-                return result.exit_code
+                return effective_exit_code
             next_run = time.monotonic() + REVIEW_INTERVAL_SECONDS
     finally:
         fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)

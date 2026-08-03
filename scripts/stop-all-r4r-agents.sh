@@ -20,7 +20,7 @@ Sin argumentos:
   - detiene agentes R4R de todos los worktrees r4r-*.git;
   - detiene unidades systemd --user que puedan relanzarlos;
   - envía SIGTERM y fuerza SIGKILL a cualquier superviviente;
-  - termina controladores Python, OpenCode y descendientes MCP/Node;
+  - termina supervisor Ring, wrappers, controladores Python, OpenCode y descendientes MCP/Node;
   - repite el barrido para impedir reconexiones;
   - descarga los modelos y reinicia ollama.service;
   - verifica que Ollama queda activo y sin modelos cargados.
@@ -93,6 +93,10 @@ is_target_root() {
   case "$cmd" in
     *"r4r_codex_agent.cli"*|\
     *"run-codex-agent.sh"*|\
+    *"run-ring-system.py"*|\
+    *"run-ring-agent.py"*|\
+    *"run-ring-stabilized.py"*|\
+    *"run-worker-streamed.py"*|\
     *"run-ring-agent.sh"*|\
     *"run-r4r"*".sh"*|\
     *"ring-agent"*".sh"*|\
