@@ -100,6 +100,20 @@ for key in (
     print(value[key])
 
 print(json.dumps(value.get("peerPaths", []), separators=(",", ":")))
+runtime = value.get("runtime", {})
+for key in (
+    "maxAttemptsPerTask",
+    "maxNoProgressCycles",
+    "maxTransientFailures",
+    "autoCommit",
+    "bootstrapCommit",
+    "checkpointOnGreen",
+    "maxSessionSeconds",
+    "idleSeconds",
+    "maxSessionSteps",
+    "repeatEventBudget",
+):
+    print(json.dumps(runtime[key], separators=(",", ":")))
 PYMETA
 )
 
@@ -113,6 +127,16 @@ memory="${values[6]}"
 control_dir="${values[7]}"
 resolved_config="${values[8]}"
 peer_paths_json="${values[9]}"
+runtime_max_attempts="${values[10]}"
+runtime_max_no_progress="${values[11]}"
+runtime_max_transient="${values[12]}"
+runtime_auto_commit="${values[13]}"
+runtime_bootstrap_commit="${values[14]}"
+runtime_checkpoint_on_green="${values[15]}"
+runtime_max_session_seconds="${values[16]}"
+runtime_idle_seconds="${values[17]}"
+runtime_max_session_steps="${values[18]}"
+runtime_repeat_event_budget="${values[19]}"
 
 # Una sola fuente de verdad para OpenCode: opencode.jsonc de la raíz.
 unset OPENCODE_CONFIG || true
@@ -152,11 +176,16 @@ export R4R_OPENCODE_AGENT="$agent"
 export R4R_PLAN_DISPLAY="$plan"
 export R4R_MEMORY_PATH="$memory"
 export R4R_PEER_PATHS_JSON="$peer_paths_json"
-export R4R_AUTO_COMMIT="${R4R_AUTO_COMMIT:-true}"
-export R4R_BOOTSTRAP_COMMIT="${R4R_BOOTSTRAP_COMMIT:-true}"
-export R4R_MAX_ATTEMPTS_PER_TASK="${R4R_MAX_ATTEMPTS_PER_TASK:-0}"
-export R4R_MAX_NO_PROGRESS_CYCLES="${R4R_MAX_NO_PROGRESS_CYCLES:-4}"
-export R4R_MAX_TRANSIENT_FAILURES="${R4R_MAX_TRANSIENT_FAILURES:-8}"
+export R4R_AUTO_COMMIT="${R4R_AUTO_COMMIT:-$runtime_auto_commit}"
+export R4R_BOOTSTRAP_COMMIT="${R4R_BOOTSTRAP_COMMIT:-$runtime_bootstrap_commit}"
+export R4R_CHECKPOINT_ON_GREEN="${R4R_CHECKPOINT_ON_GREEN:-$runtime_checkpoint_on_green}"
+export R4R_MAX_ATTEMPTS_PER_TASK="${R4R_MAX_ATTEMPTS_PER_TASK:-$runtime_max_attempts}"
+export R4R_MAX_NO_PROGRESS_CYCLES="${R4R_MAX_NO_PROGRESS_CYCLES:-$runtime_max_no_progress}"
+export R4R_MAX_TRANSIENT_FAILURES="${R4R_MAX_TRANSIENT_FAILURES:-$runtime_max_transient}"
+export R4R_OPENCODE_MAX_SESSION_SECONDS="${R4R_OPENCODE_MAX_SESSION_SECONDS:-$runtime_max_session_seconds}"
+export R4R_OPENCODE_IDLE_SECONDS="${R4R_OPENCODE_IDLE_SECONDS:-$runtime_idle_seconds}"
+export R4R_OPENCODE_MAX_SESSION_STEPS="${R4R_OPENCODE_MAX_SESSION_STEPS:-$runtime_max_session_steps}"
+export R4R_OPENCODE_REPEAT_EVENT_BUDGET="${R4R_OPENCODE_REPEAT_EVENT_BUDGET:-$runtime_repeat_event_budget}"
 export R4R_OPENCODE_BIN="${R4R_OPENCODE_BIN:-opencode}"
 
 command -v "$R4R_OPENCODE_BIN" >/dev/null 2>&1 || {

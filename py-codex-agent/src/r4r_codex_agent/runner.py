@@ -31,12 +31,78 @@ class CommandResult:
     stdout: str
     stderr: str
     timed_out: bool = False
+    stop_reason: str | None = None
+    observed_steps: int = 0
+    meaningful_events: int = 0
+
+
+@dataclass(frozen=True)
+class CommandWatchdog:
+    """Bound one streamed OpenCode session by wall time and useful activity.
+
+    `step_start` events are deliberately not treated as progress. This prevents a
+    stalled JSONL stream from keeping a worker alive forever merely by emitting
+    periodic start markers.
+    """
+
+    max_seconds: int = 0
+    idle_seconds: int = 0
+    max_steps: int = 0
+    repeat_event_budget: int = 0
+
+
+def _opencode_event_observation(line: str) -> tuple[bool, bool, str]:
+    """Return (is_step_start, is_meaningful, normalized_signature)."""
+    stripped = line.strip()
+    if not stripped:
+        return False, False, "empty"
+    try:
+        value = json.loads(stripped)
+    except json.JSONDecodeError:
+        return False, True, "plain:" + hashlib.sha256(
+            stripped.encode("utf-8", errors="replace")
+        ).hexdigest()[:16]
+
+    if not isinstance(value, dict):
+        return False, True, "json-non-object"
+    part = value.get("part") if isinstance(value.get("part"), dict) else {}
+    event_type = str(value.get("type") or part.get("type") or "unknown")
+    normalized_type = event_type.replace("-", "_").lower()
+    if normalized_type in {"step_start", "stepstart"}:
+        return True, False, "step_start"
+
+    tool_name = str(value.get("tool") or part.get("tool") or "").strip()
+    state = part.get("state") if isinstance(part.get("state"), dict) else {}
+    if not state and isinstance(value.get("state"), dict):
+        state = value["state"]
+    if tool_name or normalized_type in {"tool", "tool_use", "tooluse"}:
+        payload = state.get("input", {})
+        try:
+            encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False)
+        except TypeError:
+            encoded = repr(payload)
+        signature = hashlib.sha256(encoded.encode("utf-8", errors="replace")).hexdigest()[:12]
+        status = str(state.get("status") or "unknown")
+        return False, True, f"tool:{tool_name or 'unknown'}:{status}:{signature}"
+
+    text_value = part.get("text") if isinstance(part.get("text"), str) else value.get("text")
+    if isinstance(text_value, str) and text_value.strip():
+        signature = hashlib.sha256(
+            text_value.strip().encode("utf-8", errors="replace")
+        ).hexdigest()[:16]
+        return False, True, f"text:{signature}"
+
+    if normalized_type in {"step_finish", "stepfinish", "message", "error"}:
+        reason = str(part.get("reason") or value.get("reason") or "")
+        return False, True, f"{normalized_type}:{reason}"
+    return False, True, f"event:{normalized_type}"
 
 
 def run_command(
     command: Sequence[str], cwd: Path, input_text: str | None = None,
     timeout_seconds: int | None = None, stream: bool = False,
     env: dict[str, str] | None = None,
+    watchdog: CommandWatchdog | None = None,
 ) -> CommandResult:
     if not command:
         raise ValueError("Command cannot be empty")
@@ -48,40 +114,135 @@ def run_command(
     )
     stdout_parts: list[str] = []
     stderr_parts: list[str] = []
+    state_lock = threading.Lock()
+    started = time.monotonic()
+    watch_state: dict[str, Any] = {
+        "last_meaningful": started,
+        "steps": 0,
+        "meaningful": 0,
+        "last_signature": None,
+        "repeat_count": 0,
+        "stop_reason": None,
+    }
 
-    def consume(pipe: Any, target: list[str], display: Any) -> None:
+    def observe(line: str) -> None:
+        if watchdog is None:
+            return
+        is_step, meaningful, signature = _opencode_event_observation(line)
+        now = time.monotonic()
+        with state_lock:
+            if is_step:
+                watch_state["steps"] += 1
+            if meaningful:
+                watch_state["meaningful"] += 1
+                watch_state["last_meaningful"] = now
+            if signature == watch_state["last_signature"]:
+                watch_state["repeat_count"] += 1
+            else:
+                watch_state["last_signature"] = signature
+                watch_state["repeat_count"] = 1
+            if (
+                watchdog.repeat_event_budget > 0
+                and watch_state["repeat_count"] > watchdog.repeat_event_budget
+            ):
+                watch_state["stop_reason"] = "repeat-event-budget"
+
+    def consume(pipe: Any, target: list[str], display: Any, *, inspect: bool) -> None:
         try:
             for line in iter(pipe.readline, ""):
                 target.append(line)
+                if inspect:
+                    observe(line)
                 if stream:
                     print(line, end="", file=display, flush=True)
         finally:
             pipe.close()
 
     threads = [
-        threading.Thread(target=consume, args=(process.stdout, stdout_parts, sys.stdout), daemon=True),
-        threading.Thread(target=consume, args=(process.stderr, stderr_parts, sys.stderr), daemon=True),
+        threading.Thread(
+            target=consume,
+            args=(process.stdout, stdout_parts, sys.stdout),
+            kwargs={"inspect": True},
+            daemon=True,
+        ),
+        threading.Thread(
+            target=consume,
+            args=(process.stderr, stderr_parts, sys.stderr),
+            kwargs={"inspect": False},
+            daemon=True,
+        ),
     ]
     for thread in threads:
         thread.start()
     if input_text is not None and process.stdin is not None:
         process.stdin.write(input_text)
         process.stdin.close()
-    timed_out = False
-    try:
-        exit_code = process.wait(timeout=timeout_seconds)
-    except subprocess.TimeoutExpired:
-        timed_out = True
-        os.killpg(process.pid, signal.SIGTERM)
-        try:
-            exit_code = process.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            os.killpg(process.pid, signal.SIGKILL)
-            exit_code = process.wait()
+
+    stop_reason: str | None = None
+    while process.poll() is None:
+        now = time.monotonic()
+        elapsed = now - started
+        with state_lock:
+            observed_steps = int(watch_state["steps"])
+            last_meaningful = float(watch_state["last_meaningful"])
+            requested_stop = watch_state["stop_reason"]
+        if timeout_seconds is not None and timeout_seconds > 0 and elapsed >= timeout_seconds:
+            stop_reason = "command-timeout"
+        elif watchdog is not None and watchdog.max_seconds > 0 and elapsed >= watchdog.max_seconds:
+            stop_reason = "session-timeout"
+        elif (
+            watchdog is not None
+            and watchdog.idle_seconds > 0
+            and now - last_meaningful >= watchdog.idle_seconds
+        ):
+            stop_reason = "idle-timeout"
+        elif (
+            watchdog is not None
+            and watchdog.max_steps > 0
+            and observed_steps >= watchdog.max_steps
+        ):
+            stop_reason = "step-limit"
+        elif requested_stop:
+            stop_reason = str(requested_stop)
+        if stop_reason is not None:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.wait()
+            break
+        time.sleep(0.2)
+
+    exit_code = process.wait()
+    timed_out = stop_reason is not None
+    if timed_out:
         exit_code = 124
+        stderr_parts.append(
+            "\n[r4r-watchdog] stopped OpenCode session: "
+            f"reason={stop_reason} elapsed={time.monotonic() - started:.1f}s\n"
+        )
     for thread in threads:
         thread.join(timeout=5)
-    return CommandResult(tuple(command), exit_code, "".join(stdout_parts), "".join(stderr_parts), timed_out)
+    with state_lock:
+        steps = int(watch_state["steps"])
+        meaningful_events = int(watch_state["meaningful"])
+    return CommandResult(
+        tuple(command),
+        exit_code,
+        "".join(stdout_parts),
+        "".join(stderr_parts),
+        timed_out,
+        stop_reason,
+        steps,
+        meaningful_events,
+    )
 
 
 def _nul_paths(result: CommandResult) -> set[str]:
@@ -371,6 +532,35 @@ class AutomaticRunner:
         self.max_tasks = int(os.environ.get("R4R_MAX_TASKS_PER_RUN", "0"))
         self.auto_commit = os.environ.get("R4R_AUTO_COMMIT", "true").lower() == "true"
         self.bootstrap_commit = os.environ.get("R4R_BOOTSTRAP_COMMIT", "true").lower() == "true"
+        self.checkpoint_on_green = (
+            os.environ.get("R4R_CHECKPOINT_ON_GREEN", "true").lower() == "true"
+        )
+
+        worker_prefix = f"R4R_{self.worker_id}_"
+        def worker_int(name: str, default: int) -> int:
+            worker_value = os.environ.get(worker_prefix + name)
+            generic_value = os.environ.get("R4R_OPENCODE_" + name)
+            raw = worker_value if worker_value not in (None, "") else generic_value
+            return int(raw) if raw not in (None, "") else default
+
+        self.opencode_session_seconds = worker_int("MAX_SESSION_SECONDS", 5400)
+        self.opencode_idle_seconds = worker_int("IDLE_SECONDS", 900)
+        self.opencode_max_steps = worker_int("MAX_SESSION_STEPS", 120)
+        self.opencode_repeat_event_budget = worker_int("REPEAT_EVENT_BUDGET", 12)
+        self.memory_context: dict[str, Any] = {
+            "task_id": None,
+            "attempt": None,
+            "gate_exit": None,
+            "gate_name": None,
+            "codex_decision": None,
+            "changed_paths": [],
+            "demonstrated": [],
+            "outstanding": [],
+            "avoid_repeating": [],
+            "next_action": None,
+            "checkpoint_head": None,
+            "checkpoint_status": "none",
+        }
         self.opencode_bin = os.environ.get("R4R_OPENCODE_BIN", "opencode")
         self.opencode_agent = os.environ.get("R4R_OPENCODE_AGENT", "r4r-pc")
         self.compact_local_worker = (
@@ -432,6 +622,16 @@ class AutomaticRunner:
         )
         self.ring_directive_max_age_seconds = int(
             os.environ.get("R4R_RING_DIRECTIVE_MAX_AGE_SECONDS", "10800")
+        )
+        self.ring_request_path = (
+            self.ring_worktree
+            / "runtime"
+            / "control"
+            / "RING"
+            / "requests"
+            / f"{self.worker_id}.json"
+            if self.ring_worktree is not None
+            else None
         )
         self.verified_green: set[str] = set()
 
@@ -762,6 +962,22 @@ class AutomaticRunner:
     def _execute_task(self, task: Task) -> int:
         task_root = self.run_dir / task.id
         task_root.mkdir(parents=True, exist_ok=True)
+        self.memory_context.update(
+            {
+                "task_id": task.id,
+                "attempt": 0,
+                "gate_exit": None,
+                "gate_name": None,
+                "codex_decision": None,
+                "changed_paths": list(self._manual_commit_paths(task)),
+                "demonstrated": [],
+                "outstanding": [task.objective],
+                "avoid_repeating": [],
+                "next_action": "Run the initial exact gate and classify the first current failure.",
+                "checkpoint_head": None,
+                "checkpoint_status": "none",
+            }
+        )
         self._write_progress(task.id)
         self._write_memory()
         initial_gate = self._run_gate("initial-gate", task.gate, task_root, stream=True)
@@ -776,6 +992,11 @@ class AutomaticRunner:
             edit_result: CommandResult | None = None
             attempt_dir = task_root / f"attempt-{attempt:02d}"
             attempt_dir.mkdir(parents=True, exist_ok=True)
+            self.memory_context["attempt"] = attempt
+            self.memory_context["next_action"] = next_action or (
+                "Review the exact gate evidence and make one coherent, task-scoped repair."
+            )
+            self._write_memory()
             current_gate = (
                 initial_gate
                 if attempt == 1
@@ -871,6 +1092,16 @@ class AutomaticRunner:
                     stream=True,
                 )
                 if edit_result.exit_code != 0:
+                    self.memory_context["avoid_repeating"] = [
+                        f"Do not repeat the stopped OpenCode session without changing the plan; stop_reason={edit_result.stop_reason or 'process-exit'}.",
+                    ]
+                    self.memory_context["outstanding"] = [
+                        "The local edit session did not complete; no acceptance claim can be made from it."
+                    ]
+                    self.memory_context["next_action"] = (
+                        "Start a fresh bounded session using the preserved worktree and the first current gate failure."
+                    )
+                    self._write_memory()
                     if self._non_transient_opencode_failure(edit_result):
                         return self._finish(
                             "OPENCODE_CONFIGURATION_ERROR",
@@ -960,6 +1191,11 @@ class AutomaticRunner:
                         {"task": task.id, "paths": disallowed},
                     )
                 self._write_patch(attempt_dir, changed)
+                self.memory_context["changed_paths"] = list(changed)
+                self.memory_context["next_action"] = (
+                    "Run the exact task gate against the coherent edited state."
+                )
+                self._write_memory()
 
                 if (
                     not changed_this_attempt
@@ -968,13 +1204,41 @@ class AutomaticRunner:
                     next_action = self._no_progress_action(next_action)
 
             gate = self._run_gate("task-gate", task.gate, attempt_dir, stream=True)
+            self.memory_context["gate_name"] = "task-gate"
+            self.memory_context["gate_exit"] = gate.exit_code
             if gate.exit_code == 0:
+                self.memory_context["demonstrated"] = [
+                    "The exact deterministic task gate completed successfully.",
+                ]
+                self.memory_context["outstanding"] = [
+                    "Codex has not yet accepted the current checkpoint.",
+                ]
+                self.memory_context["next_action"] = (
+                    "Preserve a deterministic gate-green checkpoint, generate final evidence and request Codex review."
+                )
+                try:
+                    self._checkpoint_green(task, gate, attempt, attempt_dir)
+                except RuntimeError as exception:
+                    return self._finish(
+                        "CHECKPOINT_COMMIT_FAILED",
+                        67,
+                        {"task": task.id, "attempt": attempt, "error": str(exception)},
+                    )
                 self._notify(
                     attempt_dir,
                     f"handoff-to-codex-{attempt:02d}",
                     4,
                     f"{task.id}: green gate, handing control to Codex",
                 )
+            else:
+                self.memory_context["demonstrated"] = []
+                self.memory_context["outstanding"] = [
+                    f"The exact task gate is red with exit code {gate.exit_code}.",
+                ]
+                self.memory_context["next_action"] = (
+                    "Fix the first current deterministic gate failure before requesting acceptance."
+                )
+                self._write_memory()
 
             # The compact laptop worker avoids a second model call. Codex reviews
             # the exact diff and gate evidence directly. The PC worker keeps the
@@ -1062,6 +1326,35 @@ class AutomaticRunner:
                 continue
 
             transient_failures = 0
+            self.memory_context["codex_decision"] = review["decision"]
+            review_corrections = [
+                str(value).strip()
+                for value in (review.get("instruction_corrections") or [])
+                if str(value).strip()
+            ]
+            review_next = str(review.get("next_action") or "").strip()
+            if review["decision"] == "ACCEPT":
+                self.memory_context["outstanding"] = []
+                self.memory_context["next_action"] = (
+                    "Record ACCEPT, create the final controller commit and advance the queue."
+                )
+            else:
+                self.memory_context["outstanding"] = review_corrections or [
+                    review_next or "Codex requires another bounded revision."
+                ]
+                self.memory_context["avoid_repeating"] = review_corrections
+                self.memory_context["next_action"] = review_next or (
+                    "Apply the resolved Codex correction packet in one coherent batch."
+                )
+            self._write_memory()
+            self._request_ring_review(
+                task,
+                reason=f"codex-{str(review['decision']).lower()}",
+                attempt=attempt,
+                gate=gate,
+                review=review,
+                checkpoint_head=self.memory_context.get("checkpoint_head"),
+            )
             if review["decision"] == "ACCEPT":
                 if gate.exit_code != 0:
                     next_action = (
@@ -1615,6 +1908,12 @@ Do not propose code yet. Do not claim that an infrastructure outage is a Java bu
             if pre_edit_understanding_path.exists()
             else "No pre-edit local understanding report was produced."
         )
+        checkpoint_path = evidence_dir / "evidence" / "checkpoint.json"
+        checkpoint_evidence = (
+            checkpoint_path.read_text(encoding="utf-8")
+            if checkpoint_path.exists()
+            else "No gate-green checkpoint was created for this attempt."
+        )
         codegraph_path = (
             evidence_dir / "evidence" / "codegraph-reconnaissance.md"
         )
@@ -1648,6 +1947,8 @@ Do not propose code yet. Do not claim that an infrastructure outage is a Java bu
             + self._instruction_manifest(task)
             + "\n\nCURRENT MEMORY\n"
             + memory
+            + "\n\nGATE-GREEN CHECKPOINT EVIDENCE\n"
+            + checkpoint_evidence
             + "\n\nVERIFIED CODEGRAPH RECONNAISSANCE\n"
             + codegraph_reconnaissance
             + "\n\nPRE-EDIT LOCAL UNDERSTANDING REPORT\n"
@@ -2193,12 +2494,32 @@ next instruction packet.
         logs.mkdir(parents=True, exist_ok=True)
         evidence.mkdir(parents=True, exist_ok=True)
         print(f"\n[r4r] {name}: {shlex.join(command)}", flush=True)
-        result = run_command(command, self.repo, input_text, self.timeout, stream)
+        watchdog = None
+        if name == "opencode" or name.startswith("opencode-"):
+            watchdog = CommandWatchdog(
+                max_seconds=self.opencode_session_seconds,
+                idle_seconds=self.opencode_idle_seconds,
+                max_steps=self.opencode_max_steps,
+                repeat_event_budget=self.opencode_repeat_event_budget,
+            )
+        result = run_command(
+            command,
+            self.repo,
+            input_text,
+            self.timeout,
+            stream,
+            watchdog=watchdog,
+        )
         (logs / f"{name}.stdout.log").write_text(result.stdout, encoding="utf-8")
         (logs / f"{name}.stderr.log").write_text(result.stderr, encoding="utf-8")
         (evidence / f"{name}.json").write_text(json.dumps({
-            "command": list(result.command), "exit_code": result.exit_code,
+            "command": list(result.command),
+            "exit_code": result.exit_code,
             "timed_out": result.timed_out,
+            "stop_reason": result.stop_reason,
+            "observed_steps": result.observed_steps,
+            "meaningful_events": result.meaningful_events,
+            "watchdog": asdict(watchdog) if watchdog is not None else None,
         }, indent=2), encoding="utf-8")
         return result
 
@@ -2310,30 +2631,219 @@ next instruction packet.
         self.progress["last_run"] = self.run_id
         self.progress_path.write_text(json.dumps(self.progress, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
+    def _request_ring_review(
+        self,
+        task: Task,
+        *,
+        reason: str,
+        attempt: int | None = None,
+        gate: CommandResult | None = None,
+        review: dict[str, Any] | None = None,
+        checkpoint_head: str | None = None,
+    ) -> None:
+        path = getattr(self, "ring_request_path", None)
+        if path is None:
+            return
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "schema_version": 1,
+            "worker": self.worker_id,
+            "task_id": task.id,
+            "reason": reason,
+            "requested_at": datetime.now(timezone.utc).isoformat(),
+            "run_id": self.run_id,
+            "attempt": attempt,
+            "gate_exit": gate.exit_code if gate is not None else None,
+            "gate_stop_reason": gate.stop_reason if gate is not None else None,
+            "codex_decision": review.get("decision") if review else None,
+            "next_action": str(review.get("next_action") or "").strip() if review else None,
+            "checkpoint_head": checkpoint_head,
+            "memory_path": str(self.memory_path),
+            "changed_paths": list(self.memory_context.get("changed_paths") or []),
+        }
+        temporary = path.with_suffix(".json.tmp")
+        temporary.write_text(
+            json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(path)
+
+    def _checkpoint_green(
+        self,
+        task: Task,
+        gate: CommandResult,
+        attempt: int,
+        attempt_dir: Path,
+    ) -> str | None:
+        product_paths = self._manual_commit_paths(task)
+        now = datetime.now(timezone.utc).isoformat()
+        item = task_progress(self.progress, task.id)
+        item["last_gate_green_at"] = now
+        item["last_gate_green_attempt"] = attempt
+        item["last_gate_green_run"] = self.run_id
+        self.memory_context.update(
+            {
+                "task_id": task.id,
+                "attempt": attempt,
+                "gate_exit": gate.exit_code,
+                "gate_name": "task-gate",
+                "changed_paths": list(product_paths),
+                "demonstrated": [
+                    "The exact deterministic task gate completed with exit code 0.",
+                    "The checkpoint contains only task-owned product paths plus controller progress/memory.",
+                ],
+                "checkpoint_status": (
+                    "disabled" if not self.checkpoint_on_green
+                    else "no-product-diff" if not product_paths
+                    else "pending"
+                ),
+            }
+        )
+        self._write_progress(task.id)
+        self._write_memory()
+
+        checkpoint_payload: dict[str, Any] = {
+            "schema_version": 1,
+            "worker": self.worker_id,
+            "task_id": task.id,
+            "run_id": self.run_id,
+            "attempt": attempt,
+            "created_at": now,
+            "gate_exit": gate.exit_code,
+            "product_paths": list(product_paths),
+            "checkpoint_enabled": self.checkpoint_on_green,
+            "auto_commit": self.auto_commit,
+            "status": self.memory_context["checkpoint_status"],
+            "head_before": git_head(self.repo),
+            "head_after": None,
+        }
+        evidence = attempt_dir / "evidence"
+        evidence.mkdir(parents=True, exist_ok=True)
+        checkpoint_path = evidence / "checkpoint.json"
+
+        if not self.checkpoint_on_green or not self.auto_commit or not product_paths:
+            checkpoint_path.write_text(
+                json.dumps(checkpoint_payload, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._request_ring_review(
+                task,
+                reason="gate-green-no-checkpoint",
+                attempt=attempt,
+                gate=gate,
+            )
+            return None
+
+        message = (
+            f"wip({self.worker_id.lower()}/{task.id}): "
+            f"gate-green checkpoint attempt-{attempt:02d}"
+        )
+        head = self._commit_if_needed(
+            message,
+            (
+                *task.allowed_paths,
+                str(self.progress_path.relative_to(self.repo)),
+                str(self.memory_path.relative_to(self.repo)),
+            ),
+        )
+        checkpoint_payload["head_after"] = head
+        checkpoint_payload["status"] = "created" if head else "failed"
+        checkpoint_path.write_text(
+            json.dumps(checkpoint_payload, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        self.memory_context["checkpoint_head"] = head
+        self.memory_context["checkpoint_status"] = checkpoint_payload["status"]
+        self._request_ring_review(
+            task,
+            reason="gate-green-checkpoint",
+            attempt=attempt,
+            gate=gate,
+            checkpoint_head=head,
+        )
+        if head is None:
+            raise RuntimeError("Automatic gate-green checkpoint commit failed")
+        return head
+
     def _write_memory(self) -> None:
         accepted = [item for item in self.progress["tasks"] if item["status"] == "ACCEPTED"]
         pending = [item for item in self.progress["tasks"] if item["status"] != "ACCEPTED"]
         last = accepted[-1]["id"] if accepted else "None"
+        context = getattr(self, "memory_context", {})
+
+        changed = list(context.get("changed_paths") or [])
+        demonstrated = list(context.get("demonstrated") or [])
+        outstanding = list(context.get("outstanding") or [])
+        avoid = list(context.get("avoid_repeating") or [])
+        next_action = str(context.get("next_action") or "").strip()
+
         lines = [
-            "# Agent memory", "", "## Current state", "",
+            "# Agent memory",
+            "",
+            "## Current state",
+            "",
+            f"- Worker: {self.worker_id}.",
+            f"- Run: {self.run_id}.",
             f"- Last accepted task: {last}.",
             f"- Active task: {self.progress.get('active_task') or 'None'}.",
+            f"- Current attempt: {context.get('attempt') or 'not started'}.",
+            f"- Latest exact gate: {context.get('gate_name') or 'not run'}; exit={context.get('gate_exit') if context.get('gate_exit') is not None else 'unknown'}.",
+            f"- Latest Codex decision: {context.get('codex_decision') or 'pending'}.",
+            f"- Checkpoint: {context.get('checkpoint_status') or 'none'}; head={context.get('checkpoint_head') or 'not recorded'}.",
             f"- Accepted: {', '.join(item['id'] for item in accepted) or 'none'}.",
             f"- Remaining: {', '.join(item['id'] for item in pending) or 'none'}.",
-            "- Exact plan: `{self.plan_display}`.", "",
-            "## Fixed decisions", "",
-            "- Non-web application until an explicit later task changes scope.",
+            f"- Exact plan: `{self.plan_display}`.",
+            "",
+            "## Files currently owned or edited",
+            "",
+        ]
+        lines.extend(f"- `{path}`" for path in changed)
+        if not changed:
+            lines.append("- No task-owned dirty product path at the latest snapshot.")
+
+        lines.extend(["", "## Demonstrated by current evidence", ""])
+        lines.extend(f"- {value}" for value in demonstrated)
+        if not demonstrated:
+            lines.append("- No new acceptance claim has been demonstrated in this run yet.")
+
+        lines.extend(["", "## Still unproven or below expectations", ""])
+        lines.extend(f"- {value}" for value in outstanding)
+        if not outstanding:
+            lines.append("- Awaiting the next Codex decision or exact gate evidence.")
+
+        lines.extend(["", "## Approaches not to repeat", ""])
+        lines.extend(f"- {value}" for value in avoid)
+        if not avoid:
+            lines.append("- Do not repeat an unchanged failing action without new evidence.")
+
+        lines.extend(["", "## Next exact action", ""])
+        lines.append(next_action or "Run the active task's exact deterministic gate and act on its first current failure.")
+
+        lines.extend([
+            "",
+            "## Fixed decisions",
+            "",
+            "- OpenCode/Qwen3 and Codex never write Git history.",
+            "- The deterministic Python controller may create a gate-green checkpoint and a final ACCEPT commit.",
+            "- A gate-green checkpoint preserves useful work but does not mark the task ACCEPTED.",
+            "- A task completes only after its exact gate is green and Codex returns `ACCEPT`.",
             "- PostgreSQL only in Docker; Flyway owns application schema.",
             "- Spring AI abstractions; no handwritten Ollama HTTP client.",
-            "- Codex plans/reviews read-only; OpenCode edits; Python validates and commits.",
-            "- Every red gate produces a full diagnostic log and compressed source bundle for Codex.",
-            "- Identical Codex planning evidence is rate-limited; changed failures bypass the cooldown.",
-            "- CodeGraph is focused and advisory by default; unavailable MCP evidence does not stop repair.",
-            "- Runtime evidence stays under `runtime/runs/`; no automatic push.", "",
-            "## Task commits", "",
-        ]
+            "- Every red gate retains complete diagnostics for Codex.",
+            "- CodeGraph is focused retrieval evidence, not authority to expand task scope.",
+            "- Runtime evidence stays under `runtime/runs/`; no automatic push.",
+            "",
+            "## Task ledger",
+            "",
+        ])
         for item in self.progress["tasks"]:
-            lines.append(f"- {item['id']}: {item['status']} — accepted at {item.get('accepted_at') or 'not accepted'}")
+            lines.append(
+                f"- {item['id']}: {item['status']} — accepted at "
+                f"{item.get('accepted_at') or 'not accepted'}; "
+                f"last green attempt={item.get('last_gate_green_attempt') or 'none'}"
+            )
+        self.memory_path.parent.mkdir(parents=True, exist_ok=True)
         self.memory_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     def _commit_if_needed(

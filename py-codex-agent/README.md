@@ -92,3 +92,13 @@ from `runtime/control/<PC|LP>/ring-qwen3-directive.json` in the Ring worktree. A
 directive is used only for the matching active task, must be recent and must declare
 `priority: advisory`. It is included in Qwen3 and Codex contexts but cannot override
 the task specification, exact gate or current Codex correction packet.
+
+## Gate-green checkpoints and session watchdog
+
+The deterministic controller can create a task-scoped checkpoint immediately after the
+exact gate turns green (`R4R_CHECKPOINT_ON_GREEN=true`). The task remains pending until
+Codex returns `ACCEPT`. OpenCode/Qwen3 and Codex never execute Git writes.
+
+OpenCode JSONL sessions are bounded by wall time, useful inactivity, step count and
+repeated-event budgets. `step_start` alone is not progress. Every watchdog stop is
+written to the attempt evidence with its exact `stop_reason`.

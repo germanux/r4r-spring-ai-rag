@@ -3,11 +3,16 @@
   "defaults": {
     "requestTimeoutSeconds": 14400,
     "chunkTimeoutSeconds": 600,
-    "maxAttemptsPerTask": 0,
-    "maxNoProgressCycles": 4,
-    "maxTransientFailures": 8,
-    "autoCommit": false,
-    "bootstrapCommit": false
+    "maxAttemptsPerTask": 6,
+    "maxNoProgressCycles": 2,
+    "maxTransientFailures": 3,
+    "autoCommit": true,
+    "bootstrapCommit": true,
+    "checkpointOnGreen": true,
+    "maxSessionSeconds": 5400,
+    "idleSeconds": 900,
+    "maxSessionSteps": 120,
+    "repeatEventBudget": 12
   },
   "codeIntelligence": {
     "referenceManifest": "knowledge/code-repositories.md",
@@ -59,7 +64,13 @@
       "mcp": [
         "codegraph",
         "code_graph_rag"
-      ]
+      ],
+      "runtime": {
+        "maxSessionSeconds": 5400,
+        "idleSeconds": 900,
+        "maxSessionSteps": 120,
+        "repeatEventBudget": 12
+      }
     },
     "LP": {
       "agentId": "r4r-laptop",
@@ -88,7 +99,17 @@
         "docker-postgres/**",
         "docs/backend/**"
       ],
-      "mcp": []
+      "mcp": [
+        "codegraph",
+        "code_graph_rag",
+        "playwright"
+      ],
+      "runtime": {
+        "maxSessionSeconds": 3600,
+        "idleSeconds": 600,
+        "maxSessionSteps": 90,
+        "repeatEventBudget": 12
+      }
     }
   }
 }

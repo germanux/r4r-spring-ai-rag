@@ -12,6 +12,8 @@ The launcher chooses an independent plan and progress file from `config/r4r-agen
 `.opencode/task-plan.frontend.json`: Angular 17 and Playwright tasks. It may edit only
 `frontend/**` and `docs/frontend/**`.
 
-Both controllers may run in the same working tree. Their runtime and progress files are
-separate, peer product paths are ignored as background changes, and automatic Git
-commits are disabled. Never launch two controllers for the same destination.
+Both controllers use separate progress, memory, control and runtime evidence. Peer
+product paths are background-only. OpenCode/Qwen3 and Codex never write Git history;
+the deterministic controller may create a gate-green checkpoint and a final ACCEPT
+commit. A checkpoint does not complete the task. Never launch two controllers for the
+same destination.

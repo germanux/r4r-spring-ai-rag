@@ -35,6 +35,9 @@ OPENCODE_BIN = os.environ.get("R4R_OPENCODE_BIN", "opencode")
 DIRECTIVE_MAX_AGE_SECONDS = int(
     os.environ.get("R4R_RING_DIRECTIVE_MAX_AGE_SECONDS", "10800")
 )
+EVENT_MIN_INTERVAL_SECONDS = int(
+    os.environ.get("R4R_RING_EVENT_MIN_INTERVAL_SECONDS", "300")
+)
 
 
 def _git(repo: Path, args: Sequence[str]) -> str:
@@ -103,6 +106,58 @@ def _worker_progress_path(worker: str, repo: Path) -> Path:
     return repo / ".opencode" / f"progress.{suffix}.json"
 
 
+def _worker_memory_path(worker: str, repo: Path) -> Path:
+    suffix = "backend" if worker == "PC" else "frontend"
+    return repo / ".opencode" / f"memory.{suffix}.md"
+
+
+def _request_directory(ring: Path) -> Path:
+    return ring / "runtime" / "control" / "RING" / "requests"
+
+
+def _pending_worker_requests(ring: Path) -> tuple[Path, ...]:
+    root = _request_directory(ring)
+    return tuple(
+        path for path in (root / "PC.json", root / "LP.json")
+        if path.is_file()
+    )
+
+
+def _consume_worker_requests(ring: Path, run_dir: Path) -> list[dict[str, Any]]:
+    collected: list[dict[str, Any]] = []
+    target = run_dir / "worker-requests"
+    for source in _pending_worker_requests(ring):
+        target.mkdir(parents=True, exist_ok=True)
+        destination = target / source.name
+        try:
+            raw = source.read_text(encoding="utf-8")
+            value = json.loads(raw)
+        except (OSError, json.JSONDecodeError) as exception:
+            value = {
+                "schema_version": 1,
+                "worker": source.stem,
+                "reason": "invalid-request",
+                "error": str(exception),
+            }
+            raw = json.dumps(value, indent=2) + "\n"
+        destination.write_text(raw, encoding="utf-8")
+        collected.append(value if isinstance(value, dict) else {"worker": source.stem})
+        source.unlink(missing_ok=True)
+    (run_dir / "worker-request-manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "consumed_at": datetime.now(timezone.utc).isoformat(),
+                "requests": collected,
+            },
+            indent=2,
+            ensure_ascii=False,
+        ) + "\n",
+        encoding="utf-8",
+    )
+    return collected
+
+
 def _write_worker_runtime_evidence(
     worker: str,
     worker_repo: Path,
@@ -118,6 +173,10 @@ def _write_worker_runtime_evidence(
         "progress": _copy_snapshot_file(
             _worker_progress_path(worker, worker_repo),
             snapshot_dir / "progress.json",
+        ),
+        "memory": _copy_snapshot_file(
+            _worker_memory_path(worker, worker_repo),
+            snapshot_dir / "memory.md",
         ),
         "codex_extra_instructions": _copy_snapshot_file(
             worker_repo
@@ -147,6 +206,7 @@ def _write_worker_runtime_evidence(
             "pre_edit_understanding": "pre-edit-understanding.md",
             "codegraph_reconnaissance": "codegraph-reconnaissance.md",
             "gate_summary": "gate-summary.md",
+            "checkpoint": "checkpoint.json",
         }
         for label, pattern in selected_patterns.items():
             source = _latest_match(latest_run, pattern)
@@ -302,8 +362,11 @@ artifacts is stored under:
 - {run_dir}
 
 Read the Ring, PC and LP commit/status/diff evidence. Then read both worker-runtime
-subdirectories, including progress, latest Codex plan/review, local understanding,
-CodeGraph report, gate summary and the previous Ring directive when present.
+subdirectories, including progress, worker memory, latest gate-green checkpoint,
+latest Codex plan/review, local understanding, CodeGraph report, gate summary and the
+previous Ring directive when present. Also read `worker-request-manifest.json` and
+`worker-requests/*.json`: these are event-triggered requests from the deterministic
+controllers and identify what changed since the previous Ring cycle.
 Identify the first current defect for PC and LP. Prefer correction before new
 implementation. Read Java, Angular, tests, Python and shell only when needed.
 Do not perform unbounded searches.
@@ -372,6 +435,8 @@ def run_ring_loop(paths: WorktreePaths, *, once: bool = False) -> int:
         raise ValueError("R4R_RING_REVIEW_INTERVAL_SECONDS must be positive")
     if SESSION_TIMEOUT_SECONDS < 1:
         raise ValueError("R4R_RING_SESSION_TIMEOUT_SECONDS must be positive")
+    if EVENT_MIN_INTERVAL_SECONDS < 1:
+        raise ValueError("R4R_RING_EVENT_MIN_INTERVAL_SECONDS must be positive")
 
     paths = WorktreePaths(
         require_git_worktree(paths.ring, "RING"),
@@ -395,6 +460,7 @@ def run_ring_loop(paths: WorktreePaths, *, once: bool = False) -> int:
         if RUN_IMMEDIATELY
         else time.monotonic() + REVIEW_INTERVAL_SECONDS
     )
+    last_session_started = 0.0
 
     try:
         while True:
@@ -416,15 +482,27 @@ def run_ring_loop(paths: WorktreePaths, *, once: bool = False) -> int:
                 control.heartbeat("paused")
                 time.sleep(1)
                 continue
-            if time.monotonic() < next_run:
+
+            now = time.monotonic()
+            if (
+                _pending_worker_requests(paths.ring)
+                and now - last_session_started >= EVENT_MIN_INTERVAL_SECONDS
+            ):
+                next_run = min(next_run, now)
+            if now < next_run:
                 control.heartbeat("running")
                 time.sleep(1)
                 continue
 
+            last_session_started = time.monotonic()
             run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
             run_dir = paths.ring / "runtime" / "ring-agent" / "ring" / run_id
             _write_evidence(paths, run_dir)
-            control.set_state("running", f"The Ring session {run_id} started")
+            consumed_requests = _consume_worker_requests(paths.ring, run_dir)
+            control.set_state(
+                "running",
+                f"The Ring session {run_id} started; event_requests={len(consumed_requests)}",
+            )
 
             active_command: OperatorCommand | None = None
 
@@ -457,6 +535,8 @@ def run_ring_loop(paths: WorktreePaths, *, once: bool = False) -> int:
                         "agent": RING_AGENT,
                         "model": RING_MODEL,
                         "review_interval_seconds": REVIEW_INTERVAL_SECONDS,
+                        "event_min_interval_seconds": EVENT_MIN_INTERVAL_SECONDS,
+                        "consumed_worker_requests": consumed_requests,
                         "worktrees": {
                             "RING": str(paths.ring),
                             "PC": str(paths.pc),
