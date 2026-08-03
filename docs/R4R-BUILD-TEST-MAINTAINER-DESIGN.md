@@ -105,8 +105,6 @@ fix(build-maintainer): restore deterministic test suite
 - Rebase/fetch before starting; never force-push.
 - Maximum one compile commit and one test commit per run.
 - Maximum two OpenCode correction cycles per phase.
-- Target 45–70 minutes of useful model work per run; hard OpenCode session ceiling
-  90 minutes (`5400` seconds).
 - No dependency upgrades, migrations, schema changes or broad formatting unless the
   failure directly requires them.
 - Never modify progress files to mark tasks accepted.
