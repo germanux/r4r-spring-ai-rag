@@ -2,22 +2,40 @@
 
 ## Roles and queues
 
-Two controllers may run concurrently in the same working tree because ownership is
-disjoint:
+Two product controllers may run concurrently because ownership is disjoint:
 
-- **PC / backend** uses `.opencode/task-plan.backend.json` and may edit Java 21,
+- **PC / backend** uses `.opencode/task-plan.backend.json` and owns Java 21,
   Spring AI, PostgreSQL/pgvector and backend documentation.
-- **LP / frontend** uses `.opencode/task-plan.frontend.json` and may edit only
+- **LP / frontend** uses `.opencode/task-plan.frontend.json` and owns
   `frontend/**` and `docs/frontend/**`; Angular must remain major 17.
+- **RING / director** coordinates both queues and may read or modify any file in the
+  Ring worktree when a current evidence-backed cross-cutting correction is necessary.
+  This Ring exception includes this `AGENTS.md` file and other policy/configuration
+  files.
 
 The canonical runtime/model configuration is `config/r4r-agents.json`. Machine-local
 endpoints belong in `.env.r4r.local`, never in the application `.env`.
+
+## Ring non-destructive authority
+
+- Ring may modify existing repository files, including Java, Angular, scripts,
+  controller code, documentation and agent instructions.
+- Ring must never delete, move or rename an existing file or directory.
+- Ring must never truncate an existing file to empty or replace useful content with a
+  placeholder.
+- Ring reads before editing and preserves unrelated content.
+- New files belong in an appropriate existing directory; the repository root is
+  reserved for canonical project entry files.
+- Ring does not edit secrets, credentials, private keys, tokens, `.env` files or
+  runtime PID/lock files.
+- Ring does not write Git history. The deterministic controller or the human operator
+  owns commits and pushes.
 
 ## Concurrency
 
 - Never run two workers for the same queue.
 - Peer-owned product paths are tolerated as concurrent background changes but are not
-  writable by the current agent.
+  writable by the PC or LP peer agent.
 - Each worker has separate progress, memory, control and run directories.
 - OpenCode/Qwen3 and Codex never write Git history.
 - The deterministic Python controller may create a task-scoped checkpoint immediately
@@ -28,7 +46,7 @@ endpoints belong in `.env.r4r.local`, never in the application `.env`.
 
 ## Code intelligence
 
-- `npm run repos:sync` materializes the repositories declared in
+- `npm run repos:sync` materializes repositories declared in
   `knowledge/code-repositories.md` under the ignored `.r4r/` directory.
 - `npm run code:index` indexes the application and enabled references with CodeGraph
   and Code-Graph-RAG.
@@ -54,10 +72,6 @@ endpoints belong in `.env.r4r.local`, never in the application `.env`.
 - Frontend tests and Playwright must not require a live LLM.
 - Flyway owns the backend schema.
 - A task completes only with its exact gate green and Codex `ACCEPT`.
-  - Never run find, rg, grep or glob recursively through:
-    frontend/node_modules/**
-    frontend/dist/**
-    frontend/.angular/**
-    node_modules/**
-    runtime/**
-    .r4r/**
+- Never recursively search generated or runtime-heavy directories:
+  `frontend/node_modules/**`, `frontend/dist/**`, `frontend/.angular/**`,
+  `node_modules/**`, `runtime/**` and `.r4r/**`.
