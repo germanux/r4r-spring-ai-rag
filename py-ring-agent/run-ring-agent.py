@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import signal
 import sys
+import threading
 
 # ---------------------------------------------------------------------------
 # Environment-aware canonical worktrees. No command-line parameters required.
@@ -30,5 +32,19 @@ from r4r_ring_agent.worktrees import WorktreePaths  # noqa: E402
 
 
 if __name__ == "__main__":
+    stop_event = threading.Event()
+
+    def request_stop(_signum: int, _frame: object) -> None:
+        stop_event.set()
+
+    signal.signal(signal.SIGINT, request_stop)
+    signal.signal(signal.SIGTERM, request_stop)
+
     paths = WorktreePaths(RING_WORKTREE, PC_WORKTREE, LP_WORKTREE)
-    raise SystemExit(run_ring_loop(paths, once=RUN_ONCE))
+    raise SystemExit(
+        run_ring_loop(
+            paths,
+            once=RUN_ONCE,
+            stop_requested=stop_event.is_set,
+        )
+    )
