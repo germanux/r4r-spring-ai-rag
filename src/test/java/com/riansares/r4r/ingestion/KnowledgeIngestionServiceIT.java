@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -85,10 +86,10 @@ class KnowledgeIngestionServiceIT {
     void unchangedReingestionPreservesExactState() throws IOException {
         writeMarkdown("guide.md", "# Guide\n\nStable content.");
 
-        ingestionService.ingest();
+        KnowledgeIngestionResult _result = ingestionService.ingest(Clock.systemUTC());
         SourceSnapshot before = snapshot("guide.md");
 
-        ingestionService.ingest();
+        KnowledgeIngestionResult _result2 = ingestionService.ingest(Clock.systemUTC());
         SourceSnapshot after = snapshot("guide.md");
 
         assertThat(after).isEqualTo(before);
@@ -108,7 +109,7 @@ class KnowledgeIngestionServiceIT {
     void changedContentReplacesChunksAndPreservesSourceIdentity() throws IOException {
         Path source = writeMarkdown("guide.md", "# Original\n\nOriginal stable body.");
 
-        ingestionService.ingest();
+        KnowledgeIngestionResult _result = ingestionService.ingest(Clock.systemUTC());
         SourceSnapshot before = snapshot("guide.md");
         Long sourceIdBefore = jdbcTemplate.queryForObject(
                 "SELECT id FROM knowledge_sources WHERE source_path = ?",
@@ -116,7 +117,7 @@ class KnowledgeIngestionServiceIT {
 
         Files.writeString(source, "# Replacement\n\nReplacement body.", StandardCharsets.UTF_8);
 
-        ingestionService.ingest();
+        KnowledgeIngestionResult _result2 = ingestionService.ingest(Clock.systemUTC());
         SourceSnapshot after = snapshot("guide.md");
         Long sourceIdAfter = jdbcTemplate.queryForObject(
                 "SELECT id FROM knowledge_sources WHERE source_path = ?",
@@ -153,14 +154,14 @@ class KnowledgeIngestionServiceIT {
     void failedReplacementRollsBackChecksumAndChunks() throws IOException {
         Path source = writeMarkdown("guide.md", "# Original\n\nOriginal stable body.");
 
-        ingestionService.ingest();
+        KnowledgeIngestionResult _result = ingestionService.ingest(Clock.systemUTC());
         SourceSnapshot before = snapshot("guide.md");
 
         Files.writeString(source, "# Replacement\n\nReplacement body.", StandardCharsets.UTF_8);
 
         installFailureTrigger();
         try {
-            assertThatThrownBy(ingestionService::ingest)
+            assertThatThrownBy(() -> ingestionService.ingest(Clock.systemUTC()))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Failed to ingest knowledge documents");
         } finally {
@@ -182,7 +183,7 @@ class KnowledgeIngestionServiceIT {
                 Drainage details.
                 """);
 
-        ingestionService.ingest();
+        KnowledgeIngestionResult _result = ingestionService.ingest(Clock.systemUTC());
 
         List<ChunkSnapshot> chunks = jdbcTemplate.query(
                 """

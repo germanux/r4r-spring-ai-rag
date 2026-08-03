@@ -24,7 +24,7 @@ spring:
     vectorstore:
       pgvector:
         initialize-schema: false
-        dimensions: 768
+        dimensions: ${RAG_EMBEDDING_DIMENSIONS}
         distance-type: COSINE_DISTANCE
         index-type: HNSW
         schema-name: public
