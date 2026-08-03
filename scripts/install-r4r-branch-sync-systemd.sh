@@ -14,9 +14,10 @@ usage() {
 Usage: ./scripts/install-r4r-branch-sync-systemd.sh [--uninstall]
 
 Installs a user-level systemd timer that every 3 minutes:
-  - collects all active agent branches into agent/integration;
-  - propagates the pinned integration commit to all branches;
-  - pushes integration and updated branches;
+  - discovers every worktree branch subscribed to the same Git repository;
+  - centralizes one source branch into agent/integration;
+  - propagates that integration revision before processing the next source;
+  - pushes integration and every updated branch;
   - displays a GNOME/KDE notification and opens the exact worktree on conflict.
 
 Environment overrides:
@@ -53,7 +54,7 @@ mkdir -p "$UNIT_DIR"
 
 cat > "$SERVICE" <<UNIT
 [Unit]
-Description=R4R collect branches into integration and propagate them
+Description=R4R full worktree branch convergence through agent/integration
 Wants=network-online.target
 After=network-online.target graphical-session.target
 
@@ -63,7 +64,7 @@ WorkingDirectory=$INTEGRATION_ROOT
 Environment=R4R_DEVELOPMENT_ROOT=$DEVELOPMENT_ROOT
 Environment=R4R_INTEGRATION_WORKTREE=$INTEGRATION_ROOT
 Environment=R4R_RING_WORKTREE=$RING_ROOT
-ExecStart=/bin/bash -lc 'exec ./scripts/sync-agent-branches.sh --source agent/integration --fetch --push'
+ExecStart=/bin/bash -lc 'exec ./scripts/sync-agent-branches.sh'
 TimeoutStartSec=25min
 Nice=10
 IOSchedulingClass=idle
