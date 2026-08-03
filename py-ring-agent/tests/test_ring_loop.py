@@ -24,10 +24,13 @@ class RingLoopTest(unittest.TestCase):
             self.assertIn(str(run_dir), prompt)
             self.assertIn(str(run_dir / "output"), prompt)
             self.assertIn("RUN_ID: run-1", prompt)
-            self.assertIn("Write exactly these six staged files", prompt)
-            self.assertIn("Do not write `runtime/control/**` yourself", prompt)
+            self.assertIn("Write these six staged files", prompt)
+            self.assertIn("Do not write `runtime/control/**`", prompt)
+            self.assertIn(str(paths.ring), prompt)
             self.assertNotIn(str(paths.pc), prompt)
             self.assertNotIn(str(paths.lp), prompt)
+            self.assertIn("never delete, unlink, remove, rename or move", prompt)
+            self.assertIn("may additionally make bounded, non-destructive edits", prompt)
 
     def test_directive_validation_accepts_current_advisory_json(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

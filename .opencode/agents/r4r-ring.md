@@ -75,7 +75,7 @@ state.json must be valid JSON with this structure:
   "overall_status": "READY | BLOCKED | NO_ACTION",
   "decisions": {
     "PC": {
-      "action": "START | CONTINUE | HOLD | REVIEW | STOP | RESTART | NO_ACTION",
+      "action": "START | CONTINUE | HOLD | REVIEW | STOP | NO_ACTION",
       "task_id": "string or null",
       "reason": "non-empty evidence-grounded reason",
       "next_action": "one focused action for one worker pass",
@@ -84,7 +84,7 @@ state.json must be valid JSON with this structure:
       "avoid_repeating": "the last failed or wasteful approach to avoid"
     },
     "LP": {
-      "action": "START | CONTINUE | HOLD | REVIEW | STOP | RESTART | NO_ACTION",
+      "action": "START | CONTINUE | HOLD | REVIEW | STOP | NO_ACTION",
       "task_id": "string or null",
       "reason": "non-empty evidence-grounded reason",
       "next_action": "one focused action for one worker pass",
