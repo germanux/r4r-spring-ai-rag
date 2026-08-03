@@ -1,0 +1,3 @@
+888cf38d9138f4044798fede34ef3234174557b2ddf8d8565e24a8f929c02254  r4r-phase3-operational-control-v1-dropin.zip
+b4ddda7724547bef728e73bbf486e307dc4aa24609c5a2292432718bdd9c7a45  r4r-phase3-operational-control-v1.patch
+7f86433bb9d3aca6626c83522c42b2d2dc754ed25ca54ba92f9723d3368cd87b  r4r-phase3-operational-control-v1-validation.txt

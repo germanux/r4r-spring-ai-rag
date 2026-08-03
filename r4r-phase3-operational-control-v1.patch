@@ -50,6 +50,65 @@ diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseli
 +the deterministic controller may create a gate-green checkpoint and a final ACCEPT
 +commit. A checkpoint does not complete the task. Never launch two controllers for the
 +same destination.
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/.opencode/r4r-agents.json r4r-phase3-control-v1/.opencode/r4r-agents.json
+--- r4r-phase3-control-v1-baseline-full/.opencode/r4r-agents.json	2026-08-03 00:08:25.256752423 +0000
++++ r4r-phase3-control-v1/.opencode/r4r-agents.json	2026-08-03 00:08:25.256752423 +0000
+@@ -3,11 +3,16 @@
+   "defaults": {
+     "requestTimeoutSeconds": 14400,
+     "chunkTimeoutSeconds": 600,
+-    "maxAttemptsPerTask": 0,
+-    "maxNoProgressCycles": 4,
+-    "maxTransientFailures": 8,
+-    "autoCommit": false,
+-    "bootstrapCommit": false
++    "maxAttemptsPerTask": 6,
++    "maxNoProgressCycles": 2,
++    "maxTransientFailures": 3,
++    "autoCommit": true,
++    "bootstrapCommit": true,
++    "checkpointOnGreen": true,
++    "maxSessionSeconds": 5400,
++    "idleSeconds": 900,
++    "maxSessionSteps": 120,
++    "repeatEventBudget": 12
+   },
+   "codeIntelligence": {
+     "referenceManifest": "knowledge/code-repositories.md",
+@@ -59,7 +64,13 @@
+       "mcp": [
+         "codegraph",
+         "code_graph_rag"
+-      ]
++      ],
++      "runtime": {
++        "maxSessionSeconds": 5400,
++        "idleSeconds": 900,
++        "maxSessionSteps": 120,
++        "repeatEventBudget": 12
++      }
+     },
+     "LP": {
+       "agentId": "r4r-laptop",
+@@ -88,7 +99,17 @@
+         "docker-postgres/**",
+         "docs/backend/**"
+       ],
+-      "mcp": []
++      "mcp": [
++        "codegraph",
++        "code_graph_rag",
++        "playwright"
++      ],
++      "runtime": {
++        "maxSessionSeconds": 3600,
++        "idleSeconds": 600,
++        "maxSessionSteps": 90,
++        "repeatEventBudget": 12
++      }
+     }
+   }
+ }
 diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/AGENTS.md r4r-phase3-control-v1/AGENTS.md
 --- r4r-phase3-control-v1-baseline-full/AGENTS.md	2026-08-03 00:01:42.716737867 +0000
 +++ r4r-phase3-control-v1/AGENTS.md	2026-08-02 23:54:59.240723278 +0000
