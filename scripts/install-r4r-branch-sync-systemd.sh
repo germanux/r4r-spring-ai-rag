@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 DEVELOPMENT_ROOT="${R4R_DEVELOPMENT_ROOT:-$HOME/Desarrollo}"
 INTEGRATION_ROOT="${R4R_INTEGRATION_WORKTREE:-$DEVELOPMENT_ROOT/r4r-integration.git}"
-INTERVAL="${R4R_BRANCH_SYNC_INTERVAL:-3min}"
+INTERVAL="${R4R_BRANCH_SYNC_INTERVAL:-15min}"
 UNIT_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
 SERVICE="$UNIT_DIR/r4r-agent-branch-sync.service"
 TIMER="$UNIT_DIR/r4r-agent-branch-sync.timer"
@@ -13,14 +13,14 @@ usage() {
   cat <<'USAGE'
 Usage: ./scripts/install-r4r-branch-sync-systemd.sh [install|uninstall]
 
-Installs a user-level systemd timer. Every three minutes, by default, it runs the
+Installs a user-level fallback timer. Every fifteen minutes, by default, it runs the
 complete worktree-aware hot-sync pass with fetch, centralization, propagation,
 pushes, dirty-state preservation and prior-runtime restoration.
 
 Environment:
   R4R_DEVELOPMENT_ROOT
   R4R_INTEGRATION_WORKTREE
-  R4R_BRANCH_SYNC_INTERVAL   default: 3min
+  R4R_BRANCH_SYNC_INTERVAL   default: 15min
 USAGE
 }
 
@@ -71,10 +71,10 @@ cat >"$TIMER" <<EOF
 Description=Run R4R hot-sync every $INTERVAL
 
 [Timer]
-OnBootSec=45s
-OnUnitActiveSec=$INTERVAL
+OnActiveSec=2min
+OnUnitInactiveSec=$INTERVAL
 AccuracySec=15s
-Persistent=true
+Persistent=false
 Unit=r4r-agent-branch-sync.service
 
 [Install]

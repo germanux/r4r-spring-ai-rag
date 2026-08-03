@@ -535,6 +535,17 @@ class AutomaticRunner:
         self.checkpoint_on_green = (
             os.environ.get("R4R_CHECKPOINT_ON_GREEN", "true").lower() == "true"
         )
+        self.integration_sync_enabled = (
+            os.environ.get("R4R_AGENT_INTEGRATION_SYNC", "true").lower() == "true"
+        )
+        sync_script_value = os.environ.get(
+            "R4R_AGENT_INTEGRATION_SYNC_SCRIPT",
+            "scripts/agent-integration-sync.sh",
+        )
+        self.integration_sync_script = Path(sync_script_value).expanduser()
+        if not self.integration_sync_script.is_absolute():
+            self.integration_sync_script = self.repo / self.integration_sync_script
+        self.integration_sync_failures: list[dict[str, Any]] = []
 
         worker_prefix = f"R4R_{self.worker_id}_"
         def worker_int(name: str, default: int) -> int:
@@ -694,6 +705,8 @@ class AutomaticRunner:
         return True
 
     def execute(self) -> int:
+        if not self._sync_with_integration("startup", required=True):
+            return self._finish("STARTUP_INTEGRATION_SYNC_FAILED", 74)
         self._require_binary(self.opencode_bin)
         self._require_binary(self.codex_bin)
         if self.require_codegraph and self.codegraph_policy != "off":
@@ -2838,7 +2851,7 @@ next instruction packet.
             "- Spring AI abstractions; no handwritten Ollama HTTP client.",
             "- Every red gate retains complete diagnostics for Codex.",
             "- CodeGraph is focused retrieval evidence, not authority to expand task scope.",
-            "- Runtime evidence stays under `runtime/runs/`; no automatic push.",
+            "- Runtime evidence stays under `runtime/runs/`; the deterministic controller publishes only after a validated commit.",
             "",
             "## Task ledger",
             "",
@@ -2860,6 +2873,7 @@ next instruction packet.
         # Serialize only the short add/check/commit section with every R4R Git
         # automation. Model work and gates remain concurrent. Manual Git commands
         # do not honor this cooperative lock.
+        committed_head: str | None = None
         with exclusive_file_lock(self.git_commit_lock_path):
             changed = git_changed_paths(self.repo)
             if allowed_patterns is None:
@@ -2968,7 +2982,48 @@ next instruction packet.
                 f"{self.git_author_name} <{self.git_author_email}>",
                 flush=True,
             )
-            return head
+            committed_head = head
+
+        # The lifecycle script acquires this same lock. Invoke it only after the
+        # short commit transaction above has released the lock.
+        if committed_head is not None:
+            self._sync_with_integration("checkpoint", required=False)
+        return committed_head
+
+    def _sync_with_integration(self, phase: str, *, required: bool) -> bool:
+        if not self.integration_sync_enabled:
+            return True
+        if not self.integration_sync_script.is_file():
+            message = f"integration sync script not found: {self.integration_sync_script}"
+            if required:
+                print(f"[r4r] {message}", file=sys.stderr, flush=True)
+                return False
+            print(f"[r4r] WARNING: {message}", file=sys.stderr, flush=True)
+            self.integration_sync_failures.append({"phase": phase, "error": message})
+            return False
+
+        result = run_command(
+            (str(self.integration_sync_script), phase),
+            self.repo,
+            timeout_seconds=self.timeout,
+            stream=True,
+        )
+        if result.exit_code == 0:
+            return True
+
+        error = (result.stderr or result.stdout).strip()[-4000:]
+        self.integration_sync_failures.append(
+            {"phase": phase, "exit_code": result.exit_code, "error": error}
+        )
+        level = "ERROR" if required else "WARNING"
+        print(
+            f"[r4r] {level}: integration synchronization failed during {phase}; "
+            "the local commit is preserved and the fallback timer may retry\n"
+            f"{error}",
+            file=sys.stderr,
+            flush=True,
+        )
+        return False
 
     def _task_by_id(self, task_id: str) -> Task:
         for task in self.plan.tasks:
@@ -2987,6 +3042,9 @@ next instruction packet.
             "git_author_name": self.git_author_name,
             "git_author_email": self.git_author_email,
             "changed_paths": git_changed_paths(self.repo),
+            "integration_sync_failures": list(
+                getattr(self, "integration_sync_failures", [])
+            ),
         }
         if extra:
             state.update(extra)

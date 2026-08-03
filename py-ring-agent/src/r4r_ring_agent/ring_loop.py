@@ -38,6 +38,15 @@ DIRECTIVE_MAX_AGE_SECONDS = int(
 EVENT_MIN_INTERVAL_SECONDS = int(
     os.environ.get("R4R_RING_EVENT_MIN_INTERVAL_SECONDS", "300")
 )
+INTEGRATION_SYNC_ENABLED = (
+    os.environ.get("R4R_AGENT_INTEGRATION_SYNC", "true").lower() == "true"
+)
+GIT_LOCK_PATH = Path(
+    os.environ.get(
+        "R4R_GIT_LOCK",
+        str(Path.home() / "Desarrollo" / ".r4r-runtime" / "git.lock"),
+    )
+).expanduser()
 
 
 def _git(repo: Path, args: Sequence[str]) -> str:
@@ -50,6 +59,38 @@ def _git(repo: Path, args: Sequence[str]) -> str:
         check=False,
     )
     return result.stdout
+
+
+def _integration_sync(repo: Path, phase: str) -> dict[str, Any]:
+    result: dict[str, Any] = {"status": "disabled", "phase": phase}
+    if not INTEGRATION_SYNC_ENABLED:
+        return result
+    script = Path(
+        os.environ.get(
+            "R4R_AGENT_INTEGRATION_SYNC_SCRIPT",
+            str(repo / "scripts" / "agent-integration-sync.sh"),
+        )
+    ).expanduser()
+    if not script.is_file():
+        return {
+            "status": "failed",
+            "phase": phase,
+            "detail": f"integration sync script not found: {script}",
+        }
+    completed = subprocess.run(
+        [str(script), phase],
+        cwd=repo,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    return {
+        "status": "ok" if completed.returncode == 0 else "failed",
+        "phase": phase,
+        "exit_code": completed.returncode,
+        "detail": completed.stdout[-4000:].strip(),
+    }
 
 
 def _write_repo_evidence(label: str, repo: Path, run_dir: Path) -> None:
@@ -425,7 +466,7 @@ def _append_decision_ledger(
     _atomic_write_text(destination, content)
 
 
-def _commit_coordination_files(
+def _commit_coordination_files_locked(
     repo: Path,
     files: Sequence[Path],
     run_id: str,
@@ -492,6 +533,20 @@ def _commit_coordination_files(
         detail=commit.stdout.strip(),
     )
     return result
+
+
+def _commit_coordination_files(
+    repo: Path,
+    files: Sequence[Path],
+    run_id: str,
+) -> dict[str, Any]:
+    GIT_LOCK_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with GIT_LOCK_PATH.open("a+") as lock_handle:
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+        try:
+            return _commit_coordination_files_locked(repo, files, run_id)
+        finally:
+            fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
 
 
 def _path_within(root: Path, candidate: Path) -> bool:
@@ -642,6 +697,7 @@ def _publish_staged_outputs(
         "promoted_files": {},
         "versioned_files": {},
         "coordination_commit": {"status": "not-run"},
+        "integration_sync": {"status": "not-run"},
         "directive_files": {},
     }
     missing = [
@@ -727,6 +783,9 @@ def _publish_staged_outputs(
             encoding="utf-8",
         )
         return result
+
+    if commit_result["status"] == "committed":
+        result["integration_sync"] = _integration_sync(paths.ring, "checkpoint")
 
     generated_at = datetime.now(timezone.utc)
     expires_at = generated_at + timedelta(seconds=DIRECTIVE_MAX_AGE_SECONDS)
@@ -895,6 +954,14 @@ def run_ring_loop(
         require_git_worktree(paths.pc, "PC"),
         require_git_worktree(paths.lp, "LP"),
     )
+    startup_sync = _integration_sync(paths.ring, "startup")
+    if startup_sync["status"] == "failed":
+        print(
+            "[the-ring] startup integration synchronization failed: "
+            + startup_sync.get("detail", "unknown error"),
+            flush=True,
+        )
+        return 74
     loop_runtime = paths.ring / "runtime" / "ring-agent" / "ring"
     loop_runtime.mkdir(parents=True, exist_ok=True)
     lock_handle = (loop_runtime / "loop.lock").open("a+")
