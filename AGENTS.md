@@ -19,10 +19,12 @@ endpoints belong in `.env.r4r.local`, never in the application `.env`.
 - Peer-owned product paths are tolerated as concurrent background changes but are not
   writable by the current agent.
 - Each worker has separate progress, memory, control and run directories.
-- OpenCode and Codex never write Git history. Automatic commits are disabled while
-  both workers share a branch; commit manually after reviewing both scopes.
+- OpenCode/Qwen3 and Codex never write Git history.
+- The deterministic Python controller may create a task-scoped checkpoint immediately
+  after the exact gate is green, and a closing commit after Codex `ACCEPT`.
+- A checkpoint preserves useful compilable work but does not mark the task accepted.
 - Do not run `git add`, `git commit`, `git reset`, `git checkout`, `git merge` or
-  `git push` from an agent.
+  `git push` from a model/tool session; only the controller owns automated commits.
 
 ## Code intelligence
 
@@ -41,8 +43,10 @@ endpoints belong in `.env.r4r.local`, never in the application `.env`.
 3. Use focused CodeGraph/Code-Graph-RAG retrieval when useful.
 4. Follow the bounded Codex plan.
 5. Edit one coherent batch inside the current worker's allowed paths.
-6. Re-run the exact gate and hand the evidence to Codex.
-7. Stop on scope/Git violations; retry recoverable model or infrastructure failures.
+6. Re-run the exact gate. When green, let the controller write worker memory and a
+   task-scoped checkpoint before handing the same evidence to Codex.
+7. Stop on scope/Git violations and bounded-session watchdog triggers; retry only with
+   a changed plan or new evidence.
 
 ## Product boundaries
 

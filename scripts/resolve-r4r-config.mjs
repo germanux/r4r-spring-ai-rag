@@ -79,6 +79,18 @@ const metadata = {
   controlDir: profile.controlDir,
   peerPaths: profile.peerPaths,
   allowedPaths: profile.allowedPaths,
+  runtime: {
+    maxAttemptsPerTask: canonical.defaults.maxAttemptsPerTask,
+    maxNoProgressCycles: canonical.defaults.maxNoProgressCycles,
+    maxTransientFailures: canonical.defaults.maxTransientFailures,
+    autoCommit: canonical.defaults.autoCommit,
+    bootstrapCommit: canonical.defaults.bootstrapCommit,
+    checkpointOnGreen: canonical.defaults.checkpointOnGreen,
+    maxSessionSeconds: profile.runtime?.maxSessionSeconds ?? canonical.defaults.maxSessionSeconds,
+    idleSeconds: profile.runtime?.idleSeconds ?? canonical.defaults.idleSeconds,
+    maxSessionSteps: profile.runtime?.maxSessionSteps ?? canonical.defaults.maxSessionSteps,
+    repeatEventBudget: profile.runtime?.repeatEventBudget ?? canonical.defaults.repeatEventBudget,
+  },
   opencodeConfig: path.relative(root, configPath),
 };
 const metadataPath = path.join(controlDir, "agent-runtime.json");
