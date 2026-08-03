@@ -105,9 +105,9 @@
         "playwright"
       ],
       "runtime": {
-        "maxSessionSeconds": 3600,
-        "idleSeconds": 600,
-        "maxSessionSteps": 90,
+        "maxSessionSeconds": 5400,
+        "idleSeconds": 900,
+        "maxSessionSteps": 120,
         "repeatEventBudget": 12
       }
     }

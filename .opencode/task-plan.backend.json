@@ -91,7 +91,7 @@
     {
       "id": "task-06-production-ingestion-cli",
       "command": ".opencode/commands/task-06-production-ingestion-cli.md",
-      "objective": "Add an explicit non-web CLI for deterministic production knowledge ingestion.",
+      "objective": "Stabilize and commit the current compilable production-ingestion CLI baseline.",
       "allowed_paths": [
         "pom.xml",
         "src/main/**",
@@ -100,11 +100,95 @@
         ".env.example"
       ],
       "gate": [
-        "bash",
-        "-lc",
-        "rm -rf target && ./scripts/task-gate.sh all && mvn -Dtest=KnowledgeIngestionCliTest -DfailIfNoTests=true test"
+        "./scripts/task-gate.sh",
+        "task-06-production-ingestion-cli"
       ],
-      "commit_message": "feat(task-06): add production knowledge ingestion CLI"
+      "commit_message": "chore(ingestion): checkpoint compilable CLI baseline"
+    },
+    {
+      "id": "task-06b-cli-contract",
+      "command": ".opencode/commands/task-06b-cli-contract.md",
+      "objective": "Finalize the CLI result and orchestration contract.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**",
+        ".env.example"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-06b-cli-contract"
+      ],
+      "commit_message": "feat(ingestion): finalize CLI result contract"
+    },
+    {
+      "id": "task-06c-spring-lifecycle",
+      "command": ".opencode/commands/task-06c-spring-lifecycle.md",
+      "objective": "Prove deterministic non-web Spring lifecycle and no startup ingestion side effect.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**",
+        ".env.example"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-06c-spring-lifecycle"
+      ],
+      "commit_message": "fix(ingestion): enforce non-web Spring lifecycle"
+    },
+    {
+      "id": "task-06d-failure-classification",
+      "command": ".opencode/commands/task-06d-failure-classification.md",
+      "objective": "Classify configuration, infrastructure and ingestion failures by concrete cause.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**",
+        ".env.example"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-06d-failure-classification"
+      ],
+      "commit_message": "fix(ingestion): classify infrastructure failures"
+    },
+    {
+      "id": "task-06e-child-process",
+      "command": ".opencode/commands/task-06e-child-process.md",
+      "objective": "Execute and verify the real production CLI as a bounded child JVM.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**",
+        ".env.example"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-06e-child-process"
+      ],
+      "commit_message": "test(ingestion): verify production CLI process"
+    },
+    {
+      "id": "task-06f-ingestion-validation",
+      "command": ".opencode/commands/task-06f-ingestion-validation.md",
+      "objective": "Complete the full deterministic production-ingestion CLI validation.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**",
+        ".env.example"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-06f-ingestion-validation"
+      ],
+      "commit_message": "test(ingestion): complete production CLI validation"
     },
     {
       "id": "task-07-populate-production-rag",

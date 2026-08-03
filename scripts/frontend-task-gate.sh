@@ -14,6 +14,11 @@ require_file() {
   [[ -f "$1" ]] || fail "Required frontend artifact is missing: ${1#$ROOT/}"
 }
 
+clean_diff_gate() {
+  git -C "$ROOT" diff --check
+  git -C "$ROOT" diff --cached --check
+}
+
 require_workspace() {
   if [[ ! -f "$FRONTEND/package.json" ]]; then
     printf '%s\n' \
@@ -72,36 +77,51 @@ NODE
   npm --prefix "$FRONTEND" run test:ci
 }
 
+rag_ui_gate() {
+  clean_diff_gate
+  require_file "$FRONTEND/src/app/features/rag/rag-page.component.ts"
+  require_file "$FRONTEND/src/app/features/rag/rag-page.component.html"
+  require_file "$FRONTEND/src/app/features/rag/rag-page.component.spec.ts"
+  build_gate
+  unit_gate
+}
+
 case "$TASK" in
   task-fe-01-angular17-bootstrap)
-    # FE-01 creates the workspace. Once it exists, validate only Angular 17 and build.
+    clean_diff_gate
     build_gate
     ;;
   task-fe-02-rag-client)
+    clean_diff_gate
     require_file "$FRONTEND/src/app/core/rag/rag-api.service.ts"
     require_file "$FRONTEND/src/app/core/rag/rag.models.ts"
     build_gate
     unit_gate
     ;;
-  task-fe-03-rag-ui)
-    require_file "$FRONTEND/src/app/features/rag/rag-page.component.ts"
-    build_gate
-    unit_gate
+  task-fe-03-rag-ui|\
+  task-fe-03b-answer-abstention|\
+  task-fe-03c-citations|\
+  task-fe-03d-dom-state-tests|\
+  task-fe-03e-security-accessibility|\
+  task-fe-03f-final-validation)
+    rag_ui_gate
     ;;
   task-fe-04-playwright)
+    clean_diff_gate
     require_file "$FRONTEND/playwright.config.ts"
     build_gate
     unit_gate
     npm --prefix "$FRONTEND" run e2e
     ;;
   all)
+    clean_diff_gate
     require_file "$FRONTEND/playwright.config.ts"
     build_gate
     unit_gate
     npm --prefix "$FRONTEND" run e2e
     ;;
   *)
-    echo "Usage: $0 {task-fe-01-angular17-bootstrap|task-fe-02-rag-client|task-fe-03-rag-ui|task-fe-04-playwright|all}" >&2
+    echo "Usage: $0 {task-fe-01-angular17-bootstrap|task-fe-02-rag-client|task-fe-03-rag-ui|task-fe-03b-answer-abstention|task-fe-03c-citations|task-fe-03d-dom-state-tests|task-fe-03e-security-accessibility|task-fe-03f-final-validation|task-fe-04-playwright|all}" >&2
     exit 2
     ;;
 esac
