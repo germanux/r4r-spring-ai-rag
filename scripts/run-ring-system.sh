@@ -9,6 +9,7 @@ RING_ROOT="${R4R_RING_WORKTREE:-$CODE_ROOT}"
 RUNTIME_ENV_HELPER="$CODE_ROOT/scripts/r4r-runtime-env.sh"
 PYTHON="$CODE_ROOT/py-ring-agent/run-ring-system.py"
 GUARDIAN="$CODE_ROOT/scripts/ensure-r4r-workers.sh"
+STOP_ALL="$CODE_ROOT/scripts/stop-all-r4r-agents.sh"
 RUNTIME="$RING_ROOT/runtime/ring-system"
 PID_FILE="$RUNTIME/supervisor.pid"
 LOG_FILE="$RUNTIME/supervisor.log"
@@ -56,7 +57,11 @@ case "$ACTION" in
       exit 0
     fi
     rm -f "$PID_FILE"
-    nohup python3 "$PYTHON" --ring "$RING_ROOT" --guardian "$GUARDIAN" "$@" >>"$LOG_FILE" 2>&1 &
+    launcher=(python3 "$PYTHON" --ring "$RING_ROOT" --guardian "$GUARDIAN" "$@")
+    if command -v setsid >/dev/null 2>&1; then
+      launcher=(setsid "${launcher[@]}")
+    fi
+    nohup "${launcher[@]}" >>"$LOG_FILE" 2>&1 &
     launcher_pid=$!
     for _ in $(seq 1 40); do
       if pid_alive; then
@@ -71,19 +76,36 @@ case "$ACTION" in
     exit 1
     ;;
   stop)
-    if ! pid_alive; then
-      rm -f "$PID_FILE"
-      echo "[r4r-system] already stopped"
-      exit 0
+    supervisor_pid=""
+    if pid_alive; then
+      supervisor_pid="$(cat "$PID_FILE")"
+      kill -TERM "$supervisor_pid" 2>/dev/null || true
+      for _ in $(seq 1 80); do
+        kill -0 "$supervisor_pid" 2>/dev/null || break
+        sleep 0.25
+      done
+      if kill -0 "$supervisor_pid" 2>/dev/null; then
+        echo "[r4r-system] supervisor survived SIGTERM; sending SIGKILL" >&2
+        kill -KILL "$supervisor_pid" 2>/dev/null || true
+      fi
     fi
-    pid="$(cat "$PID_FILE")"
-    kill -TERM "$pid"
-    for _ in $(seq 1 80); do
-      kill -0 "$pid" 2>/dev/null || { rm -f "$PID_FILE"; echo "[r4r-system] stopped"; exit 0; }
-      sleep 0.25
-    done
-    echo "[r4r-system] ERROR: supervisor did not stop" >&2
-    exit 1
+
+    # The workers and OpenCode sessions are intentionally detached from the
+    # supervisor. A complete stop therefore delegates to the repository-wide,
+    # process-tree-aware cleanup after the supervisor has stopped creating work.
+    if [[ -x "$STOP_ALL" ]]; then
+      if [[ "${R4R_RING_STOP_KEEP_OLLAMA:-false}" == "true" ]]; then
+        "$STOP_ALL" --keep-models
+      else
+        "$STOP_ALL"
+      fi
+    else
+      echo "[r4r-system] ERROR: missing executable $STOP_ALL" >&2
+      exit 2
+    fi
+
+    rm -f "$PID_FILE" "$RING_AGENT_PID_FILE"
+    echo "[r4r-system] stopped supervisor, Ring, PC and LP"
     ;;
   status)
     if pid_alive; then
