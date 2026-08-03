@@ -133,3 +133,11 @@ The default review interval is one hour and can be changed with:
 export R4R_RING_REVIEW_INTERVAL_SECONDS=3600
 export R4R_RING_DIRECTIVE_MAX_AGE_SECONDS=10800
 ```
+
+## Event-triggered worker reviews
+
+PC and LP controllers request a fresh cognitive Ring review after a gate-green
+checkpoint and after a Codex decision. Requests are written atomically under
+`runtime/control/RING/requests/`, consumed once, and preserved with worker memory and
+checkpoint evidence in the next Ring run. The hourly review remains the fallback and
+all Ring directives remain advisory.
