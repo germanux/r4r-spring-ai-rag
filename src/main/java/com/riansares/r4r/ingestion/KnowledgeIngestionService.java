@@ -15,6 +15,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Array;
 import java.sql.PreparedStatement;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,9 +37,18 @@ public class KnowledgeIngestionService {
     }
 
     @Transactional
-    public void ingest() {
+    public KnowledgeIngestionResult ingest(Clock clock) {
+        Instant start = clock.instant();
+
+        int discoveredSources = 0;
+        int changedSources = 0;
+        int unchangedSources = 0;
+        int persistedChunks = 0;
+
         try {
             for (KnowledgeDocument document : documentLoader.loadAll()) {
+                discoveredSources++;
+
                 byte[] documentChecksum = sha256(
                         document.content().getBytes(StandardCharsets.UTF_8));
 
@@ -46,15 +57,18 @@ public class KnowledgeIngestionService {
                         documentChecksum);
 
                 if (unchangedSourceId != null) {
+                    unchangedSources++;
                     continue;
                 }
 
                 long sourceId = insertOrUpdateSource(
                         document.source(),
                         documentChecksum);
+                changedSources++;
 
                 List<MarkdownChunk> chunks = chunker.chunk(document);
                 replaceChunks(sourceId, chunks);
+                persistedChunks += chunks.size();
             }
         } catch (IllegalStateException exception) {
             throw exception;
@@ -63,6 +77,21 @@ public class KnowledgeIngestionService {
                     "Failed to ingest knowledge documents",
                     exception);
         }
+
+        Instant end = clock.instant();
+        long durationMs = java.time.Duration.between(start, end).toMillis();
+
+        return new KnowledgeIngestionResult(
+                discoveredSources,
+                changedSources,
+                unchangedSources,
+                persistedChunks,
+                durationMs);
+    }
+
+    @Transactional
+    public void ingest() {
+        ingest(Clock.systemUTC());
     }
 
     private Long findSourceIdByPathAndSha256(String sourcePath, byte[] checksum) {
