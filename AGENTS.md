@@ -16,6 +16,29 @@ Two product controllers may run concurrently because ownership is disjoint:
 The canonical runtime/model configuration is `config/r4r-agents.json`. Machine-local
 endpoints belong in `.env.r4r.local`, never in the application `.env`.
 
+## Subtask size, timebox and commits
+
+These rules apply to **PC**, **LP** and **RING**. For Ring, a task means one bounded,
+evidence-backed cross-cutting correction in the Ring worktree rather than an unbounded
+repository rewrite.
+
+- An agent task should represent one bounded outcome that can normally be completed
+  in 45–70 minutes of useful model work.
+- The hard OpenCode session ceiling is 90 minutes (`5400` seconds). Reaching the
+  ceiling stops the session; it does not authorize a broader scope or an unreviewed
+  commit.
+- Every subtask has one objective, one exact gate and one controller-owned closing
+  commit. A subtask may create an earlier gate-green checkpoint, but the closing
+  commit still requires Codex `ACCEPT`.
+- Split work again when one task mixes independent concerns such as entrypoint,
+  lifecycle, exception classification, subprocess proof, DOM behavior, accessibility
+  or final integration validation.
+- Before an expensive gate, the deterministic gate must reject whitespace errors with
+  `git diff --check`; do not spend another full Maven or Angular cycle on a patch that
+  cannot be committed.
+- After a subtask is accepted and committed, advance immediately to the next pending
+  subtask. Do not reopen accepted work without a current regression.
+
 ## Ring non-destructive authority
 
 - Ring may modify existing repository files, including Java, Angular, scripts,
