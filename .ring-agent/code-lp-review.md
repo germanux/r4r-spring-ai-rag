@@ -1,72 +1,56 @@
-# LP Frontend Code Review Snapshot (2026-08-01T174030Z)
+# LP / Frontend code review
 
-## Overview
+## Current state
 
-Worker: LP / frontend  
-Branch: agent/laptop-qwen3-worker  
-Status: Uncommitted changes in Angular component and routing
+- **Worker**: LP (Qwen3-Coder)
+- **Active task**: `task-fe-03-rag-ui` (PENDING, gate green, Codex REVISE)
+- **Gate status**: Exit 0 but rejected by Codex decision `REVISE`
+- **Status of acceptance gates**: Not yet met;Codex explicitly requires corrections
 
-## Git Diff Summary
+## Latest corrected implementation
 
-| File | Lines Changed |
-|------|---------------|
-| app.component.spec.ts | +/-2 |
-| app.component.ts | -25 (reduction) |
-| app.config.ts | +10/-3 |
-| app.routes.ts | +12/-1 |
+The `lp-git-status.txt` evidence shows the following paths were added or modified in the last worker run:
 
-Total: 4 files, +25 insertions, -36 deletions
+- Modified: `frontend/src/app/app.component.spec.ts`
+- Modified: `frontend/src/app/app.component.ts`
+- Modified: `frontend/src/app/app.config.ts` (modified twice, indicating MM conflict)
+- Added: `frontend/src/app/features/rag/rag-page.component.html`
+- Added: `frontend/src/app/features/rag/rag-page.component.scss`
+- Added: `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- Added: `frontend/src/app/features/rag/rag-page.component.ts`
 
-## Untracked Files
+## Codex rejection summary
 
-- frontend/src/app/features/ (directory)
+The `codex-qwen3-extra-instructions.md` for this run explicitly identifies test instrumentation defects:
 
-## Detected Defects
+1. **AppComponent tests** still assert stale bootstrap title instead of rendered RAG integration heading
+2. **RagPageComponent tests** inspect component properties rather than fixture DOM assertions:
+   - Missing loading state (`role="status"`) verification
+   - Missing disabled textarea/submit button before emission
+   - Missing re-enabled controls after success and error
+   - Missing error alert with `role="alert"` and deterministic transport-error text
+   - Missing structured abstention rendering
+   - Missing escaped answer markup without injected HTML
+   - Missing ordered citation entries (ordinal/source/heading-path)
+   - Missing absence of citations when citation-like text exists only in answer
+3. **Component source** contains unused `BehaviorSubject`, `queryObservableForTesting` and related emissions, RxJS imports, and asynchronous `setTimeout` scaffolding that must be removed
 
-### 1. Feature Module Binding Risk
-Severity: High  
-Evidence: New frontend/src/app/features/ directory untracked and uncommitted. No evidence that:
-- Feature module routes are bound to app.routes.ts
-- Angular compiler can resolve feature imports
-- Lazy loading configuration (if any) matches directory structure
+## Remaining acceptance gates
 
-### 2. Component Reduction Without Replacement
-Severity: Medium  
-Evidence: app.component.ts reduced by 25 lines without corresponding component template or service changes shown. Risk of:
-- Missing UI functionality if business logic was removed without migration
-- Breakage in parent components expecting removed methods or properties
+| Gate | Status |
+|------|--------|
+| Exact frontend gate exit 0 | ✅ Confirmed (exit=0) |
+| Codex ACCEPT decision | ❌ Pending (decision=REVISE) |
+| AppComponent tests verify rendered RAG page heading | Not yet applied |
+| RagPageComponent tests assert fixture DOM transitions | Not yet applied |
+| Remove production-only BehaviorSubject/test accessors and unused imports | Not yet applied |
 
-### 3. Configuration Drift: app.config.ts
-Severity: Medium  
-Evidence: +10/-3 suggests new service providers or route guard additions. Must correlate with:
-- Backend REST contract used in component services
-- Feature module dependencies (if lazy loading)
+## Next action
 
-## First Current Defect (LP)
+**Wait for Codex review**: The ring-agent director should not commit code or claim acceptance. Only the deterministic Python supervisor may create a checkpoint after corrections are applied and the gate passes with ACCEPT.
 
-Defect: Unbound feature module routes
+## Avoid repeating
 
-Paths to Inspect:
-- /home/german/Desarrollo/r4r-lp-worker.git/frontend/src/app/features/
-- /home/german/Desarrollo/r4r-lp-worker.git/frontend/src/app/app.routes.ts
-- /home/german/Desarrollo/r4r-lp-worker.git/frontend/src/app/app.config.ts
-
-Exact Gate: ng build --configuration development succeeds with zero error output
-
-Strategy (Non-Repeating):
-- Run Angular build in development mode first, before attempting serve or test
-- If route resolution fails, verify feature module exports and routing imports
-- Only after green build, move to ng Serve integration verification
-
-## Acceptance Conditions
-
-1. All .ts sources compile without errors (tsc --noEmit)
-2. Angular router resolves all routes at compile-time (no lazy loading warnings)
-3. Feature directory structure matches route definitions in app.routes.ts
-
-## Next Bounded Action (LP)
-
-Action: Verify frontend build of LP changes
-Command: cd /home/german/Desarrollo/r4r-lp-worker.git && ng build --configuration development
-Evidence to Capture: Full Angular CLI console output (success or error lines)
-Next After Gate: If green, run ng serve to verify runtime navigation
+- Do not re-attempt the same component property inspections without new fixture DOM assertions
+- Do not repeat AppComponent tests asserting stale bootstrap title
+- Do not omit removal of production-only test scaffolding

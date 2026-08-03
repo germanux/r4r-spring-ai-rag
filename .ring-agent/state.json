@@ -1,58 +1,45 @@
 {
-  "timestamp": "2026-08-01T174030Z",
-  "ring-worker-state": {
-    "branch": "agent/ring-agent-worker",
-    "ahead_of_origin": 5,
-    "modified_files": ["py-ring-agent/run-ring-agent.py"],
-    "untracked_files": [".opencode/agents/r4r-ring.md"]
-  },
-  "pc-worker-state": {
-    "branch": "agent/pc-qwen3-worker",
-    "modified_files": [
-      "src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionService.java",
-      "src/main/resources/application.yml",
-      "src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionServiceIT.java"
-    ],
-    "untracked_files": [
-      "local-understanding-report.md",
-      "src/main/java/com/riansares/r4r/ingestion/IngestionConfiguration.java",
-      "src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionOrchestration.java",
-      "src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionCli.java",
-      "src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionResult.java",
-      "src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionCliTest.java"
-    ],
-    "git_diff_stats": {
-      "KnowledgeIngestionService.java": "+77/-47",
-      "application.yml": "+1/-1",
-      "KnowledgeIngestionServiceIT.java": "+12/-12"
+  "schema_version": 1,
+  "run_id": "20260803T163636Z",
+  "overall_status": "READY",
+  "decisions": {
+    "PC": {
+      "action": "HOLD",
+      "task_id": "task-06-production-ingestion-cli",
+      "reason": "The exact task gate returned exit code 0 but Codex decision is REVISE, not ACCEPT. The codex-qwen3-extra-instructions.md file specifies precise corrections: register BeanDefinitionRegistryPostProcessor instead of ApplicationContextInitializer singleton registration, use instanceof checks for typed exceptions (SQLException, DataAccessException, ConnectException, SocketTimeoutException), invoke KnowledgeIngestionCli directly as child process, and assert explicit context closure in tests. The worker memory correctly records gate-green-but-codex-rejected status and the active task remains pending.",
+      "next_action": "Wait for Codex to produce an ACCEPT decision after PC applies all corrections from codex-qwen3-extra-instructions.md: install BeanDefinitionRegistryPostProcessor in ApplicationContextInitializer, use typed exception instanceof checks instead of string matching, invoke KnowledgeIngestionCli directly as child process with fixed timeout, and assert explicit context closure.",
+      "avoid_repeating": "Do not repeat ApplicationContextInitializer singleton registration or string-based exception classification; Codex explicitly rejected these approaches in codex-qwen3-extra-instructions.md for task-06-production-ingestion-cli",
+      "acceptance_gates": [
+        "Exact gate must be exit 0",
+        "Codex decision must be ACCEPT (not REVISE)",
+        "KnowledgeIngestionCliTest must pass with Mockito mock registered via BeanDefinitionRegistryPostProcessor",
+        "Child process must invoke KnowledgeIngestionCli directly"
+      ],
+      "evidence_paths": [
+        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T163636Z/pc-runtime/gate_summary.md",
+        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T163636Z/pc-runtime/codex-qwen3-extra-instructions.md",
+        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T163636Z/pc-runtime/progress.json"
+      ]
     },
-    "first_defect": "Unverified compilation of new orchestration classes (IngestionConfiguration, KnowledgeIngestionOrchestration, KnowledgeIngestionCli)",
-    "gate": "./gradlew compileJava testCompile --stacktrace"
+    "LP": {
+      "action": "HOLD",
+      "task_id": "task-fe-03-rag-ui",
+      "reason": "The exact frontend task gate returned exit code 0 but Codex decision is REVISE, not ACCEPT. The codex-qwen3-extra-instructions.md identifies test instrumentation defects: AppComponent tests still assert stale bootstrap title instead of rendered RAG heading; rag-page.component.spec.ts inspects component properties rather than fixture DOM assertions for loading states, disabled controls, error alerts, structured abstention, escaped answer markup and citation ordering; component contains unused BehaviorSubject/test accessors. The worker memory records gate-green-but-codex-rejected status.",
+      "next_action": "Wait for Codex to produce an ACCEPT decision after LP applies all corrections from codex-qwen3-extra-instructions.md: update app.component.spec.ts to verify rendered RAG page heading, drive rag-page tests with controlled Subjects and assert fixture DOM (loading role='status', disabled textarea/submit button before emission, re-enabled controls after success/error, error alert role='alert', structured abstention, escaped answer markup without injected HTML, citation ordering), remove production-only BehaviorSubject/test accessors and unused RxJS imports.",
+      "avoid_repeating": "Do not repeat AppComponent tests asserting bootstrap title or rag-page tests inspecting component properties instead of fixture DOM; Codex explicitly identified these failures in codex-qwen3-extra-instructions.md",
+      "acceptance_gates": [
+        "Exact frontend task gate must be exit 0",
+        "Codex decision must be ACCEPT (not REVISE)",
+        "app.component.spec.ts must verify rendered RAG page heading",
+        "rag-page.component.spec.ts must assert fixture DOM for all transitions"
+      ],
+      "evidence_paths": [
+        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T163636Z/lp-runtime/gate_summary.md",
+        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T163636Z/lp-runtime/codex-qwen3-extra-instructions.md",
+        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T163636Z/lp-runtime/progress.json"
+      ]
+    }
   },
-  "lp-worker-state": {
-    "branch": "agent/laptop-qwen3-worker",
-    "modified_files": [
-      "frontend/src/app/app.component.spec.ts",
-      "frontend/src/app/app.component.ts",
-      "frontend/src/app/app.config.ts",
-      "frontend/src/app/app.routes.ts"
-    ],
-    "untracked_files": ["frontend/src/app/features/"],
-    "git_diff_stats": {
-      "app.component.spec.ts": "+2/-2",
-      "app.component.ts": "-25",
-      "app.config.ts": "+10/-3",
-      "app.routes.ts": "+12/-1"
-    },
-    "first_defect": "Feature module routes not bound to backend REST contract",
-    "gate": "ng build --configuration development"
-  },
-  "integration_risks": [
-    "PC's new orchestration classes may introduce circular dependencies or missing Spring context wiring",
-    "LP's route expansion without corresponding API service updates may cause runtime navigation errors"
-  ],
-  "next_actions": {
-    "pc": "Run ./gradlew compileJava testCompile --stacktrace to verify compilation of new classes",
-    "lp": "Run ng build --configuration development to verify feature routes compile correctly"
-  }
+  "integration_risks": [],
+  "evidence_limitations": []
 }

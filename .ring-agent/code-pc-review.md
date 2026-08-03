@@ -1,75 +1,49 @@
-# PC Backend Code Review Snapshot (2026-08-01T174030Z)
+# PC / Backend code review
 
-## Overview
+## Current state
 
-**Worker**: PC / backend  
-**Branch**: `agent/pc-qwen3-worker`  
-**Status**: Uncommitted changes in ingestion package
+- **Worker**: PC (Qwen3-Coder)
+- **Active task**: `task-06-production-ingestion-cli` (PENDING, gate green, Codex REVISE)
+- **Gate status**: Exit 0 but rejected by Codex decision `REVISE`
+- **Status of acceptance gates**: Not yet met;Codex explicitly requires corrections, not just pass
 
-## Git Diff Summary
+## Latest corrected implementation
 
-| File | Lines Changed |
-|------|---------------|
-| KnowledgeIngestionService.java | +77/-47 |
-| application.yml | +/-1 |
-| KnowledgeIngestionServiceIT.java | +/-12 |
+The `pc-git-status.txt` evidence shows the following paths were added or modified in the last worker run:
 
-Total: 3 files, +77 insertions, -47 deletions
+- Added: `src/main/java/com/riansares/r4r/ingestion/IngestionConfiguration.java`
+- Added: `src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionCli.java`
+- Added: `src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionOrchestration.java`
+- Added: `src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionResult.java`
+- Modified: `src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionService.java`
+- Modified: `src/main/resources/application.yml`
+- Added: `src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionCliTest.java`
+- Modified: `src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionServiceIT.java`
 
-## Untracked Files
+## Codex rejection summary
 
-- local-understanding-report.md
-- IngestionConfiguration.java
-- KnowledgeIngestionCli.java
-- KnowledgeIngestionOrchestration.java
-- KnowledgeIngestionResult.java
-- KnowledgeIngestionCliTest.java
+The `codex-qwen3-extra-instructions.md` for this run explicitly rejects the previous attempts with the following corrections:
 
-## Detected Defects
+1. **A5 production service bean registration** must use `BeanDefinitionRegistryPostProcessor` instead of `ApplicationContextInitializer` singleton registration
+2. **Child process invocation** must invoke `KnowledgeIngestionCli`, not `R4rSpringAiRagApplication`
+3. **Exception classification** must use `instanceof` checks for typed exceptions (`SQLException`, `DataAccessException`, `ConnectException`, `SocketTimeoutException`) instead of string matching
 
-### 1. Compilation Risk: Unverified New Classes
-Severity: High  
-Evidence: Six new Java files added without verified compilation status. New orchestration pattern introduces dependencies to verify:
-- KnowledgeIngestionOrchestration must properly delegate to KnowledgeIngestionService
-- KnowledgeIngestionCli CLI wrapper requires Spring Boot Actuator auto-configuration
-- IngestionConfiguration bean wiring must not conflict with existing context
+## Remaining acceptance gates
 
-### 2. Integration Risk: Test Coverage Gap
-Severity: High  
-Evidence: KnowldegeIngestionCliTest.java untested for:
-- Command-line argument parsing edge cases
-- Exception recovery paths in orchestration
-- Integration with pgvector embedding store
+| Gate | Status |
+|------|--------|
+| Exact gate exit 0 | ✅ Confirmed (exit=0) |
+| Codex ACCEPT decision | ❌ Pending (decision=REVISE) |
+| Mockito mock registered via BeanDefinitionRegistryPostProcessor | Not yet applied |
+| Child process invokes KnowledgeIngestionCli directly | Not yet applied |
+| Exception classification uses typed `instanceof` checks | Not yet applied |
 
-### 3. Configuration Drift: application.yml
-Severity: Medium  
-Evidence: Single-line change suggests property key rename or default value update. Must correlate with new IngestionConfiguration bean properties.
+## Next action
 
-## First Current Defect (PC)
+**Wait for Codex review**: The ring-agent director should not commit code or claim acceptance. Only the deterministic Python supervisor may create a checkpoint after corrections are applied and the gate passes withACCEPT.
 
-Defect: Unverified compilation of new orchestration classes
+## Avoid repeating
 
-Paths to Inspect:
-- /home/german/Desarrollo/r4r-pc-worker.git/src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionOrchestration.java
-- /home/german/Desarrollo/r4r-pc-worker.git/src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionCli.java
-- /home/german/Desarrollo/r4r-pc-worker.git/src/main/java/com/riansares/r4r/ingestion/IngestionConfiguration.java
-
-Exact Gate: ./gradlew compileJava testCompile --stacktrace succeeds with zero error output
-
-Strategy (Non-Repeating):
-- Run Gradle compilation before attempting to run any integration tests
-- If compilation fails, fix class dependencies and imports before retesting
-- Only after green compilation, move to KnowledgeIngestionServiceIT verification
-
-## Acceptance Conditions
-
-1. All new .java sources compile without errors or warnings
-2. Spring context loads successfully (./gradlew bootBuildLauncher succeeds)
-3. New test class (KnowledgeIngestionCliTest.java) compiles separately from main code
-
-## Next Bounded Action (PC)
-
-Action: Verify compilation of PC backend changes
-Command: cd /home/german/Desarrollo/r4r-pc-worker.git && ./gradlew compileJava testCompile --stacktrace
-Evidence to Capture: Full Gradle console output (success or error lines)
-Next After Gate: If green, run ./gradlew test --tests "KnowledgeIngestionCliTest"
+- Do not re-attempt the same changes without new corrective instructions
+- Do not bypass the exact task gate or Codex constraints
+- Do not assume gate-green implies accepted; the supervisor must validate
