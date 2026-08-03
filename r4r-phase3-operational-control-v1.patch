@@ -1,0 +1,1500 @@
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/.env.example r4r-phase3-control-v1/.env.example
+--- r4r-phase3-control-v1-baseline-full/.env.example	2026-08-03 00:01:42.716737867 +0000
++++ r4r-phase3-control-v1/.env.example	2026-08-02 23:55:15.980723883 +0000
+@@ -22,11 +22,8 @@
+ R4R_REQUIRE_CODEGRAPH=true
+ R4R_MAX_ATTEMPTS_PER_TASK=6
+ R4R_MAX_NO_PROGRESS_CYCLES=2
+-R4R_MAX_TRANSIENT_FAILURES=2
++R4R_MAX_TRANSIENT_FAILURES=3
+ R4R_AUTO_COMMIT=true
+-R4R_LP_MAX_SESSION_STEPS=90
+-R4R_LP_MAX_SESSION_SECONDS=5400
+-R4R_LP_REPEAT_EVENT_BUDGET=12
+ R4R_LP_SAME_ERROR_THRESHOLD=3
+ R4R_LP_FALSE_COMPLETION_THRESHOLD=2
+ 
+@@ -41,3 +38,20 @@
+ R4R_RING_SESSION_TIMEOUT_SECONDS=5400
+ R4R_RING_DIRECTIVE_MAX_AGE_SECONDS=10800
+ R4R_RING_RUN_IMMEDIATELY=true
++
++# Deterministic controller checkpoints and bounded OpenCode sessions.
++# Models never write Git history; the Python controller creates checkpoints.
++R4R_CHECKPOINT_ON_GREEN=true
++R4R_OPENCODE_MAX_SESSION_SECONDS=5400
++R4R_OPENCODE_IDLE_SECONDS=900
++R4R_OPENCODE_MAX_SESSION_STEPS=120
++R4R_OPENCODE_REPEAT_EVENT_BUDGET=12
++R4R_PC_MAX_SESSION_SECONDS=5400
++R4R_PC_IDLE_SECONDS=900
++R4R_PC_MAX_SESSION_STEPS=120
++R4R_PC_REPEAT_EVENT_BUDGET=12
++R4R_LP_MAX_SESSION_SECONDS=3600
++R4R_LP_IDLE_SECONDS=600
++R4R_LP_MAX_SESSION_STEPS=90
++R4R_LP_REPEAT_EVENT_BUDGET=12
++R4R_RING_EVENT_MIN_INTERVAL_SECONDS=300
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/.opencode/commands/task.md r4r-phase3-control-v1/.opencode/commands/task.md
+--- r4r-phase3-control-v1-baseline-full/.opencode/commands/task.md	2026-08-03 00:01:42.716737867 +0000
++++ r4r-phase3-control-v1/.opencode/commands/task.md	2026-08-02 23:54:59.240723278 +0000
+@@ -12,6 +12,8 @@
+ `.opencode/task-plan.frontend.json`: Angular 17 and Playwright tasks. It may edit only
+ `frontend/**` and `docs/frontend/**`.
+ 
+-Both controllers may run in the same working tree. Their runtime and progress files are
+-separate, peer product paths are ignored as background changes, and automatic Git
+-commits are disabled. Never launch two controllers for the same destination.
++Both controllers use separate progress, memory, control and runtime evidence. Peer
++product paths are background-only. OpenCode/Qwen3 and Codex never write Git history;
++the deterministic controller may create a gate-green checkpoint and a final ACCEPT
++commit. A checkpoint does not complete the task. Never launch two controllers for the
++same destination.
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/.opencode/r4r-agents.json r4r-phase3-control-v1/.opencode/r4r-agents.json
+--- r4r-phase3-control-v1-baseline-full/.opencode/r4r-agents.json	2026-08-03 00:08:25.256752423 +0000
++++ r4r-phase3-control-v1/.opencode/r4r-agents.json	2026-08-03 00:08:25.256752423 +0000
+@@ -3,11 +3,16 @@
+   "defaults": {
+     "requestTimeoutSeconds": 14400,
+     "chunkTimeoutSeconds": 600,
+-    "maxAttemptsPerTask": 0,
+-    "maxNoProgressCycles": 4,
+-    "maxTransientFailures": 8,
+-    "autoCommit": false,
+-    "bootstrapCommit": false
++    "maxAttemptsPerTask": 6,
++    "maxNoProgressCycles": 2,
++    "maxTransientFailures": 3,
++    "autoCommit": true,
++    "bootstrapCommit": true,
++    "checkpointOnGreen": true,
++    "maxSessionSeconds": 5400,
++    "idleSeconds": 900,
++    "maxSessionSteps": 120,
++    "repeatEventBudget": 12
+   },
+   "codeIntelligence": {
+     "referenceManifest": "knowledge/code-repositories.md",
+@@ -59,7 +64,13 @@
+       "mcp": [
+         "codegraph",
+         "code_graph_rag"
+-      ]
++      ],
++      "runtime": {
++        "maxSessionSeconds": 5400,
++        "idleSeconds": 900,
++        "maxSessionSteps": 120,
++        "repeatEventBudget": 12
++      }
+     },
+     "LP": {
+       "agentId": "r4r-laptop",
+@@ -88,7 +99,17 @@
+         "docker-postgres/**",
+         "docs/backend/**"
+       ],
+-      "mcp": []
++      "mcp": [
++        "codegraph",
++        "code_graph_rag",
++        "playwright"
++      ],
++      "runtime": {
++        "maxSessionSeconds": 3600,
++        "idleSeconds": 600,
++        "maxSessionSteps": 90,
++        "repeatEventBudget": 12
++      }
+     }
+   }
+ }
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/AGENTS.md r4r-phase3-control-v1/AGENTS.md
+--- r4r-phase3-control-v1-baseline-full/AGENTS.md	2026-08-03 00:01:42.716737867 +0000
++++ r4r-phase3-control-v1/AGENTS.md	2026-08-02 23:54:59.240723278 +0000
+@@ -19,10 +19,12 @@
+ - Peer-owned product paths are tolerated as concurrent background changes but are not
+   writable by the current agent.
+ - Each worker has separate progress, memory, control and run directories.
+-- OpenCode and Codex never write Git history. Automatic commits are disabled while
+-  both workers share a branch; commit manually after reviewing both scopes.
++- OpenCode/Qwen3 and Codex never write Git history.
++- The deterministic Python controller may create a task-scoped checkpoint immediately
++  after the exact gate is green, and a closing commit after Codex `ACCEPT`.
++- A checkpoint preserves useful compilable work but does not mark the task accepted.
+ - Do not run `git add`, `git commit`, `git reset`, `git checkout`, `git merge` or
+-  `git push` from an agent.
++  `git push` from a model/tool session; only the controller owns automated commits.
+ 
+ ## Code intelligence
+ 
+@@ -41,8 +43,10 @@
+ 3. Use focused CodeGraph/Code-Graph-RAG retrieval when useful.
+ 4. Follow the bounded Codex plan.
+ 5. Edit one coherent batch inside the current worker's allowed paths.
+-6. Re-run the exact gate and hand the evidence to Codex.
+-7. Stop on scope/Git violations; retry recoverable model or infrastructure failures.
++6. Re-run the exact gate. When green, let the controller write worker memory and a
++   task-scoped checkpoint before handing the same evidence to Codex.
++7. Stop on scope/Git violations and bounded-session watchdog triggers; retry only with
++   a changed plan or new evidence.
+ 
+ ## Product boundaries
+ 
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/R4R-PHASE3-OPERATIONAL-CONTROL-V1.md r4r-phase3-control-v1/R4R-PHASE3-OPERATIONAL-CONTROL-V1.md
+--- r4r-phase3-control-v1-baseline-full/R4R-PHASE3-OPERATIONAL-CONTROL-V1.md	1970-01-01 00:00:00.000000000 +0000
++++ r4r-phase3-control-v1/R4R-PHASE3-OPERATIONAL-CONTROL-V1.md	2026-08-02 23:59:09.212732317 +0000
+@@ -0,0 +1,115 @@
++# R4R Phase 3 operational control v1
++
++## Scope
++
++This increment advances the Phase 3 foundation. It does **not** claim that full
++multi-agent orchestration is complete. It closes three operational gaps observed in
++long-running PC and LP sessions:
++
++1. preserve a useful task-scoped Git checkpoint immediately after the exact gate is
++   green, without waiting for final Codex acceptance;
++2. stop OpenCode sessions that exceed wall-time, useful-activity, step or repeated
++   event budgets;
++3. give The-Ring event-driven worker memory and checkpoint evidence instead of waiting
++   only for the hourly review.
++
++## Authority and Git history
++
++OpenCode/Qwen3 and Codex remain read-only with respect to Git history. The deterministic
++Python controller is the only component allowed to create automatic commits.
++
++A green checkpoint uses a message such as:
++
++```text
++wip(pc/task-06-production-ingestion-cli): gate-green checkpoint attempt-03
++```
++
++It contains only the current task's owned product paths plus its progress and memory
++files. The task remains `PENDING`. After Codex returns `ACCEPT`, the controller records
++acceptance and creates the normal closing commit.
++
++## Worker memory contract
++
++Each worker maintains its own memory:
++
++```text
++.opencode/memory.backend.md
++.opencode/memory.frontend.md
++```
++
++The memory records:
++
++- active task, run and attempt;
++- exact gate result and latest Codex decision;
++- task-owned files currently edited;
++- claims demonstrated by current evidence;
++- acceptance conditions still unproven;
++- approaches that must not be repeated;
++- one exact next action;
++- latest checkpoint status.
++
++Codex already receives this memory in every structured plan/review prompt.
++
++## Bounded OpenCode sessions
++
++The controller inspects OpenCode JSONL output. A periodic `step_start` is not useful
++progress. A session is terminated with exit `124` and a recorded `stop_reason` when it
++exceeds any configured budget:
++
++```text
++session-timeout
++idle-timeout
++step-limit
++repeat-event-budget
++```
++
++Defaults are resolved from `config/r4r-agents.json`; environment variables may
++override them. PC and LP have independent limits.
++
++## Event-driven The-Ring feedback
++
++After a green checkpoint and after each Codex decision, the controller writes an
++atomic request under:
++
++```text
++runtime/control/RING/requests/PC.json
++runtime/control/RING/requests/LP.json
++```
++
++The cognitive Ring loop notices pending requests and starts a fresh session after the
++minimum event interval. It snapshots worker progress, memory, latest checkpoint,
++Codex evidence, gate evidence and the request. Requests are consumed exactly once and
++preserved in the Ring run directory.
++
++The normal hourly review remains as a fallback. Ring directives stay advisory and may
++not override task scope, the deterministic gate or Codex.
++
++## Important configuration
++
++```text
++R4R_AUTO_COMMIT=true
++R4R_CHECKPOINT_ON_GREEN=true
++R4R_MAX_ATTEMPTS_PER_TASK=6
++R4R_MAX_NO_PROGRESS_CYCLES=2
++R4R_MAX_TRANSIENT_FAILURES=3
++
++R4R_PC_MAX_SESSION_SECONDS=5400
++R4R_PC_IDLE_SECONDS=900
++R4R_PC_MAX_SESSION_STEPS=120
++R4R_PC_REPEAT_EVENT_BUDGET=12
++
++R4R_LP_MAX_SESSION_SECONDS=3600
++R4R_LP_IDLE_SECONDS=600
++R4R_LP_MAX_SESSION_STEPS=90
++R4R_LP_REPEAT_EVENT_BUDGET=12
++
++R4R_RING_REVIEW_INTERVAL_SECONDS=3600
++R4R_RING_EVENT_MIN_INTERVAL_SECONDS=300
++```
++
++## Activation safety
++
++Source files may be synchronized while old workers are running because already-loaded
++Python processes keep their current code. The new behavior becomes active only after a
++controlled supervisor stop, branch synchronization and restart. Dirty PC/LP product
++work must never be reset or cleaned during activation.
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/config/r4r-agents.json r4r-phase3-control-v1/config/r4r-agents.json
+--- r4r-phase3-control-v1-baseline-full/config/r4r-agents.json	2026-08-03 00:01:42.716737867 +0000
++++ r4r-phase3-control-v1/config/r4r-agents.json	2026-08-02 23:58:41.456731313 +0000
+@@ -3,11 +3,16 @@
+   "defaults": {
+     "requestTimeoutSeconds": 14400,
+     "chunkTimeoutSeconds": 600,
+-    "maxAttemptsPerTask": 0,
+-    "maxNoProgressCycles": 4,
+-    "maxTransientFailures": 8,
+-    "autoCommit": false,
+-    "bootstrapCommit": false
++    "maxAttemptsPerTask": 6,
++    "maxNoProgressCycles": 2,
++    "maxTransientFailures": 3,
++    "autoCommit": true,
++    "bootstrapCommit": true,
++    "checkpointOnGreen": true,
++    "maxSessionSeconds": 5400,
++    "idleSeconds": 900,
++    "maxSessionSteps": 120,
++    "repeatEventBudget": 12
+   },
+   "codeIntelligence": {
+     "referenceManifest": "knowledge/code-repositories.md",
+@@ -59,7 +64,13 @@
+       "mcp": [
+         "codegraph",
+         "code_graph_rag"
+-      ]
++      ],
++      "runtime": {
++        "maxSessionSeconds": 5400,
++        "idleSeconds": 900,
++        "maxSessionSteps": 120,
++        "repeatEventBudget": 12
++      }
+     },
+     "LP": {
+       "agentId": "r4r-laptop",
+@@ -92,7 +103,13 @@
+         "codegraph",
+         "code_graph_rag",
+         "playwright"
+-      ]
++      ],
++      "runtime": {
++        "maxSessionSeconds": 3600,
++        "idleSeconds": 600,
++        "maxSessionSteps": 90,
++        "repeatEventBudget": 12
++      }
+     }
+   }
+ }
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/py-codex-agent/README.md r4r-phase3-control-v1/py-codex-agent/README.md
+--- r4r-phase3-control-v1-baseline-full/py-codex-agent/README.md	2026-08-03 00:01:42.724737868 +0000
++++ r4r-phase3-control-v1/py-codex-agent/README.md	2026-08-02 23:59:09.212732317 +0000
+@@ -92,3 +92,13 @@
+ directive is used only for the matching active task, must be recent and must declare
+ `priority: advisory`. It is included in Qwen3 and Codex contexts but cannot override
+ the task specification, exact gate or current Codex correction packet.
++
++## Gate-green checkpoints and session watchdog
++
++The deterministic controller can create a task-scoped checkpoint immediately after the
++exact gate turns green (`R4R_CHECKPOINT_ON_GREEN=true`). The task remains pending until
++Codex returns `ACCEPT`. OpenCode/Qwen3 and Codex never execute Git writes.
++
++OpenCode JSONL sessions are bounded by wall time, useful inactivity, step count and
++repeated-event budgets. `step_start` alone is not progress. Every watchdog stop is
++written to the attempt evidence with its exact `stop_reason`.
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/py-codex-agent/src/r4r_codex_agent/runner.py r4r-phase3-control-v1/py-codex-agent/src/r4r_codex_agent/runner.py
+--- r4r-phase3-control-v1-baseline-full/py-codex-agent/src/r4r_codex_agent/runner.py	2026-08-03 00:01:42.720737868 +0000
++++ r4r-phase3-control-v1/py-codex-agent/src/r4r_codex_agent/runner.py	2026-08-02 23:59:20.612732729 +0000
+@@ -31,12 +31,78 @@
+     stdout: str
+     stderr: str
+     timed_out: bool = False
++    stop_reason: str | None = None
++    observed_steps: int = 0
++    meaningful_events: int = 0
++
++
++@dataclass(frozen=True)
++class CommandWatchdog:
++    """Bound one streamed OpenCode session by wall time and useful activity.
++
++    `step_start` events are deliberately not treated as progress. This prevents a
++    stalled JSONL stream from keeping a worker alive forever merely by emitting
++    periodic start markers.
++    """
++
++    max_seconds: int = 0
++    idle_seconds: int = 0
++    max_steps: int = 0
++    repeat_event_budget: int = 0
++
++
++def _opencode_event_observation(line: str) -> tuple[bool, bool, str]:
++    """Return (is_step_start, is_meaningful, normalized_signature)."""
++    stripped = line.strip()
++    if not stripped:
++        return False, False, "empty"
++    try:
++        value = json.loads(stripped)
++    except json.JSONDecodeError:
++        return False, True, "plain:" + hashlib.sha256(
++            stripped.encode("utf-8", errors="replace")
++        ).hexdigest()[:16]
++
++    if not isinstance(value, dict):
++        return False, True, "json-non-object"
++    part = value.get("part") if isinstance(value.get("part"), dict) else {}
++    event_type = str(value.get("type") or part.get("type") or "unknown")
++    normalized_type = event_type.replace("-", "_").lower()
++    if normalized_type in {"step_start", "stepstart"}:
++        return True, False, "step_start"
++
++    tool_name = str(value.get("tool") or part.get("tool") or "").strip()
++    state = part.get("state") if isinstance(part.get("state"), dict) else {}
++    if not state and isinstance(value.get("state"), dict):
++        state = value["state"]
++    if tool_name or normalized_type in {"tool", "tool_use", "tooluse"}:
++        payload = state.get("input", {})
++        try:
++            encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False)
++        except TypeError:
++            encoded = repr(payload)
++        signature = hashlib.sha256(encoded.encode("utf-8", errors="replace")).hexdigest()[:12]
++        status = str(state.get("status") or "unknown")
++        return False, True, f"tool:{tool_name or 'unknown'}:{status}:{signature}"
++
++    text_value = part.get("text") if isinstance(part.get("text"), str) else value.get("text")
++    if isinstance(text_value, str) and text_value.strip():
++        signature = hashlib.sha256(
++            text_value.strip().encode("utf-8", errors="replace")
++        ).hexdigest()[:16]
++        return False, True, f"text:{signature}"
++
++    if normalized_type in {"step_finish", "stepfinish", "message", "error"}:
++        reason = str(part.get("reason") or value.get("reason") or "")
++        return False, True, f"{normalized_type}:{reason}"
++    return False, True, f"event:{normalized_type}"
+ 
+ 
+ def run_command(
+     command: Sequence[str], cwd: Path, input_text: str | None = None,
+     timeout_seconds: int | None = None, stream: bool = False,
+     env: dict[str, str] | None = None,
++    watchdog: CommandWatchdog | None = None,
+ ) -> CommandResult:
+     if not command:
+         raise ValueError("Command cannot be empty")
+@@ -48,40 +114,135 @@
+     )
+     stdout_parts: list[str] = []
+     stderr_parts: list[str] = []
++    state_lock = threading.Lock()
++    started = time.monotonic()
++    watch_state: dict[str, Any] = {
++        "last_meaningful": started,
++        "steps": 0,
++        "meaningful": 0,
++        "last_signature": None,
++        "repeat_count": 0,
++        "stop_reason": None,
++    }
++
++    def observe(line: str) -> None:
++        if watchdog is None:
++            return
++        is_step, meaningful, signature = _opencode_event_observation(line)
++        now = time.monotonic()
++        with state_lock:
++            if is_step:
++                watch_state["steps"] += 1
++            if meaningful:
++                watch_state["meaningful"] += 1
++                watch_state["last_meaningful"] = now
++            if signature == watch_state["last_signature"]:
++                watch_state["repeat_count"] += 1
++            else:
++                watch_state["last_signature"] = signature
++                watch_state["repeat_count"] = 1
++            if (
++                watchdog.repeat_event_budget > 0
++                and watch_state["repeat_count"] > watchdog.repeat_event_budget
++            ):
++                watch_state["stop_reason"] = "repeat-event-budget"
+ 
+-    def consume(pipe: Any, target: list[str], display: Any) -> None:
++    def consume(pipe: Any, target: list[str], display: Any, *, inspect: bool) -> None:
+         try:
+             for line in iter(pipe.readline, ""):
+                 target.append(line)
++                if inspect:
++                    observe(line)
+                 if stream:
+                     print(line, end="", file=display, flush=True)
+         finally:
+             pipe.close()
+ 
+     threads = [
+-        threading.Thread(target=consume, args=(process.stdout, stdout_parts, sys.stdout), daemon=True),
+-        threading.Thread(target=consume, args=(process.stderr, stderr_parts, sys.stderr), daemon=True),
++        threading.Thread(
++            target=consume,
++            args=(process.stdout, stdout_parts, sys.stdout),
++            kwargs={"inspect": True},
++            daemon=True,
++        ),
++        threading.Thread(
++            target=consume,
++            args=(process.stderr, stderr_parts, sys.stderr),
++            kwargs={"inspect": False},
++            daemon=True,
++        ),
+     ]
+     for thread in threads:
+         thread.start()
+     if input_text is not None and process.stdin is not None:
+         process.stdin.write(input_text)
+         process.stdin.close()
+-    timed_out = False
+-    try:
+-        exit_code = process.wait(timeout=timeout_seconds)
+-    except subprocess.TimeoutExpired:
+-        timed_out = True
+-        os.killpg(process.pid, signal.SIGTERM)
+-        try:
+-            exit_code = process.wait(timeout=10)
+-        except subprocess.TimeoutExpired:
+-            os.killpg(process.pid, signal.SIGKILL)
+-            exit_code = process.wait()
++
++    stop_reason: str | None = None
++    while process.poll() is None:
++        now = time.monotonic()
++        elapsed = now - started
++        with state_lock:
++            observed_steps = int(watch_state["steps"])
++            last_meaningful = float(watch_state["last_meaningful"])
++            requested_stop = watch_state["stop_reason"]
++        if timeout_seconds is not None and timeout_seconds > 0 and elapsed >= timeout_seconds:
++            stop_reason = "command-timeout"
++        elif watchdog is not None and watchdog.max_seconds > 0 and elapsed >= watchdog.max_seconds:
++            stop_reason = "session-timeout"
++        elif (
++            watchdog is not None
++            and watchdog.idle_seconds > 0
++            and now - last_meaningful >= watchdog.idle_seconds
++        ):
++            stop_reason = "idle-timeout"
++        elif (
++            watchdog is not None
++            and watchdog.max_steps > 0
++            and observed_steps >= watchdog.max_steps
++        ):
++            stop_reason = "step-limit"
++        elif requested_stop:
++            stop_reason = str(requested_stop)
++        if stop_reason is not None:
++            try:
++                os.killpg(process.pid, signal.SIGTERM)
++            except ProcessLookupError:
++                pass
++            try:
++                process.wait(timeout=10)
++            except subprocess.TimeoutExpired:
++                try:
++                    os.killpg(process.pid, signal.SIGKILL)
++                except ProcessLookupError:
++                    pass
++                process.wait()
++            break
++        time.sleep(0.2)
++
++    exit_code = process.wait()
++    timed_out = stop_reason is not None
++    if timed_out:
+         exit_code = 124
++        stderr_parts.append(
++            "\n[r4r-watchdog] stopped OpenCode session: "
++            f"reason={stop_reason} elapsed={time.monotonic() - started:.1f}s\n"
++        )
+     for thread in threads:
+         thread.join(timeout=5)
+-    return CommandResult(tuple(command), exit_code, "".join(stdout_parts), "".join(stderr_parts), timed_out)
++    with state_lock:
++        steps = int(watch_state["steps"])
++        meaningful_events = int(watch_state["meaningful"])
++    return CommandResult(
++        tuple(command),
++        exit_code,
++        "".join(stdout_parts),
++        "".join(stderr_parts),
++        timed_out,
++        stop_reason,
++        steps,
++        meaningful_events,
++    )
+ 
+ 
+ def _nul_paths(result: CommandResult) -> set[str]:
+@@ -371,6 +532,35 @@
+         self.max_tasks = int(os.environ.get("R4R_MAX_TASKS_PER_RUN", "0"))
+         self.auto_commit = os.environ.get("R4R_AUTO_COMMIT", "true").lower() == "true"
+         self.bootstrap_commit = os.environ.get("R4R_BOOTSTRAP_COMMIT", "true").lower() == "true"
++        self.checkpoint_on_green = (
++            os.environ.get("R4R_CHECKPOINT_ON_GREEN", "true").lower() == "true"
++        )
++
++        worker_prefix = f"R4R_{self.worker_id}_"
++        def worker_int(name: str, default: int) -> int:
++            worker_value = os.environ.get(worker_prefix + name)
++            generic_value = os.environ.get("R4R_OPENCODE_" + name)
++            raw = worker_value if worker_value not in (None, "") else generic_value
++            return int(raw) if raw not in (None, "") else default
++
++        self.opencode_session_seconds = worker_int("MAX_SESSION_SECONDS", 5400)
++        self.opencode_idle_seconds = worker_int("IDLE_SECONDS", 900)
++        self.opencode_max_steps = worker_int("MAX_SESSION_STEPS", 120)
++        self.opencode_repeat_event_budget = worker_int("REPEAT_EVENT_BUDGET", 12)
++        self.memory_context: dict[str, Any] = {
++            "task_id": None,
++            "attempt": None,
++            "gate_exit": None,
++            "gate_name": None,
++            "codex_decision": None,
++            "changed_paths": [],
++            "demonstrated": [],
++            "outstanding": [],
++            "avoid_repeating": [],
++            "next_action": None,
++            "checkpoint_head": None,
++            "checkpoint_status": "none",
++        }
+         self.opencode_bin = os.environ.get("R4R_OPENCODE_BIN", "opencode")
+         self.opencode_agent = os.environ.get("R4R_OPENCODE_AGENT", "r4r-pc")
+         self.compact_local_worker = (
+@@ -433,6 +623,16 @@
+         self.ring_directive_max_age_seconds = int(
+             os.environ.get("R4R_RING_DIRECTIVE_MAX_AGE_SECONDS", "10800")
+         )
++        self.ring_request_path = (
++            self.ring_worktree
++            / "runtime"
++            / "control"
++            / "RING"
++            / "requests"
++            / f"{self.worker_id}.json"
++            if self.ring_worktree is not None
++            else None
++        )
+         self.verified_green: set[str] = set()
+ 
+     def _worktree_fingerprint(self) -> str:
+@@ -762,6 +962,22 @@
+     def _execute_task(self, task: Task) -> int:
+         task_root = self.run_dir / task.id
+         task_root.mkdir(parents=True, exist_ok=True)
++        self.memory_context.update(
++            {
++                "task_id": task.id,
++                "attempt": 0,
++                "gate_exit": None,
++                "gate_name": None,
++                "codex_decision": None,
++                "changed_paths": list(self._manual_commit_paths(task)),
++                "demonstrated": [],
++                "outstanding": [task.objective],
++                "avoid_repeating": [],
++                "next_action": "Run the initial exact gate and classify the first current failure.",
++                "checkpoint_head": None,
++                "checkpoint_status": "none",
++            }
++        )
+         self._write_progress(task.id)
+         self._write_memory()
+         initial_gate = self._run_gate("initial-gate", task.gate, task_root, stream=True)
+@@ -776,6 +992,11 @@
+             edit_result: CommandResult | None = None
+             attempt_dir = task_root / f"attempt-{attempt:02d}"
+             attempt_dir.mkdir(parents=True, exist_ok=True)
++            self.memory_context["attempt"] = attempt
++            self.memory_context["next_action"] = next_action or (
++                "Review the exact gate evidence and make one coherent, task-scoped repair."
++            )
++            self._write_memory()
+             current_gate = (
+                 initial_gate
+                 if attempt == 1
+@@ -871,6 +1092,16 @@
+                     stream=True,
+                 )
+                 if edit_result.exit_code != 0:
++                    self.memory_context["avoid_repeating"] = [
++                        f"Do not repeat the stopped OpenCode session without changing the plan; stop_reason={edit_result.stop_reason or 'process-exit'}.",
++                    ]
++                    self.memory_context["outstanding"] = [
++                        "The local edit session did not complete; no acceptance claim can be made from it."
++                    ]
++                    self.memory_context["next_action"] = (
++                        "Start a fresh bounded session using the preserved worktree and the first current gate failure."
++                    )
++                    self._write_memory()
+                     if self._non_transient_opencode_failure(edit_result):
+                         return self._finish(
+                             "OPENCODE_CONFIGURATION_ERROR",
+@@ -960,6 +1191,11 @@
+                         {"task": task.id, "paths": disallowed},
+                     )
+                 self._write_patch(attempt_dir, changed)
++                self.memory_context["changed_paths"] = list(changed)
++                self.memory_context["next_action"] = (
++                    "Run the exact task gate against the coherent edited state."
++                )
++                self._write_memory()
+ 
+                 if (
+                     not changed_this_attempt
+@@ -968,13 +1204,41 @@
+                     next_action = self._no_progress_action(next_action)
+ 
+             gate = self._run_gate("task-gate", task.gate, attempt_dir, stream=True)
++            self.memory_context["gate_name"] = "task-gate"
++            self.memory_context["gate_exit"] = gate.exit_code
+             if gate.exit_code == 0:
++                self.memory_context["demonstrated"] = [
++                    "The exact deterministic task gate completed successfully.",
++                ]
++                self.memory_context["outstanding"] = [
++                    "Codex has not yet accepted the current checkpoint.",
++                ]
++                self.memory_context["next_action"] = (
++                    "Preserve a deterministic gate-green checkpoint, generate final evidence and request Codex review."
++                )
++                try:
++                    self._checkpoint_green(task, gate, attempt, attempt_dir)
++                except RuntimeError as exception:
++                    return self._finish(
++                        "CHECKPOINT_COMMIT_FAILED",
++                        67,
++                        {"task": task.id, "attempt": attempt, "error": str(exception)},
++                    )
+                 self._notify(
+                     attempt_dir,
+                     f"handoff-to-codex-{attempt:02d}",
+                     4,
+                     f"{task.id}: green gate, handing control to Codex",
+                 )
++            else:
++                self.memory_context["demonstrated"] = []
++                self.memory_context["outstanding"] = [
++                    f"The exact task gate is red with exit code {gate.exit_code}.",
++                ]
++                self.memory_context["next_action"] = (
++                    "Fix the first current deterministic gate failure before requesting acceptance."
++                )
++                self._write_memory()
+ 
+             # The compact laptop worker avoids a second model call. Codex reviews
+             # the exact diff and gate evidence directly. The PC worker keeps the
+@@ -1062,6 +1326,35 @@
+                 continue
+ 
+             transient_failures = 0
++            self.memory_context["codex_decision"] = review["decision"]
++            review_corrections = [
++                str(value).strip()
++                for value in (review.get("instruction_corrections") or [])
++                if str(value).strip()
++            ]
++            review_next = str(review.get("next_action") or "").strip()
++            if review["decision"] == "ACCEPT":
++                self.memory_context["outstanding"] = []
++                self.memory_context["next_action"] = (
++                    "Record ACCEPT, create the final controller commit and advance the queue."
++                )
++            else:
++                self.memory_context["outstanding"] = review_corrections or [
++                    review_next or "Codex requires another bounded revision."
++                ]
++                self.memory_context["avoid_repeating"] = review_corrections
++                self.memory_context["next_action"] = review_next or (
++                    "Apply the resolved Codex correction packet in one coherent batch."
++                )
++            self._write_memory()
++            self._request_ring_review(
++                task,
++                reason=f"codex-{str(review['decision']).lower()}",
++                attempt=attempt,
++                gate=gate,
++                review=review,
++                checkpoint_head=self.memory_context.get("checkpoint_head"),
++            )
+             if review["decision"] == "ACCEPT":
+                 if gate.exit_code != 0:
+                     next_action = (
+@@ -1615,6 +1908,12 @@
+             if pre_edit_understanding_path.exists()
+             else "No pre-edit local understanding report was produced."
+         )
++        checkpoint_path = evidence_dir / "evidence" / "checkpoint.json"
++        checkpoint_evidence = (
++            checkpoint_path.read_text(encoding="utf-8")
++            if checkpoint_path.exists()
++            else "No gate-green checkpoint was created for this attempt."
++        )
+         codegraph_path = (
+             evidence_dir / "evidence" / "codegraph-reconnaissance.md"
+         )
+@@ -1648,6 +1947,8 @@
+             + self._instruction_manifest(task)
+             + "\n\nCURRENT MEMORY\n"
+             + memory
++            + "\n\nGATE-GREEN CHECKPOINT EVIDENCE\n"
++            + checkpoint_evidence
+             + "\n\nVERIFIED CODEGRAPH RECONNAISSANCE\n"
+             + codegraph_reconnaissance
+             + "\n\nPRE-EDIT LOCAL UNDERSTANDING REPORT\n"
+@@ -2193,12 +2494,32 @@
+         logs.mkdir(parents=True, exist_ok=True)
+         evidence.mkdir(parents=True, exist_ok=True)
+         print(f"\n[r4r] {name}: {shlex.join(command)}", flush=True)
+-        result = run_command(command, self.repo, input_text, self.timeout, stream)
++        watchdog = None
++        if name == "opencode" or name.startswith("opencode-"):
++            watchdog = CommandWatchdog(
++                max_seconds=self.opencode_session_seconds,
++                idle_seconds=self.opencode_idle_seconds,
++                max_steps=self.opencode_max_steps,
++                repeat_event_budget=self.opencode_repeat_event_budget,
++            )
++        result = run_command(
++            command,
++            self.repo,
++            input_text,
++            self.timeout,
++            stream,
++            watchdog=watchdog,
++        )
+         (logs / f"{name}.stdout.log").write_text(result.stdout, encoding="utf-8")
+         (logs / f"{name}.stderr.log").write_text(result.stderr, encoding="utf-8")
+         (evidence / f"{name}.json").write_text(json.dumps({
+-            "command": list(result.command), "exit_code": result.exit_code,
++            "command": list(result.command),
++            "exit_code": result.exit_code,
+             "timed_out": result.timed_out,
++            "stop_reason": result.stop_reason,
++            "observed_steps": result.observed_steps,
++            "meaningful_events": result.meaningful_events,
++            "watchdog": asdict(watchdog) if watchdog is not None else None,
+         }, indent=2), encoding="utf-8")
+         return result
+ 
+@@ -2310,30 +2631,219 @@
+         self.progress["last_run"] = self.run_id
+         self.progress_path.write_text(json.dumps(self.progress, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+ 
++    def _request_ring_review(
++        self,
++        task: Task,
++        *,
++        reason: str,
++        attempt: int | None = None,
++        gate: CommandResult | None = None,
++        review: dict[str, Any] | None = None,
++        checkpoint_head: str | None = None,
++    ) -> None:
++        path = getattr(self, "ring_request_path", None)
++        if path is None:
++            return
++        path = Path(path)
++        path.parent.mkdir(parents=True, exist_ok=True)
++        payload = {
++            "schema_version": 1,
++            "worker": self.worker_id,
++            "task_id": task.id,
++            "reason": reason,
++            "requested_at": datetime.now(timezone.utc).isoformat(),
++            "run_id": self.run_id,
++            "attempt": attempt,
++            "gate_exit": gate.exit_code if gate is not None else None,
++            "gate_stop_reason": gate.stop_reason if gate is not None else None,
++            "codex_decision": review.get("decision") if review else None,
++            "next_action": str(review.get("next_action") or "").strip() if review else None,
++            "checkpoint_head": checkpoint_head,
++            "memory_path": str(self.memory_path),
++            "changed_paths": list(self.memory_context.get("changed_paths") or []),
++        }
++        temporary = path.with_suffix(".json.tmp")
++        temporary.write_text(
++            json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
++            encoding="utf-8",
++        )
++        temporary.replace(path)
++
++    def _checkpoint_green(
++        self,
++        task: Task,
++        gate: CommandResult,
++        attempt: int,
++        attempt_dir: Path,
++    ) -> str | None:
++        product_paths = self._manual_commit_paths(task)
++        now = datetime.now(timezone.utc).isoformat()
++        item = task_progress(self.progress, task.id)
++        item["last_gate_green_at"] = now
++        item["last_gate_green_attempt"] = attempt
++        item["last_gate_green_run"] = self.run_id
++        self.memory_context.update(
++            {
++                "task_id": task.id,
++                "attempt": attempt,
++                "gate_exit": gate.exit_code,
++                "gate_name": "task-gate",
++                "changed_paths": list(product_paths),
++                "demonstrated": [
++                    "The exact deterministic task gate completed with exit code 0.",
++                    "The checkpoint contains only task-owned product paths plus controller progress/memory.",
++                ],
++                "checkpoint_status": (
++                    "disabled" if not self.checkpoint_on_green
++                    else "no-product-diff" if not product_paths
++                    else "pending"
++                ),
++            }
++        )
++        self._write_progress(task.id)
++        self._write_memory()
++
++        checkpoint_payload: dict[str, Any] = {
++            "schema_version": 1,
++            "worker": self.worker_id,
++            "task_id": task.id,
++            "run_id": self.run_id,
++            "attempt": attempt,
++            "created_at": now,
++            "gate_exit": gate.exit_code,
++            "product_paths": list(product_paths),
++            "checkpoint_enabled": self.checkpoint_on_green,
++            "auto_commit": self.auto_commit,
++            "status": self.memory_context["checkpoint_status"],
++            "head_before": git_head(self.repo),
++            "head_after": None,
++        }
++        evidence = attempt_dir / "evidence"
++        evidence.mkdir(parents=True, exist_ok=True)
++        checkpoint_path = evidence / "checkpoint.json"
++
++        if not self.checkpoint_on_green or not self.auto_commit or not product_paths:
++            checkpoint_path.write_text(
++                json.dumps(checkpoint_payload, indent=2, ensure_ascii=False) + "\n",
++                encoding="utf-8",
++            )
++            self._request_ring_review(
++                task,
++                reason="gate-green-no-checkpoint",
++                attempt=attempt,
++                gate=gate,
++            )
++            return None
++
++        message = (
++            f"wip({self.worker_id.lower()}/{task.id}): "
++            f"gate-green checkpoint attempt-{attempt:02d}"
++        )
++        head = self._commit_if_needed(
++            message,
++            (
++                *task.allowed_paths,
++                str(self.progress_path.relative_to(self.repo)),
++                str(self.memory_path.relative_to(self.repo)),
++            ),
++        )
++        checkpoint_payload["head_after"] = head
++        checkpoint_payload["status"] = "created" if head else "failed"
++        checkpoint_path.write_text(
++            json.dumps(checkpoint_payload, indent=2, ensure_ascii=False) + "\n",
++            encoding="utf-8",
++        )
++        self.memory_context["checkpoint_head"] = head
++        self.memory_context["checkpoint_status"] = checkpoint_payload["status"]
++        self._request_ring_review(
++            task,
++            reason="gate-green-checkpoint",
++            attempt=attempt,
++            gate=gate,
++            checkpoint_head=head,
++        )
++        if head is None:
++            raise RuntimeError("Automatic gate-green checkpoint commit failed")
++        return head
++
+     def _write_memory(self) -> None:
+         accepted = [item for item in self.progress["tasks"] if item["status"] == "ACCEPTED"]
+         pending = [item for item in self.progress["tasks"] if item["status"] != "ACCEPTED"]
+         last = accepted[-1]["id"] if accepted else "None"
++        context = getattr(self, "memory_context", {})
++
++        changed = list(context.get("changed_paths") or [])
++        demonstrated = list(context.get("demonstrated") or [])
++        outstanding = list(context.get("outstanding") or [])
++        avoid = list(context.get("avoid_repeating") or [])
++        next_action = str(context.get("next_action") or "").strip()
++
+         lines = [
+-            "# Agent memory", "", "## Current state", "",
++            "# Agent memory",
++            "",
++            "## Current state",
++            "",
++            f"- Worker: {self.worker_id}.",
++            f"- Run: {self.run_id}.",
+             f"- Last accepted task: {last}.",
+             f"- Active task: {self.progress.get('active_task') or 'None'}.",
++            f"- Current attempt: {context.get('attempt') or 'not started'}.",
++            f"- Latest exact gate: {context.get('gate_name') or 'not run'}; exit={context.get('gate_exit') if context.get('gate_exit') is not None else 'unknown'}.",
++            f"- Latest Codex decision: {context.get('codex_decision') or 'pending'}.",
++            f"- Checkpoint: {context.get('checkpoint_status') or 'none'}; head={context.get('checkpoint_head') or 'not recorded'}.",
+             f"- Accepted: {', '.join(item['id'] for item in accepted) or 'none'}.",
+             f"- Remaining: {', '.join(item['id'] for item in pending) or 'none'}.",
+-            "- Exact plan: `{self.plan_display}`.", "",
+-            "## Fixed decisions", "",
+-            "- Non-web application until an explicit later task changes scope.",
++            f"- Exact plan: `{self.plan_display}`.",
++            "",
++            "## Files currently owned or edited",
++            "",
++        ]
++        lines.extend(f"- `{path}`" for path in changed)
++        if not changed:
++            lines.append("- No task-owned dirty product path at the latest snapshot.")
++
++        lines.extend(["", "## Demonstrated by current evidence", ""])
++        lines.extend(f"- {value}" for value in demonstrated)
++        if not demonstrated:
++            lines.append("- No new acceptance claim has been demonstrated in this run yet.")
++
++        lines.extend(["", "## Still unproven or below expectations", ""])
++        lines.extend(f"- {value}" for value in outstanding)
++        if not outstanding:
++            lines.append("- Awaiting the next Codex decision or exact gate evidence.")
++
++        lines.extend(["", "## Approaches not to repeat", ""])
++        lines.extend(f"- {value}" for value in avoid)
++        if not avoid:
++            lines.append("- Do not repeat an unchanged failing action without new evidence.")
++
++        lines.extend(["", "## Next exact action", ""])
++        lines.append(next_action or "Run the active task's exact deterministic gate and act on its first current failure.")
++
++        lines.extend([
++            "",
++            "## Fixed decisions",
++            "",
++            "- OpenCode/Qwen3 and Codex never write Git history.",
++            "- The deterministic Python controller may create a gate-green checkpoint and a final ACCEPT commit.",
++            "- A gate-green checkpoint preserves useful work but does not mark the task ACCEPTED.",
++            "- A task completes only after its exact gate is green and Codex returns `ACCEPT`.",
+             "- PostgreSQL only in Docker; Flyway owns application schema.",
+             "- Spring AI abstractions; no handwritten Ollama HTTP client.",
+-            "- Codex plans/reviews read-only; OpenCode edits; Python validates and commits.",
+-            "- Every red gate produces a full diagnostic log and compressed source bundle for Codex.",
+-            "- Identical Codex planning evidence is rate-limited; changed failures bypass the cooldown.",
+-            "- CodeGraph is focused and advisory by default; unavailable MCP evidence does not stop repair.",
+-            "- Runtime evidence stays under `runtime/runs/`; no automatic push.", "",
+-            "## Task commits", "",
+-        ]
++            "- Every red gate retains complete diagnostics for Codex.",
++            "- CodeGraph is focused retrieval evidence, not authority to expand task scope.",
++            "- Runtime evidence stays under `runtime/runs/`; no automatic push.",
++            "",
++            "## Task ledger",
++            "",
++        ])
+         for item in self.progress["tasks"]:
+-            lines.append(f"- {item['id']}: {item['status']} — accepted at {item.get('accepted_at') or 'not accepted'}")
++            lines.append(
++                f"- {item['id']}: {item['status']} — accepted at "
++                f"{item.get('accepted_at') or 'not accepted'}; "
++                f"last green attempt={item.get('last_gate_green_attempt') or 'none'}"
++            )
++        self.memory_path.parent.mkdir(parents=True, exist_ok=True)
+         self.memory_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+ 
+     def _commit_if_needed(
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/py-codex-agent/tests/test_runner.py r4r-phase3-control-v1/py-codex-agent/tests/test_runner.py
+--- r4r-phase3-control-v1-baseline-full/py-codex-agent/tests/test_runner.py	2026-08-03 00:01:42.720737868 +0000
++++ r4r-phase3-control-v1/py-codex-agent/tests/test_runner.py	2026-08-02 23:56:57.620727558 +0000
+@@ -11,6 +11,7 @@
+ from r4r_codex_agent.runner import (
+     AutomaticRunner,
+     CommandResult,
++    CommandWatchdog,
+     codex_exec_command,
+     extract_codegraph_tool_calls,
+     extract_opencode_text,
+@@ -841,6 +842,117 @@
+             with patch.dict(os.environ, {"OPENCODE_CONFIG": str(config)}):
+                 runner._validate_opencode_runtime_config()
+ 
++    def test_watchdog_stops_repeated_step_start_stream(self):
++        with tempfile.TemporaryDirectory() as directory:
++            script = (
++                "import json,time\n"
++                "for _ in range(20):\n"
++                " print(json.dumps({'type':'step_start','part':{'type':'step-start'}}), flush=True)\n"
++                " time.sleep(0.03)\n"
++                "time.sleep(10)\n"
++            )
++            result = run_command(
++                ("python3", "-c", script),
++                Path(directory),
++                timeout_seconds=20,
++                watchdog=CommandWatchdog(
++                    max_seconds=20,
++                    idle_seconds=10,
++                    max_steps=100,
++                    repeat_event_budget=3,
++                ),
++            )
++
++        self.assertEqual(124, result.exit_code)
++        self.assertEqual("repeat-event-budget", result.stop_reason)
++        self.assertGreaterEqual(result.observed_steps, 4)
++        self.assertEqual(0, result.meaningful_events)
++
++    def test_green_checkpoint_commits_product_memory_and_progress_but_stays_pending(self):
++        with tempfile.TemporaryDirectory() as directory:
++            repo = Path(directory)
++            self._init_repo(repo)
++            product = repo / "src" / "main" / "App.java"
++            product.parent.mkdir(parents=True)
++            product.write_text("class App {}\n", encoding="utf-8")
++
++            runner = object.__new__(AutomaticRunner)
++            runner.repo = repo
++            runner.worker_id = "PC"
++            runner.run_id = "20260803T010000Z"
++            runner.plan_display = ".opencode/task-plan.backend.json"
++            task = Task(
++                "task-06",
++                ".opencode/commands/task-06.md",
++                "Production CLI",
++                ("src/**",),
++                ("true",),
++                "finish task",
++            )
++            runner.plan = TaskPlan(1, (task,), ("true",))
++            runner.progress = {
++                "schema_version": 1,
++                "active_task": "task-06",
++                "last_run": None,
++                "tasks": [
++                    {"id": "task-06", "status": "PENDING", "accepted_at": None}
++                ],
++            }
++            runner.progress_path = repo / ".opencode" / "progress.backend.json"
++            runner.progress_path.parent.mkdir(parents=True)
++            runner.memory_path = repo / ".opencode" / "memory.backend.md"
++            runner.memory_context = {
++                "task_id": "task-06",
++                "attempt": 1,
++                "gate_exit": None,
++                "gate_name": None,
++                "codex_decision": None,
++                "changed_paths": [],
++                "demonstrated": [],
++                "outstanding": ["Codex review pending"],
++                "avoid_repeating": [],
++                "next_action": "Run gate",
++                "checkpoint_head": None,
++                "checkpoint_status": "none",
++            }
++            runner.peer_paths = ()
++            runner.checkpoint_on_green = True
++            runner.auto_commit = True
++            runner.timeout = 30
++            runner.git_commit_lock_path = repo / "runtime" / "locks" / "git-commit.lock"
++            runner.git_author_name = "R4R Agent"
++            runner.git_author_email = "r4r@example.invalid"
++            runner.ring_request_path = None
++            attempt = repo / "runtime" / "runs" / "PC" / runner.run_id / task.id / "attempt-01"
++            gate = CommandResult(task.gate, 0, "green", "")
++
++            head = runner._checkpoint_green(task, gate, 1, attempt)
++
++            self.assertIsNotNone(head)
++            self.assertEqual("PENDING", runner.progress["tasks"][0]["status"])
++            subject = run_command(("git", "show", "-s", "--format=%s", "HEAD"), repo).stdout
++            self.assertIn("gate-green checkpoint", subject)
++            committed = set(
++                run_command(("git", "show", "--name-only", "--pretty=", "HEAD"), repo)
++                .stdout.splitlines()
++            )
++            self.assertEqual(
++                {
++                    "src/main/App.java",
++                    ".opencode/progress.backend.json",
++                    ".opencode/memory.backend.md",
++                },
++                committed,
++            )
++            memory = runner.memory_path.read_text(encoding="utf-8")
++            self.assertIn("Still unproven or below expectations", memory)
++            self.assertIn("does not mark the task ACCEPTED", memory)
++            checkpoint = json.loads(
++                (attempt / "evidence" / "checkpoint.json").read_text(encoding="utf-8")
++            )
++            self.assertEqual("created", checkpoint["status"])
++            self.assertEqual(head, checkpoint["head_after"])
++
+     @staticmethod
+     def _init_repo(repo: Path) -> None:
+         run_command(("git", "init", "-q"), repo)
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/py-ring-agent/README.md r4r-phase3-control-v1/py-ring-agent/README.md
+--- r4r-phase3-control-v1-baseline-full/py-ring-agent/README.md	2026-08-03 00:01:42.724737868 +0000
++++ r4r-phase3-control-v1/py-ring-agent/README.md	2026-08-02 23:59:09.212732317 +0000
+@@ -133,3 +133,11 @@
+ export R4R_RING_REVIEW_INTERVAL_SECONDS=3600
+ export R4R_RING_DIRECTIVE_MAX_AGE_SECONDS=10800
+ ```
++
++## Event-triggered worker reviews
++
++PC and LP controllers request a fresh cognitive Ring review after a gate-green
++checkpoint and after a Codex decision. Requests are written atomically under
++`runtime/control/RING/requests/`, consumed once, and preserved with worker memory and
++checkpoint evidence in the next Ring run. The hourly review remains the fallback and
++all Ring directives remain advisory.
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/py-ring-agent/src/r4r_ring_agent/ring_loop.py r4r-phase3-control-v1/py-ring-agent/src/r4r_ring_agent/ring_loop.py
+--- r4r-phase3-control-v1-baseline-full/py-ring-agent/src/r4r_ring_agent/ring_loop.py	2026-08-03 00:01:42.720737868 +0000
++++ r4r-phase3-control-v1/py-ring-agent/src/r4r_ring_agent/ring_loop.py	2026-08-02 23:54:17.900721783 +0000
+@@ -35,6 +35,9 @@
+ DIRECTIVE_MAX_AGE_SECONDS = int(
+     os.environ.get("R4R_RING_DIRECTIVE_MAX_AGE_SECONDS", "10800")
+ )
++EVENT_MIN_INTERVAL_SECONDS = int(
++    os.environ.get("R4R_RING_EVENT_MIN_INTERVAL_SECONDS", "300")
++)
+ 
+ 
+ def _git(repo: Path, args: Sequence[str]) -> str:
+@@ -103,6 +106,58 @@
+     return repo / ".opencode" / f"progress.{suffix}.json"
+ 
+ 
++def _worker_memory_path(worker: str, repo: Path) -> Path:
++    suffix = "backend" if worker == "PC" else "frontend"
++    return repo / ".opencode" / f"memory.{suffix}.md"
++
++
++def _request_directory(ring: Path) -> Path:
++    return ring / "runtime" / "control" / "RING" / "requests"
++
++
++def _pending_worker_requests(ring: Path) -> tuple[Path, ...]:
++    root = _request_directory(ring)
++    return tuple(
++        path for path in (root / "PC.json", root / "LP.json")
++        if path.is_file()
++    )
++
++
++def _consume_worker_requests(ring: Path, run_dir: Path) -> list[dict[str, Any]]:
++    collected: list[dict[str, Any]] = []
++    target = run_dir / "worker-requests"
++    for source in _pending_worker_requests(ring):
++        target.mkdir(parents=True, exist_ok=True)
++        destination = target / source.name
++        try:
++            raw = source.read_text(encoding="utf-8")
++            value = json.loads(raw)
++        except (OSError, json.JSONDecodeError) as exception:
++            value = {
++                "schema_version": 1,
++                "worker": source.stem,
++                "reason": "invalid-request",
++                "error": str(exception),
++            }
++            raw = json.dumps(value, indent=2) + "\n"
++        destination.write_text(raw, encoding="utf-8")
++        collected.append(value if isinstance(value, dict) else {"worker": source.stem})
++        source.unlink(missing_ok=True)
++    (run_dir / "worker-request-manifest.json").write_text(
++        json.dumps(
++            {
++                "schema_version": 1,
++                "consumed_at": datetime.now(timezone.utc).isoformat(),
++                "requests": collected,
++            },
++            indent=2,
++            ensure_ascii=False,
++        ) + "\n",
++        encoding="utf-8",
++    )
++    return collected
++
++
+ def _write_worker_runtime_evidence(
+     worker: str,
+     worker_repo: Path,
+@@ -119,6 +174,10 @@
+             _worker_progress_path(worker, worker_repo),
+             snapshot_dir / "progress.json",
+         ),
++        "memory": _copy_snapshot_file(
++            _worker_memory_path(worker, worker_repo),
++            snapshot_dir / "memory.md",
++        ),
+         "codex_extra_instructions": _copy_snapshot_file(
+             worker_repo
+             / "runtime"
+@@ -147,6 +206,7 @@
+             "pre_edit_understanding": "pre-edit-understanding.md",
+             "codegraph_reconnaissance": "codegraph-reconnaissance.md",
+             "gate_summary": "gate-summary.md",
++            "checkpoint": "checkpoint.json",
+         }
+         for label, pattern in selected_patterns.items():
+             source = _latest_match(latest_run, pattern)
+@@ -302,8 +362,11 @@
+ - {run_dir}
+ 
+ Read the Ring, PC and LP commit/status/diff evidence. Then read both worker-runtime
+-subdirectories, including progress, latest Codex plan/review, local understanding,
+-CodeGraph report, gate summary and the previous Ring directive when present.
++subdirectories, including progress, worker memory, latest gate-green checkpoint,
++latest Codex plan/review, local understanding, CodeGraph report, gate summary and the
++previous Ring directive when present. Also read `worker-request-manifest.json` and
++`worker-requests/*.json`: these are event-triggered requests from the deterministic
++controllers and identify what changed since the previous Ring cycle.
+ Identify the first current defect for PC and LP. Prefer correction before new
+ implementation. Read Java, Angular, tests, Python and shell only when needed.
+ Do not perform unbounded searches.
+@@ -372,6 +435,8 @@
+         raise ValueError("R4R_RING_REVIEW_INTERVAL_SECONDS must be positive")
+     if SESSION_TIMEOUT_SECONDS < 1:
+         raise ValueError("R4R_RING_SESSION_TIMEOUT_SECONDS must be positive")
++    if EVENT_MIN_INTERVAL_SECONDS < 1:
++        raise ValueError("R4R_RING_EVENT_MIN_INTERVAL_SECONDS must be positive")
+ 
+     paths = WorktreePaths(
+         require_git_worktree(paths.ring, "RING"),
+@@ -395,6 +460,7 @@
+         if RUN_IMMEDIATELY
+         else time.monotonic() + REVIEW_INTERVAL_SECONDS
+     )
++    last_session_started = 0.0
+ 
+     try:
+         while True:
+@@ -416,15 +482,27 @@
+                 control.heartbeat("paused")
+                 time.sleep(1)
+                 continue
+-            if time.monotonic() < next_run:
++
++            now = time.monotonic()
++            if (
++                _pending_worker_requests(paths.ring)
++                and now - last_session_started >= EVENT_MIN_INTERVAL_SECONDS
++            ):
++                next_run = min(next_run, now)
++            if now < next_run:
+                 control.heartbeat("running")
+                 time.sleep(1)
+                 continue
+ 
++            last_session_started = time.monotonic()
+             run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+             run_dir = paths.ring / "runtime" / "ring-agent" / "ring" / run_id
+             _write_evidence(paths, run_dir)
+-            control.set_state("running", f"The Ring session {run_id} started")
++            consumed_requests = _consume_worker_requests(paths.ring, run_dir)
++            control.set_state(
++                "running",
++                f"The Ring session {run_id} started; event_requests={len(consumed_requests)}",
++            )
+ 
+             active_command: OperatorCommand | None = None
+ 
+@@ -457,6 +535,8 @@
+                         "agent": RING_AGENT,
+                         "model": RING_MODEL,
+                         "review_interval_seconds": REVIEW_INTERVAL_SECONDS,
++                        "event_min_interval_seconds": EVENT_MIN_INTERVAL_SECONDS,
++                        "consumed_worker_requests": consumed_requests,
+                         "worktrees": {
+                             "RING": str(paths.ring),
+                             "PC": str(paths.pc),
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/py-ring-agent/tests/test_ring_loop.py r4r-phase3-control-v1/py-ring-agent/tests/test_ring_loop.py
+--- r4r-phase3-control-v1-baseline-full/py-ring-agent/tests/test_ring_loop.py	2026-08-03 00:01:42.720737868 +0000
++++ r4r-phase3-control-v1/py-ring-agent/tests/test_ring_loop.py	2026-08-02 23:58:20.612730559 +0000
+@@ -49,6 +49,55 @@
+             self.assertTrue(result["valid"])
+             self.assertEqual(result["reason"], "ok")
+ 
++    def test_worker_snapshot_includes_memory_and_latest_checkpoint(self) -> None:
++        with tempfile.TemporaryDirectory() as temporary:
++            root = Path(temporary)
++            worker = root / "pc"
++            ring = root / "ring"
++            memory = worker / ".opencode" / "memory.backend.md"
++            progress = worker / ".opencode" / "progress.backend.json"
++            memory.parent.mkdir(parents=True)
++            memory.write_text("# memory\nStill unproven\n", encoding="utf-8")
++            progress.write_text('{"schema_version":1}\n', encoding="utf-8")
++            checkpoint = (
++                worker / "runtime" / "runs" / "PC" / "run-1" / "task" /
++                "attempt-01" / "evidence" / "checkpoint.json"
++            )
++            checkpoint.parent.mkdir(parents=True)
++            checkpoint.write_text('{"status":"created"}\n', encoding="utf-8")
++            run_dir = ring / "runtime" / "ring-agent" / "ring" / "session"
++
++            ring_loop._write_worker_runtime_evidence(
++                "PC", worker, ring, run_dir
++            )
++
++            snapshot = run_dir / "pc-runtime"
++            self.assertTrue((snapshot / "memory.md").is_file())
++            self.assertTrue((snapshot / "checkpoint.json").is_file())
++            manifest = (snapshot / "manifest.json").read_text(encoding="utf-8")
++            self.assertIn("memory.backend.md", manifest)
++            self.assertIn("checkpoint.json", manifest)
++
++    def test_consumes_worker_event_requests_once(self) -> None:
++        with tempfile.TemporaryDirectory() as temporary:
++            ring = Path(temporary) / "ring"
++            request = ring / "runtime" / "control" / "RING" / "requests" / "LP.json"
++            request.parent.mkdir(parents=True)
++            request.write_text(
++                '{"schema_version":1,"worker":"LP","reason":"codex-revise"}\n',
++                encoding="utf-8",
++            )
++            run_dir = ring / "runtime" / "ring-agent" / "ring" / "session"
++            run_dir.mkdir(parents=True)
++
++            consumed = ring_loop._consume_worker_requests(ring, run_dir)
++
++            self.assertEqual("LP", consumed[0]["worker"])
++            self.assertFalse(request.exists())
++            self.assertTrue((run_dir / "worker-requests" / "LP.json").is_file())
++            self.assertTrue((run_dir / "worker-request-manifest.json").is_file())
++
++
+ 
+ if __name__ == "__main__":
+     unittest.main()
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/scripts/resolve-r4r-config.mjs r4r-phase3-control-v1/scripts/resolve-r4r-config.mjs
+--- r4r-phase3-control-v1-baseline-full/scripts/resolve-r4r-config.mjs	2026-08-03 00:01:42.720737868 +0000
++++ r4r-phase3-control-v1/scripts/resolve-r4r-config.mjs	2026-08-02 23:54:32.780722321 +0000
+@@ -79,6 +79,18 @@
+   controlDir: profile.controlDir,
+   peerPaths: profile.peerPaths,
+   allowedPaths: profile.allowedPaths,
++  runtime: {
++    maxAttemptsPerTask: canonical.defaults.maxAttemptsPerTask,
++    maxNoProgressCycles: canonical.defaults.maxNoProgressCycles,
++    maxTransientFailures: canonical.defaults.maxTransientFailures,
++    autoCommit: canonical.defaults.autoCommit,
++    bootstrapCommit: canonical.defaults.bootstrapCommit,
++    checkpointOnGreen: canonical.defaults.checkpointOnGreen,
++    maxSessionSeconds: profile.runtime?.maxSessionSeconds ?? canonical.defaults.maxSessionSeconds,
++    idleSeconds: profile.runtime?.idleSeconds ?? canonical.defaults.idleSeconds,
++    maxSessionSteps: profile.runtime?.maxSessionSteps ?? canonical.defaults.maxSessionSteps,
++    repeatEventBudget: profile.runtime?.repeatEventBudget ?? canonical.defaults.repeatEventBudget,
++  },
+   opencodeConfig: path.relative(root, configPath),
+ };
+ const metadataPath = path.join(controlDir, "agent-runtime.json");
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' r4r-phase3-control-v1-baseline-full/scripts/run-codex-agent.sh r4r-phase3-control-v1/scripts/run-codex-agent.sh
+--- r4r-phase3-control-v1-baseline-full/scripts/run-codex-agent.sh	2026-08-03 00:01:42.716737867 +0000
++++ r4r-phase3-control-v1/scripts/run-codex-agent.sh	2026-08-02 23:54:47.932722869 +0000
+@@ -100,6 +100,20 @@
+     print(value[key])
+ 
+ print(json.dumps(value.get("peerPaths", []), separators=(",", ":")))
++runtime = value.get("runtime", {})
++for key in (
++    "maxAttemptsPerTask",
++    "maxNoProgressCycles",
++    "maxTransientFailures",
++    "autoCommit",
++    "bootstrapCommit",
++    "checkpointOnGreen",
++    "maxSessionSeconds",
++    "idleSeconds",
++    "maxSessionSteps",
++    "repeatEventBudget",
++):
++    print(json.dumps(runtime[key], separators=(",", ":")))
+ PYMETA
+ )
+ 
+@@ -113,6 +127,16 @@
+ control_dir="${values[7]}"
+ resolved_config="${values[8]}"
+ peer_paths_json="${values[9]}"
++runtime_max_attempts="${values[10]}"
++runtime_max_no_progress="${values[11]}"
++runtime_max_transient="${values[12]}"
++runtime_auto_commit="${values[13]}"
++runtime_bootstrap_commit="${values[14]}"
++runtime_checkpoint_on_green="${values[15]}"
++runtime_max_session_seconds="${values[16]}"
++runtime_idle_seconds="${values[17]}"
++runtime_max_session_steps="${values[18]}"
++runtime_repeat_event_budget="${values[19]}"
+ 
+ # Una sola fuente de verdad para OpenCode: opencode.jsonc de la raíz.
+ unset OPENCODE_CONFIG || true
+@@ -152,11 +176,16 @@
+ export R4R_PLAN_DISPLAY="$plan"
+ export R4R_MEMORY_PATH="$memory"
+ export R4R_PEER_PATHS_JSON="$peer_paths_json"
+-export R4R_AUTO_COMMIT="${R4R_AUTO_COMMIT:-true}"
+-export R4R_BOOTSTRAP_COMMIT="${R4R_BOOTSTRAP_COMMIT:-true}"
+-export R4R_MAX_ATTEMPTS_PER_TASK="${R4R_MAX_ATTEMPTS_PER_TASK:-0}"
+-export R4R_MAX_NO_PROGRESS_CYCLES="${R4R_MAX_NO_PROGRESS_CYCLES:-4}"
+-export R4R_MAX_TRANSIENT_FAILURES="${R4R_MAX_TRANSIENT_FAILURES:-8}"
++export R4R_AUTO_COMMIT="${R4R_AUTO_COMMIT:-$runtime_auto_commit}"
++export R4R_BOOTSTRAP_COMMIT="${R4R_BOOTSTRAP_COMMIT:-$runtime_bootstrap_commit}"
++export R4R_CHECKPOINT_ON_GREEN="${R4R_CHECKPOINT_ON_GREEN:-$runtime_checkpoint_on_green}"
++export R4R_MAX_ATTEMPTS_PER_TASK="${R4R_MAX_ATTEMPTS_PER_TASK:-$runtime_max_attempts}"
++export R4R_MAX_NO_PROGRESS_CYCLES="${R4R_MAX_NO_PROGRESS_CYCLES:-$runtime_max_no_progress}"
++export R4R_MAX_TRANSIENT_FAILURES="${R4R_MAX_TRANSIENT_FAILURES:-$runtime_max_transient}"
++export R4R_OPENCODE_MAX_SESSION_SECONDS="${R4R_OPENCODE_MAX_SESSION_SECONDS:-$runtime_max_session_seconds}"
++export R4R_OPENCODE_IDLE_SECONDS="${R4R_OPENCODE_IDLE_SECONDS:-$runtime_idle_seconds}"
++export R4R_OPENCODE_MAX_SESSION_STEPS="${R4R_OPENCODE_MAX_SESSION_STEPS:-$runtime_max_session_steps}"
++export R4R_OPENCODE_REPEAT_EVENT_BUDGET="${R4R_OPENCODE_REPEAT_EVENT_BUDGET:-$runtime_repeat_event_budget}"
+ export R4R_OPENCODE_BIN="${R4R_OPENCODE_BIN:-opencode}"
+ 
+ command -v "$R4R_OPENCODE_BIN" >/dev/null 2>&1 || {
