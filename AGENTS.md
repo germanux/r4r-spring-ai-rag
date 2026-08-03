@@ -44,6 +44,25 @@ endpoints belong in `.env.r4r.local`, never in the application `.env`.
 - Do not run `git add`, `git commit`, `git reset`, `git checkout`, `git merge` or
   `git push` from a model/tool session; only the controller owns automated commits.
 
+## Subtask size, timebox and commits
+
+- A product task should represent one bounded outcome that can normally be completed
+  in 45–70 minutes of useful model work.
+- The hard OpenCode session ceiling is 90 minutes (`5400` seconds). Reaching the
+  ceiling stops the session; it does not authorize a broader scope or an unreviewed
+  commit.
+- Every subtask has one objective, one exact gate and one controller-owned closing
+  commit. A subtask may create an earlier gate-green checkpoint, but the closing
+  commit still requires Codex `ACCEPT`.
+- Split work again when one task mixes independent concerns such as entrypoint,
+  lifecycle, exception classification, subprocess proof, DOM behavior, accessibility
+  or final integration validation.
+- Before an expensive gate, the deterministic gate must reject whitespace errors with
+  `git diff --check`; do not spend another full Maven or Angular cycle on a patch that
+  cannot be committed.
+- After a subtask is accepted and committed, advance immediately to the next pending
+  subtask. Do not reopen accepted work without a current regression.
+
 ## Code intelligence
 
 - `npm run repos:sync` materializes repositories declared in

@@ -1,10 +1,34 @@
-# FE-03 — Cited RAG Angular interface
+# FE-03A — Stabilize the current Angular RAG page baseline
 
-LP/30B only. Edit `frontend/**` and `docs/frontend/**` only.
+## Ownership and timebox
 
-Build an accessible question form and result view. Show loading, error and deterministic
-abstention states. Render ordered citations with source, heading path and ordinal.
-Do not parse or trust model-authored citation text when structured citations are present.
-Keep components bounded and test their meaningful behavior.
+LP/frontend only. Edit `frontend/**` and `docs/frontend/**`. Target 45–70 minutes;
+hard ceiling 90 minutes.
 
-Run exactly `./scripts/frontend-task-gate.sh task-fe-03-rag-ui`.
+## Objective
+
+Preserve the useful RAG page already present and produce a clean compilable baseline
+commit. Correct current TypeScript/template structure, whitespace and existing unit
+failures without expanding scope.
+
+## Required evidence
+
+- Angular 17 build succeeds.
+- Existing RAG page unit tests succeed in headless Chrome.
+- The question form and explicit idle/loading/success/abstention/error state model
+  remain present.
+- `git diff --check` is clean.
+- No backend, controller, progress or runtime file is edited.
+
+Later subtasks own detailed answer rendering, citations, DOM assertions, escaping and
+accessibility.
+
+## Exact gate
+
+`./scripts/frontend-task-gate.sh task-fe-03-rag-ui`
+
+## Completion
+
+Gate `0`, Codex `ACCEPT`, controller commit:
+
+`chore(rag-ui): checkpoint compilable RAG page baseline`
