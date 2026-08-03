@@ -594,9 +594,15 @@ class AutomaticRunner:
         # Legacy path is retained only so old locks can be deleted safely.
         # Task continuation is recorded in .opencode/progress.json.
         self.lock_path = self.repo / "runtime" / "locks" / "active-task.json"
-        self.git_commit_lock_path = (
-            self.repo / "runtime" / "locks" / "git-commit.lock"
-        )
+        # Every local worktree, the Drive bridge and branch synchronization use
+        # this same short-lived Git transaction lock. Model work and gates do
+        # not hold it, so PC and LP remain concurrent.
+        self.git_commit_lock_path = Path(
+            os.environ.get(
+                "R4R_GIT_LOCK",
+                str(Path.home() / "Desarrollo" / ".r4r-runtime" / "git.lock"),
+            )
+        ).expanduser()
         self.active_task_lock_enabled = False
         memory_value = Path(os.environ.get("R4R_MEMORY_PATH", ".opencode/memory.md"))
         self.memory_path = memory_value if memory_value.is_absolute() else self.repo / memory_value
@@ -2851,9 +2857,9 @@ next instruction packet.
         message: str,
         allowed_patterns: Sequence[str] | None = None,
     ) -> str | None:
-        # PC and LP share the same Git index and HEAD in the current topology.
-        # Serialize only the short add/check/commit section; model work and gates
-        # remain concurrent. Manual Git commands do not honor this cooperative lock.
+        # Serialize only the short add/check/commit section with every R4R Git
+        # automation. Model work and gates remain concurrent. Manual Git commands
+        # do not honor this cooperative lock.
         with exclusive_file_lock(self.git_commit_lock_path):
             changed = git_changed_paths(self.repo)
             if allowed_patterns is None:

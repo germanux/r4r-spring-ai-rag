@@ -1,22 +1,18 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# R4R worktree-aware hub synchronization with coordinated hot merges.
+# R4R worktree-aware hub synchronization with non-disruptive hot merges.
 #
 # Default invocation:
 #   * fetch/prune origin;
 #   * discover every non-detached worktree attached to the same Git common dir;
 #   * centralize each source branch in agent/integration;
-#   * after each source round, propagate the pinned hub commit to every worktree;
+#   * after each source round, propagate the pinned hub commit to idle, clean worktrees;
 #   * push the hub and every updated branch;
-#   * when a Git update is actually required, stop the active R4R stack once,
-#     preserve every dirty worktree once, perform all merges, restore the dirty
-#     states once, then restart only the runtime that was active before the pass.
+#   * never stop an agent and never stash its in-progress work.
 #
-# Dirty worktrees are never silently skipped. A merge or stash-reapply conflict is
-# left open in the exact worktree, backed up, and reported through terminal plus
-# desktop notification. No force-push, reset of user work, or automatic conflict
-# resolution is performed.
+# Active or dirty worktrees are reported and skipped until a later pass. No
+# force-push, reset, stash, or automatic conflict resolution is performed.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEVELOPMENT_ROOT="${R4R_DEVELOPMENT_ROOT:-$HOME/Desarrollo}"
@@ -43,6 +39,7 @@ EXCLUDES=()
 SOURCES_EXPLICIT=false
 TARGETS_EXPLICIT=false
 FAILED=()
+SKIPPED=()
 CENTRALIZED=()
 PROPAGATED=()
 ROUND_COMMITS=()
@@ -77,10 +74,9 @@ Usage: ./scripts/sync-agent-branches.sh [options]
 
 Default: complete automatic hot-sync pass
   - discovers every linked non-detached worktree;
-  - fetches, centralizes each source in agent/integration, propagates after each
-    source round, pushes all updated refs;
-  - when an update is needed, temporarily stops active R4R processes, backs up and
-    stashes dirty states, merges, restores those states, and resumes the prior stack.
+  - fetches and centralizes committed source refs in agent/integration;
+  - propagates only to idle, clean worktrees and retries skipped worktrees later;
+  - never stops an agent and never stashes in-progress work.
 
 Options:
   --hub BRANCH             Hub branch (default: agent/integration).
@@ -95,20 +91,19 @@ Options:
   --no-push                Disable pushes.
   --collect-only           Centralize selected sources only.
   --propagate-only         Propagate current hub only.
-  --leave-stopped          Stop active agents for the merge and do not restart them.
-  --no-guardian            Compatibility alias for --leave-stopped.
-  --require-idle           Refuse to run when an R4R agent is active.
+  --leave-stopped          Deprecated compatibility option; agents are never stopped.
+  --no-guardian            Deprecated compatibility option.
+  --require-idle           Deprecated compatibility option.
   --no-notify              Disable desktop notifications.
   --open-conflict-dir      Open affected worktree automatically (default).
   --no-open-conflict-dir   Do not open a file manager.
   --no-modal-alert         Do not open Zenity/KDialog; keep terminal/notify-send.
-  --dry-run                Print the plan without changing Git or processes.
+  --dry-run                Print the plan without changing Git.
   -h, --help               Show this help.
 
 Conflict policy:
-  A collection conflict remains open in the integration worktree. A propagation
-  conflict remains open in the exact target worktree. A stash-reapply conflict also
-  remains open there, while its original stash and external backup are retained.
+  A collection conflict remains open in the integration worktree. Active, dirty or
+  conflicted target worktrees are skipped without blocking the remaining branches.
 USAGE
 }
 
@@ -158,12 +153,14 @@ ALERT_ROOT="$LOG_ROOT/alerts"
 BACKUP_RUN_ROOT="$LOG_ROOT/backups/$SYNC_STAMP"
 mkdir -p "$LOG_ROOT/conflicts" "$ALERT_ROOT" "$BACKUP_RUN_ROOT"
 
-# One canonical lock across systemd, cron and manual runs in any worktree.
-exec 9>/tmp/r4r-agent-branch-sync.lock
+# One scheduler lock plus one shared Git transaction lock used by workers and Drive.
+SYNC_LOCK="${R4R_BRANCH_SYNC_LOCK:-$DEVELOPMENT_ROOT/.r4r-runtime/branch-sync.lock}"
+GIT_LOCK="${R4R_GIT_LOCK:-$DEVELOPMENT_ROOT/.r4r-runtime/git.lock}"
+mkdir -p "$(dirname "$SYNC_LOCK")" "$(dirname "$GIT_LOCK")"
+exec 9>"$SYNC_LOCK"
 flock -n 9 || { log "another branch synchronization is already running"; exit 0; }
-# Serialize with the Google Drive import/autocommit process.
-exec 8>/tmp/r4r-drive-import.lock
-flock -w 30 8 || die "Google Drive import lock remained busy for 30 seconds"
+exec 8>"$GIT_LOCK"
+flock -w 60 8 || { warn "shared Git lock remained busy; retrying next pass"; exit 0; }
 
 release_locks() {
   "$LOCKS_RELEASED" && return 0
@@ -435,141 +432,9 @@ for entry in Path('/proc').iterdir():
 PY_PROCESSES
 }
 
-capture_runtime_state() {
-  local rows
-  rows="$(active_process_snapshot)"
-  [[ -z "$rows" ]] && return 0
-  grep -q $'^RING\t' <<<"$rows" && RING_WAS_ACTIVE=true || true
-  grep -q $'^PC\t' <<<"$rows" && PC_WAS_ACTIVE=true || true
-  grep -q $'^LP\t' <<<"$rows" && LP_WAS_ACTIVE=true || true
-  printf '%s\n' "$rows" >"$BACKUP_RUN_ROOT/processes-before.txt"
-}
-
-any_runtime_active() { "$RING_WAS_ACTIVE" || "$PC_WAS_ACTIVE" || "$LP_WAS_ACTIVE"; }
-
-stop_active_runtime() {
-  any_runtime_active || return 0
-  [[ "$RUNTIME_POLICY" != require-idle ]] || {
-    alert_once runtime-active 'R4R: sincronización requiere agentes parados' \
-      "Hay agentes activos y se pidió --require-idle.\n\n$(active_process_snapshot | sed -n '1,30p')" \
-      "$DEVELOPMENT_ROOT"
-    return 4
-  }
-  "$DRY_RUN" && { log 'DRY-RUN: stop active R4R runtime with --keep-models'; return 0; }
-  local stopper=""
-  for stopper in \
-    "$RING_WORKTREE/scripts/stop-all-r4r-agents.sh" \
-    "$INTEGRATION_WORKTREE/scripts/stop-all-r4r-agents.sh" \
-    "$ROOT/scripts/stop-all-r4r-agents.sh"; do
-    [[ -x "$stopper" ]] && break
-    stopper=""
-  done
-  [[ -n "$stopper" ]] || die 'stop-all-r4r-agents.sh is required for an active hot sync'
-  log "stopping active R4R runtime before the Git critical section"
-  # Keep this systemd service and its timer alive while stopping the managed
-  # Ring/PC/LP runtime; otherwise the shutdown helper terminates its own caller.
-  "$stopper" --keep-models --keep-branch-sync
-  sleep 1
-  if [[ -n "$(active_process_snapshot)" ]]; then
-    alert_once runtime-stop-failed 'R4R: no se pudo detener el runtime' \
-      "Quedan procesos activos; no se tocará ningún worktree.\n\n$(active_process_snapshot | sed -n '1,30p')" \
-      "$RING_WORKTREE"
-    return 4
-  fi
-  RUNTIME_STOPPED=true
-  clear_alert runtime-active
-  clear_alert runtime-stop-failed
-}
-
-backup_worktree() {
-  local branch="$1" path="$2" backup="$BACKUP_RUN_ROOT/$(sanitize "$branch")"
-  mkdir -p "$backup"
-  WT_BACKUP["$branch"]="$backup"
-  git -C "$path" rev-parse HEAD >"$backup/head.txt"
-  git -C "$path" branch --show-current >"$backup/branch.txt"
-  git -C "$path" status --short --untracked-files=all >"$backup/status-before.txt"
-  git -C "$path" diff --binary --full-index --no-ext-diff >"$backup/worktree.patch"
-  git -C "$path" diff --cached --binary --full-index --no-ext-diff >"$backup/index.patch"
-  git -C "$path" ls-files --others --exclude-standard >"$backup/untracked.txt"
-  git -C "$path" ls-files -m -d -o --exclude-standard -z \
-    | tar -C "$path" --null --no-recursion --ignore-failed-read -czf "$backup/files.tgz" -T - \
-      2>"$backup/tar-warnings.txt" || true
-}
-
-preserve_dirty_worktrees() {
-  local branch path dirty before_oid after_oid
-  TRANSACTION_STARTED=true
-  while IFS=$'\t' read -r branch path; do
-    [[ -n "$branch" && -n "$path" ]] || continue
-    WT_PATH["$branch"]="$path"
-    if merge_in_progress "$path" || [[ -n "$(unmerged_paths "$path" || true)" ]]; then
-      alert_once "pending-$branch" 'R4R: conflicto Git pendiente' \
-        "$branch ya tiene una operación Git pendiente. Resuélvela o abórtala antes de sincronizar." "$path"
-      return 4
-    fi
-    dirty="$(git -C "$path" status --porcelain=v1 --untracked-files=all)"
-    [[ -n "$dirty" ]] || continue
-    WT_WAS_DIRTY["$branch"]=true
-    PRESERVED_BRANCHES+=("$branch")
-    backup_worktree "$branch" "$path"
-    log "$branch: preserving dirty state in ${WT_BACKUP[$branch]}"
-    if "$DRY_RUN"; then
-      WT_STASH["$branch"]="DRY-RUN"
-      continue
-    fi
-    before_oid="$(git -C "$path" rev-parse -q --verify refs/stash 2>/dev/null || true)"
-    git -C "$path" stash push --include-untracked \
-      --message "r4r-hot-sync:$SYNC_STAMP:$branch" >/dev/null
-    after_oid="$(git -C "$path" rev-parse -q --verify refs/stash 2>/dev/null || true)"
-    [[ -n "$after_oid" && "$after_oid" != "$before_oid" ]] \
-      || die "$branch: git stash did not create a preservation commit"
-    WT_STASH["$branch"]="$after_oid"
-    if [[ -n "$(git -C "$path" status --porcelain=v1 --untracked-files=all)" ]]; then
-      alert_once "stash-$branch" 'R4R: no se pudo apartar el estado local' \
-        "$branch sigue sucia después de git stash. Backup: ${WT_BACKUP[$branch]}" "$path"
-      return 4
-    fi
-  done < <(all_worktree_records)
-}
-
-stash_ref_for_oid() {
-  local oid="$1" ref current
-  while IFS=' ' read -r ref current; do
-    [[ "$current" == "$oid" ]] && { printf '%s\n' "$ref"; return 0; }
-  done < <(git -C "$REPOSITORY" stash list --format='%gd %H')
-  return 1
-}
-
-restore_preserved_worktrees() {
-  local branch path oid ref report log_file body code=0
-  "$RESTORE_ATTEMPTED" && return 0
-  RESTORE_ATTEMPTED=true
-  for branch in "${PRESERVED_BRANCHES[@]}"; do
-    path="${WT_PATH[$branch]}"
-    oid="${WT_STASH[$branch]}"
-    [[ "$oid" != DRY-RUN ]] || { log "DRY-RUN: restore preserved state for $branch"; continue; }
-    if merge_in_progress "$path" || [[ -n "$(unmerged_paths "$path" || true)" ]]; then
-      warn "$branch: preserved stash remains unapplied because the worktree has a conflict"
-      code=4
-      continue
-    fi
-    log_file="${WT_BACKUP[$branch]}/stash-apply.log"
-    log "$branch: restoring preserved dirty state"
-    if git -C "$path" stash apply --index "$oid" >"$log_file" 2>&1; then
-      git -C "$path" status --short --untracked-files=all >"${WT_BACKUP[$branch]}/status-after.txt"
-      if ref="$(stash_ref_for_oid "$oid" || true)"; then
-        git -C "$REPOSITORY" stash drop "$ref" >/dev/null
-      fi
-      clear_alert "stash-apply-$branch"
-    else
-      report="$(write_conflict_report stash-reapply "$branch" "$path" "$log_file")"
-      body="Conflicto al reaplicar el trabajo local de $branch.\nEl conflicto queda abierto y el stash original se conserva.\n\nStash: $oid\nBackup: ${WT_BACKUP[$branch]}\nInforme: $report"
-      alert_once "stash-apply-$branch" 'R4R: conflicto al restaurar trabajo local' "$body" "$path"
-      FAILED+=("$branch:stash-reapply-conflict")
-      code=4
-    fi
-  done
-  return "$code"
+worktree_is_active() {
+  local path="$1"
+  active_process_snapshot | grep -Fq -- "$path"
 }
 
 collect_ref_into_hub() {
@@ -628,7 +493,7 @@ remove_temporary_worktree() {
 }
 
 propagate_branch() {
-  local branch="$1" path merge_log report paths body
+  local branch="$1" path merge_log report paths body dirty
   branch_exists "$branch" || { FAILED+=("$branch:missing"); return 1; }
   if git -C "$REPOSITORY" merge-base --is-ancestor "$HUB_COMMIT" "$branch"; then
     log "$branch: already contains ${HUB_COMMIT:0:12}"
@@ -636,6 +501,25 @@ propagate_branch() {
     return 0
   fi
   path="$(prepare_target_worktree "$branch")" || return 1
+  if worktree_is_active "$path"; then
+    log "$branch: skipped because its agent is active"
+    SKIPPED+=("$branch:active")
+    remove_temporary_worktree "$path"
+    return 0
+  fi
+  if merge_in_progress "$path" || [[ -n "$(unmerged_paths "$path" || true)" ]]; then
+    warn "$branch: skipped because a Git operation or conflict is pending"
+    SKIPPED+=("$branch:conflict-pending")
+    remove_temporary_worktree "$path"
+    return 0
+  fi
+  dirty="$(git -C "$path" status --porcelain=v1 --untracked-files=all)"
+  if [[ -n "$dirty" ]]; then
+    log "$branch: skipped because its worktree is dirty"
+    SKIPPED+=("$branch:dirty")
+    remove_temporary_worktree "$path"
+    return 0
+  fi
   merge_log="$BACKUP_RUN_ROOT/propagate-$(sanitize "$branch").log"
   log "$branch: merging hub ${HUB_COMMIT:0:12}"
   if "$DRY_RUN"; then
@@ -706,82 +590,9 @@ sync_is_needed() {
   return 1
 }
 
-restart_preserved_runtime() {
-  any_runtime_active || return 0
-  [[ "$RUNTIME_POLICY" == preserve ]] || return 0
-  "$DRY_RUN" && { log 'DRY-RUN: restore previously active R4R runtime'; return 0; }
-  local starter wrapper python worker log_path pid heartbeat deadline
-  if "$RING_WAS_ACTIVE"; then
-    starter="$INTEGRATION_WORKTREE/scripts/run-ring-system.sh"
-    [[ -x "$starter" ]] || starter="$RING_WORKTREE/scripts/run-ring-system.sh"
-    [[ -x "$starter" ]] || { warn 'run-ring-system.sh missing; runtime remains stopped'; return 1; }
-    log 'restarting the previously active managed R4R stack'
-    R4R_RING_WORKTREE="$RING_WORKTREE" "$starter" start
-    return $?
-  fi
-
-  # Individual workers may occasionally run without the Ring supervisor. Restore only
-  # those that were active, using the same authoritative streamed wrapper.
-  wrapper="$RING_WORKTREE/py-ring-agent/run-worker-streamed.py"
-  [[ -f "$wrapper" ]] || { warn "worker wrapper missing: $wrapper"; return 1; }
-  for worker in PC LP; do
-    if [[ "$worker" == PC ]]; then
-      "$PC_WAS_ACTIVE" || continue
-    else
-      "$LP_WAS_ACTIVE" || continue
-    fi
-    log_path="$RING_WORKTREE/runtime/ring-agent/bootstrap/${SYNC_STAMP}-${worker}-hot-sync.log"
-    mkdir -p "$(dirname "$log_path")"
-    pid="$(python3 - "$wrapper" "$worker" "$log_path" "$RING_WORKTREE" "$PC_WORKTREE" "$LP_WORKTREE" <<'PY'
-from pathlib import Path
-import os, subprocess, sys
-wrapper, worker, log_path, ring, pc, lp = sys.argv[1:7]
-Path(log_path).parent.mkdir(parents=True, exist_ok=True)
-log = open(log_path, 'ab', buffering=0)
-env = {**os.environ, 'PYTHONUNBUFFERED': '1', 'R4R_RING_WORKTREE': ring,
-       'R4R_PC_WORKTREE': pc, 'R4R_LP_WORKTREE': lp}
-p = subprocess.Popen([sys.executable, wrapper, worker], cwd=ring,
-                     stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
-                     start_new_session=True, env=env, close_fds=True)
-print(p.pid)
-PY
-)"
-    sleep 2
-    kill -0 "$pid" 2>/dev/null || { warn "$worker wrapper failed; see $log_path"; return 1; }
-    log "$worker wrapper restarted pid=$pid log=$log_path"
-  done
-}
-
-runtime_restart_safe() {
-  local branch path oid
-  while IFS=$'\t' read -r branch path; do
-    merge_in_progress "$path" && return 1
-    [[ -z "$(unmerged_paths "$path" || true)" ]] || return 1
-  done < <(all_worktree_records)
-  for branch in "${PRESERVED_BRANCHES[@]}"; do
-    oid="${WT_STASH[$branch]:-}"
-    [[ -z "$oid" || "$oid" == DRY-RUN ]] && continue
-    # A remaining stash means restoration did not complete and must stay available.
-    stash_ref_for_oid "$oid" >/dev/null 2>&1 && return 1
-  done
-  return 0
-}
-
 on_exit() {
   local code=$?
-  if "$TRANSACTION_STARTED" && ! "$RESTORE_ATTEMPTED"; then
-    restore_preserved_worktrees || code=$?
-  fi
   release_locks
-  if "$RUNTIME_STOPPED"; then
-    if [[ "$RUNTIME_POLICY" == preserve ]] && runtime_restart_safe; then
-      restart_preserved_runtime || code=5
-    elif [[ "$RUNTIME_POLICY" == preserve ]]; then
-      warn 'runtime remains stopped because a merge or preserved-state conflict is still open'
-    else
-      log 'runtime intentionally left stopped by policy'
-    fi
-  fi
   git -C "$REPOSITORY" worktree prune >/dev/null 2>&1 || true
   exit "$code"
 }
@@ -828,14 +639,21 @@ log "propagation targets:    ${TARGETS[*]:-(none)}"
 log "runtime policy:         $RUNTIME_POLICY"
 log "push policy:            $PUSH_POLICY"
 
-# Existing conflicts are never hidden by a new synchronization pass.
+# A conflict in the hub blocks collection. Conflicts in worker worktrees are
+# isolated and retried later instead of blocking every other branch.
 while IFS=$'\t' read -r branch path; do
   if merge_in_progress "$path" || [[ -n "$(unmerged_paths "$path" || true)" ]]; then
-    alert_once "pending-$branch" 'R4R: conflicto Git pendiente' \
-      "$branch tiene una operación Git pendiente. Resuélvela o abórtala antes del siguiente ciclo." "$path"
-    exit 4
+    if [[ "$branch" == "$HUB_BRANCH" ]]; then
+      alert_once "pending-$branch" 'R4R: conflicto Git pendiente' \
+        "$branch tiene una operación Git pendiente. Resuélvela o abórtala antes del siguiente ciclo." "$path"
+      exit 4
+    fi
+    SKIPPED+=("$branch:conflict-pending")
   fi
 done < <(all_worktree_records)
+
+[[ -z "$(git -C "$INTEGRATION_WORKTREE" status --porcelain=v1 --untracked-files=all)" ]] \
+  || die "integration worktree is dirty; refusing to mix synchronization changes"
 
 # Avoid interrupting agents every three minutes when every branch already converged.
 if ! sync_is_needed; then
@@ -846,10 +664,6 @@ if ! sync_is_needed; then
     branch_exists "$branch" && push_ref "$branch" || true
   done
 else
-  capture_runtime_state
-  stop_active_runtime || exit $?
-  preserve_dirty_worktrees || exit $?
-
   rounds=0
   if "$COLLECT"; then
     if "$FETCH" && remote_ref_exists "$HUB_BRANCH"; then
@@ -893,20 +707,19 @@ else
       propagate_branch "$branch" || exit $?
     done
   fi
-
-  restore_preserved_worktrees || exit $?
 fi
 
 mapfile -t CENTRALIZED < <(printf '%s\n' "${CENTRALIZED[@]}" | awk 'NF && !seen[$0]++')
 mapfile -t PROPAGATED < <(printf '%s\n' "${PROPAGATED[@]}" | awk 'NF && !seen[$0]++')
 mapfile -t FAILED < <(printf '%s\n' "${FAILED[@]}" | awk 'NF && !seen[$0]++')
+mapfile -t SKIPPED < <(printf '%s\n' "${SKIPPED[@]}" | awk 'NF && !seen[$0]++')
 
 printf '\n[r4r-hot-sync] SUMMARY\n'
 printf '  hub:                    %s\n' "$HUB_BRANCH"
 printf '  final hub commit:       %s\n' "${HUB_COMMIT:-$(git -C "$INTEGRATION_WORKTREE" rev-parse HEAD)}"
 printf '  centralized refs:       %s\n' "${CENTRALIZED[*]:-(none)}"
 printf '  propagated branches:    %s\n' "${PROPAGATED[*]:-(none)}"
-printf '  preserved worktrees:    %s\n' "${PRESERVED_BRANCHES[*]:-(none)}"
+printf '  skipped worktrees:      %s\n' "${SKIPPED[*]:-(none)}"
 printf '  backup root:            %s\n' "$BACKUP_RUN_ROOT"
 printf '  failed:                 %s\n' "${FAILED[*]:-(none)}"
 
