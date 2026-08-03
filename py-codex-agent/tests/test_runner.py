@@ -11,6 +11,7 @@ from r4r_codex_agent.diagnostics import GateDiagnostics
 from r4r_codex_agent.runner import (
     AutomaticRunner,
     CommandResult,
+    CommandWatchdog,
     codex_exec_command,
     extract_codegraph_tool_calls,
     extract_opencode_text,
@@ -840,6 +841,117 @@ class RunnerTest(unittest.TestCase):
 
             with patch.dict(os.environ, {"OPENCODE_CONFIG": str(config)}):
                 runner._validate_opencode_runtime_config()
+
+    def test_watchdog_stops_repeated_step_start_stream(self):
+        with tempfile.TemporaryDirectory() as directory:
+            script = (
+                "import json,time\n"
+                "for _ in range(20):\n"
+                " print(json.dumps({'type':'step_start','part':{'type':'step-start'}}), flush=True)\n"
+                " time.sleep(0.03)\n"
+                "time.sleep(10)\n"
+            )
+            result = run_command(
+                ("python3", "-c", script),
+                Path(directory),
+                timeout_seconds=20,
+                watchdog=CommandWatchdog(
+                    max_seconds=20,
+                    idle_seconds=10,
+                    max_steps=100,
+                    repeat_event_budget=3,
+                ),
+            )
+
+        self.assertEqual(124, result.exit_code)
+        self.assertEqual("repeat-event-budget", result.stop_reason)
+        self.assertGreaterEqual(result.observed_steps, 4)
+        self.assertEqual(0, result.meaningful_events)
+
+    def test_green_checkpoint_commits_product_memory_and_progress_but_stays_pending(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            self._init_repo(repo)
+            product = repo / "src" / "main" / "App.java"
+            product.parent.mkdir(parents=True)
+            product.write_text("class App {}\n", encoding="utf-8")
+
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner.worker_id = "PC"
+            runner.run_id = "20260803T010000Z"
+            runner.plan_display = ".opencode/task-plan.backend.json"
+            task = Task(
+                "task-06",
+                ".opencode/commands/task-06.md",
+                "Production CLI",
+                ("src/**",),
+                ("true",),
+                "finish task",
+            )
+            runner.plan = TaskPlan(1, (task,), ("true",))
+            runner.progress = {
+                "schema_version": 1,
+                "active_task": "task-06",
+                "last_run": None,
+                "tasks": [
+                    {"id": "task-06", "status": "PENDING", "accepted_at": None}
+                ],
+            }
+            runner.progress_path = repo / ".opencode" / "progress.backend.json"
+            runner.progress_path.parent.mkdir(parents=True)
+            runner.memory_path = repo / ".opencode" / "memory.backend.md"
+            runner.memory_context = {
+                "task_id": "task-06",
+                "attempt": 1,
+                "gate_exit": None,
+                "gate_name": None,
+                "codex_decision": None,
+                "changed_paths": [],
+                "demonstrated": [],
+                "outstanding": ["Codex review pending"],
+                "avoid_repeating": [],
+                "next_action": "Run gate",
+                "checkpoint_head": None,
+                "checkpoint_status": "none",
+            }
+            runner.peer_paths = ()
+            runner.checkpoint_on_green = True
+            runner.auto_commit = True
+            runner.timeout = 30
+            runner.git_commit_lock_path = repo / "runtime" / "locks" / "git-commit.lock"
+            runner.git_author_name = "R4R Agent"
+            runner.git_author_email = "r4r@example.invalid"
+            runner.ring_request_path = None
+            attempt = repo / "runtime" / "runs" / "PC" / runner.run_id / task.id / "attempt-01"
+            gate = CommandResult(task.gate, 0, "green", "")
+
+            head = runner._checkpoint_green(task, gate, 1, attempt)
+
+            self.assertIsNotNone(head)
+            self.assertEqual("PENDING", runner.progress["tasks"][0]["status"])
+            subject = run_command(("git", "show", "-s", "--format=%s", "HEAD"), repo).stdout
+            self.assertIn("gate-green checkpoint", subject)
+            committed = set(
+                run_command(("git", "show", "--name-only", "--pretty=", "HEAD"), repo)
+                .stdout.splitlines()
+            )
+            self.assertEqual(
+                {
+                    "src/main/App.java",
+                    ".opencode/progress.backend.json",
+                    ".opencode/memory.backend.md",
+                },
+                committed,
+            )
+            memory = runner.memory_path.read_text(encoding="utf-8")
+            self.assertIn("Still unproven or below expectations", memory)
+            self.assertIn("does not mark the task ACCEPTED", memory)
+            checkpoint = json.loads(
+                (attempt / "evidence" / "checkpoint.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual("created", checkpoint["status"])
+            self.assertEqual(head, checkpoint["head_after"])
 
     @staticmethod
     def _init_repo(repo: Path) -> None:
