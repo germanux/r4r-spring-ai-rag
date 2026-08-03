@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+import importlib.util
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 
@@ -108,6 +111,50 @@ class RingSystemTests(unittest.TestCase):
             self.assertEqual(completed.returncode, 0, completed.stdout)
             lines = marker.read_text(encoding="utf-8").splitlines()
             self.assertEqual(lines, [str(ring.resolve()), str(ring.resolve())])
+
+    def test_terminate_managed_process_kills_detached_child_group(self) -> None:
+        spec = importlib.util.spec_from_file_location("run_ring_system", SCRIPT)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            pid_file = Path(temporary) / "detached.pid"
+            child_code = (
+                "import os, signal, time; "
+                "signal.signal(signal.SIGTERM, signal.SIG_IGN); "
+                f"open({str(pid_file)!r}, 'w').write(str(os.getpid())); "
+                "time.sleep(300)"
+            )
+            parent_code = (
+                "import signal, subprocess, sys, time; "
+                "signal.signal(signal.SIGTERM, signal.SIG_IGN); "
+                f"subprocess.Popen([sys.executable, '-c', {child_code!r}], "
+                "start_new_session=True); "
+                "time.sleep(300)"
+            )
+            parent = subprocess.Popen(
+                [sys.executable, "-c", parent_code],
+                start_new_session=True,
+            )
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline and not pid_file.exists():
+                time.sleep(0.05)
+            self.assertTrue(pid_file.exists())
+            child_pid = int(pid_file.read_text(encoding="utf-8"))
+
+            module._terminate_managed_process(parent.pid, timeout_seconds=0.4)
+            parent.wait(timeout=3)
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline and Path(
+                f"/proc/{child_pid}"
+            ).exists():
+                time.sleep(0.05)
+
+            self.assertFalse(Path(f"/proc/{parent.pid}").exists())
+            self.assertFalse(Path(f"/proc/{child_pid}").exists())
+
 
 
 if __name__ == "__main__":

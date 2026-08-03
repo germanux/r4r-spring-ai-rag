@@ -1,0 +1,65 @@
+R4R Phase 3 operational control v1 — validation
+Generated: 03/08/2026 02:03:30 CEST
+
+Scope
+-----
+This is an operational Phase 3 increment, not a claim that full Phase 3 orchestration is complete.
+
+Implemented
+-----------
+- Deterministic gate-green checkpoint commits owned by the Python controller.
+- Task remains PENDING until Codex ACCEPT.
+- Per-worker memory records files, demonstrated claims, unproven requirements,
+  approaches to avoid, exact next action and checkpoint state.
+- OpenCode wall-time, useful-idle, step and repeated-event watchdogs.
+- Periodic step_start events do not count as useful progress.
+- Worker checkpoint/Codex events request a fresh The-Ring review.
+- Ring snapshots progress, worker memory, latest checkpoint and event request.
+- Canonical runtime limits now come from config/r4r-agents.json and are exported by
+  scripts/run-codex-agent.sh.
+
+Static validation
+-----------------
+python3 -m py_compile: PASS
+- py-codex-agent/src/r4r_codex_agent/runner.py
+- py-codex-agent/src/r4r_codex_agent/contracts.py
+- py-codex-agent/src/r4r_codex_agent/diagnostics.py
+- py-ring-agent/run-ring-agent.py
+- py-ring-agent/run-ring-system.py
+- py-ring-agent/src/r4r_ring_agent/ring_loop.py
+
+bash -n: PASS
+- scripts/run-codex-agent.sh
+- scripts/run-ring-system.sh
+
+node --check: PASS
+- scripts/resolve-r4r-config.mjs
+
+Resolved runtime metadata
+-------------------------
+PC: maxAttempts=6, noProgress=2, transient=3, checkpoint=true,
+    maxSession=5400s, idle=900s, maxSteps=120, repeatBudget=12
+LP: maxAttempts=6, noProgress=2, transient=3, checkpoint=true,
+    maxSession=3600s, idle=600s, maxSteps=90, repeatBudget=12
+
+Unit tests
+----------
+py-codex-agent/tests/test_runner.py: 37 tests, PASS
+py-ring-agent/tests/test_ring_loop.py: 4 tests, PASS
+py-ring-agent/tests/test_ring_system.py: 3 tests, PASS
+Total: 44 tests, PASS
+
+New regression tests include
+----------------------------
+- repeated step_start stream is terminated by the watchdog;
+- gate-green checkpoint commits only task product + worker progress + worker memory;
+- checkpoint leaves task status PENDING;
+- Ring snapshots worker memory and checkpoint evidence;
+- Ring consumes each worker event request once.
+
+Not executed
+------------
+- Maven backend gate: this increment changes the Python/shell control plane only.
+- Angular frontend gate: this increment changes the Python/shell control plane only.
+- Live supervisor restart: activation must be controlled on the user's machine so
+  current dirty PC/LP product work is preserved.
