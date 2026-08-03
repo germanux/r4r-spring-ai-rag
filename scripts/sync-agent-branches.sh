@@ -466,7 +466,9 @@ stop_active_runtime() {
   done
   [[ -n "$stopper" ]] || die 'stop-all-r4r-agents.sh is required for an active hot sync'
   log "stopping active R4R runtime before the Git critical section"
-  "$stopper" --keep-models
+  # Keep this systemd service and its timer alive while stopping the managed
+  # Ring/PC/LP runtime; otherwise the shutdown helper terminates its own caller.
+  "$stopper" --keep-models --keep-branch-sync
   sleep 1
   if [[ -n "$(active_process_snapshot)" ]]; then
     alert_once runtime-stop-failed 'R4R: no se pudo detener el runtime' \

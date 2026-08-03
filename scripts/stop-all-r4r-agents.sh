@@ -3,6 +3,7 @@ set -Eeuo pipefail
 
 MODE="kill"
 OLLAMA_ACTION="restart"
+KEEP_BRANCH_SYNC=false
 R4R_BASE="${R4R_BASE:-$HOME/Desarrollo}"
 TERM_WAIT_SECONDS="${TERM_WAIT_SECONDS:-10}"
 KILL_WAIT_SECONDS="${KILL_WAIT_SECONDS:-3}"
@@ -15,6 +16,7 @@ Uso:
   stop-all-r4r-agents.sh --restart-ollama
   stop-all-r4r-agents.sh --stop-ollama
   stop-all-r4r-agents.sh --keep-models
+  stop-all-r4r-agents.sh --keep-branch-sync
 
 Sin argumentos:
   - detiene agentes R4R de todos los worktrees r4r-*.git;
@@ -30,6 +32,7 @@ Opciones:
   --restart-ollama   Explícito; coincide con el comportamiento por defecto.
   --stop-ollama      Detiene ollama.service tras limpiar clientes.
   --keep-models      No toca Ollama.
+  --keep-branch-sync Conserva r4r-agent-branch-sync.service y su timer.
   -h, --help         Ayuda.
 
 Variable:
@@ -43,6 +46,7 @@ for arg in "$@"; do
     --restart-ollama) OLLAMA_ACTION="restart" ;;
     --stop-ollama) OLLAMA_ACTION="stop" ;;
     --keep-models) OLLAMA_ACTION="keep" ;;
+    --keep-branch-sync) KEEP_BRANCH_SYNC=true ;;
     -h|--help) usage; exit 0 ;;
     *) echo "ERROR: opción desconocida: $arg" >&2; usage >&2; exit 2 ;;
   esac
@@ -164,6 +168,11 @@ print_targets() {
 
 unit_matches() {
   local unit="$1"
+  if "$KEEP_BRANCH_SYNC"; then
+    case "$unit" in
+      r4r-agent-branch-sync.service|r4r-agent-branch-sync.timer) return 1 ;;
+    esac
+  fi
   [[ "$unit" =~ ^r4r-(ring|pc|lp|backend|frontend|codex|opencode|agent|worker) ]] ||
   [[ "$unit" =~ ^(ring|pc|lp)-(r4r-)?(agent|worker|codex|opencode) ]] ||
   [[ "$unit" =~ (r4r-ring-agent|r4r-pc-worker|r4r-lp-worker) ]]
