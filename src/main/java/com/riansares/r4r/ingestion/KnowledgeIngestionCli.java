@@ -22,6 +22,12 @@ public class KnowledgeIngestionCli {
     private static final int EXIT_CODE_APP_FAILURE = 5;
 
     /**
+     * Test seam: when set, execute() uses this builder instead of createBuilder().
+     * Null by default - only used during tests.
+     */
+    static SpringApplicationBuilder builderForTesting;
+
+    /**
      * Exposes the builder configuration seam for testing.
      *
      * @return a pre-configured SpringApplicationBuilder with WebApplicationType.NONE
@@ -43,7 +49,8 @@ public class KnowledgeIngestionCli {
      * @return categorized exit code
      */
     static int execute(String[] args) {
-        try (var context = createBuilder().run(args)) {
+        SpringApplicationBuilder builder = builderForTesting != null ? builderForTesting : createBuilder();
+        try (var context = builder.run(args)) {
             var orchestration = context.getBean(KnowledgeIngestionOrchestration.class);
             if (orchestration == null) {
                 System.err.println("ERROR: KnowledgeIngestionOrchestration bean not found");

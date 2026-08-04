@@ -3,11 +3,14 @@ package com.riansares.r4r.ingestion;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.WebApplicationType;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.event.ContextClosedEvent;
+import com.riansares.r4r.R4rSpringAiRagApplication;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,10 +27,10 @@ import static org.mockito.Mockito.when;
  * Proves deterministic non-web Spring lifecycle and no startup ingestion side effect.
  * <p>
  * Tests:
- * 1. CLI builder creates a non-web context via createBuilder()
- * 2. Context closes properly on success and failure paths through try-with-resources
- * 3. Production beans are replaced with deterministic registry-level mechanism
- *    before singleton instantiation (via BeanDefinitionRegistryPostProcessor)
+ * 1. createBuilder() returns a non-web builder (no ServletWebServerFactory)
+ * 2. execute() properly closes context on success/failure via ContextClosedEvent
+ * 3. Registry-level bean replacement before instantiation
+ * 4. Normal R4rSpringAiRagApplication startup does not invoke ingestion
  */
 class KnowledgeIngestionSpringLifecycleTest {
 
@@ -65,13 +68,14 @@ class KnowledgeIngestionSpringLifecycleTest {
     }
 
     /**
-     * Verifies the CLI builder creates a non-web context without ServletWebServerFactory.
+     * Verifies the createBuilder() returns a non-web builder that produces a context without ServletWebServerFactory.
      */
     @Test
-    void cliBuilderCreatesNonWebContext() throws Exception {
+    void createBuilderProducesNonWebContextWithoutServletFactory() throws Exception {
         var mockService = mock(KnowledgeIngestionService.class);
         when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 0, 42));
 
+        // Create builder and verify it's non-web by checking the context type
         try (var context = KnowledgeIngestionCli.createBuilder()
                 .initializers(wrapBmpr(mockService))
                 .run()) {
@@ -79,59 +83,73 @@ class KnowledgeIngestionSpringLifecycleTest {
             // Verify no ServletWebServerFactory bean exists (Tomcat not started)
             String[] webBeans = context.getBeanNamesForType(org.springframework.boot.web.servlet.server.ServletWebServerFactory.class);
             assertThat(webBeans).as("No ServletWebServerFactory bean should exist").isEmpty();
+
+            // Verify the context is not a refreshable web application context
+            assertThat(context.getEnvironment().getProperty("server.port")).isNull();
         }
     }
 
     /**
-     * Verifies ContextClosedEvent is emitted when using the CLI builder with try-with-resources.
+     * Verifies execute() properly closes context on successful orchestration and emits ContextClosedEvent.
      */
     @Test
-    void contextClosedEventEmittedOnBuilderClose() throws Exception {
+    void executeEmitsContextClosedOnSuccess() throws Exception {
         var mockService = mock(KnowledgeIngestionService.class);
         when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(3, 1, 2, 0, 5, 42));
 
         EventsCaptured events = new EventsCaptured();
 
-        try (var context = KnowledgeIngestionCli.createBuilder()
+        // Configure builder with lifecycle observer and registry-level replacement
+        var builder = KnowledgeIngestionCli.createBuilder()
                 .initializers(wrapBmpr(mockService))
-                .initializers(events)
-                .run()) {
+                .initializers(events);
 
-            // Verify we can get the orchestration and run it
-            var orch = context.getBean(KnowledgeIngestionOrchestration.class);
-            var result = orch.execute();
-            assertThat(result).isExactlyInstanceOf(KnowledgeIngestionOrchestration.IngestionResult.Success.class);
+        // Use reflection to replace createBuilder() temporarily with our configured builder
+        // This allows execute() to use the configured builder while keeping the original logic
+        ReflectionTestUtils.setField(KnowledgeIngestionCli.class, "builderForTesting", builder);
+
+        try {
+            int exitCode = KnowledgeIngestionCli.execute(new String[0]);
+            assertThat(exitCode).as("Exit code should be 0 on success").isEqualTo(0);
+        } finally {
+            // Clear the field for future tests
+            ReflectionTestUtils.setField(KnowledgeIngestionCli.class, "builderForTesting", null);
         }
 
-        // Context was closed via try-with-resources
+        // Context was closed by execute() and ContextClosedEvent was emitted
         assertThat(events.closed()).as("ContextClosedEvent should be emitted after context close").isTrue();
 
         verify(mockService, times(1)).ingest(any());
     }
 
     /**
-     * Verifies ContextClosedEvent is emitted when orchestration fails.
+     * Verifies execute() properly closes context on failing orchestration and emits ContextClosedEvent.
      */
     @Test
-    void contextClosedEventEmittedOnBuilderCloseWithFailure() throws Exception {
+    void executeEmitsContextClosedOnFailure() throws Exception {
         RuntimeException failure = new IllegalStateException("Orchestration failed");
         var mockService = mock(KnowledgeIngestionService.class);
         when(mockService.ingest(any())).thenThrow(failure);
 
         EventsCaptured events = new EventsCaptured();
 
-        try (var context = KnowledgeIngestionCli.createBuilder()
+        // Configure builder with lifecycle observer and registry-level replacement
+        var builder = KnowledgeIngestionCli.createBuilder()
                 .initializers(wrapBmpr(mockService))
-                .initializers(events)
-                .run()) {
+                .initializers(events);
 
-            // Verify orchestration fails and ContextClosedEvent is still emitted
-            var orch = context.getBean(KnowledgeIngestionOrchestration.class);
-            var result = orch.execute();
-            assertThat(result).isExactlyInstanceOf(KnowledgeIngestionOrchestration.IngestionResult.IngestionFailure.class);
+        // Use reflection to replace createBuilder() temporarily with our configured builder
+        ReflectionTestUtils.setField(KnowledgeIngestionCli.class, "builderForTesting", builder);
+
+        try {
+            int exitCode = KnowledgeIngestionCli.execute(new String[0]);
+            assertThat(exitCode).as("Exit code should be 4 on ingestion failure").isEqualTo(4);
+        } finally {
+            // Clear the field for future tests
+            ReflectionTestUtils.setField(KnowledgeIngestionCli.class, "builderForTesting", null);
         }
 
-        // Context was closed via try-with-resources
+        // Context was closed by execute() and ContextClosedEvent was emitted
         assertThat(events.closed()).as("ContextClosedEvent should be emitted after context close with failure").isTrue();
 
         verify(mockService, times(1)).ingest(any());
@@ -145,12 +163,13 @@ class KnowledgeIngestionSpringLifecycleTest {
         var mockService = mock(KnowledgeIngestionService.class);
         when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 0, 42));
 
-        // Use the CLI's createBuilder which is non-web
-        try (var context = KnowledgeIngestionCli.createBuilder()
-                .initializers(wrapBmpr(mockService))
-                .run()) {
+        // Use SpringApplicationBuilder directly to start R4rSpringAiRagApplication
+        var builder = new SpringApplicationBuilder(R4rSpringAiRagApplication.class)
+                .web(WebApplicationType.NONE)
+                .initializers(wrapBmpr(mockService));
 
-            // Context started but no ingestion should have occurred
+        try (var context = builder.run()) {
+            // Context started but no ingestion should have occurred automatically
         }
 
         verify(mockService, times(0)).ingest(any());
