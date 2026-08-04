@@ -27,7 +27,7 @@ BACKUP_ROOT="${R4R_AGENT_SYNC_BACKUP_ROOT:-$DEVELOPMENT_ROOT/.r4r-runtime/agent-
 log() { printf '[r4r-agent-sync] %s\n' "$*"; }
 die() { printf '[r4r-agent-sync] ERROR: %s\n' "$*" >&2; exit 2; }
 
-for command in git flock realpath tar; do
+for command in git flock realpath tar sha256sum awk stat; do
   command -v "$command" >/dev/null 2>&1 || die "required command unavailable: $command"
 done
 
@@ -108,13 +108,33 @@ backup_dirty_state() {
   log "$branch: dirty-state recovery snapshot=$destination"
 }
 
+state_fingerprint() {
+  local path="$1"
+  {
+    git -C "$path" status --porcelain=v1 -z --untracked-files=all
+    git -C "$path" diff --binary
+    git -C "$path" diff --cached --binary
+    git -C "$path" ls-files --stage -z
+    git -C "$path" ls-files --others --exclude-standard -z |
+      while IFS= read -r -d '' file; do
+        printf '%s\0' "$file"
+        stat --printf='%f %s\0' -- "$path/$file"
+        [[ -f "$path/$file" ]] && sha256sum -- "$path/$file" || true
+      done
+  } | sha256sum | awk '{print $1}'
+}
+
 merge_inbound_or_defer() {
-  local path="$1" ref="$2" label="$3"
+  local path="$1" ref="$2" label="$3" before_state after_state
   backup_dirty_state "$path" "$BRANCH"
+  before_state="$(state_fingerprint "$path")"
   if git -C "$path" merge --no-edit "$ref"; then
     return 0
   fi
   abort_merge_if_needed "$path"
+  after_state="$(state_fingerprint "$path")"
+  [[ "$after_state" == "$before_state" ]] \
+    || die "Git rejected $label and the prior index/worktree state was not restored exactly"
   log "$BRANCH: inbound merge deferred after Git rejected $label"
   return 1
 }

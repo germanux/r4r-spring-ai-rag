@@ -71,7 +71,7 @@ cat >"$TIMER" <<EOF
 Description=Run R4R hot-sync every $INTERVAL
 
 [Timer]
-OnActiveSec=2min
+OnActiveSec=$INTERVAL
 OnUnitInactiveSec=$INTERVAL
 AccuracySec=15s
 Persistent=false
@@ -80,6 +80,15 @@ Unit=r4r-agent-branch-sync.service
 [Install]
 WantedBy=timers.target
 EOF
+
+# An older installation created this drop-in with a three-minute cadence. It
+# overrides the freshly written timer unless it is removed explicitly.
+LEGACY_DROPIN="$UNIT_DIR/r4r-agent-branch-sync.timer.d/schedule.conf"
+if [[ -f "$LEGACY_DROPIN" ]]; then
+  rm -f "$LEGACY_DROPIN"
+  rmdir "$(dirname "$LEGACY_DROPIN")" 2>/dev/null || true
+  echo "Removed stale timer override: $LEGACY_DROPIN"
+fi
 
 # Remove only the legacy marked cron entry, avoiding duplicate schedulers.
 if command -v crontab >/dev/null 2>&1; then

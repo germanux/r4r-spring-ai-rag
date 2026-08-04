@@ -7,12 +7,14 @@ set -Eeuo pipefail
 #   * fetch/prune origin;
 #   * discover every non-detached worktree attached to the same Git common dir;
 #   * centralize each source branch in agent/integration;
-#   * after each source round, propagate the pinned hub commit to idle, clean worktrees;
+#   * after each source round, attempt to propagate the pinned hub commit to
+#     every worktree, including active and dirty ones;
 #   * push the hub and every updated branch;
-#   * never stop an agent and never stash its in-progress work.
+#   * preserve staged, unstaged and untracked work exactly as Git found it.
 #
-# Active or dirty worktrees are reported and skipped until a later pass. No
-# force-push, reset, stash, or automatic conflict resolution is performed.
+# A pending Git operation is skipped. A new merge is otherwise attempted and
+# deferred only when Git rejects it. No unstage, stash, reset, force-push or
+# automatic conflict resolution is performed.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEVELOPMENT_ROOT="${R4R_DEVELOPMENT_ROOT:-$HOME/Desarrollo}"
@@ -61,12 +63,9 @@ RING_WAS_ACTIVE=false
 PC_WAS_ACTIVE=false
 LP_WAS_ACTIVE=false
 
-# branch -> path / stash OID / backup directory
+# branch -> recovery backup directory
 declare -A WT_PATH=()
-declare -A WT_STASH=()
 declare -A WT_BACKUP=()
-declare -A WT_WAS_DIRTY=()
-PRESERVED_BRANCHES=()
 
 usage() {
   cat <<'USAGE'
@@ -75,8 +74,9 @@ Usage: ./scripts/sync-agent-branches.sh [options]
 Default: complete automatic hot-sync pass
   - discovers every linked non-detached worktree;
   - fetches and centralizes committed source refs in agent/integration;
-  - propagates only to idle, clean worktrees and retries skipped worktrees later;
-  - never stops an agent and never stashes in-progress work.
+  - attempts propagation to active and dirty worktrees;
+  - preserves staged, unstaged and untracked work without stashing or unstaging;
+  - defers only when Git rejects a merge or another Git operation is pending.
 
 Options:
   --hub BRANCH             Hub branch (default: agent/integration).
@@ -102,8 +102,9 @@ Options:
   -h, --help               Show this help.
 
 Conflict policy:
-  A collection conflict remains open in the integration worktree. Active, dirty or
-  conflicted target worktrees are skipped without blocking the remaining branches.
+  A collection conflict remains open in the integration worktree. A target merge
+  is aborted and deferred after a real conflict, without changing its prior local
+  index/worktree state. Other target branches continue.
 USAGE
 }
 
@@ -138,7 +139,7 @@ while (($#)); do
   esac
 done
 
-for command in git flock realpath sha256sum awk sed sort mktemp tar python3; do
+for command in git flock realpath sha256sum awk sed sort mktemp tar python3 stat; do
   command -v "$command" >/dev/null 2>&1 || die "required command unavailable: $command"
 done
 
@@ -320,7 +321,6 @@ write_conflict_report() {
     echo "Branch: $branch"
     echo "Worktree: $worktree"
     echo "Backup: ${WT_BACKUP[$branch]:-(none)}"
-    echo "Preserved stash: ${WT_STASH[$branch]:-(none)}"
     echo
     echo 'Unmerged paths:'
     unmerged_paths "$worktree" || true
@@ -331,15 +331,7 @@ write_conflict_report() {
     echo 'Operation output:'
     [[ -f "$log_file" ]] && sed -n '1,260p' "$log_file" || true
     echo
-    echo 'Resolve in place:'
-    echo "  cd '$worktree'"
-    echo '  git status'
-    echo '  # edit files, git add <resolved>, git commit when the MERGE conflict is resolved'
-    echo
-    echo 'Abort a MERGE conflict:'
-    echo "  git -C '$worktree' merge --abort"
-    echo
-    echo 'The preserved stash is intentionally retained until restoration succeeds.'
+    echo 'The target merge was aborted. Retry after the overlapping local change is committed.'
   } >"$report"
   printf '%s\n' "$report"
 }
@@ -437,6 +429,48 @@ worktree_is_active() {
   active_process_snapshot | grep -Fq -- "$path"
 }
 
+snapshot_worktree_state() {
+  local branch="$1" path="$2" destination index_path
+  [[ -n "$(git -C "$path" status --porcelain=v1 --untracked-files=all)" ]] || return 0
+  destination="$BACKUP_RUN_ROOT/state-$(sanitize "$branch")"
+  mkdir -p "$destination"
+  git -C "$path" status --porcelain=v1 --untracked-files=all >"$destination/status.txt"
+  git -C "$path" diff --binary >"$destination/worktree.patch"
+  git -C "$path" diff --cached --binary >"$destination/index.patch"
+  git -C "$path" ls-files --stage -z >"$destination/index.entries"
+  git -C "$path" ls-files --others --exclude-standard -z >"$destination/untracked.list"
+  if [[ -s "$destination/untracked.list" ]]; then
+    tar -C "$path" --null -T "$destination/untracked.list" -czf "$destination/untracked.tar.gz"
+  fi
+  index_path="$(git -C "$path" rev-parse --git-path index)"
+  [[ "$index_path" == /* ]] || index_path="$path/$index_path"
+  [[ -f "$index_path" ]] && sha256sum "$index_path" >"$destination/index.sha256"
+  printf '%s\n' \
+    "branch=$branch" \
+    "worktree=$path" \
+    "head=$(git -C "$path" rev-parse HEAD)" \
+    "active=$(worktree_is_active "$path" && echo true || echo false)" \
+    >"$destination/manifest.txt"
+  WT_BACKUP[$branch]="$destination"
+  log "$branch: preserved dirty-state evidence=$destination"
+}
+
+state_fingerprint() {
+  local path="$1"
+  {
+    git -C "$path" status --porcelain=v1 -z --untracked-files=all
+    git -C "$path" diff --binary
+    git -C "$path" diff --cached --binary
+    git -C "$path" ls-files --stage -z
+    git -C "$path" ls-files --others --exclude-standard -z |
+      while IFS= read -r -d '' file; do
+        printf '%s\0' "$file"
+        stat --printf='%f %s\0' -- "$path/$file"
+        [[ -f "$path/$file" ]] && sha256sum -- "$path/$file" || true
+      done
+  } | sha256sum | awk '{print $1}'
+}
+
 collect_ref_into_hub() {
   local incoming="$1" label="$2" merge_log report paths body
   if git -C "$INTEGRATION_WORKTREE" merge-base --is-ancestor "$incoming" HEAD; then
@@ -493,7 +527,7 @@ remove_temporary_worktree() {
 }
 
 propagate_branch() {
-  local branch="$1" path merge_log report paths body dirty
+  local branch="$1" path merge_log report body dirty active before_state after_state
   branch_exists "$branch" || { FAILED+=("$branch:missing"); return 1; }
   if git -C "$REPOSITORY" merge-base --is-ancestor "$HUB_COMMIT" "$branch"; then
     log "$branch: already contains ${HUB_COMMIT:0:12}"
@@ -501,12 +535,6 @@ propagate_branch() {
     return 0
   fi
   path="$(prepare_target_worktree "$branch")" || return 1
-  if worktree_is_active "$path"; then
-    log "$branch: skipped because its agent is active"
-    SKIPPED+=("$branch:active")
-    remove_temporary_worktree "$path"
-    return 0
-  fi
   if merge_in_progress "$path" || [[ -n "$(unmerged_paths "$path" || true)" ]]; then
     warn "$branch: skipped because a Git operation or conflict is pending"
     SKIPPED+=("$branch:conflict-pending")
@@ -514,31 +542,34 @@ propagate_branch() {
     return 0
   fi
   dirty="$(git -C "$path" status --porcelain=v1 --untracked-files=all)"
-  if [[ -n "$dirty" ]]; then
-    log "$branch: skipped because its worktree is dirty"
-    SKIPPED+=("$branch:dirty")
-    remove_temporary_worktree "$path"
-    return 0
-  fi
+  active=false
+  worktree_is_active "$path" && active=true
+  [[ -z "$dirty" ]] || snapshot_worktree_state "$branch" "$path"
+  before_state="$(state_fingerprint "$path")"
   merge_log="$BACKUP_RUN_ROOT/propagate-$(sanitize "$branch").log"
-  log "$branch: merging hub ${HUB_COMMIT:0:12}"
+  log "$branch: attempting hub ${HUB_COMMIT:0:12} (active=$active dirty=$([[ -n "$dirty" ]] && echo true || echo false))"
   if "$DRY_RUN"; then
     log "DRY-RUN: git -C $path merge --no-edit $HUB_COMMIT"
   elif git -C "$path" merge --no-edit "$HUB_COMMIT" >"$merge_log" 2>&1; then
     PROPAGATED+=("$branch")
     clear_alert "propagate-$branch"
-  elif merge_in_progress "$path" || [[ -n "$(unmerged_paths "$path" || true)" ]]; then
-    report="$(write_conflict_report propagation "$branch" "$path" "$merge_log")"
-    paths="$(unmerged_paths "$path" || true)"
-    body="Conflicto al propagar $HUB_BRANCH a $branch.\nQueda abierto en el worktree exacto.\n\nFicheros:\n${paths:-Consulta git status.}\nInforme: $report"
-    alert_once "propagate-$branch" 'R4R: conflicto al propagar integration' "$body" "$path"
-    FAILED+=("$branch:propagation-conflict")
-    return 4
   else
-    alert_once "propagate-$branch" 'R4R: fallo al propagar integration' \
-      "Falló la propagación a $branch.\n\n$(sed -n '1,50p' "$merge_log")" "$path"
-    FAILED+=("$branch:propagation-failed")
-    return 1
+    if merge_in_progress "$path" || [[ -n "$(unmerged_paths "$path" || true)" ]]; then
+      git -C "$path" merge --abort >>"$merge_log" 2>&1 || true
+    fi
+    after_state="$(state_fingerprint "$path")"
+    report="$(write_conflict_report propagation "$branch" "$path" "$merge_log")"
+    if [[ "$after_state" != "$before_state" ]]; then
+      body="Git rechazó la propagación a $branch y el estado posterior no coincide con la huella previa.\nNo se aplicará ninguna reparación destructiva.\nInforme: $report\nCopia: ${WT_BACKUP[$branch]:-(worktree limpio)}"
+      alert_once "propagate-$branch" 'R4R: revisar estado tras merge rechazado' "$body" "$path"
+      FAILED+=("$branch:state-mismatch-after-abort")
+      return 1
+    fi
+    log "$branch: merge deferred; Git rejected it and prior local state is unchanged"
+    SKIPPED+=("$branch:merge-rejected")
+    clear_alert "propagate-$branch"
+    remove_temporary_worktree "$path"
+    return 0
   fi
   push_ref "$branch" || FAILED+=("$branch:push")
   remove_temporary_worktree "$path"

@@ -12,12 +12,16 @@ El paquete se descomprime en la raíz de `~/Desarrollo/r4r-ring-agent.git`.
 - `agent-integration-sync.sh`, `runner.py`, el respaldo periódico y Google Drive
   usan el mismo bloqueo:
   `~/Desarrollo/.r4r-runtime/git.lock`.
-- La importación se intenta siempre, también con el worktree sucio. Git acepta
-  cambios locales disjuntos; solo se aplaza si Git rechaza realmente el merge.
+- La importación se intenta siempre, incluso si el agente está activo y el
+  worktree contiene cambios `staged`, `unstaged` o no rastreados. No se ejecuta
+  `git restore --staged`, por lo que el índice conserva su estado.
+- Git acepta cambios locales disjuntos; solo se aplaza si rechaza realmente el
+  merge. Ante un rechazo se aborta la operación y se compara la huella del
+  índice/worktree con la anterior.
 - Antes de un intento sobre cambios locales se crea evidencia recuperable bajo
   `~/Desarrollo/.r4r-runtime/agent-sync-backups/`.
-- Ante un rechazo o conflicto, el merge se aborta y no se ejecutan `stash`,
-  `reset`, `force-push` ni resoluciones automáticas.
+- Ante un rechazo o conflicto, el merge se aborta y no se ejecutan `unstage`,
+  `stash`, `reset`, `force-push` ni resoluciones automáticas.
 - El temporizador general se conserva como respaldo, no como vía principal.
 - `r4r-drive-import-safe.py --bidirectional` sincroniza Insync ↔ Git, exportando
   únicamente ficheros versionados y notificando cambios simultáneos.
@@ -46,6 +50,7 @@ chmod +x \
 # de Ring ni otros cambios locales.
 git add -- \
   scripts/agent-integration-sync.sh \
+  scripts/sync-agent-branches.sh \
   scripts/install-r4r-branch-sync-systemd.sh \
   py-codex-agent/src/r4r_codex_agent/runner.py \
   py-ring-agent/src/r4r_ring_agent/ring_loop.py \
@@ -54,6 +59,7 @@ git add -- \
 git commit --only \
   -m "feat(sync): synchronize agents at safe lifecycle boundaries" -- \
   scripts/agent-integration-sync.sh \
+  scripts/sync-agent-branches.sh \
   scripts/install-r4r-branch-sync-systemd.sh \
   py-codex-agent/src/r4r_codex_agent/runner.py \
   py-ring-agent/src/r4r_ring_agent/ring_loop.py \
@@ -61,7 +67,8 @@ git commit --only \
 
 git push origin agent/ring-agent-worker
 
-# Reinstala el temporizador, ahora como respaldo cada 15 minutos.
+# Reinstala el temporizador, ahora como respaldo cada 15 minutos. El instalador
+# elimina automáticamente el override antiguo schedule.conf de tres minutos.
 R4R_BRANCH_SYNC_INTERVAL=15min \
   ./scripts/install-r4r-branch-sync-systemd.sh install
 
@@ -97,9 +104,11 @@ En las consolas de Ring, PC y LP deben aparecer estas líneas:
 [r4r-agent-sync] agent/...: phase=checkpoint
 ```
 
-`inbound merge deferred after Git rejected` significa que la sincronización se
-intentó y Git la rechazó. El commit ya confirmado queda publicado y centralizado.
-La copia previa permite auditar o recuperar el estado local si fuera necesario.
+`inbound merge deferred after Git rejected` o `merge-rejected` significa que la
+sincronización se intentó y Git la rechazó. El commit ya confirmado queda
+publicado y centralizado. La copia previa permite auditar el estado local y la
+huella comprueba que el rechazo no cambió `staged`, `unstaged` ni los archivos
+no rastreados.
 
 ## Prueba manual de los tres agentes
 
