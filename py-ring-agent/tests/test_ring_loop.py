@@ -18,7 +18,12 @@ class RingLoopTest(unittest.TestCase):
             self.assertIn("--agent", command)
             self.assertIn("r4r-ring", command)
             self.assertIn("--model", command)
-            self.assertIn("t033-128k", " ".join(command))
+            self.assertEqual(
+                command[command.index("--model") + 1],
+                "openai/gpt-5.2-codex",
+            )
+            self.assertIn("--variant", command)
+            self.assertEqual(command[command.index("--variant") + 1], "medium")
             self.assertEqual(command[command.index("--dir") + 1], str(paths.ring))
             prompt = command[-1]
             self.assertIn(str(run_dir), prompt)

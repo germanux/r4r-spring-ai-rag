@@ -22,8 +22,9 @@ from .worktrees import WorktreePaths, require_git_worktree
 RING_AGENT = os.environ.get("R4R_RING_AGENT", "r4r-ring")
 RING_MODEL = os.environ.get(
     "R4R_RING_MODEL",
-    "ollama-pc/qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest",
+    "openai/gpt-5.2-codex",
 )
+RING_VARIANT = os.environ.get("R4R_RING_VARIANT", "medium")
 REVIEW_INTERVAL_SECONDS = int(
     os.environ.get("R4R_RING_REVIEW_INTERVAL_SECONDS", "3600")
 )
@@ -416,7 +417,7 @@ def _atomic_write_text(path: Path, content: str) -> None:
 
 def _decision_ledger_entry(run_id: str, state: dict[str, Any]) -> str:
     lines = [
-        f"## Cycle `{run_id}` — {state['overall_status']}",
+        f"## Cycle `{run_id}` â {state['overall_status']}",
         "",
     ]
     for worker in ("PC", "LP"):
@@ -929,6 +930,8 @@ def _command(
         RING_AGENT,
         "--model",
         RING_MODEL,
+        "--variant",
+        RING_VARIANT,
         "--format",
         "json",
         "--auto",
@@ -1090,6 +1093,7 @@ def run_ring_loop(
                         "stop_reason": result.stop_reason,
                         "agent": RING_AGENT,
                         "model": RING_MODEL,
+                        "variant": RING_VARIANT,
                         "review_interval_seconds": REVIEW_INTERVAL_SECONDS,
                         "event_min_interval_seconds": EVENT_MIN_INTERVAL_SECONDS,
                         "consumed_worker_requests": consumed_requests,
