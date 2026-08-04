@@ -74,7 +74,8 @@ class KnowledgeIngestionCliContractTest {
     @Test
     void executeSuccessOutputsExactlyOnePrefixedJsonWithAllRequiredFields() throws Exception {
         var mockService = mock(KnowledgeIngestionService.class);
-        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(3, 1, 2, 0, 5, 42));
+        // Use non-zero deletion count to verify propagation
+        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(3, 1, 2, 7, 5, 42));
         var properties = new KnowledgeProperties(tempRoot, 1_048_576, 2_000);
         var orchestration = createOrchestration(mockService, properties);
 
@@ -87,28 +88,34 @@ class KnowledgeIngestionCliContractTest {
 
         // Exactly one final line with R4R_INGESTION_RESULT=
         long resultLineCount = 0;
-        for (String line : lines) {
-            if (line.startsWith("R4R_INGESTION_RESULT=")) {
+        for (int i = 0; i < lines.length; i++) {
+            if (!lines[i].trim().isEmpty() && lines[i].startsWith("R4R_INGESTION_RESULT=")) {
                 resultLineCount++;
             }
         }
         assertThat(resultLineCount).as("Exactly one output line must have R4R_INGESTION_RESULT= prefix").isEqualTo(1);
 
-        // Parse the JSON
+        // Parse the JSON from the last occurrence (handles trailing newlines)
         String json = output.substring(output.lastIndexOf("R4R_INGESTION_RESULT=") + "R4R_INGESTION_RESULT=".length()).trim();
+
         var mapper = new ObjectMapper();
         var node = mapper.readTree(json);
+        assertThat(node.isObject()).as("JSON should be an object").isTrue();
 
         // Assert all required fields
         assertThat(node.get("path")).isNotNull();
         assertThat(node.get("discovered").asInt()).isEqualTo(3);
         assertThat(node.get("changed").asInt()).isEqualTo(1);
         assertThat(node.get("unchanged").asInt()).isEqualTo(2);
-        assertThat(node.get("deleted").asInt()).isEqualTo(0);
+        assertThat(node.get("deleted").asInt()).isEqualTo(7);
         assertThat(node.get("chunks").asInt()).isEqualTo(5);
         long duration = node.get("durationMs").asLong();
         assertThat(duration).isNotNegative();
         assertThat(node.get("success").asBoolean()).isTrue();
+
+        // Verify the success result contains the exact deletion count
+        var successResult = (KnowledgeIngestionOrchestration.IngestionResult.Success) result;
+        assertThat(successResult.result().deletedSources()).isEqualTo(7);
 
         verify(mockService, times(1)).ingest(any());
     }
@@ -153,12 +160,14 @@ class KnowledgeIngestionCliContractTest {
         var mapper = new ObjectMapper();
         var node = mapper.readTree(json);
 
-        // The path should be canonical (resolved symlink to real directory)
-        String canonicalPath = node.get("path").asText();
+        // The path in JSON should be the resolved canonical path (symlink target)
+        String emittedPath = node.get("path").asText();
 
-        // Verify it points to the real directory
-        Path actualCanonical = Path.of(canonicalPath);
-        assertThat(actualCanonical.toRealPath()).isEqualTo(realDir.toRealPath());
+        // Assert the emitted path equals realDir.toRealPath().toString() directly
+        assertThat(emittedPath).isEqualTo(realDir.toRealPath().toString());
+
+        // Assert the emitted path differs from the symlink path itself
+        assertThat(emittedPath).isNotEqualTo(symlink.toString());
     }
 
     @Test

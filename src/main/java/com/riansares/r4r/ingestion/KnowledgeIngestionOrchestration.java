@@ -82,16 +82,10 @@ public class KnowledgeIngestionOrchestration {
         Instant end = clock.instant();
         long durationMs = java.time.Duration.between(start, end).toMillis();
 
-        String json = toJson(properties, result, durationMs);
+        String json = toJson(canonicalRoot, result, durationMs);
         outputSupplier.get().println("R4R_INGESTION_RESULT=" + json);
 
-        return new IngestionResult.Success(new KnowledgeIngestionResult(
-                result.discoveredSources(),
-                result.changedSources(),
-                result.unchangedSources(),
-                0,
-                result.persistedChunks(),
-                durationMs));
+        return new IngestionResult.Success(result);
     }
 
     private boolean isInfrastructureCause(Throwable cause) {
@@ -120,14 +114,7 @@ public class KnowledgeIngestionOrchestration {
         return false;
     }
 
-    private String toJson(KnowledgeProperties properties, KnowledgeIngestionResult result, long durationMs) {
-        java.nio.file.Path canonicalRoot;
-        try {
-            canonicalRoot = properties.root().toRealPath();
-        } catch (java.io.IOException e) {
-            // Fallback if canonicalization fails - sanitized path without exception details
-            canonicalRoot = properties.root().toAbsolutePath().normalize();
-        }
+    private String toJson(java.nio.file.Path canonicalRoot, KnowledgeIngestionResult result, long durationMs) {
         return "{"
                 + "\"path\":\"" + escapeJson(canonicalRoot.toString()) + "\","
                 + "\"discovered\":" + result.discoveredSources() + ","
