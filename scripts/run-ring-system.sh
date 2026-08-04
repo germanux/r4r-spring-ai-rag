@@ -7,6 +7,7 @@ set -Eeuo pipefail
 CODE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RING_ROOT="${R4R_RING_WORKTREE:-$CODE_ROOT}"
 RUNTIME_ENV_HELPER="$CODE_ROOT/scripts/r4r-runtime-env.sh"
+OPENAI_ENV_FILE="${R4R_OPENAI_ENV_FILE:-$HOME/.config/r4r/openai.env}"
 PYTHON="$CODE_ROOT/py-ring-agent/run-ring-system.py"
 GUARDIAN="$CODE_ROOT/scripts/ensure-r4r-workers.sh"
 STOP_ALL="$CODE_ROOT/scripts/stop-all-r4r-agents.sh"
@@ -15,6 +16,7 @@ PID_FILE="$RUNTIME/supervisor.pid"
 LOG_FILE="$RUNTIME/supervisor.log"
 RING_AGENT_PID_FILE="$RUNTIME/ring-agent.pid"
 RING_AGENT_LOG_FILE="$RUNTIME/ring-agent.console.log"
+ARCHIVE_DIR="$RUNTIME/archive"
 ACTION="${1:-start}"
 shift || true
 
@@ -50,14 +52,71 @@ ring_agent_alive() {
   pid_alive_file "$RING_AGENT_PID_FILE"
 }
 
+ring_agent_requested() {
+  local option
+  for option in "$@"; do
+    [[ "$option" == "--no-ring-agent" ]] && return 1
+  done
+  return 0
+}
+
+load_openai_credentials() {
+  if [[ -z "${OPENAI_API_KEY:-}" && -r "$OPENAI_ENV_FILE" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "$OPENAI_ENV_FILE"
+    set +a
+  fi
+
+  if [[ -z "${OPENAI_API_KEY:-}" ]]; then
+    echo "ERROR: OPENAI_API_KEY is not loaded and was not found in $OPENAI_ENV_FILE" >&2
+    exit 2
+  fi
+}
+
+archive_current_logs() {
+  local stamp archive
+  stamp="$(date '+%Y%m%dT%H%M%S%z')"
+  mkdir -p "$ARCHIVE_DIR"
+
+  if [[ -s "$LOG_FILE" ]]; then
+    archive="$ARCHIVE_DIR/supervisor-$stamp.log"
+    mv -- "$LOG_FILE" "$archive"
+    echo "[r4r-system] archived previous supervisor log: $archive"
+  else
+    rm -f -- "$LOG_FILE"
+  fi
+
+  if [[ -s "$RING_AGENT_LOG_FILE" ]]; then
+    archive="$ARCHIVE_DIR/ring-agent.console-$stamp.log"
+    mv -- "$RING_AGENT_LOG_FILE" "$archive"
+    echo "[r4r-system] archived previous Ring log: $archive"
+  else
+    rm -f -- "$RING_AGENT_LOG_FILE"
+  fi
+
+  : >"$LOG_FILE"
+  : >"$RING_AGENT_LOG_FILE"
+}
+
 case "$ACTION" in
   start)
     if pid_alive; then
       echo "[r4r-system] already running pid=$(cat "$PID_FILE")"
       exit 0
     fi
-    rm -f "$PID_FILE"
-    launcher=(python3 "$PYTHON" --ring "$RING_ROOT" --guardian "$GUARDIAN" "$@")
+    if ring_agent_alive; then
+      echo "ERROR: The-Ring is still running without its supervisor; run '$0 stop' first" >&2
+      exit 1
+    fi
+    if ring_agent_requested "$@"; then
+      load_openai_credentials
+    fi
+    rm -f "$PID_FILE" "$RING_AGENT_PID_FILE"
+    archive_current_logs
+    printf '[r4r-system] supervisor launch at %s code=%s ring=%s\n' \
+      "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$CODE_ROOT" "$RING_ROOT" >>"$LOG_FILE"
+    launcher=(python3 -u "$PYTHON" --ring "$RING_ROOT" --guardian "$GUARDIAN" "$@")
     if command -v setsid >/dev/null 2>&1; then
       launcher=(setsid "${launcher[@]}")
     fi
@@ -125,14 +184,27 @@ case "$ACTION" in
     "$GUARDIAN" --check-only --ring "$RING_ROOT" || true
     exit 1
     ;;
+  logs)
+    echo "===== CURRENT SUPERVISOR LOG ====="
+    tail -n "${R4R_LOG_LINES:-120}" "$LOG_FILE" 2>/dev/null || true
+    echo "===== CURRENT RING LOG ====="
+    tail -n "${R4R_LOG_LINES:-120}" "$RING_AGENT_LOG_FILE" 2>/dev/null || true
+    ;;
+  follow)
+    touch "$LOG_FILE" "$RING_AGENT_LOG_FILE"
+    exec tail -n "${R4R_LOG_LINES:-40}" -F "$LOG_FILE" "$RING_AGENT_LOG_FILE"
+    ;;
   foreground)
-    exec python3 "$PYTHON" --ring "$RING_ROOT" --guardian "$GUARDIAN" "$@"
+    if ring_agent_requested "$@"; then
+      load_openai_credentials
+    fi
+    exec python3 -u "$PYTHON" --ring "$RING_ROOT" --guardian "$GUARDIAN" "$@"
     ;;
   once)
-    exec python3 "$PYTHON" --ring "$RING_ROOT" --guardian "$GUARDIAN" --once "$@"
+    exec python3 -u "$PYTHON" --ring "$RING_ROOT" --guardian "$GUARDIAN" --once "$@"
     ;;
   *)
-    echo "Usage: $0 {start|stop|status|foreground|once} [supervisor options]" >&2
+    echo "Usage: $0 {start|stop|status|logs|follow|foreground|once} [supervisor options]" >&2
     exit 2
     ;;
 esac
