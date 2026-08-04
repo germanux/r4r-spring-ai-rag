@@ -82,10 +82,19 @@ public class KnowledgeIngestionOrchestration {
         Instant end = clock.instant();
         long durationMs = java.time.Duration.between(start, end).toMillis();
 
-        String json = toJson(canonicalRoot, result, durationMs);
+        KnowledgeIngestionResult orchestrationResult = new KnowledgeIngestionResult(
+                result.discoveredSources(),
+                result.changedSources(),
+                result.unchangedSources(),
+                result.deletedSources(),
+                result.persistedChunks(),
+                durationMs
+        );
+
+        String json = toJson(canonicalRoot, orchestrationResult, durationMs);
         outputSupplier.get().println("R4R_INGESTION_RESULT=" + json);
 
-        return new IngestionResult.Success(result);
+        return new IngestionResult.Success(orchestrationResult);
     }
 
     private boolean isInfrastructureCause(Throwable cause) {

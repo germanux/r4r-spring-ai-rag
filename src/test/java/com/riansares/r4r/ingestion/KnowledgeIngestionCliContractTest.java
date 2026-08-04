@@ -73,11 +73,20 @@ class KnowledgeIngestionCliContractTest {
 
     @Test
     void executeSuccessOutputsExactlyOnePrefixedJsonWithAllRequiredFields() throws Exception {
+        final long SERVICE_DURATION_MS = 123L;
+        final long EXPECTED_ORCHESTRATION_DURATION_MS = 456L;
+
         var mockService = mock(KnowledgeIngestionService.class);
-        // Use non-zero deletion count to verify propagation
-        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(3, 1, 2, 7, 5, 42));
+        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(3, 1, 2, 7, 5, SERVICE_DURATION_MS));
+
+        // Create a deterministic clock supplier that returns a fixed orchestration duration
+        var testingClockSupplier = new TestingClockSupplier(
+                Instant.parse("2026-08-01T00:00:00Z"),
+                EXPECTED_ORCHESTRATION_DURATION_MS
+        );
+
         var properties = new KnowledgeProperties(tempRoot, 1_048_576, 2_000);
-        var orchestration = createOrchestration(mockService, properties);
+        var orchestration = createOrchestration(mockService, properties, testingClockSupplier);
 
         var result = orchestration.execute();
 
@@ -88,33 +97,53 @@ class KnowledgeIngestionCliContractTest {
 
         // Exactly one final line with R4R_INGESTION_RESULT=
         long resultLineCount = 0;
+        String lastNonEmptyLine = "";
         for (int i = 0; i < lines.length; i++) {
-            if (!lines[i].trim().isEmpty() && lines[i].startsWith("R4R_INGESTION_RESULT=")) {
+            if (!lines[i].trim().isEmpty()) {
+                lastNonEmptyLine = lines[i];
+            }
+            if (lines[i].startsWith("R4R_INGESTION_RESULT=")) {
                 resultLineCount++;
             }
         }
-        assertThat(resultLineCount).as("Exactly one output line must have R4R_INGESTION_RESULT= prefix").isEqualTo(1);
 
-        // Parse the JSON from the last occurrence (handles trailing newlines)
-        String json = output.substring(output.lastIndexOf("R4R_INGESTION_RESULT=") + "R4R_INGESTION_RESULT=".length()).trim();
+        // Assert the sole prefixed line is the last non-empty output line
+        assertThat(resultLineCount).as("Exactly one output line must have R4R_INGESTION_RESULT= prefix").isEqualTo(1);
+        assertThat(lastNonEmptyLine).startsWith("R4R_INGESTION_RESULT=");
+
+        String suffix = lastNonEmptyLine.substring("R4R_INGESTION_RESULT=".length());
+        // Assert no trailing newline in the JSON suffix
+        assertThat(suffix).doesNotContain("\n");
+
+        String json = suffix.trim();
 
         var mapper = new ObjectMapper();
         var node = mapper.readTree(json);
         assertThat(node.isObject()).as("JSON should be an object").isTrue();
 
-        // Assert all required fields
+        // Assert exact field-name set: path, discovered, changed, unchanged, deleted, chunks, durationMs, success
+        assertThat(node.fieldNames()).toIterable().containsExactlyInAnyOrder(
+                "path", "discovered", "changed", "unchanged", "deleted", "chunks", "durationMs", "success"
+        );
+
+        // Assert all required fields with correct values
         assertThat(node.get("path")).isNotNull();
         assertThat(node.get("discovered").asInt()).isEqualTo(3);
         assertThat(node.get("changed").asInt()).isEqualTo(1);
         assertThat(node.get("unchanged").asInt()).isEqualTo(2);
         assertThat(node.get("deleted").asInt()).isEqualTo(7);
         assertThat(node.get("chunks").asInt()).isEqualTo(5);
-        long duration = node.get("durationMs").asLong();
-        assertThat(duration).isNotNegative();
+
+        // Assert the durationMs is from orchestration, not service (distinct values)
+        long actualDuration = node.get("durationMs").asLong();
+        assertThat(actualDuration).isEqualTo(EXPECTED_ORCHESTRATION_DURATION_MS);
+        assertThat(actualDuration).isNotEqualTo(SERVICE_DURATION_MS);
+
         assertThat(node.get("success").asBoolean()).isTrue();
 
-        // Verify the success result contains the exact deletion count
+        // Verify the success result contains the orchestration-measured duration
         var successResult = (KnowledgeIngestionOrchestration.IngestionResult.Success) result;
+        assertThat(successResult.result().durationMs()).isEqualTo(EXPECTED_ORCHESTRATION_DURATION_MS);
         assertThat(successResult.result().deletedSources()).isEqualTo(7);
 
         verify(mockService, times(1)).ingest(any());
@@ -223,13 +252,17 @@ class KnowledgeIngestionCliContractTest {
 
     @Test
     void successContainsExactDurationInJson() throws Exception {
-        final long EXPECTED_DURATION_MS = 1234L;
+        final long SERVICE_DURATION_MS = 987L;
+        final long EXPECTED_ORCHESTRATION_DURATION_MS = 654L;
 
         var mockService = mock(KnowledgeIngestionService.class);
-        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 0, EXPECTED_DURATION_MS));
+        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 0, SERVICE_DURATION_MS));
 
-        // Create a deterministic clock supplier with controlled instants
-        var testingClockSupplier = new TestingClockSupplier(Instant.parse("2026-08-01T00:00:00Z"), EXPECTED_DURATION_MS);
+        // Create a deterministic clock supplier with controlled instants for orchestration duration
+        var testingClockSupplier = new TestingClockSupplier(
+                Instant.parse("2026-08-01T00:00:00Z"),
+                EXPECTED_ORCHESTRATION_DURATION_MS
+        );
 
         var properties = new KnowledgeProperties(tempRoot, 1_048_576, 2_000);
         var orchestration = createOrchestration(mockService, properties, testingClockSupplier);
@@ -243,7 +276,7 @@ class KnowledgeIngestionCliContractTest {
         var mapper = new ObjectMapper();
         var node = mapper.readTree(json);
 
-        assertThat(node.get("durationMs").asLong()).isEqualTo(EXPECTED_DURATION_MS);
+        assertThat(node.get("durationMs").asLong()).isEqualTo(EXPECTED_ORCHESTRATION_DURATION_MS);
     }
 
     private KnowledgeIngestionOrchestration createOrchestration(
