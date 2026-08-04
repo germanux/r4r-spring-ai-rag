@@ -87,7 +87,7 @@ class KnowledgeIngestionCliTest {
     @Test
     void mainInvokesOrchestrationWithWebApplicationTypeNone() throws Exception {
         var mockService = mock(KnowledgeIngestionService.class);
-        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 42));
+        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 0, 42));
 
         // Pre-refresh initializer that installs a BeanDefinitionRegistryPostProcessor
         // to replace the production knowledgeIngestionService with our mock before singleton creation.
@@ -136,7 +136,7 @@ class KnowledgeIngestionCliTest {
     @Test
     void executeSuccessOutputsPrefixedJson() throws Exception {
         var mockService = mock(KnowledgeIngestionService.class);
-        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(3, 1, 2, 5, 42));
+        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(3, 1, 2, 0, 5, 42));
         var properties = new KnowledgeProperties(tempRoot, 1_048_576, 2_000);
         var orchestration = new KnowledgeIngestionOrchestration(
                 mockService,
@@ -325,7 +325,7 @@ class KnowledgeIngestionCliTest {
     @Test
     void orchestrationDoesNotNeedLiveDependencies() {
         var mockService = mock(KnowledgeIngestionService.class);
-        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 42));
+        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 0, 42));
         var mockPropertiesSupplier = mock(Supplier.class);
         when(mockPropertiesSupplier.get()).thenReturn(new KnowledgeProperties(tempRoot, 1_048_576, 2_000));
         var outCapture = new ByteArrayOutputStream();
@@ -351,7 +351,7 @@ class KnowledgeIngestionCliTest {
     @Test
     void productionCliBuilderCreatesNoneWebContext() throws Exception {
         var mockService = mock(KnowledgeIngestionService.class);
-        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 42));
+        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 0, 42));
 
         // Pre-refresh initializer that installs a BeanDefinitionRegistryPostProcessor
         // to replace the production knowledgeIngestionService with our mock before singleton creation.
@@ -402,7 +402,7 @@ class KnowledgeIngestionCliTest {
         final long EXPECTED_DURATION_MS = 1234L;
 
         var mockService = mock(KnowledgeIngestionService.class);
-        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(3, 1, 2, 5, EXPECTED_DURATION_MS));
+        when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 0, EXPECTED_DURATION_MS));
 
         // Create a deterministic clock that returns successive controlled instants with a known delta
         // We simulate the passage of time by using two different fixed instants
@@ -470,7 +470,7 @@ class KnowledgeIngestionCliTest {
         var properties = new KnowledgeProperties(tempRoot, 1_048_576, 2_000);
         var loader = new com.riansares.r4r.document.MarkdownDocumentLoader(properties);
         var chunker = new com.riansares.r4r.chunking.HeadingMarkdownChunker(2_000);
-        var result = new KnowledgeIngestionResult(5, 3, 2, 10, 1234);
+        var result = new KnowledgeIngestionResult(5, 3, 2, 0, 10, 1234);
         assertThat(result.discoveredSources()).isEqualTo(5);
         assertThat(result.changedSources()).isEqualTo(3);
         assertThat(result.unchangedSources()).isEqualTo(2);
@@ -521,7 +521,7 @@ class KnowledgeIngestionCliTest {
 
             // Store the exact local mock before context refresh
             KnowledgeIngestionService mockService = mock(KnowledgeIngestionService.class);
-            when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 42));
+            when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 0, 42));
             mockServiceRef[0] = mockService;
 
             // Pre-refresh initializer that installs a BeanDefinitionRegistryPostProcessor
@@ -606,7 +606,7 @@ class KnowledgeIngestionCliTest {
         @Primary
         KnowledgeIngestionService knowledgeIngestionService() {
             var mock = mock(KnowledgeIngestionService.class);
-            when(mock.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 42));
+            when(mock.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 0, 42));
             return mock;
         }
     }

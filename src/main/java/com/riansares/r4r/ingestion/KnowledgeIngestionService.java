@@ -43,6 +43,7 @@ public class KnowledgeIngestionService {
         int discoveredSources = 0;
         int changedSources = 0;
         int unchangedSources = 0;
+        int deletedSources = 0;
         int persistedChunks = 0;
 
         try {
@@ -85,6 +86,7 @@ public class KnowledgeIngestionService {
                 discoveredSources,
                 changedSources,
                 unchangedSources,
+                deletedSources,
                 persistedChunks,
                 durationMs);
     }

@@ -43,9 +43,20 @@ public class KnowledgeIngestionOrchestration {
             return new IngestionResult.InvalidConfiguration(e);
         }
 
-        if (!properties.root().toFile().exists()) {
-            errorSupplier.get().println("ERROR: Knowledge root does not exist: " + properties.root());
-            return new IngestionResult.InvalidRoot(properties.root());
+        // First check if root exists before canonicalizing
+        java.nio.file.Path rootPath = properties.root();
+        if (!rootPath.toFile().exists()) {
+            errorSupplier.get().println("ERROR: Knowledge root does not exist: " + rootPath);
+            return new IngestionResult.InvalidRoot(rootPath);
+        }
+
+        // Now get the canonical path (which requires the file to exist)
+        java.nio.file.Path canonicalRoot;
+        try {
+            canonicalRoot = rootPath.toRealPath();
+        } catch (java.io.IOException e) {
+            errorSupplier.get().println("ERROR: Cannot resolve knowledge root path");
+            return new IngestionResult.InvalidConfiguration(e);
         }
 
         Clock clock = clockSupplier.get();
@@ -78,6 +89,7 @@ public class KnowledgeIngestionOrchestration {
                 result.discoveredSources(),
                 result.changedSources(),
                 result.unchangedSources(),
+                0,
                 result.persistedChunks(),
                 durationMs));
     }
@@ -109,11 +121,19 @@ public class KnowledgeIngestionOrchestration {
     }
 
     private String toJson(KnowledgeProperties properties, KnowledgeIngestionResult result, long durationMs) {
+        java.nio.file.Path canonicalRoot;
+        try {
+            canonicalRoot = properties.root().toRealPath();
+        } catch (java.io.IOException e) {
+            // Fallback if canonicalization fails - sanitized path without exception details
+            canonicalRoot = properties.root().toAbsolutePath().normalize();
+        }
         return "{"
-                + "\"path\":\"" + escapeJson(properties.root().toAbsolutePath().normalize().toString()) + "\","
+                + "\"path\":\"" + escapeJson(canonicalRoot.toString()) + "\","
                 + "\"discovered\":" + result.discoveredSources() + ","
                 + "\"changed\":" + result.changedSources() + ","
                 + "\"unchanged\":" + result.unchangedSources() + ","
+                + "\"deleted\":" + result.deletedSources() + ","
                 + "\"chunks\":" + result.persistedChunks() + ","
                 + "\"durationMs\":" + durationMs + ","
                 + "\"success\":true"
