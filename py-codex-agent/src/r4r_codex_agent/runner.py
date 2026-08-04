@@ -780,18 +780,6 @@ class AutomaticRunner:
         providers = data.get("provider")
         if not isinstance(providers, dict) or not providers:
             raise RuntimeError(f"OpenCode config has no providers: {path}")
-        for provider_id, provider in providers.items():
-            options = provider.get("options") if isinstance(provider, dict) else None
-            base_url = options.get("baseURL") if isinstance(options, dict) else None
-            if not isinstance(base_url, str) or "{env:" in base_url:
-                raise RuntimeError(
-                    f"OpenCode provider {provider_id} has unresolved baseURL: {base_url!r}"
-                )
-            parsed = urlparse(base_url)
-            if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-                raise RuntimeError(
-                    f"OpenCode provider {provider_id} baseURL is not absolute: {base_url!r}"
-                )
 
         agent_path = self.repo / ".opencode" / "agents" / f"{self.opencode_agent}.md"
         if not agent_path.is_file():
@@ -805,12 +793,40 @@ class AutomaticRunner:
             raise RuntimeError(f"OpenCode agent has no valid model declaration: {agent_path}")
         provider_id, model_id = match.groups()
         provider = providers.get(provider_id)
+        if not isinstance(provider, dict):
+            raise RuntimeError(
+                f"OpenCode agent {self.opencode_agent} references unknown provider "
+                f"{provider_id}"
+            )
         models = provider.get("models") if isinstance(provider, dict) else None
         if not isinstance(models, dict) or model_id not in models:
             raise RuntimeError(
                 f"OpenCode agent {self.opencode_agent} references unknown model "
                 f"{provider_id}/{model_id}"
             )
+
+        # Validate only the provider selected by this agent. Native providers
+        # such as ``openai`` legitimately omit baseURL; OpenAI-compatible
+        # providers (our Ollama endpoints) require an explicit absolute URL.
+        options = provider.get("options")
+        base_url = options.get("baseURL") if isinstance(options, dict) else None
+        requires_base_url = provider.get("npm") == "@ai-sdk/openai-compatible"
+        if requires_base_url and (
+            not isinstance(base_url, str) or not base_url.strip() or "{env:" in base_url
+        ):
+            raise RuntimeError(
+                f"OpenCode provider {provider_id} has unresolved baseURL: {base_url!r}"
+            )
+        if base_url is not None:
+            if not isinstance(base_url, str) or "{env:" in base_url:
+                raise RuntimeError(
+                    f"OpenCode provider {provider_id} has unresolved baseURL: {base_url!r}"
+                )
+            parsed = urlparse(base_url)
+            if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+                raise RuntimeError(
+                    f"OpenCode provider {provider_id} baseURL is not absolute: {base_url!r}"
+                )
 
     @staticmethod
     def _non_transient_opencode_failure(result: CommandResult) -> bool:
