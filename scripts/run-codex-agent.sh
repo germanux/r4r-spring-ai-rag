@@ -320,6 +320,11 @@ PYTHON="$ROOT/py-codex-agent/.venv/bin/python"
   exit 2
 }
 
+# Import the controller package from this worktree.  The virtual environment may
+# contain a non-editable installation left behind by an earlier setup run; without
+# this, synchronized source fixes can be ignored until the package is reinstalled.
+export PYTHONPATH="$ROOT/py-codex-agent/src${PYTHONPATH:+:$PYTHONPATH}"
+
 export R4R_CODEGRAPH_POLICY="${R4R_CODEGRAPH_POLICY:-advisory}"
 export R4R_REQUIRE_CODEGRAPH="${R4R_REQUIRE_CODEGRAPH:-true}"
 
