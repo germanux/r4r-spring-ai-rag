@@ -1,7 +1,5 @@
 package com.riansares.r4r.ingestion;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -9,11 +7,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.event.ContextClosedEvent;
 import com.riansares.r4r.R4rSpringAiRagApplication;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,6 +16,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 /**
  * Proves deterministic non-web Spring lifecycle and no startup ingestion side effect.
@@ -33,39 +28,6 @@ import static org.mockito.Mockito.when;
  * 4. Normal R4rSpringAiRagApplication startup does not invoke ingestion
  */
 class KnowledgeIngestionSpringLifecycleTest {
-
-    private Path tempRoot;
-
-    @BeforeEach
-    void setUp() throws IOException {
-        tempRoot = Files.createTempDirectory("r4r-lifecycle-test-");
-    }
-
-    @AfterEach
-    void tearDown() throws IOException {
-        if (tempRoot != null) {
-            try {
-                deleteRecursively(tempRoot);
-            } catch (IOException e) {
-                // ignore cleanup errors
-            }
-        }
-    }
-
-    private void deleteRecursively(Path path) throws IOException {
-        if (Files.isDirectory(path)) {
-            try (var stream = Files.list(path)) {
-                stream.forEach(p -> {
-                    try {
-                        deleteRecursively(p);
-                    } catch (IOException e) {
-                        // ignore
-                    }
-                });
-            }
-        }
-        Files.deleteIfExists(path);
-    }
 
     /**
      * Verifies the createBuilder() returns a non-web builder that produces a context without ServletWebServerFactory.
@@ -99,21 +61,17 @@ class KnowledgeIngestionSpringLifecycleTest {
 
         EventsCaptured events = new EventsCaptured();
 
-        // Configure builder with lifecycle observer and registry-level replacement
-        var builder = KnowledgeIngestionCli.createBuilder()
+        // Create the production builder with registry-level replacement and lifecycle observer
+        var configuredBuilder = KnowledgeIngestionCli.createBuilder()
                 .initializers(wrapBmpr(mockService))
                 .initializers(events);
 
-        // Use reflection to replace createBuilder() temporarily with our configured builder
-        // This allows execute() to use the configured builder while keeping the original logic
-        ReflectionTestUtils.setField(KnowledgeIngestionCli.class, "builderForTesting", builder);
+        // Use Mockito static mock to make createBuilder() return our configured builder during execute()
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(KnowledgeIngestionCli.class, withSettings().defaultAnswer(org.mockito.Answers.CALLS_REAL_METHODS))) {
+            mockedStatic.when(KnowledgeIngestionCli::createBuilder).thenReturn(configuredBuilder);
 
-        try {
             int exitCode = KnowledgeIngestionCli.execute(new String[0]);
             assertThat(exitCode).as("Exit code should be 0 on success").isEqualTo(0);
-        } finally {
-            // Clear the field for future tests
-            ReflectionTestUtils.setField(KnowledgeIngestionCli.class, "builderForTesting", null);
         }
 
         // Context was closed by execute() and ContextClosedEvent was emitted
@@ -133,20 +91,17 @@ class KnowledgeIngestionSpringLifecycleTest {
 
         EventsCaptured events = new EventsCaptured();
 
-        // Configure builder with lifecycle observer and registry-level replacement
-        var builder = KnowledgeIngestionCli.createBuilder()
+        // Create the production builder with registry-level replacement and lifecycle observer
+        var configuredBuilder = KnowledgeIngestionCli.createBuilder()
                 .initializers(wrapBmpr(mockService))
                 .initializers(events);
 
-        // Use reflection to replace createBuilder() temporarily with our configured builder
-        ReflectionTestUtils.setField(KnowledgeIngestionCli.class, "builderForTesting", builder);
+        // Use Mockito static mock to make createBuilder() return our configured builder during execute()
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(KnowledgeIngestionCli.class, withSettings().defaultAnswer(org.mockito.Answers.CALLS_REAL_METHODS))) {
+            mockedStatic.when(KnowledgeIngestionCli::createBuilder).thenReturn(configuredBuilder);
 
-        try {
             int exitCode = KnowledgeIngestionCli.execute(new String[0]);
             assertThat(exitCode).as("Exit code should be 4 on ingestion failure").isEqualTo(4);
-        } finally {
-            // Clear the field for future tests
-            ReflectionTestUtils.setField(KnowledgeIngestionCli.class, "builderForTesting", null);
         }
 
         // Context was closed by execute() and ContextClosedEvent was emitted
@@ -163,9 +118,8 @@ class KnowledgeIngestionSpringLifecycleTest {
         var mockService = mock(KnowledgeIngestionService.class);
         when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 0, 42));
 
-        // Use SpringApplicationBuilder directly to start R4rSpringAiRagApplication
+        // Use SpringApplicationBuilder directly to start R4rSpringAiRagApplication with inferred web type
         var builder = new SpringApplicationBuilder(R4rSpringAiRagApplication.class)
-                .web(WebApplicationType.NONE)
                 .initializers(wrapBmpr(mockService));
 
         try (var context = builder.run()) {
