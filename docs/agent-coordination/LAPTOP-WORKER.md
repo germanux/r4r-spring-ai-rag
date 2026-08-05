@@ -1,32 +1,32 @@
-# LP code review (RUN_ID 20260805T191433Z)
+# LP code review (RUN_ID 20260805T201628Z)
 
 ## Evidence reviewed
 
-- `lp-runtime/progress.json`: active task is `task-fe-03b-answer-abstention` and is `PENDING`; prior FE-01/02/03 tasks are accepted.
-- `lp-git-status.txt`: one modified file: `frontend/src/app/features/rag/rag-page.component.html`.
-- `lp-git-diff-stat.txt`: small edit (2 insertions, 2 deletions).
-- `lp-runtime/manifest.json`: no current gate summary, codex plan/review, checkpoint, or correction packet captured.
-- `lp-runtime/memory.md`: stale and contradictory (claims no accepted tasks, wrong active task, and placeholder exact plan text).
+- `lp-runtime/progress.json`: active task is `task-fe-03b-answer-abstention` and status is `PENDING`.
+- `lp-runtime/gate_summary.md`: exact FE-03B gate is `green` with exit code `0`.
+- `lp-runtime/memory.md`: confirms gate green and Codex decision still pending.
+- `lp-runtime/manifest.json`: no codex review artifact and no checkpoint path recorded.
+- `lp-git-status.txt` and `lp-git-diff-stat.txt`: in-flight product edit is a small HTML change in `frontend/src/app/features/rag/rag-page.component.html`.
+- `.opencode/commands/task-fe-03b-answer-abstention.md`: completion still requires gate `0` plus Codex `ACCEPT`.
 
 ## First current defect
 
-**Defect: stale runtime understanding plus missing current gate evidence.**
+**Defect: acceptance-evidence gap after green gate.**
 
-The active FE-03B task is correct in progress, but memory context is outdated and cannot be trusted for execution decisions. With only a tiny HTML edit and no current gate/codex artifacts, completion status cannot be asserted.
+The task is already gate-green but still pending because there is no Codex ACCEPT evidence in this snapshot. The main correction is process completion (review/acceptance), not additional feature edits.
 
-## Bounded next action for one worker pass
+## Bounded next action (single worker pass)
 
-1. Run exact gate: `./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention`.
-2. Capture first failure (or green) and align edits/tests only to FE-03B required behaviors: loading/disable, answer render, abstention render, transport error render, reset behavior.
-3. Refresh worker memory/progress consistency so subsequent attempts use accurate task state.
+1. Keep the FE-03B code state stable (no extra feature changes).
+2. Submit the current gate-green checkpoint candidate for Codex review.
+3. If Codex requests changes, perform one bounded correction batch and rerun only `./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention`.
 
 ## Acceptance conditions
 
-- Exact FE-03B gate returns exit `0`.
-- DOM-oriented assertions cover deterministic answer/abstention/error/reset outcomes.
-- Codex returns `ACCEPT` before controller commit.
+- FE-03B exact gate remains green (`./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention`).
+- Codex returns `ACCEPT` for FE-03B.
+- Controller can then close with `feat(rag-ui): render answer and abstention states`.
 
 ## Avoid repeating
 
-- Do not iterate UI markup in isolation without immediate exact-gate evidence.
-- Do not rely on stale memory placeholders when determining accepted/active task state.
+- Do not keep iterating HTML after a green gate without first obtaining Codex acceptance on that same validated state.

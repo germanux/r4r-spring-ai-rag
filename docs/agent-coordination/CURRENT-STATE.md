@@ -1,32 +1,32 @@
-# Global summary (RUN_ID 20260805T191433Z)
+# Global summary (RUN_ID 20260805T201628Z)
 
-## Outcome
+## Cycle outcome
 
-Ring completed a bounded evidence review and issued queue-specific next actions.
+Ring completed an evidence-bounded coordination review using this RUN_DIR snapshot and produced queue-specific directives.
 
 - **Overall status:** `READY`
-- **PC decision:** `REVIEW` on `task-06e-child-process`
-- **LP decision:** `CONTINUE` on `task-fe-03b-answer-abstention`
+- **PC decision:** `CONTINUE` on `task-06e-child-process`
+- **LP decision:** `REVIEW` on `task-fe-03b-answer-abstention`
 
-## Why these decisions
+## Why these decisions are evidence-grounded
 
-1. Both workers have in-progress edits, but this RUN_DIR lacks fresh gate/codex artifacts.
-2. PC has a large test rewrite in a file not explicitly named in Task 06E required evidence, so scope alignment must be re-proven with gate output.
-3. LP progress is coherent, but LP memory is contradictory/stale and includes a template placeholder, so gate-first verification is required.
+1. **PC is currently red**: latest gate summary is a deterministic failure (exit `2`) and task remains pending.
+2. **PC scope risk is present**: edits are concentrated in `TestChildApplicationContextInitializer.java`, while Task 06E requirements are framed around `KnowledgeIngestionCli` child-process proof.
+3. **LP is gate-green but unaccepted**: FE-03B gate passed, yet Codex review/accept artifact is still missing, so task cannot be declared complete.
 
-## Integration risk posture
+## Integration posture
 
-- Primary near-term risk is coordination drift from stale or missing runtime evidence, not confirmed product contract breakage.
-- Secondary risk is backend test-scope drift while frontend proceeds on deterministic UI-state work.
+- Near-term bottleneck is backend Task 06E correction to restore green status.
+- Frontend should avoid churn and close FE-03B through Codex acceptance on the already-green state.
+- Cross-stack contract stability must be maintained while backend repairs proceed.
 
-## Ring repository edits this cycle
+## Ring worktree edits this cycle
 
-- No cross-cutting source-code or policy files were edited in the Ring worktree.
-- Ring only wrote the six required staged coordination artifacts under:
-  - `runtime/ring-agent/ring/20260805T191433Z/output/`
+- No cross-cutting product or policy files were edited.
+- Ring wrote only the six required staged artifacts under:
+  `runtime/ring-agent/ring/20260805T201628Z/output/`
 
-## Next-cycle evidence required
+## Evidence limitations acknowledged
 
-- PC: exact gate result for `./scripts/task-gate.sh task-06e-child-process` plus first-failure/green diagnostics.
-- LP: exact gate result for `./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention` plus first-failure/green diagnostics.
-- Updated worker memory artifacts consistent with progress state.
+- Full gate logs are not in RUN_DIR (only summaries), so PC root-cause specifics are delegated to worker-side first-failure diagnostics.
+- No Codex review artifact for either queue is present in RUN_DIR; therefore no ACCEPT claim is made.

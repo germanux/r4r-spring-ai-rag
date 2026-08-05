@@ -1,30 +1,30 @@
-# Backend ↔ Frontend handoff (RUN_ID 20260805T191433Z)
+# Backend ↔ Frontend handoff (RUN_ID 20260805T201628Z)
 
-## Current shared status
+## Queue status snapshot
 
-- Backend (PC) active: `task-06e-child-process` (pending).
-- Frontend (LP) active: `task-fe-03b-answer-abstention` (pending).
-- Both workers show local edits but no fresh gate/codex artifacts were captured in this RUN_DIR snapshot.
+- **PC/backend**: `task-06e-child-process` is active and currently red (gate exit `2`).
+- **LP/frontend**: `task-fe-03b-answer-abstention` is active, gate-green, and awaiting Codex acceptance.
 
-## What backend needs to preserve for frontend stability
+## Immediate cross-stack coordination guidance
 
-1. Keep existing RAG API response contract stable while working on task-06e (this task is process-validation oriented, not API redesign).
-2. Avoid introducing side effects that force frontend tests to depend on a live external LLM.
-3. If backend discovers error-shape changes during task-06e, publish them explicitly before LP advances past FE-03B.
+### For PC (backend)
 
-## What frontend needs to preserve for backend compatibility
+- Prioritize correction of Task 06E gate failure using first-failure diagnostics.
+- Keep scope bounded to child-process verification for `KnowledgeIngestionCli`; avoid unrelated API behavior changes.
 
-1. Keep answer/abstention rendering tied to typed API fields rather than model-text parsing.
-2. Keep deterministic transport-error handling compatible with backend failure classification semantics already accepted in prior backend tasks.
-3. Ensure FE-03B tests validate DOM states only; no coupling to backend runtime availability.
+### For LP (frontend)
 
-## Immediate bounded coordination actions
+- Prioritize Codex review on the existing FE-03B gate-green state before adding new UI behavior.
+- Preserve deterministic answer/abstention/error/reset rendering semantics already validated by the green gate.
 
-- **PC**: run `./scripts/task-gate.sh task-06e-child-process`, then attach first failure/green evidence tied to child JVM process behavior.
-- **LP**: run `./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention`, then attach first failure/green evidence tied to answer/abstention/error/reset DOM behavior.
+## Integration risks to actively control
 
-## Acceptance checkpoints before cross-stack advancement
+1. **Backend scope drift risk**: current PC edits target a different test surface than Task 06E command requirements, which can delay backend stabilization.
+2. **Frontend evidence invalidation risk**: further LP edits before Codex review can invalidate current green evidence.
+3. **Contract drift risk**: while PC is repairing Task 06E, backend must not silently alter response/error semantics that FE-03B rendering relies on.
 
-- PC task-06e gate green + Codex `ACCEPT`.
-- LP FE-03B gate green + Codex `ACCEPT`.
-- No unannounced API contract drift introduced while FE-03B is in progress.
+## Bounded acceptance checkpoints before advancing tasks
+
+- PC: `./scripts/task-gate.sh task-06e-child-process` green + Codex `ACCEPT`.
+- LP: `./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention` green + Codex `ACCEPT`.
+- No undocumented backend-to-frontend response contract change introduced during these passes.

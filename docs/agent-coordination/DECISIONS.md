@@ -423,3 +423,48 @@ Append-only ledger generated after each validated Ring cycle.
 
 - RUN_DIR snapshot contains status/diff summaries and worker memory/progress only; no current gate diagnostics, codex plan/review, or correction packet files were provided.
 - No full file patches for PC/LP edited files are present in RUN_DIR, so code-level review is limited to diff-stat and task-scope consistency checks.
+
+## Cycle `20260805T201628Z` â READY
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-06e-child-process`
+- Reason: The latest PC gate summary for the active task is a deterministic failure (exit 2, classification gate-failure), while in-flight edits are concentrated in TestChildApplicationContextInitializer.java instead of the Task 06E process-proof target called out by the task command, so the first defect is gate-failing scope drift.
+- Next action: Use the first failure from task-06e gate diagnostics to make one minimal process-contract fix focused on KnowledgeIngestionCli child-JVM proof, then rerun only ./scripts/task-gate.sh task-06e-child-process.
+- Avoid repeating: Do not keep rewriting TestChildApplicationContextInitializer.java without direct linkage to the child-process contract and a newly classified first gate failure.
+- Acceptance gates:
+  - ./scripts/task-gate.sh task-06e-child-process
+  - Task 06E completion requires gate 0 plus Codex ACCEPT before controller commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T201628Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T201628Z/pc-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T201628Z/pc-git-diff-stat.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T201628Z/pc-runtime/progress.json`
+
+### LP
+
+- Decision: `REVIEW`
+- Task: `task-fe-03b-answer-abstention`
+- Reason: LP already has a green exact gate for FE-03B (exit 0), but the task remains pending with no Codex review/accept artifact and no checkpoint recorded, so the first defect is acceptance-evidence gap rather than new implementation work.
+- Next action: Freeze feature edits, package the existing FE-03B gate-green evidence, and request Codex review for ACCEPT on the current checkpoint candidate.
+- Avoid repeating: Do not continue iterative HTML tweaks after a green FE-03B gate without first obtaining Codex ACCEPT evidence for the same gated state.
+- Acceptance gates:
+  - ./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention
+  - FE-03B completion requires gate 0 plus Codex ACCEPT before controller commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T201628Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T201628Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T201628Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T201628Z/lp-runtime/manifest.json`
+
+### Integration risks
+
+- PC task-06e is currently red and appears to be editing a lifecycle test file instead of the explicit child-process proof target, which can delay backend readiness and introduce unrelated regression risk.
+- LP has gate-green but unaccepted work; additional edits before Codex review can invalidate the already-green evidence and force unnecessary reruns.
+- Frontend error/abstention behavior stability depends on backend preserving existing response/error contracts while PC resolves task-06e.
+
+### Evidence limitations
+
+- RUN_DIR includes gate summaries but not full gate logs, so root-cause details of the PC failure are not directly visible in this snapshot.
+- No Codex review artifact is present for either worker in this RUN_DIR, so ACCEPT/REJECT state must remain unclaimed.
