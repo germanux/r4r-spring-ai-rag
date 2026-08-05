@@ -6,7 +6,7 @@
 - Run: 20260805T203856Z.
 - Last accepted task: task-fe-03b-answer-abstention.
 - Active task: task-fe-03c-citations.
-- Current attempt: 1.
+- Current attempt: 2.
 - Latest exact gate: not run; exit=unknown.
 - Latest Codex decision: pending.
 - Checkpoint: none; head=not recorded.
@@ -24,15 +24,21 @@
 
 ## Still unproven or below expectations
 
-- Render ordered structured citations without parsing model text.
+- The local edit session did not complete; no acceptance claim can be made from it.
 
 ## Approaches not to repeat
 
-- Do not repeat an unchanged failing action without new evidence.
+- Do not repeat the stopped OpenCode session without changing the plan; stop_reason=idle-timeout.
 
 ## Next exact action
 
+OpenCode edit failed transiently with exit 124. Start a fresh local session, preserve the current worktree, diagnose the concrete error below and continue the same active task. Do not revert already validated changes.
+
+Previous action:
 Resume the unfinished revision by applying the complete CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS included below. Do not wait for another Codex review before making the requested correction.
+
+Failure tail:
+[r4r-watchdog] stopped OpenCode session: reason=idle-timeout elapsed=898.3s
 
 ## Fixed decisions
 
