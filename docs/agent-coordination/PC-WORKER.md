@@ -1,41 +1,31 @@
-# PC Code Review (task-06e-child-process)
+# PC code review (RUN_ID 20260805T191433Z)
 
-## Current evidence reviewed
+## Evidence reviewed
 
-- `pc-runtime/progress.json`: active task is `task-06e-child-process` and still `PENDING`.
-- `pc-runtime/codex-qwen3-extra-instructions.md`: Codex decision is `REVISE` with a mandatory bounded correction packet.
-- `pc-git-status.txt` + `pc-git-diff-stat.txt`: only one modified file with just **2 insertions** in `TestChildApplicationContextInitializer.java`.
-- `pc-runtime/manifest.json`: no current-run `gate_summary`, `codex_review`, `checkpoint`, or `local_understanding` artifacts published in this snapshot.
+- `pc-runtime/progress.json`: active task is `task-06e-child-process` and status remains `PENDING`.
+- `pc-git-status.txt`: one modified file: `src/test/java/com/riansares/r4r/ingestion/TestChildApplicationContextInitializer.java`.
+- `pc-git-diff-stat.txt`: large rewrite in that file (51 insertions, 130 deletions).
+- `pc-runtime/manifest.json`: no current gate summary, codex plan/review, checkpoint, or local-understanding artifacts captured in this snapshot.
+- `pc-runtime/memory.md`: explicitly says latest exact gate was not run and Codex decision pending.
 
 ## First current defect
 
-The current PC state is a **partially applied REVISE** with no proof of closure. The Codex packet requires a full mechanism shift (test SPI registration and assignable service replacement sequencing), but the visible diff is minimal and isolated. That is insufficient evidence that the full correction packet was implemented and revalidated.
+**Defect: verification gap with potential scope drift.**
 
-## Bounded next action (one worker pass)
+The current active task (`task-06e-child-process`) requires proving a bounded child JVM invocation of `KnowledgeIngestionCli`, but the only visible in-flight edit is a large rewrite in a different lifecycle test class. Without current gate output or codex correction evidence in this RUN_DIR snapshot, this change cannot be validated as task-aligned.
 
-1. Complete the full Codex packet for `task-06e-child-process` strictly in test-only scope:
-   - process IT,
-   - one initializer,
-   - `src/test/resources/META-INF/spring.factories` (preserve existing entries),
-   - helper cleanup adjustments.
-2. Remove unsupported `-Dcontext.initializer.classes` path and rely on test-classpath SPI loading.
-3. Ensure replacement bean is assignable to `KnowledgeIngestionService` and installed at the required lifecycle timing (post-definition registration, pre-singleton creation), while keeping real orchestration active.
-4. Re-run exact gate once and retain diagnostics bundle.
+## Bounded next action for one worker pass
+
+1. Run the exact gate once: `./scripts/task-gate.sh task-06e-child-process`.
+2. If failing, capture the **first** failure and classify it before additional edits.
+3. Restrict edits to evidence needed by Task 06E process-contract requirements (child command, timeout/cleanup, deterministic success and failure behavior, no Tomcat startup, no secret leakage).
 
 ## Acceptance conditions
 
-- `./scripts/task-gate.sh task-06e-child-process` exits `0`.
-- Diagnostics prove expected child-process behavior (success exit/result line and failure classification constraints from Codex packet).
-- Codex returns `ACCEPT` for `task-06e-child-process` before task closure.
+- Exact gate for task-06e returns exit `0`.
+- Evidence directly demonstrates child-JVM process contract for `KnowledgeIngestionCli`.
+- Codex returns `ACCEPT` for task-06e before controller closing commit.
 
 ## Avoid repeating
 
-- Do **not** iterate on tiny initializer-only edits without completing the mandated SPI + type-compatible replacement path and producing fresh gate/Codex evidence.
-
-## Evidence paths
-
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/pc-runtime/progress.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/pc-runtime/codex-qwen3-extra-instructions.md`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/pc-git-status.txt`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/pc-git-diff-stat.txt`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/pc-runtime/manifest.json`
+- Do not continue broad test rewrites without fresh gate evidence and explicit mapping to Task 06E requirements.

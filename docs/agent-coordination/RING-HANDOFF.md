@@ -1,35 +1,30 @@
-# Backend ↔ Frontend Handoff
+# Backend ↔ Frontend handoff (RUN_ID 20260805T191433Z)
 
-## Coordination status
+## Current shared status
 
-- **Backend (PC)**: `task-06e-child-process` is active and blocked on completing a Codex `REVISE` packet with fresh exact-gate + Codex evidence.
-- **Frontend (LP)**: `task-fe-03b-answer-abstention` is active and blocked on implementing Codex-mandated DOM-state assertions with fresh gate + Codex evidence.
+- Backend (PC) active: `task-06e-child-process` (pending).
+- Frontend (LP) active: `task-fe-03b-answer-abstention` (pending).
+- Both workers show local edits but no fresh gate/codex artifacts were captured in this RUN_DIR snapshot.
 
-Both queues are independent in ownership and can proceed concurrently.
+## What backend needs to preserve for frontend stability
 
-## What backend needs from frontend
+1. Keep existing RAG API response contract stable while working on task-06e (this task is process-validation oriented, not API redesign).
+2. Avoid introducing side effects that force frontend tests to depend on a live external LLM.
+3. If backend discovers error-shape changes during task-06e, publish them explicitly before LP advances past FE-03B.
 
-No immediate backend dependency on LP output for current pass. Continue bounded FE-03B test/template corrections only.
+## What frontend needs to preserve for backend compatibility
 
-## What frontend needs from backend
+1. Keep answer/abstention rendering tied to typed API fields rather than model-text parsing.
+2. Keep deterministic transport-error handling compatible with backend failure classification semantics already accepted in prior backend tasks.
+3. Ensure FE-03B tests validate DOM states only; no coupling to backend runtime availability.
 
-No immediate frontend dependency on PC output for current pass. Continue bounded child-process IT/test infrastructure corrections only.
+## Immediate bounded coordination actions
 
-## Cross-stack risks to monitor
+- **PC**: run `./scripts/task-gate.sh task-06e-child-process`, then attach first failure/green evidence tied to child JVM process behavior.
+- **LP**: run `./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention`, then attach first failure/green evidence tied to answer/abstention/error/reset DOM behavior.
 
-1. **Evidence freshness risk**: both manifests show null for run artifacts (`codex_review`, `gate_summary`, `checkpoint`), so no closure proof exists yet.
-2. **Scope-drift risk**: recent shared-history imports touched frontend RAG files; LP must keep FE-03B changes narrowly tied to DOM-state acceptance requirements.
-3. **False-green risk**: prior snapshots include gate-green metadata while tasks remain pending; neither queue should treat gate green alone as acceptance without Codex `ACCEPT`.
+## Acceptance checkpoints before cross-stack advancement
 
-## Bounded next synchronization point
-
-After each worker completes one pass, require these artifacts before changing queue state:
-
-- exact gate log for active task,
-- Codex review decision (`ACCEPT`/`REVISE`),
-- checkpoint/changed-path evidence showing scope compliance.
-
-## Acceptance constraints restated
-
-- PC: `./scripts/task-gate.sh task-06e-child-process` must exit 0 and then receive Codex `ACCEPT`.
-- LP: `./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention` must exit 0 and then receive Codex `ACCEPT`.
+- PC task-06e gate green + Codex `ACCEPT`.
+- LP FE-03B gate green + Codex `ACCEPT`.
+- No unannounced API contract drift introduced while FE-03B is in progress.

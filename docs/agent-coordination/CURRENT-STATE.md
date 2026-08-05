@@ -1,35 +1,32 @@
-# Global Summary — Ring Cycle 20260805T174028Z
+# Global summary (RUN_ID 20260805T191433Z)
 
 ## Outcome
 
-Overall status: **READY** (actionable for both queues; not blocked).
+Ring completed a bounded evidence review and issued queue-specific next actions.
 
-## Key findings
+- **Overall status:** `READY`
+- **PC decision:** `REVIEW` on `task-06e-child-process`
+- **LP decision:** `CONTINUE` on `task-fe-03b-answer-abstention`
 
-1. **PC (backend)**
-   - Active task: `task-06e-child-process` (`PENDING`).
-   - Current defect: unresolved Codex `REVISE` packet; only minimal partial edit evidence, no fresh closure artifacts.
-   - Direction: continue one bounded correction pass in test-only scope, rerun exact gate, get Codex decision.
+## Why these decisions
 
-2. **LP (frontend)**
-   - Active task: `task-fe-03b-answer-abstention` (`PENDING`).
-   - Current defect: required FE-03B DOM-state assertions from Codex `REVISE` are not evidenced in current snapshot.
-   - Direction: continue one bounded fixture-driven test/template pass, run exact gate, get Codex decision.
+1. Both workers have in-progress edits, but this RUN_DIR lacks fresh gate/codex artifacts.
+2. PC has a large test rewrite in a file not explicitly named in Task 06E required evidence, so scope alignment must be re-proven with gate output.
+3. LP progress is coherent, but LP memory is contradictory/stale and includes a template placeholder, so gate-first verification is required.
 
-## Integration posture
+## Integration risk posture
 
-- No direct backend↔frontend blocking dependency for these two active tasks.
-- Main risk is evidence incompleteness for this cycle: manifests show null current-run Codex/gate/checkpoint artifacts.
-- Do not mark any task complete on gate metadata alone; require Codex `ACCEPT`.
+- Primary near-term risk is coordination drift from stale or missing runtime evidence, not confirmed product contract breakage.
+- Secondary risk is backend test-scope drift while frontend proceeds on deterministic UI-state work.
 
-## Repository edits by Ring in this cycle
+## Ring repository edits this cycle
 
-- Created staged coordination outputs under:
-  - `runtime/ring-agent/ring/20260805T174028Z/output/state.json`
-  - `runtime/ring-agent/ring/20260805T174028Z/output/code-pc-review.md`
-  - `runtime/ring-agent/ring/20260805T174028Z/output/code-lp-review.md`
-  - `runtime/ring-agent/ring/20260805T174028Z/output/backend-frontend-handoff.md`
-  - `runtime/ring-agent/ring/20260805T174028Z/output/worker-understanding.md`
-  - `runtime/ring-agent/ring/20260805T174028Z/output/global-summary.md`
+- No cross-cutting source-code or policy files were edited in the Ring worktree.
+- Ring only wrote the six required staged coordination artifacts under:
+  - `runtime/ring-agent/ring/20260805T191433Z/output/`
 
-No additional product/policy file edits were made.
+## Next-cycle evidence required
+
+- PC: exact gate result for `./scripts/task-gate.sh task-06e-child-process` plus first-failure/green diagnostics.
+- LP: exact gate result for `./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention` plus first-failure/green diagnostics.
+- Updated worker memory artifacts consistent with progress state.
