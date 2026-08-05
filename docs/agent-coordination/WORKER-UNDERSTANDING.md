@@ -1,34 +1,41 @@
-# Worker-understanding assessment (RUN_ID 20260805T205823Z)
+# Worker-understanding audit
 
 ## PC understanding quality
 
+Assessment: **partially corrected but still conflicting across artifacts**.
+
+- Positive: memory captures the active task, Codex `REVISE`, and a bounded next action.
+- Defect: earlier understanding artifacts framed the issue as test-failure root cause investigation, while latest request/evidence indicates a preflight-oriented correction path (whitespace + bounded config exclusion fix).
+
 Evidence:
-- `pc-runtime/memory.md` correctly advances active task to `task-06f-ingestion-validation`.
-- `pc-runtime/local_understanding.md` is focused on old task 06e and includes stale uncertainty, while 06e is already accepted.
-- `pc-runtime/gate_summary.md` for current active task 06f is red and already identifies failing test files.
 
-Assessment:
-- PC state tracking is partially correct (task progression is right), but execution focus must move from historical 06e context to current 06f failure triage.
+- `runtime/ring-agent/ring/20260805T212753Z/pc-runtime/pre_edit_understanding.md`
+- `runtime/ring-agent/ring/20260805T212753Z/pc-runtime/memory.md`
+- `runtime/ring-agent/ring/20260805T212753Z/worker-requests/PC.json`
 
-Required correction in next PC pass:
-- Anchor pre/post understanding and any repair narrative to `task-06f-ingestion-validation` only.
-- Record first current failing assertion from full gate evidence before editing.
+Required understanding adjustment next pass:
+
+- Treat `gate_exit=2` as authoritative current blocker and execute the provided REVISE packet before inferring deeper backend defects.
 
 ## LP understanding quality
 
+Assessment: **insufficient for task closure**.
+
+- Defect: pre-edit understanding was skipped because gate appeared green, but Codex marked task proof incomplete and required specific rendered-DOM tests.
+- Defect: repeated idle-timeouts indicate execution breakdown rather than resolved understanding.
+
 Evidence:
-- `lp-runtime/memory.md` acknowledges prior session timeout and no completion claim.
-- `lp-runtime/codex-qwen3-extra-instructions.md` provides precise REVISE packet for FE-03C.
-- `lp-git-diff-stat.txt` indicates no frontend product edits in this snapshot.
 
-Assessment:
-- LP has the correct corrective packet but has not yet executed it. Understanding is directionally correct but incomplete in proof because required tests were not yet added.
+- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/pre_edit_understanding.md`
+- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/memory.md`
 
-Required correction in next LP pass:
-- Execute the explicit FE-03C revise instructions in `rag-page.component.spec.ts` and provide accurate pre/post mapping to acceptance requirements.
+Required understanding adjustment next pass:
 
-## Ring confidence for next cycle
+- FE-03C is not satisfied by generic green status; it requires explicit rendered-DOM proof for all three citation behaviors requested by Codex.
 
-- Confidence is **moderate** for both queues if they remain strictly task-scoped:
-  - PC: first-failure repair on 06f.
-  - LP: FE-03C DOM assertion revise packet.
+## Ring-side edits this cycle
+
+- No product or policy files were edited in `RING_WORKTREE`.
+- Only staged coordination outputs were created under:
+  `runtime/ring-agent/ring/20260805T212753Z/output/`.

@@ -1,30 +1,41 @@
-# Backend ↔ Frontend handoff (RUN_ID 20260805T205823Z)
+# Backend ↔ Frontend handoff
 
-## Backend to frontend status
+## Coordination outcome
 
-- Backend just completed `task-06e-child-process` (`worker-requests/PC.json` shows `codex_decision=ACCEPT`).
-- Backend is now on `task-06f-ingestion-validation`, but latest packaged task-06f gate is red (`pc-runtime/gate_summary.md`, exit 1).
+Both queues should continue their current active tasks with bounded correction-first passes. No cross-queue code ownership transfer is needed.
 
-Implication: frontend should continue FE-03C independently; do not block FE-03C on backend 06f, but do not claim cross-stack readiness yet.
+## Backend handoff (PC)
 
-## Frontend to backend status
+- Task: `task-06f-ingestion-validation`
+- Required pass: hygiene + config correction, then exact backend gate rerun.
+- Scope guard: only the prescribed sanitation and `src/test/resources/application.yml` exclusion adjustment; do not expand into unrelated backend refactors.
 
-- Frontend remains on `task-fe-03c-citations` with Codex `REVISE` instructions requiring additional DOM proof.
-- Latest LP diff evidence shows no product-path FE-03C completion patch yet.
+Acceptance gates:
 
-Implication: backend should not assume FE-03C citation rendering contract is proven until LP executes revise packet and Codex returns ACCEPT.
+- `git diff --check` clean.
+- `./scripts/task-gate.sh task-06f-ingestion-validation` exit `0`.
+- Codex `ACCEPT`.
 
-## Current integration risks
+## Frontend handoff (LP)
 
-1. Backend 06f red gate can hide regressions impacting production-ingestion validation used by later end-to-end checks.
-2. Frontend FE-03C lacks final DOM-proofed citation behavior, creating potential mismatch with backend structured citation payload expectations.
+- Task: `task-fe-03c-citations`
+- Required pass: implement Codex-requested rendered-DOM assertions in `rag-page.component.spec.ts` and rerun exact FE gate.
+- Scope guard: frontend-only; no backend path edits.
 
-## Coordinated bounded next actions
+Acceptance gates:
 
-- **PC pass**: fix first current task-06f failing assertion from full gate evidence and rerun exact gate.
-- **LP pass**: implement FE-03C DOM assertions exactly as Codex revise packet describes and rerun exact gate.
+- `git diff --check` clean.
+- `./scripts/frontend-task-gate.sh task-fe-03c-citations` exit `0`.
+- Codex `ACCEPT`.
 
-## Cross-stack acceptance checkpoint after both passes
+## Integration risks to watch next cycle
 
-- PC: `./scripts/task-gate.sh task-06f-ingestion-validation` exit 0 + Codex ACCEPT.
-- LP: `./scripts/frontend-task-gate.sh task-fe-03c-citations` exit 0 + Codex ACCEPT.
+1. Backend preflight whitespace failures can invalidate expensive test runs before actual behavioral validation.
+2. Frontend can produce superficially green runs while still missing FE-03C requirement-level proof.
+
+## Evidence anchors
+
+- `runtime/ring-agent/ring/20260805T212753Z/worker-requests/PC.json`
+- `runtime/ring-agent/ring/20260805T212753Z/pc-runtime/memory.md`
+- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/memory.md`

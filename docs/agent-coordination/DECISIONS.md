@@ -603,3 +603,50 @@ Append-only ledger generated after each validated Ring cycle.
 
 - Only gate summaries were packaged in RUN_DIR; full gate logs are referenced but not included here.
 - LP snapshot includes no codex_review.json artifact, so Codex acceptance status for FE-03C cannot be inferred beyond the REVISE packet.
+
+## Cycle `20260805T212753Z` â READY
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-06f-ingestion-validation`
+- Reason: Current backend task is still pending and the latest worker request is Codex REVISE with gate exit 2; evidence directs a bounded correction (whitespace sanitation plus test config exclusion fix) before rerunning the exact gate.
+- Next action: Apply the codex-revise packet exactly: sanitize trailing whitespace in controller-published Markdown artifacts, remove only PgVectorStoreAutoConfiguration from src/test/resources/application.yml exclusions (keep Flyway enabled and JdbcMetrics exclusion), then rerun ./scripts/task-gate.sh task-06f-ingestion-validation from clean target/.
+- Avoid repeating: Do not infer backend test behavior from gate exit 2 preflight/whitespace failures or widen scope into Java test rewrites before applying the bounded config+sanitation fix.
+- Acceptance gates:
+  - git diff --check must be clean before expensive gate reruns
+  - ./scripts/task-gate.sh task-06f-ingestion-validation must exit 0
+  - task-06f-ingestion-validation completes only after Codex decision ACCEPT
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/pc-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/pc-git-diff-stat.txt`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03c-citations`
+- Reason: Frontend task remains PENDING with Codex REVISE instructions still unimplemented in task-owned product code; repeated idle-timeout sessions produced no FE-03C proof despite a generic green gate snapshot.
+- Next action: Edit only frontend/src/app/features/rag/rag-page.component.spec.ts to add the three required rendered-DOM citation assertions from the Codex REVISE packet, then run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03c-citations.
+- Avoid repeating: Do not run another idle-timeout session or stop at a generic green run without implementing and proving the missing FE-03C DOM assertions.
+- Acceptance gates:
+  - git diff --check must be clean before the FE gate
+  - ./scripts/frontend-task-gate.sh task-fe-03c-citations must exit 0
+  - task-fe-03c-citations completes only after Codex decision ACCEPT
+  - FE-03C proof must be rendered-DOM assertions for ordered structured citations, empty-citation omission, and non-parsing of citation-like answer text
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- Cross-stack delivery is blocked by backend gate preflight/test-config hygiene and frontend evidence-quality gaps; both tasks can report green-like signals without meeting Codex ACCEPT criteria.
+- Controller-published Markdown whitespace can fail repository-wide preflight and waste full backend gate cycles if not sanitized first.
+
+### Evidence limitations
+
+- RUN_DIR provides gate summaries and worker memory but not full gate-full.log output; first failing assertion text is not directly quoted in this cycle.
+- LP evidence is internally inconsistent (green gate summary vs memory saying latest gate not run), so directive prioritizes explicit Codex REVISE packet completion and exact gate rerun.
