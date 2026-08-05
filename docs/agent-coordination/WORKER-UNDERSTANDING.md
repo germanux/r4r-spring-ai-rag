@@ -1,41 +1,32 @@
-# Worker-understanding audit
+# Worker-understanding assessment (RUN 20260805T222913Z)
 
 ## PC understanding quality
 
-Assessment: **partially corrected but still conflicting across artifacts**.
+### What is aligned
+- Active backend task and exact gate are correctly tracked in memory/progress.
+- Codex REVISE packet is explicit and bounded (`application.yml` + whitespace sanitation).
 
-- Positive: memory captures the active task, Codex `REVISE`, and a bounded next action.
-- Defect: earlier understanding artifacts framed the issue as test-failure root cause investigation, while latest request/evidence indicates a preflight-oriented correction path (whitespace + bounded config exclusion fix).
+### What is not yet aligned with newest evidence
+- Newest `pc-git-status.txt` introduces a more immediate defect (`UU` unmerged files) that must be corrected before gate reliability.
+- Earlier reasoning mixed migration/test-failure interpretations with preflight failures.
 
-Evidence:
-
-- `runtime/ring-agent/ring/20260805T212753Z/pc-runtime/pre_edit_understanding.md`
-- `runtime/ring-agent/ring/20260805T212753Z/pc-runtime/memory.md`
-- `runtime/ring-agent/ring/20260805T212753Z/worker-requests/PC.json`
-
-Required understanding adjustment next pass:
-
-- Treat `gate_exit=2` as authoritative current blocker and execute the provided REVISE packet before inferring deeper backend defects.
+### Directive quality for next pass
+- Keep instruction order strict: **resolve unmerged state first**, then run preflight, then exact gate.
 
 ## LP understanding quality
 
-Assessment: **insufficient for task closure**.
+### What is aligned
+- Active FE task is correctly tracked as `task-fe-03c-citations` and still PENDING.
+- Codex REVISE packet is precise about the three missing rendered-DOM assertions.
 
-- Defect: pre-edit understanding was skipped because gate appeared green, but Codex marked task proof incomplete and required specific rendered-DOM tests.
-- Defect: repeated idle-timeouts indicate execution breakdown rather than resolved understanding.
+### What is not yet aligned
+- `pre_edit_understanding.md` was skipped and recent attempts timed out; this indicates process adherence issues despite known concrete next steps.
+- Green gate snapshot is being over-weighted versus missing FE-03C acceptance proof.
 
-Evidence:
+### Directive quality for next pass
+- Single-file correction with explicit assertion targets and immediate exact gate rerun.
 
-- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/pre_edit_understanding.md`
-- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/memory.md`
+## Evidence confidence
 
-Required understanding adjustment next pass:
-
-- FE-03C is not satisfied by generic green status; it requires explicit rendered-DOM proof for all three citation behaviors requested by Codex.
-
-## Ring-side edits this cycle
-
-- No product or policy files were edited in `RING_WORKTREE`.
-- Only staged coordination outputs were created under:
-  `runtime/ring-agent/ring/20260805T212753Z/output/`.
+- Confidence is **high** for task/status and immediate defects because evidence is explicit in `progress`, `memory`, `gate_summary`, `codex extra instructions`, and `git-status` snapshots.
+- Confidence is **moderate** for deeper root-cause mechanics because full current gate logs were not staged for this ring cycle.

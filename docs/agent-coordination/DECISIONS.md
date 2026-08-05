@@ -650,3 +650,52 @@ Append-only ledger generated after each validated Ring cycle.
 
 - RUN_DIR provides gate summaries and worker memory but not full gate-full.log output; first failing assertion text is not directly quoted in this cycle.
 - LP evidence is internally inconsistent (green gate summary vs memory saying latest gate not run), so directive prioritizes explicit Codex REVISE packet completion and exact gate rerun.
+
+## Cycle `20260805T222913Z` â READY
+
+### PC
+
+- Decision: `HOLD`
+- Task: `task-06f-ingestion-validation`
+- Reason: Newest snapshot shows unresolved merge conflicts in PC evidence files (`UU` in `.opencode/current/PC/manifest.json` and `.opencode/current/PC/opencode/memory.backend.md`) while the active backend task is still PENDING with last gate exit=2 and Codex=REVISE; this must be corrected before another expensive gate cycle.
+- Next action: Resolve the two unmerged PC evidence files to a coherent snapshot (no conflict markers, no unmerged index entries), verify `git diff --check` is clean, then proceed with the existing bounded REVISE fix for `src/test/resources/application.yml` and rerun `./scripts/task-gate.sh task-06f-ingestion-validation`.
+- Avoid repeating: Do not infer backend test behavior from exit=2 snapshots or rerun the full gate while merge conflicts / whitespace preflight defects are still present.
+- Acceptance gates:
+  - No unmerged paths remain in the PC worktree before gate reruns
+  - `git diff --check` must be clean before expensive backend gate
+  - `./scripts/task-gate.sh task-06f-ingestion-validation` must exit 0
+  - task-06f-ingestion-validation closes only after Codex decision ACCEPT
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T222913Z/pc-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T222913Z/pc-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T222913Z/pc-runtime/codex-qwen3-extra-instructions.md`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03c-citations`
+- Reason: Frontend task remains PENDING with Codex=REVISE and repeated idle-timeout history; the latest green gate summary is generic and does not prove the required FE-03C rendered-DOM citation assertions were implemented.
+- Next action: Edit only `frontend/src/app/features/rag/rag-page.component.spec.ts` to add the three missing rendered-DOM FE-03C assertions (ordered citations with source+heading path, empty-citations omission, and non-parsing of citation-like answer text), then run `git diff --check` and `./scripts/frontend-task-gate.sh task-fe-03c-citations`.
+- Avoid repeating: Do not stop at a generic green run or another idle-timeout session without implementing and proving the missing FE-03C DOM assertions.
+- Acceptance gates:
+  - `git diff --check` must be clean before the FE gate
+  - `./scripts/frontend-task-gate.sh task-fe-03c-citations` must exit 0
+  - FE-03C proof must include rendered-DOM assertions for ordered structured citations, empty-citation omission, and non-parsing of citation-like answer text
+  - task-fe-03c-citations closes only after Codex decision ACCEPT
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T222913Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T222913Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T222913Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T222913Z/lp-runtime/gate_summary.md`
+
+### Integration risks
+
+- PC worktree currently contains unmerged evidence files; this can block deterministic preflight and prevent reliable backend gate evidence.
+- LP has a green snapshot but still lacks Codex-backed FE-03C acceptance proof; relying on generic gate success risks false completion.
+- Cross-branch artifact churn in `.opencode/current/**` (seen in commit/status snapshots) can reintroduce whitespace/conflict noise into gate preflight.
+
+### Evidence limitations
+
+- This cycle used staged RUN_DIR snapshots only; live PC/LP worktrees were not directly inspected.
+- RUN_DIR includes gate summaries but not a freshly captured full gate log for this Ring cycle.
+- `worker-request-manifest.json` contains no new explicit worker requests, so decisions rely on status/progress/memory/directive evidence.

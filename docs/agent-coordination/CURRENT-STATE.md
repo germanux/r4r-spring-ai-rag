@@ -1,33 +1,33 @@
-# Global summary (run 20260805T212753Z)
+# Global coordination summary (RUN 20260805T222913Z)
 
-## Overall status
+## Outcome
 
-**READY** — both queues have clear bounded next actions with evidence-backed directives.
+- **overall_status: READY**
+- Both queues have bounded next actions.
+- No direct Ring worktree code/policy edits were required in this cycle beyond staged coordination artifacts.
 
-## What is currently true
+## PC decision summary
 
-- **PC/backend** is active on `task-06f-ingestion-validation` and currently blocked by a Codex `REVISE` pass with `gate_exit=2`; no ACCEPT for task 06f exists yet.
-- **LP/frontend** is active on `task-fe-03c-citations` and still `PENDING`; Codex requires additional rendered-DOM citation tests, and repeated idle-timeouts prevented completion.
+- **Action:** HOLD on new gate runs until current unmerged PC evidence files are resolved.
+- **Task:** `task-06f-ingestion-validation`
+- **Why:** newest PC status contains `UU` entries in `.opencode/current/PC/*`; active task remains PENDING with Codex `REVISE` and prior exit `2`.
+- **Next:** clear unmerged state, clean whitespace preflight, apply bounded `application.yml` REVISE fix, rerun exact backend gate.
 
-## Prioritized next moves
+## LP decision summary
 
-1. **PC first defect correction:** apply the exact REVISE packet (whitespace sanitation + bounded application.yml exclusion fix), then rerun exact backend gate.
-2. **LP first defect correction:** implement the three missing rendered-DOM citation assertions in `rag-page.component.spec.ts`, then rerun exact FE gate.
+- **Action:** CONTINUE
+- **Task:** `task-fe-03c-citations`
+- **Why:** task is still PENDING; Codex REVISE requires missing FE-03C rendered-DOM assertions not yet proven.
+- **Next:** update only `rag-page.component.spec.ts` with the three required DOM assertions and rerun exact FE gate.
 
-## Acceptance bar (non-negotiable)
+## Main integration risks
 
-- Backend: `./scripts/task-gate.sh task-06f-ingestion-validation` exit 0 + Codex ACCEPT.
-- Frontend: `./scripts/frontend-task-gate.sh task-fe-03c-citations` exit 0 + Codex ACCEPT.
-- Both: `git diff --check` clean before expensive gates.
+1. PC preflight reliability is threatened by merge-conflicted evidence files.
+2. LP may incorrectly treat generic green gate output as FE-03C completion.
+3. Ongoing `.opencode/current/**` churn can reintroduce whitespace/conflict noise.
 
-## Evidence limitations
+## Evidence limitations noted
 
-- Full `gate-full.log` is not present in RUN_DIR artifacts, so this cycle does not quote first failing assertions directly.
-- LP evidence has an inconsistency between gate summary and memory; we therefore prioritize the explicit Codex REVISE packet as authoritative for next action.
-
-## Evidence references
-
-- `runtime/ring-agent/ring/20260805T212753Z/worker-request-manifest.json`
-- `runtime/ring-agent/ring/20260805T212753Z/worker-requests/PC.json`
-- `runtime/ring-agent/ring/20260805T212753Z/pc-runtime/{progress.json,memory.md,gate_summary.md}`
-- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/{progress.json,memory.md,codex-qwen3-extra-instructions.md,gate_summary.md}`
+- Decisions are based on staged RUN_DIR snapshots; live worker trees were not directly inspected.
+- This cycle did not include freshly staged full gate logs for first-failure line-by-line verification.
+- No new worker-request payloads were provided in `worker-request-manifest.json`.

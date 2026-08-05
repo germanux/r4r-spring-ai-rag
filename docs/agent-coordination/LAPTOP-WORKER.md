@@ -1,43 +1,44 @@
-# LP code review (frontend)
+# LP code/runtime review (RUN 20260805T222913Z)
 
-## Current task and status
+## Authoritative evidence reviewed
 
-- Active task: `task-fe-03c-citations` (`PENDING`).
-- Latest local sessions show repeated `idle-timeout` with no task-owned product diff.
-- Codex packet remains `REVISE` and asks for missing rendered-DOM coverage.
-
-Evidence:
-
-- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/progress.json`
-- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/memory.md`
-- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `runtime/ring-agent/ring/20260805T212753Z/lp-git-diff-stat.txt`
+- `lp-runtime/progress.json` (active task `task-fe-03c-citations`, status PENDING)
+- `lp-runtime/memory.md` (Codex decision pending; repeated idle-timeout history)
+- `lp-runtime/codex-qwen3-extra-instructions.md` (explicit REVISE packet with missing DOM assertions)
+- `lp-runtime/gate_summary.md` (generic green snapshot)
+- `lp-git-status.txt` / `lp-git-diff-stat.txt` (no task-owned product diff captured in this ring snapshot)
 
 ## First current defect
 
-The task proof is incomplete: FE-03C requires specific rendered-DOM citation assertions, but current evidence shows no implementation pass that delivered those assertions. A generic green gate summary is insufficient because Codex explicitly required additional task-specific tests.
+FE-03C acceptance proof is incomplete. The latest gate summary is green, but Codex REVISE requires missing rendered-DOM assertions in `rag-page.component.spec.ts`, and task remains PENDING.
 
-Required missing proof (from Codex extra instructions):
+## Required bounded correction
 
-1. ordered structured citations render in order with ordinal/source/heading path checks;
-2. `.citations-section` omitted when `citations: []` in non-abstained success response;
-3. citation-like text inside answer body is not parsed into structured citation DOM.
+Edit only:
+
+- `frontend/src/app/features/rag/rag-page.component.spec.ts`
+
+Add all three missing FE-03C proofs in rendered DOM:
+
+1. Out-of-order citations render in ordered sequence with ordinal, source, and full heading path.
+2. `{ abstained: false, citations: [] }` does not render `.citations-section`.
+3. Citation-like text in answer body is not parsed into `.citation-item` / `.citations-section` when structured citations are empty.
 
 ## Bounded next action for one worker pass
 
-1. Modify only `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-2. Add the three required rendered-DOM tests exactly as specified.
-3. Run `git diff --check`.
-4. Run exact gate: `./scripts/frontend-task-gate.sh task-fe-03c-citations`.
+Implement the three spec assertions above, run `git diff --check`, then run exact gate:
+
+- `./scripts/frontend-task-gate.sh task-fe-03c-citations`
+
+If red, stop at first new failure and preserve diagnostics.
 
 ## Acceptance conditions
 
-- `git diff --check` clean.
-- `./scripts/frontend-task-gate.sh task-fe-03c-citations` exits `0`.
-- Codex decision is `ACCEPT` for FE-03C.
-- Evidence explicitly demonstrates the three DOM behaviors above.
+- FE gate exits `0`.
+- DOM-level FE-03C assertions are present and passing.
+- Task closure only after Codex decision `ACCEPT`.
 
-## Avoid repeating
+## Do not repeat
 
-- Do not run another idle-timeout pass without editing the target spec file.
-- Do not stop at generic gate-green output without FE-03C requirement-level assertions.
+- Do not treat a generic green run as sufficient FE-03C proof.
+- Do not allow another idle-timeout loop without implementing the REVISE packet.
