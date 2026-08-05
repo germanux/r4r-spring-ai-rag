@@ -1,40 +1,39 @@
-# LP code review (Ring)
+# LP code review — RUN 20260805T234824Z
 
-## Current diagnosis
+## Current evidence read
 
-First current defect for the LP queue is **unfinished FE-03C Codex REVISE obligations** (rendered-DOM citation proof), with no SURGICAL acceptance evidence yet.
+- `lp-runtime/progress.json`: active task `task-fe-03c-citations` is still `PENDING`.
+- `lp-runtime/codex-qwen3-extra-instructions.md`: Codex decision is `REVISE` with mandatory FE-03C rendered-DOM instructions.
+- `lp-git-status.txt`: dirty paths include `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+- `lp-git-diff-stat.txt`: spec file has large unreviewed delta (`+108` lines) and no closure evidence.
+- `lp-runtime/manifest.json`: no checkpoint/codex review artifact is present in this snapshot.
 
-Evidence:
-- `lp-runtime/codex-qwen3-extra-instructions.md` is explicit: Codex decision is `REVISE` and mandates three specific rendered-DOM test behaviors.
-- `lp-runtime/progress.json` still marks `task-fe-03c-citations` as `PENDING`.
-- `lp-git-status.txt` shows an active product diff in `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-- `lp-git-diff-stat.txt` shows a large in-flight test edit (`108` insertions) without acceptance evidence.
+## First current defect (LP)
 
-## Routed package
+LP has not yet produced reviewer-verified FE-03C coverage for all required rendered-DOM citation behaviors. The current dirty spec diff is not yet proven against the exact FE-03C contract.
 
-- **Implementation level:** Level 1 (LP).
-- **Assigned role:** LP.
-- **Task ID:** `task-fe-03c-citations` (work package `FE-03C-A`).
-- **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED` (satisfied).
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` only.
-- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03c-citations`.
-- **Required SURGICAL review:** **Yes (mandatory)** before closure.
+## Bounded next action package
 
-## One-pass next action
+- **Implementation level:** 1 (LP)
+- **Assigned role:** LP (execution), SURGICAL Codex (mandatory reviewer)
+- **Task ID:** `task-fe-03c-citations`
+- **Work package:** `FE-03C-A`
+- **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED`
+- **allowed_paths:**
+  - `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03c-citations`
+- **Required SURGICAL review:** `ACCEPT` required before controller closure
 
-Execute one bounded FE-03C-A pass in the spec file only:
-1. Ensure rendered-DOM assertions cover: ordered citations (ordinal/source/heading path), omission of citations section for empty citation arrays, and non-parsing of citation-like answer text.
-2. Run `git diff --check`.
-3. Run the exact gate `./scripts/frontend-task-gate.sh task-fe-03c-citations`.
-4. Stop and hand off evidence for SURGICAL Codex review.
+### One-pass directive
 
-## Acceptance conditions
+Implement the Codex mandatory set in one bounded pass inside `rag-page.component.spec.ts`:
 
-- Only the allowed spec path is changed.
-- `git diff --check` is clean.
-- Exact FE gate is green.
-- Codex decision becomes `ACCEPT` for `task-fe-03c-citations`.
+1. Render a success response with out-of-order structured citations; assert rendered citation order and per-item ordinal/source/multi-segment heading path.
+2. Render `{ abstained: false, citations: [] }`; assert `.citations-section` is absent.
+3. Render citation-like answer text with empty structured citations; assert text stays in `.answer-content` and no `.citation-item`/`.citations-section` is created.
+4. Run `git diff --check` then run exact gate; submit resulting evidence for SURGICAL review.
 
 ## Avoid repeating
 
-- Do **not** treat generic Angular success as task completion when FE-03C rendered-DOM assertions are incomplete.
+- Do not treat generic green Angular runs as sufficient.
+- Do not rely on non-DOM shortcuts (e.g., only checking component internals/getters) for FE-03C acceptance.

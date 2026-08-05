@@ -795,3 +795,51 @@ Append-only ledger generated after each validated Ring cycle.
 - No codex_review or codex_plan artifact is present in this RUN_DIR for PC or LP (manifest fields are null).
 - RUN_DIR provides diff stats/status but not full unified diffs for worker product changes, so line-level validation of LP assertions is not directly available here.
 - Full gate logs referenced by summaries are not mirrored into this RUN_DIR snapshot.
+
+## Cycle `20260805T234824Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-06f-ingestion-validation`
+- Reason: PC is gate-green on attempt 1 with no product diff, but closure evidence is incomplete because SURGICAL Codex decision is still null/pending.
+- Next action: Route the existing gate-green checkpoint package for one SURGICAL Codex review pass; only if Codex returns REVISE, run one bounded BE-06F-A correction pass and rerun the exact gate.
+- Avoid repeating: Do not rerun unchanged backend edits or extra gate cycles while the current gate-green checkpoint is still awaiting Codex review.
+- Acceptance gates:
+  - task-06f-ingestion-validation exact gate: ./scripts/task-gate.sh task-06f-ingestion-validation must remain exit 0
+  - If REVISE: stay within BE-06F-A allowed_paths (src/test/resources/application.yml, .opencode/current/PC/**)
+  - Task closure requires SURGICAL Codex decision ACCEPT per .opencode/task-plan.hierarchy.json review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T234824Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T234824Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T234824Z/pc-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T234824Z/worker-requests/PC.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03c-citations`
+- Reason: LP remains in Codex REVISE state for FE-03C with an unreviewed spec-only diff and no ACCEPT evidence; missing rendered-DOM coverage is still the first current defect.
+- Next action: Complete FE-03C-A in rag-page.component.spec.ts exactly per Codex mandatory instructions (ordered structured citations, empty-citations omission, no parsing citation-like answer text), then run preflight and exact gate before SURGICAL review.
+- Avoid repeating: Do not stop at generic green test runs or partial assertions that fail to prove FE-03C rendered-DOM requirements.
+- Acceptance gates:
+  - FE-03C-A write scope remains only frontend/src/app/features/rag/rag-page.component.spec.ts
+  - Preflight must pass: git diff --check
+  - Exact gate: ./scripts/frontend-task-gate.sh task-fe-03c-citations must exit 0
+  - Task closure requires SURGICAL Codex decision ACCEPT per .opencode/task-plan.hierarchy.json review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T234824Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T234824Z/lp-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T234824Z/lp-git-diff-stat.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T234824Z/lp-runtime/progress.json`
+
+### Integration risks
+
+- If LP FE-03C assertions stay incomplete, frontend may pass broad tests without proving citation-order and citation-source rendering contract.
+- If PC advances beyond task-06f before Codex ACCEPT, backend progression can violate mandatory SURGICAL review policy.
+- PC request metadata says gate-green-no-checkpoint while checkpoint status is no-product-diff; this mismatch can cause controller/operator confusion if not interpreted consistently.
+
+### Evidence limitations
+
+- No codex_review/codex_plan artifacts are present in this RUN_DIR snapshot for either worker, so reviewer conclusions cannot be independently verified here.
+- RUN_DIR contains git status and diff-stat snapshots, not full patch hunks; detailed line-level validation of LP spec edits is not possible from this bundle alone.
