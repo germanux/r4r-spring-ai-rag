@@ -44,9 +44,9 @@
       "target": "ring-agent/state.json"
     },
     {
-      "bytes": 460,
+      "bytes": 586,
       "producer": "controller",
-      "sha256": "3bd6c2043d3bf0a206c842309bcdc855f9f32a2fcd6da7d35ee8b90a75acdbb7",
+      "sha256": "0edc61ac46b5317252a3a1627f32e1d3639714efa60720f75ad343b9e3e1d0f2",
       "source": "runtime/control/RING/requests/LP.json",
       "target": "runtime/control/RING/requests/LP.json"
     },
