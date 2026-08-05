@@ -2,58 +2,26 @@
 
 ## Current state
 
-- Worker: LP.
-- Run: 20260805T181511Z.
-- Last accepted task: task-fe-03-rag-ui.
-- Active task: task-fe-03b-answer-abstention.
-- Current attempt: 1.
-- Latest exact gate: not run; exit=unknown.
-- Latest Codex decision: pending.
-- Checkpoint: none; head=not recorded.
-- Accepted: task-fe-01-angular17-bootstrap, task-fe-02-rag-client, task-fe-03-rag-ui.
-- Remaining: task-fe-03b-answer-abstention, task-fe-03c-citations, task-fe-03d-dom-state-tests, task-fe-03e-security-accessibility, task-fe-03f-final-validation, task-fe-04-playwright.
-- Exact plan: `.opencode/task-plan.frontend.json`.
-
-## Files currently owned or edited
-
-- `frontend/src/app/features/rag/rag-page.component.html`
-
-## Demonstrated by current evidence
-
-- No new acceptance claim has been demonstrated in this run yet.
-
-## Still unproven or below expectations
-
-- Render deterministic answer, abstention and error states.
-
-## Approaches not to repeat
-
-- Do not repeat an unchanged failing action without new evidence.
-
-## Next exact action
-
-Resume the unfinished revision by applying the complete CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS included below. Do not wait for another Codex review before making the requested correction.
+- Last accepted task: None.
+- Active task: task-fe-01-angular17-bootstrap.
+- Accepted: none.
+- Remaining: task-fe-01-angular17-bootstrap, task-fe-02-rag-client, task-fe-03-rag-ui, task-fe-04-playwright.
+- Exact plan: `{self.plan_display}`.
 
 ## Fixed decisions
 
-- OpenCode/Qwen3 and Codex never write Git history.
-- The deterministic Python controller may create a gate-green checkpoint and a final ACCEPT commit.
-- A gate-green checkpoint preserves useful work but does not mark the task ACCEPTED.
-- A task completes only after its exact gate is green and Codex returns `ACCEPT`.
+- Non-web application until an explicit later task changes scope.
 - PostgreSQL only in Docker; Flyway owns application schema.
 - Spring AI abstractions; no handwritten Ollama HTTP client.
-- Every red gate retains complete diagnostics for Codex.
-- CodeGraph is focused retrieval evidence, not authority to expand task scope.
-- Markdown/JSON activity is published under `.opencode/current/{ring,PC,LP}/`; raw runtime is never committed directly.
+- Codex plans/reviews read-only; OpenCode edits; Python validates and commits.
+- Every red gate produces a full diagnostic log and compressed source bundle for Codex.
+- Identical Codex planning evidence is rate-limited; changed failures bypass the cooldown.
+- CodeGraph is focused and advisory by default; unavailable MCP evidence does not stop repair.
+- Runtime evidence stays under `runtime/runs/`; no automatic push.
 
-## Task ledger
+## Task commits
 
-- task-fe-01-angular17-bootstrap: ACCEPTED — accepted at 2026-08-05T17:04:46.121118+00:00; last green attempt=1
-- task-fe-02-rag-client: ACCEPTED — accepted at 2026-08-05T17:05:49.579162+00:00; last green attempt=1
-- task-fe-03-rag-ui: ACCEPTED — accepted at 2026-08-05T17:06:42.020494+00:00; last green attempt=1
-- task-fe-03b-answer-abstention: PENDING — accepted at not accepted; last green attempt=1
-- task-fe-03c-citations: PENDING — accepted at not accepted; last green attempt=none
-- task-fe-03d-dom-state-tests: PENDING — accepted at not accepted; last green attempt=none
-- task-fe-03e-security-accessibility: PENDING — accepted at not accepted; last green attempt=none
-- task-fe-03f-final-validation: PENDING — accepted at not accepted; last green attempt=none
-- task-fe-04-playwright: PENDING — accepted at not accepted; last green attempt=none
+- task-fe-01-angular17-bootstrap: PENDING — accepted at not accepted
+- task-fe-02-rag-client: PENDING — accepted at not accepted
+- task-fe-03-rag-ui: PENDING — accepted at not accepted
+- task-fe-04-playwright: PENDING — accepted at not accepted
