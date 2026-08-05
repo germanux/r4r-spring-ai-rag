@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "classification": "green",
+  "summary": "The deterministic task gate completed successfully.",
+  "fingerprint": "924f565592090ea86e448325ec50af03a1e057292196f986c9b8856ff708fb5d",
+  "command": [
+    "./scripts/frontend-task-gate.sh",
+    "task-fe-03b-answer-abstention"
+  ],
+  "exit_code": 0,
+  "source_paths": [],
+  "related_paths": [],
+  "full_log": "gate-full.log"
+}
