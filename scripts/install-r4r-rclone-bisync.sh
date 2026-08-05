@@ -5,13 +5,21 @@ set -Eeuo pipefail
 # CONFIGURACION: no se pasan parametros al script.
 # ============================================================================
 RCLONE_REMOTE="gdrive"
+
+# Este directorio deja de estar gestionado por Insync, pero se conserva como
+# espejo local de Drive para no alterar el resto del sistema R4R.
 LOCAL_SYNC_DIR="${HOME}/Insync/riansares4r@gmail.com/Google Drive/Agentes R4R/r4r-ring-agent.git"
 REMOTE_SYNC_DIR="Agentes R4R/r4r-ring-agent.git"
+
+# Worktree existente alimentado por r4r-drive-import-safe.py. Rclone NO debe
+# sincronizar directamente este directorio ni sustituir la importación segura.
+LOCAL_GIT_WORKTREE="${HOME}/Desarrollo/r4r-google-drive.git"
 
 SYNC_INTERVAL="1min"
 MAX_DELETE_PERCENT="15"
 MIN_RCLONE_VERSION="1.71.0"
 AUTO_INSTALL_RCLONE="true"
+INITIAL_RESYNC_MODE="newer"
 
 UNIT_NAME="r4r-rclone-bisync"
 INSTALL_PATH="${HOME}/.local/bin/${UNIT_NAME}"
@@ -21,6 +29,9 @@ RUNTIME_DIR="${HOME}/Desarrollo/.r4r-runtime"
 FILTERS_FILE="${CONFIG_DIR}/filters.txt"
 BOOTSTRAP_MARKER="${STATE_DIR}/bootstrap-completed"
 LOCK_FILE="${RUNTIME_DIR}/${UNIT_NAME}.lock"
+# Rclone exige que cada backup esté en el mismo sistema que su ruta de origen
+# y que no se solape con ella. Por eso son directorios separados y nuevos; no
+# son raíces de sincronización ni sustituyen ningún directorio actual.
 LOCAL_BACKUP_DIR="${RUNTIME_DIR}/rclone-backups/r4r-ring-agent-local"
 REMOTE_BACKUP_DIR="Agentes R4R/.rclone-backups/r4r-ring-agent-remote"
 ACCESS_TEST_FILE="RCLONE_TEST"
@@ -60,7 +71,7 @@ install_rclone_if_needed() {
   local temp_dir=""
 
   if command_exists rclone; then
-    current_version="$(rclone version | awk 'NR == 1 {sub(/^rclone v/, "", $2); print $2}')"
+    current_version="$(rclone version | sed -n '1s/^rclone v//p')"
     if ! version_at_least "$current_version" "$MIN_RCLONE_VERSION"; then
       log "rclone ${current_version} es demasiado antiguo; se requiere ${MIN_RCLONE_VERSION} o posterior."
       install_required="true"
@@ -75,14 +86,16 @@ install_rclone_if_needed() {
   command_exists sudo || die "Falta sudo; no puedo instalar rclone automáticamente."
 
   temp_dir="$(mktemp -d)"
+  trap 'rm -rf -- "$temp_dir"' RETURN
   log "Descargando el instalador oficial de rclone. sudo puede pedir la contraseña."
   curl --proto '=https' --tlsv1.2 --fail --silent --show-error \
     --location https://rclone.org/install.sh \
     --output "${temp_dir}/install-rclone.sh"
   sudo bash "${temp_dir}/install-rclone.sh"
   rm -rf -- "$temp_dir"
+  trap - RETURN
   command_exists rclone || die "La instalación de rclone no terminó correctamente."
-  current_version="$(rclone version | awk 'NR == 1 {sub(/^rclone v/, "", $2); print $2}')"
+  current_version="$(rclone version | sed -n '1s/^rclone v//p')"
   version_at_least "$current_version" "$MIN_RCLONE_VERSION" ||
     die "Se instaló rclone ${current_version}, pero se requiere ${MIN_RCLONE_VERSION} o posterior."
 }
@@ -101,6 +114,32 @@ ensure_remote_configured() {
 }
 
 ensure_layout() {
+  local sync_path
+  local worktree_path
+  local backup_path
+
+  [[ -d "$LOCAL_SYNC_DIR" ]] ||
+    die "No existe el directorio local actual: ${LOCAL_SYNC_DIR}"
+
+  [[ -d "$LOCAL_GIT_WORKTREE" ]] ||
+    die "No existe el worktree actual: ${LOCAL_GIT_WORKTREE}"
+
+  sync_path="$(realpath -m "$LOCAL_SYNC_DIR")"
+  worktree_path="$(realpath -m "$LOCAL_GIT_WORKTREE")"
+  backup_path="$(realpath -m "$LOCAL_BACKUP_DIR")"
+
+  [[ "$sync_path" != "$worktree_path" ]] ||
+    die "LOCAL_SYNC_DIR no puede ser el worktree Git; debe seguir siendo el espejo intermedio."
+  [[ "$backup_path" != "$sync_path" &&
+     "$backup_path" != "${sync_path}/"* &&
+     "$sync_path" != "${backup_path}/"* ]] ||
+    die "LOCAL_BACKUP_DIR y LOCAL_SYNC_DIR no pueden solaparse."
+
+  [[ "$REMOTE_BACKUP_DIR" != "$REMOTE_SYNC_DIR" &&
+     "$REMOTE_BACKUP_DIR" != "${REMOTE_SYNC_DIR}/"* &&
+     "$REMOTE_SYNC_DIR" != "${REMOTE_BACKUP_DIR}/"* ]] ||
+    die "REMOTE_BACKUP_DIR y REMOTE_SYNC_DIR no pueden solaparse."
+
   mkdir -p \
     "$(dirname "$INSTALL_PATH")" \
     "$CONFIG_DIR" \
@@ -108,9 +147,6 @@ ensure_layout() {
     "$RUNTIME_DIR" \
     "$LOCAL_BACKUP_DIR" \
     "$(dirname "$SERVICE_FILE")"
-
-  [[ -d "$LOCAL_SYNC_DIR" ]] ||
-    die "No existe el directorio local actual: ${LOCAL_SYNC_DIR}"
 }
 
 ensure_filters() {
@@ -165,6 +201,9 @@ ensure_access_markers() {
 }
 
 bisync_common_args() {
+  local backup_suffix
+  backup_suffix=".$(date '+%Y%m%d-%H%M%S')"
+
   BISYNC_ARGS=(
     "$LOCAL_SYNC_DIR"
     "$REMOTE_PATH"
@@ -183,6 +222,8 @@ bisync_common_args() {
     --conflict-loser pathname
     --backup-dir1 "$LOCAL_BACKUP_DIR"
     --backup-dir2 "$REMOTE_BACKUP_PATH"
+    --suffix "$backup_suffix"
+    --suffix-keep-extension
     --drive-use-trash=true
     --drive-skip-gdocs
     --fast-list
@@ -211,14 +252,17 @@ run_bisync() {
   if [[ "$mode" == "bootstrap" ]]; then
     log "Primera simulación segura: no modificará archivos."
     rclone bisync "${BISYNC_ARGS[@]}" \
-      --resync-mode newer \
+      --resync \
+      --resync-mode "$INITIAL_RESYNC_MODE" \
       --dry-run \
       --log-file "${STATE_DIR}/bootstrap-dry-run.log"
 
     log "La simulación terminó correctamente. Se inicia el bootstrap real en 10 segundos."
     log "Pulsa Ctrl+C ahora si quieres revisar primero ${STATE_DIR}/bootstrap-dry-run.log."
     sleep 10
-    rclone bisync "${BISYNC_ARGS[@]}" --resync-mode newer
+    rclone bisync "${BISYNC_ARGS[@]}" \
+      --resync \
+      --resync-mode "$INITIAL_RESYNC_MODE"
     date --iso-8601=seconds >"$BOOTSTRAP_MARKER"
   else
     [[ -f "$BOOTSTRAP_MARKER" ]] ||
@@ -270,6 +314,8 @@ EOF
 }
 
 main() {
+  [[ "$#" -eq 0 ]] || die "Este script no acepta parámetros; edita las variables del principio."
+
   if [[ "${R4R_RCLONE_SERVICE_MODE:-0}" == "1" ]]; then
     run_bisync normal
     return 0
