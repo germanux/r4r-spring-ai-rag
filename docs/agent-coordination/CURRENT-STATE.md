@@ -1,39 +1,37 @@
-# Global coordination summary (run 20260805T225504Z)
+# Global coordination summary (RUN_ID 20260805T233220Z)
 
-## Overall status: READY
+## Executive status
 
-This cycle found no destructive repository issue requiring Ring-side code edits. The queue is ready for bounded continuation with asymmetric actions:
+**Overall status: READY**
 
-- **PC:** hold for Codex review on an already gate-green checkpoint.
-- **LP:** continue one focused FE-03C correction pass.
+- PC queue is at a review boundary (green gate, pending Codex decision).
+- LP queue needs one bounded correction pass to satisfy explicit Codex REVISE requirements for FE-03C.
 
-## Evidence highlights
+## Evidence-led findings
 
-- PC has deterministic gate success and checkpoint evidence:
-  - `pc-runtime/gate_summary.md`
-  - `pc-runtime/checkpoint.json`
-  - `worker-requests/PC.json`
-- LP remains pending with explicit Codex REVISE instructions:
-  - `lp-runtime/codex-qwen3-extra-instructions.md`
-  - `lp-runtime/progress.json`
-  - `lp-runtime/memory.md`
+### PC
+- `task-06f-ingestion-validation` gate is green (`pc-runtime/gate_summary.md`).
+- `checkpoint.json` reports `no-product-diff`.
+- `worker-requests/PC.json` explicitly requests action because Codex decision is still null.
 
-## Priority decisions
+### LP
+- `task-fe-03c-citations` is still `PENDING` (`lp-runtime/progress.json`).
+- Codex extra instructions are `REVISE` with concrete missing assertion requirements.
+- Active spec diff exists (`lp-git-status.txt`, `lp-git-diff-stat.txt`), but no SURGICAL acceptance evidence is present.
 
-1. **PC first defect:** no Codex ACCEPT evidence yet for `task-06f-ingestion-validation`.
-   - Action: HOLD pending review outcome.
-2. **LP first defect:** missing FE-03C rendered-DOM citation assertions.
-   - Action: CONTINUE with bounded spec-only implementation and exact FE gate.
+## Directed next actions
 
-## Guardrails reaffirmed
+1. **PC (L2):** prioritize SURGICAL review of current green evidence; no new backend edits unless Codex returns REVISE.
+2. **LP (L1):** complete FE-03C-A in the single allowed spec path, run `git diff --check`, run exact FE gate, then request SURGICAL review.
 
-- Do not bypass exact gates.
-- Do not widen task scope.
-- Do not write Git history from workers.
-- Do not treat gate-green alone as task completion without Codex `ACCEPT`.
+## Acceptance framework (non-negotiable)
 
-## Explicit limitations
+- Exact gate green is required but not sufficient.
+- PC/LP tasks close only after SURGICAL Codex `ACCEPT`.
+- Scope must remain inside each package's `allowed_paths`.
 
-- Review was constrained to staged snapshot evidence under RUN_DIR.
-- No direct live-worker worktree inspection was performed.
-- Full gate logs and Codex review artifacts are not fully present in this snapshot for deeper forensics.
+## Evidence limitations
+
+- No Codex review artifact is present in this RUN_DIR for either queue.
+- LP/PC full unified diffs are not included in this snapshot; only status/stat summaries are available.
+- Full gate logs are referenced but not mirrored into this RUN_DIR evidence set.

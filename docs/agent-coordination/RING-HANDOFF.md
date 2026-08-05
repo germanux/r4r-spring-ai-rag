@@ -1,28 +1,39 @@
-# Backend ↔ Frontend handoff (run 20260805T225504Z)
+# Backend ↔ Frontend handoff (Ring)
 
-## Current backend state relevant to frontend
+## Queue separation status
 
-- Backend PC task `task-06f-ingestion-validation` has a green deterministic gate and checkpoint evidence.
-- Backend task is **not closed** yet because Codex acceptance is not present in this snapshot.
-- No new backend API contract change is evidenced in this run snapshot.
+Ownership remains disjoint for this cycle and can run concurrently:
 
-## Current frontend state relevant to backend
+- **PC/backend scope:** review posture on `task-06f-ingestion-validation` (no new product edit required unless Codex REVISE).
+- **LP/frontend scope:** active FE-03C test-only correction in `rag-page.component.spec.ts`.
 
-- Frontend LP task `task-fe-03c-citations` remains pending under Codex `REVISE`.
-- Required work is test-proof completion in spec assertions, not backend contract expansion.
+No overlapping `allowed_paths` are required by the current next actions.
 
-## Integration risk assessment
+## Active packages
 
-1. **Process risk:** backend gate-green may be mistaken for task closure; closure still requires Codex `ACCEPT`.
-2. **Verification risk:** frontend may pass generic gate paths while still missing FE-03C contract assertions.
-3. **Coordination risk:** parallel activity could drift if LP changes component logic instead of bounded spec-only verification.
+### Backend package
+- **Level / role:** Level 2 / PC
+- **Task ID:** `task-06f-ingestion-validation` (`BE-06F-A` review stage)
+- **Dependencies:** `task-06e-child-process:ACCEPTED`
+- **allowed_paths:** `src/test/resources/application.yml`, `.opencode/current/PC/**` (only if REVISE)
+- **Exact gate:** `./scripts/task-gate.sh task-06f-ingestion-validation`
+- **SURGICAL review:** required before closure
 
-## Bounded cross-stack next actions
+### Frontend package
+- **Level / role:** Level 1 / LP
+- **Task ID:** `task-fe-03c-citations` (`FE-03C-A`)
+- **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED`
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03c-citations`
+- **SURGICAL review:** required before closure
 
-- **PC lane:** hold until Codex decision on existing checkpoint; only run a corrective pass if Codex requires it.
-- **LP lane:** complete FE-03C rendered-DOM assertions in `rag-page.component.spec.ts` and rerun exact FE gate.
+## Integration risks to monitor
 
-## Cross-stack acceptance conditions
+1. **LP evidence consistency risk:** `lp-runtime/memory.md` says gate not run, while `lp-runtime/gate_summary.md` is green. Treat closure evidence as incomplete until one coherent run packet is produced.
+2. **Scope creep risk in LP spec edit:** current diff size suggests potential drift into FE-03D behaviors; keep FE-03C assertions only.
+3. **Unnecessary churn risk on backend:** PC should avoid fresh edits while Codex decision is pending on a green gate state.
 
-- Backend `task-06f-ingestion-validation`: exact gate green evidence + Codex `ACCEPT`.
-- Frontend `task-fe-03c-citations`: exact FE gate green evidence + Codex `ACCEPT` with required DOM assertions proven.
+## Handoff decision
+
+- Backend: **hold edits, prioritize SURGICAL review of current evidence**.
+- Frontend: **continue one bounded LP pass to satisfy Codex REVISE and regenerate exact-gate evidence**.

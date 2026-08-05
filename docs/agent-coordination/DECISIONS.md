@@ -745,3 +745,53 @@ Append-only ledger generated after each validated Ring cycle.
 - This cycle uses bounded snapshot evidence under RUN_DIR only; no direct inspection of live PC/LP worktrees was performed.
 - No Codex review artifact is present yet for PC checkpoint head 64dcc9c8a8993f1a59c96624853b1fad72ebc98c in this RUN_DIR snapshot.
 - Gate summary markdowns are truncated summaries and do not include full gate-full.log contents in this staged review.
+
+## Cycle `20260805T233220Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-06f-ingestion-validation`
+- Reason: PC has a green exact gate with no product diff and no Codex decision yet; closure is blocked only on mandatory SURGICAL review/ACCEPT evidence.
+- Next action: Submit the existing gate-green checkpoint evidence for SURGICAL Codex review; only if Codex returns REVISE, execute one bounded BE-06F-A correction pass and rerun the exact gate.
+- Avoid repeating: Do not rerun backend edits or full gate cycles while Codex decision is still pending for the current green checkpoint.
+- Acceptance gates:
+  - task-06f-ingestion-validation closes only after SURGICAL Codex decision ACCEPT
+  - Exact gate remains: ./scripts/task-gate.sh task-06f-ingestion-validation with exit 0
+  - If Codex returns REVISE, stay within BE-06F-A allowed_paths: src/test/resources/application.yml and .opencode/current/PC/**
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T233220Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T233220Z/pc-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T233220Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T233220Z/pc-runtime/progress.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03c-citations`
+- Reason: LP is still PENDING on Codex REVISE instructions for FE-03C rendered-DOM coverage; current snapshot shows an unreviewed spec diff and no Codex ACCEPT evidence.
+- Next action: Complete FE-03C-A in rag-page.component.spec.ts exactly per Codex instructions, run git diff --check, run ./scripts/frontend-task-gate.sh task-fe-03c-citations, then hand off for SURGICAL review.
+- Avoid repeating: Do not stop at generic green runs or partial assertions that miss FE-03C rendered-DOM requirements.
+- Acceptance gates:
+  - FE-03C-A scope: only frontend/src/app/features/rag/rag-page.component.spec.ts
+  - Preflight: git diff --check must be clean
+  - Exact gate: ./scripts/frontend-task-gate.sh task-fe-03c-citations
+  - task-fe-03c-citations closes only after SURGICAL Codex decision ACCEPT
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T233220Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T233220Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T233220Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T233220Z/lp-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T233220Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- Evidence inconsistency exists for LP (memory says latest gate not run, while gate_summary is green), creating risk of stale or misattributed acceptance evidence.
+- LP currently carries a large single-file spec diff (108 inserted lines), which can accidentally include FE-03D scope if not kept strictly FE-03C bounded.
+- PC has no current product diff; unnecessary new edits before Codex review would introduce avoidable regression risk.
+
+### Evidence limitations
+
+- No codex_review or codex_plan artifact is present in this RUN_DIR for PC or LP (manifest fields are null).
+- RUN_DIR provides diff stats/status but not full unified diffs for worker product changes, so line-level validation of LP assertions is not directly available here.
+- Full gate logs referenced by summaries are not mirrored into this RUN_DIR snapshot.
