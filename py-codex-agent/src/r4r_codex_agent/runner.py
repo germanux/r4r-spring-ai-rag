@@ -2867,7 +2867,7 @@ next instruction packet.
             "- Spring AI abstractions; no handwritten Ollama HTTP client.",
             "- Every red gate retains complete diagnostics for Codex.",
             "- CodeGraph is focused retrieval evidence, not authority to expand task scope.",
-            "- Runtime evidence stays under `runtime/runs/`; the deterministic controller publishes only after a validated commit.",
+            "- Curated Markdown evidence under `runtime/runs/` is versioned; heavy runtime artifacts stay local.",
             "",
             "## Task ledger",
             "",
@@ -2881,11 +2881,24 @@ next instruction packet.
         self.memory_path.parent.mkdir(parents=True, exist_ok=True)
         self.memory_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
+    @staticmethod
+    def _versioned_trace_patterns() -> tuple[str, ...]:
+        """Return the concise runtime reports that belong in Git history."""
+        return (
+            "runtime/runs/**/decisions/*.md",
+            "runtime/runs/**/evidence/*.md",
+        )
+
     def _commit_if_needed(
         self,
         message: str,
         allowed_patterns: Sequence[str] | None = None,
     ) -> str | None:
+        if allowed_patterns is not None:
+            allowed_patterns = (
+                *allowed_patterns,
+                *self._versioned_trace_patterns(),
+            )
         # Serialize only the short add/check/commit section with every R4R Git
         # automation. Model work and gates remain concurrent. Manual Git commands
         # do not honor this cooperative lock.
@@ -3081,3 +3094,4 @@ next instruction packet.
             if notification.exit_code != 0:
                 print("[r4r] error sound notification failed; workflow state is preserved", file=sys.stderr)
         return exit_code
+

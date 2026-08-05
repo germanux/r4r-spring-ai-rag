@@ -98,3 +98,8 @@ repository rewrite.
 - Never recursively search generated or runtime-heavy directories:
   `frontend/node_modules/**`, `frontend/dist/**`, `frontend/.angular/**`,
   `node_modules/**`, `runtime/**` and `.r4r/**`.
+- Concise observability reports under `runtime/runs/**/decisions/*.md` and
+  `runtime/runs/**/evidence/*.md` are versioned. Inspect only the exact task/run
+  needed; logs, JSON diagnostics, patches, PID/lock files and bulk runtime output
+  remain local.
+
