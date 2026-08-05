@@ -44,6 +44,13 @@
       "target": "ring-agent/state.json"
     },
     {
+      "bytes": 460,
+      "producer": "controller",
+      "sha256": "3bd6c2043d3bf0a206c842309bcdc855f9f32a2fcd6da7d35ee8b90a75acdbb7",
+      "source": "runtime/control/RING/requests/LP.json",
+      "target": "runtime/control/RING/requests/LP.json"
+    },
+    {
       "bytes": 1630,
       "producer": "local-llm",
       "sha256": "2d1b5c099fd6d96c0a58703ef5fedea7c748d4d7bbc6a6008d578f7c6361e40c",
