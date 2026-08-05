@@ -559,3 +559,94 @@ Append-only ledger generated after each validated Ring cycle.
 - This cycle has no new Codex review artifact (codex_review/codex_plan are null in both worker manifests).
 - Gate summaries are condensed; full gate logs are not included in this RUN_DIR snapshot.
 - Ring reviewed bounded runtime evidence only and did not inspect live PC/LP worktrees directly.
+
+## Cycle `20260805T205823Z` â READY
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-06f-ingestion-validation`
+- Reason: Current active backend task is task-06f-ingestion-validation and the latest packaged gate evidence for that task is red (classification test-failure, exit 1) with failing tests named in PostgresBaselineIT, KnowledgeIngestionCliTest, and RagQueryControllerTest.
+- Next action: Run the exact gate for task-06f, capture the first current failing assertion from gate-full.log, and make one bounded backend fix scoped to that first failure before re-running the same gate.
+- Avoid repeating: Do not treat the prior task-06e ACCEPT/checkpoint as evidence that task-06f is already validated.
+- Acceptance gates:
+  - ./scripts/task-gate.sh task-06f-ingestion-validation must exit 0
+  - task-06f-ingestion-validation is complete only after Codex decision is ACCEPT
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205823Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205823Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205823Z/pc-runtime/manifest.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03c-citations`
+- Reason: Frontend active task remains task-fe-03c-citations in PENDING state; Codex extra instructions are REVISE with explicit missing rendered-DOM citation assertions, and memory shows the prior local session ended by idle-timeout without task-owned product edits.
+- Next action: Apply the FE-03C REVISE packet by editing rag-page.component.spec.ts to add the three required rendered-DOM citation tests, then run the exact FE-03C gate.
+- Avoid repeating: Do not stop at a generic green run or another idle-timeout without implementing the Codex-requested DOM assertions.
+- Acceptance gates:
+  - ./scripts/frontend-task-gate.sh task-fe-03c-citations must exit 0
+  - task-fe-03c-citations is complete only after Codex decision is ACCEPT
+  - FE-03C proof must be rendered-DOM assertions (ordered structured citations, empty-citations omission, and no parsing of citation-like answer text)
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205823Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205823Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205823Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205823Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- Backend task-06f gate is currently red, so downstream integration confidence remains blocked even though task-06e was accepted.
+- Frontend FE-03C citations behavior is still unproven by required DOM-level tests, risking mismatch between structured citation contract and rendered UI evidence.
+
+### Evidence limitations
+
+- Only gate summaries were packaged in RUN_DIR; full gate logs are referenced but not included here.
+- LP snapshot includes no codex_review.json artifact, so Codex acceptance status for FE-03C cannot be inferred beyond the REVISE packet.
+
+## Cycle `20260805T212753Z` â READY
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-06f-ingestion-validation`
+- Reason: Current backend task is still pending and the latest worker request is Codex REVISE with gate exit 2; evidence directs a bounded correction (whitespace sanitation plus test config exclusion fix) before rerunning the exact gate.
+- Next action: Apply the codex-revise packet exactly: sanitize trailing whitespace in controller-published Markdown artifacts, remove only PgVectorStoreAutoConfiguration from src/test/resources/application.yml exclusions (keep Flyway enabled and JdbcMetrics exclusion), then rerun ./scripts/task-gate.sh task-06f-ingestion-validation from clean target/.
+- Avoid repeating: Do not infer backend test behavior from gate exit 2 preflight/whitespace failures or widen scope into Java test rewrites before applying the bounded config+sanitation fix.
+- Acceptance gates:
+  - git diff --check must be clean before expensive gate reruns
+  - ./scripts/task-gate.sh task-06f-ingestion-validation must exit 0
+  - task-06f-ingestion-validation completes only after Codex decision ACCEPT
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/pc-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/pc-git-diff-stat.txt`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03c-citations`
+- Reason: Frontend task remains PENDING with Codex REVISE instructions still unimplemented in task-owned product code; repeated idle-timeout sessions produced no FE-03C proof despite a generic green gate snapshot.
+- Next action: Edit only frontend/src/app/features/rag/rag-page.component.spec.ts to add the three required rendered-DOM citation assertions from the Codex REVISE packet, then run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03c-citations.
+- Avoid repeating: Do not run another idle-timeout session or stop at a generic green run without implementing and proving the missing FE-03C DOM assertions.
+- Acceptance gates:
+  - git diff --check must be clean before the FE gate
+  - ./scripts/frontend-task-gate.sh task-fe-03c-citations must exit 0
+  - task-fe-03c-citations completes only after Codex decision ACCEPT
+  - FE-03C proof must be rendered-DOM assertions for ordered structured citations, empty-citation omission, and non-parsing of citation-like answer text
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T212753Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- Cross-stack delivery is blocked by backend gate preflight/test-config hygiene and frontend evidence-quality gaps; both tasks can report green-like signals without meeting Codex ACCEPT criteria.
+- Controller-published Markdown whitespace can fail repository-wide preflight and waste full backend gate cycles if not sanitized first.
+
+### Evidence limitations
+
+- RUN_DIR provides gate summaries and worker memory but not full gate-full.log output; first failing assertion text is not directly quoted in this cycle.
+- LP evidence is internally inconsistent (green gate summary vs memory saying latest gate not run), so directive prioritizes explicit Codex REVISE packet completion and exact gate rerun.

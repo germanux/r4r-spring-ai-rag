@@ -1,35 +1,33 @@
-# Global summary — run 20260805T205323Z
+# Global summary (run 20260805T212753Z)
 
 ## Overall status
 
-`READY`
+**READY** — both queues have clear bounded next actions with evidence-backed directives.
 
-Both queues have actionable, bounded next steps with sufficient evidence to proceed.
+## What is currently true
 
-## PC summary
+- **PC/backend** is active on `task-06f-ingestion-validation` and currently blocked by a Codex `REVISE` pass with `gate_exit=2`; no ACCEPT for task 06f exists yet.
+- **LP/frontend** is active on `task-fe-03c-citations` and still `PENDING`; Codex requires additional rendered-DOM citation tests, and repeated idle-timeouts prevented completion.
 
-- Task: `task-06e-child-process`.
-- Exact gate: green (`exit 0`).
-- Checkpoint: created at head `179ab444664901b620d59cb30e4a42cc6e93a95b`.
-- Blocking gap: no Codex decision yet (`codex_decision: null`).
+## Prioritized next moves
 
-Decision: `REVIEW` — close the pending Codex decision on the existing checkpoint before any new backend implementation pass.
+1. **PC first defect correction:** apply the exact REVISE packet (whitespace sanitation + bounded application.yml exclusion fix), then rerun exact backend gate.
+2. **LP first defect correction:** implement the three missing rendered-DOM citation assertions in `rag-page.component.spec.ts`, then rerun exact FE gate.
 
-## LP summary
+## Acceptance bar (non-negotiable)
 
-- Task: `task-fe-03c-citations`.
-- Status: still `PENDING`.
-- Codex packet: `REVISE` with explicit missing FE-03C rendered-DOM assertions.
-- Current snapshot: no task-owned dirty product file.
-
-Decision: `CONTINUE` — execute the bounded test-spec revisions and rerun the exact FE-03C gate.
-
-## Key risks
-
-- FE-03C acceptance may be overstated if DOM-proof assertions are still absent despite generic gate success.
-- Backend task-06e remains unfinalized until Codex ACCEPT on the current checkpoint.
+- Backend: `./scripts/task-gate.sh task-06f-ingestion-validation` exit 0 + Codex ACCEPT.
+- Frontend: `./scripts/frontend-task-gate.sh task-fe-03c-citations` exit 0 + Codex ACCEPT.
+- Both: `git diff --check` clean before expensive gates.
 
 ## Evidence limitations
 
-- No new Codex review artifacts are packaged in this run for either worker.
-- Full gate logs are not present here; only summarized diagnostics were available.
+- Full `gate-full.log` is not present in RUN_DIR artifacts, so this cycle does not quote first failing assertions directly.
+- LP evidence has an inconsistency between gate summary and memory; we therefore prioritize the explicit Codex REVISE packet as authoritative for next action.
+
+## Evidence references
+
+- `runtime/ring-agent/ring/20260805T212753Z/worker-request-manifest.json`
+- `runtime/ring-agent/ring/20260805T212753Z/worker-requests/PC.json`
+- `runtime/ring-agent/ring/20260805T212753Z/pc-runtime/{progress.json,memory.md,gate_summary.md}`
+- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/{progress.json,memory.md,codex-qwen3-extra-instructions.md,gate_summary.md}`

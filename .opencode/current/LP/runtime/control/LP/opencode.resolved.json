@@ -1,0 +1,370 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "r4r-laptop",
+  "share": "disabled",
+  "snapshot": true,
+  "provider": {
+    "ollama-pc": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama PC - R4R",
+      "options": {
+        "baseURL": "http://127.0.0.1:11434/v1",
+        "timeout": 14400000,
+        "chunkTimeout": 600000
+      },
+      "models": {
+        "qwen3-coder-next-80b-t025-168k-8k-pc-pc": {
+          "name": "qwen3-coder-next-80b-t025-168k-8k-pc-pc",
+          "limit": {
+            "context": 172032,
+            "output": 8192
+          }
+        },
+        "qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest": {
+          "name": "qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest",
+          "limit": {
+            "context": 172032,
+            "output": 8192
+          }
+        },
+        "qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest": {
+          "name": "qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest",
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        }
+      }
+    },
+    "ollama-laptop": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama Laptop - R4R",
+      "options": {
+        "baseURL": "http://192.168.1.9:11434/v1",
+        "timeout": 14400000,
+        "chunkTimeout": 600000
+      },
+      "models": {
+        "qwen3-30b-coder-28k-6k-t33:latest": {
+          "name": "Qwen3 Coder 30B Laptop 28K/6K t33",
+          "temperature": true,
+          "limit": {
+            "context": 28672,
+            "output": 6144
+          }
+        }
+      }
+    },
+    "openai": {
+      "options": {
+        "reasoningEffort": "medium",
+        "reasoningSummary": "auto",
+        "textVerbosity": "medium",
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "store": false
+      },
+      "models": {
+        "gpt-5.2": {
+          "name": "GPT 5.2 (OAuth)",
+          "limit": {
+            "context": 272000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "variants": {
+            "none": {
+              "reasoningEffort": "none",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "low": {
+              "reasoningEffort": "low",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "medium": {
+              "reasoningEffort": "medium",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "high": {
+              "reasoningEffort": "high",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            }
+          }
+        },
+        "gpt-5.2-codex": {
+          "name": "GPT 5.2 Codex (OAuth)",
+          "limit": {
+            "context": 272000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "variants": {
+            "low": {
+              "reasoningEffort": "low",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "medium": {
+              "reasoningEffort": "medium",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "high": {
+              "reasoningEffort": "high",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            }
+          }
+        },
+        "gpt-5.1-codex-max": {
+          "name": "GPT 5.1 Codex Max (OAuth)",
+          "limit": {
+            "context": 272000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "variants": {
+            "low": {
+              "reasoningEffort": "low",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            },
+            "medium": {
+              "reasoningEffort": "medium",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            },
+            "high": {
+              "reasoningEffort": "high",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            }
+          }
+        },
+        "gpt-5.1-codex": {
+          "name": "GPT 5.1 Codex (OAuth)",
+          "limit": {
+            "context": 272000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "variants": {
+            "low": {
+              "reasoningEffort": "low",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "medium": {
+              "reasoningEffort": "medium",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "high": {
+              "reasoningEffort": "high",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            }
+          }
+        },
+        "gpt-5.1-codex-mini": {
+          "name": "GPT 5.1 Codex Mini (OAuth)",
+          "limit": {
+            "context": 272000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "variants": {
+            "medium": {
+              "reasoningEffort": "medium",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "high": {
+              "reasoningEffort": "high",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            }
+          }
+        },
+        "gpt-5.1": {
+          "name": "GPT 5.1 (OAuth)",
+          "limit": {
+            "context": 272000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "variants": {
+            "none": {
+              "reasoningEffort": "none",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "low": {
+              "reasoningEffort": "low",
+              "reasoningSummary": "auto",
+              "textVerbosity": "low"
+            },
+            "medium": {
+              "reasoningEffort": "medium",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "high": {
+              "reasoningEffort": "high",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "high"
+            }
+          }
+        }
+      }
+    }
+  },
+  "permission": {
+    "codegraph_*": "deny",
+    "code_graph_rag_*": "deny",
+    "playwright_*": "deny"
+  },
+  "mcp": {
+    "codegraph": {
+      "type": "local",
+      "command": [
+        "bash",
+        "./scripts/codegraph-mcp.sh"
+      ],
+      "enabled": true,
+      "timeout": 30000
+    },
+    "code_graph_rag": {
+      "type": "local",
+      "command": [
+        "bash",
+        "./scripts/cgr.sh",
+        "mcp"
+      ],
+      "enabled": true,
+      "timeout": 120000,
+      "environment": {
+        "TARGET_REPO_PATH": "/home/german/Desarrollo/r4r-lp-worker.git",
+        "ORCHESTRATOR_PROVIDER": "ollama",
+        "ORCHESTRATOR_MODEL": "qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest",
+        "ORCHESTRATOR_ENDPOINT": "http://127.0.0.1:11434/v1",
+        "CYPHER_PROVIDER": "ollama",
+        "CYPHER_MODEL": "qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest",
+        "CYPHER_ENDPOINT": "http://127.0.0.1:11434/v1"
+      }
+    },
+    "playwright": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@playwright/mcp@latest",
+        "--headless",
+        "--isolated",
+        "--block-service-workers",
+        "--image-responses",
+        "omit",
+        "--viewport-size",
+        "1440x1000",
+        "--timeout-navigation",
+        "90000",
+        "--output-dir",
+        "runtime/playwright"
+      ],
+      "enabled": true,
+      "timeout": 30000
+    }
+  },
+  "watcher": {
+    "ignore": [
+      ".git/**",
+      ".codegraph/**",
+      ".cgr-runtime/**",
+      ".r4r/reference-repositories/**",
+      "runtime/**",
+      "target/**",
+      "frontend/node_modules/**",
+      "frontend/dist/**",
+      "node_modules/**",
+      "docker-postgres/data/**",
+      "**/*.zip"
+    ]
+  },
+  "enabled_providers": [
+    "ollama-pc",
+    "ollama-laptop",
+    "openai"
+  ],
+  "disabled_providers": [],
+  "plugin": [
+    "opencode-openai-codex-auth"
+  ]
+}

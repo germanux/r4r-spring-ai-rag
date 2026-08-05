@@ -1,26 +1,41 @@
 # Backend ↔ Frontend handoff
 
-## Current backend state relevant to frontend
+## Coordination outcome
 
-- PC task `task-06e-child-process` produced a gate-green checkpoint (`pc-runtime/checkpoint.json`) and is awaiting Codex decision.
-- The checkpointed backend change is limited to `src/test/resources/META-INF/spring.factories` per current evidence.
+Both queues should continue their current active tasks with bounded correction-first passes. No cross-queue code ownership transfer is needed.
 
-## Current frontend state relevant to backend contract
+## Backend handoff (PC)
 
-- LP task `task-fe-03c-citations` is still pending with a Codex `REVISE` instruction focused on DOM-proof coverage for structured citation rendering.
-- LP has no task-owned dirty product file in this snapshot, so required FE-03C proof edits are still outstanding.
+- Task: `task-06f-ingestion-validation`
+- Required pass: hygiene + config correction, then exact backend gate rerun.
+- Scope guard: only the prescribed sanitation and `src/test/resources/application.yml` exclusion adjustment; do not expand into unrelated backend refactors.
 
-## Integration risks
+Acceptance gates:
 
-1. FE-03C can appear healthy under a generic gate while still missing assertions that enforce backend structured citation semantics in the UI.
-2. Backend task-06e has gate evidence but not Codex acceptance; avoid assuming backend contract work is finalized until that decision lands.
+- `git diff --check` clean.
+- `./scripts/task-gate.sh task-06f-ingestion-validation` exit `0`.
+- Codex `ACCEPT`.
 
-## Bounded coordination next steps
+## Frontend handoff (LP)
 
-1. **LP first:** complete the explicit FE-03C revise packet in the spec file and rerun the exact frontend gate.
-2. **PC in parallel review lane:** complete Codex review decision for checkpoint head `179ab444664901b620d59cb30e4a42cc6e93a95b` without scope growth.
+- Task: `task-fe-03c-citations`
+- Required pass: implement Codex-requested rendered-DOM assertions in `rag-page.component.spec.ts` and rerun exact FE gate.
+- Scope guard: frontend-only; no backend path edits.
 
-## Joint acceptance checkpoint
+Acceptance gates:
 
-- LP: FE-03C gate green + Codex `ACCEPT` with rendered-DOM citation coverage confirmed.
-- PC: task-06e gate green + Codex `ACCEPT` on the current checkpoint.
+- `git diff --check` clean.
+- `./scripts/frontend-task-gate.sh task-fe-03c-citations` exit `0`.
+- Codex `ACCEPT`.
+
+## Integration risks to watch next cycle
+
+1. Backend preflight whitespace failures can invalidate expensive test runs before actual behavioral validation.
+2. Frontend can produce superficially green runs while still missing FE-03C requirement-level proof.
+
+## Evidence anchors
+
+- `runtime/ring-agent/ring/20260805T212753Z/worker-requests/PC.json`
+- `runtime/ring-agent/ring/20260805T212753Z/pc-runtime/memory.md`
+- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/memory.md`
