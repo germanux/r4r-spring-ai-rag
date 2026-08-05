@@ -238,3 +238,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This cycle did not include LP full patch content; only git status/diff-stat and runtime summaries were available in RUN_DIR.
 - Gate full logs were not included in this snapshot; diagnosis relies on gate summaries, checkpoint metadata, and worker memory/progress artifacts.
+
+## Cycle `20260805T170359Z` â READY
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-06e-child-process`
+- Reason: Active backend task remains PENDING with deterministic gate green (exit 0), but no Codex decision/review artifact exists in this run snapshot, so closure is unproven.
+- Next action: Run one bounded review pass for task-06e-child-process: map current test files to the Codex correction packet and submit the existing gate-green snapshot for Codex decision; edit only if a concrete mismatch is found.
+- Avoid repeating: Do not run another unchanged no-product-diff cycle that still leaves Codex decision absent.
+- Acceptance gates:
+  - ./scripts/task-gate.sh task-06e-child-process returns exit 0
+  - Codex decision is ACCEPT for task-06e-child-process before task closure
+  - Scope remains bounded to Codex packet targets (test files/resources only; no production script/code changes)
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170359Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170359Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170359Z/pc-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170359Z/pc-runtime/manifest.json`
+
+### LP
+
+- Decision: `REVIEW`
+- Task: `task-fe-01-angular17-bootstrap`
+- Reason: Frontend gate is green and a checkpoint/worker request exists, but task is still PENDING with codex_decision null, so the first defect is missing Codex closure evidence.
+- Next action: Review the gate-green checkpoint (head 8ab9da9c54bd2117909c63082d32b102845e1985) against FE-01 requirements and obtain Codex decision; only reopen edits if Codex identifies a concrete remaining mismatch.
+- Avoid repeating: Do not submit another mapping-free or unchanged checkpoint loop without producing a Codex decision.
+- Acceptance gates:
+  - ./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap returns exit 0
+  - Codex decision is ACCEPT for task-fe-01-angular17-bootstrap before task closure
+  - Keep ownership boundaries: edits only in frontend/** and Angular major remains 17
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170359Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170359Z/lp-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170359Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170359Z/worker-requests/LP.json`
+
+### Integration risks
+
+- Backend task-06e is not accepted yet; child-process coverage may still miss a Codex-flagged mismatch despite green gate.
+- Frontend FE-01 is not accepted yet; if production environment replacement is still incomplete, deployed UI could target localhost backend URLs.
+- Both queues are gate-green but unaccepted, so cross-stack integration can be delayed by documentation/review gaps rather than runtime failures.
+
+### Evidence limitations
+
+- No codex_review, codex_plan, or local_understanding artifacts were present in this run manifests for either worker.
+- Evidence snapshot includes status/summary metadata but not full source diffs for worker-owned product files, so content-level correctness cannot be independently revalidated here.
+- No PC worker-request artifact exists in this RUN_DIR, so backend progression intent must be inferred from progress/gate snapshots only.

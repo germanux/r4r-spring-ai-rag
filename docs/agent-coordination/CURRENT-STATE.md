@@ -1,43 +1,32 @@
-# Global summary — run 20260805T164848Z
+# Global coordination summary (RUN_ID: 20260805T170359Z)
 
-## Outcome
+## Overall status
 
-Overall status: **READY** (actionable next passes for both workers; no hard external blocker evidenced).
+`READY` — both queues have actionable, bounded next steps with no supervisor-policy blocker in the provided evidence.
 
-## Evidence-driven diagnosis
+## What changed this cycle
 
-### PC (backend)
-- Task `task-06e-child-process` remains pending.
-- Latest gate is green with checkpoint `no-product-diff`.
-- Current snapshot has no Codex decision (`null`) for closure.
+- Reviewed bounded evidence under `runtime/ring-agent/ring/20260805T170359Z`.
+- Identified first current defect for each queue as **missing Codex closure evidence** (not gate failure).
+- Produced six staged coordination artifacts in the run `output/` directory.
+- No additional repository code/config edits were made outside these staged outputs.
 
-Primary issue: acceptance has not been proven yet, despite gate green.
+## Queue decisions
 
-### LP (frontend)
-- Task `task-fe-01-angular17-bootstrap` remains pending with Codex `REVISE`.
-- Codex required production environment selection correction and better local requirement mapping.
-- Snapshot shows dirty `frontend/angular.json`, but acceptance proof for that exact change is not present.
+- **PC:** `CONTINUE` on `task-06e-child-process` with one bounded review/closure pass.
+- **LP:** `REVIEW` on `task-fe-01-angular17-bootstrap` checkpoint to obtain Codex decision.
 
-Primary issue: unresolved Codex correction and incomplete evidence narrative.
+## Evidence-grounded risks
 
-## Directed next cycle
+1. Backend child-process task remains unaccepted despite green gate; hidden Codex mismatch may still exist.
+2. Frontend bootstrap task remains unaccepted; incorrect production env selection would propagate to later FE tasks.
+3. Documentation/understanding artifacts lag state in places, creating coordination noise and potential rework.
 
-- **PC:** review-focused pass to convert gate-green state into Codex-accepted closure for task-06e.
-- **LP:** bounded config correction validation for FE-01 (`angular.json` production replacement), then gate + Codex acceptance with clear requirement mapping.
+## Evidence limitations
 
-## Integration risks to watch
+- No Codex review/plan/local-understanding artifacts were included in the latest manifests.
+- Snapshot does not include full worker source diffs, so correctness is inferred from gate/checkpoint metadata only.
 
-1. FE production config risk (possible localhost backend in production build).
-2. BE acceptance-lag risk (task can remain pending indefinitely without Codex decision even when gate is green).
+## Immediate next cycle expectation
 
-## Ring worktree edits in this cycle
-
-- Wrote staged coordination artifacts only under:
-  - `runtime/ring-agent/ring/20260805T164848Z/output/state.json`
-  - `runtime/ring-agent/ring/20260805T164848Z/output/code-pc-review.md`
-  - `runtime/ring-agent/ring/20260805T164848Z/output/code-lp-review.md`
-  - `runtime/ring-agent/ring/20260805T164848Z/output/backend-frontend-handoff.md`
-  - `runtime/ring-agent/ring/20260805T164848Z/output/worker-understanding.md`
-  - `runtime/ring-agent/ring/20260805T164848Z/output/global-summary.md`
-
-No destructive repository edits were made.
+Expect Codex decisions (preferably `ACCEPT`) for the two active tasks, with any further edits tightly bounded to the existing correction packets and ownership constraints.

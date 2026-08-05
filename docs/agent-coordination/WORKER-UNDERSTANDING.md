@@ -2,26 +2,30 @@
 
 ## PC understanding quality
 
-Evidence indicates operational discipline is good (green exact gate, preserved bounded scope), but closure is incomplete because Codex acceptance evidence is still missing for active task 06e.
+### Evidence
+- `pc-runtime/memory.md` still says latest exact gate is "not run; exit=unknown".
+- `pc-runtime/gate_summary.md` shows gate is green (exit 0).
 
-What PC must demonstrate in the next pass:
+### Assessment
+PC memory is partially stale/inconsistent with latest diagnostics snapshot. The main technical direction (task focus and Codex packet scope) is present, but operational status reporting is behind current evidence.
 
-- Explicit requirement-to-file reconciliation for every mandatory Codex packet item.
-- Clear statement whether any mismatch remains and, if yes, minimal bounded correction.
-- Final Codex decision attached to the current gate-green snapshot.
+### Required correction in next pass
+- Reconcile local status narrative with the actual latest gate result.
+- Produce the missing Codex decision artifact to resolve task closure ambiguity.
 
 ## LP understanding quality
 
-Codex explicitly marked LP understanding as insufficient: reports omitted requirement-to-file mapping and deferred substantive review back to Codex.
+### Evidence
+- `lp-runtime/memory.md` correctly records gate exit 0 and pending Codex.
+- `lp-runtime/codex-qwen3-extra-instructions.md` explicitly required a requirement-to-file mapping in the next understanding report.
+- `lp-runtime/manifest.json` reports `local_understanding: null`.
 
-What LP must demonstrate in the next pass:
+### Assessment
+LP operational status tracking is better aligned than PC, but the required explicit requirement mapping artifact is still absent in this snapshot.
 
-- Direct mapping from FE-01 requirements to concrete files (`angular.json`, environment files, bootstrap/routing/http provider/dependency evidence).
-- Proof that production build path selects `environment.prod.ts`.
-- Gate result and Codex decision tied to the same change.
+### Required correction in next pass
+- Attach a concrete requirement-to-file mapping while seeking Codex decision on the existing checkpoint.
 
-## Shared instruction hygiene
+## Director confidence level
 
-- Avoid unchanged reruns that produce `no-product-diff` without advancing acceptance.
-- Keep strict task boundaries and do not expand scope before current task acceptance.
-- Preserve gate-first discipline and include explicit evidence paths in reports.
+Moderate confidence for both queues: gates are green, but closure evidence quality is incomplete until Codex decisions (and required supporting understanding artifacts) are present.

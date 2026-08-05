@@ -1,27 +1,28 @@
 # Backend ↔ Frontend handoff
 
-## Coordination status
+## Current queue states
 
-- **Backend (PC):** gate-green but pending Codex acceptance on `task-06e-child-process`.
-- **Frontend (LP):** Codex REVISE unresolved on `task-fe-01-angular17-bootstrap`, with likely in-progress `frontend/angular.json` correction not yet acceptance-proven in this snapshot.
+- **Backend (PC):** `task-06e-child-process` gate is green but still pending Codex acceptance.
+- **Frontend (LP):** `task-fe-01-angular17-bootstrap` gate is green with checkpoint requested, but still pending Codex acceptance.
 
-## Cross-stack dependencies and risk
+## Cross-stack implications
 
-1. **No backend API contract change is currently authorized.** Backend must stay bounded to task-06e test/process behavior.
-2. **Frontend environment selection is release-critical.** If production replacement is wrong, FE may target localhost in production builds.
-3. **Do not advance cross-stack features** (RAG client/UI integration) until FE-01 and BE-06e are each Codex-accepted.
+1. No new backend API contract change is evidenced in this RUN_DIR snapshot.
+2. Frontend FE-01 remains a bootstrap/configuration task, not yet a new RAG feature integration.
+3. Both tracks are currently blocked by **acceptance evidence**, not by proven runtime regressions.
 
-## Bounded next actions
+## Integration risks to watch next
 
-### PC (backend)
-- Review current gate-green snapshot against mandatory Codex packet, then obtain Codex decision for task closure.
+- If FE-01 production environment replacement is still wrong, frontend may point to localhost values in production builds.
+- If backend task-06e has hidden mismatch against Codex packet constraints, later ingestion-validation and production-smoke tasks may fail despite current gate green.
 
-### LP (frontend)
-- Validate `frontend/angular.json` production replacement fix through exact FE-01 gate and provide requirement-to-file traceability.
+## Bounded coordination next actions
 
-## Acceptance gates to unblock integration
+- **PC next:** produce Codex decision for the existing gate-green snapshot; only edit if packet mismatch is found.
+- **LP next:** review checkpoint commit with Codex and close FE-01 (or apply one bounded correction if Codex rejects).
 
-- `./scripts/task-gate.sh task-06e-child-process` => `exit 0` and Codex `ACCEPT`.
-- `./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap` => `exit 0` and Codex `ACCEPT`.
+## Acceptance conditions for handoff readiness
 
-Only after both are accepted should controllers schedule subsequent cross-stack tasks.
+- PC task-06e: exact gate green + Codex `ACCEPT`.
+- LP task-fe-01: exact gate green + Codex `ACCEPT`.
+- No scope widening across ownership boundaries during these closure passes.
