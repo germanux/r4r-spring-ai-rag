@@ -9,55 +9,6 @@
       "target": "opencode/memory.md"
     },
     {
-      "bytes": 1573,
-      "producer": "ring",
-      "sha256": "f616169438c3e1bd7ff13ec85d1fc25f3275ad219e9b61a3e50e550295456548",
-      "source": ".ring-agent/backend-frontend-handoff.md",
-      "target": "ring-agent/backend-frontend-handoff.md"
-    },
-    {
-      "bytes": 1911,
-      "producer": "ring",
-      "sha256": "f95313a20560809d9f812d5d1cf0512abba7fb1cf817db0dd927fbf540371527",
-      "source": ".ring-agent/code-lp-review.md",
-      "target": "ring-agent/code-lp-review.md"
-    },
-    {
-      "bytes": 2193,
-      "producer": "ring",
-      "sha256": "b78c6f0ea348254bdf780602306cea8a3635a6ddaeef33183c954b480ce8a685",
-      "source": ".ring-agent/code-pc-review.md",
-      "target": "ring-agent/code-pc-review.md"
-    },
-    {
-      "bytes": 1848,
-      "producer": "ring",
-      "sha256": "6fa42707ec71e93896d90da5a35fe514dd580befb8a7112efe1a8957a7903f1b",
-      "source": ".ring-agent/global-summary.md",
-      "target": "ring-agent/global-summary.md"
-    },
-    {
-      "bytes": 4220,
-      "producer": "ring",
-      "sha256": "622bf956f5d97c90ce8c690ce2baf5c831dff0390b5dadd6e8b6cd9b54eedc4f",
-      "source": ".ring-agent/state.json",
-      "target": "ring-agent/state.json"
-    },
-    {
-      "bytes": 586,
-      "producer": "controller",
-      "sha256": "0edc61ac46b5317252a3a1627f32e1d3639714efa60720f75ad343b9e3e1d0f2",
-      "source": ".opencode/current/ring/runtime/control/RING/requests/LP.json",
-      "target": "runtime/control/RING/requests/LP.json"
-    },
-    {
-      "bytes": 567,
-      "producer": "controller",
-      "sha256": "ebee7ce33a0647e0d24d13217c11b7f8826cd3ff2ecbffc169d892ae81e7873e",
-      "source": ".opencode/current/ring/runtime/control/RING/requests/PC.json",
-      "target": "runtime/control/RING/requests/PC.json"
-    },
-    {
       "bytes": 1832,
       "producer": "local-llm",
       "sha256": "229881cb7329a145f6dc5627d1e9db5ebcc244edda4847eef6f30a48747840dd",
@@ -65,6 +16,7 @@
       "target": "worker-understanding.md"
     }
   ],
-  "schema_version": 1,
+  "policy": "explicit-current-state-only; runtime-ignored; task-evidence-in-.ring-agent/evidence",
+  "schema_version": 2,
   "worker_id": "RING"
 }
