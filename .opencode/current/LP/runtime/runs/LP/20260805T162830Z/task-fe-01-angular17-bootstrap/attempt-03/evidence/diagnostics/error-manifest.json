@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "classification": "green",
+  "summary": "The deterministic task gate completed successfully.",
+  "fingerprint": "14fe7476194c8c5c59de387453ef04e2ffec4ac7562cdaf8d7ab404a9f8ae75a",
+  "command": [
+    "./scripts/frontend-task-gate.sh",
+    "task-fe-01-angular17-bootstrap"
+  ],
+  "exit_code": 0,
+  "source_paths": [],
+  "related_paths": [],
+  "full_log": "gate-full.log"
+}

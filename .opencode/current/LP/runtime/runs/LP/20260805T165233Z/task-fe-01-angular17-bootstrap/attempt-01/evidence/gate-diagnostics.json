@@ -1,0 +1,11 @@
+{
+  "classification": "green",
+  "summary": "The deterministic task gate completed successfully.",
+  "fingerprint": "ecb079085931b9e8ec27d568cffb545bea4f648da9dc841979177fad131fbf06",
+  "source_paths": [],
+  "related_paths": [],
+  "log_path": "runtime/runs/LP/20260805T165233Z/task-fe-01-angular17-bootstrap/attempt-01/evidence/diagnostics/gate-full.log",
+  "summary_path": "runtime/runs/LP/20260805T165233Z/task-fe-01-angular17-bootstrap/attempt-01/evidence/diagnostics/gate-summary.md",
+  "manifest_path": "runtime/runs/LP/20260805T165233Z/task-fe-01-angular17-bootstrap/attempt-01/evidence/diagnostics/error-manifest.json",
+  "bundle_path": "runtime/runs/LP/20260805T165233Z/task-fe-01-angular17-bootstrap/attempt-01/evidence/diagnostics/codex-error-bundle.zip"
+}

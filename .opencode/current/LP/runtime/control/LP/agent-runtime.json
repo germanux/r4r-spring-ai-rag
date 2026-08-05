@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "destination": "LP",
+  "agent": "r4r-laptop",
+  "role": "frontend-angular17",
+  "provider": "ollama-laptop",
+  "model": "qwen3-30b-coder-28k-6k-t33:latest",
+  "endpoint": "http://192.168.1.9:11434/v1",
+  "worker": "opencode",
+  "plan": ".opencode/task-plan.frontend.json",
+  "progress": ".opencode/progress.frontend.json",
+  "memory": ".opencode/memory.frontend.md",
+  "controlDir": "runtime/control/LP",
+  "peerPaths": [
+    "pom.xml",
+    "src/**",
+    "knowledge/**",
+    "docker-postgres/**",
+    "docs/backend/**"
+  ],
+  "allowedPaths": [
+    "frontend/**",
+    "docs/frontend/**"
+  ],
+  "runtime": {
+    "maxAttemptsPerTask": 6,
+    "maxNoProgressCycles": 2,
+    "maxTransientFailures": 3,
+    "autoCommit": true,
+    "bootstrapCommit": true,
+    "checkpointOnGreen": true,
+    "maxSessionSeconds": 5400,
+    "idleSeconds": 900,
+    "maxSessionSteps": 120,
+    "repeatEventBudget": 12
+  },
+  "opencodeConfig": "runtime/control/LP/opencode.resolved.json"
+}

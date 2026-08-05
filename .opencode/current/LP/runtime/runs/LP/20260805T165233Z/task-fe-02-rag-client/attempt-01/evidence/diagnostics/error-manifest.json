@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "classification": "green",
+  "summary": "The deterministic task gate completed successfully.",
+  "fingerprint": "cdd7f71a9c15b4b227f9949904cb12600f5014f5231448c4e1ba95069a1a48b7",
+  "command": [
+    "./scripts/frontend-task-gate.sh",
+    "task-fe-02-rag-client"
+  ],
+  "exit_code": 0,
+  "source_paths": [],
+  "related_paths": [],
+  "full_log": "gate-full.log"
+}

@@ -1,0 +1,65 @@
+# Agent memory
+
+## Current state
+
+- Worker: LP.
+- Run: 20260805T174027Z.
+- Last accepted task: task-fe-03-rag-ui.
+- Active task: task-fe-03b-answer-abstention.
+- Current attempt: 2.
+- Latest exact gate: not run; exit=unknown.
+- Latest Codex decision: pending.
+- Checkpoint: none; head=not recorded.
+- Accepted: task-fe-01-angular17-bootstrap, task-fe-02-rag-client, task-fe-03-rag-ui.
+- Remaining: task-fe-03b-answer-abstention, task-fe-03c-citations, task-fe-03d-dom-state-tests, task-fe-03e-security-accessibility, task-fe-03f-final-validation, task-fe-04-playwright.
+- Exact plan: `.opencode/task-plan.frontend.json`.
+
+## Files currently owned or edited
+
+- No task-owned dirty product path at the latest snapshot.
+
+## Demonstrated by current evidence
+
+- No new acceptance claim has been demonstrated in this run yet.
+
+## Still unproven or below expectations
+
+- The local edit session did not complete; no acceptance claim can be made from it.
+
+## Approaches not to repeat
+
+- Do not repeat the stopped OpenCode session without changing the plan; stop_reason=idle-timeout.
+
+## Next exact action
+
+OpenCode edit failed transiently with exit 124. Start a fresh local session, preserve the current worktree, diagnose the concrete error below and continue the same active task. Do not revert already validated changes.
+
+Previous action:
+Resume the unfinished revision by applying the complete CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS included below. Do not wait for another Codex review before making the requested correction.
+
+Failure tail:
+[r4r-watchdog] stopped OpenCode session: reason=idle-timeout elapsed=1069.5s
+
+## Fixed decisions
+
+- OpenCode/Qwen3 and Codex never write Git history.
+- The deterministic Python controller may create a gate-green checkpoint and a final ACCEPT commit.
+- A gate-green checkpoint preserves useful work but does not mark the task ACCEPTED.
+- A task completes only after its exact gate is green and Codex returns `ACCEPT`.
+- PostgreSQL only in Docker; Flyway owns application schema.
+- Spring AI abstractions; no handwritten Ollama HTTP client.
+- Every red gate retains complete diagnostics for Codex.
+- CodeGraph is focused retrieval evidence, not authority to expand task scope.
+- Runtime evidence stays under `runtime/runs/`; the deterministic controller publishes only after a validated commit.
+
+## Task ledger
+
+- task-fe-01-angular17-bootstrap: ACCEPTED — accepted at 2026-08-05T17:04:46.121118+00:00; last green attempt=1
+- task-fe-02-rag-client: ACCEPTED — accepted at 2026-08-05T17:05:49.579162+00:00; last green attempt=1
+- task-fe-03-rag-ui: ACCEPTED — accepted at 2026-08-05T17:06:42.020494+00:00; last green attempt=1
+- task-fe-03b-answer-abstention: PENDING — accepted at not accepted; last green attempt=1
+- task-fe-03c-citations: PENDING — accepted at not accepted; last green attempt=none
+- task-fe-03d-dom-state-tests: PENDING — accepted at not accepted; last green attempt=none
+- task-fe-03e-security-accessibility: PENDING — accepted at not accepted; last green attempt=none
+- task-fe-03f-final-validation: PENDING — accepted at not accepted; last green attempt=none
+- task-fe-04-playwright: PENDING — accepted at not accepted; last green attempt=none
