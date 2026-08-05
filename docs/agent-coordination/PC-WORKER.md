@@ -1,34 +1,32 @@
 # PC code review (backend)
 
-## Evidence reviewed
+## Current authoritative evidence
 
-- `pc-runtime/progress.json`: active task is `task-06e-child-process`, status still `PENDING`, last gate-green metadata recorded.
-- `pc-runtime/gate_summary.md`: deterministic gate classification `green`, exit `0`.
-- `pc-runtime/codex-qwen3-extra-instructions.md`: latest Codex decision context is `REVISE` with mandatory bounded packet for test-only correction scope.
-- `pc-runtime/manifest.json`: `codex_review`, `codex_plan`, `local_understanding`, and `checkpoint` are `null` for the latest run snapshot.
-- `pc-git-status.txt` / `pc-git-diff-stat.txt`: no current dirty diff captured in this snapshot.
+- Active backend task is `task-06e-child-process` and still `PENDING`.
+  - Evidence: `runtime/ring-agent/ring/20260805T170859Z/pc-runtime/progress.json`
+- Deterministic gate summary is green (`exit 0`).
+  - Evidence: `runtime/ring-agent/ring/20260805T170859Z/pc-runtime/gate_summary.md`
+- Current snapshot has **no Codex review artifact** for PC (`codex_review: null`, `codex_plan: null`).
+  - Evidence: `runtime/ring-agent/ring/20260805T170859Z/pc-runtime/manifest.json`
+- No task-owned product diff is present in snapshot (`pc-git-diff-stat.txt` empty).
+  - Evidence: `runtime/ring-agent/ring/20260805T170859Z/pc-git-diff-stat.txt`
 
 ## First current defect
 
-The first backend defect is **workflow closure evidence missing**: gate is green, but there is no Codex decision artifact proving `ACCEPT`, and the task remains pending.
-
-## Why this matters
-
-Per queue rules, gate-green alone does not complete a task. Without Codex `ACCEPT`, task-06e cannot be closed and downstream tasks (06f/07/08/09) should not advance.
+The first blocking defect is **missing Codex closure evidence** for a still-pending task with an already green gate. Without an ACCEPT/REVISE decision tied to current gate evidence, task status cannot advance safely.
 
 ## Bounded next action for one worker pass
 
-1. Stay on `task-06e-child-process`.
-2. Perform a focused review against Codex packet requirements already listed in `pc-runtime/codex-qwen3-extra-instructions.md`.
-3. Submit the current gate-green snapshot for Codex decision.
-4. Edit only if the review finds a concrete mismatch; keep edits bounded to the allowed test files/resources.
+1. Run a single backend review pass against the existing gate-green `task-06e-child-process` evidence.
+2. Obtain and persist Codex decision (`ACCEPT` or `REVISE`) for this exact task snapshot.
+3. Only if `REVISE`, execute the minimal correction constrained to the existing packet scope.
 
-## Acceptance conditions
+## Acceptance conditions / gates
 
 - `./scripts/task-gate.sh task-06e-child-process` returns exit `0`.
-- Codex decision is explicitly `ACCEPT` for `task-06e-child-process`.
-- No scope expansion into production code/scripts.
+- Codex returns `ACCEPT` for `task-06e-child-process` before marking task complete.
+- If revisions are required, keep scope bounded to test-side child-process verification packet targets; do not change production scripts/services outside that packet.
 
 ## Avoid repeating
 
-- Do not run another unchanged no-product-diff pass that still yields no Codex decision artifact.
+- Do not run another unchanged cycle that remains gate-green but still lacks Codex decision evidence.

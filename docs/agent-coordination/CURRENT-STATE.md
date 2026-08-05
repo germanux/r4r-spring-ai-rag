@@ -1,32 +1,27 @@
-# Global coordination summary (RUN_ID: 20260805T170359Z)
+# Global summary — run 20260805T170859Z
 
-## Overall status
+## Overall status: READY
 
-`READY` — both queues have actionable, bounded next steps with no supervisor-policy blocker in the provided evidence.
+Both queues have actionable, bounded next steps with available evidence; no hard blocker prevents another worker pass.
 
 ## What changed this cycle
 
-- Reviewed bounded evidence under `runtime/ring-agent/ring/20260805T170359Z`.
-- Identified first current defect for each queue as **missing Codex closure evidence** (not gate failure).
-- Produced six staged coordination artifacts in the run `output/` directory.
-- No additional repository code/config edits were made outside these staged outputs.
+- Reviewed bounded evidence under `runtime/ring-agent/ring/20260805T170859Z` for Ring/PC/LP status, runtime artifacts, gate summaries, Codex packets, checkpoint state, and worker requests.
+- Produced six staged coordination artifacts in this run output directory.
+- No product-code edits were made in the Ring worktree during this cycle.
 
-## Queue decisions
+## Priority decisions
 
-- **PC:** `CONTINUE` on `task-06e-child-process` with one bounded review/closure pass.
-- **LP:** `REVIEW` on `task-fe-01-angular17-bootstrap` checkpoint to obtain Codex decision.
+1. **PC (`task-06e-child-process`)** → `REVIEW`
+   - First defect: missing current-run Codex closure evidence despite green gate.
+   - Next pass: obtain bounded Codex decision on existing evidence before new implementation churn.
 
-## Evidence-grounded risks
+2. **LP (`task-fe-03b-answer-abstention`)** → `CONTINUE`
+   - First defect: Codex REVISE packet not yet implemented (no-product-diff checkpoint).
+   - Next pass: add fixture-based FE-03B DOM assertions + minimal template correction if needed, rerun exact gate.
 
-1. Backend child-process task remains unaccepted despite green gate; hidden Codex mismatch may still exist.
-2. Frontend bootstrap task remains unaccepted; incorrect production env selection would propagate to later FE tasks.
-3. Documentation/understanding artifacts lag state in places, creating coordination noise and potential rework.
+## Explicit non-claims
 
-## Evidence limitations
-
-- No Codex review/plan/local-understanding artifacts were included in the latest manifests.
-- Snapshot does not include full worker source diffs, so correctness is inferred from gate/checkpoint metadata only.
-
-## Immediate next cycle expectation
-
-Expect Codex decisions (preferably `ACCEPT`) for the two active tasks, with any further edits tightly bounded to the existing correction packets and ownership constraints.
+- This cycle does **not** claim either task completed.
+- This cycle does **not** claim Codex `ACCEPT` for PC or LP active tasks.
+- This cycle does **not** claim new tests passed beyond already-recorded gate summaries in provided evidence.

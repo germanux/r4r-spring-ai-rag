@@ -1,28 +1,24 @@
 # Backend ↔ Frontend handoff
 
-## Current queue states
+## Snapshot status
 
-- **Backend (PC):** `task-06e-child-process` gate is green but still pending Codex acceptance.
-- **Frontend (LP):** `task-fe-01-angular17-bootstrap` gate is green with checkpoint requested, but still pending Codex acceptance.
+- **Backend (PC)**: `task-06e-child-process` gate is green but closure evidence is incomplete because current-run Codex decision is missing.
+- **Frontend (LP)**: `task-fe-03b-answer-abstention` has Codex `REVISE`; required DOM-state test coverage is still pending implementation.
 
-## Cross-stack implications
+## Cross-stack coordination guidance
 
-1. No new backend API contract change is evidenced in this RUN_DIR snapshot.
-2. Frontend FE-01 remains a bootstrap/configuration task, not yet a new RAG feature integration.
-3. Both tracks are currently blocked by **acceptance evidence**, not by proven runtime regressions.
+1. Backend should resolve review-state uncertainty first (Codex decision on existing gate-green evidence) before any new backend scope.
+2. Frontend should execute the already-issued FE-03B correction packet now; this is correction work, not new feature expansion.
+3. Keep ownership disjoint:
+   - PC: backend/test packet scope only.
+   - LP: `frontend/**` only, Angular major remains 17.
 
-## Integration risks to watch next
+## Integration risks to watch
 
-- If FE-01 production environment replacement is still wrong, frontend may point to localhost values in production builds.
-- If backend task-06e has hidden mismatch against Codex packet constraints, later ingestion-validation and production-smoke tasks may fail despite current gate green.
+- If FE-03B abstention/error DOM semantics remain unverified, later citation/accessibility/final-validation tasks may stack on unstable UI behavior.
+- If PC task-06e lacks Codex closure evidence, backend ingestion validation sequencing can be delayed even with green gate traces.
 
-## Bounded coordination next actions
+## Handoff acceptance checks
 
-- **PC next:** produce Codex decision for the existing gate-green snapshot; only edit if packet mismatch is found.
-- **LP next:** review checkpoint commit with Codex and close FE-01 (or apply one bounded correction if Codex rejects).
-
-## Acceptance conditions for handoff readiness
-
-- PC task-06e: exact gate green + Codex `ACCEPT`.
-- LP task-fe-01: exact gate green + Codex `ACCEPT`.
-- No scope widening across ownership boundaries during these closure passes.
+- PC handoff ready when `task-06e-child-process` has both: gate green and Codex `ACCEPT`.
+- LP handoff ready when FE-03B correction packet is implemented, gate re-run is green, and Codex returns `ACCEPT`.

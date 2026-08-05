@@ -286,3 +286,49 @@ Append-only ledger generated after each validated Ring cycle.
 - No codex_review, codex_plan, or local_understanding artifacts were present in this run manifests for either worker.
 - Evidence snapshot includes status/summary metadata but not full source diffs for worker-owned product files, so content-level correctness cannot be independently revalidated here.
 - No PC worker-request artifact exists in this RUN_DIR, so backend progression intent must be inferred from progress/gate snapshots only.
+
+## Cycle `20260805T170859Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-06e-child-process`
+- Reason: Backend task-06e-child-process remains PENDING with a green gate snapshot, but this run has no Codex review artifact/decision for the current gate-green evidence, so task closure is unproven.
+- Next action: Run one bounded Codex review pass on the existing gate-green task-06e evidence and return a concrete ACCEPT/REVISE decision before any further implementation churn.
+- Avoid repeating: Do not repeat another no-product-diff/no-Codex-decision loop on the same gate-green snapshot.
+- Acceptance gates:
+  - ./scripts/task-gate.sh task-06e-child-process returns exit 0
+  - Codex decision is ACCEPT for task-06e-child-process before task closure
+  - If REVISE, keep edits bounded to Codex packet scope (test-side child-process verification only; no production script/service changes)
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170859Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170859Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170859Z/pc-runtime/manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170859Z/pc-git-diff-stat.txt`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03b-answer-abstention`
+- Reason: LP has an explicit Codex REVISE packet for FE-03B, while the checkpoint is no-product-diff and changed_paths is empty; the required DOM-state assertions were not implemented yet.
+- Next action: Implement the Codex-mandated fixture-driven DOM tests for FE-03B states (and only minimal template fix if exposed), then rerun the exact frontend task gate.
+- Avoid repeating: Do not submit another mapping-free, no-product-diff pass that relies only on a generic green gate.
+- Acceptance gates:
+  - ./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention returns exit 0
+  - Codex decision is ACCEPT for task-fe-03b-answer-abstention before task closure
+  - Assertions must cover loading/disabled re-submit protection, non-abstained success DOM, explicit nonblank abstention message, exact transport error text, and clear/reset DOM recovery
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170859Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170859Z/lp-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170859Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T170859Z/worker-requests/LP.json`
+
+### Integration risks
+
+- Frontend FE-03B abstention/error DOM behavior remains unproven by Codex and currently blocks confidence in UI behavior expected by later frontend tasks.
+- Backend task-06e has no current-run Codex closure evidence despite green gate status; unresolved review state can stall downstream ingestion-validation sequencing.
+
+### Evidence limitations
+
+- This snapshot does not include a current-run PC codex_review/codex_plan artifact, only older Codex extra instructions and gate summary.
+- Ring reviewed only staged evidence under RUN_DIR and did not inspect live PC/LP worktrees directly.
