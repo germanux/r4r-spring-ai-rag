@@ -1,0 +1,56 @@
+{
+  "agent": "ring",
+  "artifacts": [
+    {
+      "bytes": 1095,
+      "producer": "local-llm",
+      "sha256": "fa7fce6254b426f0e0cb5ef56dfaa8eed02877c4b07ca35b86923b8b7b5995d8",
+      "source": ".opencode/memory.md",
+      "target": "opencode/memory.md"
+    },
+    {
+      "bytes": 1819,
+      "producer": "ring",
+      "sha256": "0810f7996a56b3b22de3802b444b912e32b53dd3ce51e64752eec337961d7fe6",
+      "source": ".ring-agent/backend-frontend-handoff.md",
+      "target": "ring-agent/backend-frontend-handoff.md"
+    },
+    {
+      "bytes": 2416,
+      "producer": "ring",
+      "sha256": "ac1112a4401bdc8d944ec8c989b008770767bef4756c60cc3d5f48cff27ca557",
+      "source": ".ring-agent/code-lp-review.md",
+      "target": "ring-agent/code-lp-review.md"
+    },
+    {
+      "bytes": 2694,
+      "producer": "ring",
+      "sha256": "75e10ec013a2578c1d0682018dee5b9be24afc0700b56d4c9228af9e6a8de254",
+      "source": ".ring-agent/code-pc-review.md",
+      "target": "ring-agent/code-pc-review.md"
+    },
+    {
+      "bytes": 1651,
+      "producer": "ring",
+      "sha256": "1f54c8de18f52126b14b26ad727e05652e97ef6c573d7cec6d67be525c44ce78",
+      "source": ".ring-agent/global-summary.md",
+      "target": "ring-agent/global-summary.md"
+    },
+    {
+      "bytes": 4212,
+      "producer": "ring",
+      "sha256": "d30c1eff8dbe588d1cc33bd93a51ba1c7c7457a9389cd846072ad9a19ff3fa97",
+      "source": ".ring-agent/state.json",
+      "target": "ring-agent/state.json"
+    },
+    {
+      "bytes": 1963,
+      "producer": "local-llm",
+      "sha256": "8e472b925ab0323687c53178941268882270090a01d458fbddedcca82776660b",
+      "source": ".opencode/current/ring/worker-understanding.md",
+      "target": "worker-understanding.md"
+    }
+  ],
+  "schema_version": 1,
+  "worker_id": "RING"
+}
