@@ -48,3 +48,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - gate-full.log files referenced in codex-qwen3-extra-instructions.md are not present in RUN_DIR; exact compilation or test failure details require external runtime runs directories
 - PC and LP worker worktrees (/home/german/Desarrollo/r4r-pc-worker.git, /home/german/Desarrollo/r4r-lp-worker.git) are not readable by Ring; source analysis must rely on ring worktree copies and runtime evidence only
+
+## Cycle `20260805T163327Z` â READY
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-06e-child-process`
+- Reason: PC remains on a PENDING backend task with no Codex ACCEPT evidence, while the current correction packet still records a Codex REVISE decision and mandatory unresolved instructions for child-process test wiring.
+- Next action: Apply the existing Codex correction packet for task-06e-child-process in one bounded pass, then rerun the exact backend gate and return the updated evidence for Codex review.
+- Avoid repeating: Do not repeat unsupported initializer loading via -Dcontext.initializer.classes or untyped mock replacement that is not assignable to KnowledgeIngestionService; Codex explicitly rejected that approach.
+- Acceptance gates:
+  - ./scripts/task-gate.sh task-06e-child-process must return exit 0
+  - Codex decision must be ACCEPT for task-06e-child-process before task closure
+  - Keep scope bounded to Codex packet targets (process IT, initializer/SPI resource, helper) and do not change production scripts
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/pc-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/pc-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/pc-runtime/gate_summary.md`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-01-angular17-bootstrap`
+- Reason: LP has a green deterministic gate but no Codex decision because the Codex review invocation failed transiently (exit 1, zero observed steps), leaving the task pending with no acceptance decision.
+- Next action: Re-run Codex review against the existing gate-green evidence for task-fe-01-angular17-bootstrap without widening scope; only implement edits if Codex returns REVISE.
+- Avoid repeating: Do not rerun unchanged implementation passes while Codex review is the only missing signal; first recover the review path for the already green evidence.
+- Acceptance gates:
+  - ./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap must return exit 0
+  - Codex decision must be ACCEPT for task-fe-01-angular17-bootstrap before task closure
+  - Do not bypass review by marking a gate-green checkpoint as accepted
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/worker-requests/LP.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/lp-runtime/codex_review.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/lp-runtime/checkpoint.json`
+
+### Integration risks
+
+- Backend task-06e remains unaccepted while child-process/Spring initializer behavior is still governed by an unresolved Codex REVISE packet, risking repeated gate cycles without closure.
+- Frontend queue is currently blocked on review-tool reliability (Codex invocation exit 1 with zero events), which can create no-op retries if not explicitly handled.
+- Ring branch has an unrelated untracked file (docs/CHANGELOG-ANGULAR.md) in status evidence; coordination commits must avoid accidental inclusion.
+
+### Evidence limitations
+
+- Only summarized gate evidence is present in RUN_DIR; gate-full.log contents were not provided in this snapshot.
+- No fresh PC codex_review.json artifact is present in RUN_DIR, so PC acceptance state is inferred from progress/memory plus Codex extra instructions.
+- Live PC/LP worktrees were intentionally not inspected directly; conclusions are limited to staged RUN_DIR evidence.
