@@ -9,44 +9,44 @@
       "target": "opencode/memory.md"
     },
     {
-      "bytes": 1819,
+      "bytes": 1694,
       "producer": "ring",
-      "sha256": "0810f7996a56b3b22de3802b444b912e32b53dd3ce51e64752eec337961d7fe6",
+      "sha256": "6ce89eb0206e5bc73de48d0d7cb88cf9f2a2a36123a01f18f079a279f50b30df",
       "source": ".ring-agent/backend-frontend-handoff.md",
       "target": "ring-agent/backend-frontend-handoff.md"
     },
     {
-      "bytes": 2416,
+      "bytes": 1738,
       "producer": "ring",
-      "sha256": "ac1112a4401bdc8d944ec8c989b008770767bef4756c60cc3d5f48cff27ca557",
+      "sha256": "c7d18df0d49e79e59e9857435bf02741afb8925fb5dc9644581fc9c21c487778",
       "source": ".ring-agent/code-lp-review.md",
       "target": "ring-agent/code-lp-review.md"
     },
     {
-      "bytes": 2694,
+      "bytes": 1832,
       "producer": "ring",
-      "sha256": "75e10ec013a2578c1d0682018dee5b9be24afc0700b56d4c9228af9e6a8de254",
+      "sha256": "6db0f2dc0d7b74a0c13c70cef3af665ffedb2918268b43226502d7a5a7ff0ed1",
       "source": ".ring-agent/code-pc-review.md",
       "target": "ring-agent/code-pc-review.md"
     },
     {
-      "bytes": 1651,
+      "bytes": 1544,
       "producer": "ring",
-      "sha256": "1f54c8de18f52126b14b26ad727e05652e97ef6c573d7cec6d67be525c44ce78",
+      "sha256": "d107d578a0d2ee741f3ea3afb1e114e89e7ba42329c5e8e978c98b8ecea80d3a",
       "source": ".ring-agent/global-summary.md",
       "target": "ring-agent/global-summary.md"
     },
     {
-      "bytes": 4212,
+      "bytes": 3937,
       "producer": "ring",
-      "sha256": "d30c1eff8dbe588d1cc33bd93a51ba1c7c7457a9389cd846072ad9a19ff3fa97",
+      "sha256": "1dac6815ba805acbe42d17cc4118762da24d51a7e537663faee040b7a94386b5",
       "source": ".ring-agent/state.json",
       "target": "ring-agent/state.json"
     },
     {
-      "bytes": 1963,
+      "bytes": 1630,
       "producer": "local-llm",
-      "sha256": "8e472b925ab0323687c53178941268882270090a01d458fbddedcca82776660b",
+      "sha256": "2d1b5c099fd6d96c0a58703ef5fedea7c748d4d7bbc6a6008d578f7c6361e40c",
       "source": ".opencode/current/ring/worker-understanding.md",
       "target": "worker-understanding.md"
     }

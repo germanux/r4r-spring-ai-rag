@@ -1,42 +1,32 @@
-# LP Code Review (task-fe-03b-answer-abstention)
+# LP code review (RUN_ID 20260805T191433Z)
 
-## Current evidence reviewed
+## Evidence reviewed
 
-- `lp-runtime/progress.json`: active task is `task-fe-03b-answer-abstention`, status `PENDING`.
-- `lp-runtime/codex-qwen3-extra-instructions.md`: Codex decision is `REVISE` with explicit fixture-driven DOM assertions required.
-- `lp-git-status.txt` + `lp-git-diff-stat.txt`: no dirty product paths / no diff in this snapshot.
-- `lp-runtime/manifest.json`: no current-run `gate_summary`, `codex_review`, `checkpoint`, or `local_understanding` artifacts published.
+- `lp-runtime/progress.json`: active task is `task-fe-03b-answer-abstention` and is `PENDING`; prior FE-01/02/03 tasks are accepted.
+- `lp-git-status.txt`: one modified file: `frontend/src/app/features/rag/rag-page.component.html`.
+- `lp-git-diff-stat.txt`: small edit (2 insertions, 2 deletions).
+- `lp-runtime/manifest.json`: no current gate summary, codex plan/review, checkpoint, or correction packet captured.
+- `lp-runtime/memory.md`: stale and contradictory (claims no accepted tasks, wrong active task, and placeholder exact plan text).
 
 ## First current defect
 
-The FE-03B Codex correction packet is still unresolved. Required DOM-state evidence has not been demonstrated in this snapshot, and there is no new product diff tied to the REVISE requirements.
+**Defect: stale runtime understanding plus missing current gate evidence.**
 
-## Bounded next action (one worker pass)
+The active FE-03B task is correct in progress, but memory context is outdated and cannot be trusted for execution decisions. With only a tiny HTML edit and no current gate/codex artifacts, completion status cannot be asserted.
 
-Implement exactly the Codex packet in `rag-page.component.spec.ts` (and only minimal HTML adjustment if tests reveal a gap):
+## Bounded next action for one worker pass
 
-1. Fixture-based state transitions with `fixture.detectChanges()`.
-2. Assert loading state + button text + disabled submit + no second service call.
-3. Assert non-abstained success answer DOM.
-4. Assert abstained response shows explicit nonblank abstention message even with blank answer.
-5. Assert transport error DOM text exactly `Transport error occurred`.
-6. Assert clear/reset action restores idle UI, clears question, and re-enables controls.
-7. Run `git diff --check`, then exact frontend gate, and preserve full log.
+1. Run exact gate: `./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention`.
+2. Capture first failure (or green) and align edits/tests only to FE-03B required behaviors: loading/disable, answer render, abstention render, transport error render, reset behavior.
+3. Refresh worker memory/progress consistency so subsequent attempts use accurate task state.
 
 ## Acceptance conditions
 
-- `./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention` exits `0`.
-- DOM assertions cover all FE-03B states listed in Codex packet.
-- Codex returns `ACCEPT` before task closure.
+- Exact FE-03B gate returns exit `0`.
+- DOM-oriented assertions cover deterministic answer/abstention/error/reset outcomes.
+- Codex returns `ACCEPT` before controller commit.
 
 ## Avoid repeating
 
-- Do **not** submit another no-product-diff pass or field-only/mapping-free test pass that depends only on a generic green gate.
-
-## Evidence paths
-
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/lp-runtime/progress.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/lp-git-status.txt`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/lp-git-diff-stat.txt`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/lp-runtime/manifest.json`
+- Do not iterate UI markup in isolation without immediate exact-gate evidence.
+- Do not rely on stale memory placeholders when determining accepted/active task state.

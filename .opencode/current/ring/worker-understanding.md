@@ -1,43 +1,35 @@
-# Worker Understanding Assessment
+# Worker-understanding audit (RUN_ID 20260805T191433Z)
 
-## Evidence base used this cycle
+## PC understanding quality
 
-- Run snapshot root: `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z`
-- Reviewed: queue progress, memory, Codex extra instructions, prior Ring directive, git status/diff summaries, worker manifest metadata for PC and LP.
-- Explicitly not read: `opencode.console.log`.
+### Strong signals
+- `pc-runtime/progress.json` correctly tracks accepted history and active task `task-06e-child-process`.
+- `pc-runtime/memory.md` correctly lists active task and states no new acceptance was demonstrated.
 
-## PC understanding
+### Gaps
+- `pc-runtime/manifest.json` has `null` for codex plan/review, gate summary, local understanding, and checkpoint in this snapshot.
+- Current code delta is large but only represented as diff-stat; no direct rationale artifact is present.
 
-### Confirmed
+### Direction
+- Keep PC on task-06e but require immediate exact-gate evidence before further broad edits.
 
-- PC is on active backend task `task-06e-child-process` and task remains pending.
-- A Codex `REVISE` packet exists with detailed constraints focused on Spring Boot initializer-loading correctness and type-compatible test replacement.
+## LP understanding quality
 
-### Gap / first defect
+### Strong signals
+- `lp-runtime/progress.json` correctly marks FE-01/02/03 accepted and active `task-fe-03b-answer-abstention` pending.
 
-- Available code-change evidence is too small (2 inserted lines in one file) relative to mandatory correction packet scope.
-- No current-run gate/Codex closure artifact is present in this snapshot.
+### Defects
+- `lp-runtime/memory.md` is stale/invalid for this run (wrong active task, no accepted tasks, placeholder `{self.plan_display}`).
+- `lp-runtime/manifest.json` similarly lacks current gate/codex artifacts.
 
-### Directive quality for next pass
+### Direction
+- LP should continue FE-03B only with fresh exact-gate evidence and corrected memory/progress consistency.
 
-- Keep one bounded pass: complete packet in test-side scope, run exact gate, publish diagnostics, and obtain Codex decision.
+## Confidence statement
 
-## LP understanding
+- **PC task targeting confidence:** medium (active task known, but proof artifacts missing).
+- **LP task targeting confidence:** low-to-medium (progress is clear, memory artifact is contradictory).
 
-### Confirmed
+## Bounded acceptance for next cycle
 
-- LP is on active frontend task `task-fe-03b-answer-abstention` and task remains pending.
-- Codex `REVISE` explicitly requires fixture-driven DOM assertions for FE-03B states.
-
-### Gap / first defect
-
-- Snapshot has no LP product diff and no fresh closure artifacts; required DOM-evidence work is not proven.
-
-### Directive quality for next pass
-
-- Keep one bounded pass: implement exact DOM-state assertions from Codex packet, run whitespace check + exact gate, and obtain Codex decision.
-
-## Shared limitations
-
-- Both `pc-runtime/manifest.json` and `lp-runtime/manifest.json` report null for `controller_state`, `codex_review`, `codex_plan`, `local_understanding`, `codegraph_reconnaissance`, `gate_summary`, and `checkpoint` in this cycle snapshot.
-- Therefore, this coordination decision is based on latest available snapshot evidence but cannot claim new gate pass/acceptance in this run.
+Next cycle should include newly captured gate diagnostics (or gate green evidence) for both queues so Ring decisions can be based on current execution outcomes rather than metadata-only snapshots.
