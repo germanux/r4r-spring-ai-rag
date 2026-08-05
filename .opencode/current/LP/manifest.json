@@ -2,9 +2,9 @@
   "agent": "LP",
   "artifacts": [
     {
-      "bytes": 3245,
+      "bytes": 2822,
       "producer": "local-llm",
-      "sha256": "5ce807c684f5bd368729bb1f375c4bd9967934ef2538aaf6edb67aac4a896fb8",
+      "sha256": "47e93a611f7ef364d792655a80880e129f10da2f94e9a64b59e7ccdbe4050711",
       "source": ".opencode/memory.frontend.md",
       "target": "opencode/memory.frontend.md"
     },
