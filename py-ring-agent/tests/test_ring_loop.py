@@ -1,11 +1,54 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import tempfile
 import unittest
 
 from r4r_ring_agent import ring_loop
 from r4r_ring_agent.worktrees import WorktreePaths
+
+
+def _configure_task_plans(
+    ring: Path,
+    *,
+    pc_scope: list[str] | None = None,
+    lp_scope: list[str] | None = None,
+) -> None:
+    plans = {
+        "PC": (".opencode/task-plan.backend.json", "task-pc", pc_scope or ["src/**"]),
+        "LP": (
+            ".opencode/task-plan.frontend.json",
+            "task-lp",
+            lp_scope or ["frontend/**"],
+        ),
+    }
+    config = {"agents": {}}
+    for worker, (plan_name, task_id, scope) in plans.items():
+        config["agents"][worker] = {
+            "agentId": "r4r-pc" if worker == "PC" else "r4r-laptop",
+            "branch": (
+                "agent/pc-qwen3-worker"
+                if worker == "PC"
+                else "agent/laptop-qwen3-worker"
+            ),
+            "model": "qwen3-pc:latest" if worker == "PC" else "qwen3-lp:latest",
+            "plan": plan_name,
+        }
+        plan_path = ring / plan_name
+        plan_path.parent.mkdir(parents=True, exist_ok=True)
+        plan_path.write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "tasks": [{"id": task_id, "allowed_paths": scope}],
+                }
+            ),
+            encoding="utf-8",
+        )
+    config_path = ring / "config" / "r4r-agents.json"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text(json.dumps(config), encoding="utf-8")
 
 
 class RingLoopTest(unittest.TestCase):
@@ -20,7 +63,7 @@ class RingLoopTest(unittest.TestCase):
             self.assertIn("--model", command)
             self.assertEqual(
                 command[command.index("--model") + 1],
-                "openai/gpt-5.2-codex",
+                "openai/gpt-5.3-codex",
             )
             self.assertIn("--variant", command)
             self.assertEqual(command[command.index("--variant") + 1], "medium")
@@ -118,6 +161,7 @@ class RingLoopTest(unittest.TestCase):
             root = Path(temporary)
             ring = root / "ring"
             paths = WorktreePaths(ring, root / "pc", root / "lp")
+            _configure_task_plans(ring)
             run_id = "20260803T160000Z"
             run_dir = ring / "runtime" / "ring-agent" / "ring" / run_id
             output = run_dir / "output"
@@ -163,7 +207,23 @@ class RingLoopTest(unittest.TestCase):
             self.assertTrue(publication["published"], publication)
             self.assertTrue((ring / ".ring-agent" / "state.json").is_file())
             self.assertTrue(
-                (ring / ".opencode/current/ring/worker-understanding.md").is_file()
+                (ring / ".ring-agent" / "worker-understanding.md").is_file()
+            )
+            self.assertEqual(
+                2,
+                len(list((ring / ".ring-agent" / "evidence").glob("*/*.md"))),
+            )
+            self.assertTrue(
+                (
+                    ring
+                    / ".ring-agent/evidence/task-pc/pc-qwen3-worker-attempt-01.md"
+                ).is_file()
+            )
+            self.assertTrue(
+                (
+                    ring
+                    / ".ring-agent/evidence/task-lp/laptop-qwen3-worker-attempt-01.md"
+                ).is_file()
             )
             coordination = ring / "docs" / "agent-coordination"
             self.assertTrue((coordination / "CURRENT-STATE.md").is_file())
@@ -191,7 +251,58 @@ class RingLoopTest(unittest.TestCase):
                 self.assertEqual(directive["task_id"], f"task-{worker.lower()}")
                 self.assertTrue(directive["next_action"])
                 self.assertTrue(directive["evidence_paths"])
+                self.assertTrue(directive["write_scope"])
+                self.assertTrue(directive["assigned_agent"].endswith("qwen3-worker"))
+                self.assertTrue(directive["branch"].startswith("agent/"))
+                self.assertTrue(directive["model"].startswith("qwen3-"))
+                self.assertTrue(directive["evidence_path"].startswith(
+                    f".ring-agent/evidence/task-{worker.lower()}/"
+                ))
                 self.assertIsNotNone(datetime.fromisoformat(directive["expires_at"]))
+
+    def test_overlapping_active_task_scopes_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            ring = Path(temporary) / "ring"
+            _configure_task_plans(
+                ring,
+                pc_scope=["src/**"],
+                lp_scope=["src/main/**"],
+            )
+            state = {
+                "decisions": {
+                    "PC": {
+                        "action": "CONTINUE",
+                        "task_id": "task-pc",
+                    },
+                    "LP": {
+                        "action": "START",
+                        "task_id": "task-lp",
+                    },
+                }
+            }
+
+            with self.assertRaisesRegex(ValueError, "overlapping write_scope"):
+                ring_loop._load_task_assignments(ring, state)
+
+    def test_inactive_overlapping_task_scope_does_not_block_dispatch(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            ring = Path(temporary) / "ring"
+            _configure_task_plans(
+                ring,
+                pc_scope=["src/**"],
+                lp_scope=["src/main/**"],
+            )
+            state = {
+                "decisions": {
+                    "PC": {"action": "CONTINUE", "task_id": "task-pc"},
+                    "LP": {"action": "HOLD", "task_id": "task-lp"},
+                }
+            }
+
+            assignments = ring_loop._load_task_assignments(ring, state)
+
+            self.assertTrue(assignments["PC"]["active"])
+            self.assertFalse(assignments["LP"]["active"])
 
     def test_coordination_commit_preserves_unrelated_staged_changes(self) -> None:
         import subprocess

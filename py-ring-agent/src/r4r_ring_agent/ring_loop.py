@@ -5,6 +5,7 @@ import fcntl
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import time
@@ -406,6 +407,7 @@ VALID_RING_ACTIONS = {
     "NO_ACTION",
 }
 VALID_OVERALL_STATUSES = {"READY", "BLOCKED", "NO_ACTION"}
+ACTIVE_DISPATCH_ACTIONS = {"START", "CONTINUE", "REVIEW"}
 
 
 def _atomic_write_text(path: Path, content: str) -> None:
@@ -569,10 +571,228 @@ def _non_empty_strings(value: Any, field: str) -> list[str]:
     return result
 
 
+def _safe_slug(value: str, *, fallback: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    return slug[:80] or fallback
+
+
+def _scope_anchor(pattern: str) -> tuple[str, ...]:
+    raw = pattern.strip().replace("\\", "/")
+    if raw.startswith("/"):
+        raise ValueError(f"write_scope must be repository-relative: {pattern!r}")
+    normalized = raw.strip("/")
+    parts = tuple(part for part in normalized.split("/") if part)
+    if not parts or any(part == ".." for part in parts):
+        raise ValueError(f"invalid write_scope pattern: {pattern!r}")
+    anchor: list[str] = []
+    for part in parts:
+        if any(marker in part for marker in ("*", "?", "[")):
+            break
+        anchor.append(part)
+    return tuple(anchor)
+
+
+def _scopes_overlap(left: str, right: str) -> bool:
+    left_normalized = left.strip().replace("\\", "/").strip("/")
+    right_normalized = right.strip().replace("\\", "/").strip("/")
+    left_glob = any(marker in left_normalized for marker in ("*", "?", "["))
+    right_glob = any(marker in right_normalized for marker in ("*", "?", "["))
+    if not left_glob and not right_glob:
+        return left_normalized == right_normalized
+    left_anchor = _scope_anchor(left_normalized)
+    right_anchor = _scope_anchor(right_normalized)
+    shortest = min(len(left_anchor), len(right_anchor))
+    return left_anchor[:shortest] == right_anchor[:shortest]
+
+
+def _load_task_assignments(
+    ring: Path,
+    state: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    config_path = ring / "config" / "r4r-agents.json"
+    try:
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exception:
+        raise ValueError(f"invalid agent configuration: {exception}") from exception
+    agents = config.get("agents")
+    if not isinstance(agents, dict):
+        raise ValueError("config/r4r-agents.json agents must be an object")
+
+    assignments: dict[str, dict[str, Any]] = {}
+    for worker in ("PC", "LP"):
+        agent = agents.get(worker)
+        if not isinstance(agent, dict):
+            raise ValueError(f"config/r4r-agents.json agents.{worker} is missing")
+        plan_name = agent.get("plan")
+        if not isinstance(plan_name, str) or not plan_name.strip():
+            raise ValueError(
+                f"config/r4r-agents.json agents.{worker}.plan must be non-empty"
+            )
+        branch = agent.get("branch")
+        if (
+            not isinstance(branch, str)
+            or not branch.startswith("agent/")
+            or not branch.removeprefix("agent/").strip()
+        ):
+            raise ValueError(
+                f"config/r4r-agents.json agents.{worker}.branch must start with agent/"
+            )
+        plan_path = (ring / plan_name).resolve()
+        if not _path_within(ring.resolve(), plan_path):
+            raise ValueError(f"agents.{worker}.plan escapes the Ring worktree")
+        try:
+            plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exception:
+            raise ValueError(f"invalid {plan_name}: {exception}") from exception
+        tasks = plan.get("tasks")
+        if not isinstance(tasks, list):
+            raise ValueError(f"{plan_name} tasks must be a list")
+        tasks_by_id: dict[str, dict[str, Any]] = {}
+        for task in tasks:
+            if not isinstance(task, dict) or not isinstance(task.get("id"), str):
+                raise ValueError(f"{plan_name} contains a task without a valid id")
+            task_id_in_plan = task["id"].strip()
+            if not task_id_in_plan or task_id_in_plan in tasks_by_id:
+                raise ValueError(
+                    f"{plan_name} contains an empty or duplicate task id: "
+                    f"{task.get('id')!r}"
+                )
+            tasks_by_id[task_id_in_plan] = task
+
+        decision = state["decisions"][worker]
+        task_id = decision["task_id"]
+        if task_id is None:
+            if decision["action"] in ACTIVE_DISPATCH_ACTIONS:
+                raise ValueError(
+                    f"state.json decisions.{worker} action {decision['action']} "
+                    "requires a task_id"
+                )
+            write_scope: list[str] = []
+        else:
+            task = tasks_by_id.get(task_id)
+            if not isinstance(task, dict):
+                raise ValueError(
+                    f"state.json decisions.{worker}.task_id {task_id!r} "
+                    f"is not declared in {plan_name}"
+                )
+            write_scope = _non_empty_strings(
+                task.get("allowed_paths"),
+                f"{plan_name} task {task_id}.allowed_paths",
+            )
+            for pattern in write_scope:
+                _scope_anchor(pattern)
+
+        assignments[worker] = {
+            "agent_id": str(agent.get("agentId", worker.lower())).strip(),
+            "assigned_agent": branch.removeprefix("agent/"),
+            "branch": branch,
+            "model": str(agent.get("model", "unknown-model")).strip(),
+            "task_id": task_id,
+            "write_scope": write_scope,
+            "active": decision["action"] in ACTIVE_DISPATCH_ACTIONS,
+        }
+
+    active_workers = [
+        worker for worker in ("PC", "LP") if assignments[worker]["active"]
+    ]
+    for index, left_worker in enumerate(active_workers):
+        for right_worker in active_workers[index + 1 :]:
+            left = assignments[left_worker]
+            right = assignments[right_worker]
+            for left_pattern in left["write_scope"]:
+                for right_pattern in right["write_scope"]:
+                    if _scopes_overlap(left_pattern, right_pattern):
+                        raise ValueError(
+                            "overlapping write_scope: "
+                            f"{left_worker}/{left['task_id']}:{left_pattern} conflicts "
+                            f"with {right_worker}/{right['task_id']}:{right_pattern}"
+                        )
+    return assignments
+
+
+def _attempt_evidence_content(
+    run_id: str,
+    worker: str,
+    decision: dict[str, Any],
+) -> str:
+    lines = [
+        f"# Ring evidence: {decision['task_id']}",
+        "",
+        f"- Run: `{run_id}`",
+        f"- Worker: `{worker}`",
+        f"- Assigned agent: `{decision['assigned_agent']}`",
+        f"- Model: `{decision['model']}`",
+        f"- Branch: `{decision['branch']}`",
+        f"- Action: `{decision['action']}`",
+        f"- Task: `{decision['task_id']}`",
+        f"- Evidence path: `{decision['evidence_path']}`",
+        "- Write scope:",
+        *[f"  - `{pattern}`" for pattern in decision["write_scope"]],
+        "",
+        "## Decision",
+        "",
+        decision["reason"],
+        "",
+        "## Next action",
+        "",
+        decision["next_action"],
+        "",
+        "## Acceptance gates",
+        "",
+        *[f"- {gate}" for gate in decision["acceptance_gates"]],
+        "",
+        "## Runtime sources",
+        "",
+        *[f"- `{path}`" for path in decision["evidence_paths"]],
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def _publish_task_evidence(
+    ring: Path,
+    run_id: str,
+    worker: str,
+    decision: dict[str, Any],
+) -> Path | None:
+    task_id = decision["task_id"]
+    if task_id is None:
+        return None
+    task_dir = ring / ".ring-agent" / "evidence" / _safe_slug(
+        task_id,
+        fallback="unknown-task",
+    )
+    author = _safe_slug(decision["assigned_agent"], fallback=worker.lower())
+    existing = sorted(task_dir.glob(f"{author}-attempt-*.md"))
+    marker = f"- Run: `{run_id}`"
+    highest_attempt = 0
+    for path in existing:
+        match = re.fullmatch(
+            rf"{re.escape(author)}-attempt-(\d+)\.md",
+            path.name,
+        )
+        if match:
+            highest_attempt = max(highest_attempt, int(match.group(1)))
+        try:
+            if marker in path.read_text(encoding="utf-8"):
+                decision["evidence_path"] = path.relative_to(ring).as_posix()
+                return path
+        except OSError:
+            continue
+    destination = task_dir / f"{author}-attempt-{highest_attempt + 1:02d}.md"
+    decision["evidence_path"] = destination.relative_to(ring).as_posix()
+    _atomic_write_text(
+        destination,
+        _attempt_evidence_content(run_id, worker, decision),
+    )
+    return destination
+
+
 def _validate_staged_state(
     state_path: Path,
     run_dir: Path,
     run_id: str,
+    ring: Path,
 ) -> dict[str, Any]:
     try:
         value = json.loads(state_path.read_text(encoding="utf-8"))
@@ -665,7 +885,7 @@ def _validate_staged_state(
             "evidence_paths": normalized_evidence,
         }
 
-    return {
+    normalized_state = {
         "schema_version": 1,
         "run_id": run_id,
         "overall_status": overall_status,
@@ -681,6 +901,10 @@ def _validate_staged_state(
             if isinstance(item, str) and item.strip()
         ],
     }
+    assignments = _load_task_assignments(ring, normalized_state)
+    for worker in ("PC", "LP"):
+        normalized_state["decisions"][worker].update(assignments[worker])
+    return normalized_state
 
 
 def _publish_staged_outputs(
@@ -720,6 +944,7 @@ def _publish_staged_outputs(
             output_dir / "state.json",
             run_dir,
             run_id,
+            paths.ring,
         )
     except ValueError as exception:
         result["reason"] = str(exception)
@@ -728,6 +953,22 @@ def _publish_staged_outputs(
             encoding="utf-8",
         )
         return result
+
+    task_evidence_files = []
+    for worker in ("PC", "LP"):
+        evidence_path = _publish_task_evidence(
+            paths.ring,
+            run_id,
+            worker,
+            normalized_state["decisions"][worker],
+        )
+        if evidence_path is not None:
+            task_evidence_files.append(evidence_path)
+            result["versioned_files"][f"{worker.lower()}-task-evidence"] = str(
+                evidence_path
+            )
+        else:
+            normalized_state["decisions"][worker]["evidence_path"] = None
 
     operational_destinations = {
         "state.json": paths.ring / ".ring-agent" / "state.json",
@@ -738,7 +979,7 @@ def _publish_staged_outputs(
         ),
         "global-summary.md": paths.ring / ".ring-agent" / "global-summary.md",
         "worker-understanding.md": (
-            paths.ring / ".opencode" / "current" / "ring" / "worker-understanding.md"
+            paths.ring / ".ring-agent" / "worker-understanding.md"
         ),
     }
     for name, destination in operational_destinations.items():
@@ -773,7 +1014,7 @@ def _publish_staged_outputs(
     result["versioned_files"]["decisions"] = str(decisions_path)
     commit_result = _commit_coordination_files(
         paths.ring,
-        [*versioned_destinations.values(), decisions_path],
+        [*versioned_destinations.values(), decisions_path, *task_evidence_files],
         run_id,
     )
     result["coordination_commit"] = commit_result
@@ -796,6 +1037,11 @@ def _publish_staged_outputs(
             "schema_version": 1,
             "target": worker,
             "task_id": decision["task_id"] or "NO_ACTIVE_TASK",
+            "assigned_agent": decision["assigned_agent"],
+            "model": decision["model"],
+            "branch": decision["branch"],
+            "write_scope": decision["write_scope"],
+            "evidence_path": decision["evidence_path"],
             "generated_at": generated_at.isoformat(),
             "expires_at": expires_at.isoformat(),
             "priority": "advisory",
@@ -910,6 +1156,8 @@ state.json must be valid JSON with this exact structure:
 The exact task specification, deterministic gate and current Codex correction packet
 remain authoritative for PC and LP. Do not ask workers to bypass a gate, change task
 scope, write Git history or repeat an already failed approach.
+Use only task IDs declared in the configured PC/LP plans. Their `allowed_paths` lists
+are the canonical write scopes; the supervisor rejects active scopes that overlap.
 
 Finish after the six staged files and any explicitly justified, non-destructive Ring
 worktree edits have been written.

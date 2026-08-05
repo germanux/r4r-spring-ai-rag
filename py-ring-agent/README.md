@@ -71,6 +71,10 @@ can instead edit `DESTINATION` at the top and run it without arguments.
 r4r-ring-agent.git/
 ├── py-ring-agent/
 ├── .ring-agent/
+│   ├── worker-understanding.md
+│   └── evidence/
+│       └── <task-id>/
+│           └── <assigned-agent>-attempt-NN.md
 └── runtime/ring-agent/
     ├── ring/
     ├── pc/
@@ -126,6 +130,14 @@ timestamp and `priority=advisory` are valid. It injects the accepted directive i
 Qwen3 pre-edit, edit and assimilation prompts and into the next Codex plan/review
 context. The exact task, deterministic gate and current Codex correction packet
 always override The-Ring.
+
+Before Ring publishes those directives, it resolves each active `task_id` against the
+worker's configured task plan. The task's existing `allowed_paths` list is the
+canonical write scope. Publication stops if PC and LP scopes overlap. A compact,
+versioned decision trace is then written to `.ring-agent/evidence/<task-id>/`; ignored
+runtime logs remain the detailed source evidence. Each directive names the assigned
+agent, model, branch, write scope and exclusive evidence path. Ring is the sole writer
+of each attempt file.
 
 The default review interval is one hour and can be changed with:
 

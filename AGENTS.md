@@ -57,6 +57,10 @@ repository rewrite.
 ## Concurrency
 
 - Never run two workers for the same queue.
+- Every task's `allowed_paths` entry is its canonical `write_scope`; do not create a
+  second scope field that can drift from controller enforcement.
+- Before publishing PC/LP directives, Ring validates both active task IDs against
+  their configured plans and rejects dispatch when their write scopes overlap.
 - Peer-owned product paths are tolerated as concurrent background changes but are not
   writable by the PC or LP peer agent.
 - Each worker has separate progress, memory, control and run directories.
@@ -98,8 +102,11 @@ repository rewrite.
 - Never recursively search generated or runtime-heavy directories:
   `frontend/node_modules/**`, `frontend/dist/**`, `frontend/.angular/**`,
   `node_modules/**`, `runtime/**` and `.r4r/**`.
-- `runtime/` is visible working state and is not globally ignored. The deterministic
-  collector copies every Markdown/JSON agent artifact into the durable, versioned
-  `.opencode/current/{ring,PC,LP}/` namespace while preserving its source path.
-- Inspect only the exact task/run needed. Binary bundles, patches, PID/lock files and
-  bulk text logs are not copied into `.opencode/current/`.
+- `runtime/` is ephemeral working state and is globally ignored. Inspect only the
+  exact task/run needed.
+- Ring publishes one durable Markdown summary per task, agent/model and attempt under
+  `.ring-agent/evidence/<task-id>/`. Each file has one writer, and its task-derived
+  `write_scope` is recorded in the summary and worker directive. The directive also
+  records `assigned_agent`, `model`, `branch` and the exclusive `evidence_path`.
+- Binary bundles, patches, PID/lock files and bulk text logs remain only in ignored
+  runtime storage; they are never copied into `.ring-agent/evidence/`.
