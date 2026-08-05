@@ -23,9 +23,9 @@
       "target": "runtime/control/PC/agent-runtime.json"
     },
     {
-      "bytes": 2360,
+      "bytes": 1028,
       "producer": "codex",
-      "sha256": "8ff2820f53752eb7cf146dc131286d2364bf31169804da2a6448b79fce07f2ee",
+      "sha256": "bdd36c2ff926f84399624b4f050ef05c9b99dbb299daac2d3313d5c654262697",
       "source": "runtime/control/PC/codex-plan-cache.json",
       "target": "runtime/control/PC/codex-plan-cache.json"
     },
@@ -149,11 +149,39 @@
       "target": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/evidence/initial-gate.json"
     },
     {
+      "bytes": 682,
+      "producer": "codex",
+      "sha256": "b0adc3ecda7913ced30e7672e4ec3eabdc8a104e595b397b87eded3526e4973d",
+      "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/decisions/codex-plan.json",
+      "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/decisions/codex-plan.json"
+    },
+    {
+      "bytes": 530,
+      "producer": "controller",
+      "sha256": "d414e9af8af51f97ec2bf30c89f05a3cdc4b96a9103acd0852ede1559e235bda",
+      "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/codegraph-reconnaissance.md",
+      "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/codegraph-reconnaissance.md"
+    },
+    {
       "bytes": 206,
       "producer": "controller",
       "sha256": "0e7949cb3fd3711bfd0bb36fba32197ae8e440b1c015586bd6136c8b65d30163",
       "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/codegraph-sync.json",
       "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/codegraph-sync.json"
+    },
+    {
+      "bytes": 424,
+      "producer": "controller",
+      "sha256": "53e36980e5a58d10f855f90dc872966367a742d5d28b04a21277ed61599e54a5",
+      "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/codegraph-tool-calls.json",
+      "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/codegraph-tool-calls.json"
+    },
+    {
+      "bytes": 504,
+      "producer": "codex",
+      "sha256": "8c92fe349870c4c809cce35efd2c79ea6d429b73880ef21a10b84d740b2bbc6f",
+      "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/codex-plan.json",
+      "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/codex-plan.json"
     },
     {
       "bytes": 593,
@@ -177,11 +205,32 @@
       "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/gate-diagnostics.json"
     },
     {
+      "bytes": 1756,
+      "producer": "local-llm",
+      "sha256": "30b374b64cde666b81d559ae86d13f37776f4944ae9656c99678e3ea3c564578",
+      "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/opencode-codegraph-retry-02.json",
+      "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/opencode-codegraph-retry-02.json"
+    },
+    {
       "bytes": 1590,
       "producer": "local-llm",
       "sha256": "5387ce1c155033cea0dc524912b9edf74d52e91460cd41e5126d277a7943ac76",
       "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/opencode-codegraph.json",
       "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/opencode-codegraph.json"
+    },
+    {
+      "bytes": 3661,
+      "producer": "local-llm",
+      "sha256": "252297f50064468052c11cc68c41c96ef0d4f31d16d5879f8c6c0df521bfa808",
+      "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/opencode-pre-edit-understanding.json",
+      "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/opencode-pre-edit-understanding.json"
+    },
+    {
+      "bytes": 1767,
+      "producer": "local-llm",
+      "sha256": "b6cda06c7a42b0f85a5137981016c355417521ffb327c65c16863fe56cc476f4",
+      "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/pre-edit-understanding.md",
+      "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/pre-edit-understanding.md"
     },
     {
       "bytes": 213,
