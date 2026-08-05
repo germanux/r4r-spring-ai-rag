@@ -3,10 +3,10 @@
 ## Current state
 
 - Worker: PC.
-- Run: 20260805T201405Z.
+- Run: 20260805T205254Z.
 - Last accepted task: task-06d-failure-classification.
 - Active task: task-06e-child-process.
-- Current attempt: 1.
+- Current attempt: not started.
 - Latest exact gate: not run; exit=unknown.
 - Latest Codex decision: pending.
 - Checkpoint: none; head=not recorded.
@@ -16,7 +16,7 @@
 
 ## Files currently owned or edited
 
-- `src/test/java/com/riansares/r4r/ingestion/TestChildApplicationContextInitializer.java`
+- `src/test/resources/META-INF/spring.factories`
 
 ## Demonstrated by current evidence
 
@@ -32,7 +32,7 @@
 
 ## Next exact action
 
-Review the exact gate evidence and make one coherent, task-scoped repair.
+Run the initial exact gate and classify the first current failure.
 
 ## Fixed decisions
 
