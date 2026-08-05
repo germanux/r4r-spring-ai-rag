@@ -3,29 +3,28 @@
 ## Current state
 
 - Worker: PC.
-- Run: 20260805T223903Z.
+- Run: 20260805T230208Z.
 - Last accepted task: task-06e-child-process.
 - Active task: task-06f-ingestion-validation.
 - Current attempt: 1.
-- Latest exact gate: task-gate; exit=0.
+- Latest exact gate: not run; exit=unknown.
 - Latest Codex decision: pending.
-- Checkpoint: pending; head=not recorded.
+- Checkpoint: none; head=not recorded.
 - Accepted: task-01-base, task-02-ingestion, task-03-pgvector, task-04-rag, task-05-rag-api, task-06-production-ingestion-cli, task-06b-cli-contract, task-06c-spring-lifecycle, task-06d-failure-classification, task-06e-child-process.
 - Remaining: task-06f-ingestion-validation, task-07-populate-production-rag, task-08-rag-semantic-evaluation, task-09-production-smoke.
 - Exact plan: `.opencode/task-plan.backend.json`.
 
 ## Files currently owned or edited
 
-- `src/test/resources/application.yml`
+- No task-owned dirty product path at the latest snapshot.
 
 ## Demonstrated by current evidence
 
-- The exact deterministic task gate completed with exit code 0.
-- The checkpoint contains only task-owned product paths plus controller progress/memory.
+- No new acceptance claim has been demonstrated in this run yet.
 
 ## Still unproven or below expectations
 
-- Codex has not yet accepted the current checkpoint.
+- Complete the full deterministic production-ingestion CLI validation.
 
 ## Approaches not to repeat
 
@@ -33,7 +32,7 @@
 
 ## Next exact action
 
-Preserve a deterministic gate-green checkpoint, generate final evidence and request Codex review.
+Resume the unfinished revision by applying the complete CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS included below. Do not wait for another Codex review before making the requested correction.
 
 ## Fixed decisions
 
