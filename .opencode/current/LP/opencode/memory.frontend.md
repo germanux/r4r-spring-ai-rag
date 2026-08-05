@@ -6,9 +6,9 @@
 - Run: 20260805T191432Z.
 - Last accepted task: task-fe-03b-answer-abstention.
 - Active task: task-fe-03c-citations.
-- Current attempt: 1.
+- Current attempt: 2.
 - Latest exact gate: task-gate; exit=0.
-- Latest Codex decision: pending.
+- Latest Codex decision: REVISE.
 - Checkpoint: no-product-diff; head=not recorded.
 - Accepted: task-fe-01-angular17-bootstrap, task-fe-02-rag-client, task-fe-03-rag-ui, task-fe-03b-answer-abstention.
 - Remaining: task-fe-03c-citations, task-fe-03d-dom-state-tests, task-fe-03e-security-accessibility, task-fe-03f-final-validation, task-fe-04-playwright.
@@ -25,15 +25,17 @@
 
 ## Still unproven or below expectations
 
-- Codex has not yet accepted the current checkpoint.
+- Treat a green generic Angular build/test run as necessary but insufficient; inspect whether task-specific assertions cover every required behavior.
+- For FE-03C, require DOM assertions for ordinal order, source, complete ordered heading path, omission on an empty citation array in a non-abstained success response, and non-parsing of citation-like answer text.
 
 ## Approaches not to repeat
 
-- Do not repeat an unchanged failing action without new evidence.
+- Treat a green generic Angular build/test run as necessary but insufficient; inspect whether task-specific assertions cover every required behavior.
+- For FE-03C, require DOM assertions for ordinal order, source, complete ordered heading path, omission on an empty citation array in a non-abstained success response, and non-parsing of citation-like answer text.
 
 ## Next exact action
 
-Preserve a deterministic gate-green checkpoint, generate final evidence and request Codex review.
+Add focused rendered-DOM tests for every missing FE-03C requirement, then rerun `./scripts/frontend-task-gate.sh task-fe-03c-citations`.
 
 ## Fixed decisions
 
