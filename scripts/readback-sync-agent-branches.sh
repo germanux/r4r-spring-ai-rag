@@ -157,6 +157,7 @@ COMMON_DIR="$(realpath -e "$COMMON_DIR")"
 LOG_ROOT="${R4R_BRANCH_SYNC_RUNTIME_ROOT:-$DEVELOPMENT_ROOT/.r4r-runtime/branch-sync}"
 ALERT_ROOT="$LOG_ROOT/alerts"
 BACKUP_RUN_ROOT="$LOG_ROOT/backups/$SYNC_STAMP"
+ARTIFACT_COLLECTOR="${R4R_ARTIFACT_COLLECTOR:-$REPOSITORY/scripts/collect-agent-artifacts.py}"
 mkdir -p "$LOG_ROOT/conflicts" "$ALERT_ROOT" "$BACKUP_RUN_ROOT"
 
 # One scheduler lock plus one shared Git transaction lock used by workers and Drive.
@@ -480,6 +481,26 @@ visible_status() {
   git -C "$1" status --porcelain=v1 --untracked-files=all -- . ':(exclude)runtime/**'
 }
 
+collect_agent_artifacts() {
+  local path="$1" agent="$2" worker="$3" branch
+  [[ -n "$path" && -d "$path" ]] || { warn "$agent: worktree unavailable; artifact collection skipped"; return 0; }
+  [[ -f "$ARTIFACT_COLLECTOR" ]] || die "artifact collector not found: $ARTIFACT_COLLECTOR"
+  if merge_in_progress "$path" || [[ -n "$(unmerged_paths "$path" || true)" ]]; then
+    warn "$agent: Git operation pending; artifact collection deferred"
+    return 0
+  fi
+  branch="$(git -C "$path" branch --show-current)"
+  if "$DRY_RUN"; then
+    log "DRY-RUN: curate explicit $agent current-state files from $branch"
+    return 0
+  fi
+  python3 "$ARTIFACT_COLLECTOR" \
+    --repo "$path" \
+    --agent "$agent" \
+    --worker-id "$worker" \
+    --commit
+}
+
 collect_ref_into_hub() {
   local incoming="$1" label="$2" merge_log report paths body
   if git -C "$INTEGRATION_WORKTREE" merge-base --is-ancestor "$incoming" HEAD; then
@@ -691,6 +712,13 @@ while IFS=$'\t' read -r branch path; do
     SKIPPED+=("$branch:conflict-pending")
   fi
 done < <(all_worktree_records)
+
+# //TODO: Remove the obsolete artifact collector and its supporting code when the
+# repository cleanup is performed. Disabled because task evidence is already
+# durable in .ring-agent/evidence and runtime must remain entirely ignored.
+# collect_agent_artifacts "$RING_WORKTREE" ring RING
+# collect_agent_artifacts "$PC_WORKTREE" PC PC
+# collect_agent_artifacts "$LP_WORKTREE" LP LP
 
 [[ -z "$(visible_status "$INTEGRATION_WORKTREE")" ]] \
   || die "integration worktree is dirty; refusing to mix synchronization changes"
