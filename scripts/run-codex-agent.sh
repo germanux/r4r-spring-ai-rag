@@ -51,6 +51,28 @@ while (($#)); do
   esac
 done
 
+if [[ -z "$DEST" && -z "${R4R_DESTINATION:-}" ]]; then
+  current_branch="$(git -C "$ROOT" branch --show-current 2>/dev/null || true)"
+  case "$current_branch" in
+    agent/laptop-qwen3-worker)
+      DEST="LP"
+      ;;
+    agent/pc-qwen3-worker)
+      DEST="PC"
+      ;;
+    *)
+      case "$(basename "$ROOT")" in
+        r4r-lp-worker.git)
+          DEST="LP"
+          ;;
+        r4r-pc-worker.git)
+          DEST="PC"
+          ;;
+      esac
+      ;;
+  esac
+fi
+
 DEST="${DEST:-${R4R_DESTINATION:-PC}}"
 DEST="${DEST^^}"
 case "$DEST" in
