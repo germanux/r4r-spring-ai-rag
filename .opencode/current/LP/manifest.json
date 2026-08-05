@@ -51,6 +51,13 @@
       "target": "runtime/control/LP/opencode.resolved.json"
     },
     {
+      "bytes": 797,
+      "producer": "controller",
+      "sha256": "231089898bb2071c65cf372c6c0a28885749b3eabc262fecf0c77769c57e8353",
+      "source": "runtime/runs/LP/20260805T191432Z/state.json",
+      "target": "runtime/runs/LP/20260805T191432Z/state.json"
+    },
+    {
       "bytes": 1248,
       "producer": "codex",
       "sha256": "8583dc9738b208ab050f99feac92596a56ab8d354657e2ee561175194d9ff321",
@@ -343,6 +350,13 @@
       "sha256": "9f8998dbf937670ab16e4e2e676a1a8427f2ee52042a71f128cf0f61b15d5353",
       "source": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-02/evidence/notify-pre-edit-gate-green.json",
       "target": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-02/evidence/notify-pre-edit-gate-green.json"
+    },
+    {
+      "bytes": 1690,
+      "producer": "local-llm",
+      "sha256": "b7e624746e1639f29244b943483a7072edfa3fc059d935372bb22363f8fa1259",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-02/evidence/opencode.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-02/evidence/opencode.json"
     },
     {
       "bytes": 221,
