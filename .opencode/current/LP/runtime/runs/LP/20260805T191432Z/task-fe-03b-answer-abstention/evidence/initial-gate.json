@@ -1,0 +1,12 @@
+{
+  "command": [
+    "./scripts/frontend-task-gate.sh",
+    "task-fe-03b-answer-abstention"
+  ],
+  "exit_code": 1,
+  "timed_out": false,
+  "stop_reason": null,
+  "observed_steps": 0,
+  "meaningful_events": 0,
+  "watchdog": null
+}

@@ -1,0 +1,11 @@
+{
+  "classification": "green",
+  "summary": "The deterministic task gate completed successfully.",
+  "fingerprint": "d9df2a6abd2256e04ef0a04692636f4356b719aa94a2c9545b9a4384ecb28bd9",
+  "source_paths": [],
+  "related_paths": [],
+  "log_path": "runtime/runs/LP/20260805T203856Z/task-fe-03c-citations/attempt-04/evidence/diagnostics/gate-full.log",
+  "summary_path": "runtime/runs/LP/20260805T203856Z/task-fe-03c-citations/attempt-04/evidence/diagnostics/gate-summary.md",
+  "manifest_path": "runtime/runs/LP/20260805T203856Z/task-fe-03c-citations/attempt-04/evidence/diagnostics/error-manifest.json",
+  "bundle_path": "runtime/runs/LP/20260805T203856Z/task-fe-03c-citations/attempt-04/evidence/diagnostics/codex-error-bundle.zip"
+}
