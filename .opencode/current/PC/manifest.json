@@ -32,7 +32,7 @@
     {
       "bytes": 5837,
       "producer": "controller",
-      "sha256": "1615454ed3743824c11790163ef82e682f53bda855c78bb51cddbabf4f3a3c52",
+      "sha256": "b57261d321212ffd15a442ad7ceb25c5cf7a02fe61bfbb1e4d957dc0db849d77",
       "source": "runtime/control/PC/models.json",
       "target": "runtime/control/PC/models.json"
     },
@@ -42,6 +42,13 @@
       "sha256": "59e6547161df45ceec9304a4eaa10bb01e92c353e52bc88c1737f1113e023ad2",
       "source": "runtime/control/PC/opencode.resolved.json",
       "target": "runtime/control/PC/opencode.resolved.json"
+    },
+    {
+      "bytes": 665,
+      "producer": "controller",
+      "sha256": "1567daa721df6e3d3abab29ec0c5630ed5c866fea04d9efd413bc8efb5a7ebd3",
+      "source": "runtime/runs/PC/20260805T191431Z/state.json",
+      "target": "runtime/runs/PC/20260805T191431Z/state.json"
     },
     {
       "bytes": 1986,
@@ -100,6 +107,13 @@
       "target": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/gate-diagnostics.json"
     },
     {
+      "bytes": 316,
+      "producer": "controller",
+      "sha256": "46cdc39506f14edab4614f040729fcae799fc042672a7c49db8b5c625e4e6148",
+      "source": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/notify-files-changed-01.json",
+      "target": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/notify-files-changed-01.json"
+    },
+    {
       "bytes": 2479,
       "producer": "local-llm",
       "sha256": "5518c44be1f8e4b82c8bc69d1ba1c4b1635fef34cc90e29e8fdde43db7d03db2",
@@ -112,6 +126,13 @@
       "sha256": "29f0d3cc0c8c89ef1194c2a568d5e7d4faf2e49744a904f2386a9a8f4a18df64",
       "source": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/opencode-pre-edit-understanding.json",
       "target": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/opencode-pre-edit-understanding.json"
+    },
+    {
+      "bytes": 10948,
+      "producer": "local-llm",
+      "sha256": "f7fed5cf9a043b789cec4dcdc2cb3e5226bd2c412680d6236a904c0866d5cc6a",
+      "source": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/opencode.json",
+      "target": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/opencode.json"
     },
     {
       "bytes": 1937,
