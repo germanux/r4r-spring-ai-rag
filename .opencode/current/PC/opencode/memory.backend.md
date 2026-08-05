@@ -6,10 +6,10 @@
 - Run: 20260805T205254Z.
 - Last accepted task: task-06d-failure-classification.
 - Active task: task-06e-child-process.
-- Current attempt: not started.
-- Latest exact gate: not run; exit=unknown.
+- Current attempt: 1.
+- Latest exact gate: task-gate; exit=0.
 - Latest Codex decision: pending.
-- Checkpoint: none; head=not recorded.
+- Checkpoint: pending; head=not recorded.
 - Accepted: task-01-base, task-02-ingestion, task-03-pgvector, task-04-rag, task-05-rag-api, task-06-production-ingestion-cli, task-06b-cli-contract, task-06c-spring-lifecycle, task-06d-failure-classification.
 - Remaining: task-06e-child-process, task-06f-ingestion-validation, task-07-populate-production-rag, task-08-rag-semantic-evaluation, task-09-production-smoke.
 - Exact plan: `.opencode/task-plan.backend.json`.
@@ -20,11 +20,12 @@
 
 ## Demonstrated by current evidence
 
-- No new acceptance claim has been demonstrated in this run yet.
+- The exact deterministic task gate completed with exit code 0.
+- The checkpoint contains only task-owned product paths plus controller progress/memory.
 
 ## Still unproven or below expectations
 
-- Execute and verify the real production CLI as a bounded child JVM.
+- Codex has not yet accepted the current checkpoint.
 
 ## Approaches not to repeat
 
@@ -32,7 +33,7 @@
 
 ## Next exact action
 
-Run the initial exact gate and classify the first current failure.
+Preserve a deterministic gate-green checkpoint, generate final evidence and request Codex review.
 
 ## Fixed decisions
 

@@ -3,28 +3,29 @@
 ## Current state
 
 - Worker: PC.
-- Run: 20260805T174026Z.
+- Run: 20260805T205254Z.
 - Last accepted task: task-06d-failure-classification.
 - Active task: task-06e-child-process.
 - Current attempt: 1.
-- Latest exact gate: not run; exit=unknown.
+- Latest exact gate: task-gate; exit=0.
 - Latest Codex decision: pending.
-- Checkpoint: none; head=not recorded.
+- Checkpoint: pending; head=not recorded.
 - Accepted: task-01-base, task-02-ingestion, task-03-pgvector, task-04-rag, task-05-rag-api, task-06-production-ingestion-cli, task-06b-cli-contract, task-06c-spring-lifecycle, task-06d-failure-classification.
 - Remaining: task-06e-child-process, task-06f-ingestion-validation, task-07-populate-production-rag, task-08-rag-semantic-evaluation, task-09-production-smoke.
 - Exact plan: `.opencode/task-plan.backend.json`.
 
 ## Files currently owned or edited
 
-- `src/test/java/com/riansares/r4r/ingestion/TestChildApplicationContextInitializer.java`
+- `src/test/resources/META-INF/spring.factories`
 
 ## Demonstrated by current evidence
 
-- No new acceptance claim has been demonstrated in this run yet.
+- The exact deterministic task gate completed with exit code 0.
+- The checkpoint contains only task-owned product paths plus controller progress/memory.
 
 ## Still unproven or below expectations
 
-- Execute and verify the real production CLI as a bounded child JVM.
+- Codex has not yet accepted the current checkpoint.
 
 ## Approaches not to repeat
 
@@ -32,7 +33,7 @@
 
 ## Next exact action
 
-Resume the unfinished revision by applying the complete CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS included below. Do not wait for another Codex review before making the requested correction.
+Preserve a deterministic gate-green checkpoint, generate final evidence and request Codex review.
 
 ## Fixed decisions
 
@@ -44,7 +45,7 @@ Resume the unfinished revision by applying the complete CURRENT CODEX-TO-LOCAL E
 - Spring AI abstractions; no handwritten Ollama HTTP client.
 - Every red gate retains complete diagnostics for Codex.
 - CodeGraph is focused retrieval evidence, not authority to expand task scope.
-- Runtime evidence stays under `runtime/runs/`; the deterministic controller publishes only after a validated commit.
+- Markdown/JSON activity is published under `.opencode/current/{ring,PC,LP}/`; raw runtime is never committed directly.
 
 ## Task ledger
 
