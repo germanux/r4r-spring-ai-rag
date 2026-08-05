@@ -50,10 +50,10 @@
     </div>
   }
 
-  @if (currentState === 'abstention' && response) {
+  @if (currentState === 'abstention') {
     <div class="abstention-state" role="status" aria-live="polite">
       <h2>Cannot Answer</h2>
-      <p class="answer-content">{{ response.answer }}</p>
+      <p class="answer-content">{{ response?.answer || 'No answer available due to lack of relevant information.' }}</p>
       <button type="button" (click)="clear()" class="clear-button">Ask Another Question</button>
     </div>
   }
