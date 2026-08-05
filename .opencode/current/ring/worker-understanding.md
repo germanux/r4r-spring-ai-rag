@@ -1,35 +1,25 @@
-# Worker-understanding audit (RUN_ID 20260805T191433Z)
+# Worker understanding audit (RUN_ID 20260805T201628Z)
 
-## PC understanding quality
+## What the evidence says each worker currently understands
 
-### Strong signals
-- `pc-runtime/progress.json` correctly tracks accepted history and active task `task-06e-child-process`.
-- `pc-runtime/memory.md` correctly lists active task and states no new acceptance was demonstrated.
+## PC
 
-### Gaps
-- `pc-runtime/manifest.json` has `null` for codex plan/review, gate summary, local understanding, and checkpoint in this snapshot.
-- Current code delta is large but only represented as diff-stat; no direct rationale artifact is present.
+- Correctly tracks active task as `task-06e-child-process` (`pc-runtime/progress.json`, `pc-runtime/memory.md`).
+- Has current gate evidence showing failure (`pc-runtime/gate_summary.md`, exit `2`).
+- In-flight edits are large and centered on `TestChildApplicationContextInitializer.java`, which may not be the most direct Task 06E proof target.
 
-### Direction
-- Keep PC on task-06e but require immediate exact-gate evidence before further broad edits.
+**Understanding gap to correct next:** prioritize first-failure-driven repair tied explicitly to child-process contract evidence for `KnowledgeIngestionCli`.
 
-## LP understanding quality
+## LP
 
-### Strong signals
-- `lp-runtime/progress.json` correctly marks FE-01/02/03 accepted and active `task-fe-03b-answer-abstention` pending.
+- Correctly tracks active task as `task-fe-03b-answer-abstention` (`lp-runtime/progress.json`, `lp-runtime/memory.md`).
+- Has current gate-green evidence (`lp-runtime/gate_summary.md`, exit `0`).
+- Still lacks completion evidence because Codex review/accept artifact is absent (`lp-runtime/manifest.json` has `codex_review: null`, `checkpoint: null`).
 
-### Defects
-- `lp-runtime/memory.md` is stale/invalid for this run (wrong active task, no accepted tasks, placeholder `{self.plan_display}`).
-- `lp-runtime/manifest.json` similarly lacks current gate/codex artifacts.
+**Understanding gap to correct next:** completion is blocked by acceptance workflow, not by missing implementation evidence.
 
-### Direction
-- LP should continue FE-03B only with fresh exact-gate evidence and corrected memory/progress consistency.
+## Director confidence and constraints
 
-## Confidence statement
-
-- **PC task targeting confidence:** medium (active task known, but proof artifacts missing).
-- **LP task targeting confidence:** low-to-medium (progress is clear, memory artifact is contradictory).
-
-## Bounded acceptance for next cycle
-
-Next cycle should include newly captured gate diagnostics (or gate green evidence) for both queues so Ring decisions can be based on current execution outcomes rather than metadata-only snapshots.
+- Confidence is **high** on queue status and immediate next actions because both workers provide fresh progress and gate summaries in this RUN_DIR.
+- Confidence is **limited** on precise code-level root cause for PC because full gate logs are not bundled in RUN_DIR.
+- No claim is made that tests are fully complete or Codex has accepted either task.
