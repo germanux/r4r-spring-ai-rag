@@ -1,33 +1,39 @@
-# Global coordination summary (RUN 20260805T222913Z)
+# Global coordination summary (run 20260805T225504Z)
 
-## Outcome
+## Overall status: READY
 
-- **overall_status: READY**
-- Both queues have bounded next actions.
-- No direct Ring worktree code/policy edits were required in this cycle beyond staged coordination artifacts.
+This cycle found no destructive repository issue requiring Ring-side code edits. The queue is ready for bounded continuation with asymmetric actions:
 
-## PC decision summary
+- **PC:** hold for Codex review on an already gate-green checkpoint.
+- **LP:** continue one focused FE-03C correction pass.
 
-- **Action:** HOLD on new gate runs until current unmerged PC evidence files are resolved.
-- **Task:** `task-06f-ingestion-validation`
-- **Why:** newest PC status contains `UU` entries in `.opencode/current/PC/*`; active task remains PENDING with Codex `REVISE` and prior exit `2`.
-- **Next:** clear unmerged state, clean whitespace preflight, apply bounded `application.yml` REVISE fix, rerun exact backend gate.
+## Evidence highlights
 
-## LP decision summary
+- PC has deterministic gate success and checkpoint evidence:
+  - `pc-runtime/gate_summary.md`
+  - `pc-runtime/checkpoint.json`
+  - `worker-requests/PC.json`
+- LP remains pending with explicit Codex REVISE instructions:
+  - `lp-runtime/codex-qwen3-extra-instructions.md`
+  - `lp-runtime/progress.json`
+  - `lp-runtime/memory.md`
 
-- **Action:** CONTINUE
-- **Task:** `task-fe-03c-citations`
-- **Why:** task is still PENDING; Codex REVISE requires missing FE-03C rendered-DOM assertions not yet proven.
-- **Next:** update only `rag-page.component.spec.ts` with the three required DOM assertions and rerun exact FE gate.
+## Priority decisions
 
-## Main integration risks
+1. **PC first defect:** no Codex ACCEPT evidence yet for `task-06f-ingestion-validation`.
+   - Action: HOLD pending review outcome.
+2. **LP first defect:** missing FE-03C rendered-DOM citation assertions.
+   - Action: CONTINUE with bounded spec-only implementation and exact FE gate.
 
-1. PC preflight reliability is threatened by merge-conflicted evidence files.
-2. LP may incorrectly treat generic green gate output as FE-03C completion.
-3. Ongoing `.opencode/current/**` churn can reintroduce whitespace/conflict noise.
+## Guardrails reaffirmed
 
-## Evidence limitations noted
+- Do not bypass exact gates.
+- Do not widen task scope.
+- Do not write Git history from workers.
+- Do not treat gate-green alone as task completion without Codex `ACCEPT`.
 
-- Decisions are based on staged RUN_DIR snapshots; live worker trees were not directly inspected.
-- This cycle did not include freshly staged full gate logs for first-failure line-by-line verification.
-- No new worker-request payloads were provided in `worker-request-manifest.json`.
+## Explicit limitations
+
+- Review was constrained to staged snapshot evidence under RUN_DIR.
+- No direct live-worker worktree inspection was performed.
+- Full gate logs and Codex review artifacts are not fully present in this snapshot for deeper forensics.

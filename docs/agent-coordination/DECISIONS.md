@@ -699,3 +699,49 @@ Append-only ledger generated after each validated Ring cycle.
 - This cycle used staged RUN_DIR snapshots only; live PC/LP worktrees were not directly inspected.
 - RUN_DIR includes gate summaries but not a freshly captured full gate log for this Ring cycle.
 - `worker-request-manifest.json` contains no new explicit worker requests, so decisions rely on status/progress/memory/directive evidence.
+
+## Cycle `20260805T225504Z` â READY
+
+### PC
+
+- Decision: `HOLD`
+- Task: `task-06f-ingestion-validation`
+- Reason: PC already produced a gate-green checkpoint (gate_exit=0) for task-06f-ingestion-validation and the first remaining defect is missing Codex acceptance evidence for that checkpoint, not a new backend code failure.
+- Next action: Do not run another backend edit/gate pass; wait for Codex review on checkpoint head 64dcc9c8a8993f1a59c96624853b1fad72ebc98c, then execute only the first bounded correction if Codex returns REVISE.
+- Avoid repeating: Do not rerun the expensive backend gate or expand scope while Codex decision is still pending for the current gate-green checkpoint.
+- Acceptance gates:
+  - task-06f-ingestion-validation closes only after Codex decision ACCEPT
+  - If revised, rerun exact gate: ./scripts/task-gate.sh task-06f-ingestion-validation with exit 0
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T225504Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T225504Z/pc-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T225504Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T225504Z/pc-runtime/progress.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03c-citations`
+- Reason: LP remains PENDING with Codex decision REVISE and no task-owned product diff in this snapshot; required FE-03C rendered-DOM citation assertions are still the first unresolved defect.
+- Next action: Edit only frontend/src/app/features/rag/rag-page.component.spec.ts to add the three missing FE-03C rendered-DOM assertions (ordered structured citations with source+heading path, empty-citations omission, and non-parsing of citation-like answer text), then run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03c-citations.
+- Avoid repeating: Do not stop at generic green runs or idle-timeout cycles without implementing task-specific FE-03C DOM assertions.
+- Acceptance gates:
+  - git diff --check must be clean before FE gate
+  - Exact gate must pass: ./scripts/frontend-task-gate.sh task-fe-03c-citations
+  - task-fe-03c-citations closes only after Codex decision ACCEPT
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T225504Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T225504Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T225504Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T225504Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- PC task-06f remains integration-blocking for backend acceptance until Codex review outcome is recorded, even though gate is currently green.
+- LP may produce false confidence if assertions validate component internals instead of rendered DOM contract required by FE-03C.
+
+### Evidence limitations
+
+- This cycle uses bounded snapshot evidence under RUN_DIR only; no direct inspection of live PC/LP worktrees was performed.
+- No Codex review artifact is present yet for PC checkpoint head 64dcc9c8a8993f1a59c96624853b1fad72ebc98c in this RUN_DIR snapshot.
+- Gate summary markdowns are truncated summaries and do not include full gate-full.log contents in this staged review.
