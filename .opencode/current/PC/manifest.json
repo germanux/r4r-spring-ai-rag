@@ -14,6 +14,27 @@
       "sha256": "952122e18f46ae828b1a81bb80820181e2ec060fc0818c74972c78e8e6661793",
       "source": ".opencode/progress.backend.json",
       "target": "opencode/progress.backend.json"
+    },
+    {
+      "bytes": 994,
+      "producer": "controller",
+      "sha256": "5acd25d5092ed680e3d84b26073047ea128b80186122866ada5c507964fef937",
+      "source": "runtime/control/PC/agent-runtime.json",
+      "target": "runtime/control/PC/agent-runtime.json"
+    },
+    {
+      "bytes": 5837,
+      "producer": "controller",
+      "sha256": "1615454ed3743824c11790163ef82e682f53bda855c78bb51cddbabf4f3a3c52",
+      "source": "runtime/control/PC/models.json",
+      "target": "runtime/control/PC/models.json"
+    },
+    {
+      "bytes": 9394,
+      "producer": "local-llm",
+      "sha256": "59e6547161df45ceec9304a4eaa10bb01e92c353e52bc88c1737f1113e023ad2",
+      "source": "runtime/control/PC/opencode.resolved.json",
+      "target": "runtime/control/PC/opencode.resolved.json"
     }
   ],
   "schema_version": 1,
