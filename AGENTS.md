@@ -1,35 +1,50 @@
-# R4R dual-agent rules
+# R4R four-role engineering hierarchy
 
-## Roles and queues
+## Roles, experience calibration and queues
 
-Two product controllers may run concurrently because ownership is disjoint:
+The years below are an operational calibration for autonomy and risk, not a factual
+claim about a model's biography. There are three implementation levels and one
+coordination role:
 
-- **PC / backend** uses `.opencode/task-plan.backend.json` and owns Java 21,
-  Spring AI, PostgreSQL/pgvector and backend documentation.
-- **LP / frontend** uses `.opencode/task-plan.frontend.json` and owns
-  `frontend/**` and `docs/frontend/**`; Angular must remain major 17.
-- **RING / director** coordinates both queues and may read or modify any file in the
-  Ring worktree when a current evidence-backed cross-cutting correction is necessary.
-  This Ring exception includes this `AGENTS.md` file and other policy/configuration
-  files.
+- **RING / technical lead — 10-year calibration, no coding.** Ring decomposes work,
+  classifies risk, assigns one owner, checks dependencies and decides whether evidence
+  is sufficient. It writes only staged coordination outputs. Ring never edits product,
+  test, script, controller, configuration or policy code.
+- **SURGICAL / senior developer and reviewer — 5-year calibration, level 3.** Codex
+  runs through OpenCode using the `r4r-surgical-architect` and
+  `r4r-surgical-fixer` profiles on branch `agent/opencode-dual-surgical`. It implements
+  cross-cutting or high-risk work and reviews every PC and LP result before closure.
+- **PC / developer — 2-year calibration, level 2.** PC performs bounded medium-risk
+  implementation within the active backend or frontend phase. It does not make
+  repository-wide architecture, lifecycle or Git-synchronization decisions.
+- **LP / junior developer — 6-month calibration, level 1.** LP receives small,
+  prescriptive work packages with exact files, one observable behavior and one gate.
+  It never invents architecture, widens scope or resolves cross-component ambiguity.
+
+The canonical classification is `.opencode/task-plan.hierarchy.json`. The active
+legacy backend/frontend plans remain execution-state authorities until phase-aware
+migration is implemented.
 
 The canonical runtime/model configuration is `config/r4r-agents.json`. Machine-local
 endpoints belong in `.env.r4r.local`, never in the application `.env`.
 
 ## Subtask size, timebox and commits
 
-These rules apply to **PC**, **LP** and **RING**. For Ring, a task means one bounded,
-evidence-backed cross-cutting correction in the Ring worktree rather than an unbounded
-repository rewrite.
+These rules apply to all implementation work. Ring creates and routes work packages;
+it does not implement them.
 
-- An agent task should represent one bounded outcome that can normally be completed
-  in 45–70 minutes of useful model work.
+- A level-1 LP package targets 15–35 minutes, one or two closely related files and one
+  exact assertion or visible behavior.
+- A level-2 PC package targets 30–60 minutes, one component or layer and one exact gate.
+- A level-3 SURGICAL package targets 45–90 minutes and may cross layers only when the
+  work cannot safely be decomposed further.
 - The hard OpenCode session ceiling is 90 minutes (`5400` seconds). Reaching the
   ceiling stops the session; it does not authorize a broader scope or an unreviewed
   commit.
-- Every subtask has one objective, one exact gate and one controller-owned closing
-  commit. A subtask may create an earlier gate-green checkpoint, but the closing
-  commit still requires Codex `ACCEPT`.
+- Every subtask has one objective, explicit dependencies, one canonical `allowed_paths`
+  write scope, one exact gate and one controller-owned closing commit. A subtask may
+  create an earlier gate-green checkpoint, but closure still requires SURGICAL Codex
+  `ACCEPT` through OpenCode.
 - Split work again when one task mixes independent concerns such as entrypoint,
   lifecycle, exception classification, subprocess proof, DOM behavior, accessibility
   or final integration validation.
@@ -39,32 +54,29 @@ repository rewrite.
 - After a subtask is accepted and committed, advance immediately to the next pending
   subtask. Do not reopen accepted work without a current regression.
 
-## Ring non-destructive authority
+## Ring coordination-only authority
 
-- Ring may modify existing repository files, including Java, Angular, scripts,
-  controller code, documentation and agent instructions.
-- Ring must never delete, move or rename an existing file or directory.
-- Ring must never truncate an existing file to empty or replace useful content with a
-  placeholder.
-- Ring reads before editing and preserves unrelated content.
-- New files belong in an appropriate existing directory; the repository root is
-  reserved for canonical project entry files.
-- Ring does not edit secrets, credentials, private keys, tokens, `.env` files or
-  runtime PID/lock files.
-- Ring does not write Git history. The deterministic controller or the human operator
-  owns commits and pushes.
+- Ring may read repository and runtime evidence required to classify work.
+- Ring may write only the exact staged outputs under the supplied `OUTPUT_DIR`.
+- Ring never edits Java, Angular, tests, scripts, controller code, configuration,
+  documentation, task plans, agent profiles or `AGENTS.md`.
+- Ring never deletes, moves, renames or truncates repository content.
+- Ring never writes Git history, launches workers or applies a SURGICAL patch.
+- When Ring identifies a code or policy correction, it creates a bounded level-1,
+  level-2 or level-3 work package and routes it to LP, PC or SURGICAL respectively.
 
 ## Concurrency
 
 - Never run two workers for the same queue.
 - Every task's `allowed_paths` entry is its canonical `write_scope`; do not create a
   second scope field that can drift from controller enforcement.
-- Before publishing PC/LP directives, Ring validates both active task IDs against
-  their configured plans and rejects dispatch when their write scopes overlap.
+- Before publishing directives, Ring validates active task IDs against the configured
+  plans and rejects dispatch when write scopes overlap. A level-3 SURGICAL task holds
+  overlapping PC/LP work until the surgical patch is integrated and revalidated.
 - Peer-owned product paths are tolerated as concurrent background changes but are not
   writable by the PC or LP peer agent.
 - Each worker has separate progress, memory, control and run directories.
-- OpenCode/Qwen3 and Codex never write Git history.
+- OpenCode/Qwen3 and OpenCode/Codex never write Git history.
 - The deterministic Python controller may create a task-scoped checkpoint immediately
   after the exact gate is green, and a closing commit after Codex `ACCEPT`.
 - A checkpoint preserves useful compilable work but does not mark the task accepted.
@@ -86,10 +98,12 @@ repository rewrite.
 1. Run the selected queue's exact gate.
 2. Classify the first current failure and retain the full evidence.
 3. Use focused CodeGraph/Code-Graph-RAG retrieval when useful.
-4. Follow the bounded Codex plan.
+4. Follow the bounded Ring work package; escalate ambiguity to SURGICAL instead of
+   widening scope.
 5. Edit one coherent batch inside the current worker's allowed paths.
 6. Re-run the exact gate. When green, let the controller write worker memory and a
-   task-scoped checkpoint before handing the same evidence to Codex.
+   task-scoped checkpoint before handing the same evidence to SURGICAL Codex through
+   OpenCode.
 7. Stop on scope/Git violations and bounded-session watchdog triggers; retry only with
    a changed plan or new evidence.
 
@@ -98,7 +112,9 @@ repository rewrite.
 - Backend tasks use Spring AI abstractions; no handwritten Ollama HTTP client.
 - Frontend tests and Playwright must not require a live LLM.
 - Flyway owns the backend schema.
-- A task completes only with its exact gate green and Codex `ACCEPT`.
+- A level-1 or level-2 task completes only with its exact gate green and SURGICAL
+  Codex `ACCEPT`. A level-3 task requires its exact gate, a read-only surgical review
+  pass and controller acceptance of the emitted patch.
 - Never recursively search generated or runtime-heavy directories:
   `frontend/node_modules/**`, `frontend/dist/**`, `frontend/.angular/**`,
   `node_modules/**`, `runtime/**` and `.r4r/**`.

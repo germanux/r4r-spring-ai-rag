@@ -1,12 +1,16 @@
 # R4R OpenCode dual surgical reviewer — phase 2.19
 
-This replaces the paid Claude Code dependency with two local OpenCode agents:
+This is the level-3 implementation and mandatory review lane. It uses Codex through
+OpenCode on branch `agent/opencode-dual-surgical`:
 
-1. `r4r-surgical-architect`: whole-repository, read-only diagnosis.
-2. `r4r-surgical-fixer`: minimal edits in an isolated detached worktree.
+1. `r4r-surgical-architect`: whole-repository, read-only diagnosis and PC/LP review.
+2. `r4r-surgical-fixer`: complex minimal edits in an isolated detached worktree.
 
-The controller captures evidence, validates shell/Python code, emits a binary Git patch,
-and can ask Codex for a final read-only review. Neither OpenCode agent writes Git history.
+Both profiles pin `openai/gpt-5.3-codex`. The canonical configuration is
+`config/r4r-agents.json` under `agents.SURGICAL`. The controller captures evidence,
+validates shell/Python code and emits a binary Git patch. Neither OpenCode agent writes
+Git history. Ring only requests and coordinates this lane; Ring never edits code or
+applies the patch.
 
 ## Install
 
@@ -25,12 +29,14 @@ git commit -m "feat(surgical): add dual local OpenCode reviewer"
 ```bash
 ./scripts/run-opencode-dual-surgical-review.sh \
   --repo ~/Desarrollo/r4r-ring-agent.git \
-  --branch r4r-chatgpt \
   --mode patch \
   --codex-review \
   --output-root "$PWD/runtime/opencode-dual-surgical" \
   --keep-worktree \
   --prompt "Correct evidence capture, exact gates, permission loops, error classification and stop-merge-restart lifecycle."
 ```
+
+`--branch` is optional; the safe default is `agent/opencode-dual-surgical`. Pass an
+explicit ref only for a deliberate audit of another branch.
 
 Use `--mode review` to run only the architect.

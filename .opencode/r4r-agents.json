@@ -14,6 +14,22 @@
     "maxSessionSteps": 120,
     "repeatEventBudget": 12
   },
+  "teamHierarchy": {
+    "coordinationRole": "RING",
+    "implementationLevels": {
+      "1": "LP",
+      "2": "PC",
+      "3": "SURGICAL"
+    },
+    "mandatoryReviewer": "SURGICAL",
+    "routingPlan": ".opencode/task-plan.hierarchy.json",
+    "experienceCalibration": {
+      "RING": "10-years-technical-lead-no-coding",
+      "SURGICAL": "5-years-senior-complex-implementation-and-review",
+      "PC": "2-years-bounded-developer",
+      "LP": "6-months-junior-prescriptive-work"
+    }
+  },
   "codeIntelligence": {
     "referenceManifest": "knowledge/code-repositories.md",
     "referenceRoot": ".r4r/reference-repositories",
@@ -34,9 +50,43 @@
     }
   },
   "agents": {
+    "RING": {
+      "agentId": "r4r-ring",
+      "role": "technical-lead-coordination-only",
+      "experienceCalibration": "10-years",
+      "taskLevel": 0,
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "modelLabel": "GPT-5.6 Luna Ring lead",
+      "reasoningVariant": "low",
+      "worker": "opencode",
+      "branch": "agent/ring-agent-worker",
+      "plan": ".opencode/task-plan.hierarchy.json",
+      "controlDir": "runtime/control/RING",
+      "mayImplement": false,
+      "reviewer": "SURGICAL"
+    },
+    "SURGICAL": {
+      "agentId": "r4r-surgical-fixer",
+      "architectAgentId": "r4r-surgical-architect",
+      "role": "complex-implementation-and-mandatory-review",
+      "experienceCalibration": "5-years",
+      "taskLevel": 3,
+      "provider": "openai",
+      "model": "gpt-5.3-codex",
+      "modelLabel": "GPT-5.3 Codex OpenCode surgical",
+      "reasoningVariant": "medium",
+      "worker": "opencode",
+      "branch": "agent/opencode-dual-surgical",
+      "plan": ".opencode/task-plan.hierarchy.json",
+      "controlDir": "runtime/control/SURGICAL",
+      "reviews": ["PC", "LP", "SURGICAL"]
+    },
     "PC": {
       "agentId": "r4r-pc",
-      "role": "backend-java21-spring-ai",
+      "role": "bounded-level-2-developer",
+      "experienceCalibration": "2-years",
+      "taskLevel": 2,
       "provider": "ollama-pc",
       "endpointEnv": "R4R_OPENCODE_PC_BASE_URL",
       "defaultEndpoint": "http://127.0.0.1:11434/v1",
@@ -46,6 +96,8 @@
       "outputTokens": 8192,
       "temperature": 0.25,
       "worker": "opencode",
+      "branch": "agent/pc-qwen3-worker",
+      "reviewer": "SURGICAL",
       "plan": ".opencode/task-plan.backend.json",
       "progress": ".opencode/progress.backend.json",
       "memory": ".opencode/memory.backend.md",
@@ -74,7 +126,9 @@
     },
     "LP": {
       "agentId": "r4r-laptop",
-      "role": "frontend-angular17",
+      "role": "prescriptive-level-1-junior",
+      "experienceCalibration": "6-months",
+      "taskLevel": 1,
       "provider": "ollama-laptop",
       "endpointEnv": "R4R_OPENCODE_LP_BASE_URL",
       "defaultEndpoint": "http://192.168.1.9:11434/v1",
@@ -84,6 +138,8 @@
       "outputTokens": 6144,
       "temperature": 0.33,
       "worker": "opencode",
+      "branch": "agent/laptop-qwen3-worker",
+      "reviewer": "SURGICAL",
       "plan": ".opencode/task-plan.frontend.json",
       "progress": ".opencode/progress.frontend.json",
       "memory": ".opencode/memory.frontend.md",
