@@ -3,7 +3,7 @@
 ## Current state
 
 - Worker: LP.
-- Run: 20260805T224710Z.
+- Run: 20260805T230628Z.
 - Last accepted task: task-fe-03b-answer-abstention.
 - Active task: task-fe-03c-citations.
 - Current attempt: 1.
@@ -16,7 +16,7 @@
 
 ## Files currently owned or edited
 
-- No task-owned dirty product path at the latest snapshot.
+- `frontend/src/app/features/rag/rag-page.component.spec.ts`
 
 ## Demonstrated by current evidence
 
