@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "active_task": "task-06f-ingestion-validation",
-  "last_run": "20260805T232055Z",
+  "last_run": "20260805T233754Z",
   "tasks": [
     {
       "id": "task-01-base",
@@ -72,9 +72,9 @@
       "id": "task-06f-ingestion-validation",
       "status": "PENDING",
       "accepted_at": null,
-      "last_gate_green_at": "2026-08-05T23:32:19.232464+00:00",
+      "last_gate_green_at": "2026-08-05T23:48:24.193206+00:00",
       "last_gate_green_attempt": 1,
-      "last_gate_green_run": "20260805T232055Z"
+      "last_gate_green_run": "20260805T233754Z"
     },
     {
       "id": "task-07-populate-production-rag",
