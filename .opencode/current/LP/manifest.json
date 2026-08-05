@@ -2,16 +2,16 @@
   "agent": "LP",
   "artifacts": [
     {
-      "bytes": 2877,
+      "bytes": 2857,
       "producer": "local-llm",
-      "sha256": "b56244ae7122ce7d093b8bf24b1028b80733730791f5ad24bc7e9dee35b6274f",
+      "sha256": "aa06224680f4cf353a247a58390195806db8e90506e28d7f2dc9e612cd833f54",
       "source": ".opencode/memory.frontend.md",
       "target": "opencode/memory.frontend.md"
     },
     {
-      "bytes": 1786,
+      "bytes": 1954,
       "producer": "local-llm",
-      "sha256": "84b3cb1722f913936c547a0b07ab95519894172201e50c999386338742083664",
+      "sha256": "69cd027510789bbd4b82da1e18450a11230398f36e5568337ae00b82e3ebc634",
       "source": ".opencode/progress.frontend.json",
       "target": "opencode/progress.frontend.json"
     },
@@ -231,6 +231,83 @@
       "sha256": "666125393b7f02ccb17ba4383f93d56397009bb91ef86736d99e3c72682000b6",
       "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/evidence/initial-gate.json",
       "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/evidence/initial-gate.json"
+    },
+    {
+      "bytes": 390,
+      "producer": "controller",
+      "sha256": "88dcb7773d57d3fa3cc47e01ad56d0914c8e94269e46af33aa1615b82c3905af",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/checkpoint.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/checkpoint.json"
+    },
+    {
+      "bytes": 389,
+      "producer": "controller",
+      "sha256": "a3157eb12336cbbba222f68c73f4c947fe9b3d4e39938c7d4c69fe4102928764",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/diagnostics/error-manifest.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/diagnostics/error-manifest.json"
+    },
+    {
+      "bytes": 430,
+      "producer": "controller",
+      "sha256": "a4a74ce9d69270558a2f7974bde01b511cc38f4479cc76b65a1ea2b2c5068dbc",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/diagnostics/gate-summary.md",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/diagnostics/gate-summary.md"
+    },
+    {
+      "bytes": 731,
+      "producer": "controller",
+      "sha256": "85531aab2574b0d94729e2b9529280fa645e4d55b330d29708414cc5172b1c63",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/gate-diagnostics.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/gate-diagnostics.json"
+    },
+    {
+      "bytes": 904,
+      "producer": "local-llm",
+      "sha256": "f757f5d2918b3361cedc29e2cc72df070262779bd5271adba0123275642c7232",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/local-understanding.md",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/local-understanding.md"
+    },
+    {
+      "bytes": 304,
+      "producer": "codex",
+      "sha256": "4baa8fd4a0ee22dedaace201c348344be956949e816135ee00f28fdf0f0805c4",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/notify-handoff-to-codex-01.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/notify-handoff-to-codex-01.json"
+    },
+    {
+      "bytes": 271,
+      "producer": "controller",
+      "sha256": "07f11bb980f0ee3470339c493be86ccaeb1412b5d109cf952503ce5454fd9f09",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/notify-task-gate-green.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/notify-task-gate-green.json"
+    },
+    {
+      "bytes": 124,
+      "producer": "local-llm",
+      "sha256": "0afbe5c607bf57d3994275c02180f225bf982251214c4166474818b2b83eb805",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/pre-edit-understanding.md",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/pre-edit-understanding.md"
+    },
+    {
+      "bytes": 221,
+      "producer": "controller",
+      "sha256": "583bb7262470e974851b7abda46c72a23cd65174729d8e673def105eaa2ba7d5",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/task-gate.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/attempt-01/evidence/task-gate.json"
+    },
+    {
+      "bytes": 221,
+      "producer": "controller",
+      "sha256": "583bb7262470e974851b7abda46c72a23cd65174729d8e673def105eaa2ba7d5",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/evidence/initial-gate.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/evidence/initial-gate.json"
+    },
+    {
+      "bytes": 274,
+      "producer": "controller",
+      "sha256": "fbb0339241374891c35d94d5e63ad0dfac5d255601e2fcc5b4a6377457f8e5a3",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/evidence/notify-initial-gate-green.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/evidence/notify-initial-gate-green.json"
     }
   ],
   "schema_version": 1,

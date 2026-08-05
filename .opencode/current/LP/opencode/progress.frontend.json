@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "active_task": null,
+  "active_task": "task-fe-03c-citations",
   "last_run": "20260805T191432Z",
   "tasks": [
     {
@@ -38,7 +38,10 @@
     {
       "id": "task-fe-03c-citations",
       "status": "PENDING",
-      "accepted_at": null
+      "accepted_at": null,
+      "last_gate_green_at": "2026-08-05T20:17:38.257436+00:00",
+      "last_gate_green_attempt": 1,
+      "last_gate_green_run": "20260805T191432Z"
     },
     {
       "id": "task-fe-03d-dom-state-tests",

@@ -5,18 +5,18 @@
 - Worker: LP.
 - Run: 20260805T191432Z.
 - Last accepted task: task-fe-03b-answer-abstention.
-- Active task: None.
-- Current attempt: 2.
+- Active task: task-fe-03c-citations.
+- Current attempt: 1.
 - Latest exact gate: task-gate; exit=0.
-- Latest Codex decision: ACCEPT.
-- Checkpoint: created; head=278e9803def1fe0bea5779d2ec7df3ccadd9d9cb.
+- Latest Codex decision: pending.
+- Checkpoint: no-product-diff; head=not recorded.
 - Accepted: task-fe-01-angular17-bootstrap, task-fe-02-rag-client, task-fe-03-rag-ui, task-fe-03b-answer-abstention.
 - Remaining: task-fe-03c-citations, task-fe-03d-dom-state-tests, task-fe-03e-security-accessibility, task-fe-03f-final-validation, task-fe-04-playwright.
 - Exact plan: `.opencode/task-plan.frontend.json`.
 
 ## Files currently owned or edited
 
-- `frontend/src/app/features/rag/rag-page.component.html`
+- No task-owned dirty product path at the latest snapshot.
 
 ## Demonstrated by current evidence
 
@@ -25,15 +25,15 @@
 
 ## Still unproven or below expectations
 
-- Awaiting the next Codex decision or exact gate evidence.
+- Codex has not yet accepted the current checkpoint.
 
 ## Approaches not to repeat
 
-- Do not repeat the stopped OpenCode session without changing the plan; stop_reason=session-timeout.
+- Do not repeat an unchanged failing action without new evidence.
 
 ## Next exact action
 
-Record ACCEPT, create the final controller commit and advance the queue.
+Preserve a deterministic gate-green checkpoint, generate final evidence and request Codex review.
 
 ## Fixed decisions
 
@@ -53,7 +53,7 @@ Record ACCEPT, create the final controller commit and advance the queue.
 - task-fe-02-rag-client: ACCEPTED — accepted at 2026-08-05T17:05:49.579162+00:00; last green attempt=1
 - task-fe-03-rag-ui: ACCEPTED — accepted at 2026-08-05T17:06:42.020494+00:00; last green attempt=1
 - task-fe-03b-answer-abstention: ACCEPTED — accepted at 2026-08-05T20:17:20.426349+00:00; last green attempt=2
-- task-fe-03c-citations: PENDING — accepted at not accepted; last green attempt=none
+- task-fe-03c-citations: PENDING — accepted at not accepted; last green attempt=1
 - task-fe-03d-dom-state-tests: PENDING — accepted at not accepted; last green attempt=none
 - task-fe-03e-security-accessibility: PENDING — accepted at not accepted; last green attempt=none
 - task-fe-03f-final-validation: PENDING — accepted at not accepted; last green attempt=none
