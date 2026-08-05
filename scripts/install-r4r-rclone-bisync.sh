@@ -4,7 +4,9 @@ set -Eeuo pipefail
 # ============================================================================
 # CONFIGURACION: no se pasan parametros al script.
 # ============================================================================
-RCLONE_REMOTE="gdrive"
+# Remoto de Google Drive que ya existe en ~/.config/rclone/rclone.conf.
+# No se crea un segundo remoto con otro nombre.
+RCLONE_REMOTE="Riansares4R"
 
 # Este directorio deja de estar gestionado por Insync, pero se conserva como
 # espejo local de Drive para no alterar el resto del sistema R4R.
@@ -101,7 +103,17 @@ install_rclone_if_needed() {
 }
 
 ensure_remote_configured() {
+  local remote_type=""
+
   if rclone listremotes | grep -Fxq "${RCLONE_REMOTE}:"; then
+    remote_type="$(
+      rclone config show "$RCLONE_REMOTE" 2>/dev/null |
+        sed -n 's/^[[:space:]]*type[[:space:]]*=[[:space:]]*//p' |
+        head -n1
+    )"
+    [[ "$remote_type" == "drive" ]] ||
+      die "El remoto ${RCLONE_REMOTE} existe, pero es de tipo ${remote_type:-desconocido}; se requiere drive."
+    log "Reutilizando el remoto existente ${RCLONE_REMOTE} (Google Drive)."
     return 0
   fi
 
