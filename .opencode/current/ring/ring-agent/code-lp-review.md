@@ -1,32 +1,46 @@
-# LP code review (RUN_ID 20260805T201628Z)
+# LP code review (frontend)
 
-## Evidence reviewed
+## Current evidence reviewed
 
-- `lp-runtime/progress.json`: active task is `task-fe-03b-answer-abstention` and status is `PENDING`.
-- `lp-runtime/gate_summary.md`: exact FE-03B gate is `green` with exit code `0`.
-- `lp-runtime/memory.md`: confirms gate green and Codex decision still pending.
-- `lp-runtime/manifest.json`: no codex review artifact and no checkpoint path recorded.
-- `lp-git-status.txt` and `lp-git-diff-stat.txt`: in-flight product edit is a small HTML change in `frontend/src/app/features/rag/rag-page.component.html`.
-- `.opencode/commands/task-fe-03b-answer-abstention.md`: completion still requires gate `0` plus Codex `ACCEPT`.
+- `runtime/ring-agent/ring/20260805T202129Z/worker-request-manifest.json`
+- `runtime/ring-agent/ring/20260805T202129Z/worker-requests/LP.json`
+- `runtime/ring-agent/ring/20260805T202129Z/lp-runtime/progress.json`
+- `runtime/ring-agent/ring/20260805T202129Z/lp-runtime/memory.md`
+- `runtime/ring-agent/ring/20260805T202129Z/lp-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260805T202129Z/lp-runtime/checkpoint.json`
+- `runtime/ring-agent/ring/20260805T202129Z/lp-runtime/codex-qwen3-extra-instructions.md`
 
 ## First current defect
 
-**Defect: acceptance-evidence gap after green gate.**
+The first current defect is **acceptance-evidence insufficiency for FE-03C despite a green gate**:
 
-The task is already gate-green but still pending because there is no Codex ACCEPT evidence in this snapshot. The main correction is process completion (review/acceptance), not additional feature edits.
+- Active task is `task-fe-03c-citations` and remains `PENDING`.
+- A worker request exists with `reason: codex-revise` and `codex_decision: REVISE`.
+- Checkpoint status is `no-product-diff` and request `changed_paths` is empty.
+- Codex corrective instructions explicitly require missing rendered-DOM assertions for citation requirements.
 
-## Bounded next action (single worker pass)
+## Bounded next action for one worker pass
 
-1. Keep the FE-03B code state stable (no extra feature changes).
-2. Submit the current gate-green checkpoint candidate for Codex review.
-3. If Codex requests changes, perform one bounded correction batch and rerun only `./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention`.
+Edit only:
+
+- `frontend/src/app/features/rag/rag-page.component.spec.ts`
+
+Add rendered-DOM tests that prove all FE-03C missing points from the correction packet:
+
+1. Out-of-order citation input renders in expected ordered output with displayed ordinal, source, and full heading path segment order.
+2. Response `{ answer: '...', abstained: false, citations: [] }` renders no `.citations-section`.
+3. Citation-like text embedded in answer is not parsed into citation DOM when structured citations are empty.
+
+Then run exactly:
+
+- `./scripts/frontend-task-gate.sh task-fe-03c-citations`
 
 ## Acceptance conditions
 
-- FE-03B exact gate remains green (`./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention`).
-- Codex returns `ACCEPT` for FE-03B.
-- Controller can then close with `feat(rag-ui): render answer and abstention states`.
+- Exact gate exits `0` after new FE-03C assertions are present.
+- Codex review for FE-03C returns `ACCEPT` on that state.
+- Keep scope inside frontend task FE-03C; do not advance to FE-03D or broader UI changes in this pass.
 
 ## Avoid repeating
 
-- Do not keep iterating HTML after a green gate without first obtaining Codex acceptance on that same validated state.
+- Do not rely on an unchanged product diff plus green generic gate as FE-03C proof.

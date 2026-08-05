@@ -1,32 +1,39 @@
-# Global summary (RUN_ID 20260805T201628Z)
+# Global coordination summary (run 20260805T202129Z)
 
-## Cycle outcome
+## Outcome
 
-Ring completed an evidence-bounded coordination review using this RUN_DIR snapshot and produced queue-specific directives.
+Overall status: **READY**.
 
-- **Overall status:** `READY`
-- **PC decision:** `CONTINUE` on `task-06e-child-process`
-- **LP decision:** `REVIEW` on `task-fe-03b-answer-abstention`
+- PC has an unresolved gate failure on the active backend task.
+- LP has a codex-revise request on the active frontend task with missing acceptance-proof tests.
 
-## Why these decisions are evidence-grounded
+No bounded Ring worktree code/policy edits were required in this cycle; only staged coordination artifacts were produced.
 
-1. **PC is currently red**: latest gate summary is a deterministic failure (exit `2`) and task remains pending.
-2. **PC scope risk is present**: edits are concentrated in `TestChildApplicationContextInitializer.java`, while Task 06E requirements are framed around `KnowledgeIngestionCli` child-process proof.
-3. **LP is gate-green but unaccepted**: FE-03B gate passed, yet Codex review/accept artifact is still missing, so task cannot be declared complete.
+## Evidence-grounded diagnoses
 
-## Integration posture
+### PC
 
-- Near-term bottleneck is backend Task 06E correction to restore green status.
-- Frontend should avoid churn and close FE-03B through Codex acceptance on the already-green state.
-- Cross-stack contract stability must be maintained while backend repairs proceed.
+- `pc-runtime/gate_summary.md`: classification `gate-failure`, exit `2`.
+- `pc-runtime/progress.json`: `task-06e-child-process` still `PENDING`.
+- `pc-git-status.txt` + `pc-git-diff-stat.txt`: in-flight edits present, concentrated in `TestChildApplicationContextInitializer.java`.
 
-## Ring worktree edits this cycle
+### LP
 
-- No cross-cutting product or policy files were edited.
-- Ring wrote only the six required staged artifacts under:
-  `runtime/ring-agent/ring/20260805T201628Z/output/`
+- `worker-request-manifest.json` and `worker-requests/LP.json`: active `codex-revise` request for `task-fe-03c-citations`.
+- `lp-runtime/checkpoint.json`: `no-product-diff`.
+- `lp-runtime/codex-qwen3-extra-instructions.md`: explicit missing FE-03C DOM assertions and bounded fix path.
 
-## Evidence limitations acknowledged
+## Directed next actions (one-pass bounded)
 
-- Full gate logs are not in RUN_DIR (only summaries), so PC root-cause specifics are delegated to worker-side first-failure diagnostics.
-- No Codex review artifact for either queue is present in RUN_DIR; therefore no ACCEPT claim is made.
+- **PC**: one minimal first-failure-driven fix for Task 06E child-process contract, then rerun `./scripts/task-gate.sh task-06e-child-process`.
+- **LP**: add required FE-03C rendered-DOM assertions in `rag-page.component.spec.ts`, then rerun `./scripts/frontend-task-gate.sh task-fe-03c-citations`.
+
+## Acceptance gates enforced
+
+- Backend: `./scripts/task-gate.sh task-06e-child-process` exit `0` + Codex `ACCEPT`.
+- Frontend: `./scripts/frontend-task-gate.sh task-fe-03c-citations` exit `0` + Codex `ACCEPT`.
+
+## Explicit limitations
+
+- PC summary references `gate-full.log` for exact first-failure detail, but full log is not present in this snapshot.
+- No PC Codex review artifact is present in this RUN_DIR snapshot.
