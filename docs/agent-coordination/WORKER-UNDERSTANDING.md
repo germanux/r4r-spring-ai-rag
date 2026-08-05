@@ -1,25 +1,40 @@
-# Worker understanding audit — run 20260805T163847Z
+# Worker understanding assessment
 
 ## PC understanding quality
 
-Evidence indicates PC memory correctly tracks active backend task (`task-06e-child-process`) and pending acceptance state. However, current packaged evidence has a consistency gap:
+Evidence:
 
-- `pc-runtime/gate_summary.md` reports a green gate.
-- `pc-runtime/memory.md` states latest exact gate is unknown/not run.
+- `pc-runtime/memory.md` still tracks unresolved objective (real CLI as bounded child JVM).
+- `pc-runtime/codex-qwen3-extra-instructions.md` contains explicit corrections to prior misunderstandings.
 
-This mismatch means closure cannot be inferred from memory alone; worker must provide a fresh, internally consistent gate+review evidence set after applying the active Codex REVISE packet.
+Assessment:
+
+- Understanding is partially aligned on objective, but prior implementation path was rejected by Codex for mechanism/type compatibility.
+- Worker should follow the codified packet exactly instead of re-deriving approach.
+
+Required improvement in next pass:
+
+- Provide direct requirement→edit mapping for each numbered Codex instruction (SPI registration, marker gating, postprocessor ordering, assignable replacement type, assertions).
 
 ## LP understanding quality
 
-LP local-understanding file explicitly states the compact summary was missing and asks Codex to inspect exact diff. Controller-side evidence confirms the true blocker is not gate failure but review execution failure:
+Evidence:
 
-- Gate is green (`lp-runtime/gate_summary.md`).
-- Codex review process failed early with no observed steps (`lp-runtime/codex_review.json`).
+- `lp-runtime/local_understanding.md` has no requirement-to-code mapping.
+- `lp-runtime/checkpoint.json` shows `status: no-product-diff`.
+- `lp-runtime/codex-qwen3-extra-instructions.md` explicitly flags local understanding omission.
 
-So LP should prioritize review-path recovery, not speculative code edits.
+Assessment:
 
-## Director guidance to improve next worker pass
+- Current understanding quality is insufficient for closure despite green gate.
+- The missing mapping and no-op pass are the immediate blockers to Codex acceptance.
 
-1. Keep one focused objective per pass (PC: correction packet; LP: review recovery).
-2. Preserve exact gate + Codex acceptance contract as non-negotiable completion criteria.
-3. Avoid scope expansion while acceptance evidence is incomplete.
+Required improvement in next pass:
+
+- Explicitly map bootstrap/strict/routing/HttpClient/Angular 17 deps/lockfile/env selection to concrete files and show where production replacement is configured.
+
+## Direction for both workers
+
+- Treat current Codex correction packets as authoritative checklists.
+- Do one bounded correction pass each; do not widen scope.
+- Re-run exact gate only after concrete edit verification and whitespace check.

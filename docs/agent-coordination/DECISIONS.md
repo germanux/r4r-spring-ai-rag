@@ -143,3 +143,49 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This cycle used bounded artifacts in RUN_DIR only; no direct inspection of live PC/LP worktrees was performed.
 - PC snapshot contains a consistency gap (green gate summary vs memory 'latest gate unknown'); final closure still requires fresh gate+Codex evidence from a new worker pass.
+
+## Cycle `20260805T164348Z` â READY
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-06e-child-process`
+- Reason: task-06e-child-process is still PENDING and the latest authoritative Codex packet for PC is REVISE with unresolved mandatory instructions (initializer SPI registration and KnowledgeIngestionService-compatible replacement). No checkpoint or Codex ACCEPT is present in this run snapshot.
+- Next action: Apply the existing Codex correction packet for task-06e-child-process in one bounded backend pass (process IT + initializer + spring.factories + helper scope), then rerun exactly ./scripts/task-gate.sh task-06e-child-process.
+- Avoid repeating: Do not repeat -Dcontext.initializer.classes loading or register a replacement bean not assignable to KnowledgeIngestionService; Codex already rejected that path.
+- Acceptance gates:
+  - ./scripts/task-gate.sh task-06e-child-process must return exit 0
+  - Codex decision must be ACCEPT for task-06e-child-process before task closure
+  - Keep scope bounded to the Codex packet targets; do not modify production scripts/code for this correction
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164348Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164348Z/pc-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164348Z/pc-runtime/manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164348Z/pc-runtime/memory.md`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-01-angular17-bootstrap`
+- Reason: task-fe-01-angular17-bootstrap remains PENDING with a Codex REVISE request that specifically flags missing production environment selection; the latest checkpoint is no-product-diff, so the required correction was not applied.
+- Next action: Edit frontend/angular.json to ensure production build uses src/environments/environment.prod.ts (preserving development replacement), then rerun exactly ./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap and provide requirement-to-file mapping in local understanding.
+- Avoid repeating: Do not run another unchanged/no-product-diff pass or submit a local-understanding report without requirement-to-file mapping.
+- Acceptance gates:
+  - ./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap must return exit 0
+  - Codex decision must be ACCEPT for task-fe-01-angular17-bootstrap before task closure
+  - Keep edits inside frontend/** and preserve Angular major 17
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164348Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164348Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164348Z/lp-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164348Z/worker-requests/LP.json`
+
+### Integration risks
+
+- If PC initializer replacement is not marker-gated and properly ordered, child-process test hooks can leak into unrelated Spring test contexts.
+- If LP production file replacement remains misconfigured, production bundles may still point to localhost backend URLs despite gate-green status.
+
+### Evidence limitations
+
+- RUN_DIR snapshot contains summaries/manifests, not full worker worktree diffs or full gate logs.
+- PC snapshot has no codex_review artifact in this cycle; Codex state is inferred from codex-qwen3-extra-instructions.md and task status metadata.

@@ -1,33 +1,39 @@
-# LP frontend review — run 20260805T163847Z
+# LP code review (frontend)
 
-## Evidence inspected
+## Current evidence reviewed
 
-- `runtime/ring-agent/ring/20260805T163847Z/lp-runtime/progress.json`
-- `runtime/ring-agent/ring/20260805T163847Z/lp-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260805T163847Z/lp-runtime/codex_review.json`
-- `runtime/ring-agent/ring/20260805T163847Z/lp-runtime/checkpoint.json`
-- `runtime/ring-agent/ring/20260805T163847Z/worker-requests/LP.json`
-- `runtime/ring-agent/ring/20260805T163847Z/lp-git-status.txt`
+- `runtime/ring-agent/ring/20260805T164348Z/lp-runtime/progress.json`
+- `runtime/ring-agent/ring/20260805T164348Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260805T164348Z/lp-runtime/checkpoint.json`
+- `runtime/ring-agent/ring/20260805T164348Z/lp-runtime/local_understanding.md`
+- `runtime/ring-agent/ring/20260805T164348Z/worker-requests/LP.json`
 
-## Current diagnosis (first defect)
+## First current defect
 
-`task-fe-01-angular17-bootstrap` has a green deterministic gate (exit 0) but remains **PENDING** because Codex review did not execute successfully (`exit_code: 1`, `observed_steps: 0`, `meaningful_events: 0`).
+`task-fe-01-angular17-bootstrap` remains **PENDING** with Codex **REVISE**.
 
-The checkpoint is `no-product-diff` and `head_after` is null, so there is no new product change to re-implement right now. The blocker is review-path execution, not frontend code behavior proven by this snapshot.
+Codex identifies a concrete unresolved defect: production build selection is not proven to use `environment.prod.ts`. The latest checkpoint is `no-product-diff`, confirming no corrective product edit landed in the last pass.
 
-## Bounded next action for LP
+## Bounded next action for one worker pass
 
-Run one review-recovery pass:
+Apply one focused frontend correction:
 
-1. Re-run Codex review against the existing gate-green evidence for `task-fe-01-angular17-bootstrap`.
-2. Keep scope unchanged and do not start new implementation unless Codex returns `REVISE`.
+- Update `frontend/angular.json` so production build resolves `src/environments/environment.prod.ts` (preserve development replacement and Angular 17 constraints).
 
-## Acceptance conditions
+Then rerun exactly:
 
-- `./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap` remains exit `0`.
-- Codex decision returns `ACCEPT` for `task-fe-01-angular17-bootstrap`.
-- Task is not marked accepted from gate/checkpoint evidence alone.
+- `./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap`
+
+And include a requirement-to-file mapping in the next local understanding report.
+
+## Acceptance conditions (must all hold)
+
+1. Exact gate exits 0: `./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap`.
+2. Codex review returns `ACCEPT` for `task-fe-01-angular17-bootstrap`.
+3. Scope remains inside `frontend/**` (no unrelated RAG/UI feature work).
+4. Angular major stays 17.
 
 ## Avoid repeating
 
-- Do not execute another unchanged implementation pass while Codex review execution is the only missing signal.
+- Another unchanged run with `changed_paths: []` / `no-product-diff`.
+- A local-understanding report that omits requirement-to-file mapping.

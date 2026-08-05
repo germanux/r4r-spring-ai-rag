@@ -1,36 +1,46 @@
-# PC backend review — run 20260805T163847Z
+# PC code review (backend)
 
-## Evidence inspected
+## Current evidence reviewed
 
-- `runtime/ring-agent/ring/20260805T163847Z/pc-runtime/progress.json`
-- `runtime/ring-agent/ring/20260805T163847Z/pc-runtime/memory.md`
-- `runtime/ring-agent/ring/20260805T163847Z/pc-runtime/codex-qwen3-extra-instructions.md`
-- `runtime/ring-agent/ring/20260805T163847Z/pc-runtime/manifest.json`
-- `runtime/ring-agent/ring/20260805T163847Z/pc-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260805T163847Z/pc-git-status.txt`
+- `runtime/ring-agent/ring/20260805T164348Z/pc-runtime/progress.json`
+- `runtime/ring-agent/ring/20260805T164348Z/pc-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260805T164348Z/pc-runtime/memory.md`
+- `runtime/ring-agent/ring/20260805T164348Z/pc-runtime/manifest.json`
+- `runtime/ring-agent/ring/20260805T164348Z/pc-runtime/previous-ring-qwen3-directive.json`
 
-## Current diagnosis (first defect)
+## First current defect
 
-`task-06e-child-process` is still **PENDING** and the latest Codex packet for this task is still **REVISE** with mandatory unresolved instructions (initializer/SPI registration and type-compatible replacement bean requirements).
+`task-06e-child-process` is still **PENDING** while the active Codex packet is **REVISE** and includes unresolved mandatory instructions.
 
-Although the packaged gate summary is green, there is no accompanying Codex review artifact in the PC manifest (`codex_review: null`) and no checkpoint proving this task advanced to acceptance-ready review. The safest evidence-grounded interpretation is: the correction packet remains authoritative and unresolved for closure.
+Key unresolved backend defect from Codex packet:
 
-## Bounded next action for PC
+1. The prior approach used unsupported initializer loading (`-Dcontext.initializer.classes`) for this plain Spring Boot path.
+2. The replacement service approach was type-incompatible for `KnowledgeIngestionService` constructor injection.
 
-Execute one backend-only correction pass for `task-06e-child-process` exactly within Codex packet scope:
+This means child-process verification remains unproven even though a gate summary artifact in this snapshot is green; no Codex ACCEPT is present for this task.
 
-1. Apply the mandatory Codex instructions to test-only assets (`KnowledgeIngestionCliProcessIT`, child initializer, `src/test/resources/META-INF/spring.factories`, helper).
-2. Keep production scripts and production Java unchanged.
-3. Re-run `./scripts/task-gate.sh task-06e-child-process`.
-4. Submit updated evidence for Codex review.
+## Bounded next action for one worker pass
 
-## Acceptance conditions
+Apply the existing correction packet exactly within bounded scope:
 
-- Exact gate returns exit `0` for `task-06e-child-process`.
-- Codex decision returns `ACCEPT` for the same task.
-- No scope drift into unrelated backend/frontend areas.
+- `src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionCliProcessIT.java`
+- one test initializer class
+- `src/test/resources/META-INF/spring.factories` (preserving existing entries)
+- helper cleanup path (existing helper or nested helper)
+
+Then rerun:
+
+- `./scripts/task-gate.sh task-06e-child-process`
+
+## Acceptance conditions (must all hold)
+
+1. Exact gate exits 0: `./scripts/task-gate.sh task-06e-child-process`.
+2. Codex review returns `ACCEPT` for `task-06e-child-process`.
+3. No expansion into unrelated production code/scripts.
+4. Do not reintroduce unsupported initializer loading or non-assignable replacement bean.
 
 ## Avoid repeating
 
-- Do **not** use `-Dcontext.initializer.classes` as the initializer-loading mechanism in this path.
-- Do **not** register a replacement bean that is not assignable to `KnowledgeIngestionService`.
+- Repeating the rejected initializer path (`-Dcontext.initializer.classes`).
+- Registering a bean that is not assignable to `KnowledgeIngestionService`.
+- Running unchanged retries without new correction evidence.

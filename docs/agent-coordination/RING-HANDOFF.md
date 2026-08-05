@@ -1,26 +1,30 @@
-# Backend ↔ Frontend handoff — run 20260805T163847Z
+# Backend ↔ Frontend handoff
 
-## Queue status snapshot
+## Coordination stance
 
-- **PC (backend)**: Active task `task-06e-child-process` remains pending with unresolved Codex REVISE packet.
-- **LP (frontend)**: Active task `task-fe-01-angular17-bootstrap` has green gate evidence but no Codex decision due failed review invocation.
+- PC and LP should proceed **independently** on their current active tasks.
+- No cross-stack API/schema change is requested in this cycle.
 
-## Coordination boundaries for next pass
+## Backend to frontend status
 
-- PC remains backend-only and must stay within Codex packet scope (test-only child-process wiring assets).
-- LP remains frontend-only and should recover review path first; no cross-stack code changes are requested.
+- Backend (`task-06e-child-process`) is a test/process-lifecycle correction pass.
+- No new backend API contract change is evidenced in this RUN_DIR snapshot.
 
-## Cross-stack risks to monitor
+Frontend impact now: **none expected**; LP should not wait for PC.
 
-1. Backend task sequencing risk: if PC scope drifts beyond test-only correction packet, remaining ingestion validation tasks can be delayed.
-2. Frontend acceptance latency risk: repeated Codex invocation failures can stall progression even with green deterministic gate.
+## Frontend to backend status
 
-## Explicit next handoff actions
+- Frontend (`task-fe-01-angular17-bootstrap`) correction is environment selection in Angular build config.
+- This is configuration hygiene; it does not require backend code changes.
 
-- **To PC**: apply current correction packet once, rerun exact gate, send updated evidence for Codex decision.
-- **To LP**: rerun Codex review on existing evidence, edit only if Codex returns REVISE.
+Backend impact now: **none expected**; PC should not wait for LP.
 
-## Acceptance conditions for advancing queues
+## Integration risks to monitor next cycle
 
-- PC: `./scripts/task-gate.sh task-06e-child-process` exit 0 + Codex `ACCEPT`.
-- LP: `./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap` exit 0 + Codex `ACCEPT`.
+1. LP may pass deterministic gate while still mis-pointing production URL unless fileReplacement is explicitly correct and reviewed.
+2. PC test-only initializer behavior must stay marker-gated; leakage could destabilize unrelated tests.
+
+## Bounded acceptance checkpoints
+
+- PC checkpoint: exact gate `./scripts/task-gate.sh task-06e-child-process` green + Codex `ACCEPT`.
+- LP checkpoint: exact gate `./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap` green + Codex `ACCEPT`.

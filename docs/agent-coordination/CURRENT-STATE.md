@@ -1,28 +1,44 @@
-# Global summary — Ring cycle 20260805T163847Z
+# Global coordination summary — RUN_ID 20260805T164348Z
 
-## Outcome
+## What was reviewed
 
-Overall status: **READY**.
+Primary evidence under:
 
-Both queues have a bounded next step with sufficient evidence:
+- `runtime/ring-agent/ring/20260805T164348Z/pc-runtime/**`
+- `runtime/ring-agent/ring/20260805T164348Z/lp-runtime/**`
+- `runtime/ring-agent/ring/20260805T164348Z/worker-request-manifest.json`
+- `runtime/ring-agent/ring/20260805T164348Z/worker-requests/LP.json`
+- git status/diff snapshots for RING/PC/LP in the same RUN_DIR
 
-- **PC** should continue `task-06e-child-process` by applying the active Codex REVISE correction packet and rerunning the exact backend gate before Codex re-review.
-- **LP** should continue `task-fe-01-angular17-bootstrap` by rerunning Codex review on already green gate evidence; no new implementation unless Codex requests revision.
+## Current status call
 
-## Key evidence highlights
+- Overall status: **READY** (both queues have bounded, evidence-backed next actions).
+- No claim of task completion or Codex ACCEPT is made for either active task.
 
-- PC task state remains pending: `pc-runtime/progress.json`.
-- PC still carries unresolved Codex REVISE packet: `pc-runtime/codex-qwen3-extra-instructions.md`.
-- LP gate is green: `lp-runtime/gate_summary.md`.
-- LP Codex review failed transiently: `lp-runtime/codex_review.json` (exit 1, zero steps/events).
+## Queue decisions
 
-## Risks
+### PC (backend)
 
-- PC: incorrect initializer/bean replacement handling can re-break child-process task gate.
-- LP: repeated review invocation failures can create acceptance deadlock despite green gate evidence.
+- Active task: `task-06e-child-process`
+- Decision: **CONTINUE**
+- Reason: task remains PENDING and Codex packet is REVISE with unresolved mandatory corrections.
+- Next action: apply packet-bounded backend test correction and rerun exact backend gate.
 
-## Ring worktree edits in this cycle
+### LP (frontend)
 
-- Added six staged coordination artifacts under:
-  `runtime/ring-agent/ring/20260805T163847Z/output/`
-- No product/backend/frontend source files were modified.
+- Active task: `task-fe-01-angular17-bootstrap`
+- Decision: **CONTINUE**
+- Reason: Codex REVISE persists; required production environment selection correction not landed (`no-product-diff`).
+- Next action: fix production fileReplacement in `frontend/angular.json`, rerun exact frontend gate, provide requirement mapping.
+
+## Risks and guardrails
+
+- Guard PC test-only initializer behavior to avoid cross-test leakage.
+- Ensure LP production bundle does not resolve to localhost backend.
+- Keep backend/frontend ownership disjoint and avoid scope expansion.
+
+## Ring worktree edits this cycle
+
+- No repository source/config policy files were modified.
+- Only staged coordination artifacts were created under:
+  - `runtime/ring-agent/ring/20260805T164348Z/output/`
