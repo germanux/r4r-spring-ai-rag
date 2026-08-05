@@ -37,11 +37,25 @@
       "target": "runtime/control/PC/opencode.resolved.json"
     },
     {
+      "bytes": 530,
+      "producer": "controller",
+      "sha256": "d414e9af8af51f97ec2bf30c89f05a3cdc4b96a9103acd0852ede1559e235bda",
+      "source": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/codegraph-reconnaissance.md",
+      "target": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/codegraph-reconnaissance.md"
+    },
+    {
       "bytes": 206,
       "producer": "controller",
       "sha256": "0e7949cb3fd3711bfd0bb36fba32197ae8e440b1c015586bd6136c8b65d30163",
       "source": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/codegraph-sync.json",
       "target": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/codegraph-sync.json"
+    },
+    {
+      "bytes": 424,
+      "producer": "controller",
+      "sha256": "53e36980e5a58d10f855f90dc872966367a742d5d28b04a21277ed61599e54a5",
+      "source": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/codegraph-tool-calls.json",
+      "target": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/codegraph-tool-calls.json"
     },
     {
       "bytes": 561,
@@ -63,6 +77,13 @@
       "sha256": "9a764843590c37db14c88ebe2e70c4e1150fbe80d18c1e790ae2a8141a624a12",
       "source": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/gate-diagnostics.json",
       "target": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/gate-diagnostics.json"
+    },
+    {
+      "bytes": 2479,
+      "producer": "local-llm",
+      "sha256": "5518c44be1f8e4b82c8bc69d1ba1c4b1635fef34cc90e29e8fdde43db7d03db2",
+      "source": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/opencode-codegraph.json",
+      "target": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/attempt-01/evidence/opencode-codegraph.json"
     },
     {
       "bytes": 213,
