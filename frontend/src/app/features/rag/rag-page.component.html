@@ -1,0 +1,94 @@
+<div class="rag-container">
+  <h1>RAG Question Answering</h1>
+
+  <!-- Question Form -->
+  <form [formGroup]="ragForm" (ngSubmit)="onSubmit()" class="question-form" aria-label="Question input form">
+    <div class="form-group">
+      <label for="question">Enter your question:</label>
+      <textarea
+        id="question"
+        formControlName="question"
+        placeholder="Ask a question about the knowledge base..."
+        class="question-input"
+        rows="3"
+        required
+        aria-describedby="question-hint"
+        aria-invalid="false">
+      </textarea>
+      <div id="question-hint" class="form-hint">Enter your question to get a detailed answer with citations</div>
+      <div class="form-errors" *ngIf="ragForm.controls['question'].invalid && ragForm.controls['question'].touched">
+        <div *ngIf="ragForm.controls['question'].errors?.['required']" class="error">Question is required.</div>
+        <div *ngIf="ragForm.controls['question'].errors?.['minlength']" class="error">Question must be at least 1 character long.</div>
+      </div>
+    </div>
+
+    <button
+      type="submit"
+      [disabled]="ragForm.invalid || currentState === 'loading'"
+      class="submit-button"
+      aria-label="Submit question">
+      {{ currentState === 'loading' ? 'Processing...' : 'Ask Question' }}
+    </button>
+  </form>
+
+  <!-- Loading State -->
+  @if (currentState === 'loading') {
+    <div class="loading-state" role="status" aria-live="polite">
+      <p>Processing your question...</p>
+      <div class="spinner" aria-hidden="true"></div>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (currentState === 'error' && error) {
+    <div class="error-state" role="alert" aria-live="assertive">
+      <h3>Error</h3>
+      <p>{{ error }}</p>
+      <button (click)="clear()" class="clear-button" aria-label="Try again">Try Again</button>
+    </div>
+  }
+
+  <!-- Abstention State -->
+  @if (currentState === 'abstention' && response) {
+    <div class="abstention-state" role="status" aria-live="polite">
+      <h3>Cannot Answer</h3>
+      <p>{{ response.answer }}</p>
+      <button (click)="clear()" class="clear-button" aria-label="Ask another question">Ask Another Question</button>
+    </div>
+  }
+
+  <!-- Success State -->
+  @if (currentState === 'success' && response) {
+    <div class="success-state" role="status">
+      <h3>Answer</h3>
+      <div class="answer-content" [innerHTML]="response.answer">
+      </div>
+
+      @if (hasCitations) {
+        <div class="citations-section">
+          <h4>Citations</h4>
+          <ol class="citation-list" aria-label="Citations">
+            @for (citation of sortedCitations; track citation.ordinal) {
+              <li class="citation-item" role="listitem">
+                <span class="citation-ordinal">{{ citation.ordinal }}.</span>
+                <span class="citation-source">{{ citation.source }}</span>
+                @if (citation.headingPath && citation.headingPath.length > 0) {
+                  <span class="citation-heading-path">({{ citation.headingPath.join(' > ') }})</span>
+                }
+              </li>
+            }
+          </ol>
+        </div>
+      }
+
+      <button (click)="clear()" class="clear-button" aria-label="Ask another question">Ask Another Question</button>
+    </div>
+  }
+
+  <!-- Idle State -->
+  @if (currentState === 'idle') {
+    <div class="idle-state" role="status" aria-live="polite">
+      <p>Enter a question above to get started</p>
+    </div>
+  }
+</div>
