@@ -23,6 +23,13 @@
       "target": "runtime/control/LP/agent-runtime.json"
     },
     {
+      "bytes": 1635,
+      "producer": "codex",
+      "sha256": "58536b328bf8fc703c011fc32cd883881f6157c682bf9188af6f009182fe2f66",
+      "source": "runtime/control/LP/codex-plan-cache.json",
+      "target": "runtime/control/LP/codex-plan-cache.json"
+    },
+    {
       "bytes": 2878,
       "producer": "controller",
       "sha256": "7a441c8fbda82491c3c372c75571917b1b276839f0ba01f8b9a6f5af17d9ae8d",
@@ -35,6 +42,20 @@
       "sha256": "345e5944cb77ea3a0b6479e76fb4d64338d2c16e42cb0a0264fc1cabf39d440e",
       "source": "runtime/control/LP/opencode.resolved.json",
       "target": "runtime/control/LP/opencode.resolved.json"
+    },
+    {
+      "bytes": 1248,
+      "producer": "codex",
+      "sha256": "8583dc9738b208ab050f99feac92596a56ab8d354657e2ee561175194d9ff321",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/decisions/codex-plan.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/decisions/codex-plan.json"
+    },
+    {
+      "bytes": 590,
+      "producer": "codex",
+      "sha256": "acac96de1a28e083fbd70b6d35d84a1350d5b5bb882043b1e744fca26d72ff49",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/codex-plan.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/codex-plan.json"
     },
     {
       "bytes": 526,
