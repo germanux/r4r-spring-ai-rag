@@ -1,0 +1,64 @@
+# Agent memory
+
+## Current state
+
+- Worker: PC.
+- Run: 20260805T174026Z.
+- Last accepted task: task-06d-failure-classification.
+- Active task: task-06e-child-process.
+- Current attempt: 1.
+- Latest exact gate: not run; exit=unknown.
+- Latest Codex decision: pending.
+- Checkpoint: none; head=not recorded.
+- Accepted: task-01-base, task-02-ingestion, task-03-pgvector, task-04-rag, task-05-rag-api, task-06-production-ingestion-cli, task-06b-cli-contract, task-06c-spring-lifecycle, task-06d-failure-classification.
+- Remaining: task-06e-child-process, task-06f-ingestion-validation, task-07-populate-production-rag, task-08-rag-semantic-evaluation, task-09-production-smoke.
+- Exact plan: `.opencode/task-plan.backend.json`.
+
+## Files currently owned or edited
+
+- `src/test/java/com/riansares/r4r/ingestion/TestChildApplicationContextInitializer.java`
+
+## Demonstrated by current evidence
+
+- No new acceptance claim has been demonstrated in this run yet.
+
+## Still unproven or below expectations
+
+- Execute and verify the real production CLI as a bounded child JVM.
+
+## Approaches not to repeat
+
+- Do not repeat an unchanged failing action without new evidence.
+
+## Next exact action
+
+Resume the unfinished revision by applying the complete CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS included below. Do not wait for another Codex review before making the requested correction.
+
+## Fixed decisions
+
+- OpenCode/Qwen3 and Codex never write Git history.
+- The deterministic Python controller may create a gate-green checkpoint and a final ACCEPT commit.
+- A gate-green checkpoint preserves useful work but does not mark the task ACCEPTED.
+- A task completes only after its exact gate is green and Codex returns `ACCEPT`.
+- PostgreSQL only in Docker; Flyway owns application schema.
+- Spring AI abstractions; no handwritten Ollama HTTP client.
+- Every red gate retains complete diagnostics for Codex.
+- CodeGraph is focused retrieval evidence, not authority to expand task scope.
+- Runtime evidence stays under `runtime/runs/`; the deterministic controller publishes only after a validated commit.
+
+## Task ledger
+
+- task-01-base: ACCEPTED — accepted at 2026-07-30T01:56:21.671118+00:00; last green attempt=none
+- task-02-ingestion: ACCEPTED — accepted at 2026-07-30T14:21:45.327732+00:00; last green attempt=none
+- task-03-pgvector: ACCEPTED — accepted at 2026-07-31T04:57:58.481883+00:00; last green attempt=none
+- task-04-rag: ACCEPTED — accepted at 2026-07-31T17:08:50.489886+00:00; last green attempt=none
+- task-05-rag-api: ACCEPTED — accepted at 2026-07-31T18:58:37.474302+00:00; last green attempt=none
+- task-06-production-ingestion-cli: ACCEPTED — accepted at 2026-08-03T23:52:33.915790+00:00; last green attempt=1
+- task-06b-cli-contract: ACCEPTED — accepted at 2026-08-04T04:15:14.759540+00:00; last green attempt=3
+- task-06c-spring-lifecycle: ACCEPTED — accepted at 2026-08-04T07:30:03.038079+00:00; last green attempt=4
+- task-06d-failure-classification: ACCEPTED — accepted at 2026-08-04T08:15:06.995514+00:00; last green attempt=1
+- task-06e-child-process: PENDING — accepted at not accepted; last green attempt=1
+- task-06f-ingestion-validation: PENDING — accepted at not accepted; last green attempt=none
+- task-07-populate-production-rag: PENDING — accepted at not accepted; last green attempt=none
+- task-08-rag-semantic-evaluation: PENDING — accepted at not accepted; last green attempt=none
+- task-09-production-smoke: PENDING — accepted at not accepted; last green attempt=none
