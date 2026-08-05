@@ -1,7 +1,6 @@
-<div class="rag-container">
+<main class="rag-container">
   <h1>RAG Question Answering</h1>
 
-  <!-- Question Form -->
   <form [formGroup]="ragForm" (ngSubmit)="onSubmit()" class="question-form" aria-label="Question input form">
     <div class="form-group">
       <label for="question">Enter your question:</label>
@@ -12,26 +11,30 @@
         class="question-input"
         rows="3"
         required
-        aria-describedby="question-hint"
-        aria-invalid="false">
+        aria-describedby="question-hint question-error"
+        [attr.aria-invalid]="questionControl.invalid && questionControl.touched">
       </textarea>
-      <div id="question-hint" class="form-hint">Enter your question to get a detailed answer with citations</div>
-      <div class="form-errors" *ngIf="ragForm.controls['question'].invalid && ragForm.controls['question'].touched">
-        <div *ngIf="ragForm.controls['question'].errors?.['required']" class="error">Question is required.</div>
-        <div *ngIf="ragForm.controls['question'].errors?.['minlength']" class="error">Question must be at least 1 character long.</div>
-      </div>
+      <div id="question-hint" class="form-hint">Enter your question to get an answer with citations.</div>
+
+      @if (questionControl.invalid && questionControl.touched) {
+        <div id="question-error" class="form-errors" role="alert">
+          @if (questionControl.errors?.['required']) {
+            <div class="error">Question is required.</div>
+          } @else if (questionControl.errors?.['pattern']) {
+            <div class="error">Question cannot be blank.</div>
+          }
+        </div>
+      }
     </div>
 
     <button
       type="submit"
       [disabled]="ragForm.invalid || currentState === 'loading'"
-      class="submit-button"
-      aria-label="Submit question">
+      class="submit-button">
       {{ currentState === 'loading' ? 'Processing...' : 'Ask Question' }}
     </button>
   </form>
 
-  <!-- Loading State -->
   @if (currentState === 'loading') {
     <div class="loading-state" role="status" aria-live="polite">
       <p>Processing your question...</p>
@@ -39,56 +42,51 @@
     </div>
   }
 
-  <!-- Error State -->
   @if (currentState === 'error' && error) {
     <div class="error-state" role="alert" aria-live="assertive">
-      <h3>Error</h3>
+      <h2>Error</h2>
       <p>{{ error }}</p>
-      <button (click)="clear()" class="clear-button" aria-label="Try again">Try Again</button>
+      <button type="button" (click)="clear()" class="clear-button">Try Again</button>
     </div>
   }
 
-  <!-- Abstention State -->
   @if (currentState === 'abstention' && response) {
     <div class="abstention-state" role="status" aria-live="polite">
-      <h3>Cannot Answer</h3>
-      <p>{{ response.answer }}</p>
-      <button (click)="clear()" class="clear-button" aria-label="Ask another question">Ask Another Question</button>
+      <h2>Cannot Answer</h2>
+      <p class="answer-content">{{ response.answer }}</p>
+      <button type="button" (click)="clear()" class="clear-button">Ask Another Question</button>
     </div>
   }
 
-  <!-- Success State -->
   @if (currentState === 'success' && response) {
-    <div class="success-state" role="status">
-      <h3>Answer</h3>
-      <div class="answer-content" [innerHTML]="response.answer">
-      </div>
+    <section class="success-state" aria-live="polite">
+      <h2>Answer</h2>
+      <div class="answer-content">{{ response.answer }}</div>
 
       @if (hasCitations) {
-        <div class="citations-section">
-          <h4>Citations</h4>
-          <ol class="citation-list" aria-label="Citations">
+        <section class="citations-section" aria-labelledby="citations-heading">
+          <h3 id="citations-heading">Citations</h3>
+          <ol class="citation-list">
             @for (citation of sortedCitations; track citation.ordinal) {
-              <li class="citation-item" role="listitem">
+              <li class="citation-item">
                 <span class="citation-ordinal">{{ citation.ordinal }}.</span>
                 <span class="citation-source">{{ citation.source }}</span>
-                @if (citation.headingPath && citation.headingPath.length > 0) {
+                @if (citation.headingPath.length > 0) {
                   <span class="citation-heading-path">({{ citation.headingPath.join(' > ') }})</span>
                 }
               </li>
             }
           </ol>
-        </div>
+        </section>
       }
 
-      <button (click)="clear()" class="clear-button" aria-label="Ask another question">Ask Another Question</button>
-    </div>
+      <button type="button" (click)="clear()" class="clear-button">Ask Another Question</button>
+    </section>
   }
 
-  <!-- Idle State -->
   @if (currentState === 'idle') {
-    <div class="idle-state" role="status" aria-live="polite">
-      <p>Enter a question above to get started</p>
+    <div class="idle-state" role="status">
+      <p>Enter a question above to get started.</p>
     </div>
   }
-</div>
+</main>
