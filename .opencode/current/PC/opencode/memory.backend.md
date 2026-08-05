@@ -3,13 +3,13 @@
 ## Current state
 
 - Worker: PC.
-- Run: 20260805T205254Z.
+- Run: 20260805T223903Z.
 - Last accepted task: task-06e-child-process.
 - Active task: task-06f-ingestion-validation.
-- Current attempt: 2.
-- Latest exact gate: task-gate; exit=2.
-- Latest Codex decision: REVISE.
-- Checkpoint: none; head=not recorded.
+- Current attempt: 1.
+- Latest exact gate: task-gate; exit=0.
+- Latest Codex decision: pending.
+- Checkpoint: pending; head=not recorded.
 - Accepted: task-01-base, task-02-ingestion, task-03-pgvector, task-04-rag, task-05-rag-api, task-06-production-ingestion-cli, task-06b-cli-contract, task-06c-spring-lifecycle, task-06d-failure-classification, task-06e-child-process.
 - Remaining: task-06f-ingestion-validation, task-07-populate-production-rag, task-08-rag-semantic-evaluation, task-09-production-smoke.
 - Exact plan: `.opencode/task-plan.backend.json`.
@@ -20,25 +20,20 @@
 
 ## Demonstrated by current evidence
 
-- No new acceptance claim has been demonstrated in this run yet.
+- The exact deterministic task gate completed with exit code 0.
+- The checkpoint contains only task-owned product paths plus controller progress/memory.
 
 ## Still unproven or below expectations
 
-- Treat current gate exit 2 as a deterministic whitespace-preflight failure proven by the current untruncated output; do not infer test behavior from it.
-- Do not add an unnecessary profile document or alter Java tests. Keep the correction bounded to test configuration plus sanitation of controller-generated Markdown.
-- The controller/collector must publish Markdown without trailing whitespace so its durable artifacts cannot invalidate the mandatory repository-wide `git diff --check` preflight.
-- After preflight is clean, require the full exact gate—not focused or generic Maven success—to prove CLI, ingestion, pgvector, RAG, and HTTP tests together.
+- Codex has not yet accepted the current checkpoint.
 
 ## Approaches not to repeat
 
-- Treat current gate exit 2 as a deterministic whitespace-preflight failure proven by the current untruncated output; do not infer test behavior from it.
-- Do not add an unnecessary profile document or alter Java tests. Keep the correction bounded to test configuration plus sanitation of controller-generated Markdown.
-- The controller/collector must publish Markdown without trailing whitespace so its durable artifacts cannot invalidate the mandatory repository-wide `git diff --check` preflight.
-- After preflight is clean, require the full exact gate—not focused or generic Maven success—to prove CLI, ingestion, pgvector, RAG, and HTTP tests together.
+- Do not repeat an unchanged failing action without new evidence.
 
 ## Next exact action
 
-Sanitize trailing whitespace in the controller-published Markdown artifacts, remove only `PgVectorStoreAutoConfiguration` from the test configuration exclusions while retaining Flyway enabled and the JDBC metrics exclusion, then rerun `./scripts/task-gate.sh task-06f-ingestion-validation` from a clean `target/`.
+Preserve a deterministic gate-green checkpoint, generate final evidence and request Codex review.
 
 ## Fixed decisions
 
@@ -64,7 +59,7 @@ Sanitize trailing whitespace in the controller-published Markdown artifacts, rem
 - task-06c-spring-lifecycle: ACCEPTED — accepted at 2026-08-04T07:30:03.038079+00:00; last green attempt=4
 - task-06d-failure-classification: ACCEPTED — accepted at 2026-08-04T08:15:06.995514+00:00; last green attempt=1
 - task-06e-child-process: ACCEPTED — accepted at 2026-08-05T20:55:14.801213+00:00; last green attempt=1
-- task-06f-ingestion-validation: PENDING — accepted at not accepted; last green attempt=none
+- task-06f-ingestion-validation: PENDING — accepted at not accepted; last green attempt=1
 - task-07-populate-production-rag: PENDING — accepted at not accepted; last green attempt=none
 - task-08-rag-semantic-evaluation: PENDING — accepted at not accepted; last green attempt=none
 - task-09-production-smoke: PENDING — accepted at not accepted; last green attempt=none

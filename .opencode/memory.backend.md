@@ -3,20 +3,20 @@
 ## Current state
 
 - Worker: PC.
-- Run: 20260805T205254Z.
+- Run: 20260805T223903Z.
 - Last accepted task: task-06e-child-process.
-- Active task: None.
+- Active task: task-06f-ingestion-validation.
 - Current attempt: 1.
 - Latest exact gate: task-gate; exit=0.
-- Latest Codex decision: ACCEPT.
-- Checkpoint: created; head=179ab444664901b620d59cb30e4a42cc6e93a95b.
+- Latest Codex decision: pending.
+- Checkpoint: pending; head=not recorded.
 - Accepted: task-01-base, task-02-ingestion, task-03-pgvector, task-04-rag, task-05-rag-api, task-06-production-ingestion-cli, task-06b-cli-contract, task-06c-spring-lifecycle, task-06d-failure-classification, task-06e-child-process.
 - Remaining: task-06f-ingestion-validation, task-07-populate-production-rag, task-08-rag-semantic-evaluation, task-09-production-smoke.
 - Exact plan: `.opencode/task-plan.backend.json`.
 
 ## Files currently owned or edited
 
-- `src/test/resources/META-INF/spring.factories`
+- `src/test/resources/application.yml`
 
 ## Demonstrated by current evidence
 
@@ -25,7 +25,7 @@
 
 ## Still unproven or below expectations
 
-- Awaiting the next Codex decision or exact gate evidence.
+- Codex has not yet accepted the current checkpoint.
 
 ## Approaches not to repeat
 
@@ -33,7 +33,7 @@
 
 ## Next exact action
 
-Record ACCEPT, create the final controller commit and advance the queue.
+Preserve a deterministic gate-green checkpoint, generate final evidence and request Codex review.
 
 ## Fixed decisions
 
@@ -59,7 +59,7 @@ Record ACCEPT, create the final controller commit and advance the queue.
 - task-06c-spring-lifecycle: ACCEPTED — accepted at 2026-08-04T07:30:03.038079+00:00; last green attempt=4
 - task-06d-failure-classification: ACCEPTED — accepted at 2026-08-04T08:15:06.995514+00:00; last green attempt=1
 - task-06e-child-process: ACCEPTED — accepted at 2026-08-05T20:55:14.801213+00:00; last green attempt=1
-- task-06f-ingestion-validation: PENDING — accepted at not accepted; last green attempt=none
+- task-06f-ingestion-validation: PENDING — accepted at not accepted; last green attempt=1
 - task-07-populate-production-rag: PENDING — accepted at not accepted; last green attempt=none
 - task-08-rag-semantic-evaluation: PENDING — accepted at not accepted; last green attempt=none
 - task-09-production-smoke: PENDING — accepted at not accepted; last green attempt=none

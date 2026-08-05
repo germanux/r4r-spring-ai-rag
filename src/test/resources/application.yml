@@ -1,16 +1,15 @@
 spring:
   autoconfigure:
     exclude:
-      - org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
       - org.springframework.boot.actuate.autoconfigure.metrics.JdbcMetricsAutoConfiguration
   datasource:
-    url: jdbc:postgresql://localhost:5432/r4r_rag_test
-    username: r4r_test
-    password: r4r_test_local_only
+    url: jdbc:postgresql://localhost:55432/r4r_rag
+    username: r4r
+    password: r4r_local
     driver-class-name: org.postgresql.Driver
     initialize: false
   flyway:
-    enabled: false
+    enabled: true
 
 r4r:
   catalog-on-startup: false

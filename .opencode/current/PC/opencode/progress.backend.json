@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "active_task": "task-06f-ingestion-validation",
-  "last_run": "20260805T205254Z",
+  "last_run": "20260805T223903Z",
   "tasks": [
     {
       "id": "task-01-base",
@@ -71,7 +71,10 @@
     {
       "id": "task-06f-ingestion-validation",
       "status": "PENDING",
-      "accepted_at": null
+      "accepted_at": null,
+      "last_gate_green_at": "2026-08-05T22:54:57.413826+00:00",
+      "last_gate_green_attempt": 1,
+      "last_gate_green_run": "20260805T223903Z"
     },
     {
       "id": "task-07-populate-production-rag",
