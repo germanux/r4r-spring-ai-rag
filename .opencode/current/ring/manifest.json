@@ -51,6 +51,13 @@
       "target": "runtime/control/RING/requests/LP.json"
     },
     {
+      "bytes": 567,
+      "producer": "controller",
+      "sha256": "ebee7ce33a0647e0d24d13217c11b7f8826cd3ff2ecbffc169d892ae81e7873e",
+      "source": "runtime/control/RING/requests/PC.json",
+      "target": "runtime/control/RING/requests/PC.json"
+    },
+    {
       "bytes": 1278,
       "producer": "local-llm",
       "sha256": "19bdb90af61a33c80569c9c8e5ee8d0f288c610839ec6ca637c612e0e4cd0e33",
