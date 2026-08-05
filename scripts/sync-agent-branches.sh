@@ -713,11 +713,12 @@ while IFS=$'\t' read -r branch path; do
   fi
 done < <(all_worktree_records)
 
-# Every propagation pass first publishes only the explicit current-state files.
-# runtime is never copied; task evidence is already durable in .ring-agent/evidence.
-collect_agent_artifacts "$RING_WORKTREE" ring RING
-collect_agent_artifacts "$PC_WORKTREE" PC PC
-collect_agent_artifacts "$LP_WORKTREE" LP LP
+# //TODO: Remove the obsolete artifact collector and its supporting code when the
+# repository cleanup is performed. Disabled because task evidence is already
+# durable in .ring-agent/evidence and runtime must remain entirely ignored.
+# collect_agent_artifacts "$RING_WORKTREE" ring RING
+# collect_agent_artifacts "$PC_WORKTREE" PC PC
+# collect_agent_artifacts "$LP_WORKTREE" LP LP
 
 [[ -z "$(visible_status "$INTEGRATION_WORKTREE")" ]] \
   || die "integration worktree is dirty; refusing to mix synchronization changes"
