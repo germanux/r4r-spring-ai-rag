@@ -1,0 +1,1053 @@
+## agent/ring-agent-worker...origin/agent/ring-agent-worker
+ M .opencode/current/ring/worker-understanding.md
+ M .ring-agent/backend-frontend-handoff.md
+ M .ring-agent/code-lp-review.md
+ M .ring-agent/code-pc-review.md
+ M .ring-agent/global-summary.md
+ M .ring-agent/state.json
+?? docs/R4R_BACKLOG_IMPLEMENTACION_SIGUIENTE_CHAT_2026-08-05.md
+?? r4r-audit.txt
+ .opencode/current/ring/worker-understanding.md |  98 ++++++++++++++-------
+ .ring-agent/backend-frontend-handoff.md        |  63 +++++++++-----
+ .ring-agent/code-lp-review.md                  | 116 ++++++++++++++++---------
+ .ring-agent/code-pc-review.md                  |  95 ++++++++++++--------
+ .ring-agent/global-summary.md                  | 115 ++++++++++++++----------
+ .ring-agent/state.json                         |  57 ++++++------
+ 6 files changed, 340 insertions(+), 204 deletions(-)
+diff --git a/.opencode/current/ring/worker-understanding.md b/.opencode/current/ring/worker-understanding.md
+index d3d2183..500d0b3 100644
+--- a/.opencode/current/ring/worker-understanding.md
++++ b/.opencode/current/ring/worker-understanding.md
+@@ -1,46 +1,80 @@
+-# Worker understanding report
++# Worker Understanding Report - 20260803T220222Z
+ 
+-## Summary
++## Executive Summary
+ 
+-Both workers (PC and LP) successfully executed their exact gates with exit code 0 in the most recent run. However, Codex classified both runs as REVISE rather than ACCEPT, indicating local-model misunderstandings in the implementation details despite passing tests.
++Both PC and LP workers are currently blocked by deterministic gate failures. Codex REVISE decisions specify the exact corrections required for each queue. No workers should be launched until corrections are applied per this directive.
+ 
+-## PC worker understanding
++## PC Worker State (Backend)
+ 
+-### Primary active task
+-`task-06-production-ingestion-cli`
++### Current Attempt
++- **Active task**: task-06-production-ingestion-cli
++- **Attempt number**: 1
++- **Last gate result**: exit code 1 (compilation failure)
+ 
+-### Key learnings from this cycle
+-- The deterministic gate script returns exit 0 but Codex explicitly identifies Spring bean registration, child-process invocation, and exception classification errors that prevent ACCEPT.
+-- The local model incorrectly applied ApplicationContextInitializer singleton registration instead of BeanDefinitionRegistryPostProcessor for the mock service replacement in NONE-mode tests.
+-- Test expectation documentation must distinguish between direct CLI invocation (child process) versus Spring context bootstrap via R4rSpringAiRagApplication.
++### Known Corrective Actions
+ 
+-### Incorrect understanding present
+-- Over-reliance on gate exit code as acceptance indicator without verifying Codex decision semantics
+-- Failure to apply the precise correction packet instructions for bean lifecycle management and exception handling
++Per `codex-qwen3-extra-instructions.md`:
+ 
+-### Pending corrections required by Codex
+-1. Register `BeanDefinitionRegistryPostProcessor` in `ApplicationContextInitializer`
+-2. Use `KnowledgeIngestionCli` directly as child process, not `R4rSpringAiRagApplication`
+-3. Classify exceptions via `instanceof SQLException / DataAccessException / ConnectException / SocketTimeoutException`
++1. Install BeanDefinitionRegistryPostProcessor in ApplicationContextInitializer to replace knowledgeIngestionService bean definition after configuration-class registration but before singleton instantiation
++2. Use instanceof checks for SQLException, DataAccessException, ConnectException, SocketTimeoutException and concrete Spring AI/Ollama transport exceptions across the cause chain instead of string matching or OAuth2 class-name checks
++3. Invoke KnowledgeIngestionCli directly as child JVM with fixed timeout and valid RAG_* environment variables instead of via R4rSpringAiRagApplication
++4. Explicitly assert context.close() for NONE-mode tests and SERVLET mode tests
+ 
+-## LP worker understanding
++### Required Next Input
+ 
+-### Primary active task
+-`task-fe-03-rag-ui`
++Before launching PC worker:
++1. Review codex-qwen3-extra-instructions.md in full
++2. Verify current source state matches what gate expects (git status shows A files IngestionConfiguration.java, KnowledgeIngestionCli.java, KnowledgeIngestionOrchestration.java, KnowledgeIngestionResult.java)
++3. Apply all mandatory corrections to PC worktree
++4. Run exact gate: bash -lc 'rm -rf target && ./scripts/task-gate.sh all && mvn -Dtest=KnowledgeIngestionCliTest -DfailIfNoTests=true test'
+ 
+-### Key learnings from this cycle
+-- The deterministic gate returns exit 0 but Codex rejects acceptance because tests inspect component properties instead of fixture DOM assertions.
+-- Local model did not fully remove test scaffolding (BehaviorSubject, queryObservableForTesting, unused RxJS imports) despite correct high-level implementation.
++### Prohibited Actions
+ 
+-### Incorrect understanding present
+-- Insufficient DOM-level verification in Angular tests (missing role attributes, loading states, disabled controls assertions)
+-- Retained production-only test fixtures that should have been removed during refactor
++- Do not repeat ApplicationContextInitializer singleton registration (rejected by Codex)
++- Do not use string-based exception classification (HikariConfig/OAuth2 matching rejected)
++- Do not invoke child process indirectly via R4rSpringAiRagApplication
+ 
+-### Pending corrections required by Codex
+-1. Update `app.component.spec.ts` to verify rendered RAG page heading instead of bootstrap title
+-2. Drive rag-page component with controlled Subjects and assert fixture DOM for all transitions
+-3. Remove production-only BehaviorSubject/test accessors and unused imports from component
++## LP Worker State (Frontend)
+ 
+-## General conclusions
++### Current Attempt
++- **Active task**: task-fe-03-rag-ui
++- **Attempt number**: 1
++- **Last gate result**: exit code 2 (gate-failure)
+ 
+-Both workers correctly executed and reported gate-green results but failed to fully satisfy Codex's detailed correction instructions. The supervisor must wait for the workers to apply those corrections before attempting another gate run.
++### Known Corrective Actions
++
++Per `codex-qwen3-extra-instructions.md`:
++
++1. Run git diff --check against frontend/** and remove trailing whitespace from all named paths first
++2. Remove router provisioning while retaining HTTP configuration
++3. Render response.answer with interpolation instead of [innerHTML]
++4. Replace property-only/setTimeout tests with controlled Subject<RAGAnswerResult> emissions and synchronous fixture.detectChanges() DOM assertions without timers
++5. Assert exact request payload, loading role="status", disabled textarea/submit button before emission, re-enabled controls after success/error
++6. Assert deterministic error alert text, structured abstention, ordered citation content, absence of citation DOM when empty
++
++### Required Next Input
++
++Before launching LP worker:
++1. First run git diff --check and remove all trailing whitespace
++2. Remove router imports/provisioning from app.config.ts
++3. In template: use interpolation {{response.answer}}
++4. In spec.ts: implement controlled Subject emissions with fixture.detectChanges() assertions for all DOM states
++
++### Prohibited Actions
++
++- Do not repeat incomplete correction application (whitespace gate must pass first)
++- Do not use [innerHTML] and setTimeout timers in tests
++
++## Gate Evidence Availability
++
++The exact compilation or frontend test error details are referenced in gate-full.log files that are not present in RUN_DIR. Full evidence is available at:
++- PC: runtime/runs/PC/20260803T072545Z/task-06-production-ingestion-cli/attempt-01/evidence/diagnostics/
++- LP: runtime/runs/LP/20260803T200003Z/task-fe-03-rag-ui/attempt-01/evidence/diagnostics/
++
++These are external to Ring and accessible only via controller.
++
++## Worker Launch Eligibility
++
++**PC**: Not eligible until BeanDefinitionRegistryPostProcessor, typed exception checks, child process invocation corrections applied AND exact gate returns exit 0.
++
++**LP**: Not eligible until trailing whitespace removed (git diff --check passes), fixture-DOM assertions implemented AND exact gate returns exit 0.
+diff --git a/.ring-agent/backend-frontend-handoff.md b/.ring-agent/backend-frontend-handoff.md
+index d6d903c..7aa029f 100644
+--- a/.ring-agent/backend-frontend-handoff.md
++++ b/.ring-agent/backend-frontend-handoff.md
+@@ -1,35 +1,52 @@
+-# Backend-Frontend handoff analysis
++# Backend-Frontend Handoff Analysis - 20260803T220222Z
+ 
+-## Current handoff status
++## Current Cross-Stack State
+ 
+-| Area | Status |
+-|------|--------|
+-| Backend task-06-production-ingestion-cli | Gate green (exit 0), Codex requires REVISE corrections |
+-| Frontend task-fe-03-rag-ui | Gate green (exit 0), Codex requires REVISE corrections |
+-| Cross-stack integration | No active inter-task blocking dependencies |
++| Layer | Active Task | Status | Gate Exit Code |
++|-------|-------------|--------|----------------|
++| PC (Backend) | task-06-production-ingestion-cli | PENDING | 1 (compilation failure) |
++| LP (Frontend) | task-fe-03-rag-ui | PENDING | 2 (gate-failure) |
+ 
+-## PC/LP task alignment
++## Integration Boundary
+ 
+-Both workers have completed gate-green runs but are blocked by Codex rejection at ACCEPT stage. Neither queue is waiting on the other; both are independently awaiting Codex review of their respective correction packets.
++The two queues are currently independent with no pending handoffs between PC and LP. PC is working on production CLI ingestion mechanics (spring beans, child process invocation), while LP is working on Angular RAG UI component DOM states and test assertions.
+ 
+-### PC worker notes
++## Risk Assessment
+ 
+-- **Active**: `task-06-production-ingestion-cli`
+-- **Gate exit**: 0
+-- **Codex decision**: REVISE (not ACCEPT)
+-- **Pending corrections**: BeanDefinitionRegistryPostProcessor registration, typed exception `instanceof` checks, direct KnowledgeIngestionCli child process invocation
++1. **Backend-first ordering**: The RAG UI component depends on the rag-page.ts service contract defined by LP worktree. No current changes to that contract are required; both workers operate within accepted scope boundaries.
+ 
+-### LP worker notes
++2. **Shared context risks**:
++   - Backend `KnowledgeIngestionOrchestration.java` compilation failure may indicate missing bean configuration that could affect RAG service if it depends on ingestion components
++   - Frontend tests do not use actual backend services (per rule: "Frontend tests and Playwright must not require a live LLM")
++   - No current changes threaten the accepted RAGAnswerResult contract between LP services
+ 
+-- **Active**: `task-fe-03-rag-ui`
+-- **Gate exit**: 0
+-- **Codex decision**: REVISE (not ACCEPT)
+-- **Pending corrections**: Fixture DOM assertions for all transitions, removal of test scaffolding and unused imports
++3. **No immediate blocking dependencies**: Each task has its own acceptance gates and is independently verifiable.
+ 
+-## No immediate integration risks
++## Current Artifacts at Handoff Boundary
+ 
+-There are no evidentiary dependencies between the two tasks. The backend ingestion CLI does not require the frontend UI component to be accepted, and the frontend RAG page is designed against an existing `RagApiService`/`RAGAnswerResult` contract that has already been accepted (`task-fe-02-rag-client`).
++Ring worktree contains base implementation files under `src/main/java/com/riansares/r4r/` but not the production CLI task artifacts (`IngestionConfiguration.java`, `KnowledgeIngestionCli.java`, `KnowledgeIngestionOrchestration.java`). These exist only in PC worktree.
+ 
+-## Recommended coordination strategy
++Frontend Angular component files exist in LP worktree. Ring worktree contains no frontend source; only runtime progress tracking and directive history is available to Ring.
+ 
+-Continue holding both queues at ACCEPT gate validation until Codex produces ACCEPT. Once both tasks are ACCEPTED, the next pending backend task (task-07-populate-production-rag) and frontend task (task-fe-04-playwright) remain independent and may run in parallel.
++## Recommendations for Next Cycle
++
++1. **PC first**: Resolution of compilation failure in `KnowledgeIngestionOrchestration.java` should proceed before significant LP changes to minimize potential rework if backend structure changes.
++2. **Parallel work acceptable**: Frontend corrections (whitespace, fixture assertions) do not depend on backend completion and may continue independently per task schedule.
++3. **Reintegrate only after acceptance**: Do not reintroduce code from PC/LP worktrees into ring worktree except as directed by controller commits.
++
++## Gate Green Checkpoints
++
++Both workers maintain last-green-at timestamps indicating previous successful gates:
++
++- PC: 2026-08-03T16:50:33.772689+00:00 (attempt 1)
++- LP: 2026-08-03T12:12:00.914271+00:00 (attempt 2)
++
++Neither was accepted by Codex; the gates turned red on a subsequent run.
++
++## Decision Ledger Entry
++
++This handoff analysis documents:
++- Independent queue states at current cycle start
++- No cross-stack dependencies requiring synchronization
++- Separate correction paths per codex-qwen3-extra-instructions.md
++- No integration risks requiring blocker status beyond each gate's individual failures
+diff --git a/.ring-agent/code-lp-review.md b/.ring-agent/code-lp-review.md
+index 2a7fb33..ed299d5 100644
+--- a/.ring-agent/code-lp-review.md
++++ b/.ring-agent/code-lp-review.md
+@@ -1,56 +1,88 @@
+-# LP / Frontend code review
++# LP / Frontend Code Review - 20260803T220222Z
+ 
+-## Current state
++## Current State
+ 
+-- **Worker**: LP (Qwen3-Coder)
+-- **Active task**: `task-fe-03-rag-ui` (PENDING, gate green, Codex REVISE)
+-- **Gate status**: Exit 0 but rejected by Codex decision `REVISE`
+-- **Status of acceptance gates**: Not yet met;Codex explicitly requires corrections
++**Active Task**: `task-fe-03-rag-ui`  
++**Status**: PENDING, gate-red (exit code 2, gate-failure classification)  
++**Last Green Attempt**: 2026-08-03T12:12:00.914271+00:00 (attempt 2)  
++**Codex Decision**: REVISE
+ 
+-## Latest corrected implementation
++## Gate Diagnostic Summary
+ 
+-The `lp-git-status.txt` evidence shows the following paths were added or modified in the last worker run:
++```
++Classification: gate-failure
++Exit code: 2
++Fingerprint: 54153b57df193754978aac3cf16517a24f209586a2a4f49a162b67aa135bbfc1
++Summary: The deterministic task gate failed; inspect the full captured log.
+ 
+-- Modified: `frontend/src/app/app.component.spec.ts`
+-- Modified: `frontend/src/app/app.component.ts`
+-- Modified: `frontend/src/app/app.config.ts` (modified twice, indicating MM conflict)
+-- Added: `frontend/src/app/features/rag/rag-page.component.html`
+-- Added: `frontend/src/app/features/rag/rag-page.component.scss`
+-- Added: `frontend/src/app/features/rag/rag-page.component.spec.ts`
+-- Added: `frontend/src/app/features/rag/rag-page.component.ts`
++Source paths named by current evidence:
++- frontend/src/app/app.component.spec.ts
++- frontend/src/app/app.config.ts
++- frontend/src/app/features/rag/rag-page.component.html
++- frontend/src/app/features/rag/rag-page.component.spec.ts
++- frontend/src/app/features/rag/rag-page.component.ts
++```
+ 
+-## Codex rejection summary
++## Issue Classification
+ 
+-The `codex-qwen3-extra-instructions.md` for this run explicitly identifies test instrumentation defects:
++The exact gate returns `exit code 2`. Codex REVISE decision indicates the worker only partially applied prior correction packet:
+ 
+-1. **AppComponent tests** still assert stale bootstrap title instead of rendered RAG integration heading
+-2. **RagPageComponent tests** inspect component properties rather than fixture DOM assertions:
+-   - Missing loading state (`role="status"`) verification
+-   - Missing disabled textarea/submit button before emission
+-   - Missing re-enabled controls after success and error
+-   - Missing error alert with `role="alert"` and deterministic transport-error text
+-   - Missing structured abstention rendering
+-   - Missing escaped answer markup without injected HTML
+-   - Missing ordered citation entries (ordinal/source/heading-path)
+-   - Missing absence of citations when citation-like text exists only in answer
+-3. **Component source** contains unused `BehaviorSubject`, `queryObservableForTesting` and related emissions, RxJS imports, and asynchronous `setTimeout` scaffolding that must be removed
++1. **Missing whitespace cleanup**: `git diff --check` was not run or passed before Angular work
++2. **Incomplete corrections retained by worker**:
++   - Trailing whitespace in diagnostic files
++   - Unnecessary router provisioning still present in app.config.ts
++   - Response answer rendered with `[innerHTML]` instead of interpolation
++   - Property-only and `setTimeout`-based tests without controlled Subject emissions
++   - Missing fixture DOM assertions for loading status, disabled controls, error alerts, structured abstention, escaped markup, citation ordering
+ 
+-## Remaining acceptance gates
++## Evidence of Current State
+ 
+-| Gate | Status |
+-|------|--------|
+-| Exact frontend gate exit 0 | ✅ Confirmed (exit=0) |
+-| Codex ACCEPT decision | ❌ Pending (decision=REVISE) |
+-| AppComponent tests verify rendered RAG page heading | Not yet applied |
+-| RagPageComponent tests assert fixture DOM transitions | Not yet applied |
+-| Remove production-only BehaviorSubject/test accessors and unused imports | Not yet applied |
++From git status:  
++```
++M  frontend/src/app/app.component.spec.ts
++M  frontend/src/app/app.component.ts
++M  frontend/src/app/app.config.ts
++AM frontend/src/app/features/rag/rag-page.component.html
++A  frontend/src/app/features/rag/rag-page.component.scss
++AM frontend/src/app/features/rag/rag-page.component.spec.ts
++AM frontend/src/app/features/rag/rag-page.component.ts
++```
+ 
+-## Next action
++## Mandatory Corrections for Next Pass
+ 
+-**Wait for Codex review**: The ring-agent director should not commit code or claim acceptance. Only the deterministic Python supervisor may create a checkpoint after corrections are applied and the gate passes with ACCEPT.
++Per codex-qwen3-extra-instructions.md:
+ 
+-## Avoid repeating
++1. **Whitespace gate first**: Run `git diff --check` against frontend/** and remove trailing whitespace from every path named by the current gate output before running Angular work
++2. **Remove router provisioning**: Keep Angular at major 17, preserve RAGAnswerResult contract and environment-backed BACKEND_URL; remove router imports/provisioning because AppComponent directly renders RagPageComponent and no accepted requirement uses routing
++3. **Interpolate answer text**: Use interpolation `{{response.answer}}` instead of `[innerHTML]`; the escaping test must inspect fixture DOM and prove model markup remains literal with no injected element
++4. **Controlled Subject emissions**: Replace property-only and setTimeout-based tests with controlled Subject<RAGAnswerResult> emissions followed by synchronous `fixture.detectChanges()` DOM assertions without timers
++5. **DOM assertions required**:
++   - Assert exact query payload, loading role="status", disabled textarea and submit button before emission
++   - Re-enabled controls after success and error
++   - Deterministic error text inside role="alert"
++   - Rendered structured abstention, ordered citation ordinal/source/heading-path content
++   - Absence of citation DOM when citation-like text exists only in the answer
++6. **Cleanup**: Remove unused `of`, `throwError`, BehaviorSubject imports and NO_ERRORS_SCHEMA
+ 
+-- Do not re-attempt the same component property inspections without new fixture DOM assertions
+-- Do not repeat AppComponent tests asserting stale bootstrap title
+-- Do not omit removal of production-only test scaffolding
++## Next Action
++
++Apply corrections to LP worktree:
++
++1. First run `git diff --check` against frontend/** and remove all trailing whitespace from app.component.spec.ts, app.component.ts, app.config.ts, rag-page.* files
++2. Remove router provisioning (RouterModule, RouterModule.forRoot) while retaining HTTP configuration
++3. In template: use interpolation `{{response.answer}}` instead of `[innerHTML]`
++4. In spec.ts: replace setTimeout timers with controlled Subject<RAGAnswerResult> emissions and synchronous fixture.detectChanges() DOM assertions
++5. Assert all required DOM states: loading role="status", disabled controls before emission, re-enabled after success/error, error alert, structured abstention, escaped markup without injected HTML, citation ordering when present
++
++Rerun exactly `./scripts/frontend-task-gate.sh task-fe-03-rag-ui`
++
++## Acceptance Gates
++
++- `./scripts/frontend-task-gate.sh task-fe-03-rag-ui` must return exit 0
++- `git diff --check` must pass (no trailing whitespace)
++- Codex decision must be ACCEPT after corrections
++- fixture.detectChanges() DOM assertions for loading role="status", disabled controls before emission, re-enabled after success/error
++
++## Avoid Repeating
++
++Do not repeat incomplete correction application; the worker must remove all trailing whitespace from diagnostic files and implement all fixture-DOM assertions (loading status, disabled controls, error alert role="alert", structured abstention, escaped answer markup without injected HTML, citation ordering) in controlled Subject-based tests.
+diff --git a/.ring-agent/code-pc-review.md b/.ring-agent/code-pc-review.md
+index 90708c7..adc904a 100644
+--- a/.ring-agent/code-pc-review.md
++++ b/.ring-agent/code-pc-review.md
+@@ -1,49 +1,74 @@
+-# PC / Backend code review
++# PC / Backend Code Review - 20260803T220222Z
+ 
+-## Current state
++## Current State
+ 
+-- **Worker**: PC (Qwen3-Coder)
+-- **Active task**: `task-06-production-ingestion-cli` (PENDING, gate green, Codex REVISE)
+-- **Gate status**: Exit 0 but rejected by Codex decision `REVISE`
+-- **Status of acceptance gates**: Not yet met;Codex explicitly requires corrections, not just pass
++**Active Task**: `task-06-production-ingestion-cli`  
++**Status**: PENDING, gate-red (exit code 1, compilation classification)  
++**Last Green Attempt**: 2026-08-03T16:50:33.772689+00:00 (attempt 1)  
++**Codex Decision**: REVISE
+ 
+-## Latest corrected implementation
++## Gate Diagnostic Summary
+ 
+-The `pc-git-status.txt` evidence shows the following paths were added or modified in the last worker run:
++```
++Classification: compilation
++Exit code: 1
++Fingerprint: 4a392a8e5f5586adce6a2fc2229fa3bc98004f42f2a8c78a824d69ddc108db21
++Summary: Java compilation or test compilation failed.
++Source paths named by current evidence:
++- src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionOrchestration.java
++```
+ 
+-- Added: `src/main/java/com/riansares/r4r/ingestion/IngestionConfiguration.java`
+-- Added: `src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionCli.java`
+-- Added: `src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionOrchestration.java`
+-- Added: `src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionResult.java`
+-- Modified: `src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionService.java`
+-- Modified: `src/main/resources/application.yml`
+-- Added: `src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionCliTest.java`
+-- Modified: `src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionServiceIT.java`
++## Issue Classification
+ 
+-## Codex rejection summary
++The exact gate returns compilation failure (`exit code 1`). Codex REVISE decision from `codex-qwen3-extra-instructions.md` specifies mandatory corrections:
+ 
+-The `codex-qwen3-extra-instructions.md` for this run explicitly rejects the previous attempts with the following corrections:
++1. **Bean Registration**: Must install `BeanDefinitionRegistryPostProcessor` in `ApplicationContextInitializer` to replace `knowledgeIngestionService` bean definition after configuration-class registration but before singleton instantiation
++2. **Exception Classification**: Use instanceof checks for typed exception families (SQLException, DataAccessException, ConnectException, SocketTimeoutException) and concrete Spring AI/Ollama transport exceptions across the cause chain – remove string package-prefix matching and unrelated OAuth2 class-name check
++3. **Child Process Invocation**: Invoke `KnowledgeIngestionCli` directly as a child JVM under fixed timeout with valid corpus and environment variables; do not invoke via `R4rSpringAiRagApplication`
++4. **Context Management**: Explicitly assert `context.close()` after using R4rSpringAiRagApplication in SERVLET mode
+ 
+-1. **A5 production service bean registration** must use `BeanDefinitionRegistryPostProcessor` instead of `ApplicationContextInitializer` singleton registration
+-2. **Child process invocation** must invoke `KnowledgeIngestionCli`, not `R4rSpringAiRagApplication`
+-3. **Exception classification** must use `instanceof` checks for typed exceptions (`SQLException`, `DataAccessException`, `ConnectException`, `SocketTimeoutException`) instead of string matching
++## Evidence of Current State
+ 
+-## Remaining acceptance gates
++From git status:  
++```
++A  src/main/java/com/riansares/r4r/ingestion/IngestionConfiguration.java
++A  src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionCli.java
++A  src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionOrchestration.java
++A  src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionResult.java
++ M src/main/resources/application.yml
++ A  src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionCliTest.java
++ M src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionServiceIT.java
++```
+ 
+-| Gate | Status |
+-|------|--------|
+-| Exact gate exit 0 | ✅ Confirmed (exit=0) |
+-| Codex ACCEPT decision | ❌ Pending (decision=REVISE) |
+-| Mockito mock registered via BeanDefinitionRegistryPostProcessor | Not yet applied |
+-| Child process invokes KnowledgeIngestionCli directly | Not yet applied |
+-| Exception classification uses typed `instanceof` checks | Not yet applied |
++Ring worktree contains the base `KnowledgeIngestionService.java` implementation with proper typed exception wrapping (IllegalStateException for non-IllegalStateException exceptions, rethrow for IllegalStateException), but the production CLI task requires additional orchestration components not yet present in ring repo.
+ 
+-## Next action
++## Mandatory Corrections for Next Pass
+ 
+-**Wait for Codex review**: The ring-agent director should not commit code or claim acceptance. Only the deterministic Python supervisor may create a checkpoint after corrections are applied and the gate passes withACCEPT.
++Per codex-qwen3-extra-instructions.md:
+ 
+-## Avoid repeating
++1. Install `BeanDefinitionRegistryPostProcessor` from `ApplicationContextInitializer` to remove/replace knowledgeIngestionService with exact local Mockito mock before ordinary singleton creation
++2. Use instanceof checks across cause chain: SQLException, DataAccessException, ConnectException, SocketTimeoutException and concrete Spring AI/Ollama exceptions; retain generic IllegalStateException and RuntimeException as exit 4
++3. Invoke KnowledgeIngestionCli directly as child JVM under fixed timeout with valid corpus and RAG_* environment variables
++4. For NONE-mode tests: exercise context-provided CLI orchestration, verify ingest exactly once, assert no servlet context/server, close explicitly
++5. For A5 mode: use R4rSpringAiRagApplication with WebApplicationType.SERVLET and server.port=0, close in finally, call verifyNoInteractions only after closure
+ 
+-- Do not re-attempt the same changes without new corrective instructions
+-- Do not bypass the exact task gate or Codex constraints
+-- Do not assume gate-green implies accepted; the supervisor must validate
++## Next Action
++
++Apply all corrections from `codex-qwen3-extra-instructions.md` to PC worktree:
++
++- Limit product edits to KnowledgeIngestionCliTest.java and narrowest correction in KnowledgeIngestionOrchestration.java
++- Install BeanDefinitionRegistryPostProcessor in ApplicationContextInitializer
++- Replace string-based exception classification with instanceof checks for typed families
++- Direct child process invocation of KnowledgeIngestionCli with fixed timeout and valid environment variables
++- Rerun exact gate: `bash -lc 'rm -rf target && ./scripts/task-gate.sh all && mvn -Dtest=KnowledgeIngestionCliTest -DfailIfNoTests=true test'`
++
++## Acceptance Gates
++
++- `./scripts/task-gate.sh task-06-production-ingestion-cli` must return exit 0
++- Codex decision must be ACCEPT after corrections
++- BeanDefinitionRegistryPostProcessor replaces knowledgeIngestionService bean definition after configuration-class registration but before singleton instantiation
++- Full test coverage includes NONE-mode (no servlet, explicit close) and SERVLET-mode (server.port=0, no live PostgreSQL/Ollama)
++
++## Avoid Repeating
++
++Do not repeat ApplicationContextInitializer singleton registration, string-based exception classification (HikariConfig/OAuth2 class matching), or indirect child process invocation via R4rSpringAiRagApplication – Codex explicitly rejected these in codex-qwen3-extra-instructions.md for task-06-production-ingestion-cli.
+diff --git a/.ring-agent/global-summary.md b/.ring-agent/global-summary.md
+index f8471f0..c96d617 100644
+--- a/.ring-agent/global-summary.md
++++ b/.ring-agent/global-summary.md
+@@ -1,65 +1,86 @@
+-# Global summary — Ring agent director cycle
++# Global Summary - Ring Coordination Cycle 20260803T220222Z
+ 
+-## Run metadata
+-- **Run ID**: `20260803T163636Z`
+-- **Timestamp**: 2026-08-03T16:36:37Z
+-- **Ring worktree**: `/home/german/Desarrollo/r4r-ring-agent.git`
++## System Status
+ 
+-## High-levelStatus
++**Overall Status**: BLOCKED
+ 
+-**OVERALL STATUS = READY**
++Both PC (backend) and LP (frontend) workers are blocked by deterministic gate failures. The exact gates return non-zero exit codes with Codex REVISE decisions indicating incomplete correction application.
+ 
+-Both product-controller queues have gates green but Codex rejection pending correction. No immediate blocking or critical defects discovered.
++## Worker Activity Summary
+ 
+-## PC queue status
++| Queue | Active Task | Status | Gate Exit Code | Classification |
++|-------|-------------|--------|----------------|----------------|
++| PC | task-06-production-ingestion-cli | PENDING | 1 | compilation failure |
++| LP | task-fe-03-rag-ui | PENDING | 2 | gate-failure |
+ 
+-| Task ID | Status | Gate exit | Codex decision |
+-|---------|--------|-----------|----------------|
+-| task-01-base through task-05-rag-api | ACCEPTED | ✅ | ✅ |
+-| task-06-production-ingestion-cli | PENDING | 0 (green) | REVISE |
+-| task-07-populate-production-rag | PENDING | — | — |
+-| task-08-rag-semantic-evaluation | PENDING | — | — |
+-| task-09-production-smoke | PENDING | — | — |
++## Root Cause Analysis
+ 
+-### Issue class: Revision pending
+-The exact gate for `task-06-production-ingestion-cli` passed but Codex explicitly requires corrections:
+-1. BeanDefinitionRegistryPostProcessor instead of ApplicationContextInitializer singleton registration
+-2. Typed exception `instanceof` checks rather than string matching
+-3. Direct KnowledgeIngestionCli child process invocation
++### Backend (PC)
+ 
+-## LP queue status
++The exact gate returned exit code 1 with classification "compilation". Codex REVISE decision specifies three mandatory correction categories:
+ 
+-| Task ID | Status | Gate exit | Codex decision |
+-|---------|--------|-----------|----------------|
+-| task-fe-01-angular17-bootstrap, task-fe-02-rag-client | ACCEPTED | ✅ | ✅ |
+-| task-fe-03-rag-ui | PENDING | 0 (green) | REVISE |
+-| task-fe-04-playwright | PENDING | — | — |
++1. Bean registration must use BeanDefinitionRegistryPostProcessor in ApplicationContextInitializer instead of singleton registration
++2. Exception classification must use instanceof checks for typed exception families across cause chain, not string matching
++3. Child process invocation must call KnowledgeIngestionCli directly with fixed timeout, not via R4rSpringAiRagApplication
+ 
+-### Issue class: Revision pending
+-The exact gate for `task-fe-03-rag-ui` passed but Codex explicitly requires corrections:
+-1. Fixture DOM assertions instead of component property inspection
+-2. Remove production-only test scaffolding and unused imports
++Current git status shows new files added to PC worktree that require these corrections before compilation succeeds.
+ 
+-## Integration analysis
++### Frontend (LP)
+ 
+-- No cross-stack blocking dependencies detected
+-- Both queues are independently blocked at ACCEPT gate due to Codex REVISE decisions
+-- Pending tasks (task-07 through task-09, task-fe-04) remain independent and sequential
+-- No new risky integrations introduced in the last worker runs
++The exact gate returned exit code 2 with classification "gate-failure". The worker partially applied prior correction packet but:
+ 
+-## Evidence limitations
++1. Failed to run `git diff --check` first and remove trailing whitespace
++2. Retained router provisioning unnecessary for direct component rendering
++3. Still using [innerHTML] instead of interpolation for answer text
++4. Tests still use property-only/setTimeout patterns instead of controlled Subject emissions with fixture.detectChanges()
+ 
+-| Limitation | Impact |
+-|------------|--------|
+-| Only runtime evidence from this cycle is available; live worktrees not inspected | Minimal — all required evidence is under RUN_DIR |
+-| No access to controller files or Git commands executed by other processes | Acceptable — Ring follows supervisor directives, never writes history |
++## Evidence-Based Decisions
+ 
+-## Deterministic next steps
++All decisions are grounded in evidence from RUN_DIR:
+ 
+-1. **PC**: Apply corrections from `codex-qwen3-extra-instructions.md`, rerun exact gate
+-2. **LP**: Apply corrections from `codex-qwen3-extra-instructions.md`, rerun frontend task gate
+-3. **Supervisor**: Validate gate-green with Codex ACCEPT before promoting checkpoint
++1. **state.json**: Documents current task status, gate exit codes, and Codex decisions
++2. **code-pc-review.md**: Detailed PC compilation failure analysis with mandatory corrections per codex-qwen3-extra-instructions.md
++3. **code-lp-review.md**: Detailed LP gate-failure analysis with whitespace and DOM assertion requirements
++4. **backend-frontend-handoff.md**: Cross-stack status showing no dependencies between queues
++5. **worker-understanding.md**: Explicit launch eligibility criteria for each worker
++6. **ring-git-status.txt**: Shows Ring itself only has staged coordination document changes
+ 
+-## Director directive
++## Integration Risks
+ 
+-**Status = READY**, no immediate Ring action required. The workers correctly identified green gates and now await Codex review of correction packets. Ring's role is to coordinate, not intervene; once both queues reach Codex ACCEPT, pending tasks may proceed in parallel.
++1. Backend compilation failure (KnowledgeIngestionOrchestration.java) may indicate missing bean configuration that could affect downstream RAG service if integration requires ingestion beans - risk is static and resolved by applying BeanDefinitionRegistryPostProcessor corrections
++2. Frontend NO_ERRORS_SCHEMA removal may create template binding errors previously masked - risk is mitigated by keeping Angular 17 and preserving accepted service contracts
++
++## Evidence Limitations
++
++1. gate-full.log files referenced in codex-qwen3-extra-instructions.md are not present in RUN_DIR; exact compilation or test failure details require external runtime runs directories
++2. PC and LP worker worktrees (/home/german/Desarrollo/r4r-pc-worker.git, /home/german/Desarrollo/r4r-lp-worker.git) are not readable by Ring per security rules; source analysis must rely on ring worktree copies and runtime evidence only
++3. No access to live worker memory or run logs outside RUN_DIR without explicit controller provision
++
++## Next Actions
++
++### For PC Worker (after corrections applied):
++1. Apply BeanDefinitionRegistryPostProcessor in ApplicationContextInitializer to replace knowledgeIngestionService bean definition after configuration-class registration but before singleton instantiation
++2. Use instanceof checks for typed exception families SQLException, DataAccessException, ConnectException, SocketTimeoutException and concrete Spring AI/Ollama exceptions across cause chain
++3. Invoke KnowledgeIngestionCli directly as child JVM with fixed timeout and valid environment variables
++4. Run exact gate: bash -lc 'rm -rf target && ./scripts/task-gate.sh all && mvn -Dtest=KnowledgeIngestionCliTest -DfailIfNoTests=true test'
++
++### For LP Worker (after corrections applied):
++1. Run git diff --check against frontend/** and remove trailing whitespace from all named paths
++2. Remove router provisioning while retaining HTTP configuration
++3. Use interpolation {{response.answer}} instead of [innerHTML]
++4. Implement controlled Subject<RAGAnswerResult> emissions with synchronous fixture.detectChanges() DOM assertions without timers
++5. Run exact gate: ./scripts/frontend-task-gate.sh task-fe-03-rag-ui
++
++### For Ring Director:
++No explicit Ring worktree edits required for this cycle; changes to coordination documents (.ring-agent/**) have been staged.
++
++## Acceptance Gates Summary
++
++Both queues must satisfy these gates before Codex ACCEPT:
++
++| Queue | Gate Command | Expected Exit | Codex Decision |
++|-------|--------------|---------------|----------------|
++| PC | ./scripts/task-gate.sh task-06-production-ingestion-cli | 0 | ACCEPT |
++| LP | ./scripts/frontend-task-gate.sh task-fe-03-rag-ui | 0 | ACCEPT |
++
++No further worker launches until gates are green and Codex returns ACCEPT.
+diff --git a/.ring-agent/state.json b/.ring-agent/state.json
+index 2062904..08819b1 100644
+--- a/.ring-agent/state.json
++++ b/.ring-agent/state.json
+@@ -1,45 +1,52 @@
+ {
+   "schema_version": 1,
+-  "run_id": "20260803T163636Z",
+-  "overall_status": "READY",
++  "run_id": "20260803T220222Z",
++  "overall_status": "BLOCKED",
+   "decisions": {
+     "PC": {
+       "action": "HOLD",
+       "task_id": "task-06-production-ingestion-cli",
+-      "reason": "The exact task gate returned exit code 0 but Codex decision is REVISE, not ACCEPT. The codex-qwen3-extra-instructions.md file specifies precise corrections: register BeanDefinitionRegistryPostProcessor instead of ApplicationContextInitializer singleton registration, use instanceof checks for typed exceptions (SQLException, DataAccessException, ConnectException, SocketTimeoutException), invoke KnowledgeIngestionCli directly as child process, and assert explicit context closure in tests. The worker memory correctly records gate-green-but-codex-rejected status and the active task remains pending.",
+-      "next_action": "Wait for Codex to produce an ACCEPT decision after PC applies all corrections from codex-qwen3-extra-instructions.md: install BeanDefinitionRegistryPostProcessor in ApplicationContextInitializer, use typed exception instanceof checks instead of string matching, invoke KnowledgeIngestionCli directly as child process with fixed timeout, and assert explicit context closure.",
+-      "avoid_repeating": "Do not repeat ApplicationContextInitializer singleton registration or string-based exception classification; Codex explicitly rejected these approaches in codex-qwen3-extra-instructions.md for task-06-production-ingestion-cli",
++      "reason": "Gate classification: compilation (exit code 1). Codex REVISE decision indicates the correction packet from codex-qwen3-extra-instructions.md was partially applied but incomplete. Specifically: BeanDefinitionRegistryPostProcessor must be installed in ApplicationContextInitializer instead of singleton registration, typed exception instanceof checks are required instead of string matching for HikariConfig/OAuth2 classes, and KnowledgeIngestionCli must be invoked directly as child process with fixed timeout rather than via R4rSpringAiRagApplication. Current git status shows new files IngestionConfiguration.java, KnowledgeIngestionCli.java, KnowledgeIngestionOrchestration.java, KnowledgeIngestionResult.java that require inspection and correction from the precise state after gate failure.",
++      "next_action": "Review codex-qwen3-extra-instructions.md for mandatory corrections: (1) install BeanDefinitionRegistryPostProcessor in ApplicationContextInitializer to replace knowledgeIngestionService bean definition after configuration-class registration but before singleton instantiation, (2) use instanceof checks for SQLException, DataAccessException, ConnectException, SocketTimeoutException and typed Spring AI/Ollama exceptions instead of string matching, (3) invoke KnowledgeIngestionCli directly as child JVM with fixed timeout and valid environment variables. Apply all corrections, then run exact gate bash -lc 'rm -rf target && ./scripts/task-gate.sh all'",
++      "avoid_repeating": "Do not repeat ApplicationContextInitializer singleton registration, string-based exception classification (HikariConfig/OAuth2 class matching), or indirect child process invocation via R4rSpringAiRagApplication – Codex explicitly rejected these in codex-qwen3-extra-instructions.md",
+       "acceptance_gates": [
+-        "Exact gate must be exit 0",
+-        "Codex decision must be ACCEPT (not REVISE)",
+-        "KnowledgeIngestionCliTest must pass with Mockito mock registered via BeanDefinitionRegistryPostProcessor",
+-        "Child process must invoke KnowledgeIngestionCli directly"
++        "./scripts/task-gate.sh task-06-production-ingestion-cli must return exit 0",
++        "Codex decision must be ACCEPT after corrections",
++        "BeanDefinitionRegistryPostProcessor replaces knowledgeIngestionService bean definition after configuration-class registration but before singleton instantiation"
+       ],
+       "evidence_paths": [
+-        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T163636Z/pc-runtime/gate_summary.md",
+-        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T163636Z/pc-runtime/codex-qwen3-extra-instructions.md",
+-        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T163636Z/pc-runtime/progress.json"
++        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T220222Z/pc-runtime/gate_summary.md",
++        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T220222Z/pc-runtime/codex-qwen3-extra-instructions.md",
++        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T220222Z/pc-runtime/memory.md",
++        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T220222Z/pc-git-status.txt"
+       ]
+     },
+     "LP": {
+-      "action": "HOLD",
++      "action": "REVIEW",
+       "task_id": "task-fe-03-rag-ui",
+-      "reason": "The exact frontend task gate returned exit code 0 but Codex decision is REVISE, not ACCEPT. The codex-qwen3-extra-instructions.md identifies test instrumentation defects: AppComponent tests still assert stale bootstrap title instead of rendered RAG heading; rag-page.component.spec.ts inspects component properties rather than fixture DOM assertions for loading states, disabled controls, error alerts, structured abstention, escaped answer markup and citation ordering; component contains unused BehaviorSubject/test accessors. The worker memory records gate-green-but-codex-rejected status.",
+-      "next_action": "Wait for Codex to produce an ACCEPT decision after LP applies all corrections from codex-qwen3-extra-instructions.md: update app.component.spec.ts to verify rendered RAG page heading, drive rag-page tests with controlled Subjects and assert fixture DOM (loading role='status', disabled textarea/submit button before emission, re-enabled controls after success/error, error alert role='alert', structured abstention, escaped answer markup without injected HTML, citation ordering), remove production-only BehaviorSubject/test accessors and unused RxJS imports.",
+-      "avoid_repeating": "Do not repeat AppComponent tests asserting bootstrap title or rag-page tests inspecting component properties instead of fixture DOM; Codex explicitly identified these failures in codex-qwen3-extra-instructions.md",
++      "reason": "Gate classification: gate-failure (exit code 2). The last green attempt at 2026-08-03T12:12:00.914271+00:00 was not accepted by Codex. Current git status shows modified files app.component.spec.ts, app.component.ts, app.config.ts and component files in rag-page.*. The codex-qwen3-extra-instructions.md specifies: (1) run git diff --check first to identify and remove trailing whitespace from all named paths, (2) remove unused router provisioning while retaining HTTP configuration, (3) render response.answer with interpolation instead of [innerHTML] for escaping, (4) replace property-only/setTimeout tests with controlled Subject<RAGAnswerResult> emissions and synchronous fixture.detectChanges() DOM assertions without timers. The worker only partially applied prior corrections and missed the whitespace gate requirement.",
++      "next_action": "First run 'git diff --check' against frontend/** to identify all trailing whitespace occurrences and remove them from app.component.spec.ts, app.component.ts, app.config.ts, rag-page.* files. Then apply remaining corrections: remove router provisioning, use interpolation for answer text, implement controlled Subject-based tests with fixture.detectChanges() assertions for loading role='status', disabled textarea/submit button before emission, re-enabled controls after success/error, deterministic error alert, structured abstention, escaped markup without injected HTML, and citation ordering.",
++      "avoid_repeating": "Do not repeat incomplete correction application; the worker must remove all trailing whitespace from diagnostic files and implement all fixture-DOM assertions (loading status, disabled controls, error alert role='alert', structured abstention, escaped answer markup without injected HTML, citation ordering) in controlled Subject-based tests",
+       "acceptance_gates": [
+-        "Exact frontend task gate must be exit 0",
+-        "Codex decision must be ACCEPT (not REVISE)",
+-        "app.component.spec.ts must verify rendered RAG page heading",
+-        "rag-page.component.spec.ts must assert fixture DOM for all transitions"
++        "./scripts/frontend-task-gate.sh task-fe-03-rag-ui must return exit 0",
++        "git diff --check must pass (no trailing whitespace)",
++        "Codex decision must be ACCEPT after corrections",
++        "fixture.detectChanges() DOM assertions for loading role='status', disabled controls before emission, re-enabled after success/error"
+       ],
+       "evidence_paths": [
+-        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T163636Z/lp-runtime/gate_summary.md",
+-        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T163636Z/lp-runtime/codex-qwen3-extra-instructions.md",
+-        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T163636Z/lp-runtime/progress.json"
++        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T220222Z/lp-runtime/gate_summary.md",
++        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T220222Z/lp-runtime/codex-qwen3-extra-instructions.md",
++        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T220222Z/lp-runtime/memory.md",
++        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260803T220222Z/lp-git-status.txt"
+       ]
+     }
+   },
+-  "integration_risks": [],
+-  "evidence_limitations": []
++  "integration_risks": [
++    "Backend: KnowledgeIngestionOrchestration.java compilation failure may indicate missing dependency injection setup or incorrect Spring ABM module usage that requires review of IngestionConfiguration.java and R4rSpringAiRagApplication.java",
++    "Frontend: Angular builds may fail if NO_ERRORS_SCHEMA removal creates template binding errors for RagPageComponent that were previously masked"
++  ],
++  "evidence_limitations": [
++    "gate-full.log files referenced in codex-qwen3-extra-instructions.md are not present in RUN_DIR; exact compilation or test failure details require external runtime runs directories",
++    "PC and LP worker worktrees (/home/german/Desarrollo/r4r-pc-worker.git, /home/german/Desarrollo/r4r-lp-worker.git) are not readable by Ring; source analysis must rely on ring worktree copies and runtime evidence only"
++  ]
+ }
+fe0a7cc (HEAD -> agent/ring-agent-worker, origin/agent/ring-agent-worker) show-agent-console.sh Compatibilidad con ejecuciones anteriores.
+5061279 (agent/integration) run-ring-system.sh  OPENAI_API_KEY
+8c5a914 (origin/r4r-chatgpt, origin/agent/r4r-google-drive, origin/agent/pc-qwen3-worker, origin/agent/opencode-dual-surgical, origin/agent/laptop-qwen3-worker, origin/agent/integration, r4r-chatgpt, agent/r4r-google-drive, agent/pc-qwen3-worker, agent/opencode-dual-surgical, agent/laptop-qwen3-worker) Merge branch 'agent/ring-agent-worker' into agent/integration
+94ed0c6 wip(pc/task-06d-failure-classification): gate-green checkpoint attempt-01
+6128fbc wip(pc/task-06c-spring-lifecycle): gate-green checkpoint attempt-04
+94f19e8 wip(pc/task-06c-spring-lifecycle): gate-green checkpoint attempt-03
+d306dec wip(pc/task-06c-spring-lifecycle): gate-green checkpoint attempt-02
+d86f3af wip(pc/task-06c-spring-lifecycle): gate-green checkpoint attempt-01
+7270e9c wip(pc/task-06b-cli-contract): gate-green checkpoint attempt-03
+3128536 wip(pc/task-06b-cli-contract): gate-green checkpoint attempt-02
+6474bf8 wip(pc/task-06b-cli-contract): gate-green checkpoint attempt-01
+edf5689 run-codex-agent.sh Import the controller package from this worktree
+9e14833 runner.py OpenCode agent
+cccd08f Configurar Ring para OpenAI Codex
+ffed134 fix(sync): merge active and dirty agent worktrees safely
+6ec30ac feat(sync): synchronize agents at lifecycle boundaries
+f98a183 fix(ops): locate PC and LP controller consoles
+e9acfed Merge commit 'e21438fa4d86108992e4f265e88ce035479138df' into agent/ring-agent-worker
+bbe4007 fix(sync): coordinate Git operations and add safe bidirectional Drive sync
+e21438f wip(pc/task-06-production-ingestion-cli): gate-green checkpoint attempt-01
+commit cccd08f12e9c77a93caa65139b801d2422768391
+Author: Germán C.R. <germanux@gmail.com>
+Date:   Tue Aug 4 04:21:10 2026 +0200
+
+    Configurar Ring para OpenAI Codex
+
+ .opencode/agents/r4r-ring.md                  |   3 +-
+ opencode.jsonc                                | 239 +++++++++++++++++++++++++-
+ py-ring-agent/src/r4r_ring_agent/ring_loop.py |   8 +-
+ py-ring-agent/tests/test_ring_loop.py         |   7 +-
+ 4 files changed, 251 insertions(+), 6 deletions(-)
+commit cccd08f12e9c77a93caa65139b801d2422768391
+Author: Germán C.R. <germanux@gmail.com>
+Date:   Tue Aug 4 04:21:10 2026 +0200
+
+    Configurar Ring para OpenAI Codex
+
+diff --git a/.opencode/agents/r4r-ring.md b/.opencode/agents/r4r-ring.md
+index 20f0a0e..d83dddb 100644
+--- a/.opencode/agents/r4r-ring.md
++++ b/.opencode/agents/r4r-ring.md
+@@ -1,7 +1,7 @@
+ ---
+ description: Main R4R Ring director; repository-wide coordination with non-destructive edits
+ mode: primary
+-model: "ollama-pc/qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest"
++model: "openai/gpt-5.2-codex"
+ temperature: 0.33
+ 
+ permission:
+@@ -109,3 +109,4 @@ then promotes the runtime directives after complete success.
+ 
+ Finish the cycle after the six staged artifacts and any explicitly justified,
+ non-destructive repository edits have been written.
++
+diff --git a/opencode.jsonc b/opencode.jsonc
+index 3b824db..cbd7dd5 100644
+--- a/opencode.jsonc
++++ b/opencode.jsonc
+@@ -60,6 +60,237 @@
+           }
+         }
+       }
++    },
++    "openai": {
++      "options": {
++        "reasoningEffort": "medium",
++        "reasoningSummary": "auto",
++        "textVerbosity": "medium",
++        "include": [
++          "reasoning.encrypted_content"
++        ],
++        "store": false
++      },
++      "models": {
++        "gpt-5.2": {
++          "name": "GPT 5.2 (OAuth)",
++          "limit": {
++            "context": 272000,
++            "output": 128000
++          },
++          "modalities": {
++            "input": [
++              "text",
++              "image"
++            ],
++            "output": [
++              "text"
++            ]
++          },
++          "variants": {
++            "none": {
++              "reasoningEffort": "none",
++              "reasoningSummary": "auto",
++              "textVerbosity": "medium"
++            },
++            "low": {
++              "reasoningEffort": "low",
++              "reasoningSummary": "auto",
++              "textVerbosity": "medium"
++            },
++            "medium": {
++              "reasoningEffort": "medium",
++              "reasoningSummary": "auto",
++              "textVerbosity": "medium"
++            },
++            "high": {
++              "reasoningEffort": "high",
++              "reasoningSummary": "detailed",
++              "textVerbosity": "medium"
++            },
++            "xhigh": {
++              "reasoningEffort": "xhigh",
++              "reasoningSummary": "detailed",
++              "textVerbosity": "medium"
++            }
++          }
++        },
++        "gpt-5.2-codex": {
++          "name": "GPT 5.2 Codex (OAuth)",
++          "limit": {
++            "context": 272000,
++            "output": 128000
++          },
++          "modalities": {
++            "input": [
++              "text",
++              "image"
++            ],
++            "output": [
++              "text"
++            ]
++          },
++          "variants": {
++            "low": {
++              "reasoningEffort": "low",
++              "reasoningSummary": "auto",
++              "textVerbosity": "medium"
++            },
++            "medium": {
++              "reasoningEffort": "medium",
++              "reasoningSummary": "auto",
++              "textVerbosity": "medium"
++            },
++            "high": {
++              "reasoningEffort": "high",
++              "reasoningSummary": "detailed",
++              "textVerbosity": "medium"
++            },
++            "xhigh": {
++              "reasoningEffort": "xhigh",
++              "reasoningSummary": "detailed",
++              "textVerbosity": "medium"
++            }
++          }
++        },
++        "gpt-5.1-codex-max": {
++          "name": "GPT 5.1 Codex Max (OAuth)",
++          "limit": {
++            "context": 272000,
++            "output": 128000
++          },
++          "modalities": {
++            "input": [
++              "text",
++              "image"
++            ],
++            "output": [
++              "text"
++            ]
++          },
++          "variants": {
++            "low": {
++              "reasoningEffort": "low",
++              "reasoningSummary": "detailed",
++              "textVerbosity": "medium"
++            },
++            "medium": {
++              "reasoningEffort": "medium",
++              "reasoningSummary": "detailed",
++              "textVerbosity": "medium"
++            },
++            "high": {
++              "reasoningEffort": "high",
++              "reasoningSummary": "detailed",
++              "textVerbosity": "medium"
++            },
++            "xhigh": {
++              "reasoningEffort": "xhigh",
++              "reasoningSummary": "detailed",
++              "textVerbosity": "medium"
++            }
++          }
++        },
++        "gpt-5.1-codex": {
++          "name": "GPT 5.1 Codex (OAuth)",
++          "limit": {
++            "context": 272000,
++            "output": 128000
++          },
++          "modalities": {
++            "input": [
++              "text",
++              "image"
++            ],
++            "output": [
++              "text"
++            ]
++          },
++          "variants": {
++            "low": {
++              "reasoningEffort": "low",
++              "reasoningSummary": "auto",
++              "textVerbosity": "medium"
++            },
++            "medium": {
++              "reasoningEffort": "medium",
++              "reasoningSummary": "auto",
++              "textVerbosity": "medium"
++            },
++            "high": {
++              "reasoningEffort": "high",
++              "reasoningSummary": "detailed",
++              "textVerbosity": "medium"
++            }
++          }
++        },
++        "gpt-5.1-codex-mini": {
++          "name": "GPT 5.1 Codex Mini (OAuth)",
++          "limit": {
++            "context": 272000,
++            "output": 128000
++          },
++          "modalities": {
++            "input": [
++              "text",
++              "image"
++            ],
++            "output": [
++              "text"
++            ]
++          },
++          "variants": {
++            "medium": {
++              "reasoningEffort": "medium",
++              "reasoningSummary": "auto",
++              "textVerbosity": "medium"
++            },
++            "high": {
++              "reasoningEffort": "high",
++              "reasoningSummary": "detailed",
++              "textVerbosity": "medium"
++            }
++          }
++        },
++        "gpt-5.1": {
++          "name": "GPT 5.1 (OAuth)",
++          "limit": {
++            "context": 272000,
++            "output": 128000
++          },
++          "modalities": {
++            "input": [
++              "text",
++              "image"
++            ],
++            "output": [
++              "text"
++            ]
++          },
++          "variants": {
++            "none": {
++              "reasoningEffort": "none",
++              "reasoningSummary": "auto",
++              "textVerbosity": "medium"
++            },
++            "low": {
++              "reasoningEffort": "low",
++              "reasoningSummary": "auto",
++              "textVerbosity": "low"
++            },
++            "medium": {
++              "reasoningEffort": "medium",
++              "reasoningSummary": "auto",
++              "textVerbosity": "medium"
++            },
++            "high": {
++              "reasoningEffort": "high",
++              "reasoningSummary": "detailed",
++              "textVerbosity": "high"
++            }
++          }
++        }
++      }
+     }
+   },
+   "permission": {
+@@ -126,7 +357,11 @@
+   },
+   "enabled_providers": [
+     "ollama-pc",
+-    "ollama-laptop"
++    "ollama-laptop",
++    "openai"
+   ],
+-  "disabled_providers": []
++  "disabled_providers": [],
++  "plugin": [
++    "opencode-openai-codex-auth"
++  ]
+ }
+diff --git a/py-ring-agent/src/r4r_ring_agent/ring_loop.py b/py-ring-agent/src/r4r_ring_agent/ring_loop.py
+index cb03153..bf68157 100644
+--- a/py-ring-agent/src/r4r_ring_agent/ring_loop.py
++++ b/py-ring-agent/src/r4r_ring_agent/ring_loop.py
+@@ -22,8 +22,9 @@ from .worktrees import WorktreePaths, require_git_worktree
+ RING_AGENT = os.environ.get("R4R_RING_AGENT", "r4r-ring")
+ RING_MODEL = os.environ.get(
+     "R4R_RING_MODEL",
+-    "ollama-pc/qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest",
++    "openai/gpt-5.2-codex",
+ )
++RING_VARIANT = os.environ.get("R4R_RING_VARIANT", "medium")
+ REVIEW_INTERVAL_SECONDS = int(
+     os.environ.get("R4R_RING_REVIEW_INTERVAL_SECONDS", "3600")
+ )
+@@ -416,7 +417,7 @@ def _atomic_write_text(path: Path, content: str) -> None:
+ 
+ def _decision_ledger_entry(run_id: str, state: dict[str, Any]) -> str:
+     lines = [
+-        f"## Cycle `{run_id}` — {state['overall_status']}",
++        f"## Cycle `{run_id}` â {state['overall_status']}",
+         "",
+     ]
+     for worker in ("PC", "LP"):
+@@ -929,6 +930,8 @@ def _command(
+         RING_AGENT,
+         "--model",
+         RING_MODEL,
++        "--variant",
++        RING_VARIANT,
+         "--format",
+         "json",
+         "--auto",
+@@ -1090,6 +1093,7 @@ def run_ring_loop(
+                         "stop_reason": result.stop_reason,
+                         "agent": RING_AGENT,
+                         "model": RING_MODEL,
++                        "variant": RING_VARIANT,
+                         "review_interval_seconds": REVIEW_INTERVAL_SECONDS,
+                         "event_min_interval_seconds": EVENT_MIN_INTERVAL_SECONDS,
+                         "consumed_worker_requests": consumed_requests,
+diff --git a/py-ring-agent/tests/test_ring_loop.py b/py-ring-agent/tests/test_ring_loop.py
+index 901c52e..d7d87c4 100644
+--- a/py-ring-agent/tests/test_ring_loop.py
++++ b/py-ring-agent/tests/test_ring_loop.py
+@@ -18,7 +18,12 @@ class RingLoopTest(unittest.TestCase):
+             self.assertIn("--agent", command)
+             self.assertIn("r4r-ring", command)
+             self.assertIn("--model", command)
+-            self.assertIn("t033-128k", " ".join(command))
++            self.assertEqual(
++                command[command.index("--model") + 1],
++                "openai/gpt-5.2-codex",
++            )
++            self.assertIn("--variant", command)
++            self.assertEqual(command[command.index("--variant") + 1], "medium")
+             self.assertEqual(command[command.index("--dir") + 1], str(paths.ring))
+             prompt = command[-1]
+             self.assertIn(str(run_dir), prompt)
+941121 /usr/bin/gnome-text-editor /home/german/Desarrollo/r4r-ring-agent.git/docker-postgres/compose.yml

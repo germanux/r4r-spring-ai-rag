@@ -22,7 +22,7 @@ from .worktrees import WorktreePaths, require_git_worktree
 RING_AGENT = os.environ.get("R4R_RING_AGENT", "r4r-ring")
 RING_MODEL = os.environ.get(
     "R4R_RING_MODEL",
-    "openai/gpt-5.2-codex",
+    "openai/gpt-5.3-codex",
 )
 RING_VARIANT = os.environ.get("R4R_RING_VARIANT", "medium")
 REVIEW_INTERVAL_SECONDS = int(

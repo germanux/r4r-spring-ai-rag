@@ -1,7 +1,7 @@
 ---
 description: Main R4R Ring director; repository-wide coordination with non-destructive edits
 mode: primary
-model: "openai/gpt-5.2-codex"
+model: "openai/gpt-5.3-codex"
 temperature: 0.33
 
 permission:
@@ -109,4 +109,3 @@ then promotes the runtime directives after complete success.
 
 Finish the cycle after the six staged artifacts and any explicitly justified,
 non-destructive repository edits have been written.
-

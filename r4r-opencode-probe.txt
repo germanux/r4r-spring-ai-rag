@@ -1,0 +1,145 @@
+=== VERSION ===
+1.18.9
+=== API KEY ===
+OPENAI_API_KEY=set
+=== RUN HELP ===
+opencode run [message..]
+
+run opencode with a message
+
+Positionals:
+  message  message to send                                                     [array] [default: []]
+
+Options:
+  -h, --help         show help                                                             [boolean]
+  -v, --version      show version number                                                   [boolean]
+      --print-logs   print logs to stderr                                                  [boolean]
+      --log-level    log level                  [string] [choices: "DEBUG", "INFO", "WARN", "ERROR"]
+      --pure         run without external plugins                                          [boolean]
+      --command      the command to run, use message for args                               [string]
+  -c, --continue     continue the last session                                             [boolean]
+  -s, --session      session id to continue                                                 [string]
+      --fork         fork the session before continuing (requires --continue or --session) [boolean]
+      --share        share the session                                                     [boolean]
+  -m, --model        model to use in the format of provider/model                           [string]
+      --agent        agent to use                                                           [string]
+      --format       format: default (formatted) or json (raw JSON events)
+                                          [string] [choices: "default", "json"] [default: "default"]
+  -f, --file         file(s) to attach to message                                            [array]
+      --title        title for the session (uses truncated prompt if no value provided)     [string]
+      --attach       attach to a running opencode server (e.g., http://localhost:4096)      [string]
+  -p, --password     basic auth password (defaults to OPENCODE_SERVER_PASSWORD)             [string]
+  -u, --username     basic auth username (defaults to OPENCODE_SERVER_USERNAME or 'opencode')
+                                                                                            [string]
+      --dir          directory to run in, path on remote server if attaching                [string]
+      --port         port for the local server (defaults to random port if no value provided)
+                                                                                            [number]
+      --variant      model variant (provider-specific reasoning effort, e.g., high, max, minimal)
+                                                                                            [string]
+      --thinking     show thinking blocks                                                  [boolean]
+  -i, --interactive  run in direct interactive split-footer mode          [boolean] [default: false]
+      --auto         auto-approve permissions that are not explicitly denied (dangerous!)
+                                                                          [boolean] [default: false]=== MODELS ===
+openai/chatgpt-image-latest
+openai/gpt-4.1
+openai/gpt-4.1-mini
+openai/gpt-4o
+openai/gpt-4o-2024-08-06
+openai/gpt-4o-2024-11-20
+openai/gpt-4o-mini
+openai/gpt-5
+openai/gpt-5-mini
+openai/gpt-5-nano
+openai/gpt-5-pro
+openai/gpt-5.1
+openai/gpt-5.1-codex
+openai/gpt-5.1-codex-max
+openai/gpt-5.1-codex-mini
+openai/gpt-5.2
+openai/gpt-5.2-chat-latest
+openai/gpt-5.2-codex
+openai/gpt-5.2-pro
+openai/gpt-5.3-chat-latest
+openai/gpt-5.3-codex
+openai/gpt-5.3-codex-spark
+openai/gpt-5.4
+openai/gpt-5.4-fast
+openai/gpt-5.4-mini
+openai/gpt-5.4-mini-fast
+openai/gpt-5.4-nano
+openai/gpt-5.4-pro
+openai/gpt-5.5
+openai/gpt-5.5-fast
+openai/gpt-5.5-pro
+openai/gpt-5.6
+openai/gpt-5.6-fast
+openai/gpt-5.6-luna
+openai/gpt-5.6-luna-fast
+openai/gpt-5.6-luna-pro
+openai/gpt-5.6-pro
+openai/gpt-5.6-sol
+openai/gpt-5.6-sol-fast
+openai/gpt-5.6-sol-pro
+openai/gpt-5.6-terra
+openai/gpt-5.6-terra-fast
+openai/gpt-5.6-terra-pro
+openai/gpt-image-1-mini
+openai/gpt-image-1.5
+openai/gpt-image-2
+openai/gpt-realtime-2.1
+openai/o3
+openai/o3-pro
+openai/text-embedding-3-large
+openai/text-embedding-3-small
+openai/text-embedding-ada-002
+=== MINIMAL RUN ===
+timestamp=2026-08-05T01:23:06.009Z level=INFO run=23405a4f message="creating instance" directory=/home/german/Desarrollo/r4r-ring-agent.git
+timestamp=2026-08-05T01:23:06.010Z level=INFO run=23405a4f message=fromDirectory directory=/home/german/Desarrollo/r4r-ring-agent.git
+timestamp=2026-08-05T01:23:06.031Z level=INFO run=23405a4f message=bootstrapping directory=/home/german/Desarrollo/r4r-ring-agent.git
+timestamp=2026-08-05T01:23:06.034Z level=INFO run=23405a4f message=loading path=/home/german/.config/opencode/config.json
+timestamp=2026-08-05T01:23:06.035Z level=INFO run=23405a4f message=loading path=/home/german/.config/opencode/opencode.json
+timestamp=2026-08-05T01:23:06.035Z level=INFO run=23405a4f message=loading path=/home/german/.config/opencode/opencode.jsonc
+timestamp=2026-08-05T01:23:06.038Z level=INFO run=23405a4f message=loading path=/home/german/Desarrollo/r4r-ring-agent.git/opencode.jsonc
+timestamp=2026-08-05T01:23:06.049Z level=DEBUG run=23405a4f message="loading config from /home/german/Desarrollo/r4r-ring-agent.git/.opencode/opencode.json"
+timestamp=2026-08-05T01:23:06.049Z level=INFO run=23405a4f message=loading path=/home/german/Desarrollo/r4r-ring-agent.git/.opencode/opencode.json
+timestamp=2026-08-05T01:23:06.050Z level=DEBUG run=23405a4f message="loading config from /home/german/Desarrollo/r4r-ring-agent.git/.opencode/opencode.jsonc"
+timestamp=2026-08-05T01:23:06.050Z level=INFO run=23405a4f message=loading path=/home/german/Desarrollo/r4r-ring-agent.git/.opencode/opencode.jsonc
+timestamp=2026-08-05T01:23:06.086Z level=INFO run=23405a4f message="all LSPs are disabled"
+timestamp=2026-08-05T01:23:06.087Z level=INFO run=23405a4f message="all formatters are disabled"
+timestamp=2026-08-05T01:23:06.087Z level=INFO run=23405a4f message=init
+timestamp=2026-08-05T01:23:06.152Z level=INFO run=23405a4f message=created id=ses_0307ba2d8ffeRtRq1ecxXc1CwA slug=glowing-mountain version=1.18.9 projectID=b06c51a3abcd43835e88066039ea6fd0e7a9d80a directory=/home/german/Desarrollo/r4r-ring-agent.git path="" workspaceID=undefined parentID=undefined title="New session - 2026-08-05T01:23:06.151Z" agent=undefined model=undefined metadata=undefined permission="[{\"permission\":\"question\",\"pattern\":\"*\",\"action\":\"deny\"},{\"permission\":\"plan_enter\",\"pattern\":\"*\",\"action\":\"deny\"},{\"permission\":\"plan_exit\",\"pattern\":\"*\",\"action\":\"deny\"}]" cost=0 tokens.input=0 tokens.output=0 tokens.reasoning=0 tokens.cache.read=0 tokens.cache.write=0 time.created=1785892986151 time.updated=1785892986151
+timestamp=2026-08-05T01:23:06.174Z level=INFO run=23405a4f message="event connected"
+timestamp=2026-08-05T01:23:06.343Z level=INFO run=23405a4f message=loop session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA step=0
+timestamp=2026-08-05T01:23:06.353Z level=INFO run=23405a4f message=stream providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=true agent=title mode=primary
+timestamp=2026-08-05T01:23:06.358Z level=INFO run=23405a4f message="llm runtime selected" llm.runtime=ai-sdk llm.provider=openai llm.model=gpt-5.2-codex
+timestamp=2026-08-05T01:23:06.389Z level=INFO run=23405a4f message=tracking hash="" cwd=/home/german/Desarrollo/r4r-ring-agent.git git=/home/german/.local/share/opencode/snapshot/b06c51a3abcd43835e88066039ea6fd0e7a9d80a/c70ba6e01c4aecc3f574450c24a85f4b4e779e2e
+timestamp=2026-08-05T01:23:06.395Z level=INFO run=23405a4f message="shell tool using shell" shell=/bin/bash
+timestamp=2026-08-05T01:23:06.442Z level=INFO run=23405a4f message="watcher backend" directory=/home/german/Desarrollo/r4r-ring-agent.git platform=linux backend=inotify
+timestamp=2026-08-05T01:23:06.445Z level=INFO run=23405a4f message="project copy refresh started" projectID=b06c51a3abcd43835e88066039ea6fd0e7a9d80a
+timestamp=2026-08-05T01:23:06.556Z level=INFO run=23405a4f message="project copy refresh done" projectID=b06c51a3abcd43835e88066039ea6fd0e7a9d80a updated=[] removed=[]
+timestamp=2026-08-05T01:23:06.557Z level=INFO run=23405a4f message="booting location services" directory=/home/german/Desarrollo/r4r-ring-agent.git workspaceID=undefined
+timestamp=2026-08-05T01:23:06.559Z level=INFO run=23405a4f message=process session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA messageID=msg_fcf845de9001B4CrBXk5c0oH55
+timestamp=2026-08-05T01:23:06.559Z level=INFO run=23405a4f message=stream providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=false agent=r4r-ring mode=primary
+timestamp=2026-08-05T01:23:06.560Z level=INFO run=23405a4f message="llm runtime selected" llm.runtime=ai-sdk llm.provider=openai llm.model=gpt-5.2-codex
+timestamp=2026-08-05T01:23:07.220Z level=ERROR run=23405a4f message="stream error" providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=true agent=title mode=primary error.error="AI_APICallError: Model not found gpt-5.2-codex"
+timestamp=2026-08-05T01:23:07.315Z level=ERROR run=23405a4f message="stream error" providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=false agent=r4r-ring mode=primary error.error="AI_APICallError: Model not found gpt-5.2-codex"
+timestamp=2026-08-05T01:23:09.318Z level=INFO run=23405a4f message=stream providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=false agent=r4r-ring mode=primary
+timestamp=2026-08-05T01:23:09.319Z level=INFO run=23405a4f message="llm runtime selected" llm.runtime=ai-sdk llm.provider=openai llm.model=gpt-5.2-codex
+timestamp=2026-08-05T01:23:09.539Z level=ERROR run=23405a4f message="stream error" providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=false agent=r4r-ring mode=primary error.error="AI_APICallError: Model not found gpt-5.2-codex"
+timestamp=2026-08-05T01:23:13.541Z level=INFO run=23405a4f message=stream providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=false agent=r4r-ring mode=primary
+timestamp=2026-08-05T01:23:13.543Z level=INFO run=23405a4f message="llm runtime selected" llm.runtime=ai-sdk llm.provider=openai llm.model=gpt-5.2-codex
+timestamp=2026-08-05T01:23:13.736Z level=ERROR run=23405a4f message="stream error" providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=false agent=r4r-ring mode=primary error.error="AI_APICallError: Model not found gpt-5.2-codex"
+timestamp=2026-08-05T01:23:21.742Z level=INFO run=23405a4f message=stream providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=false agent=r4r-ring mode=primary
+timestamp=2026-08-05T01:23:21.743Z level=INFO run=23405a4f message="llm runtime selected" llm.runtime=ai-sdk llm.provider=openai llm.model=gpt-5.2-codex
+timestamp=2026-08-05T01:23:21.970Z level=ERROR run=23405a4f message="stream error" providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=false agent=r4r-ring mode=primary error.error="AI_APICallError: Model not found gpt-5.2-codex"
+timestamp=2026-08-05T01:23:37.975Z level=INFO run=23405a4f message=stream providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=false agent=r4r-ring mode=primary
+timestamp=2026-08-05T01:23:37.976Z level=INFO run=23405a4f message="llm runtime selected" llm.runtime=ai-sdk llm.provider=openai llm.model=gpt-5.2-codex
+timestamp=2026-08-05T01:23:38.165Z level=ERROR run=23405a4f message="stream error" providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=false agent=r4r-ring mode=primary error.error="AI_APICallError: Model not found gpt-5.2-codex"
+timestamp=2026-08-05T01:24:06.119Z level=WARN run=23405a4f message="cleanup failed" exitCode=128 stderr="error: incapaz de normalizar la ruta de objeto alterno: /home/german/Desarrollo/r4r-spring-ai-rag.git/.git/objects\nerror: incapaz de normalizar la ruta de objeto alterno: /home/german/Desarrollo/r4r-spring-ai-rag.git/.git/objects\nerror: incapaz de normalizar la ruta de objeto alterno: /home/german/Desarrollo/r4r-spring-ai-rag.git/.git/objects\nfatal: bad tree object 145c8d07fcbd8824cde6573756ade26e9d89d69b\nfatal: failed to run repack\n"
+timestamp=2026-08-05T01:24:10.170Z level=INFO run=23405a4f message=stream providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=false agent=r4r-ring mode=primary
+timestamp=2026-08-05T01:24:10.171Z level=INFO run=23405a4f message="llm runtime selected" llm.runtime=ai-sdk llm.provider=openai llm.model=gpt-5.2-codex
+timestamp=2026-08-05T01:24:10.388Z level=ERROR run=23405a4f message="stream error" providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=false agent=r4r-ring mode=primary error.error="AI_APICallError: Model not found gpt-5.2-codex"
+timestamp=2026-08-05T01:25:14.391Z level=INFO run=23405a4f message=stream providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=false agent=r4r-ring mode=primary
+timestamp=2026-08-05T01:25:14.392Z level=INFO run=23405a4f message="llm runtime selected" llm.runtime=ai-sdk llm.provider=openai llm.model=gpt-5.2-codex
+timestamp=2026-08-05T01:25:14.571Z level=ERROR run=23405a4f message="stream error" providerID=openai modelID=gpt-5.2-codex session.id=ses_0307ba2d8ffeRtRq1ecxXc1CwA small=false agent=r4r-ring mode=primary error.error="AI_APICallError: Model not found gpt-5.2-codex"
+PROBE_EXIT=124
