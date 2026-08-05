@@ -3,7 +3,7 @@
 ## Current state
 
 - Worker: PC.
-- Run: 20260805T174026Z.
+- Run: 20260805T191431Z.
 - Last accepted task: task-06d-failure-classification.
 - Active task: task-06e-child-process.
 - Current attempt: 1.
@@ -32,7 +32,7 @@
 
 ## Next exact action
 
-Resume the unfinished revision by applying the complete CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS included below. Do not wait for another Codex review before making the requested correction.
+Review the exact gate evidence and make one coherent, task-scoped repair.
 
 ## Fixed decisions
 
@@ -44,7 +44,7 @@ Resume the unfinished revision by applying the complete CURRENT CODEX-TO-LOCAL E
 - Spring AI abstractions; no handwritten Ollama HTTP client.
 - Every red gate retains complete diagnostics for Codex.
 - CodeGraph is focused retrieval evidence, not authority to expand task scope.
-- Runtime evidence stays under `runtime/runs/`; the deterministic controller publishes only after a validated commit.
+- Markdown/JSON activity is published under `.opencode/current/{ring,PC,LP}/`; raw runtime is never committed directly.
 
 ## Task ledger
 
