@@ -2,16 +2,16 @@
   "agent": "PC",
   "artifacts": [
     {
-      "bytes": 3372,
+      "bytes": 3466,
       "producer": "local-llm",
-      "sha256": "ca2ec7f7077df2c33455a17d51dd2dc7f30baa3e8d301c2cb4003745c73201bd",
+      "sha256": "cd7ff8be19b7dd63b002b4f821f0863454d7e211c5f5e62009bd52e0dbb53960",
       "source": ".opencode/memory.backend.md",
       "target": "opencode/memory.backend.md"
     },
     {
-      "bytes": 2609,
+      "bytes": 2620,
       "producer": "local-llm",
-      "sha256": "606d678a4c173e717c5e3fc5ef4f1dcf50e6f6b2e031833021453371ea6c6bfc",
+      "sha256": "442e4b21fcf9f1354a30dc9bee656e4ac213a8d52b25cd6c3217d27181cc774b",
       "source": ".opencode/progress.backend.json",
       "target": "opencode/progress.backend.json"
     },
@@ -259,6 +259,104 @@
       "sha256": "5ddb6296f3bc65d5d353ee1841206b30779e7823ad8eed3d08a118aa92c0104e",
       "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/evidence/initial-gate.json",
       "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/evidence/initial-gate.json"
+    },
+    {
+      "bytes": 2362,
+      "producer": "codex",
+      "sha256": "7f4a3b44d27d6adab6ba64b07aaf27ac0bb882a7dcb41d22921cde6b8b64ba64",
+      "source": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/decisions/codex-review.json",
+      "target": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/decisions/codex-review.json"
+    },
+    {
+      "bytes": 475,
+      "producer": "controller",
+      "sha256": "2016cf4db8b20e11a326d012ccaa4059ce9d25c0d4b29a71951df3194e5a9416",
+      "source": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/checkpoint.json",
+      "target": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/checkpoint.json"
+    },
+    {
+      "bytes": 508,
+      "producer": "codex",
+      "sha256": "bc48399ce927389439dfccf0c2e69d309fcfc0e54d976f86f161033c8c606cbb",
+      "source": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/codex-review.json",
+      "target": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/codex-review.json"
+    },
+    {
+      "bytes": 381,
+      "producer": "controller",
+      "sha256": "5040a486bd3387d5166be1b7088dcc4ac578634782c001dcbf71d25c2823da71",
+      "source": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/diagnostics/error-manifest.json",
+      "target": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/diagnostics/error-manifest.json"
+    },
+    {
+      "bytes": 430,
+      "producer": "controller",
+      "sha256": "8747b90621861505a2bb5fd7b4cb8ff4a86e4948f09ba54b4e0c594b3752a87e",
+      "source": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/diagnostics/gate-summary.md",
+      "target": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/diagnostics/gate-summary.md"
+    },
+    {
+      "bytes": 735,
+      "producer": "controller",
+      "sha256": "46be30b7f80a6c609fd9451be5905212c3f927177db6562ed4ad3f7884cef000",
+      "source": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/gate-diagnostics.json",
+      "target": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/gate-diagnostics.json"
+    },
+    {
+      "bytes": 3200,
+      "producer": "local-llm",
+      "sha256": "6e5a65d42c356659ccfb8ec65164707194b70b8e21156e1e6d7886c129ed0379",
+      "source": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/local-understanding.md",
+      "target": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/local-understanding.md"
+    },
+    {
+      "bytes": 305,
+      "producer": "codex",
+      "sha256": "2a75398cf261909768a0176b5062eabda7335443e42ef3f0b71348ebecf01f93",
+      "source": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/notify-handoff-to-codex-01.json",
+      "target": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/notify-handoff-to-codex-01.json"
+    },
+    {
+      "bytes": 271,
+      "producer": "controller",
+      "sha256": "6fee2b811d9becd577dd233803358ec414d023adadeaecada6c847ed333f126a",
+      "source": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/notify-task-gate-green.json",
+      "target": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/notify-task-gate-green.json"
+    },
+    {
+      "bytes": 3348,
+      "producer": "local-llm",
+      "sha256": "259f2d92abce8a0dcdedcefac25157790c10e8edafecc875a6db7afcce2216f2",
+      "source": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/opencode-assimilation.json",
+      "target": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/opencode-assimilation.json"
+    },
+    {
+      "bytes": 124,
+      "producer": "local-llm",
+      "sha256": "0afbe5c607bf57d3994275c02180f225bf982251214c4166474818b2b83eb805",
+      "source": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/pre-edit-understanding.md",
+      "target": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/pre-edit-understanding.md"
+    },
+    {
+      "bytes": 213,
+      "producer": "controller",
+      "sha256": "54216b89c9b2c5bb49ee65565fa84c63a52396c9fed68aa4ca216d53ddd72fe3",
+      "source": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/task-gate.json",
+      "target": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/attempt-01/evidence/task-gate.json"
+    },
+    {
+      "bytes": 213,
+      "producer": "controller",
+      "sha256": "54216b89c9b2c5bb49ee65565fa84c63a52396c9fed68aa4ca216d53ddd72fe3",
+      "source": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/evidence/initial-gate.json",
+      "target": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/evidence/initial-gate.json"
+    },
+    {
+      "bytes": 274,
+      "producer": "controller",
+      "sha256": "7d53bb3208243eee2bac0f2ca48ed251423441fa78f61b9fb0460b9baef2d943",
+      "source": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/evidence/notify-initial-gate-green.json",
+      "target": "runtime/runs/PC/20260805T205254Z/task-06e-child-process/evidence/notify-initial-gate-green.json"
     }
   ],
   "schema_version": 1,
