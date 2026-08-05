@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 PROGRAM="$(basename "$0")"
 REPO="$(pwd)"
-BRANCH=""
+BRANCH="${R4R_SURGICAL_BRANCH:-agent/opencode-dual-surgical}"
 MODE="patch"                 # review | patch
 PROMPT=""
 PROMPT_FILE=""
@@ -20,10 +20,11 @@ die() { log "ERROR: $*"; exit 2; }
 usage() {
   cat <<USAGE
 Usage:
-  $PROGRAM --branch REF [options]
+  $PROGRAM [--branch REF] [options]
 
 Required:
   --branch REF                  Branch, tag or commit to inspect.
+                                Default: agent/opencode-dual-surgical.
 
 Options:
   --repo PATH                   Git repository (default: current directory).
@@ -62,7 +63,7 @@ while (($#)); do
   esac
 done
 
-[[ -n "$BRANCH" ]] || { usage >&2; die '--branch is required'; }
+[[ -n "$BRANCH" ]] || { usage >&2; die '--branch must not be empty'; }
 [[ "$MODE" == review || "$MODE" == patch ]] || die '--mode must be review or patch'
 [[ "$OPENCODE_RETRIES" =~ ^[1-9][0-9]*$ ]] || die '--opencode-retries must be positive'
 
@@ -91,12 +92,12 @@ resolve_model() {
   printf '%s' "$config" | "$PYTHON_BIN" -c '
 import json, sys
 d=json.load(sys.stdin)
-pc=d.get("agents",{}).get("PC",{})
-p=str(pc.get("provider","")).strip(); m=str(pc.get("model","")).strip()
+surgical=d.get("agents",{}).get("SURGICAL",{})
+p=str(surgical.get("provider","")).strip(); m=str(surgical.get("model","")).strip()
 if p and m: print(f"{p}/{m}")
 '
 }
-MODEL="$(resolve_model)" || die 'unable to resolve model; pass --opencode-model provider/model'
+MODEL="$(resolve_model)" || die 'unable to resolve agents.SURGICAL model; pass --opencode-model provider/model'
 [[ -n "$MODEL" ]] || die 'resolved OpenCode model is empty'
 
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)-${REF_COMMIT:0:12}"
