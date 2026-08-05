@@ -1,65 +1,86 @@
-# Global summary — Ring agent director cycle
+# Global Summary - Ring Coordination Cycle 20260803T220222Z
 
-## Run metadata
-- **Run ID**: `20260803T163636Z`
-- **Timestamp**: 2026-08-03T16:36:37Z
-- **Ring worktree**: `/home/german/Desarrollo/r4r-ring-agent.git`
+## System Status
 
-## High-levelStatus
+**Overall Status**: BLOCKED
 
-**OVERALL STATUS = READY**
+Both PC (backend) and LP (frontend) workers are blocked by deterministic gate failures. The exact gates return non-zero exit codes with Codex REVISE decisions indicating incomplete correction application.
 
-Both product-controller queues have gates green but Codex rejection pending correction. No immediate blocking or critical defects discovered.
+## Worker Activity Summary
 
-## PC queue status
+| Queue | Active Task | Status | Gate Exit Code | Classification |
+|-------|-------------|--------|----------------|----------------|
+| PC | task-06-production-ingestion-cli | PENDING | 1 | compilation failure |
+| LP | task-fe-03-rag-ui | PENDING | 2 | gate-failure |
 
-| Task ID | Status | Gate exit | Codex decision |
-|---------|--------|-----------|----------------|
-| task-01-base through task-05-rag-api | ACCEPTED | ✅ | ✅ |
-| task-06-production-ingestion-cli | PENDING | 0 (green) | REVISE |
-| task-07-populate-production-rag | PENDING | — | — |
-| task-08-rag-semantic-evaluation | PENDING | — | — |
-| task-09-production-smoke | PENDING | — | — |
+## Root Cause Analysis
 
-### Issue class: Revision pending
-The exact gate for `task-06-production-ingestion-cli` passed but Codex explicitly requires corrections:
-1. BeanDefinitionRegistryPostProcessor instead of ApplicationContextInitializer singleton registration
-2. Typed exception `instanceof` checks rather than string matching
-3. Direct KnowledgeIngestionCli child process invocation
+### Backend (PC)
 
-## LP queue status
+The exact gate returned exit code 1 with classification "compilation". Codex REVISE decision specifies three mandatory correction categories:
 
-| Task ID | Status | Gate exit | Codex decision |
-|---------|--------|-----------|----------------|
-| task-fe-01-angular17-bootstrap, task-fe-02-rag-client | ACCEPTED | ✅ | ✅ |
-| task-fe-03-rag-ui | PENDING | 0 (green) | REVISE |
-| task-fe-04-playwright | PENDING | — | — |
+1. Bean registration must use BeanDefinitionRegistryPostProcessor in ApplicationContextInitializer instead of singleton registration
+2. Exception classification must use instanceof checks for typed exception families across cause chain, not string matching
+3. Child process invocation must call KnowledgeIngestionCli directly with fixed timeout, not via R4rSpringAiRagApplication
 
-### Issue class: Revision pending
-The exact gate for `task-fe-03-rag-ui` passed but Codex explicitly requires corrections:
-1. Fixture DOM assertions instead of component property inspection
-2. Remove production-only test scaffolding and unused imports
+Current git status shows new files added to PC worktree that require these corrections before compilation succeeds.
 
-## Integration analysis
+### Frontend (LP)
 
-- No cross-stack blocking dependencies detected
-- Both queues are independently blocked at ACCEPT gate due to Codex REVISE decisions
-- Pending tasks (task-07 through task-09, task-fe-04) remain independent and sequential
-- No new risky integrations introduced in the last worker runs
+The exact gate returned exit code 2 with classification "gate-failure". The worker partially applied prior correction packet but:
 
-## Evidence limitations
+1. Failed to run `git diff --check` first and remove trailing whitespace
+2. Retained router provisioning unnecessary for direct component rendering
+3. Still using [innerHTML] instead of interpolation for answer text
+4. Tests still use property-only/setTimeout patterns instead of controlled Subject emissions with fixture.detectChanges()
 
-| Limitation | Impact |
-|------------|--------|
-| Only runtime evidence from this cycle is available; live worktrees not inspected | Minimal — all required evidence is under RUN_DIR |
-| No access to controller files or Git commands executed by other processes | Acceptable — Ring follows supervisor directives, never writes history |
+## Evidence-Based Decisions
 
-## Deterministic next steps
+All decisions are grounded in evidence from RUN_DIR:
 
-1. **PC**: Apply corrections from `codex-qwen3-extra-instructions.md`, rerun exact gate
-2. **LP**: Apply corrections from `codex-qwen3-extra-instructions.md`, rerun frontend task gate
-3. **Supervisor**: Validate gate-green with Codex ACCEPT before promoting checkpoint
+1. **state.json**: Documents current task status, gate exit codes, and Codex decisions
+2. **code-pc-review.md**: Detailed PC compilation failure analysis with mandatory corrections per codex-qwen3-extra-instructions.md
+3. **code-lp-review.md**: Detailed LP gate-failure analysis with whitespace and DOM assertion requirements
+4. **backend-frontend-handoff.md**: Cross-stack status showing no dependencies between queues
+5. **worker-understanding.md**: Explicit launch eligibility criteria for each worker
+6. **ring-git-status.txt**: Shows Ring itself only has staged coordination document changes
 
-## Director directive
+## Integration Risks
 
-**Status = READY**, no immediate Ring action required. The workers correctly identified green gates and now await Codex review of correction packets. Ring's role is to coordinate, not intervene; once both queues reach Codex ACCEPT, pending tasks may proceed in parallel.
+1. Backend compilation failure (KnowledgeIngestionOrchestration.java) may indicate missing bean configuration that could affect downstream RAG service if integration requires ingestion beans - risk is static and resolved by applying BeanDefinitionRegistryPostProcessor corrections
+2. Frontend NO_ERRORS_SCHEMA removal may create template binding errors previously masked - risk is mitigated by keeping Angular 17 and preserving accepted service contracts
+
+## Evidence Limitations
+
+1. gate-full.log files referenced in codex-qwen3-extra-instructions.md are not present in RUN_DIR; exact compilation or test failure details require external runtime runs directories
+2. PC and LP worker worktrees (/home/german/Desarrollo/r4r-pc-worker.git, /home/german/Desarrollo/r4r-lp-worker.git) are not readable by Ring per security rules; source analysis must rely on ring worktree copies and runtime evidence only
+3. No access to live worker memory or run logs outside RUN_DIR without explicit controller provision
+
+## Next Actions
+
+### For PC Worker (after corrections applied):
+1. Apply BeanDefinitionRegistryPostProcessor in ApplicationContextInitializer to replace knowledgeIngestionService bean definition after configuration-class registration but before singleton instantiation
+2. Use instanceof checks for typed exception families SQLException, DataAccessException, ConnectException, SocketTimeoutException and concrete Spring AI/Ollama exceptions across cause chain
+3. Invoke KnowledgeIngestionCli directly as child JVM with fixed timeout and valid environment variables
+4. Run exact gate: bash -lc 'rm -rf target && ./scripts/task-gate.sh all && mvn -Dtest=KnowledgeIngestionCliTest -DfailIfNoTests=true test'
+
+### For LP Worker (after corrections applied):
+1. Run git diff --check against frontend/** and remove trailing whitespace from all named paths
+2. Remove router provisioning while retaining HTTP configuration
+3. Use interpolation {{response.answer}} instead of [innerHTML]
+4. Implement controlled Subject<RAGAnswerResult> emissions with synchronous fixture.detectChanges() DOM assertions without timers
+5. Run exact gate: ./scripts/frontend-task-gate.sh task-fe-03-rag-ui
+
+### For Ring Director:
+No explicit Ring worktree edits required for this cycle; changes to coordination documents (.ring-agent/**) have been staged.
+
+## Acceptance Gates Summary
+
+Both queues must satisfy these gates before Codex ACCEPT:
+
+| Queue | Gate Command | Expected Exit | Codex Decision |
+|-------|--------------|---------------|----------------|
+| PC | ./scripts/task-gate.sh task-06-production-ingestion-cli | 0 | ACCEPT |
+| LP | ./scripts/frontend-task-gate.sh task-fe-03-rag-ui | 0 | ACCEPT |
+
+No further worker launches until gates are green and Codex returns ACCEPT.

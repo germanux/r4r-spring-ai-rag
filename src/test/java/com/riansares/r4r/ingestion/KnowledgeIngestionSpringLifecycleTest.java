@@ -1,22 +1,19 @@
 package com.riansares.r4r.ingestion;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.WebApplicationType;
-import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.event.ContextClosedEvent;
 import com.riansares.r4r.R4rSpringAiRagApplication;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.event.ContextClosedEvent;
 
+import java.nio.file.Path;
 import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
+import static org.mockito.Mockito.*;
 
 /**
  * Proves deterministic non-web Spring lifecycle and no startup ingestion side effect.
@@ -28,6 +25,9 @@ import static org.mockito.Mockito.withSettings;
  * 4. Normal R4rSpringAiRagApplication startup does not invoke ingestion
  */
 class KnowledgeIngestionSpringLifecycleTest {
+
+    @TempDir
+    Path knowledgeRoot;
 
     /**
      * Verifies the createBuilder() returns a non-web builder that produces a context without ServletWebServerFactory.
@@ -70,7 +70,7 @@ class KnowledgeIngestionSpringLifecycleTest {
         try (var mockedStatic = org.mockito.Mockito.mockStatic(KnowledgeIngestionCli.class, withSettings().defaultAnswer(org.mockito.Answers.CALLS_REAL_METHODS))) {
             mockedStatic.when(KnowledgeIngestionCli::createBuilder).thenReturn(configuredBuilder);
 
-            int exitCode = KnowledgeIngestionCli.execute(new String[0]);
+            int exitCode = KnowledgeIngestionCli.execute(knowledgeRootArguments());
             assertThat(exitCode).as("Exit code should be 0 on success").isEqualTo(0);
         }
 
@@ -100,7 +100,7 @@ class KnowledgeIngestionSpringLifecycleTest {
         try (var mockedStatic = org.mockito.Mockito.mockStatic(KnowledgeIngestionCli.class, withSettings().defaultAnswer(org.mockito.Answers.CALLS_REAL_METHODS))) {
             mockedStatic.when(KnowledgeIngestionCli::createBuilder).thenReturn(configuredBuilder);
 
-            int exitCode = KnowledgeIngestionCli.execute(new String[0]);
+            int exitCode = KnowledgeIngestionCli.execute(knowledgeRootArguments());
             assertThat(exitCode).as("Exit code should be 4 on ingestion failure").isEqualTo(4);
         }
 
@@ -136,6 +136,10 @@ class KnowledgeIngestionSpringLifecycleTest {
         return context -> context.addBeanFactoryPostProcessor(new MockBeanReplacer(mock));
     }
 
+    private String[] knowledgeRootArguments() {
+        return new String[]{"--r4r.knowledge.root=" + knowledgeRoot.toAbsolutePath()};
+    }
+
     /**
      * BeanDefinitionRegistryPostProcessor that replaces the production knowledgeIngestionService
      * bean with a mock. Runs after configuration-class definitions are registered but before
@@ -161,6 +165,11 @@ class KnowledgeIngestionSpringLifecycleTest {
             // Register our mock as a singleton after all bean definitions have been processed.
             // Using registerSingleton avoids proxy wrapping when using a pre-existing mock instance.
             beanFactory.registerSingleton("knowledgeIngestionService", mock);
+            if (!beanFactory.containsBean("vectorStore")) {
+                beanFactory.registerSingleton(
+                        "vectorStore",
+                        mock(org.springframework.ai.vectorstore.VectorStore.class));
+            }
         }
     }
 

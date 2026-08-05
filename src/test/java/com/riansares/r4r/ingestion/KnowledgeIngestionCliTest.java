@@ -5,22 +5,14 @@ import com.riansares.r4r.R4rSpringAiRagApplication;
 import com.riansares.r4r.config.KnowledgeProperties;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -31,19 +23,13 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
+import static org.mockito.Mockito.*;
 
 
 class KnowledgeIngestionCliTest {
@@ -503,6 +489,11 @@ class KnowledgeIngestionCliTest {
             // Register our mock as a singleton after all bean definitions have been processed.
             // Using registerSingleton avoids proxy wrapping when using a pre-existing mock instance.
             beanFactory.registerSingleton("knowledgeIngestionService", mock);
+            if (!beanFactory.containsBean("vectorStore")) {
+                beanFactory.registerSingleton(
+                        "vectorStore",
+                        mock(org.springframework.ai.vectorstore.VectorStore.class));
+            }
         }
     }
 
