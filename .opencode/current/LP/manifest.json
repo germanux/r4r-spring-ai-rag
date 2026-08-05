@@ -2,16 +2,16 @@
   "agent": "LP",
   "artifacts": [
     {
-      "bytes": 1174,
+      "bytes": 2722,
       "producer": "local-llm",
-      "sha256": "3fcfa6116dc07d2f58b5f2966f71a522685f23219fd2b26c99a42eb0b4db0fa9",
+      "sha256": "714225e94ef7c729e43d26707268e017beda884ad991be0012688fa3ec88b4a2",
       "source": ".opencode/memory.frontend.md",
       "target": "opencode/memory.frontend.md"
     },
     {
       "bytes": 1782,
       "producer": "local-llm",
-      "sha256": "358321f22c2ac54d2dbbccf7a3b2abe16dd060ddd74e01f3f972d60b6df391d9",
+      "sha256": "7732eba2efcb90c7581c18051537e02f1ac94c10133617da68b7d9ef1efcabe3",
       "source": ".opencode/progress.frontend.json",
       "target": "opencode/progress.frontend.json"
     },
@@ -35,6 +35,69 @@
       "sha256": "345e5944cb77ea3a0b6479e76fb4d64338d2c16e42cb0a0264fc1cabf39d440e",
       "source": "runtime/control/LP/opencode.resolved.json",
       "target": "runtime/control/LP/opencode.resolved.json"
+    },
+    {
+      "bytes": 526,
+      "producer": "controller",
+      "sha256": "822c4c1bd3679f5b4dd75194201eb1455b19c899ed68375b3fbd85f9e1074d10",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/diagnostics/error-manifest.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/diagnostics/error-manifest.json"
+    },
+    {
+      "bytes": 3283,
+      "producer": "controller",
+      "sha256": "3a196fb76c181dea627f70e1271e5bf870b68fc77f3a4797c387091f9068c7c1",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/diagnostics/files/frontend/angular.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/diagnostics/files/frontend/angular.json"
+    },
+    {
+      "bytes": 474042,
+      "producer": "controller",
+      "sha256": "a96d876f179efeb6a615517affae147ca2c53c171b4276a8a1c2e75ccc88bc94",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/diagnostics/files/frontend/package-lock.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/diagnostics/files/frontend/package-lock.json"
+    },
+    {
+      "bytes": 1111,
+      "producer": "controller",
+      "sha256": "5aacf62c26b34af2a1519dccb8588d125bd3d7b3d3dc6e61d460f0a8c4853f76",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/diagnostics/files/frontend/package.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/diagnostics/files/frontend/package.json"
+    },
+    {
+      "bytes": 857,
+      "producer": "controller",
+      "sha256": "0abc5c29a891021070c12193e24b248a0ae127e1f9996e1166962ae7a5722bf9",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/diagnostics/files/frontend/tsconfig.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/diagnostics/files/frontend/tsconfig.json"
+    },
+    {
+      "bytes": 538,
+      "producer": "controller",
+      "sha256": "6e483d2fcddac5858798846d90fa6492437181ae9f7ab66c324f937ed4b3e5b8",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/diagnostics/gate-summary.md",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/diagnostics/gate-summary.md"
+    },
+    {
+      "bytes": 892,
+      "producer": "controller",
+      "sha256": "72df42d4c31a364a57ae62b555a1384d6f5f47171ab33ac6905c76e983010044",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/gate-diagnostics.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/gate-diagnostics.json"
+    },
+    {
+      "bytes": 136,
+      "producer": "local-llm",
+      "sha256": "9c3890109a8a72a2f07fc09ad3a1985a0e10f6b1a97c9a4d1f1d9015218472e0",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/pre-edit-understanding.md",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/pre-edit-understanding.md"
+    },
+    {
+      "bytes": 229,
+      "producer": "controller",
+      "sha256": "666125393b7f02ccb17ba4383f93d56397009bb91ef86736d99e3c72682000b6",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/evidence/initial-gate.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/evidence/initial-gate.json"
     }
   ],
   "schema_version": 1,
