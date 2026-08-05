@@ -4,14 +4,14 @@
     {
       "bytes": 3410,
       "producer": "local-llm",
-      "sha256": "aa588669a477765571c7f07181133c75b84ea8ed0eb60404c1ea3ffe3cc2189f",
+      "sha256": "3e9d33b0468d6d50ae783c3a9c47e4ed514bcaa4b6f9b6a60dea3dee8923fa44",
       "source": ".opencode/memory.backend.md",
       "target": "opencode/memory.backend.md"
     },
     {
       "bytes": 2609,
       "producer": "local-llm",
-      "sha256": "44651bafdc420ad56c1893e6f8428452b9f53318c99a718f58e5eff38813f393",
+      "sha256": "02dfe14c777db6939dabdbae594564265b602deee2098949aac1ec2611c61f89",
       "source": ".opencode/progress.backend.json",
       "target": "opencode/progress.backend.json"
     },
@@ -147,6 +147,48 @@
       "sha256": "a46300201e83c7a02fdd761c0b252cf379f5f35a3f74fd6ea76b3bbc63d9dda9",
       "source": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/evidence/initial-gate.json",
       "target": "runtime/runs/PC/20260805T191431Z/task-06e-child-process/evidence/initial-gate.json"
+    },
+    {
+      "bytes": 206,
+      "producer": "controller",
+      "sha256": "0e7949cb3fd3711bfd0bb36fba32197ae8e440b1c015586bd6136c8b65d30163",
+      "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/codegraph-sync.json",
+      "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/codegraph-sync.json"
+    },
+    {
+      "bytes": 593,
+      "producer": "controller",
+      "sha256": "13189d9e01143e6fa63d4f9f2a6ae715bd262f313ccfec99a124e37b3d689dfd",
+      "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/diagnostics/error-manifest.json",
+      "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/diagnostics/error-manifest.json"
+    },
+    {
+      "bytes": 618,
+      "producer": "controller",
+      "sha256": "cf120452182098491761f5c56b8169f7b6539ffc2bf4205eb731e9f2248a5bcf",
+      "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/diagnostics/gate-summary.md",
+      "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/diagnostics/gate-summary.md"
+    },
+    {
+      "bytes": 947,
+      "producer": "controller",
+      "sha256": "7e5870056c32e3c4972ac229a317184b475266eba6ddac4f58db9641dbc0a368",
+      "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/gate-diagnostics.json",
+      "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/gate-diagnostics.json"
+    },
+    {
+      "bytes": 1590,
+      "producer": "local-llm",
+      "sha256": "5387ce1c155033cea0dc524912b9edf74d52e91460cd41e5126d277a7943ac76",
+      "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/opencode-codegraph.json",
+      "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/attempt-01/evidence/opencode-codegraph.json"
+    },
+    {
+      "bytes": 213,
+      "producer": "controller",
+      "sha256": "5ddb6296f3bc65d5d353ee1841206b30779e7823ad8eed3d08a118aa92c0104e",
+      "source": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/evidence/initial-gate.json",
+      "target": "runtime/runs/PC/20260805T201405Z/task-06e-child-process/evidence/initial-gate.json"
     }
   ],
   "schema_version": 1,
