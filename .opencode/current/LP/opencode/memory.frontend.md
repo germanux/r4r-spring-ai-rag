@@ -3,13 +3,13 @@
 ## Current state
 
 - Worker: LP.
-- Run: 20260805T191432Z.
+- Run: 20260805T203220Z.
 - Last accepted task: task-fe-03b-answer-abstention.
 - Active task: task-fe-03c-citations.
-- Current attempt: 2.
-- Latest exact gate: task-gate; exit=0.
-- Latest Codex decision: REVISE.
-- Checkpoint: no-product-diff; head=not recorded.
+- Current attempt: 1.
+- Latest exact gate: not run; exit=unknown.
+- Latest Codex decision: pending.
+- Checkpoint: none; head=not recorded.
 - Accepted: task-fe-01-angular17-bootstrap, task-fe-02-rag-client, task-fe-03-rag-ui, task-fe-03b-answer-abstention.
 - Remaining: task-fe-03c-citations, task-fe-03d-dom-state-tests, task-fe-03e-security-accessibility, task-fe-03f-final-validation, task-fe-04-playwright.
 - Exact plan: `.opencode/task-plan.frontend.json`.
@@ -20,22 +20,19 @@
 
 ## Demonstrated by current evidence
 
-- The exact deterministic task gate completed with exit code 0.
-- The checkpoint contains only task-owned product paths plus controller progress/memory.
+- No new acceptance claim has been demonstrated in this run yet.
 
 ## Still unproven or below expectations
 
-- Treat a green generic Angular build/test run as necessary but insufficient; inspect whether task-specific assertions cover every required behavior.
-- For FE-03C, require DOM assertions for ordinal order, source, complete ordered heading path, omission on an empty citation array in a non-abstained success response, and non-parsing of citation-like answer text.
+- Render ordered structured citations without parsing model text.
 
 ## Approaches not to repeat
 
-- Treat a green generic Angular build/test run as necessary but insufficient; inspect whether task-specific assertions cover every required behavior.
-- For FE-03C, require DOM assertions for ordinal order, source, complete ordered heading path, omission on an empty citation array in a non-abstained success response, and non-parsing of citation-like answer text.
+- Do not repeat an unchanged failing action without new evidence.
 
 ## Next exact action
 
-Add focused rendered-DOM tests for every missing FE-03C requirement, then rerun `./scripts/frontend-task-gate.sh task-fe-03c-citations`.
+Resume the unfinished revision by applying the complete CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS included below. Do not wait for another Codex review before making the requested correction.
 
 ## Fixed decisions
 
