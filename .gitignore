@@ -20,6 +20,7 @@ __pycache__/
 .ruff_cache/
 build/
 dist/
+runtime/
 # PostgreSQL runtime data and local backups
 /docker-postgres/data/app/*
 !/docker-postgres/data/app/.gitkeep
