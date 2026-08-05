@@ -468,3 +468,48 @@ Append-only ledger generated after each validated Ring cycle.
 
 - RUN_DIR includes gate summaries but not full gate logs, so root-cause details of the PC failure are not directly visible in this snapshot.
 - No Codex review artifact is present for either worker in this RUN_DIR, so ACCEPT/REJECT state must remain unclaimed.
+
+## Cycle `20260805T202129Z` â READY
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-06e-child-process`
+- Reason: The active backend task is still pending and the latest deterministic gate evidence is a failure (exit 2, classification gate-failure). The worker has in-flight edits concentrated in TestChildApplicationContextInitializer.java with no new acceptance evidence in this run.
+- Next action: Use the first failing assertion from the current task-06e diagnostics to make one minimal child-process contract repair in src/test/java/com/riansares/r4r/ingestion/TestChildApplicationContextInitializer.java, then rerun ./scripts/task-gate.sh task-06e-child-process.
+- Avoid repeating: Do not keep broad rewrites of the test class without tying each change to the first current gate failure and re-running the exact task gate.
+- Acceptance gates:
+  - ./scripts/task-gate.sh task-06e-child-process must exit 0
+  - task-06e-child-process remains incomplete until Codex decision is ACCEPT
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T202129Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T202129Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T202129Z/pc-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T202129Z/pc-git-diff-stat.txt`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03c-citations`
+- Reason: LP has an explicit codex-revise request for FE-03C. Even with a green gate, the checkpoint is no-product-diff and Codex flagged missing task-specific DOM proof, so acceptance evidence is incomplete.
+- Next action: Modify frontend/src/app/features/rag/rag-page.component.spec.ts to add the missing FE-03C rendered-DOM citation assertions (ordered display, empty citations omitted, and no parsing of citation-like answer text), then rerun ./scripts/frontend-task-gate.sh task-fe-03c-citations.
+- Avoid repeating: Do not treat a generic green gate or unchanged product diff as sufficient FE-03C evidence; add requirement-specific rendered-DOM assertions first.
+- Acceptance gates:
+  - ./scripts/frontend-task-gate.sh task-fe-03c-citations must exit 0
+  - task-fe-03c-citations remains incomplete until Codex decision is ACCEPT
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T202129Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T202129Z/worker-requests/LP.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T202129Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T202129Z/lp-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T202129Z/lp-runtime/memory.md`
+
+### Integration risks
+
+- Backend task-06e remains gate-failing, so downstream backend-dependent validation tasks (06f/07+) cannot be trusted as ready even if frontend work advances.
+- LP should stay scoped to spec tests; changing component behavior during FE-03C evidence repair would create avoidable cross-task regression risk.
+
+### Evidence limitations
+
+- PC gate summary points to gate-full.log for first-failure details, but that full log is not included in this Ring snapshot.
+- No PC codex review/plan artifact is present in this RUN_DIR snapshot, so PC direction is based on deterministic gate/status evidence only.

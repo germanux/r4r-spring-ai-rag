@@ -1,25 +1,28 @@
-# Worker understanding audit (RUN_ID 20260805T201628Z)
+# Worker understanding assessment
 
-## What the evidence says each worker currently understands
+## PC understanding status
 
-## PC
+Evidence indicates PC is correctly positioned on the active backend task (`task-06e-child-process`) but still in unresolved gate-failure state.
 
-- Correctly tracks active task as `task-06e-child-process` (`pc-runtime/progress.json`, `pc-runtime/memory.md`).
-- Has current gate evidence showing failure (`pc-runtime/gate_summary.md`, exit `2`).
-- In-flight edits are large and centered on `TestChildApplicationContextInitializer.java`, which may not be the most direct Task 06E proof target.
+- Positive: active task alignment is correct.
+- Gap: no demonstrated gate-green or Codex ACCEPT evidence for 06E.
+- Needed refinement: tie each test edit directly to the first deterministic failure and revalidate immediately.
 
-**Understanding gap to correct next:** prioritize first-failure-driven repair tied explicitly to child-process contract evidence for `KnowledgeIngestionCli`.
+## LP understanding status
 
-## LP
+Evidence shows LP had a green gate but missed acceptance-contract completeness for FE-03C.
 
-- Correctly tracks active task as `task-fe-03b-answer-abstention` (`lp-runtime/progress.json`, `lp-runtime/memory.md`).
-- Has current gate-green evidence (`lp-runtime/gate_summary.md`, exit `0`).
-- Still lacks completion evidence because Codex review/accept artifact is absent (`lp-runtime/manifest.json` has `codex_review: null`, `checkpoint: null`).
+- Positive: worker memory now explicitly records missing FE-03C proof points.
+- Gap: prior local-understanding mapping did not reference actual frontend code/tests and checkpoint captured no product diff.
+- Needed refinement: implement required DOM-level assertions exactly as Codex correction packet specifies.
 
-**Understanding gap to correct next:** completion is blocked by acceptance workflow, not by missing implementation evidence.
+## Cross-worker instruction quality
 
-## Director confidence and constraints
+- Prior directives were specific and bounded.
+- Remaining issue is execution completeness, not missing direction.
 
-- Confidence is **high** on queue status and immediate next actions because both workers provide fresh progress and gate summaries in this RUN_DIR.
-- Confidence is **limited** on precise code-level root cause for PC because full gate logs are not bundled in RUN_DIR.
-- No claim is made that tests are fully complete or Codex has accepted either task.
+## Required understanding outcome for next pass
+
+1. PC: produce first-failure-linked, minimal child-process contract fix plus exact gate evidence.
+2. LP: produce explicit FE-03C rendered-DOM assertion coverage plus exact gate evidence.
+3. Both: no completion claim without Codex `ACCEPT` evidence on the gated state.

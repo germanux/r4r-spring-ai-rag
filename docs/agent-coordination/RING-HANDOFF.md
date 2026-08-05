@@ -1,30 +1,27 @@
-# Backend ↔ Frontend handoff (RUN_ID 20260805T201628Z)
+# Backend ↔ Frontend handoff
 
-## Queue status snapshot
+## Ownership and concurrency guard
 
-- **PC/backend**: `task-06e-child-process` is active and currently red (gate exit `2`).
-- **LP/frontend**: `task-fe-03b-answer-abstention` is active, gate-green, and awaiting Codex acceptance.
+- **PC (backend)** remains on `task-06e-child-process`.
+- **LP (frontend)** remains on `task-fe-03c-citations`.
+- Queues are disjoint this cycle; no cross-owned file edits requested.
 
-## Immediate cross-stack coordination guidance
+## What backend needs from frontend
 
-### For PC (backend)
+Nothing blocking for this pass. LP should complete FE-03C test-evidence closure independently.
 
-- Prioritize correction of Task 06E gate failure using first-failure diagnostics.
-- Keep scope bounded to child-process verification for `KnowledgeIngestionCli`; avoid unrelated API behavior changes.
+## What frontend needs from backend
 
-### For LP (frontend)
+Nothing immediate for FE-03C. However, backend Task 06E is still gate-failing, so later backend-dependent validation phases remain risked until PC closes 06E.
 
-- Prioritize Codex review on the existing FE-03B gate-green state before adding new UI behavior.
-- Preserve deterministic answer/abstention/error/reset rendering semantics already validated by the green gate.
+## Integration risks to track
 
-## Integration risks to actively control
+1. **Backend readiness risk**: Task 06E gate is still red (exit 2), so backend progression to 06f/07+ is not yet reliable.
+2. **Frontend scope risk**: FE-03C pass should be assertion-focused; component behavior changes in this pass could introduce unnecessary regressions.
 
-1. **Backend scope drift risk**: current PC edits target a different test surface than Task 06E command requirements, which can delay backend stabilization.
-2. **Frontend evidence invalidation risk**: further LP edits before Codex review can invalidate current green evidence.
-3. **Contract drift risk**: while PC is repairing Task 06E, backend must not silently alter response/error semantics that FE-03B rendering relies on.
+## Bounded cross-stack next checkpoint
 
-## Bounded acceptance checkpoints before advancing tasks
-
-- PC: `./scripts/task-gate.sh task-06e-child-process` green + Codex `ACCEPT`.
-- LP: `./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention` green + Codex `ACCEPT`.
-- No undocumented backend-to-frontend response contract change introduced during these passes.
+- Wait for:
+  - PC: gate-green + Codex ACCEPT on `task-06e-child-process`.
+  - LP: gate-green + Codex ACCEPT on `task-fe-03c-citations` with the new DOM assertions.
+- After both are evidenced, reassess downstream dependency coupling.
