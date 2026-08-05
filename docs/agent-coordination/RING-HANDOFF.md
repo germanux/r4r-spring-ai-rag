@@ -1,35 +1,26 @@
-# Backend ↔ Frontend handoff
+# Backend ↔ Frontend handoff — run 20260805T163847Z
 
-## Current queue posture
+## Queue status snapshot
 
-- **PC/backend**: still on `task-06e-child-process`; acceptance is not closed because Codex ACCEPT evidence is missing and a REVISE packet is still active.
-- **LP/frontend**: `task-fe-01-angular17-bootstrap` gate is green, but Codex review invocation failed transiently, so acceptance is still open.
+- **PC (backend)**: Active task `task-06e-child-process` remains pending with unresolved Codex REVISE packet.
+- **LP (frontend)**: Active task `task-fe-01-angular17-bootstrap` has green gate evidence but no Codex decision due failed review invocation.
 
-## Cross-stack dependency status
+## Coordination boundaries for next pass
 
-No new cross-stack API coupling is required in this cycle. Both queues should complete their current acceptance closure first:
+- PC remains backend-only and must stay within Codex packet scope (test-only child-process wiring assets).
+- LP remains frontend-only and should recover review path first; no cross-stack code changes are requested.
 
-1. PC closes backend task-06e acceptance.
-2. LP closes frontend task-fe-01 acceptance.
+## Cross-stack risks to monitor
 
-Only after those closures should new feature handoffs be started (backend task 06f+/frontend task-fe-02+).
+1. Backend task sequencing risk: if PC scope drifts beyond test-only correction packet, remaining ingestion validation tasks can be delayed.
+2. Frontend acceptance latency risk: repeated Codex invocation failures can stall progression even with green deterministic gate.
 
-## Bounded directives
+## Explicit next handoff actions
 
-### For PC
-- Stay within backend task scope (`task-06e-child-process`) and Codex packet file boundaries.
-- Deliver: exact gate result + Codex ACCEPT/REVISE outcome.
+- **To PC**: apply current correction packet once, rerun exact gate, send updated evidence for Codex decision.
+- **To LP**: rerun Codex review on existing evidence, edit only if Codex returns REVISE.
 
-### For LP
-- Prioritize review-path recovery (Codex rerun) over code churn.
-- Deliver: Codex decision for current green checkpoint; edit only if REVISE.
+## Acceptance conditions for advancing queues
 
-## Acceptance gates to preserve
-
-- Backend: `./scripts/task-gate.sh task-06e-child-process` must be green and Codex must return `ACCEPT`.
-- Frontend: `./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap` must be green and Codex must return `ACCEPT`.
-
-## Risks to track
-
-- If PC uses a previously rejected initializer strategy again, backend will loop on REVISE.
-- If LP retries implementation instead of fixing review execution, frontend will loop without decision artifacts.
+- PC: `./scripts/task-gate.sh task-06e-child-process` exit 0 + Codex `ACCEPT`.
+- LP: `./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap` exit 0 + Codex `ACCEPT`.

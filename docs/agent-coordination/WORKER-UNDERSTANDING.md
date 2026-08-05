@@ -1,31 +1,25 @@
-# Worker understanding audit
+# Worker understanding audit — run 20260805T163847Z
 
-## PC (backend) — required understanding
+## PC understanding quality
 
-1. Active task is `task-06e-child-process`; it is not accepted yet.
-2. A green gate snapshot does **not** close the task without Codex `ACCEPT`.
-3. The latest Codex packet is authoritative and bounded; it specifically rejects:
-   - unsupported initializer loading via `context.initializer.classes`,
-   - non-type-compatible replacement for `KnowledgeIngestionService`.
-4. One pass objective: apply packet-aligned correction, rerun exact gate, return evidence.
+Evidence indicates PC memory correctly tracks active backend task (`task-06e-child-process`) and pending acceptance state. However, current packaged evidence has a consistency gap:
 
-## LP (frontend) — required understanding
+- `pc-runtime/gate_summary.md` reports a green gate.
+- `pc-runtime/memory.md` states latest exact gate is unknown/not run.
 
-1. Active task is `task-fe-01-angular17-bootstrap`; gate is already green.
-2. Missing artifact is Codex review outcome (current attempt failed transiently with exit 1 and zero steps).
-3. One pass objective: recover Codex review first; no implementation churn unless Codex returns REVISE.
-4. Task cannot advance to `task-fe-02-rag-client` until task-fe-01 has Codex ACCEPT.
+This mismatch means closure cannot be inferred from memory alone; worker must provide a fresh, internally consistent gate+review evidence set after applying the active Codex REVISE packet.
 
-## Shared operating constraints reaffirmed
+## LP understanding quality
 
-- No worker writes Git history.
-- No gate bypassing.
-- No scope expansion beyond active task.
-- Correction before new implementation.
+LP local-understanding file explicitly states the compact summary was missing and asks Codex to inspect exact diff. Controller-side evidence confirms the true blocker is not gate failure but review execution failure:
 
-## Evidence anchors
+- Gate is green (`lp-runtime/gate_summary.md`).
+- Codex review process failed early with no observed steps (`lp-runtime/codex_review.json`).
 
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/pc-runtime/codex-qwen3-extra-instructions.md`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/pc-runtime/progress.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/lp-runtime/codex_review.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/lp-runtime/gate_summary.md`
+So LP should prioritize review-path recovery, not speculative code edits.
+
+## Director guidance to improve next worker pass
+
+1. Keep one focused objective per pass (PC: correction packet; LP: review recovery).
+2. Preserve exact gate + Codex acceptance contract as non-negotiable completion criteria.
+3. Avoid scope expansion while acceptance evidence is incomplete.

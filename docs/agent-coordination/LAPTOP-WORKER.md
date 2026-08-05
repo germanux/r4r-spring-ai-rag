@@ -1,42 +1,33 @@
-# LP code review (frontend)
+# LP frontend review — run 20260805T163847Z
 
-## Snapshot reviewed
+## Evidence inspected
 
-- `lp-runtime/progress.json`: active task is `task-fe-01-angular17-bootstrap`, still `PENDING`.
-- `lp-runtime/gate_summary.md`: deterministic frontend gate is green (`exit 0`).
-- `worker-requests/LP.json`: LP requested handling with reason `gate-green-no-checkpoint`.
-- `lp-runtime/codex_review.json`: Codex invocation failed (`exit_code: 1`, `observed_steps: 0`, `meaningful_events: 0`).
-- `lp-runtime/checkpoint.json`: checkpoint status is `no-product-diff`.
+- `runtime/ring-agent/ring/20260805T163847Z/lp-runtime/progress.json`
+- `runtime/ring-agent/ring/20260805T163847Z/lp-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260805T163847Z/lp-runtime/codex_review.json`
+- `runtime/ring-agent/ring/20260805T163847Z/lp-runtime/checkpoint.json`
+- `runtime/ring-agent/ring/20260805T163847Z/worker-requests/LP.json`
+- `runtime/ring-agent/ring/20260805T163847Z/lp-git-status.txt`
 
-## First current defect
+## Current diagnosis (first defect)
 
-The frontend queue has a **review-path failure**, not a code failure. The gate is green, but Codex review did not execute successfully, so there is no acceptance decision.
+`task-fe-01-angular17-bootstrap` has a green deterministic gate (exit 0) but remains **PENDING** because Codex review did not execute successfully (`exit_code: 1`, `observed_steps: 0`, `meaningful_events: 0`).
 
-## Why this is the first defect
+The checkpoint is `no-product-diff` and `head_after` is null, so there is no new product change to re-implement right now. The blocker is review-path execution, not frontend code behavior proven by this snapshot.
 
-Without a Codex result, repeating implementation work is wasteful and risks drift. The immediate missing artifact is a successful Codex review pass (ACCEPT or REVISE) on already-green evidence.
+## Bounded next action for LP
 
-## Bounded next action for one LP pass
+Run one review-recovery pass:
 
-1. Re-run Codex review for `task-fe-01-angular17-bootstrap` using current gate-green evidence.
-2. Keep code unchanged unless Codex explicitly returns `REVISE`.
-3. If Codex returns REVISE, perform one bounded correction pass and rerun the exact gate.
+1. Re-run Codex review against the existing gate-green evidence for `task-fe-01-angular17-bootstrap`.
+2. Keep scope unchanged and do not start new implementation unless Codex returns `REVISE`.
 
 ## Acceptance conditions
 
 - `./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap` remains exit `0`.
-- Codex returns `ACCEPT` for task closure.
-- Do not skip Codex by treating checkpoint-only or gate-only state as acceptance.
+- Codex decision returns `ACCEPT` for `task-fe-01-angular17-bootstrap`.
+- Task is not marked accepted from gate/checkpoint evidence alone.
 
 ## Avoid repeating
 
-- Do not spend another no-scope implementation pass while the missing signal is only Codex review execution.
-- Do not advance to task-fe-02 before `task-fe-01-angular17-bootstrap` is formally accepted.
-
-## Evidence paths
-
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/lp-runtime/progress.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/lp-runtime/gate_summary.md`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/worker-requests/LP.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/lp-runtime/codex_review.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/lp-runtime/checkpoint.json`
+- Do not execute another unchanged implementation pass while Codex review execution is the only missing signal.

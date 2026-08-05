@@ -96,3 +96,50 @@ Append-only ledger generated after each validated Ring cycle.
 - Only summarized gate evidence is present in RUN_DIR; gate-full.log contents were not provided in this snapshot.
 - No fresh PC codex_review.json artifact is present in RUN_DIR, so PC acceptance state is inferred from progress/memory plus Codex extra instructions.
 - Live PC/LP worktrees were intentionally not inspected directly; conclusions are limited to staged RUN_DIR evidence.
+
+## Cycle `20260805T163847Z` â READY
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-06e-child-process`
+- Reason: task-06e-child-process remains PENDING and the current Codex correction packet is still REVISE with mandatory unresolved instructions; latest PC snapshot has no Codex review and no checkpoint proving closure.
+- Next action: Apply the current Codex correction packet for task-06e-child-process in one bounded backend pass, then rerun the exact backend gate and return updated evidence for Codex review.
+- Avoid repeating: Do not repeat initializer loading via -Dcontext.initializer.classes or register a replacement bean not assignable to KnowledgeIngestionService; Codex already rejected that path.
+- Acceptance gates:
+  - ./scripts/task-gate.sh task-06e-child-process must return exit 0
+  - Codex decision must be ACCEPT for task-06e-child-process before task closure
+  - Keep scope bounded to Codex packet targets (process IT, initializer, spring.factories, helper) and keep production scripts/code unchanged
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163847Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163847Z/pc-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163847Z/pc-runtime/manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163847Z/pc-runtime/memory.md`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-01-angular17-bootstrap`
+- Reason: The frontend gate is green, but the Codex review invocation failed (exit 1 with zero observed steps) and no Codex ACCEPT exists, so the task remains PENDING.
+- Next action: Re-run Codex review on the existing gate-green evidence for task-fe-01-angular17-bootstrap without widening scope; only perform edits if Codex returns REVISE.
+- Avoid repeating: Do not run another unchanged implementation pass while the only missing signal is Codex review execution.
+- Acceptance gates:
+  - ./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap must return exit 0
+  - Codex decision must be ACCEPT for task-fe-01-angular17-bootstrap before task closure
+  - Do not treat gate-green checkpoint/no-product-diff as acceptance without Codex decision
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163847Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163847Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163847Z/lp-runtime/codex_review.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163847Z/lp-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163847Z/worker-requests/LP.json`
+
+### Integration risks
+
+- PC child-process test wiring still unresolved per active Codex REVISE packet; if misapplied, backend gate may regress and block downstream ingestion validation tasks.
+- LP has a green gate with no product diff and no Codex verdict; repeated review-execution failures can stall frontend queue advancement despite technically green evidence.
+
+### Evidence limitations
+
+- This cycle used bounded artifacts in RUN_DIR only; no direct inspection of live PC/LP worktrees was performed.
+- PC snapshot contains a consistency gap (green gate summary vs memory 'latest gate unknown'); final closure still requires fresh gate+Codex evidence from a new worker pass.

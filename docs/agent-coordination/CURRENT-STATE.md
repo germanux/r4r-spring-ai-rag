@@ -1,37 +1,28 @@
-# Global coordination summary (RUN 20260805T163327Z)
+# Global summary — Ring cycle 20260805T163847Z
 
 ## Outcome
 
 Overall status: **READY**.
 
-Both queues have bounded next actions, but neither queue has current evidence of task acceptance in this RUN_DIR snapshot.
+Both queues have a bounded next step with sufficient evidence:
 
-## Queue decisions
+- **PC** should continue `task-06e-child-process` by applying the active Codex REVISE correction packet and rerunning the exact backend gate before Codex re-review.
+- **LP** should continue `task-fe-01-angular17-bootstrap` by rerunning Codex review on already green gate evidence; no new implementation unless Codex requests revision.
 
-### PC
-- Decision: `CONTINUE` on `task-06e-child-process`.
-- Basis: task still pending; Codex correction packet says `REVISE`; no Codex ACCEPT artifact present.
-- Next: execute one bounded packet-aligned correction pass and rerun exact backend gate.
+## Key evidence highlights
 
-### LP
-- Decision: `CONTINUE` on `task-fe-01-angular17-bootstrap`.
-- Basis: gate is green, but Codex review invocation failed transiently (exit 1, zero steps/events).
-- Next: rerun Codex review first on existing evidence; edit only if REVISE.
+- PC task state remains pending: `pc-runtime/progress.json`.
+- PC still carries unresolved Codex REVISE packet: `pc-runtime/codex-qwen3-extra-instructions.md`.
+- LP gate is green: `lp-runtime/gate_summary.md`.
+- LP Codex review failed transiently: `lp-runtime/codex_review.json` (exit 1, zero steps/events).
 
-## Integration risk view
+## Risks
 
-1. Backend may stall if previously rejected initializer/service-replacement tactics are retried.
-2. Frontend may stall in no-op loops if review execution failures are treated as code failures.
-3. Ring branch contains an unrelated untracked file (`docs/CHANGELOG-ANGULAR.md`) in status evidence; coordination publication should avoid accidental inclusion.
+- PC: incorrect initializer/bean replacement handling can re-break child-process task gate.
+- LP: repeated review invocation failures can create acceptance deadlock despite green gate evidence.
 
-## Evidence limitations
+## Ring worktree edits in this cycle
 
-- RUN_DIR contains gate summaries, not full gate logs.
-- No fresh PC codex_review artifact is present in this snapshot.
-- Live worker worktrees were intentionally not inspected directly.
-
-## Ring worktree edits this cycle
-
-- No repository source/config/policy files were modified.
-- Only the six staged coordination artifacts were written under:
-  `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/output/`
+- Added six staged coordination artifacts under:
+  `runtime/ring-agent/ring/20260805T163847Z/output/`
+- No product/backend/frontend source files were modified.

@@ -1,47 +1,36 @@
-# PC code review (backend)
+# PC backend review — run 20260805T163847Z
 
-## Snapshot reviewed
+## Evidence inspected
 
-- `pc-runtime/progress.json`: active task is `task-06e-child-process` and status is still `PENDING`.
-- `pc-runtime/codex-qwen3-extra-instructions.md`: latest Codex decision is `REVISE` with mandatory child-process test corrections.
-- `pc-runtime/gate_summary.md`: gate summary is green, but no accompanying Codex ACCEPT artifact is present in this RUN_DIR.
-- `pc-runtime/memory.md`: explicitly says no new acceptance claim is demonstrated in this run.
+- `runtime/ring-agent/ring/20260805T163847Z/pc-runtime/progress.json`
+- `runtime/ring-agent/ring/20260805T163847Z/pc-runtime/memory.md`
+- `runtime/ring-agent/ring/20260805T163847Z/pc-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260805T163847Z/pc-runtime/manifest.json`
+- `runtime/ring-agent/ring/20260805T163847Z/pc-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260805T163847Z/pc-git-status.txt`
 
-## First current defect
+## Current diagnosis (first defect)
 
-The backend queue has **unclosed acceptance state**: task `task-06e-child-process` remains pending while the latest authoritative Codex packet still contains unresolved `REVISE` instructions. A green gate summary alone does not satisfy task closure.
+`task-06e-child-process` is still **PENDING** and the latest Codex packet for this task is still **REVISE** with mandatory unresolved instructions (initializer/SPI registration and type-compatible replacement bean requirements).
 
-## Why this is the first defect
+Although the packaged gate summary is green, there is no accompanying Codex review artifact in the PC manifest (`codex_review: null`) and no checkpoint proving this task advanced to acceptance-ready review. The safest evidence-grounded interpretation is: the correction packet remains authoritative and unresolved for closure.
 
-This is the earliest blocker to moving backend forward safely:
+## Bounded next action for PC
 
-1. Task is pending in progress ledger.
-2. Codex ACCEPT proof is missing.
-3. Codex packet already defines an exact correction scope and rejects prior failed approaches.
+Execute one backend-only correction pass for `task-06e-child-process` exactly within Codex packet scope:
 
-Until this is reconciled, starting later tasks (`06f+`) would violate deterministic order and acceptance policy.
-
-## Bounded next action for one PC pass
-
-1. Execute only the Codex correction packet scope for `task-06e-child-process`.
-2. Re-run exact gate: `./scripts/task-gate.sh task-06e-child-process`.
-3. Hand refreshed evidence to Codex and stop.
+1. Apply the mandatory Codex instructions to test-only assets (`KnowledgeIngestionCliProcessIT`, child initializer, `src/test/resources/META-INF/spring.factories`, helper).
+2. Keep production scripts and production Java unchanged.
+3. Re-run `./scripts/task-gate.sh task-06e-child-process`.
+4. Submit updated evidence for Codex review.
 
 ## Acceptance conditions
 
-- Gate exits `0` for `task-06e-child-process`.
-- Codex returns `ACCEPT` for this task.
-- Scope stays bounded to Codex packet targets; no production script/task-plan expansion.
+- Exact gate returns exit `0` for `task-06e-child-process`.
+- Codex decision returns `ACCEPT` for the same task.
+- No scope drift into unrelated backend/frontend areas.
 
 ## Avoid repeating
 
-- Do not reintroduce `-Dcontext.initializer.classes` mechanism rejected by Codex.
-- Do not use replacement objects not assignable to `KnowledgeIngestionService`.
-- Do not treat a green gate summary as task acceptance without Codex ACCEPT evidence.
-
-## Evidence paths
-
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/pc-runtime/progress.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/pc-runtime/codex-qwen3-extra-instructions.md`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/pc-runtime/gate_summary.md`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T163327Z/pc-runtime/memory.md`
+- Do **not** use `-Dcontext.initializer.classes` as the initializer-loading mechanism in this path.
+- Do **not** register a replacement bean that is not assignable to `KnowledgeIngestionService`.
