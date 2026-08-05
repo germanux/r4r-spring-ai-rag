@@ -1,46 +1,36 @@
-# LP code review (frontend)
+# LP code review (task-fe-03c-citations)
 
-## Current evidence reviewed
+## Evidence reviewed
 
-- `runtime/ring-agent/ring/20260805T202129Z/worker-request-manifest.json`
-- `runtime/ring-agent/ring/20260805T202129Z/worker-requests/LP.json`
-- `runtime/ring-agent/ring/20260805T202129Z/lp-runtime/progress.json`
-- `runtime/ring-agent/ring/20260805T202129Z/lp-runtime/memory.md`
-- `runtime/ring-agent/ring/20260805T202129Z/lp-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260805T202129Z/lp-runtime/checkpoint.json`
-- `runtime/ring-agent/ring/20260805T202129Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `lp-runtime/progress.json` keeps `task-fe-03c-citations` in `PENDING`.
+- `lp-runtime/codex-qwen3-extra-instructions.md` sets Codex decision to `REVISE` and gives mandatory FE-03C DOM assertions.
+- `lp-runtime/memory.md` states the FE-03C behavior is still unproven and next action is to apply Codex extra instructions.
+- `lp-git-status.txt` shows only `.opencode/memory.frontend.md` modified, with no task-owned product diff in this snapshot.
 
-## First current defect
+## Current diagnosis (first defect)
 
-The first current defect is **acceptance-evidence insufficiency for FE-03C despite a green gate**:
+The first current defect is **proof gap in FE-03C tests**: task-specific rendered-DOM assertions required by Codex are missing from the current accepted evidence set, so a prior green gate is insufficient.
 
-- Active task is `task-fe-03c-citations` and remains `PENDING`.
-- A worker request exists with `reason: codex-revise` and `codex_decision: REVISE`.
-- Checkpoint status is `no-product-diff` and request `changed_paths` is empty.
-- Codex corrective instructions explicitly require missing rendered-DOM assertions for citation requirements.
-
-## Bounded next action for one worker pass
+## Bounded next action
 
 Edit only:
 
 - `frontend/src/app/features/rag/rag-page.component.spec.ts`
 
-Add rendered-DOM tests that prove all FE-03C missing points from the correction packet:
+Add the exact missing FE-03C DOM tests required by Codex:
 
-1. Out-of-order citation input renders in expected ordered output with displayed ordinal, source, and full heading path segment order.
-2. Response `{ answer: '...', abstained: false, citations: [] }` renders no `.citations-section`.
-3. Citation-like text embedded in answer is not parsed into citation DOM when structured citations are empty.
+1. Ordered rendering of structured citations even when response citations arrive out of order.
+2. Absence of `.citations-section` for `{ abstained: false, citations: [] }` success responses.
+3. No citation parsing from citation-like answer text when structured `citations` is empty.
 
-Then run exactly:
+Then run the exact gate for FE-03C.
 
-- `./scripts/frontend-task-gate.sh task-fe-03c-citations`
+## Acceptance conditions / gates
 
-## Acceptance conditions
-
-- Exact gate exits `0` after new FE-03C assertions are present.
-- Codex review for FE-03C returns `ACCEPT` on that state.
-- Keep scope inside frontend task FE-03C; do not advance to FE-03D or broader UI changes in this pass.
+- `./scripts/frontend-task-gate.sh task-fe-03c-citations` exits `0`.
+- Codex returns `ACCEPT` for FE-03C.
+- Assertions validate rendered DOM behavior, not component internals/getters.
 
 ## Avoid repeating
 
-- Do not rely on an unchanged product diff plus green generic gate as FE-03C proof.
+- Do not rely on a generic green gate or unchanged product diff as FE-03C completion evidence.

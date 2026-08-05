@@ -1,38 +1,29 @@
-# PC code review (backend)
+# PC code review (task-06e-child-process)
 
-## Current evidence reviewed
+## Evidence reviewed
 
-- `runtime/ring-agent/ring/20260805T202129Z/pc-runtime/progress.json`
-- `runtime/ring-agent/ring/20260805T202129Z/pc-runtime/memory.md`
-- `runtime/ring-agent/ring/20260805T202129Z/pc-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260805T202129Z/pc-git-status.txt`
-- `runtime/ring-agent/ring/20260805T202129Z/pc-git-diff-stat.txt`
-- `runtime/ring-agent/ring/20260805T202129Z/pc-runtime/previous-ring-qwen3-directive.json`
+- `pc-runtime/progress.json` shows `task-06e-child-process` is still `PENDING` with last gate green on run `20260805T205254Z`.
+- `pc-runtime/gate_summary.md` reports classification `green` and exit code `0`.
+- `pc-runtime/checkpoint.json` shows a created gate-green checkpoint with `head_after` `179ab444664901b620d59cb30e4a42cc6e93a95b` and product path `src/test/resources/META-INF/spring.factories`.
+- `worker-requests/PC.json` records a `gate-green-checkpoint` request with `codex_decision: null`.
 
-## First current defect
+## Current diagnosis (first defect)
 
-The first current defect is **an unresolved deterministic gate failure on the active task**:
+The first unresolved defect is not a fresh gate failure; it is **missing acceptance evidence**. The backend task is still pending because Codex has not yet returned `ACCEPT` or `REVISE` for the checkpointed change.
 
-- Active task is `task-06e-child-process` and still `PENDING`.
-- Latest PC gate summary is `gate-failure`, exit `2`.
-- In-flight edits are concentrated in `src/test/java/com/riansares/r4r/ingestion/TestChildApplicationContextInitializer.java`.
+## Bounded next action
 
-This means there is no evidence yet of a gate-green + Codex-ACCEPT state for Task 06E.
+1. Review checkpoint head `179ab444664901b620d59cb30e4a42cc6e93a95b` for `task-06e-child-process`.
+2. Emit one concrete decision:
+   - `ACCEPT` if the change satisfies task scope and gate constraints, or
+   - `REVISE` with one first failing condition and one minimal corrective edit target.
 
-## Bounded next action for one worker pass
+## Acceptance conditions / gates
 
-1. Classify the first failing assertion from the current Task 06E diagnostics.
-2. Apply one minimal repair focused on the child-JVM process proof contract in:
-   - `src/test/java/com/riansares/r4r/ingestion/TestChildApplicationContextInitializer.java`
-3. Re-run exactly:
-   - `./scripts/task-gate.sh task-06e-child-process`
-
-## Acceptance conditions
-
-- Exact gate `./scripts/task-gate.sh task-06e-child-process` exits `0`.
-- Codex review for Task 06E returns `ACCEPT` on the same gated state before completion is claimed.
-- No scope expansion beyond Task 06E objective: “Execute and verify the real production CLI as a bounded child JVM.”
+- `./scripts/task-gate.sh task-06e-child-process` must remain exit `0`.
+- Task is complete only when Codex decision is `ACCEPT`.
+- No scope expansion beyond task-06e while this decision is pending.
 
 ## Avoid repeating
 
-- Do not continue broad refactors of the test class without first-failure linkage and immediate exact-gate revalidation.
+- Do not launch another broad backend edit pass before obtaining the pending Codex decision on the existing gate-green checkpoint.
