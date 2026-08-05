@@ -1,32 +1,42 @@
-# Worker-understanding assessment (RUN 20260805T222913Z)
+# Worker understanding audit (run 20260805T225504Z)
 
 ## PC understanding quality
 
-### What is aligned
-- Active backend task and exact gate are correctly tracked in memory/progress.
-- Codex REVISE packet is explicit and bounded (`application.yml` + whitespace sanitation).
+Evidence checked:
 
-### What is not yet aligned with newest evidence
-- Newest `pc-git-status.txt` introduces a more immediate defect (`UU` unmerged files) that must be corrected before gate reliability.
-- Earlier reasoning mixed migration/test-failure interpretations with preflight failures.
+- `pc-runtime/memory.md`
+- `pc-runtime/checkpoint.json`
+- `worker-requests/PC.json`
 
-### Directive quality for next pass
-- Keep instruction order strict: **resolve unmerged state first**, then run preflight, then exact gate.
+Assessment:
+
+- PC memory correctly captures active task and gate-green status.
+- Minor staleness: memory says checkpoint pending, while snapshot includes created checkpoint JSON and request manifest.
+- Operationally acceptable; key missing item is Codex review outcome.
+
+Required correction in next PC memory update:
+
+- Reflect checkpoint as created and pending Codex review rather than not recorded.
 
 ## LP understanding quality
 
-### What is aligned
-- Active FE task is correctly tracked as `task-fe-03c-citations` and still PENDING.
-- Codex REVISE packet is precise about the three missing rendered-DOM assertions.
+Evidence checked:
 
-### What is not yet aligned
-- `pre_edit_understanding.md` was skipped and recent attempts timed out; this indicates process adherence issues despite known concrete next steps.
-- Green gate snapshot is being over-weighted versus missing FE-03C acceptance proof.
+- `lp-runtime/memory.md`
+- `lp-runtime/codex-qwen3-extra-instructions.md`
+- `lp-runtime/gate_summary.md`
 
-### Directive quality for next pass
-- Single-file correction with explicit assertion targets and immediate exact gate rerun.
+Assessment:
 
-## Evidence confidence
+- LP memory correctly states FE-03C is still unproven.
+- Codex REVISE packet clearly specifies missing rendered-DOM assertions and bounded file scope.
+- Risk of continued drift remains if LP summarizes progress without implementing the exact three assertions.
 
-- Confidence is **high** for task/status and immediate defects because evidence is explicit in `progress`, `memory`, `gate_summary`, `codex extra instructions`, and `git-status` snapshots.
-- Confidence is **moderate** for deeper root-cause mechanics because full current gate logs were not staged for this ring cycle.
+Required correction in next LP pass:
+
+- Keep local understanding explicitly mapped to FE-03C acceptance bullets and the exact target test selectors/assertions.
+
+## Acceptance-focused worker guidance
+
+- PC: no new pass until Codex response on current checkpoint.
+- LP: one bounded spec-only pass + exact FE gate + full diagnostics capture if red.
