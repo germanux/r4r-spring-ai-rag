@@ -1,35 +1,35 @@
-# Global summary — run 20260805T205323Z
+# Global coordination summary (RUN_ID 20260805T205823Z)
 
-## Overall status
+## Outcome
 
-`READY`
+Overall status: **READY**.
 
-Both queues have actionable, bounded next steps with sufficient evidence to proceed.
+- No blocking policy violation found in current bounded evidence.
+- Both queues have clear bounded next actions.
 
-## PC summary
+## What is proven now
 
-- Task: `task-06e-child-process`.
-- Exact gate: green (`exit 0`).
-- Checkpoint: created at head `179ab444664901b620d59cb30e4a42cc6e93a95b`.
-- Blocking gap: no Codex decision yet (`codex_decision: null`).
+- PC previously achieved and accepted `task-06e-child-process` (`worker-requests/PC.json`).
+- PC active task has advanced to `task-06f-ingestion-validation` and latest packaged gate evidence for 06f is red.
+- LP active task remains `task-fe-03c-citations` and Codex requires `REVISE` with concrete DOM-test additions.
 
-Decision: `REVIEW` — close the pending Codex decision on the existing checkpoint before any new backend implementation pass.
+## First current defects selected
 
-## LP summary
+- **PC defect**: task-06f deterministic gate failure (`test-failure`, exit 1).
+- **LP defect**: missing FE-03C rendered-DOM proof despite generic green gate and no product-path completion patch in snapshot.
 
-- Task: `task-fe-03c-citations`.
-- Status: still `PENDING`.
-- Codex packet: `REVISE` with explicit missing FE-03C rendered-DOM assertions.
-- Current snapshot: no task-owned dirty product file.
+## Directed next pass
 
-Decision: `CONTINUE` — execute the bounded test-spec revisions and rerun the exact FE-03C gate.
+- **PC**: one-pass first-failure repair for `task-06f-ingestion-validation`, then rerun exact gate.
+- **LP**: apply FE-03C codex revise packet in `rag-page.component.spec.ts`, then rerun exact gate.
 
-## Key risks
+## Acceptance anchors
 
-- FE-03C acceptance may be overstated if DOM-proof assertions are still absent despite generic gate success.
-- Backend task-06e remains unfinalized until Codex ACCEPT on the current checkpoint.
+- PC: `./scripts/task-gate.sh task-06f-ingestion-validation` exit 0 + Codex ACCEPT.
+- LP: `./scripts/frontend-task-gate.sh task-fe-03c-citations` exit 0 + Codex ACCEPT.
 
-## Evidence limitations
+## Ring worktree edits this cycle
 
-- No new Codex review artifacts are packaged in this run for either worker.
-- Full gate logs are not present here; only summarized diagnostics were available.
+- No product code or policy file edits were made.
+- Only six staged coordination artifacts were written under:
+  - `runtime/ring-agent/ring/20260805T205823Z/output/`

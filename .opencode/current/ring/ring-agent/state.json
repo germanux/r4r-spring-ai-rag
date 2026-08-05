@@ -1,51 +1,49 @@
 {
   "schema_version": 1,
-  "run_id": "20260805T205323Z",
+  "run_id": "20260805T205823Z",
   "overall_status": "READY",
   "decisions": {
     "PC": {
-      "action": "REVIEW",
-      "task_id": "task-06e-child-process",
-      "reason": "The active backend task is still PENDING even though attempt 1 produced a gate-green checkpoint (exit 0) with one product-path change; current evidence shows codex_decision is still null, so acceptance is not yet proven.",
-      "next_action": "Review checkpoint head 179ab444664901b620d59cb30e4a42cc6e93a95b for task-06e-child-process and issue the first concrete revise/accept decision without adding new backend scope.",
-      "avoid_repeating": "Do not start another broad backend rewrite or unrelated task while codex_decision for the gate-green checkpoint is still pending.",
+      "action": "CONTINUE",
+      "task_id": "task-06f-ingestion-validation",
+      "reason": "Current active backend task is task-06f-ingestion-validation and the latest packaged gate evidence for that task is red (classification test-failure, exit 1) with failing tests named in PostgresBaselineIT, KnowledgeIngestionCliTest, and RagQueryControllerTest.",
+      "next_action": "Run the exact gate for task-06f, capture the first current failing assertion from gate-full.log, and make one bounded backend fix scoped to that first failure before re-running the same gate.",
+      "avoid_repeating": "Do not treat the prior task-06e ACCEPT/checkpoint as evidence that task-06f is already validated.",
       "acceptance_gates": [
-        "./scripts/task-gate.sh task-06e-child-process must exit 0",
-        "task-06e-child-process is complete only after Codex decision is ACCEPT"
+        "./scripts/task-gate.sh task-06f-ingestion-validation must exit 0",
+        "task-06f-ingestion-validation is complete only after Codex decision is ACCEPT"
       ],
       "evidence_paths": [
-        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205323Z/pc-runtime/progress.json",
-        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205323Z/pc-runtime/gate_summary.md",
-        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205323Z/pc-runtime/checkpoint.json",
-        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205323Z/worker-requests/PC.json"
+        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205823Z/pc-runtime/progress.json",
+        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205823Z/pc-runtime/gate_summary.md",
+        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205823Z/pc-runtime/manifest.json"
       ]
     },
     "LP": {
       "action": "CONTINUE",
       "task_id": "task-fe-03c-citations",
-      "reason": "LP remains on FE-03C in PENDING state with no task-owned dirty product path in this snapshot, while Codex extra instructions explicitly require REVISE to add missing rendered-DOM citation assertions; prior green gate evidence is therefore insufficient for acceptance.",
-      "next_action": "Apply the bounded FE-03C revise packet by editing frontend/src/app/features/rag/rag-page.component.spec.ts to add the missing DOM assertions, then run the exact frontend gate for task-fe-03c-citations.",
-      "avoid_repeating": "Do not treat a generic green gate or unchanged product diff as FE-03C completion evidence.",
+      "reason": "Frontend active task remains task-fe-03c-citations in PENDING state; Codex extra instructions are REVISE with explicit missing rendered-DOM citation assertions, and memory shows the prior local session ended by idle-timeout without task-owned product edits.",
+      "next_action": "Apply the FE-03C REVISE packet by editing rag-page.component.spec.ts to add the three required rendered-DOM citation tests, then run the exact FE-03C gate.",
+      "avoid_repeating": "Do not stop at a generic green run or another idle-timeout without implementing the Codex-requested DOM assertions.",
       "acceptance_gates": [
         "./scripts/frontend-task-gate.sh task-fe-03c-citations must exit 0",
         "task-fe-03c-citations is complete only after Codex decision is ACCEPT",
         "FE-03C proof must be rendered-DOM assertions (ordered structured citations, empty-citations omission, and no parsing of citation-like answer text)"
       ],
       "evidence_paths": [
-        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205323Z/lp-runtime/progress.json",
-        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205323Z/lp-runtime/codex-qwen3-extra-instructions.md",
-        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205323Z/lp-runtime/memory.md",
-        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205323Z/lp-git-status.txt"
+        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205823Z/lp-runtime/progress.json",
+        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205823Z/lp-runtime/codex-qwen3-extra-instructions.md",
+        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205823Z/lp-runtime/memory.md",
+        "/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T205823Z/lp-git-diff-stat.txt"
       ]
     }
   },
   "integration_risks": [
-    "Frontend FE-03C still lacks accepted DOM-proof coverage for structured citation rendering, which risks UI behavior diverging from backend structured citation payload semantics.",
-    "Backend task-06e currently has only checkpoint-level proof; until Codex ACCEPT, downstream backend/frontend integration planning may rely on unfinalized backend test-contract changes."
+    "Backend task-06f gate is currently red, so downstream integration confidence remains blocked even though task-06e was accepted.",
+    "Frontend FE-03C citations behavior is still unproven by required DOM-level tests, risking mismatch between structured citation contract and rendered UI evidence."
   ],
   "evidence_limitations": [
-    "This cycle has no new Codex review artifact (codex_review/codex_plan are null in both worker manifests).",
-    "Gate summaries are condensed; full gate logs are not included in this RUN_DIR snapshot.",
-    "Ring reviewed bounded runtime evidence only and did not inspect live PC/LP worktrees directly."
+    "Only gate summaries were packaged in RUN_DIR; full gate logs are referenced but not included here.",
+    "LP snapshot includes no codex_review.json artifact, so Codex acceptance status for FE-03C cannot be inferred beyond the REVISE packet."
   ]
 }

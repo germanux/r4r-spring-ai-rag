@@ -1,29 +1,36 @@
-# PC code review (task-06e-child-process)
+# PC backend review (RUN_ID 20260805T205823Z)
 
-## Evidence reviewed
+## Current evidence reviewed
 
-- `pc-runtime/progress.json` shows `task-06e-child-process` is still `PENDING` with last gate green on run `20260805T205254Z`.
-- `pc-runtime/gate_summary.md` reports classification `green` and exit code `0`.
-- `pc-runtime/checkpoint.json` shows a created gate-green checkpoint with `head_after` `179ab444664901b620d59cb30e4a42cc6e93a95b` and product path `src/test/resources/META-INF/spring.factories`.
-- `worker-requests/PC.json` records a `gate-green-checkpoint` request with `codex_decision: null`.
+- `pc-runtime/progress.json`: active task is `task-06f-ingestion-validation` (PENDING).
+- `pc-runtime/gate_summary.md`: latest packaged gate for task-06f is `test-failure`, exit `1`.
+- `pc-runtime/manifest.json`: gate summary source path maps to `task-06f-ingestion-validation/attempt-01`.
+- `worker-requests/PC.json`: prior task `task-06e-child-process` is already `codex_decision=ACCEPT` and should not be reworked.
 
-## Current diagnosis (first defect)
+## First current defect
 
-The first unresolved defect is not a fresh gate failure; it is **missing acceptance evidence**. The backend task is still pending because Codex has not yet returned `ACCEPT` or `REVISE` for the checkpointed change.
+The first current backend defect is not in 06e; it is the active 06f gate failure. The packaged gate summary names failing/errored tests:
 
-## Bounded next action
+- `src/test/java/com/riansares/r4r/db/PostgresBaselineIT.java`
+- `src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionCliTest.java`
+- `src/test/java/com/riansares/r4r/rag/api/RagQueryControllerTest.java`
 
-1. Review checkpoint head `179ab444664901b620d59cb30e4a42cc6e93a95b` for `task-06e-child-process`.
-2. Emit one concrete decision:
-   - `ACCEPT` if the change satisfies task scope and gate constraints, or
-   - `REVISE` with one first failing condition and one minimal corrective edit target.
+This is sufficient to prioritize correction on task-06f before any new backend scope.
 
-## Acceptance conditions / gates
+## Bounded next action for one PC pass
 
-- `./scripts/task-gate.sh task-06e-child-process` must remain exit `0`.
-- Task is complete only when Codex decision is `ACCEPT`.
-- No scope expansion beyond task-06e while this decision is pending.
+1. Run exact gate: `./scripts/task-gate.sh task-06f-ingestion-validation`.
+2. From `gate-full.log`, capture the **first current failing assertion/error**.
+3. Apply one coherent backend fix scoped to that failure.
+4. Re-run the same gate.
+
+## Acceptance conditions
+
+- Gate must pass: `./scripts/task-gate.sh task-06f-ingestion-validation` exit `0`.
+- Task is complete only when Codex returns `ACCEPT` for task-06f.
+- No unrelated task advancement during this repair pass.
 
 ## Avoid repeating
 
-- Do not launch another broad backend edit pass before obtaining the pending Codex decision on the existing gate-green checkpoint.
+- Do not treat task-06e acceptance/checkpoint as proof for task-06f.
+- Do not attempt broad multi-test rewrites before isolating the first failing assertion from current full gate evidence.

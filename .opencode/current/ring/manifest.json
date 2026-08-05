@@ -9,37 +9,37 @@
       "target": "opencode/memory.md"
     },
     {
-      "bytes": 1446,
+      "bytes": 1612,
       "producer": "ring",
-      "sha256": "74909e121ae5b0a21d8f7f9ec26d9b756cad5afa4987b24646079b4c934d218f",
+      "sha256": "ae76450eaccc3ddd999fdb4503ad863cef29df82018ae0ddaaccf4aa23a917a2",
       "source": ".ring-agent/backend-frontend-handoff.md",
       "target": "ring-agent/backend-frontend-handoff.md"
     },
     {
-      "bytes": 1566,
+      "bytes": 1947,
       "producer": "ring",
-      "sha256": "a50d5319174beb3792f7f4dfbe89b0424f6b7152b96d3ae1dd82fd1ac3f7bf07",
+      "sha256": "fe46b1bf95153a772db35738fd939300d80f760e1bdc0a5fb6b5ed8ffacc81a3",
       "source": ".ring-agent/code-lp-review.md",
       "target": "ring-agent/code-lp-review.md"
     },
     {
-      "bytes": 1521,
+      "bytes": 1682,
       "producer": "ring",
-      "sha256": "8b1c8ce1c7a53a5f89256d5fdb77d70e698973352e097553c1a1020d916586e1",
+      "sha256": "c364f3fc03dc1d96d34395e122810ae868501e9a6764b1e1adca1f880eee2f62",
       "source": ".ring-agent/code-pc-review.md",
       "target": "ring-agent/code-pc-review.md"
     },
     {
-      "bytes": 1206,
+      "bytes": 1413,
       "producer": "ring",
-      "sha256": "0d16cf19e196daee36981369bc791e6732ee60dda8254381e8c8f147d27d6d88",
+      "sha256": "990e4c92bb7a79a65ddc8c1e31cce225a40e4baa6cb6cb00601fcfe128f5fd09",
       "source": ".ring-agent/global-summary.md",
       "target": "ring-agent/global-summary.md"
     },
     {
-      "bytes": 3838,
+      "bytes": 3603,
       "producer": "ring",
-      "sha256": "40550425e13a80cda9b502b03cce6f18f81ad9b2a16883dbfde0b7b45ef20ca3",
+      "sha256": "28449a7ed69d28b6b4d35597b3280b979f199f0355f954887f366ad2d30cd8ed",
       "source": ".ring-agent/state.json",
       "target": "ring-agent/state.json"
     },
@@ -54,13 +54,13 @@
       "bytes": 567,
       "producer": "controller",
       "sha256": "ebee7ce33a0647e0d24d13217c11b7f8826cd3ff2ecbffc169d892ae81e7873e",
-      "source": "runtime/control/RING/requests/PC.json",
+      "source": ".opencode/current/ring/runtime/control/RING/requests/PC.json",
       "target": "runtime/control/RING/requests/PC.json"
     },
     {
-      "bytes": 1278,
+      "bytes": 1686,
       "producer": "local-llm",
-      "sha256": "19bdb90af61a33c80569c9c8e5ee8d0f288c610839ec6ca637c612e0e4cd0e33",
+      "sha256": "37631a1bd7c6bc221a5b6622f9b408488917f9e64b8fa190336ee53f87e920b4",
       "source": ".opencode/current/ring/worker-understanding.md",
       "target": "worker-understanding.md"
     }

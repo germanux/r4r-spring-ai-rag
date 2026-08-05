@@ -1,31 +1,34 @@
-# Worker understanding audit
+# Worker-understanding assessment (RUN_ID 20260805T205823Z)
 
-## PC understanding status
+## PC understanding quality
 
-Evidence indicates PC is in post-gate, pre-Codex phase:
+Evidence:
+- `pc-runtime/memory.md` correctly advances active task to `task-06f-ingestion-validation`.
+- `pc-runtime/local_understanding.md` is focused on old task 06e and includes stale uncertainty, while 06e is already accepted.
+- `pc-runtime/gate_summary.md` for current active task 06f is red and already identifies failing test files.
 
-- Active task is `task-06e-child-process` and still `PENDING`.
-- Gate summary is green (`exit 0`).
-- A checkpoint was created and requested for review.
+Assessment:
+- PC state tracking is partially correct (task progression is right), but execution focus must move from historical 06e context to current 06f failure triage.
 
-Interpretation: PC does not need broad new coding right now; the immediate requirement is Codex decision closure on the current checkpoint.
+Required correction in next PC pass:
+- Anchor pre/post understanding and any repair narrative to `task-06f-ingestion-validation` only.
+- Record first current failing assertion from full gate evidence before editing.
 
-## LP understanding status
+## LP understanding quality
 
-Evidence indicates LP has a clear unresolved Codex revise packet:
+Evidence:
+- `lp-runtime/memory.md` acknowledges prior session timeout and no completion claim.
+- `lp-runtime/codex-qwen3-extra-instructions.md` provides precise REVISE packet for FE-03C.
+- `lp-git-diff-stat.txt` indicates no frontend product edits in this snapshot.
 
-- FE-03C remains `PENDING`.
-- Codex extra instructions explicitly define missing assertions and constrain edits primarily to `rag-page.component.spec.ts`.
-- Current snapshot lacks task-owned product diff.
+Assessment:
+- LP has the correct corrective packet but has not yet executed it. Understanding is directionally correct but incomplete in proof because required tests were not yet added.
 
-Interpretation: LP must execute the already-specified revise instructions; the first defect is missing requirement-proof tests, not build instability.
+Required correction in next LP pass:
+- Execute the explicit FE-03C revise instructions in `rag-page.component.spec.ts` and provide accurate pre/post mapping to acceptance requirements.
 
-## Cross-worker clarity gaps to avoid
+## Ring confidence for next cycle
 
-- Do not conflate gate-green status with task completion; both queues still require Codex `ACCEPT`.
-- Do not expand scope to later tasks (`task-06f+` or `task-fe-03d+`) before closing current pending tasks.
-
-## Ring edits this cycle
-
-- No repository source/config files were edited.
-- Only the six staged coordination artifacts were created under this run `output/` directory.
+- Confidence is **moderate** for both queues if they remain strictly task-scoped:
+  - PC: first-failure repair on 06f.
+  - LP: FE-03C DOM assertion revise packet.
