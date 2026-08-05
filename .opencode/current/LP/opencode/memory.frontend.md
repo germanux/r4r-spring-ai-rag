@@ -3,10 +3,10 @@
 ## Current state
 
 - Worker: LP.
-- Run: 20260805T203856Z.
+- Run: 20260805T213931Z.
 - Last accepted task: task-fe-03b-answer-abstention.
 - Active task: task-fe-03c-citations.
-- Current attempt: 4.
+- Current attempt: 1.
 - Latest exact gate: not run; exit=unknown.
 - Latest Codex decision: pending.
 - Checkpoint: none; head=not recorded.
@@ -24,15 +24,15 @@
 
 ## Still unproven or below expectations
 
-- The local edit session did not complete; no acceptance claim can be made from it.
+- Render ordered structured citations without parsing model text.
 
 ## Approaches not to repeat
 
-- Do not repeat the stopped OpenCode session without changing the plan; stop_reason=idle-timeout.
+- Do not repeat an unchanged failing action without new evidence.
 
 ## Next exact action
 
-Start a fresh bounded session using the preserved worktree and the first current gate failure.
+Resume the unfinished revision by applying the complete CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS included below. Do not wait for another Codex review before making the requested correction.
 
 ## Fixed decisions
 
