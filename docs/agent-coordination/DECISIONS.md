@@ -189,3 +189,52 @@ Append-only ledger generated after each validated Ring cycle.
 
 - RUN_DIR snapshot contains summaries/manifests, not full worker worktree diffs or full gate logs.
 - PC snapshot has no codex_review artifact in this cycle; Codex state is inferred from codex-qwen3-extra-instructions.md and task status metadata.
+
+## Cycle `20260805T164848Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-06e-child-process`
+- Reason: The active backend task is still PENDING even though the latest deterministic gate is green (exit 0). Current run evidence shows codex_decision is null and checkpoint status is no-product-diff, so there is no Codex ACCEPT proving closure yet.
+- Next action: Run one bounded review pass for task-06e-child-process: map the mandatory Codex packet requirements to current files and submit the existing gate-green snapshot for Codex decision; edit code only if a concrete mismatch is found.
+- Avoid repeating: Do not run another unchanged no-product-diff pass without producing a Codex decision for the gate-green snapshot.
+- Acceptance gates:
+  - ./scripts/task-gate.sh task-06e-child-process must return exit 0
+  - Codex decision must be ACCEPT for task-06e-child-process before task closure
+  - Keep scope bounded to Codex packet targets; no production script/code changes
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164848Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164848Z/pc-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164848Z/pc-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164848Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164848Z/pc-runtime/codex-qwen3-extra-instructions.md`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-01-angular17-bootstrap`
+- Reason: Frontend task remains PENDING with Codex decision REVISE. Evidence also shows a dirty frontend/angular.json in LP status while last checkpoint is no-product-diff, so the likely correction is not yet validated by the exact gate/Codex in this run snapshot.
+- Next action: Apply one bounded frontend pass: finalize production environment selection in frontend/angular.json (preserving development replacement), run git diff --check, rerun exactly ./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap, and provide requirement-to-file mapping in local understanding.
+- Avoid repeating: Do not submit another no-product-diff or mapping-free understanding report while Codex REVISE remains unresolved.
+- Acceptance gates:
+  - ./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap must return exit 0
+  - Codex decision must be ACCEPT for task-fe-01-angular17-bootstrap before task closure
+  - Keep edits inside frontend/** and preserve Angular major 17
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164848Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164848Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164848Z/lp-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164848Z/lp-runtime/local_understanding.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164848Z/lp-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T164848Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- If FE production file replacement remains incorrect, production builds may still point to localhost backend URL despite green gate evidence.
+- Backend task 06e may stall at gate-green but unaccepted state if Codex review evidence is not produced from the current snapshot.
+
+### Evidence limitations
+
+- This cycle did not include LP full patch content; only git status/diff-stat and runtime summaries were available in RUN_DIR.
+- Gate full logs were not included in this snapshot; diagnosis relies on gate summaries, checkpoint metadata, and worker memory/progress artifacts.

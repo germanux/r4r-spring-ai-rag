@@ -2,39 +2,26 @@
 
 ## PC understanding quality
 
-Evidence:
+Evidence indicates operational discipline is good (green exact gate, preserved bounded scope), but closure is incomplete because Codex acceptance evidence is still missing for active task 06e.
 
-- `pc-runtime/memory.md` still tracks unresolved objective (real CLI as bounded child JVM).
-- `pc-runtime/codex-qwen3-extra-instructions.md` contains explicit corrections to prior misunderstandings.
+What PC must demonstrate in the next pass:
 
-Assessment:
-
-- Understanding is partially aligned on objective, but prior implementation path was rejected by Codex for mechanism/type compatibility.
-- Worker should follow the codified packet exactly instead of re-deriving approach.
-
-Required improvement in next pass:
-
-- Provide direct requirement→edit mapping for each numbered Codex instruction (SPI registration, marker gating, postprocessor ordering, assignable replacement type, assertions).
+- Explicit requirement-to-file reconciliation for every mandatory Codex packet item.
+- Clear statement whether any mismatch remains and, if yes, minimal bounded correction.
+- Final Codex decision attached to the current gate-green snapshot.
 
 ## LP understanding quality
 
-Evidence:
+Codex explicitly marked LP understanding as insufficient: reports omitted requirement-to-file mapping and deferred substantive review back to Codex.
 
-- `lp-runtime/local_understanding.md` has no requirement-to-code mapping.
-- `lp-runtime/checkpoint.json` shows `status: no-product-diff`.
-- `lp-runtime/codex-qwen3-extra-instructions.md` explicitly flags local understanding omission.
+What LP must demonstrate in the next pass:
 
-Assessment:
+- Direct mapping from FE-01 requirements to concrete files (`angular.json`, environment files, bootstrap/routing/http provider/dependency evidence).
+- Proof that production build path selects `environment.prod.ts`.
+- Gate result and Codex decision tied to the same change.
 
-- Current understanding quality is insufficient for closure despite green gate.
-- The missing mapping and no-op pass are the immediate blockers to Codex acceptance.
+## Shared instruction hygiene
 
-Required improvement in next pass:
-
-- Explicitly map bootstrap/strict/routing/HttpClient/Angular 17 deps/lockfile/env selection to concrete files and show where production replacement is configured.
-
-## Direction for both workers
-
-- Treat current Codex correction packets as authoritative checklists.
-- Do one bounded correction pass each; do not widen scope.
-- Re-run exact gate only after concrete edit verification and whitespace check.
+- Avoid unchanged reruns that produce `no-product-diff` without advancing acceptance.
+- Keep strict task boundaries and do not expand scope before current task acceptance.
+- Preserve gate-first discipline and include explicit evidence paths in reports.

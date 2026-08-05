@@ -1,39 +1,42 @@
 # LP code review (frontend)
 
-## Current evidence reviewed
+## Current authoritative evidence
 
-- `runtime/ring-agent/ring/20260805T164348Z/lp-runtime/progress.json`
-- `runtime/ring-agent/ring/20260805T164348Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `runtime/ring-agent/ring/20260805T164348Z/lp-runtime/checkpoint.json`
-- `runtime/ring-agent/ring/20260805T164348Z/lp-runtime/local_understanding.md`
-- `runtime/ring-agent/ring/20260805T164348Z/worker-requests/LP.json`
+- Active frontend task: `task-fe-01-angular17-bootstrap` and still `PENDING`.
+- Latest deterministic gate summary is green (`exit 0`), but last checkpoint is `no-product-diff`.
+- Latest Codex decision for FE-01 is `REVISE` with explicit correction: ensure production selects `environment.prod.ts`.
+- Snapshot of LP worktree state shows `frontend/angular.json` modified (`7 insertions, 1 deletion`).
+- Local understanding report is explicitly flagged as insufficient by Codex (missing requirement-to-file mapping).
+
+Evidence:
+
+- `lp-runtime/progress.json`
+- `lp-runtime/codex-qwen3-extra-instructions.md`
+- `lp-runtime/checkpoint.json`
+- `lp-runtime/local_understanding.md`
+- `lp-git-status.txt`
+- `lp-git-diff-stat.txt`
 
 ## First current defect
 
-`task-fe-01-angular17-bootstrap` remains **PENDING** with Codex **REVISE**.
+The first defect is **unclosed Codex REVISE correction for production environment selection**, compounded by evidence quality issues (missing requirement-to-file mapping). There is likely an in-progress `frontend/angular.json` change, but this snapshot does not yet prove gate + Codex acceptance on that exact change.
 
-Codex identifies a concrete unresolved defect: production build selection is not proven to use `environment.prod.ts`. The latest checkpoint is `no-product-diff`, confirming no corrective product edit landed in the last pass.
+## Bounded next action for LP
 
-## Bounded next action for one worker pass
+Execute one focused correction pass on `task-fe-01-angular17-bootstrap`:
 
-Apply one focused frontend correction:
-
-- Update `frontend/angular.json` so production build resolves `src/environments/environment.prod.ts` (preserve development replacement and Angular 17 constraints).
-
-Then rerun exactly:
-
-- `./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap`
-
-And include a requirement-to-file mapping in the next local understanding report.
+1. Finalize `frontend/angular.json` so production build selects `src/environments/environment.prod.ts` while preserving development replacement.
+2. Run `git diff --check`.
+3. Run exactly `./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap`.
+4. Produce a local understanding report that maps each FE-01 requirement to concrete files.
 
 ## Acceptance conditions (must all hold)
 
-1. Exact gate exits 0: `./scripts/frontend-task-gate.sh task-fe-01-angular17-bootstrap`.
-2. Codex review returns `ACCEPT` for `task-fe-01-angular17-bootstrap`.
-3. Scope remains inside `frontend/**` (no unrelated RAG/UI feature work).
-4. Angular major stays 17.
+1. Frontend exact gate returns `exit 0` after the intended config change.
+2. Codex returns `ACCEPT` for `task-fe-01-angular17-bootstrap`.
+3. Scope remains frontend-only and Angular major remains 17.
 
 ## Avoid repeating
 
-- Another unchanged run with `changed_paths: []` / `no-product-diff`.
-- A local-understanding report that omits requirement-to-file mapping.
+- Do **not** submit another `no-product-diff`/no-mapping pass.
+- Do **not** widen scope into unrelated RAG UI/client work before FE-01 is accepted.
