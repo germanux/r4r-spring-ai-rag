@@ -2,16 +2,16 @@
   "agent": "LP",
   "artifacts": [
     {
-      "bytes": 2861,
+      "bytes": 2877,
       "producer": "local-llm",
-      "sha256": "03d0669844ef1bc1fd65e747555aa35df548ab143bc4f64bc28d1565d4c6e5cf",
+      "sha256": "b56244ae7122ce7d093b8bf24b1028b80733730791f5ad24bc7e9dee35b6274f",
       "source": ".opencode/memory.frontend.md",
       "target": "opencode/memory.frontend.md"
     },
     {
-      "bytes": 1782,
+      "bytes": 1786,
       "producer": "local-llm",
-      "sha256": "74efe26cc3dcbe6d78c55093c554e46d43f6a37994764fb274642f6c3d4f1a6a",
+      "sha256": "84b3cb1722f913936c547a0b07ab95519894172201e50c999386338742083664",
       "source": ".opencode/progress.frontend.json",
       "target": "opencode/progress.frontend.json"
     },
@@ -121,11 +121,32 @@
       "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-01/evidence/pre-edit-understanding.md"
     },
     {
+      "bytes": 1444,
+      "producer": "codex",
+      "sha256": "cd2d0b6843408fcab5794dee6b682d8ded01b743e3d0d3409d20f633faae02a6",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-02/decisions/codex-review.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-02/decisions/codex-review.json"
+    },
+    {
       "bytes": 231,
       "producer": "controller",
       "sha256": "277fba7cb7c96859e925502d7c8b9d9669703c897c6499bc505fd2fe12720ec1",
       "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-02/evidence/changed-paths.json",
       "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-02/evidence/changed-paths.json"
+    },
+    {
+      "bytes": 491,
+      "producer": "controller",
+      "sha256": "784016ff9e71b3f671d33eb04d60c6e5bd46bf06a3f4b8863c515318465ecd0f",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-02/evidence/checkpoint.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-02/evidence/checkpoint.json"
+    },
+    {
+      "bytes": 594,
+      "producer": "codex",
+      "sha256": "bd5bf7382ee9d697df488fc857f13c372b9734e14e961903c9d40788f8f0b63b",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-02/evidence/codex-review.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-02/evidence/codex-review.json"
     },
     {
       "bytes": 397,
@@ -147,6 +168,20 @@
       "sha256": "2a73c71bd72533b3881312753c796d05afcc1a2c0b586b707dd5912d3c830e9c",
       "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-02/evidence/gate-diagnostics.json",
       "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-02/evidence/gate-diagnostics.json"
+    },
+    {
+      "bytes": 874,
+      "producer": "local-llm",
+      "sha256": "c663c905297c30eec81a5141f1c3409a0058d1e53578ab59be586d7d2162de04",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-02/evidence/local-understanding.md",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-02/evidence/local-understanding.md"
+    },
+    {
+      "bytes": 312,
+      "producer": "codex",
+      "sha256": "8b20147fc6555917714bd73b837cd5a1e39b2b5194385f784ac14eceae7bb17c",
+      "source": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-02/evidence/notify-handoff-to-codex-02.json",
+      "target": "runtime/runs/LP/20260805T191432Z/task-fe-03b-answer-abstention/attempt-02/evidence/notify-handoff-to-codex-02.json"
     },
     {
       "bytes": 275,
