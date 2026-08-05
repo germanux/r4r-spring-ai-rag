@@ -1,27 +1,35 @@
-# Global summary — run 20260805T170859Z
+# Global Summary — Ring Cycle 20260805T174028Z
 
-## Overall status: READY
+## Outcome
 
-Both queues have actionable, bounded next steps with available evidence; no hard blocker prevents another worker pass.
+Overall status: **READY** (actionable for both queues; not blocked).
 
-## What changed this cycle
+## Key findings
 
-- Reviewed bounded evidence under `runtime/ring-agent/ring/20260805T170859Z` for Ring/PC/LP status, runtime artifacts, gate summaries, Codex packets, checkpoint state, and worker requests.
-- Produced six staged coordination artifacts in this run output directory.
-- No product-code edits were made in the Ring worktree during this cycle.
+1. **PC (backend)**
+   - Active task: `task-06e-child-process` (`PENDING`).
+   - Current defect: unresolved Codex `REVISE` packet; only minimal partial edit evidence, no fresh closure artifacts.
+   - Direction: continue one bounded correction pass in test-only scope, rerun exact gate, get Codex decision.
 
-## Priority decisions
+2. **LP (frontend)**
+   - Active task: `task-fe-03b-answer-abstention` (`PENDING`).
+   - Current defect: required FE-03B DOM-state assertions from Codex `REVISE` are not evidenced in current snapshot.
+   - Direction: continue one bounded fixture-driven test/template pass, run exact gate, get Codex decision.
 
-1. **PC (`task-06e-child-process`)** → `REVIEW`
-   - First defect: missing current-run Codex closure evidence despite green gate.
-   - Next pass: obtain bounded Codex decision on existing evidence before new implementation churn.
+## Integration posture
 
-2. **LP (`task-fe-03b-answer-abstention`)** → `CONTINUE`
-   - First defect: Codex REVISE packet not yet implemented (no-product-diff checkpoint).
-   - Next pass: add fixture-based FE-03B DOM assertions + minimal template correction if needed, rerun exact gate.
+- No direct backend↔frontend blocking dependency for these two active tasks.
+- Main risk is evidence incompleteness for this cycle: manifests show null current-run Codex/gate/checkpoint artifacts.
+- Do not mark any task complete on gate metadata alone; require Codex `ACCEPT`.
 
-## Explicit non-claims
+## Repository edits by Ring in this cycle
 
-- This cycle does **not** claim either task completed.
-- This cycle does **not** claim Codex `ACCEPT` for PC or LP active tasks.
-- This cycle does **not** claim new tests passed beyond already-recorded gate summaries in provided evidence.
+- Created staged coordination outputs under:
+  - `runtime/ring-agent/ring/20260805T174028Z/output/state.json`
+  - `runtime/ring-agent/ring/20260805T174028Z/output/code-pc-review.md`
+  - `runtime/ring-agent/ring/20260805T174028Z/output/code-lp-review.md`
+  - `runtime/ring-agent/ring/20260805T174028Z/output/backend-frontend-handoff.md`
+  - `runtime/ring-agent/ring/20260805T174028Z/output/worker-understanding.md`
+  - `runtime/ring-agent/ring/20260805T174028Z/output/global-summary.md`
+
+No additional product/policy file edits were made.

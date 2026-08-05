@@ -332,3 +332,49 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This snapshot does not include a current-run PC codex_review/codex_plan artifact, only older Codex extra instructions and gate summary.
 - Ring reviewed only staged evidence under RUN_DIR and did not inspect live PC/LP worktrees directly.
+
+## Cycle `20260805T174028Z` â READY
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-06e-child-process`
+- Reason: PC remains on a Codex REVISE packet for task-06e-child-process; the snapshot still shows a tiny partial edit (2 inserted lines in one initializer file) and no new gate/Codex acceptance artifacts, so the child-process correction is not proven complete.
+- Next action: Apply the full Codex correction packet in bounded test-only scope (SPI initializer registration + type-compatible KnowledgeIngestionService replacement timing), then run the exact task gate once and capture diagnostics for Codex decision.
+- Avoid repeating: Do not loop on partial/isolated initializer edits without completing the SPI registration + assignable service replacement + fresh exact-gate evidence.
+- Acceptance gates:
+  - ./scripts/task-gate.sh task-06e-child-process returns exit 0
+  - Codex decision is ACCEPT for task-06e-child-process before task closure
+  - Keep edits bounded to Codex packet scope: test-side child-process verification only; no production script/service changes
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/pc-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/pc-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/pc-git-diff-stat.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/pc-runtime/manifest.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03b-answer-abstention`
+- Reason: LP has an active Codex REVISE packet requiring fixture-driven DOM-state assertions, but this snapshot shows no dirty product paths and no newer Codex ACCEPT evidence; the required FE-03B verification remains unproven.
+- Next action: Implement the Codex-mandated FE-03B fixture-based DOM tests (and only minimal template correction if exposed), run git diff --check, then run the exact frontend task gate and retain full log for Codex review.
+- Avoid repeating: Do not submit another no-product-diff or mapping-free pass that relies only on a generic green gate.
+- Acceptance gates:
+  - ./scripts/frontend-task-gate.sh task-fe-03b-answer-abstention returns exit 0
+  - Codex decision is ACCEPT for task-fe-03b-answer-abstention before task closure
+  - Assertions must cover loading/disabled re-submit protection, non-abstained success DOM, explicit nonblank abstention message, exact transport error text, and clear/reset DOM recovery
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/lp-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/lp-git-diff-stat.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/lp-runtime/manifest.json`
+
+### Integration risks
+
+- Cross-stack integration confidence is reduced because neither worker snapshot includes current-run gate_summary/codex_review/checkpoint artifacts (manifest fields are null), so readiness depends on future worker evidence publication.
+- Recent imported frontend changes in shared history (rag-page component files) may intersect LP task area; LP must keep FE-03B edits minimal and evidence-mapped to avoid regressions outside scope.
+
+### Evidence limitations
+
+- RUN_DIR snapshot does not include current-run controller_state, codex_review, codex_plan, local_understanding, codegraph_reconnaissance, gate_summary, or checkpoint for either worker (null in both manifests).
+- No worker-request payloads were provided in this cycle (worker-request-manifest requests is empty).

@@ -1,32 +1,41 @@
-# PC code review (backend)
+# PC Code Review (task-06e-child-process)
 
-## Current authoritative evidence
+## Current evidence reviewed
 
-- Active backend task is `task-06e-child-process` and still `PENDING`.
-  - Evidence: `runtime/ring-agent/ring/20260805T170859Z/pc-runtime/progress.json`
-- Deterministic gate summary is green (`exit 0`).
-  - Evidence: `runtime/ring-agent/ring/20260805T170859Z/pc-runtime/gate_summary.md`
-- Current snapshot has **no Codex review artifact** for PC (`codex_review: null`, `codex_plan: null`).
-  - Evidence: `runtime/ring-agent/ring/20260805T170859Z/pc-runtime/manifest.json`
-- No task-owned product diff is present in snapshot (`pc-git-diff-stat.txt` empty).
-  - Evidence: `runtime/ring-agent/ring/20260805T170859Z/pc-git-diff-stat.txt`
+- `pc-runtime/progress.json`: active task is `task-06e-child-process` and still `PENDING`.
+- `pc-runtime/codex-qwen3-extra-instructions.md`: Codex decision is `REVISE` with a mandatory bounded correction packet.
+- `pc-git-status.txt` + `pc-git-diff-stat.txt`: only one modified file with just **2 insertions** in `TestChildApplicationContextInitializer.java`.
+- `pc-runtime/manifest.json`: no current-run `gate_summary`, `codex_review`, `checkpoint`, or `local_understanding` artifacts published in this snapshot.
 
 ## First current defect
 
-The first blocking defect is **missing Codex closure evidence** for a still-pending task with an already green gate. Without an ACCEPT/REVISE decision tied to current gate evidence, task status cannot advance safely.
+The current PC state is a **partially applied REVISE** with no proof of closure. The Codex packet requires a full mechanism shift (test SPI registration and assignable service replacement sequencing), but the visible diff is minimal and isolated. That is insufficient evidence that the full correction packet was implemented and revalidated.
 
-## Bounded next action for one worker pass
+## Bounded next action (one worker pass)
 
-1. Run a single backend review pass against the existing gate-green `task-06e-child-process` evidence.
-2. Obtain and persist Codex decision (`ACCEPT` or `REVISE`) for this exact task snapshot.
-3. Only if `REVISE`, execute the minimal correction constrained to the existing packet scope.
+1. Complete the full Codex packet for `task-06e-child-process` strictly in test-only scope:
+   - process IT,
+   - one initializer,
+   - `src/test/resources/META-INF/spring.factories` (preserve existing entries),
+   - helper cleanup adjustments.
+2. Remove unsupported `-Dcontext.initializer.classes` path and rely on test-classpath SPI loading.
+3. Ensure replacement bean is assignable to `KnowledgeIngestionService` and installed at the required lifecycle timing (post-definition registration, pre-singleton creation), while keeping real orchestration active.
+4. Re-run exact gate once and retain diagnostics bundle.
 
-## Acceptance conditions / gates
+## Acceptance conditions
 
-- `./scripts/task-gate.sh task-06e-child-process` returns exit `0`.
-- Codex returns `ACCEPT` for `task-06e-child-process` before marking task complete.
-- If revisions are required, keep scope bounded to test-side child-process verification packet targets; do not change production scripts/services outside that packet.
+- `./scripts/task-gate.sh task-06e-child-process` exits `0`.
+- Diagnostics prove expected child-process behavior (success exit/result line and failure classification constraints from Codex packet).
+- Codex returns `ACCEPT` for `task-06e-child-process` before task closure.
 
 ## Avoid repeating
 
-- Do not run another unchanged cycle that remains gate-green but still lacks Codex decision evidence.
+- Do **not** iterate on tiny initializer-only edits without completing the mandated SPI + type-compatible replacement path and producing fresh gate/Codex evidence.
+
+## Evidence paths
+
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/pc-runtime/progress.json`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/pc-runtime/codex-qwen3-extra-instructions.md`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/pc-git-status.txt`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/pc-git-diff-stat.txt`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260805T174028Z/pc-runtime/manifest.json`
