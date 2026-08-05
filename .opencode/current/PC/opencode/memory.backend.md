@@ -6,9 +6,9 @@
 - Run: 20260805T205254Z.
 - Last accepted task: task-06e-child-process.
 - Active task: task-06f-ingestion-validation.
-- Current attempt: 1.
-- Latest exact gate: not run; exit=unknown.
-- Latest Codex decision: pending.
+- Current attempt: 2.
+- Latest exact gate: task-gate; exit=2.
+- Latest Codex decision: REVISE.
 - Checkpoint: none; head=not recorded.
 - Accepted: task-01-base, task-02-ingestion, task-03-pgvector, task-04-rag, task-05-rag-api, task-06-production-ingestion-cli, task-06b-cli-contract, task-06c-spring-lifecycle, task-06d-failure-classification, task-06e-child-process.
 - Remaining: task-06f-ingestion-validation, task-07-populate-production-rag, task-08-rag-semantic-evaluation, task-09-production-smoke.
@@ -16,7 +16,7 @@
 
 ## Files currently owned or edited
 
-- No task-owned dirty product path at the latest snapshot.
+- `src/test/resources/application.yml`
 
 ## Demonstrated by current evidence
 
@@ -24,15 +24,21 @@
 
 ## Still unproven or below expectations
 
-- Complete the full deterministic production-ingestion CLI validation.
+- Treat current gate exit 2 as a deterministic whitespace-preflight failure proven by the current untruncated output; do not infer test behavior from it.
+- Do not add an unnecessary profile document or alter Java tests. Keep the correction bounded to test configuration plus sanitation of controller-generated Markdown.
+- The controller/collector must publish Markdown without trailing whitespace so its durable artifacts cannot invalidate the mandatory repository-wide `git diff --check` preflight.
+- After preflight is clean, require the full exact gate—not focused or generic Maven success—to prove CLI, ingestion, pgvector, RAG, and HTTP tests together.
 
 ## Approaches not to repeat
 
-- Do not repeat an unchanged failing action without new evidence.
+- Treat current gate exit 2 as a deterministic whitespace-preflight failure proven by the current untruncated output; do not infer test behavior from it.
+- Do not add an unnecessary profile document or alter Java tests. Keep the correction bounded to test configuration plus sanitation of controller-generated Markdown.
+- The controller/collector must publish Markdown without trailing whitespace so its durable artifacts cannot invalidate the mandatory repository-wide `git diff --check` preflight.
+- After preflight is clean, require the full exact gate—not focused or generic Maven success—to prove CLI, ingestion, pgvector, RAG, and HTTP tests together.
 
 ## Next exact action
 
-Review the exact gate evidence and make one coherent, task-scoped repair.
+Sanitize trailing whitespace in the controller-published Markdown artifacts, remove only `PgVectorStoreAutoConfiguration` from the test configuration exclusions while retaining Flyway enabled and the JDBC metrics exclusion, then rerun `./scripts/task-gate.sh task-06f-ingestion-validation` from a clean `target/`.
 
 ## Fixed decisions
 
