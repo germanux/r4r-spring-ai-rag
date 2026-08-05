@@ -1,20 +1,21 @@
-.rag-container{max-width:800px;margin:0 auto;padding:20px;font-family:Arial,sans-serif}
-.rag-container h1{text-align:center;color:#333;margin-bottom:30px}
-.question-form{margin-bottom:30px}
-.form-group{margin-bottom:15px}
-.form-group label{display:block;margin-bottom:5px;font-weight:bold;color:#555}
-.form-group .question-input{width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;font-size:16px;resize:vertical}
-.form-group .question-input:focus{outline:none;border-color:#007bff}
-.form-errors{margin-top:5px;color:#dc3545;font-size:14px}
-.submit-button{background-color:#007bff;color:white;padding:12px 24px;border:none;border-radius:4px;font-size:16px;cursor:pointer}
-.submit-button:hover:not([disabled]){background-color:#0056b3}
-.submit-button[disabled]{background-color:#6c757d;cursor:not-allowed}
-.answer-content{background-color:#f8f9fa;border:1px solid #e9ecef;border-radius:4px;padding:15px;margin-bottom:20px}
-.citations-section{margin-top:20px}
-.citations-section h4{color:#333;margin-bottom:10px}
-.citation-list{padding-left:20px}
-.citation-item{margin-bottom:8px;line-height:1.4}
-.citation-item .citation-ordinal{font-weight:bold;margin-right:5px}
-.citation-item .citation-source{font-style:italic;margin-right:5px}
-.clear-button{background-color:#6c757d;color:white;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;margin-top:10px}
-.clear-button:hover{background-color:#545b62}
+.rag-container { max-width: 800px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif; }
+.rag-container h1 { text-align: center; color: #333; margin-bottom: 30px; }
+.question-form { margin-bottom: 30px; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: 700; color: #555; }
+.question-input { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #767676; border-radius: 4px; font: inherit; resize: vertical; }
+.question-input:focus { outline: 2px solid #007bff; outline-offset: 1px; }
+.form-hint { margin-top: 5px; color: #555; font-size: 14px; }
+.form-errors { margin-top: 5px; color: #b00020; font-size: 14px; }
+.submit-button, .clear-button { color: #fff; border: 0; border-radius: 4px; cursor: pointer; font: inherit; }
+.submit-button { padding: 12px 24px; background: #0069d9; }
+.submit-button:hover:not([disabled]) { background: #0056b3; }
+.submit-button[disabled] { background: #6c757d; cursor: not-allowed; }
+.answer-content { padding: 15px; margin-bottom: 20px; border: 1px solid #e0e0e0; border-radius: 4px; background: #f8f9fa; white-space: pre-wrap; overflow-wrap: anywhere; }
+.citations-section { margin-top: 20px; }
+.citation-list { padding: 0; list-style: none; }
+.citation-item { margin-bottom: 8px; line-height: 1.4; }
+.citation-ordinal { margin-right: 5px; font-weight: 700; }
+.citation-source { margin-right: 5px; font-style: italic; }
+.clear-button { padding: 8px 16px; margin-top: 10px; background: #6c757d; }
+.clear-button:hover { background: #545b62; }
