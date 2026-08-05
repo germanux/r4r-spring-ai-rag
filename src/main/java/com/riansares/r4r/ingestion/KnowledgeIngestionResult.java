@@ -1,7 +1,5 @@
 package com.riansares.r4r.ingestion;
 
-import java.util.Objects;
-
 /**
  * Immutable result of a knowledge ingestion operation.
  *
