@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "queue_id": "frontend-lp",
+  "phase": "frontend",
+  "worker": "LP",
+  "source_plan": ".opencode/task-plan.frontend.json",
+  "tasks": [
+    {
+      "id": "task-fe-03-rag-ui",
+      "command": ".opencode/commands/task-fe-03-rag-ui.md",
+      "objective": "Stabilize and commit the current compilable Angular RAG page baseline.",
+      "allowed_paths": ["frontend/**", "docs/frontend/**"],
+      "gate": ["./scripts/frontend-task-gate.sh", "task-fe-03-rag-ui"],
+      "commit_message": "chore(rag-ui): checkpoint compilable RAG page baseline"
+    },
+    {
+      "id": "task-fe-03b-answer-abstention",
+      "command": ".opencode/commands/task-fe-03b-answer-abstention.md",
+      "objective": "Render deterministic answer, abstention and error states.",
+      "allowed_paths": ["frontend/**", "docs/frontend/**"],
+      "gate": ["./scripts/frontend-task-gate.sh", "task-fe-03b-answer-abstention"],
+      "commit_message": "feat(rag-ui): render answer and abstention states"
+    },
+    {
+      "id": "task-fe-03c-citations",
+      "command": ".opencode/commands/task-fe-03c-citations.md",
+      "objective": "Render ordered structured citations without parsing model text.",
+      "allowed_paths": ["frontend/**", "docs/frontend/**"],
+      "gate": ["./scripts/frontend-task-gate.sh", "task-fe-03c-citations"],
+      "commit_message": "feat(rag-ui): render structured citations"
+    }
+  ],
+  "final_gate": ["./scripts/frontend-task-gate.sh", "all"]
+}

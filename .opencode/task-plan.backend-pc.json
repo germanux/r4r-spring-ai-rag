@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "queue_id": "backend-pc",
+  "phase": "backend",
+  "worker": "PC",
+  "source_plan": ".opencode/task-plan.backend.json",
+  "tasks": [
+    {
+      "id": "task-06e-child-process",
+      "command": ".opencode/commands/task-06e-child-process.md",
+      "objective": "Execute and verify the real production CLI as a bounded child JVM.",
+      "allowed_paths": ["pom.xml", "src/main/**", "src/test/**", "docs/backend/**", ".env.example"],
+      "gate": ["./scripts/task-gate.sh", "task-06e-child-process"],
+      "commit_message": "test(ingestion): verify production CLI process"
+    },
+    {
+      "id": "task-07-populate-production-rag",
+      "command": ".opencode/commands/task-07-populate-production-rag.md",
+      "objective": "Populate the persistent PC pgvector database and prove idempotent ingestion.",
+      "allowed_paths": ["pom.xml", "src/main/**", "src/test/**", "docs/backend/**"],
+      "gate": ["bash", "-lc", "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"],
+      "commit_message": "feat(task-07): populate and verify production RAG corpus"
+    },
+    {
+      "id": "task-09-production-smoke",
+      "command": ".opencode/commands/task-09-production-smoke.md",
+      "objective": "Validate the packaged production RAG through real HTTP smoke acceptance.",
+      "allowed_paths": ["pom.xml", "src/main/**", "src/test/**", "docs/backend/**"],
+      "gate": ["bash", "-lc", "rm -rf target && ./scripts/task-gate.sh all && mvn -Dtest=RagProductionSmokeTest -DfailIfNoTests=true test"],
+      "commit_message": "test(task-09): verify packaged production RAG"
+    }
+  ],
+  "final_gate": ["./scripts/task-gate.sh", "all"]
+}
