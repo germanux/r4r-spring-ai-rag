@@ -2867,7 +2867,7 @@ next instruction packet.
             "- Spring AI abstractions; no handwritten Ollama HTTP client.",
             "- Every red gate retains complete diagnostics for Codex.",
             "- CodeGraph is focused retrieval evidence, not authority to expand task scope.",
-            "- Runtime evidence stays under `runtime/runs/`; the deterministic controller publishes only after a validated commit.",
+            "- Markdown/JSON activity is published under `.opencode/current/{ring,PC,LP}/`; raw runtime is never committed directly.",
             "",
             "## Task ledger",
             "",
@@ -2881,17 +2881,64 @@ next instruction packet.
         self.memory_path.parent.mkdir(parents=True, exist_ok=True)
         self.memory_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
+    @staticmethod
+    def _versioned_trace_patterns() -> tuple[str, ...]:
+        """Return the durable per-agent artifacts that belong in Git history."""
+        return (
+            ".opencode/current/**",
+        )
+
+    def _publish_current_artifacts(self) -> None:
+        """Materialize this worker's Markdown/JSON record before a Git commit."""
+        collector = self.repo / "scripts" / "collect-agent-artifacts.py"
+        if not collector.is_file():
+            raise RuntimeError(f"Agent artifact collector not found: {collector}")
+        worker = self.worker_id.upper()
+        agent = {"RING": "ring", "PC": "PC", "LP": "LP"}.get(worker)
+        if agent is None:
+            raise RuntimeError(f"Unsupported R4R worker id for artifact collection: {self.worker_id}")
+        collected = run_command(
+            (
+                sys.executable,
+                str(collector),
+                "--repo",
+                str(self.repo),
+                "--agent",
+                agent,
+                "--worker-id",
+                worker,
+            ),
+            self.repo,
+        )
+        if collected.exit_code != 0:
+            raise RuntimeError(
+                "Unable to publish permanent agent artifacts:\n"
+                + collected.stdout
+                + collected.stderr
+            )
+
     def _commit_if_needed(
         self,
         message: str,
         allowed_patterns: Sequence[str] | None = None,
     ) -> str | None:
+        if allowed_patterns is not None:
+            allowed_patterns = (
+                *allowed_patterns,
+                *self._versioned_trace_patterns(),
+            )
         # Serialize only the short add/check/commit section with every R4R Git
         # automation. Model work and gates remain concurrent. Manual Git commands
         # do not honor this cooperative lock.
         committed_head: str | None = None
         with exclusive_file_lock(self.git_commit_lock_path):
-            changed = git_changed_paths(self.repo)
+            self._publish_current_artifacts()
+            # Raw runtime is deliberately visible but is never committed directly.
+            # Its Markdown/JSON record is committed from .opencode/current instead.
+            changed = tuple(
+                path for path in git_changed_paths(self.repo)
+                if not path.startswith("runtime/")
+            )
             if allowed_patterns is None:
                 selected = changed
             else:

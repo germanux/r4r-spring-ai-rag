@@ -98,3 +98,8 @@ repository rewrite.
 - Never recursively search generated or runtime-heavy directories:
   `frontend/node_modules/**`, `frontend/dist/**`, `frontend/.angular/**`,
   `node_modules/**`, `runtime/**` and `.r4r/**`.
+- `runtime/` is visible working state and is not globally ignored. The deterministic
+  collector copies every Markdown/JSON agent artifact into the durable, versioned
+  `.opencode/current/{ring,PC,LP}/` namespace while preserving its source path.
+- Inspect only the exact task/run needed. Binary bundles, patches, PID/lock files and
+  bulk text logs are not copied into `.opencode/current/`.

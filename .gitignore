@@ -20,13 +20,6 @@ __pycache__/
 .ruff_cache/
 build/
 dist/
-# Generated agent runtime
-/runtime/runs/*
-!/runtime/runs/.gitkeep
-/runtime/locks/*
-!/runtime/locks/.gitkeep
-/runtime/control/*
-!/runtime/control/.gitkeep
 # PostgreSQL runtime data and local backups
 /docker-postgres/data/app/*
 !/docker-postgres/data/app/.gitkeep
@@ -51,8 +44,6 @@ patches-applied/
 /r4r-self-recovery/
 /install-r4r-agent-update-v*.sh
 /install-r4r-agent-hotfix-v*.sh
-runtime/installer/
-runtime/
 /.opencode/progress.json
 # BEGIN R4R stable agent repair artifacts
 /r4r-*.zip
@@ -80,7 +71,7 @@ runtime/
 /frontend/test-results/
 /frontend/playwright-report/
 /.opencode/progress.*.json
-/.opencode/memory.*.md
+# Queue source state is ignored here; its durable copy lives in .opencode/current/.
 
 progress.json
 /r4r-dual-agent-code-intelligence-v*/

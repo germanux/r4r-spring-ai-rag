@@ -38,7 +38,6 @@ DEFAULT_BRANCH = "agent/r4r-google-drive"
 
 EXCLUDED_DIRS = {
     ".git",
-    "runtime",
     "target",
     "node_modules",
     ".venv",
@@ -102,6 +101,10 @@ def secret_env_name(name: str) -> bool:
 def excluded_relative(relative: Path) -> bool:
     if not relative.parts:
         return True
+    # Raw runtime stays machine-local. The deterministic artifact collector
+    # publishes the durable Markdown/JSON view under .opencode/current/.
+    if relative.parts[0] == "runtime":
+        return True
     if any(part in EXCLUDED_DIRS for part in relative.parts[:-1]):
         return True
     name = relative.name
@@ -146,7 +149,7 @@ def enumerate_source(source: Path, destination: Path) -> dict[str, str]:
 
 
 def enumerate_destination(destination: Path) -> dict[str, str]:
-    """Hash existing versioned files only; runtime/untracked files never export."""
+    """Hash tracked files, excluding raw machine-local runtime state."""
     tracked = run(["git", "ls-files", "-z"], cwd=destination).stdout.split("\0")
     result: dict[str, str] = {}
     for value in tracked:
