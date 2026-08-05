@@ -1,29 +1,28 @@
-# Backend ↔ Frontend handoff (RUN 20260805T222913Z)
+# Backend ↔ Frontend handoff (run 20260805T225504Z)
 
-## Current queue posture
+## Current backend state relevant to frontend
 
-- **PC/backend:** `task-06f-ingestion-validation` is still PENDING and currently blocked first by PC worktree conflict hygiene (`UU` evidence files), then by outstanding bounded REVISE corrections.
-- **LP/frontend:** `task-fe-03c-citations` is still PENDING with Codex REVISE requirements not yet proven in rendered DOM tests.
+- Backend PC task `task-06f-ingestion-validation` has a green deterministic gate and checkpoint evidence.
+- Backend task is **not closed** yet because Codex acceptance is not present in this snapshot.
+- No new backend API contract change is evidenced in this run snapshot.
 
-## Ownership boundaries to keep disjoint
+## Current frontend state relevant to backend
 
-- **PC writes only backend scope** (not `frontend/**`).
-- **LP writes only frontend scope** (not backend Java/test resources).
-- Ring does not direct either worker to write Git history or bypass exact gates.
+- Frontend LP task `task-fe-03c-citations` remains pending under Codex `REVISE`.
+- Required work is test-proof completion in spec assertions, not backend contract expansion.
 
-## Cross-stack integration risks right now
+## Integration risk assessment
 
-1. **False-green risk:** LP has a generic green gate summary while FE-03C proof remains incomplete.
-2. **Preflight hygiene risk:** PC merge-conflicted artifact files can block deterministic `git diff --check` and hide true backend behavior.
-3. **Artifact churn risk:** large `.opencode/current/**` changes across merges may reintroduce whitespace/conflict noise in both queues.
+1. **Process risk:** backend gate-green may be mistaken for task closure; closure still requires Codex `ACCEPT`.
+2. **Verification risk:** frontend may pass generic gate paths while still missing FE-03C contract assertions.
+3. **Coordination risk:** parallel activity could drift if LP changes component logic instead of bounded spec-only verification.
 
-## Ordered handoff actions
+## Bounded cross-stack next actions
 
-1. **PC first correction pass:** clear unmerged evidence files; then apply bounded `application.yml` REVISE fix; rerun exact backend gate.
-2. **LP correction pass in parallel-safe scope:** implement the three required FE-03C DOM assertions and rerun exact frontend gate.
-3. Reassess integration only after both exact gates are green and both Codex decisions are `ACCEPT`.
+- **PC lane:** hold until Codex decision on existing checkpoint; only run a corrective pass if Codex requires it.
+- **LP lane:** complete FE-03C rendered-DOM assertions in `rag-page.component.spec.ts` and rerun exact FE gate.
 
-## Acceptance checkpoints for next coordination cycle
+## Cross-stack acceptance conditions
 
-- PC evidence includes: clean preflight + exact gate exit `0` + Codex `ACCEPT`.
-- LP evidence includes: FE-03C DOM proof + exact gate exit `0` + Codex `ACCEPT`.
+- Backend `task-06f-ingestion-validation`: exact gate green evidence + Codex `ACCEPT`.
+- Frontend `task-fe-03c-citations`: exact FE gate green evidence + Codex `ACCEPT` with required DOM assertions proven.
