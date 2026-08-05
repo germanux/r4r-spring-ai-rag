@@ -9,6 +9,8 @@ set -Eeuo pipefail
 #   * centralize each source branch in agent/integration;
 #   * after each source round, attempt to propagate the pinned hub commit to
 #     every worktree, including active and dirty ones;
+#   * before collection, publish Ring/PC/LP Markdown and JSON activity under
+#     .opencode/current/{ring,PC,LP} and commit only that permanent snapshot;
 #   * push the hub and every updated branch;
 #   * preserve staged, unstaged and untracked work exactly as Git found it.
 #
@@ -76,6 +78,7 @@ Default: complete automatic hot-sync pass
   - fetches and centralizes committed source refs in agent/integration;
   - attempts propagation to active and dirty worktrees;
   - preserves staged, unstaged and untracked work without stashing or unstaging;
+  - preserves every structured Ring/PC/LP artifact in .opencode/current;
   - defers only when Git rejects a merge or another Git operation is pending.
 
 Options:
@@ -152,6 +155,7 @@ COMMON_DIR="$(realpath -e "$COMMON_DIR")"
 LOG_ROOT="${R4R_BRANCH_SYNC_RUNTIME_ROOT:-$DEVELOPMENT_ROOT/.r4r-runtime/branch-sync}"
 ALERT_ROOT="$LOG_ROOT/alerts"
 BACKUP_RUN_ROOT="$LOG_ROOT/backups/$SYNC_STAMP"
+ARTIFACT_COLLECTOR="${R4R_ARTIFACT_COLLECTOR:-$REPOSITORY/scripts/collect-agent-artifacts.py}"
 mkdir -p "$LOG_ROOT/conflicts" "$ALERT_ROOT" "$BACKUP_RUN_ROOT"
 
 # One scheduler lock plus one shared Git transaction lock used by workers and Drive.
@@ -326,7 +330,7 @@ write_conflict_report() {
     unmerged_paths "$worktree" || true
     echo
     echo 'Git status:'
-    git -C "$worktree" status --short --untracked-files=all || true
+    visible_status "$worktree" || true
     echo
     echo 'Operation output:'
     [[ -f "$log_file" ]] && sed -n '1,260p' "$log_file" || true
@@ -431,14 +435,14 @@ worktree_is_active() {
 
 snapshot_worktree_state() {
   local branch="$1" path="$2" destination index_path
-  [[ -n "$(git -C "$path" status --porcelain=v1 --untracked-files=all)" ]] || return 0
+  [[ -n "$(visible_status "$path")" ]] || return 0
   destination="$BACKUP_RUN_ROOT/state-$(sanitize "$branch")"
   mkdir -p "$destination"
-  git -C "$path" status --porcelain=v1 --untracked-files=all >"$destination/status.txt"
-  git -C "$path" diff --binary >"$destination/worktree.patch"
-  git -C "$path" diff --cached --binary >"$destination/index.patch"
-  git -C "$path" ls-files --stage -z >"$destination/index.entries"
-  git -C "$path" ls-files --others --exclude-standard -z >"$destination/untracked.list"
+  visible_status "$path" >"$destination/status.txt"
+  git -C "$path" diff --binary -- . ':(exclude)runtime/**' >"$destination/worktree.patch"
+  git -C "$path" diff --cached --binary -- . ':(exclude)runtime/**' >"$destination/index.patch"
+  git -C "$path" ls-files --stage -z -- . ':(exclude)runtime/**' >"$destination/index.entries"
+  git -C "$path" ls-files --others --exclude-standard -z -- . ':(exclude)runtime/**' >"$destination/untracked.list"
   if [[ -s "$destination/untracked.list" ]]; then
     tar -C "$path" --null -T "$destination/untracked.list" -czf "$destination/untracked.tar.gz"
   fi
@@ -458,17 +462,41 @@ snapshot_worktree_state() {
 state_fingerprint() {
   local path="$1"
   {
-    git -C "$path" status --porcelain=v1 -z --untracked-files=all
-    git -C "$path" diff --binary
-    git -C "$path" diff --cached --binary
-    git -C "$path" ls-files --stage -z
-    git -C "$path" ls-files --others --exclude-standard -z |
+    git -C "$path" status --porcelain=v1 -z --untracked-files=all -- . ':(exclude)runtime/**'
+    git -C "$path" diff --binary -- . ':(exclude)runtime/**'
+    git -C "$path" diff --cached --binary -- . ':(exclude)runtime/**'
+    git -C "$path" ls-files --stage -z -- . ':(exclude)runtime/**'
+    git -C "$path" ls-files --others --exclude-standard -z -- . ':(exclude)runtime/**' |
       while IFS= read -r -d '' file; do
         printf '%s\0' "$file"
         stat --printf='%f %s\0' -- "$path/$file"
         [[ -f "$path/$file" ]] && sha256sum -- "$path/$file" || true
       done
   } | sha256sum | awk '{print $1}'
+}
+
+visible_status() {
+  git -C "$1" status --porcelain=v1 --untracked-files=all -- . ':(exclude)runtime/**'
+}
+
+collect_agent_artifacts() {
+  local path="$1" agent="$2" worker="$3" branch
+  [[ -n "$path" && -d "$path" ]] || { warn "$agent: worktree unavailable; artifact collection skipped"; return 0; }
+  [[ -f "$ARTIFACT_COLLECTOR" ]] || die "artifact collector not found: $ARTIFACT_COLLECTOR"
+  if merge_in_progress "$path" || [[ -n "$(unmerged_paths "$path" || true)" ]]; then
+    warn "$agent: Git operation pending; artifact collection deferred"
+    return 0
+  fi
+  branch="$(git -C "$path" branch --show-current)"
+  if "$DRY_RUN"; then
+    log "DRY-RUN: collect $agent Markdown/JSON artifacts from $branch"
+    return 0
+  fi
+  python3 "$ARTIFACT_COLLECTOR" \
+    --repo "$path" \
+    --agent "$agent" \
+    --worker-id "$worker" \
+    --commit
 }
 
 collect_ref_into_hub() {
@@ -541,7 +569,7 @@ propagate_branch() {
     remove_temporary_worktree "$path"
     return 0
   fi
-  dirty="$(git -C "$path" status --porcelain=v1 --untracked-files=all)"
+  dirty="$(visible_status "$path")"
   active=false
   worktree_is_active "$path" && active=true
   [[ -z "$dirty" ]] || snapshot_worktree_state "$branch" "$path"
@@ -683,7 +711,14 @@ while IFS=$'\t' read -r branch path; do
   fi
 done < <(all_worktree_records)
 
-[[ -z "$(git -C "$INTEGRATION_WORKTREE" status --porcelain=v1 --untracked-files=all)" ]] \
+# Every propagation pass first publishes each model/controller transcript into
+# its own durable namespace. The commits are then collected and propagated by
+# the normal hub flow below.
+collect_agent_artifacts "$RING_WORKTREE" ring RING
+collect_agent_artifacts "$PC_WORKTREE" PC PC
+collect_agent_artifacts "$LP_WORKTREE" LP LP
+
+[[ -z "$(visible_status "$INTEGRATION_WORKTREE")" ]] \
   || die "integration worktree is dirty; refusing to mix synchronization changes"
 
 # Avoid interrupting agents every three minutes when every branch already converged.

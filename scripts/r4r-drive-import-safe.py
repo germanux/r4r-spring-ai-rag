@@ -49,18 +49,6 @@ EXCLUDED_DIRS = {
     "__pycache__",
 }
 EXCLUDED_SUFFIXES = {".log", ".pid", ".lock", ".pyc", ".pyo"}
-RUNTIME_TRACE_DIRECTORIES = {"decisions", "evidence"}
-
-
-def included_runtime_trace(relative: Path) -> bool:
-    """Allow only concise Markdown reasoning reports from generated runtime."""
-    parts = relative.parts
-    return (
-        len(parts) >= 5
-        and parts[:2] == ("runtime", "runs")
-        and relative.suffix.lower() == ".md"
-        and any(part in RUNTIME_TRACE_DIRECTORIES for part in parts[2:-1])
-    )
 
 
 class ImportFailure(RuntimeError):
@@ -113,8 +101,10 @@ def secret_env_name(name: str) -> bool:
 def excluded_relative(relative: Path) -> bool:
     if not relative.parts:
         return True
+    # Raw runtime stays machine-local. The deterministic artifact collector
+    # publishes the durable Markdown/JSON view under .opencode/current/.
     if relative.parts[0] == "runtime":
-        return not included_runtime_trace(relative)
+        return True
     if any(part in EXCLUDED_DIRS for part in relative.parts[:-1]):
         return True
     name = relative.name
@@ -159,7 +149,7 @@ def enumerate_source(source: Path, destination: Path) -> dict[str, str]:
 
 
 def enumerate_destination(destination: Path) -> dict[str, str]:
-    """Hash tracked files; only allowlisted runtime Markdown traces may export."""
+    """Hash tracked files, excluding raw machine-local runtime state."""
     tracked = run(["git", "ls-files", "-z"], cwd=destination).stdout.split("\0")
     result: dict[str, str] = {}
     for value in tracked:
@@ -540,4 +530,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
