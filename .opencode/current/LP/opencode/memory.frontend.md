@@ -3,10 +3,10 @@
 ## Current state
 
 - Worker: LP.
-- Run: 20260805T174027Z.
+- Run: 20260805T181511Z.
 - Last accepted task: task-fe-03-rag-ui.
 - Active task: task-fe-03b-answer-abstention.
-- Current attempt: 2.
+- Current attempt: 1.
 - Latest exact gate: not run; exit=unknown.
 - Latest Codex decision: pending.
 - Checkpoint: none; head=not recorded.
@@ -16,7 +16,7 @@
 
 ## Files currently owned or edited
 
-- No task-owned dirty product path at the latest snapshot.
+- `frontend/src/app/features/rag/rag-page.component.html`
 
 ## Demonstrated by current evidence
 
@@ -24,21 +24,15 @@
 
 ## Still unproven or below expectations
 
-- The local edit session did not complete; no acceptance claim can be made from it.
+- Render deterministic answer, abstention and error states.
 
 ## Approaches not to repeat
 
-- Do not repeat the stopped OpenCode session without changing the plan; stop_reason=idle-timeout.
+- Do not repeat an unchanged failing action without new evidence.
 
 ## Next exact action
 
-OpenCode edit failed transiently with exit 124. Start a fresh local session, preserve the current worktree, diagnose the concrete error below and continue the same active task. Do not revert already validated changes.
-
-Previous action:
 Resume the unfinished revision by applying the complete CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS included below. Do not wait for another Codex review before making the requested correction.
-
-Failure tail:
-[r4r-watchdog] stopped OpenCode session: reason=idle-timeout elapsed=1069.5s
 
 ## Fixed decisions
 
@@ -50,7 +44,7 @@ Failure tail:
 - Spring AI abstractions; no handwritten Ollama HTTP client.
 - Every red gate retains complete diagnostics for Codex.
 - CodeGraph is focused retrieval evidence, not authority to expand task scope.
-- Runtime evidence stays under `runtime/runs/`; the deterministic controller publishes only after a validated commit.
+- Markdown/JSON activity is published under `.opencode/current/{ring,PC,LP}/`; raw runtime is never committed directly.
 
 ## Task ledger
 
