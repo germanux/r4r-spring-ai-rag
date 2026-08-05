@@ -1,36 +1,46 @@
-# PC backend review (RUN_ID 20260805T205823Z)
+# PC code review (backend)
 
-## Current evidence reviewed
+## Current task and status
 
-- `pc-runtime/progress.json`: active task is `task-06f-ingestion-validation` (PENDING).
-- `pc-runtime/gate_summary.md`: latest packaged gate for task-06f is `test-failure`, exit `1`.
-- `pc-runtime/manifest.json`: gate summary source path maps to `task-06f-ingestion-validation/attempt-01`.
-- `worker-requests/PC.json`: prior task `task-06e-child-process` is already `codex_decision=ACCEPT` and should not be reworked.
+- Active task: `task-06f-ingestion-validation` (`PENDING`).
+- Latest request: `codex-revise` with `gate_exit: 2`.
+- No new acceptance has been demonstrated for 06f.
+
+Evidence:
+
+- `runtime/ring-agent/ring/20260805T212753Z/worker-requests/PC.json`
+- `runtime/ring-agent/ring/20260805T212753Z/pc-runtime/progress.json`
+- `runtime/ring-agent/ring/20260805T212753Z/pc-runtime/memory.md`
 
 ## First current defect
 
-The first current backend defect is not in 06e; it is the active 06f gate failure. The packaged gate summary names failing/errored tests:
+The pass did not complete the deterministic validation loop because the latest run is in REVISE with preflight/gate failure (`exit 2`). The correction packet explicitly requires two bounded fixes before rerunning the exact gate:
 
-- `src/test/java/com/riansares/r4r/db/PostgresBaselineIT.java`
-- `src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionCliTest.java`
-- `src/test/java/com/riansares/r4r/rag/api/RagQueryControllerTest.java`
+1. sanitize trailing whitespace in controller-published Markdown artifacts; and
+2. in `src/test/resources/application.yml`, remove **only** `PgVectorStoreAutoConfiguration` from exclusions while preserving Flyway enablement and the JDBC metrics exclusion.
 
-This is sufficient to prioritize correction on task-06f before any new backend scope.
+This means the first defect is not new feature behavior; it is a blocked validation cycle caused by hygiene/config mismatch against codified constraints.
 
-## Bounded next action for one PC pass
+Evidence:
 
-1. Run exact gate: `./scripts/task-gate.sh task-06f-ingestion-validation`.
-2. From `gate-full.log`, capture the **first current failing assertion/error**.
-3. Apply one coherent backend fix scoped to that failure.
-4. Re-run the same gate.
+- `runtime/ring-agent/ring/20260805T212753Z/worker-requests/PC.json` (authoritative next action)
+- `runtime/ring-agent/ring/20260805T212753Z/pc-git-diff-stat.txt` (only product path changed: `src/test/resources/application.yml`)
+- `runtime/ring-agent/ring/20260805T212753Z/pc-runtime/memory.md` (explicit avoid-repeat guidance)
+
+## Bounded next action for one worker pass
+
+1. Apply the REVISE packet exactly (no Java test rewrites, no scope expansion).
+2. Run `git diff --check` and clear any whitespace errors.
+3. Run exact gate: `./scripts/task-gate.sh task-06f-ingestion-validation` from clean `target/`.
+4. If red, capture first failing assertion and keep full diagnostics for Codex.
 
 ## Acceptance conditions
 
-- Gate must pass: `./scripts/task-gate.sh task-06f-ingestion-validation` exit `0`.
-- Task is complete only when Codex returns `ACCEPT` for task-06f.
-- No unrelated task advancement during this repair pass.
+- `git diff --check` clean.
+- `./scripts/task-gate.sh task-06f-ingestion-validation` exits `0`.
+- Codex decision for task 06f is `ACCEPT`.
 
 ## Avoid repeating
 
-- Do not treat task-06e acceptance/checkpoint as proof for task-06f.
-- Do not attempt broad multi-test rewrites before isolating the first failing assertion from current full gate evidence.
+- Do not treat exit `2` as proof of backend logic failure and jump into broad test refactors.
+- Do not bypass sanitation/preflight and spend another full gate cycle on preventable whitespace failures.

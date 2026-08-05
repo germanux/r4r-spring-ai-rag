@@ -1,35 +1,33 @@
-# Global coordination summary (RUN_ID 20260805T205823Z)
+# Global summary (run 20260805T212753Z)
 
-## Outcome
+## Overall status
 
-Overall status: **READY**.
+**READY** — both queues have clear bounded next actions with evidence-backed directives.
 
-- No blocking policy violation found in current bounded evidence.
-- Both queues have clear bounded next actions.
+## What is currently true
 
-## What is proven now
+- **PC/backend** is active on `task-06f-ingestion-validation` and currently blocked by a Codex `REVISE` pass with `gate_exit=2`; no ACCEPT for task 06f exists yet.
+- **LP/frontend** is active on `task-fe-03c-citations` and still `PENDING`; Codex requires additional rendered-DOM citation tests, and repeated idle-timeouts prevented completion.
 
-- PC previously achieved and accepted `task-06e-child-process` (`worker-requests/PC.json`).
-- PC active task has advanced to `task-06f-ingestion-validation` and latest packaged gate evidence for 06f is red.
-- LP active task remains `task-fe-03c-citations` and Codex requires `REVISE` with concrete DOM-test additions.
+## Prioritized next moves
 
-## First current defects selected
+1. **PC first defect correction:** apply the exact REVISE packet (whitespace sanitation + bounded application.yml exclusion fix), then rerun exact backend gate.
+2. **LP first defect correction:** implement the three missing rendered-DOM citation assertions in `rag-page.component.spec.ts`, then rerun exact FE gate.
 
-- **PC defect**: task-06f deterministic gate failure (`test-failure`, exit 1).
-- **LP defect**: missing FE-03C rendered-DOM proof despite generic green gate and no product-path completion patch in snapshot.
+## Acceptance bar (non-negotiable)
 
-## Directed next pass
+- Backend: `./scripts/task-gate.sh task-06f-ingestion-validation` exit 0 + Codex ACCEPT.
+- Frontend: `./scripts/frontend-task-gate.sh task-fe-03c-citations` exit 0 + Codex ACCEPT.
+- Both: `git diff --check` clean before expensive gates.
 
-- **PC**: one-pass first-failure repair for `task-06f-ingestion-validation`, then rerun exact gate.
-- **LP**: apply FE-03C codex revise packet in `rag-page.component.spec.ts`, then rerun exact gate.
+## Evidence limitations
 
-## Acceptance anchors
+- Full `gate-full.log` is not present in RUN_DIR artifacts, so this cycle does not quote first failing assertions directly.
+- LP evidence has an inconsistency between gate summary and memory; we therefore prioritize the explicit Codex REVISE packet as authoritative for next action.
 
-- PC: `./scripts/task-gate.sh task-06f-ingestion-validation` exit 0 + Codex ACCEPT.
-- LP: `./scripts/frontend-task-gate.sh task-fe-03c-citations` exit 0 + Codex ACCEPT.
+## Evidence references
 
-## Ring worktree edits this cycle
-
-- No product code or policy file edits were made.
-- Only six staged coordination artifacts were written under:
-  - `runtime/ring-agent/ring/20260805T205823Z/output/`
+- `runtime/ring-agent/ring/20260805T212753Z/worker-request-manifest.json`
+- `runtime/ring-agent/ring/20260805T212753Z/worker-requests/PC.json`
+- `runtime/ring-agent/ring/20260805T212753Z/pc-runtime/{progress.json,memory.md,gate_summary.md}`
+- `runtime/ring-agent/ring/20260805T212753Z/lp-runtime/{progress.json,memory.md,codex-qwen3-extra-instructions.md,gate_summary.md}`
