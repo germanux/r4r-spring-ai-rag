@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "active_task": null,
+  "active_task": "task-06f-ingestion-validation",
   "last_run": "20260805T205254Z",
   "tasks": [
     {
