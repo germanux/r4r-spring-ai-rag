@@ -387,6 +387,13 @@
       "target": "runtime/runs/LP/20260805T191432Z/task-fe-03c-citations/evidence/notify-initial-gate-green.json"
     },
     {
+      "bytes": 703,
+      "producer": "controller",
+      "sha256": "0bf8cd4da8228f3e1a786804cff1662f3e112907bfa153849a5c4aaf9203e70b",
+      "source": "runtime/runs/LP/20260805T203220Z/state.json",
+      "target": "runtime/runs/LP/20260805T203220Z/state.json"
+    },
+    {
       "bytes": 389,
       "producer": "controller",
       "sha256": "47a87d74b31af73178edffbc2708e420c42a4fdb42584af9c967157e97bc08c3",
@@ -406,6 +413,13 @@
       "sha256": "b0ff1747b2ef5bb5ee0c962dc0baa9f163c3ddef8c494d96141006477c428d47",
       "source": "runtime/runs/LP/20260805T203220Z/task-fe-03c-citations/attempt-01/evidence/gate-diagnostics.json",
       "target": "runtime/runs/LP/20260805T203220Z/task-fe-03c-citations/attempt-01/evidence/gate-diagnostics.json"
+    },
+    {
+      "bytes": 3310,
+      "producer": "local-llm",
+      "sha256": "032d09ed24a5b91512bacb42f7651ddda200c253928f9950b59a824e03a317cc",
+      "source": "runtime/runs/LP/20260805T203220Z/task-fe-03c-citations/attempt-01/evidence/opencode.json",
+      "target": "runtime/runs/LP/20260805T203220Z/task-fe-03c-citations/attempt-01/evidence/opencode.json"
     },
     {
       "bytes": 124,
