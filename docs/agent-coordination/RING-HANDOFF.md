@@ -1,27 +1,26 @@
 # Backend ↔ Frontend handoff
 
-## Ownership and concurrency guard
+## Current backend state relevant to frontend
 
-- **PC (backend)** remains on `task-06e-child-process`.
-- **LP (frontend)** remains on `task-fe-03c-citations`.
-- Queues are disjoint this cycle; no cross-owned file edits requested.
+- PC task `task-06e-child-process` produced a gate-green checkpoint (`pc-runtime/checkpoint.json`) and is awaiting Codex decision.
+- The checkpointed backend change is limited to `src/test/resources/META-INF/spring.factories` per current evidence.
 
-## What backend needs from frontend
+## Current frontend state relevant to backend contract
 
-Nothing blocking for this pass. LP should complete FE-03C test-evidence closure independently.
+- LP task `task-fe-03c-citations` is still pending with a Codex `REVISE` instruction focused on DOM-proof coverage for structured citation rendering.
+- LP has no task-owned dirty product file in this snapshot, so required FE-03C proof edits are still outstanding.
 
-## What frontend needs from backend
+## Integration risks
 
-Nothing immediate for FE-03C. However, backend Task 06E is still gate-failing, so later backend-dependent validation phases remain risked until PC closes 06E.
+1. FE-03C can appear healthy under a generic gate while still missing assertions that enforce backend structured citation semantics in the UI.
+2. Backend task-06e has gate evidence but not Codex acceptance; avoid assuming backend contract work is finalized until that decision lands.
 
-## Integration risks to track
+## Bounded coordination next steps
 
-1. **Backend readiness risk**: Task 06E gate is still red (exit 2), so backend progression to 06f/07+ is not yet reliable.
-2. **Frontend scope risk**: FE-03C pass should be assertion-focused; component behavior changes in this pass could introduce unnecessary regressions.
+1. **LP first:** complete the explicit FE-03C revise packet in the spec file and rerun the exact frontend gate.
+2. **PC in parallel review lane:** complete Codex review decision for checkpoint head `179ab444664901b620d59cb30e4a42cc6e93a95b` without scope growth.
 
-## Bounded cross-stack next checkpoint
+## Joint acceptance checkpoint
 
-- Wait for:
-  - PC: gate-green + Codex ACCEPT on `task-06e-child-process`.
-  - LP: gate-green + Codex ACCEPT on `task-fe-03c-citations` with the new DOM assertions.
-- After both are evidenced, reassess downstream dependency coupling.
+- LP: FE-03C gate green + Codex `ACCEPT` with rendered-DOM citation coverage confirmed.
+- PC: task-06e gate green + Codex `ACCEPT` on the current checkpoint.
