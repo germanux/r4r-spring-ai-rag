@@ -9,8 +9,9 @@ set -Eeuo pipefail
 #   * centralize each source branch in agent/integration;
 #   * after each source round, attempt to propagate the pinned hub commit to
 #     every worktree, including active and dirty ones;
-#   * before collection, publish Ring/PC/LP Markdown and JSON activity under
-#     .opencode/current/{ring,PC,LP} and commit only that permanent snapshot;
+#   * before collection, publish only explicit Ring/PC/LP current-state files under
+#     .opencode/current/{ring,PC,LP}; runtime remains ignored and task evidence stays
+#     under .ring-agent/evidence with one writer per attempt;
 #   * push the hub and every updated branch;
 #   * preserve staged, unstaged and untracked work exactly as Git found it.
 #
@@ -78,7 +79,8 @@ Default: complete automatic hot-sync pass
   - fetches and centralizes committed source refs in agent/integration;
   - attempts propagation to active and dirty worktrees;
   - preserves staged, unstaged and untracked work without stashing or unstaging;
-  - preserves every structured Ring/PC/LP artifact in .opencode/current;
+  - preserves only explicit Ring/PC/LP current-state files in .opencode/current;
+  - never copies runtime; durable task evidence remains in .ring-agent/evidence;
   - defers only when Git rejects a merge or another Git operation is pending.
 
 Options:
@@ -489,7 +491,7 @@ collect_agent_artifacts() {
   fi
   branch="$(git -C "$path" branch --show-current)"
   if "$DRY_RUN"; then
-    log "DRY-RUN: collect $agent Markdown/JSON artifacts from $branch"
+    log "DRY-RUN: curate explicit $agent current-state files from $branch"
     return 0
   fi
   python3 "$ARTIFACT_COLLECTOR" \
@@ -711,9 +713,8 @@ while IFS=$'\t' read -r branch path; do
   fi
 done < <(all_worktree_records)
 
-# Every propagation pass first publishes each model/controller transcript into
-# its own durable namespace. The commits are then collected and propagated by
-# the normal hub flow below.
+# Every propagation pass first publishes only the explicit current-state files.
+# runtime is never copied; task evidence is already durable in .ring-agent/evidence.
 collect_agent_artifacts "$RING_WORKTREE" ring RING
 collect_agent_artifacts "$PC_WORKTREE" PC PC
 collect_agent_artifacts "$LP_WORKTREE" LP LP

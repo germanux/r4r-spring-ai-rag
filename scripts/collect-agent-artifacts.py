@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Publish permanent Markdown/JSON evidence for one R4R agent.
+"""Publish only the small, explicit current-state files for one R4R agent.
 
-Raw executions remain under ``runtime/``.  This collector copies their structured
-artifacts into ``.opencode/current/{ring,PC,LP}``, preserving source-relative paths
-so evidence from different runs and attempts cannot overwrite each other.
+``runtime/`` is ephemeral and must remain wholly ignored.  Durable task evidence is
+written directly by its single owner under ``.ring-agent/evidence/``; this collector
+never scans or copies either tree.  It also removes legacy runtime copies previously
+created below ``.opencode/current/{ring,PC,LP}``.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -103,16 +105,23 @@ def single_files(repo: Path, agent: str) -> tuple[Path, ...]:
 
 
 def source_artifacts(repo: Path, agent: str, worker_id: str) -> list[Path]:
-    sources: set[Path] = set()
-    sources.update(path for path in single_files(repo, agent) if path.is_file())
-    for root in (
-        repo / "runtime" / "runs" / worker_id,
-        repo / "runtime" / "control" / worker_id,
-    ):
-        sources.update(artifact_files(root))
-    if agent == "ring":
-        sources.update(artifact_files(repo / ".ring-agent"))
-    return sorted(sources)
+    del worker_id  # Kept in the CLI and manifest for compatibility and provenance.
+    return sorted(path for path in single_files(repo, agent) if path.is_file())
+
+
+def remove_legacy_copies(target: Path) -> int:
+    """Remove generated copies that violate the durable-evidence policy."""
+    removed = 0
+    for name in ("runtime", "ring-agent"):
+        path = target / name
+        if path.is_symlink():
+            raise CollectionError(f"refusing to remove symlinked legacy artifact tree: {path}")
+        if path.is_dir():
+            shutil.rmtree(path)
+            removed += 1
+        elif path.exists():
+            raise CollectionError(f"refusing to remove non-directory legacy artifact tree: {path}")
+    return removed
 
 
 def destination_for(repo: Path, target: Path, source: Path) -> Path:
@@ -143,7 +152,7 @@ def producer_for(relative: str) -> str:
 def publish(repo: Path, agent: str, worker_id: str) -> tuple[int, Path]:
     target = repo / ".opencode" / "current" / agent
     target.mkdir(parents=True, exist_ok=True)
-    copied = 0
+    copied = remove_legacy_copies(target)
     source_by_target: dict[str, str] = {}
     for source in source_artifacts(repo, agent, worker_id):
         destination = destination_for(repo, target, source)
@@ -170,7 +179,8 @@ def publish(repo: Path, agent: str, worker_id: str) -> tuple[int, Path]:
     manifest = {
         "agent": agent,
         "artifacts": records,
-        "schema_version": 1,
+        "policy": "explicit-current-state-only; runtime-ignored; task-evidence-in-.ring-agent/evidence",
+        "schema_version": 2,
         "worker_id": worker_id,
     }
     payload = json.dumps(manifest, indent=2, ensure_ascii=False, sort_keys=True).encode("utf-8") + b"\n"
@@ -216,7 +226,7 @@ def commit_target(repo: Path, target: Path, agent: str) -> bool:
             "commit",
             "--only",
             "-m",
-            f"docs({agent}): preserve current agent evidence",
+            f"docs({agent}): curate current agent evidence",
             "--",
             relative,
         ],
