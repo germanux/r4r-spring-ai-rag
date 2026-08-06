@@ -2256,3 +2256,52 @@ Append-only ledger generated after each validated Ring cycle.
 - No codex_review artifact is present in this RUN_DIR for either PC or LP, so acceptance/revision outcomes are inferred only from request and memory summaries.
 - Only gate summaries are present in this RUN_DIR snapshot; full gate logs are referenced but not included here for direct inspection.
 - No checkpoint metadata is present for current PC/LP attempts (checkpoint_head is null).
+
+## Cycle `20260806T194134Z` â READY
+
+### PC
+
+- Decision: `HOLD`
+- Task: `task-07-populate-production-rag`
+- Reason: PC already produced a gate-green checkpoint request for task-07 (gate_exit=0), but codex_decision is still null and progress remains BLOCKED; closure cannot proceed without mandatory SURGICAL review.
+- Next action: Run one level-3 SURGICAL review-only pass on the existing task-07 checkpoint evidence and return ACCEPT or REVISE before any additional PC edit/gate loop.
+- Avoid repeating: Do not run another unchanged PC edit/gate cycle while the same task-07 request still has codex_decision=null.
+- Acceptance gates:
+  - Exact backend task-07 gate from .opencode/task-plan.backend.json (bash -lc rm -rf target && ./scripts/task-gate.sh all && ... SELECT count(*) FROM vector_store ... test rows > 0) remains authoritative.
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+  - No new PC implementation pass until SURGICAL Codex returns ACCEPT or REVISE for the current checkpoint.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/pc-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/pc-runtime/previous-ring-qwen3-directive.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP remains red on the deterministic FE-03D gate (exit=2), Codex has already returned REVISE with explicit corrective instructions, and current local changes are still unvalidated.
+- Next action: Execute one bounded level-1 correction pass in frontend/src/app/features/rag/rag-page.component.spec.ts exactly per the Codex correction packet, then run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests once with fresh consistent diagnostics.
+- Avoid repeating: Do not reintroduce synthetic/invalid tests, direct innerHTML mutation, manual loading-flag mutation, invalid RAGAnswerResult shapes, or mismatched gate diagnostics.
+- Acceptance gates:
+  - Whitespace guard: git diff --check must pass before rerunning FE-03D gate.
+  - Exact frontend gate from .opencode/task-plan.frontend.json: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/lp-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/lp-git-diff-stat.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/lp-runtime/progress.json`
+
+### Integration risks
+
+- PC task-07 currently has backend edits across ingestion service, vector store, and integration tests; accepting without SURGICAL review risks shipping unreviewed cross-file behavior changes.
+- LP FE-03D is currently failing with a large spec rewrite; proceeding without applying the Codex-prescribed minimal correction risks further divergence and repeated red gates.
+- Backend/frontend schedules can drift: backend task-07 is in review-hold while frontend task-fe-03d still requires a corrective implementation pass and later SURGICAL acceptance.
+
+### Evidence limitations
+
+- This RUN_DIR includes LP gate summary but not LP full gate log tail, so diagnosis uses controller-classified failure evidence plus Codex correction packet.
+- PC runtime snapshot includes no Codex review artifact yet (codex_review=null), so acceptance state is inferred from worker request and progress only.
+- No direct worker-runtime checkpoint hash/head was recorded for the PC request (checkpoint_head=null).

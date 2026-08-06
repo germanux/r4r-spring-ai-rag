@@ -1,37 +1,38 @@
-# PC code review (backend)
+# PC code review (Ring)
 
-## Evidence reviewed
+## Current evidence-based status
 
-- `runtime/ring-agent/ring/20260806T193633Z/worker-requests/PC.json`
-- `runtime/ring-agent/ring/20260806T193633Z/pc-runtime/progress.json`
-- `runtime/ring-agent/ring/20260806T193633Z/pc-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260806T193633Z/pc-runtime/previous-ring-qwen3-directive.json`
-- `runtime/ring-agent/ring/20260806T193633Z/pc-git-status.txt`
+- Active task: `task-07-populate-production-rag` (`pc-runtime/progress.json`).
+- Deterministic gate evidence is green for the current request (`gate_exit=0`) in `worker-requests/PC.json`.
+- Task is still marked `BLOCKED` and `codex_decision` is `null`; no Codex review artifact is present in this run (`pc-runtime/manifest.json` has `codex_review: null`).
 
-## First current defect
+## First current defect (PC queue)
 
-The current defect is **workflow-state, not demonstrated code breakage**: PC has already produced a gate-green checkpoint request for `task-07-populate-production-rag` (`gate_exit=0`), but `codex_decision` is still `null`, and task status remains `BLOCKED` in progress evidence. Under hierarchy policy, task closure is impossible before SURGICAL review returns an explicit decision.
+The queue is attempting to move forward without the required SURGICAL acceptance checkpoint. This is a process/closure defect, not a new coding defect.
 
 ## Bounded next action package
 
-- **Implementation level:** 3 (SURGICAL review lane)
-- **Assigned role:** SURGICAL Codex (`r4r-surgical-architect` / `r4r-surgical-fixer`)
+- **Implementation level:** 3 (SURGICAL review pass only)
+- **Assigned role:** SURGICAL (`r4r-surgical-architect` / `r4r-surgical-fixer`), not PC
 - **Task ID:** `task-07-populate-production-rag`
 - **Dependencies:**
-  - Existing PC checkpoint request with green gate evidence (`worker-requests/PC.json`)
-  - Closure policy from `.opencode/task-plan.hierarchy.json`
-- **allowed_paths:** read-only review of current evidence packet; no new implementation paths until review outcome
-- **Exact gate / constraint:**
-  - Keep the canonical task-07 deterministic gate defined in `.opencode/task-plan.backend.json` as the authoritative implementation gate.
-  - Enforce closure sequence: `exact-gate-green + scope-clean + surgical-accept + controller-commit`.
-- **Required SURGICAL review:** **mandatory now**; this pass must emit `ACCEPT` or `REVISE` before any further PC coding cycle.
+  - Existing PC gate-green checkpoint request already captured
+  - Mandatory reviewer policy from `.opencode/task-plan.hierarchy.json`
+- **allowed_paths:** none for this review-only pass (read-only review of existing evidence and diff)
+- **Exact gate:**
+  - Keep task authoritative gate unchanged from `.opencode/task-plan.backend.json`:
+    - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && ... SELECT count(*) FROM vector_store ... test \"$rows\" -gt 0"`
+- **Required SURGICAL review:** mandatory; must return `ACCEPT` or `REVISE` before any new PC implementation pass.
 
-## Explicit acceptance conditions
+## Acceptance conditions
 
-1. SURGICAL returns explicit disposition (`ACCEPT` or `REVISE`) for the current checkpoint evidence.
-2. If `REVISE`, next PC pass is one bounded correction tied to first evidenced defect only.
-3. If `ACCEPT`, controller can proceed with checkpoint/closure flow for the active backend task.
+1. SURGICAL Codex emits explicit `ACCEPT` or `REVISE` on the current task-07 checkpoint evidence.
+2. If `REVISE`, Ring issues exactly one new bounded PC correction pass using the first current failure.
+3. Do not run additional PC edit/gate loops while `codex_decision` remains `null` for this same gate-green request.
 
-## Avoid repeating
+## Evidence paths
 
-- Do not run another backend edit+gate cycle while this same gate-green request is still unresolved (`codex_decision=null`).
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/worker-requests/PC.json`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/pc-runtime/progress.json`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/pc-runtime/manifest.json`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/pc-runtime/previous-ring-qwen3-directive.json`

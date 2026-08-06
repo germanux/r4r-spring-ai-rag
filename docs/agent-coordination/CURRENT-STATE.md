@@ -1,46 +1,34 @@
-# Global coordination summary (run 20260806T193633Z)
+# Global coordination summary (run 20260806T194134Z)
 
 ## Snapshot
 
-- Primary evidence source: `runtime/ring-agent/ring/20260806T193633Z/**`
-- PC active task: `task-07-populate-production-rag`
-- LP active task: `task-fe-03d-dom-state-tests`
+- RUN_DIR evidence shows one new PC gate-green checkpoint request and no LP checkpoint request.
+- PC is at backend `task-07-populate-production-rag` with `gate_exit=0` but still blocked pending SURGICAL decision.
+- LP is at frontend `task-fe-03d-dom-state-tests` with deterministic gate failure (`exit=2`) and a Codex `REVISE` packet already available.
 
-## What is currently proven
+## Ring decisions
 
-1. **PC:** a gate-green checkpoint request exists for task-07 (`gate_exit=0`), with backend-scoped changed paths recorded.
-2. **LP:** latest deterministic FE-03D gate in this snapshot is red (`exit=2`) and Codex has already produced a REVISE correction packet.
-3. Mandatory closure policy still applies to both queues: gate green is not sufficient without SURGICAL acceptance.
+1. **PC: HOLD (`task-07-populate-production-rag`)**
+   - Reason: mandatory SURGICAL review missing on a gate-green checkpoint.
+   - Next action: one level-3 SURGICAL review-only pass on existing evidence.
 
-## First current defects by queue
+2. **LP: CONTINUE (`task-fe-03d-dom-state-tests`)**
+   - Reason: first current defect is unresolved FE-03D red gate with explicit Codex corrective instructions.
+   - Next action: one level-1 bounded correction in `rag-page.component.spec.ts`, then whitespace guard and exact gate.
 
-- **PC defect:** unresolved mandatory review state (`codex_decision=null`) after gate-green request.
-- **LP defect:** unresolved red gate with known prescriptive fix not yet validated green.
+## Integration risk posture
 
-## Routed actions
+- Main backend risk is unreviewed acceptance of cross-file ingestion/vector/test changes.
+- Main frontend risk is repeated divergence from Codex packet causing unproductive reruns.
+- No write-scope overlap risk between immediate PC and LP actions (PC is review-hold; LP writes one frontend spec file).
 
-### PC route
+## Required acceptance conditions
 
-- **Level:** 3 (SURGICAL)
-- **Role:** SURGICAL reviewer
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** existing checkpoint request and backend gate evidence
-- **allowed_paths:** review-only for this pass
-- **Exact gate/constraint:** keep task-07 backend gate as authoritative; enforce closure sequence from hierarchy policy
-- **Required SURGICAL review:** immediate (`ACCEPT` or `REVISE`)
+- Keep canonical gates unchanged from `.opencode/task-plan.backend.json` and `.opencode/task-plan.frontend.json`.
+- Enforce hierarchy closure rule from `.opencode/task-plan.hierarchy.json`:
+  - `exact-gate-green + scope-clean + surgical-accept + controller-commit`.
 
-### LP route
+## Evidence limitations
 
-- **Level:** 1 (LP)
-- **Role:** LP implementer
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** Codex REVISE packet in lp-runtime evidence
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Required SURGICAL review:** mandatory post-gate
-
-## Risks and limits
-
-- Main risk is repeated LP retry churn without strict packet adherence.
-- Backend progress is blocked by missing SURGICAL verdict, not by newly evidenced failing code.
-- Limitations: this RUN_DIR contains gate summaries but not full gate logs; no codex_review artifact was present for either queue in this snapshot.
+- This run lacks a PC Codex review artifact (`codex_review=null`) and PC checkpoint head is not recorded.
+- LP evidence includes gate summary and correction packet but not full gate log content inside RUN_DIR snapshot.

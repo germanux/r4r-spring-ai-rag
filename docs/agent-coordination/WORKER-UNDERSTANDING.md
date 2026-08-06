@@ -1,41 +1,30 @@
 # Worker understanding assessment
 
-## PC understanding status
+## PC understanding
 
-Evidence indicates PC executed within backend task scope and reached a green deterministic gate checkpoint for `task-07-populate-production-rag`. The current blocker is procedural: mandatory SURGICAL disposition is missing (`codex_decision=null`).
+- **Observed:** PC produced a gate-green checkpoint request for `task-07-populate-production-rag` and recorded the expected backend evidence paths.
+- **Gap:** No new understanding defect is evident in this run; the blocker is lifecycle/closure (`codex_decision=null`, task still `BLOCKED`).
+- **Decision impact:** Hold PC implementation and route immediate SURGICAL review-only pass.
 
-- **Assessment:** adequate task execution signal; insufficient closure signal.
-- **First defect to address:** unresolved review state, not new code change.
-- **Next bounded action:** route one SURGICAL review-only pass for the existing checkpoint evidence.
+## LP understanding
 
-Package details:
+- **Observed:** Codex explicitly assessed LP understanding as inadequate in the correction packet and listed concrete misconceptions (synthetic state/tests/selectors, invalid shapes, divergence from packet).
+- **Gap:** LP execution did not align with prescribed bounded fixes for FE-03D.
+- **Decision impact:** Continue LP with one prescriptive level-1 correction pass, exact file scope, and strict gate evidence consistency.
 
-- **Level:** 3
-- **Role:** SURGICAL
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** checkpoint request evidence + hierarchy closure policy
-- **allowed_paths:** read-only evidence review for this pass
-- **Exact gate/constraint:** closure requires `exact-gate-green + scope-clean + surgical-accept + controller-commit`
+## Required evidence behavior next pass
 
-## LP understanding status
+### PC
+- Preserve current checkpoint evidence.
+- Obtain explicit SURGICAL `ACCEPT` or `REVISE` before any further implementation.
 
-Codex explicitly marked LP understanding as inadequate for the prior red attempt and provided highly specific corrections. Current LP diff size (single spec file but large changes) plus red gate evidence indicates understanding-to-assertion mapping remains the key weakness.
+### LP
+- Align local understanding report to each FE-03D requirement with exact selector/assertion mapping.
+- Ensure `git diff --check` and FE-03D gate outputs are from the same final attempt.
 
-- **Assessment:** correction intent present, but requirement mapping to selectors/assertions is still unproven.
-- **First defect to address:** unresolved FE-03D red gate with known correction packet.
-- **Next bounded action:** one LP pass implementing only prescribed loading/reset DOM assertions, then exact gate.
+## Evidence paths used
 
-Package details:
-
-- **Level:** 1
-- **Role:** LP
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED` and existing Codex REVISE packet
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Required SURGICAL review:** mandatory after gate-green
-
-## Shared instruction to prevent waste
-
-- Do not repeat unchanged failing attempts.
-- Do not claim acceptance without explicit SURGICAL `ACCEPT` evidence.
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/pc-runtime/progress.json`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/worker-requests/PC.json`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194134Z/lp-runtime/gate_summary.md`
