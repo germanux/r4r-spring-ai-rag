@@ -4,14 +4,14 @@
     {
       "bytes": 3825,
       "producer": "local-llm",
-      "sha256": "a5abff454e334c77b3acd3bee297c56a5c80bad7b5e8a1752bff2f73eb1a1a79",
+      "sha256": "b58ccddf4d44cb0e51609b578ceb195a3140683283716d0561a82254f5a7b8c7",
       "source": ".opencode/memory.backend.md",
       "target": "opencode/memory.backend.md"
     },
     {
       "bytes": 2978,
       "producer": "local-llm",
-      "sha256": "9a643d297c904ac3dd01d48b7b6c0a3aac5996b52bf9998ddac3608b178e942e",
+      "sha256": "2d554787fb8ab7bb087d53453f4188891f4e170e046d016b0c3aa66ef53fc355",
       "source": ".opencode/progress.backend.json",
       "target": "opencode/progress.backend.json"
     }
