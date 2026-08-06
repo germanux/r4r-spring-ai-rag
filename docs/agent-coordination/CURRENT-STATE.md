@@ -1,40 +1,47 @@
-# Global coordination summary — RUN_ID 20260806T160044Z
+# Global coordination summary — run `20260806T160956Z`
 
 ## Outcome
-Ring produced a mixed decision set:
-- **PC:** `HOLD`
-- **LP:** `CONTINUE`
-- **Overall status:** `READY` (actionable next pass exists without violating scope boundaries)
 
-## Evidence-grounded diagnosis
-1. **Backend:** PC remains on `task-07-populate-production-rag`, but dependency sequencing is unresolved and latest evidence still shows red-gate context plus new backend diffs.
-2. **Frontend:** LP has an explicit Codex `REVISE` packet for `task-fe-03d-dom-state-tests` with a single-file correction path and deterministic gate requirements.
+- **Overall status:** `READY`
+- **PC decision:** `HOLD` on `task-07-populate-production-rag`
+- **LP decision:** `CONTINUE` on `task-fe-03d-dom-state-tests`
 
-## Directed next pass
+## What changed in this coordination cycle
 
-### PC directive
+1. Confirmed backend queue remains dependency-blocked for productive task-07 execution while new backend edits and a red gate are already present.
+2. Confirmed LP has a fresh Codex revise packet with explicit single-file corrections and deterministic gate requirements.
+3. Kept backend/frontend ownership disjoint for the next pass (PC hold vs LP single-file frontend revise).
+
+## Action packages
+
+### PC package
 - **Implementation level:** 2
 - **Assigned role:** PC
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `BE-07-A:ACCEPTED` before backend execution
-- **allowed_paths:** none during hold pass
-- **Exact gate:** deferred while dependency blocked
-- **Required SURGICAL review:** mandatory for eventual closure
+- **Dependencies:** `BE-07-A:ACCEPTED` before backend execution continues
+- **allowed_paths:** none for this hold pass
+- **Exact gate:** none during hold (resume gate remains `./scripts/task-gate.sh all`)
+- **Required SURGICAL review:** mandatory before eventual closure of resumed implementation
 
-### LP directive
+### LP package
 - **Implementation level:** 1
 - **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
 - **Dependencies:** `task-fe-03c-citations:ACCEPTED`
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` (after `git diff --check`)
-- **Required SURGICAL review:** Codex `ACCEPT`
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Required SURGICAL review:** mandatory `ACCEPT` before closure
 
-## Risks to monitor immediately
-- Backend churn while blocked can hide the true first actionable defect for task-07.
-- Repeated LP partial revisions can keep producing gate exit 2 / Codex revise loops.
-- Unreviewed backend changes must not be treated as accepted progress.
+## Key risks to monitor next cycle
 
-## Evidence limitations
-- Full gate logs are referenced but not staged in this RUN_DIR bundle.
-- No PC worker-request artifact is present in this snapshot; PC hold decision is inferred from progress + prior directive + current red-gate/diff evidence.
+- Repeating backend gate loops before dependency unblock will continue generating noise without closing prerequisite work.
+- LP may repeat revise loops unless every Codex checklist item is mapped to explicit assertions before rerun.
+
+## Evidence basis (primary)
+
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/progress.json`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/previous-ring-qwen3-directive.json`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/gate_summary.md`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/worker-request-manifest.json`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/lp-runtime/gate_summary.md`

@@ -1314,3 +1314,50 @@ Append-only ledger generated after each validated Ring cycle.
 
 - RUN_DIR includes only summary diagnostics; full gate logs (gate-full.log) are referenced but not staged in this snapshot.
 - No PC worker-request file is present in this run, so PC next action is inferred from progress, prior directive, and current git/gate evidence.
+
+## Cycle `20260806T160956Z` â READY
+
+### PC
+
+- Decision: `HOLD`
+- Task: `task-07-populate-production-rag`
+- Reason: PC remains on a pending parent task with no acceptance evidence for prerequisite BE-07-A, while the snapshot already contains fresh backend edits and a red exact gate context (exit 1). Continuing backend implementation now would repeat blocked work instead of unblocking dependencies.
+- Next action: Run one hold-only pass: do not run backend gates and do not add or widen backend edits until newer evidence shows BE-07-A accepted and backend dependency unblocked.
+- Avoid repeating: Do not rerun backend task-07 gate loops or chase unrelated backend failures while BE-07-A remains unaccepted.
+- Acceptance gates:
+  - Dependency constraint from .opencode/task-plan.hierarchy.json: BE-07-B depends on BE-07-A:ACCEPTED
+  - When unblocked, exact gate remains ./scripts/task-gate.sh all for task-07-populate-production-rag
+  - Closure still requires SURGICAL Codex ACCEPT per review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/previous-ring-qwen3-directive.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/gate_summary.md`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP has an active codex-revise request on the owned spec file after deterministic gate failure exit 2; Codex identified unresolved DOM assertions plus whitespace/indentation defects and provided a precise bounded checklist.
+- Next action: Revise only frontend/src/app/features/rag/rag-page.component.spec.ts per the Codex checklist, then run git diff --check followed by ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+- Avoid repeating: Do not rerun the frontend gate before implementing every Codex-listed DOM assertion and fixing whitespace/indentation in the owned spec file.
+- Acceptance gates:
+  - Preflight gate: git diff --check
+  - Exact gate: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Closure requires SURGICAL Codex ACCEPT per .opencode/task-plan.hierarchy.json review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/worker-requests/LP.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/lp-git-status.txt`
+
+### Integration risks
+
+- If PC continues task-07 backend execution before BE-07-A acceptance evidence exists, queue dependency order is violated and backend gate noise will continue without unblocking prerequisite work.
+- LP has repeated revise cycles on the same spec; another gate rerun without full requirement-to-assertion closure risks additional non-productive iterations.
+
+### Evidence limitations
+
+- This snapshot provides gate summaries and status artifacts but not full gate logs (gate-full.log) for direct stacktrace-level diagnosis.
+- No PC codex_review artifact is present in RUN_DIR for the latest backend attempt; backend diagnosis relies on progress/status/gate-summary and prior directive evidence.

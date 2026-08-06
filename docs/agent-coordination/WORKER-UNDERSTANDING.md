@@ -1,33 +1,45 @@
 # Worker understanding assessment
 
-## PC understanding quality
-- **Observed evidence:** `pc-runtime/pre_edit_understanding.md`, `pc-runtime/memory.md`, `pc-runtime/gate_summary.md`.
-- **Assessment:** Partially aligned but execution is blocked by dependency state. The pre-edit note recognizes a block condition, yet current snapshot still contains fresh backend edits and a red gate context.
-- **Primary gap:** action discipline under dependency hold (sequence control), not lack of domain context.
+## PC understanding status
 
-### Required next understanding behavior (PC)
-- **Implementation level:** 2
-- **Assigned role:** PC
-- **Task ID:** `task-07-populate-production-rag` (blocked state)
-- **Dependencies:** `BE-07-A:ACCEPTED`
-- **allowed_paths:** none for this hold pass
-- **Exact gate:** none while blocked
-- **Required SURGICAL review:** any eventual backend closure still requires Codex `ACCEPT`
+- **Assessment:** Partial and currently misaligned with dependency state.
+- **Why:** Evidence shows active task remains pending with dependency-hold context, yet backend edits and a red gate are present.
+- **Correction:** Hold-only pass; do not continue backend implementation until dependency acceptance evidence is published.
 
-Acceptance evidence for understanding improvement: a hold pass with no new backend edits and no repeated blocked gate attempts.
+Evidence:
 
-## LP understanding quality
-- **Observed evidence:** `lp-runtime/local_understanding.md`, `lp-runtime/codex-qwen3-extra-instructions.md`, `lp-runtime/gate_summary.md`.
-- **Assessment:** Inadequate requirement mapping. Local report is minimal and does not map each Codex correction item to concrete assertions in the spec.
-- **Primary gap:** checklist-to-assertion traceability before running the expensive gate.
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/memory.md`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/previous-ring-qwen3-directive.json`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-git-status.txt`
 
-### Required next understanding behavior (LP)
-- **Implementation level:** 1
-- **Assigned role:** LP
+## LP understanding status
+
+- **Assessment:** Inadequate on explanation quality, but repair path is clear.
+- **Why:** Local understanding explicitly lacked a requirement-to-assertion mapping; Codex marked revise and provided concrete checklist items.
+- **Correction:** Execute checklist exactly on the single owned spec file before next gate.
+
+Evidence:
+
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/lp-runtime/local_understanding.md`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/lp-runtime/gate_summary.md`
+
+## Directed next-pass packages
+
+### Package A
+- **Level:** 2
+- **Role:** PC
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** `BE-07-A:ACCEPTED` required before resume
+- **allowed_paths:** none (hold)
+- **Exact gate:** none during hold
+- **SURGICAL review:** required for eventual closure once resumed
+
+### Package B
+- **Level:** 1
+- **Role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED` (already satisfied)
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` after `git diff --check`
-- **Required SURGICAL review:** Codex `ACCEPT`
-
-Acceptance evidence for understanding improvement: explicit requirement-to-assertion mapping in worker notes plus a green exact gate and Codex `ACCEPT`.
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **SURGICAL review:** required `ACCEPT` before closure
