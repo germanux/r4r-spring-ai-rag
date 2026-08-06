@@ -261,14 +261,17 @@ expect(loadingElement?.textContent).toContain('Processing your question...');
     const idleStateElement = fixture.nativeElement.querySelector('.idle-state');
     expect(idleStateElement).not.toBeNull('Expected .idle-state to be present after clearing.');
 
-    // Assert all content and error containers are cleared/absent
+    // Assert all prior state containers are cleared/absent
+    const loadingStateContainer = fixture.nativeElement.querySelector('.loading-state[role="status"]');
+    expect(loadingStateContainer).toBeNull('The .loading-state should be absent after clearing.');
+
+    const errorStateElement = fixture.nativeElement.querySelector('.error-state[role="alert"]');
+    expect(errorStateElement).toBeNull('Any stale error state container should be removed and the div should be absent or cleared.');
+    // Assert content containers are cleared/absent
     const answerContent = fixture.nativeElement.querySelector('.answer-content');
     const citationsSection = fixture.nativeElement.querySelector('.citations-section');
-    const errorState = fixture.nativeElement.querySelector('.error-state[role="alert"]');
-
     expect(answerContent).toBeNull('The .answer-content should be absent after clearing.');
     expect(citationsSection).toBeNull('The .citations-section should be absent after clearing.');
-    expect(errorState).toBeNull('Any stale error state should be removed and the div should be absent or cleared.');
 
     // Assert internal component state cleanup
     expect(component.currentState).toBe('idle');
