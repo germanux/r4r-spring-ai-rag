@@ -1,39 +1,45 @@
-# LP code review — RUN 20260805T234824Z
+# LP code review (frontend queue)
 
-## Current evidence read
+## Evidence reviewed
 
-- `lp-runtime/progress.json`: active task `task-fe-03c-citations` is still `PENDING`.
-- `lp-runtime/codex-qwen3-extra-instructions.md`: Codex decision is `REVISE` with mandatory FE-03C rendered-DOM instructions.
-- `lp-git-status.txt`: dirty paths include `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-- `lp-git-diff-stat.txt`: spec file has large unreviewed delta (`+108` lines) and no closure evidence.
-- `lp-runtime/manifest.json`: no checkpoint/codex review artifact is present in this snapshot.
+- `runtime/ring-agent/ring/20260806T000832Z/lp-runtime/progress.json`
+- `runtime/ring-agent/ring/20260806T000832Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260806T000832Z/lp-git-status.txt`
+- `runtime/ring-agent/ring/20260806T000832Z/lp-git-diff-stat.txt`
+- `runtime/ring-agent/ring/20260806T000832Z/lp-runtime/gate_summary.md`
 
-## First current defect (LP)
+## First current defect
 
-LP has not yet produced reviewer-verified FE-03C coverage for all required rendered-DOM citation behaviors. The current dirty spec diff is not yet proven against the exact FE-03C contract.
+LP is still in `task-fe-03c-citations` revise flow with an unaccepted spec diff.
+
+- Current dirty product file: `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+- Codex extra instructions explicitly require missing rendered-DOM assertions (ordered structured citations, empty-citation omission, and non-parsing of citation-like answer text).
+- No ACCEPT evidence is present in this RUN_DIR snapshot.
+
+The first defect is therefore **incomplete FE-03C proof in tests**, not a cross-layer architecture issue.
 
 ## Bounded next action package
 
-- **Implementation level:** 1 (LP)
-- **Assigned role:** LP (execution), SURGICAL Codex (mandatory reviewer)
-- **Task ID:** `task-fe-03c-citations`
-- **Work package:** `FE-03C-A`
-- **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED`
+- **Implementation level:** 1
+- **Assigned role:** LP
+- **Task ID:** `FE-03C-A` under parent `task-fe-03c-citations`
+- **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED` (satisfied)
 - **allowed_paths:**
   - `frontend/src/app/features/rag/rag-page.component.spec.ts`
 - **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03c-citations`
-- **Required SURGICAL review:** `ACCEPT` required before controller closure
+- **Required SURGICAL review:** mandatory after gate and scope-clean evidence
 
-### One-pass directive
+### One-pass instruction
 
-Implement the Codex mandatory set in one bounded pass inside `rag-page.component.spec.ts`:
+In one LP pass, finish FE-03C-A exactly as Codex mandated:
 
-1. Render a success response with out-of-order structured citations; assert rendered citation order and per-item ordinal/source/multi-segment heading path.
-2. Render `{ abstained: false, citations: [] }`; assert `.citations-section` is absent.
-3. Render citation-like answer text with empty structured citations; assert text stays in `.answer-content` and no `.citation-item`/`.citations-section` is created.
-4. Run `git diff --check` then run exact gate; submit resulting evidence for SURGICAL review.
+1. Add DOM assertions for out-of-order structured citations rendered in correct order with ordinal, source, and complete heading path segment order.
+2. Add DOM assertion that `.citations-section` is absent for `{ abstained:false, citations:[] }` success responses.
+3. Add DOM assertion that citation-like text in answer body is not parsed into citation items when structured citations are empty.
+4. Run `git diff --check` and the exact frontend gate.
+5. Hand off to SURGICAL for ACCEPT/REVISE.
 
 ## Avoid repeating
 
-- Do not treat generic green Angular runs as sufficient.
-- Do not rely on non-DOM shortcuts (e.g., only checking component internals/getters) for FE-03C acceptance.
+- Do **not** stop at generic green runs with incomplete FE-03C assertions.
+- Do **not** edit component/template unless newly failing focused tests prove a real component defect.

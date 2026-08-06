@@ -1,35 +1,34 @@
-# Backend ↔ Frontend handoff — RUN 20260805T234824Z
+# Backend ↔ Frontend handoff
 
-## Queue separation check
+## Queue separation decision
 
-- **Backend/PC active task:** `task-06f-ingestion-validation` (level 2, PC).
-- **Frontend/LP active task:** `task-fe-03c-citations` (level 1, LP).
-- Current write scopes are disjoint:
-  - PC: `src/test/resources/application.yml`, `.opencode/current/PC/**` (only if REVISE path is triggered)
-  - LP: `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- No cross-queue path overlap is required in this cycle.
+No overlapping write scopes are present in this cycle.
 
-## Backend handoff decision
+- **Backend active item:** `task-06f-ingestion-validation` (PC queue, review-state only)
+  - backend scope if revise is needed: `src/test/resources/application.yml`, `.opencode/current/PC/**`
+- **Frontend active item:** `task-fe-03c-citations` (LP queue, FE-03C-A)
+  - frontend scope: `frontend/src/app/features/rag/rag-page.component.spec.ts`
 
-- **Status:** Ready for SURGICAL review routing, not for new implementation expansion.
-- **Why:** Gate is already green with no product diff, but SURGICAL `ACCEPT` evidence is missing.
-- **Bounded next action:** reviewer pass first; corrective coding only on explicit `REVISE`.
+These scopes are disjoint; concurrent queue progression is safe.
 
-## Frontend handoff decision
+## Cross-stack dependency posture
 
-- **Status:** Continue implementation on current LP package.
-- **Why:** Codex `REVISE` explicitly requires additional rendered-DOM FE-03C assertions.
-- **Bounded next action:** complete FE-03C-A in one file, run preflight + exact gate, return to SURGICAL review.
+- Frontend FE-03C does not require backend code changes in this pass.
+- Backend task-06f currently requires SURGICAL review evidence, not implementation work.
+- No cross-layer migration/security/lifecycle ambiguity was identified that forces a new level-3 product patch.
 
-## Integration risk notes
+## Bounded next actions
 
-1. Advancing backend plan stages before Codex `ACCEPT` on `task-06f-ingestion-validation` would violate mandatory review policy.
-2. Advancing frontend to `task-fe-03d-dom-state-tests` before FE-03C acceptance risks carrying an unproven citation contract forward.
-3. LP memory/gate metadata appears partially stale relative to current gate summary; enforce evidence-pack completeness before closure claims.
+1. **SURGICAL review pass (Level 3, reviewer role)** for backend `task-06f-ingestion-validation` gate-green package.
+   - Gate constraint: `./scripts/task-gate.sh task-06f-ingestion-validation` remains exit 0.
+   - Closure condition: explicit SURGICAL `ACCEPT` evidence.
 
-## Required acceptance conditions (both queues)
+2. **LP implementation pass (Level 1, LP role)** for frontend `FE-03C-A`.
+   - allowed_paths: `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+   - Gates: `git diff --check` and `./scripts/frontend-task-gate.sh task-fe-03c-citations`.
+   - Closure condition: SURGICAL `ACCEPT` after gate-green evidence.
 
-- Exact task gate green for the active task.
-- Scope-clean changes within each task `allowed_paths`.
-- SURGICAL Codex review result `ACCEPT`.
-- Controller-owned closure actions only (no worker Git-history operations).
+## Hold conditions
+
+- If LP findings require component/template edits beyond FE-03C-A scope, pause LP queue and route a new scoped package before proceeding.
+- If SURGICAL returns backend `REVISE`, dispatch exactly one bounded BE-06F-A correction pass before any further backend advancement.

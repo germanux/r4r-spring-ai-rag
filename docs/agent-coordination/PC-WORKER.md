@@ -1,36 +1,41 @@
-# PC code review — RUN 20260805T234824Z
+# PC code review (backend queue)
 
-## Current evidence read
+## Evidence reviewed
 
-- `pc-runtime/progress.json`: active task is `task-06f-ingestion-validation` (PENDING) with `last_gate_green_attempt: 1` at run `20260805T233754Z`.
-- `pc-runtime/gate_summary.md`: exact gate classification `green`, exit `0`.
-- `pc-runtime/checkpoint.json`: checkpoint created with `status: no-product-diff`, `product_paths: []`.
-- `worker-requests/PC.json`: Codex decision is still `null`; request reason is `gate-green-no-checkpoint`.
+- `runtime/ring-agent/ring/20260806T000832Z/pc-runtime/progress.json`
+- `runtime/ring-agent/ring/20260806T000832Z/pc-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260806T000832Z/pc-runtime/checkpoint.json`
+- `runtime/ring-agent/ring/20260806T000832Z/worker-requests/PC.json`
+- `runtime/ring-agent/ring/20260806T000832Z/pc-git-status.txt`
+- `runtime/ring-agent/ring/20260806T000832Z/pc-git-diff-stat.txt`
 
-## First current defect (PC)
+## First current defect
 
-There is no failing product code in this snapshot. The blocking defect is **closure-evidence incompleteness**: mandatory SURGICAL review/ACCEPT is still missing for `task-06f-ingestion-validation`.
+`task-06f-ingestion-validation` is not blocked by a failing gate; it is blocked by missing closure evidence.
+
+- Gate evidence is green (`exit 0`) on attempt 1.
+- Checkpoint status is `no-product-diff`.
+- Worker request is `gate-green-no-checkpoint` with `codex_decision: null`.
+
+So the immediate defect is **review-state incompleteness** (no SURGICAL ACCEPT/REVISE recorded), not backend implementation failure.
 
 ## Bounded next action package
 
-- **Implementation level:** 2 (PC), review-bound by level-3 SURGICAL policy
-- **Assigned role:** PC (execution), SURGICAL Codex (mandatory reviewer)
-- **Task ID:** `task-06f-ingestion-validation`
-- **Work package:** `BE-06F-A` (only if Codex returns `REVISE`)
-- **Dependencies:** `task-06e-child-process:ACCEPTED`
-- **allowed_paths:**
+- **Implementation level:** 3
+- **Assigned role:** SURGICAL Codex reviewer (OpenCode)
+- **Task ID:** `task-06f-ingestion-validation` (review pass over BE-06F state)
+- **Dependencies:** `task-06e-child-process:ACCEPTED` (already satisfied)
+- **allowed_paths (for any subsequent PC revise pass only):**
   - `src/test/resources/application.yml`
   - `.opencode/current/PC/**`
-- **Exact gate:** `./scripts/task-gate.sh task-06f-ingestion-validation`
-- **Required SURGICAL review:** `ACCEPT` required before controller closure
+- **Exact gate constraint:** `./scripts/task-gate.sh task-06f-ingestion-validation` must remain green (`exit 0`)
+- **Required SURGICAL review:** mandatory before closure per `.opencode/task-plan.hierarchy.json` (`review_policy.closure_requires` includes `surgical-accept`)
 
-### One-pass directive
+### One-pass instruction
 
-1. Submit the existing gate-green checkpoint/evidence to SURGICAL Codex now.
-2. If Codex says `ACCEPT`, stop implementation and let controller close.
-3. If Codex says `REVISE`, perform **one** BE-06F-A bounded correction pass, rerun exact gate, then return for SURGICAL review.
+Run one SURGICAL review on the already gate-green package. If SURGICAL returns `ACCEPT`, close task-06f. If SURGICAL returns `REVISE`, dispatch exactly one bounded PC correction pass under BE-06F-A scope, then rerun the exact gate once.
 
 ## Avoid repeating
 
-- Do not perform new backend edits or additional full gate cycles while current gate-green evidence is still pending SURGICAL decision.
-- Do not widen into `BE-06F-B` until `BE-06F-A` is accepted and explicitly unblocked.
+- Do **not** rerun unchanged backend gates while Codex decision is pending.
+- Do **not** widen scope into BE-06F-B or unrelated backend code without a new first failure.

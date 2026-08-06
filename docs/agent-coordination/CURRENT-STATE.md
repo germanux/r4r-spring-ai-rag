@@ -1,42 +1,46 @@
-# Global coordination summary — RUN 20260805T234824Z
+# Global coordination summary — RUN_ID 20260806T000832Z
 
-## Executive status
+## Overall status
 
-- **Overall:** `READY` (actionable next pass for both queues).
-- **PC:** move to SURGICAL review pass for `task-06f-ingestion-validation`; no new backend implementation unless Codex returns `REVISE`.
-- **LP:** continue FE-03C revision work; current defect is incomplete/unproven rendered-DOM citation coverage.
+`READY` — both queues have a bounded next step with evidence-backed direction.
 
-## Evidence-led findings
+## PC (backend)
 
-1. PC exact gate is green with no product diff (`pc-runtime/gate_summary.md`, `pc-runtime/checkpoint.json`), but no Codex decision exists yet (`worker-requests/PC.json` codex_decision null).
-2. LP carries an active spec-only diff and Codex `REVISE` instructions (`lp-git-status.txt`, `lp-git-diff-stat.txt`, `lp-runtime/codex-qwen3-extra-instructions.md`).
-3. Neither queue includes current-run Codex review artifacts in this snapshot (`manifest.json` shows `codex_review: null`).
+- Active task: `task-06f-ingestion-validation`.
+- Current state: gate green, no product diff, closure pending SURGICAL review.
+- Decision: **REVIEW** (do not initiate new backend edits before Codex decision).
 
-## Directed next actions
+Package:
 
-### PC
-- **Level / role:** Level 2 PC, mandatory SURGICAL reviewer
-- **Task:** `task-06f-ingestion-validation`
+- **Level:** 3 review pass
+- **Owner:** SURGICAL Codex reviewer
 - **Dependencies:** `task-06e-child-process:ACCEPTED`
-- **allowed_paths (if REVISE only):** `src/test/resources/application.yml`, `.opencode/current/PC/**`
+- **allowed_paths (if revise requested):** `src/test/resources/application.yml`, `.opencode/current/PC/**`
 - **Gate:** `./scripts/task-gate.sh task-06f-ingestion-validation`
-- **Action now:** submit current evidence for SURGICAL decision.
+- **Acceptance:** SURGICAL `ACCEPT` required.
 
-### LP
-- **Level / role:** Level 1 LP, mandatory SURGICAL reviewer
-- **Task:** `task-fe-03c-citations`
+## LP (frontend)
+
+- Active task: `task-fe-03c-citations`.
+- Current state: unaccepted spec diff, Codex REVISE requirements outstanding.
+- Decision: **CONTINUE** FE-03C-A in one bounded LP pass.
+
+Package:
+
+- **Level:** 1
+- **Owner:** LP
+- **Task ID:** `FE-03C-A`
 - **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED`
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Gate:** `./scripts/frontend-task-gate.sh task-fe-03c-citations`
-- **Action now:** complete Codex-mandated FE-03C DOM assertions and rerun gate.
+- **Gate:** `./scripts/frontend-task-gate.sh task-fe-03c-citations` (plus preflight `git diff --check`)
+- **Acceptance:** SURGICAL `ACCEPT` required.
 
-## Integration-risk controls
+## Integration risks
 
-- Hold progression to subsequent backend/frontend tasks until each active task has SURGICAL `ACCEPT` evidence.
-- Keep queue ownership disjoint; do not route PC into frontend or LP into backend corrections.
-- Treat metadata inconsistencies (e.g., request reason vs checkpoint state) as coordination risk, not product-code proof.
+1. Backend churn risk if PC reruns unchanged cycles instead of obtaining pending SURGICAL decision.
+2. Frontend regression risk if FE-03C remains under-specified and later DOM/security tasks build on incomplete coverage.
 
 ## Evidence limitations
 
-- No direct Codex acceptance artifact is present for either queue in this RUN_DIR.
-- LP patch quality cannot be line-reviewed from diff-stat alone in this snapshot.
+- This run snapshot contains gate summaries rather than full gate logs.
+- `codex_review`, `codex_plan`, and `local_understanding` are null in both worker manifests for this cycle, so final closure evidence is not yet present.

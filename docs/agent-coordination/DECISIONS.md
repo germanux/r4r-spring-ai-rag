@@ -843,3 +843,49 @@ Append-only ledger generated after each validated Ring cycle.
 
 - No codex_review/codex_plan artifacts are present in this RUN_DIR snapshot for either worker, so reviewer conclusions cannot be independently verified here.
 - RUN_DIR contains git status and diff-stat snapshots, not full patch hunks; detailed line-level validation of LP spec edits is not possible from this bundle alone.
+
+## Cycle `20260806T000832Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-06f-ingestion-validation`
+- Reason: The active backend task is gate-green on attempt 1 with no product diff, but closure evidence is incomplete because Codex/SURGICAL decision is still null/pending.
+- Next action: Run one SURGICAL review pass on the existing gate-green package for task-06f-ingestion-validation and return ACCEPT or REVISE before any new PC edits.
+- Avoid repeating: Do not rerun unchanged backend gate cycles or widen BE-06F scope while the current gate-green checkpoint is awaiting SURGICAL decision.
+- Acceptance gates:
+  - task-06f-ingestion-validation exact gate remains ./scripts/task-gate.sh task-06f-ingestion-validation with exit 0
+  - Closure requires SURGICAL Codex ACCEPT per .opencode/task-plan.hierarchy.json review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T000832Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T000832Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T000832Z/pc-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T000832Z/worker-requests/PC.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03c-citations`
+- Reason: LP remains in FE-03C REVISE state with an unreviewed spec diff; the first current defect is missing rendered-DOM proof for full citation requirements despite prior green gate evidence.
+- Next action: Execute FE-03C-A in one pass: complete the mandated DOM assertions in rag-page.component.spec.ts, run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03c-citations, then submit to SURGICAL review.
+- Avoid repeating: Do not rely on generic green test runs or partial citation assertions that do not verify ordered structured-citation DOM behavior and empty-citation omission.
+- Acceptance gates:
+  - FE-03C-A write scope only frontend/src/app/features/rag/rag-page.component.spec.ts
+  - Preflight must pass: git diff --check
+  - Exact gate: ./scripts/frontend-task-gate.sh task-fe-03c-citations exits 0
+  - Closure requires SURGICAL Codex ACCEPT per .opencode/task-plan.hierarchy.json review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T000832Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T000832Z/lp-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T000832Z/lp-git-diff-stat.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T000832Z/lp-runtime/progress.json`
+
+### Integration risks
+
+- PC task can stall if another coding pass is started before SURGICAL reviews the already gate-green checkpoint, causing redundant cycles without new evidence.
+- LP frontend diff is currently unaccepted; if FE-03C DOM assertions remain incomplete, later FE-03D/FE-03E tasks will inherit weak coverage and increase regression risk.
+
+### Evidence limitations
+
+- RUN_DIR snapshots expose gate summaries, not full gate logs; deep failure context beyond summaries is not present here.
+- LP and PC manifest snapshots show codex_review/codex_plan/local_understanding as null in this run, so Codex closure evidence must be confirmed in a later cycle.

@@ -1,41 +1,42 @@
-# Worker understanding audit — RUN 20260805T234824Z
+# Worker understanding check
 
-## Evidence quality snapshot
+## PC understanding (task-06f-ingestion-validation)
 
-### PC
-- Strong evidence for gate state (`pc-runtime/gate_summary.md`) and task state (`pc-runtime/progress.json`).
-- Checkpoint metadata exists (`pc-runtime/checkpoint.json`) and shows `no-product-diff`.
-- Missing reviewer outcome artifacts (`codex_review`, `codex_plan` are null in `pc-runtime/manifest.json`).
+What must be understood now:
 
-### LP
-- Strong evidence that Codex requested revision (`lp-runtime/codex-qwen3-extra-instructions.md`).
-- Dirty-file evidence confirms active spec work (`lp-git-status.txt`, `lp-git-diff-stat.txt`).
-- Missing checkpoint and missing reviewer-outcome artifacts (`checkpoint: null`, `codex_review: null` in `lp-runtime/manifest.json`).
+- Current status is **gate-green + no-product-diff**; this is not a coding-failure state.
+- Mandatory closure requirement is still missing: SURGICAL Codex decision (`ACCEPT` or `REVISE`).
+- Next pass is a **review pass**, not a speculative new backend edit.
 
-## Understanding gaps to correct in next pass
+Evidence:
 
-1. **PC:** treat current state as review-pending, not implementation-pending; no widening while ACCEPT is absent.
-2. **LP:** treat FE-03C as a rendered-DOM proof task, not a generic "gate already green" task.
-3. **Both workers:** closure claims must cite explicit SURGICAL `ACCEPT` evidence, not only gate status.
+- `pc-runtime/gate_summary.md` shows exit code 0.
+- `pc-runtime/checkpoint.json` shows `status: no-product-diff`.
+- `worker-requests/PC.json` shows `codex_decision: null`.
 
-## Bounded directives to preserve
+Acceptance understanding:
 
-### PC package (Level 2)
-- **Task ID:** `task-06f-ingestion-validation`
-- **Dependencies:** `task-06e-child-process:ACCEPTED`
-- **allowed_paths:** `src/test/resources/application.yml`, `.opencode/current/PC/**`
-- **Exact gate:** `./scripts/task-gate.sh task-06f-ingestion-validation`
-- **SURGICAL review:** mandatory before closure
+- Task closes only with exact gate green + SURGICAL `ACCEPT` + controller commit policy.
 
-### LP package (Level 1)
-- **Task ID:** `task-fe-03c-citations`
-- **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED`
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03c-citations`
-- **SURGICAL review:** mandatory before closure
+## LP understanding (task-fe-03c-citations)
 
-## Acceptance evidence required next cycle
+What must be understood now:
 
-- Codex decision artifact proving `ACCEPT` or concrete `REVISE` with follow-up evidence.
-- Gate output tied to the same attempt/run as the submitted change set.
-- Scope-clean status (`git diff --check`) for LP FE-03C pass.
+- The task is in **REVISE** state and requires specific FE-03C rendered-DOM proofs.
+- Existing work in `rag-page.component.spec.ts` is unaccepted until required assertions and gate evidence are complete.
+- Do not treat generic green frontend tests as sufficient FE-03C acceptance.
+
+Evidence:
+
+- `lp-runtime/codex-qwen3-extra-instructions.md` provides mandatory assertion requirements.
+- `lp-git-status.txt` and `lp-git-diff-stat.txt` confirm ongoing diff in the spec file.
+- `lp-runtime/progress.json` shows `task-fe-03c-citations` still `PENDING`.
+
+Acceptance understanding:
+
+- Required: scope-clean LP diff in allowed path, `git diff --check`, exact frontend gate green, then SURGICAL `ACCEPT`.
+
+## Ring corrections made this cycle
+
+- No repository product/test/script/config edits were made.
+- Only staged coordination artifacts were produced under this run `OUTPUT_DIR`.
