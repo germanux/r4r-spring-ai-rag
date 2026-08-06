@@ -1,43 +1,37 @@
-# Global coordination summary — run 20260806T192632Z
+# Global summary — Ring coordination cycle 20260806T193132Z
 
-## Overall status
+## Executive status
+- **Overall:** `READY`
+- **PC:** move to mandatory SURGICAL **REVIEW** (no new implementation pass yet).
+- **LP:** **START** one bounded correction pass for FE-03D.
 
-`READY` — both queues have one bounded next action backed by current RUN_DIR evidence.
+## Evidence-driven findings
+1. PC already has a gate-green checkpoint request for `task-07-populate-production-rag` (`gate_exit=0`) but lacks SURGICAL decision (`codex_decision=null`), so closure cannot proceed.
+2. LP remains red on `task-fe-03d-dom-state-tests` (`exit=2`) with a Codex `REVISE` packet that precisely defines what to replace in `rag-page.component.spec.ts`.
+3. LP prior run ended with `GLOBAL_ATTEMPT_LIMIT_REACHED`, increasing risk of repeated non-convergent retries unless this pass is tightly constrained.
 
-## Decision summary
+## Dispatch packages
 
-### PC
-- **Action:** `REVIEW`
+### Package A (backend)
+- **Level:** 3
+- **Role:** SURGICAL Codex
 - **Task ID:** `task-07-populate-production-rag`
-- **First current defect:** pending workflow state (`codex_decision=null`) despite gate-green checkpoint.
-- **Next action package:**
-  - **Implementation level:** 3
-  - **Assigned role:** SURGICAL (review-only)
-  - **Dependencies:** existing checkpoint request + mandatory closure policy
-  - **allowed_paths:** `[]`
-  - **Exact gate/constraint:** keep task-07 gate satisfied and enforce `exact-gate-green + scope-clean + surgical-accept + controller-commit`
-  - **Required SURGICAL review:** yes (this step)
+- **Dependencies:** existing PC gate-green checkpoint evidence
+- **allowed_paths:** read-only review only
+- **Exact gate:** preserve task-07 backend gate contract; return `ACCEPT`/`REVISE`
+- **Required review:** this package itself is the mandatory SURGICAL review
 
-### LP
-- **Action:** `CONTINUE`
+### Package B (frontend)
+- **Level:** 1
+- **Role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **First current defect:** synthetic/invalid test behavior in current patch with frontend gate exit `2`.
-- **Next action package:**
-  - **Implementation level:** 1
-  - **Assigned role:** LP
-  - **Dependencies:** `task-fe-03c-citations:ACCEPTED` + correction packet in LP memory
-  - **allowed_paths:** canonical `frontend/**`, `docs/frontend/**`; this pass limited to `frontend/src/app/features/rag/rag-page.component.spec.ts`
-  - **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-  - **Required SURGICAL review:** yes (post gate-green)
+- **Dependencies:** Codex revise instructions + accepted FE-03C baseline
+- **allowed_paths:** canonical `frontend/**`, `docs/frontend/**`; bounded this pass to `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Required review:** SURGICAL Codex `ACCEPT` after green gate
 
-## Evidence limitations
+## No repository edits performed by Ring
+This cycle wrote only the six staged artifacts under:
+- `runtime/ring-agent/ring/20260806T193132Z/output/`
 
-- Gate summaries are present, but not full `gate-full.log` payloads in this RUN_DIR snapshot.
-- LP codex plan/review artifacts are metadata wrappers, not full rationale output.
-- No PC codex review result artifact is present yet; only pending request evidence exists.
-
-## Ring worktree edits this cycle
-
-- No repository source, tests, scripts, configs, docs, or task-plan files were edited.
-- Wrote only required staged artifacts under:
-  - `runtime/ring-agent/ring/20260806T192632Z/output/`
+No product/test/script/config/docs plan files in the repository were edited.

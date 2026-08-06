@@ -2161,3 +2161,50 @@ Append-only ledger generated after each validated Ring cycle.
 - This RUN_DIR snapshot includes gate summaries but not gate-full.log contents, so detailed failure stacks are indirect.
 - lp-runtime/codex_plan.json and lp-runtime/codex_review.json are invocation metadata wrappers and do not include rationale payload.
 - No PC codex review artifact is present in this RUN_DIR; only the pending request with codex_decision=null is available.
+
+## Cycle `20260806T193132Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-07-populate-production-rag`
+- Reason: PC already submitted a gate-green checkpoint request (gate_exit=0) for task-07, but codex_decision is still null, so closure is blocked by mandatory SURGICAL review.
+- Next action: Run one SURGICAL review-only pass on the existing task-07 evidence and return ACCEPT or REVISE before any further PC implementation pass.
+- Avoid repeating: Do not run another PC edit/gate loop while the same gate-green request still has codex_decision=null.
+- Acceptance gates:
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+  - Task gate for task-07-populate-production-rag from .opencode/task-plan.backend.json remains authoritative.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193132Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193132Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193132Z/pc-runtime/previous-ring-qwen3-directive.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193132Z/pc-git-status.txt`
+
+### LP
+
+- Decision: `START`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP is still red on the deterministic FE-03D gate (exit=2), Codex returned REVISE with explicit corrective steps, and the run ended with GLOBAL_ATTEMPT_LIMIT_REACHED.
+- Next action: Execute one bounded correction pass in frontend/src/app/features/rag/rag-page.component.spec.ts exactly per the Codex correction packet, then run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests once with consistent diagnostics.
+- Avoid repeating: Do not reintroduce synthetic/invalid tests, direct innerHTML mutation, manual loading flag mutation, invalid RAGAnswerResult shapes, or mismatched gate diagnostics.
+- Acceptance gates:
+  - Whitespace guard: git diff --check must pass before rerunning FE-03D gate.
+  - Exact frontend gate from .opencode/task-plan.frontend.json: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193132Z/worker-requests/LP.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193132Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193132Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193132Z/lp-runtime/controller_state.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193132Z/lp-runtime/gate_summary.md`
+
+### Integration risks
+
+- PC task-07 is stalled pending SURGICAL decision; launching more PC edits before that review risks duplicate work and contradictory evidence.
+- LP has repeated FE-03D revise cycles and hit GLOBAL_ATTEMPT_LIMIT_REACHED, so another unfocused pass risks a seventh attempt without deterministic progress.
+- If LP expands beyond rag-page.component.spec.ts, frontend scope may drift from the bounded correction packet and increase review churn.
+
+### Evidence limitations
+
+- RUN_DIR contains LP gate summary but not the full gate-full.log payload; diagnosis relies on summarized diagnostics plus Codex correction packet.
+- PC evidence in this RUN_DIR shows no Codex review artifact for task-07, so ACCEPT/REVISE outcome cannot be asserted yet.

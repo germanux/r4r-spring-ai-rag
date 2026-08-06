@@ -1,38 +1,33 @@
-# Backend ↔ Frontend handoff — run 20260806T192632Z
+# Backend ↔ Frontend handoff (cycle 20260806T193132Z)
 
-## Queue status
+## Ownership split (kept disjoint)
+- **Backend queue:** PC task `task-07-populate-production-rag`.
+- **Frontend queue:** LP task `task-fe-03d-dom-state-tests`.
+- **Write-scope overlap check:** none in this cycle (backend `src/main|src/test|docs/backend` vs frontend spec under `frontend/...`).
 
-- **Backend queue (PC task):** hold additional implementation; run the pending SURGICAL review decision for the existing gate-green checkpoint on `task-07-populate-production-rag`.
-- **Frontend queue (LP task):** continue one bounded correction pass on `task-fe-03d-dom-state-tests`.
-
-Current evidence shows no backend/frontend write-scope overlap for the proposed next pass.
-
-## Backend package
-
-- **Implementation level:** 3
-- **Assigned role:** SURGICAL
+## Backend handoff
+- **Implementation level:** Level 3 (review-only)
+- **Assigned role:** SURGICAL Codex
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** gate-green request exists with `codex_decision=null`.
-- **allowed_paths:** `[]` (read-only review pass)
-- **Exact gate:** preserve task-07 gate satisfaction from `.opencode/task-plan.backend.json`.
-- **Required SURGICAL review:** mandatory (this package is the review).
-- **Acceptance condition:** review outcome recorded (`ACCEPT` or `REVISE`) for the pending checkpoint request.
+- **Dependencies:** existing gate-green checkpoint request already emitted by PC
+- **allowed_paths:** read-only review (`[]` for this pass)
+- **Exact gate/constraints:** preserve backend task-07 gate contract and hierarchy closure policy
+- **Action:** return explicit `ACCEPT` or `REVISE` before any new PC edit pass
 
-## Frontend package
-
-- **Implementation level:** 1
+## Frontend handoff
+- **Implementation level:** Level 1
 - **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED`; correction rules in LP memory.
-- **allowed_paths:**
-  - Canonical: `frontend/**`, `docs/frontend/**`
-  - This pass constrained to: `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
-- **Required SURGICAL review:** mandatory after LP gate-green.
-- **Acceptance condition:** `exact-gate-green + scope-clean + surgical-accept + controller-commit`.
+- **Dependencies:** codex revise packet + prior accepted FE-03C baseline
+- **allowed_paths (task):** `frontend/**`, `docs/frontend/**`
+- **allowed_paths (pass constraint):** `frontend/src/app/features/rag/rag-page.component.spec.ts` only
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` (after `git diff --check`)
+- **Action:** one corrective pass replacing defective tests with the three prescribed DOM-state tests
 
-## Integration risks for next cycle
+## Integration risks to monitor
+1. PC queue can deadlock if SURGICAL review is not executed promptly after gate-green evidence.
+2. LP has reached global attempt limit in prior run; any scope drift likely causes another failed iteration.
+3. Cross-queue contamination risk if LP edits beyond single spec file or if PC resumes coding before review verdict.
 
-1. PC queue churn if coding resumes before the pending SURGICAL decision lands.
-2. LP repeated red-gate risk if corrections deviate from the prescribed Subject-driven DOM assertions.
-3. Backend task-07 reproducibility risk if `.env`/Docker DB state drifts between attempts.
+## Closure rule reminder
+Both backend and frontend tasks require SURGICAL review (`ACCEPT`) after exact gate success; no queue self-closes.
