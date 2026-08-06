@@ -1,38 +1,46 @@
-# LP code review — run 20260806T192632Z
+# LP code review (evidence cycle 20260806T193132Z)
 
-## Current evidence reviewed
+## Current verdict
+- **Queue status:** continue with one tightly bounded correction pass.
+- **Active task:** `task-fe-03d-dom-state-tests`.
+- **First current defect:** LP attempt remains red (`exit=2`) and Codex marked it `REVISE` due to defective/synthetic test additions and requirement mismatch.
 
-- Active frontend task is `task-fe-03d-dom-state-tests` (`lp-runtime/progress.json`).
-- Latest deterministic frontend gate is red (`lp-runtime/gate_summary.md`, exit `2`).
-- LP memory carries prescriptive REVISE constraints targeting synthetic/invalid tests in `rag-page.component.spec.ts` (`lp-runtime/memory.md`).
+## Evidence reviewed
+- `runtime/ring-agent/ring/20260806T193132Z/worker-requests/LP.json` (Codex `REVISE`, explicit corrective next action)
+- `runtime/ring-agent/ring/20260806T193132Z/lp-runtime/memory.md` (enumerated defects and required replacement tests)
+- `runtime/ring-agent/ring/20260806T193132Z/lp-runtime/codex-qwen3-extra-instructions.md` (mandatory bounded correction packet)
+- `runtime/ring-agent/ring/20260806T193132Z/lp-runtime/gate_summary.md` (deterministic gate failure)
+- `runtime/ring-agent/ring/20260806T193132Z/lp-runtime/controller_state.json` (`GLOBAL_ATTEMPT_LIMIT_REACHED`)
 
-## First current defect
-
-The first defect is in the current LP patch behavior: introduced synthetic/invalid DOM tests did not satisfy FE-03D assertions and left the deterministic gate red.
-
-## Bounded next action package
-
-- **Implementation level:** 1
-- **Assigned role:** LP
+## Bounded work package
+- **Implementation level:** **Level 1**
+- **Assigned role:** **LP**
 - **Task ID:** `task-fe-03d-dom-state-tests`
 - **Dependencies:**
-  - `task-fe-03c-citations:ACCEPTED`
-  - Existing Codex correction packet in `lp-runtime/memory.md`
-- **allowed_paths:**
-  - Canonical task scope from `.opencode/task-plan.frontend.json`: `frontend/**`, `docs/frontend/**`
-  - **This correction pass only:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:**
-  - `git diff --check`
-  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Required SURGICAL review:** Yes, after a gate-green LP pass.
+  - Prior accepted frontend baseline through `task-fe-03c-citations`
+  - Active Codex correction packet for attempt-06
+- **allowed_paths (task authority):** from `.opencode/task-plan.frontend.json` = `frontend/**`, `docs/frontend/**`
+- **allowed_paths (this pass, stricter):** `frontend/src/app/features/rag/rag-page.component.spec.ts` only
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Pre-gate guard:** `git diff --check`
 
-## Acceptance conditions and required evidence
+## Required implementation in this single pass
+1. Remove defective additions called out by Codex (synthetic tests, malformed loading fragment, invalid state mutations, unnecessary async helpers).
+2. Rebuild one controlled-pending loading test with selector-based DOM assertions and duplicate-submit call-count protection.
+3. Add two independent reset tests:
+   - success-path reset (answer/citations present before clear, absent after clear)
+   - transport-error reset (alert present before clear, absent after clear)
+4. Keep existing valid answer/abstention/citation/escaping/service-isolation coverage unchanged.
 
-1. One coherent diff limited to the single spec file above.
-2. FE-03D deterministic gate turns green on that exact pass.
-3. Diagnostics are internally consistent (manifest/task-gate/gate summary all describe the same final run).
-4. SURGICAL returns `ACCEPT` before controller closeout.
+## Acceptance conditions
+- Non-empty scoped patch limited to the single spec file above.
+- `git diff --check` passes.
+- Exact FE-03D gate exits `0` with consistent diagnostics.
+- SURGICAL Codex review returns `ACCEPT` before closure.
 
 ## Avoid repeating
+- Reintroducing synthetic DOM mutations or invalid response shapes.
+- Producing mismatched gate artifacts/local-understanding that do not describe the same final run.
 
-Do **not** re-add synthetic tests, fake success fields, invalid state values, direct `innerHTML` mutation, or mixed diagnostics from non-final runs.
+## Required SURGICAL review for closure
+Mandatory after the pass; LP cannot self-close even if gate turns green.

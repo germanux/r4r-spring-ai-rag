@@ -1,37 +1,21 @@
-# Worker understanding assessment — run 20260806T192632Z
+# Worker understanding assessment (cycle 20260806T193132Z)
 
-## PC understanding quality
+## PC understanding
+- **Signal quality:** adequate for checkpoint handoff, but no fresh Codex outcome yet.
+- **Evidence:** PC request shows gate-green checkpoint (`gate_exit=0`) and no `codex_decision`.
+- **Interpretation:** this is not a new implementation request; it is a review-closure request.
+- **Required next understanding behavior:** PC must avoid new edits until SURGICAL resolves ACCEPT/REVISE on current evidence.
 
-Evidence reviewed:
-- `pc-runtime/pre_edit_understanding.md`
-- `pc-runtime/memory.md`
-- `worker-requests/PC.json`
+## LP understanding
+- **Signal quality:** inadequate in attempt-06 per Codex.
+- **Evidence:** `codex-qwen3-extra-instructions.md` explicitly states LP invented selectors/state/content and did not map requirements to exact DOM assertions.
+- **Interpretation:** failure is implementation discipline and requirement-traceability, not missing instructions.
+- **Required next understanding behavior:** LP local understanding must map every FE-03D requirement to concrete selector/assertion pairs and align with final gate diagnostics.
 
-Assessment:
-- PC understanding is sufficient for the current state: gate is already green and the missing closure element is the SURGICAL decision.
-- No additional PC implementation understanding is required before review resolution.
+## Bounded directives emitted from this understanding
+1. **PC / Level 3 SURGICAL review package** — review-only closure decision for `task-07-populate-production-rag`.
+2. **LP / Level 1 correction package** — single-file FE-03D spec fix and exact gate rerun.
 
-Bounded next action:
-- **Implementation level 3 / Assigned role SURGICAL / Task ID `task-07-populate-production-rag`**
-- Resolve pending review with explicit `ACCEPT` or `REVISE`.
-- **allowed_paths:** `[]` (read-only review).
-- **Exact gate / constraint:** closure rule `exact-gate-green + scope-clean + surgical-accept + controller-commit`.
-- **Required SURGICAL review:** yes (mandatory policy step).
-
-## LP understanding quality
-
-Evidence reviewed:
-- `lp-runtime/local_understanding.md`
-- `lp-runtime/memory.md`
-- `lp-runtime/gate_summary.md`
-
-Assessment:
-- LP local understanding remains weak/incomplete: it reports missing model-authored compact summary and does not provide a requirement→selector/assertion map.
-- This aligns with repeated FE-03D red-gate churn.
-
-Bounded next action:
-- **Implementation level 1 / Assigned role LP / Task ID `task-fe-03d-dom-state-tests`**
-- Execute the prescribed spec-file-only correction packet and provide clear requirement-to-DOM-assertion mapping in next understanding evidence.
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` for this pass.
-- **Exact gate:** `git diff --check` and `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
-- **Required SURGICAL review:** yes, before closure.
+## Acceptance evidence expected next cycle
+- PC: artifact proving SURGICAL `ACCEPT` or `REVISE` for the current checkpoint.
+- LP: scoped spec diff, clean `git diff --check`, gate exit `0`, and SURGICAL review result.
