@@ -1,44 +1,41 @@
-# Global coordination summary (RUN_ID: 20260806T184128Z)
+# Global coordination summary — RUN_ID 20260806T184628Z
 
-## Cycle outcome
-Ring reviewed bounded RUN_DIR evidence for PC, LP, and Ring snapshots and produced queue decisions grounded in current runtime artifacts.
+## Executive status
+- **Overall:** `READY`
+- **PC lane:** move to **SURGICAL review disposition** on existing task-07 gate-green checkpoint evidence.
+- **LP lane:** **continue one bounded correction pass** for FE-03D spec assertions and evidence consistency.
 
-## PC decision — REVIEW (`task-07-populate-production-rag`)
-- Evidence shows a gate-green checkpoint request with non-empty backend changes.
-- Controller state reports `CHECKPOINT_COMMIT_FAILED` (exit `67`), and no current SURGICAL Codex review outcome is present.
-- Diagnostic packet is inconsistent (`checkpoint gate_exit=0` vs `gate_summary exit=1`), so closure is unsafe without Level-3 surgical disposition.
+## Evidence-driven findings
+1. PC currently has backend changes with gate-green request artifacts, but no Codex decision (`codex_decision: null`) and no closure proof.
+2. LP currently has red gate (`exit=2`) and Codex `REVISE` with precise corrective instructions still not demonstrated as complete.
+3. Queue scopes are disjoint for this cycle, so backend review and frontend correction can proceed in parallel safely.
 
-### Directed package
+## Directed packages
+
+### Package A (backend)
 - **Level:** 3
-- **Role:** SURGICAL Codex
+- **Role:** SURGICAL
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** hierarchy dependency context `BE-07-B -> BE-07-A:ACCEPTED`; mandatory surgical review policy
-- **allowed_paths:** review-only disposition now; backend scope only if implementation resumes
-- **Exact gate reference:** backend task-07 command from `.opencode/task-plan.backend.json`
-- **Acceptance condition:** SURGICAL ACCEPT/REVISE disposition + reconciled evidence + controller-owned commit path.
+- **Dependencies:** confirm BE-07 dependency order (BE-07-A before BE-07-B closure semantics).
+- **allowed_paths:** backend task-07 scope (`pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`) if revise implementation is required.
+- **Exact gate:** task-07 backend gate command from `.opencode/task-plan.backend.json`.
+- **SURGICAL review requirement:** mandatory and immediate.
 
-## LP decision — CONTINUE (`task-fe-03d-dom-state-tests`)
-- Evidence remains `PENDING` with latest gate exit `2` and Codex `REVISE`.
-- Codex packet specifies exact loading/reset assertion corrections and evidence consistency requirements.
-
-### Directed package
+### Package B (frontend)
 - **Level:** 1
 - **Role:** LP
-- **Task ID:** `task-fe-03d-dom-state-tests` (`FE-03D-A`)
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` (after `git diff --check`)
-- **Acceptance condition:** non-empty scoped patch, gate green, SURGICAL Codex `ACCEPT`.
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED`.
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
+- **SURGICAL review requirement:** mandatory after gate-green.
 
-## Cross-queue integration posture
-- Backend and frontend write scopes remain disjoint for this cycle (backend review context vs one frontend spec file).
-- Main near-term risks are PC evidence inconsistency and LP REVISE-loop churn.
+## Risks and controls
+- **Risk:** backend closure attempted without explicit dependency/disposition alignment.
+  - **Control:** require SURGICAL decision before any new PC implementation loop.
+- **Risk:** LP submits stale/contradictory diagnostics again.
+  - **Control:** require one final gate execution and matching task-gate/log/manifest artifacts.
 
-## Evidence limitations
-- RUN_DIR contains summary-level diagnostics but not full gate logs.
-- No PC codex_review artifact exists in this snapshot, so no surgical acceptance claim is possible.
-
-## Ring repository edits in this cycle
-- None to repository product/test/config/docs content.
-- Only the six required staged artifacts were written under:
-  - `runtime/ring-agent/ring/20260806T184128Z/output/`
+## Repository edits by Ring this cycle
+- No repository product/code edits were made.
+- Only the six required staged artifacts under `runtime/ring-agent/ring/20260806T184628Z/output/` were written.
