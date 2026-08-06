@@ -3,11 +3,11 @@
 ## Current state
 
 - Worker: PC.
-- Run: 20260806T144154Z.
+- Run: 20260806T145911Z.
 - Last accepted task: task-06f-ingestion-validation.
 - Active task: task-07-populate-production-rag.
 - Current attempt: 1.
-- Latest exact gate: not run; exit=unknown.
+- Latest exact gate: task-gate; exit=1.
 - Latest Codex decision: pending.
 - Checkpoint: none; head=not recorded.
 - Accepted: task-01-base, task-02-ingestion, task-03-pgvector, task-04-rag, task-05-rag-api, task-06-production-ingestion-cli, task-06b-cli-contract, task-06c-spring-lifecycle, task-06d-failure-classification, task-06e-child-process, task-06f-ingestion-validation.
@@ -16,7 +16,9 @@
 
 ## Files currently owned or edited
 
-- No task-owned dirty product path at the latest snapshot.
+- `src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionService.java`
+- `src/main/java/com/riansares/r4r/vector/PgVectorKnowledgeStore.java`
+- `src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionServiceIT.java`
 
 ## Demonstrated by current evidence
 
@@ -24,7 +26,7 @@
 
 ## Still unproven or below expectations
 
-- Populate the persistent PC pgvector database and prove idempotent ingestion.
+- The exact task gate is red with exit code 1.
 
 ## Approaches not to repeat
 
@@ -32,7 +34,7 @@
 
 ## Next exact action
 
-Review the exact gate evidence and make one coherent, task-scoped repair.
+Fix the first current deterministic gate failure before requesting acceptance.
 
 ## Fixed decisions
 
