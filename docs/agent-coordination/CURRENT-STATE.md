@@ -1,30 +1,23 @@
-# Global summary (RUN 20260806T143139Z)
+## Global summary — run 20260806T145914Z
 
-## Executive status
+This cycle is **READY** with one actionable frontend correction and one backend dependency hold.
 
-- **Overall:** READY
-- **PC:** HOLD on backend task-07 pending dependency readiness.
-- **LP:** REVIEW on FE-03C with gate-green evidence awaiting SURGICAL decision.
+## What was verified from current RUN_DIR evidence
+- PC: active backend task is `task-07-populate-production-rag`, but no current gate/review/checkpoint evidence exists; only memory file drift is present.
+- LP: active frontend task `task-fe-03c-citations` has in-progress spec edits plus a Codex `REVISE` packet with explicit missing DOM assertions.
+- No worker request bundle was preloaded (`worker-request-manifest.json` has empty requests array).
 
-## Evidence-backed findings
+## Ring decisions
+- **PC → HOLD** (`task-07-populate-production-rag`)
+  - Reason: dependency chain still blocks execution (`BE-07-A` required before `BE-07-B`).
+- **LP → CONTINUE** (`task-fe-03c-citations`)
+  - Reason: first current defect is unresolved REVISE requirements without fresh exact-gate proof.
 
-1. PC runtime shows active `task-07-populate-production-rag`, no task-07 gate run yet, and no product-path dirty implementation in this snapshot.
-2. LP runtime shows green FE-03C gate evidence, but task status is still PENDING and codex review artifact is absent.
-3. LP dirty set includes frontend test changes plus non-task docs/memory paths that may violate scope-clean closure checks.
+## Required next actions (bounded)
+1. LP (Level 1) performs one spec-only correction pass and reruns exact FE-03C gate.
+2. PC (Level 2) stays idle until dependency acceptance is evidenced; no premature backend gate cycles.
+3. Both paths remain review-closed only by SURGICAL Codex `ACCEPT`.
 
-## Priority ordering for next cycle
-
-1. **First:** SURGICAL review pass for LP FE-03C current evidence (`ACCEPT` or `REVISE`).
-2. **Second:** Keep PC paused until task-07 dependency release is authoritative.
-3. **Third:** After dependency release, run one bounded PC execution pass for task-07 and stop for SURGICAL review.
-
-## Required gates/constraints retained
-
-- FE-03C exact gate: `./scripts/frontend-task-gate.sh task-fe-03c-citations`.
-- Task-07 exact gate: command declared in `.opencode/task-plan.backend.json`.
-- Mandatory review policy: SURGICAL ACCEPT required for closure of LP/PC tasks.
-
-## Limitations
-
-- No current-run codex review/plan files were captured in this RUN_DIR for either worker.
-- LP diff content is summarized by status/statistics only in this evidence set.
+## Evidence limitations
+- Current snapshot lacks gate summaries, Codex review outputs, and checkpoints for both workers.
+- Snapshot includes only status/diff-stat, not full patch content; final quality claims must wait for fresh gate + review artifacts.
