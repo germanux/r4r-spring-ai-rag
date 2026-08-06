@@ -1,44 +1,36 @@
-# PC code review — run 20260806T195634Z
+# PC code review (backend)
 
-## Evidence reviewed
+## Current evidence
 
-- `runtime/ring-agent/ring/20260806T195634Z/worker-request-manifest.json`
-- `runtime/ring-agent/ring/20260806T195634Z/worker-requests/PC.json`
-- `runtime/ring-agent/ring/20260806T195634Z/pc-runtime/progress.json`
-- `runtime/ring-agent/ring/20260806T195634Z/pc-runtime/previous-ring-qwen3-directive.json`
-- `runtime/ring-agent/ring/20260806T195634Z/pc-git-status.txt`
+- Active task: `task-07-populate-production-rag` (`pc-runtime/progress.json`).
+- Deterministic backend gate status is green (`pc-runtime/gate_summary.md`, exit `0`).
+- Worker request is a **gate-green-checkpoint** handoff, but closure is incomplete: `codex_decision: null`, `checkpoint_head: null` (`worker-requests/PC.json`).
+- Task remains `BLOCKED` in progress despite gate-green evidence (`pc-runtime/progress.json`).
 
-## First current defect (PC)
+## First current defect
 
-Task closure evidence is incomplete, not a newly demonstrated code failure:
-
-- Task: `task-07-populate-production-rag`
-- Current request shows `gate_exit: 0` (green) but `codex_decision: null` and `checkpoint_head: null`.
-- Progress still marks task-07 as `BLOCKED`.
-
-This means the queue cannot close task-07 yet under hierarchy closure rules.
+The first defect is **closure-state incompleteness**, not implementation correctness: there is no recorded SURGICAL decision or checkpoint head for the gate-green attempt.
 
 ## Bounded next action package
 
-- **Implementation level:** 3 (SURGICAL)
-- **Assigned role:** SURGICAL Codex (`r4r-surgical-architect` / `r4r-surgical-fixer`)
+- **Implementation level:** 3 (SURGICAL review-only pass)
+- **Assigned role:** SURGICAL Codex (`r4r-surgical-architect` / `r4r-surgical-fixer` lane)
 - **Task ID:** `task-07-populate-production-rag`
 - **Dependencies:**
-  - `task-06f-ingestion-validation:ACCEPTED` (already true in progress evidence)
-  - Existing task-07 gate-green request evidence (current attempt)
-- **allowed_paths:**
-  - Review-only pass: no product-file writes.
-  - If correction is required after review: constrained to backend task scope from plan (`pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`).
-- **Exact gate:**
-  - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
-- **Required SURGICAL review:** mandatory `ACCEPT` or `REVISE` before controller closure.
+  - Exact gate already green for run `20260806T200011Z`
+  - Existing PC diff and evidence bundle from attempt 1
+- **allowed_paths:** none for review-only classification in this pass (no new implementation edit requested)
+- **Exact gate / closure constraint:**
+  - `.opencode/task-plan.hierarchy.json` closure chain: `exact-gate-green + scope-clean + surgical-accept + controller-commit`
+  - Backend task gate for task-07 remains authoritative from `.opencode/task-plan.backend.json`
+- **Required SURGICAL review:** mandatory before closure; produce ACCEPT/REVISE and explicit closure-state classification.
 
-## Acceptance conditions for this pass
+## Acceptance evidence required in next cycle
 
-1. SURGICAL review decision is no longer null for the active task-07 request.
-2. Controller closure evidence satisfies hierarchy policy: `exact-gate-green + scope-clean + surgical-accept + controller-commit`.
-3. No new PC implementation loop is started unless SURGICAL explicitly returns `REVISE` with bounded instructions.
+1. Explicit SURGICAL decision for task-07 (`ACCEPT` or `REVISE`).
+2. If `ACCEPT`, controller-owned closure artifacts (including checkpoint/commit state) must be present in current evidence.
+3. If `REVISE`, one bounded correction packet must identify first failure and scope-limited next edit.
 
 ## Avoid repeating
 
-Do **not** run another unchanged PC implementation/gate cycle while review/closure evidence remains unresolved.
+Do not run another unchanged PC implementation/gate pass while `codex_decision` remains null and closure metadata is unresolved.
