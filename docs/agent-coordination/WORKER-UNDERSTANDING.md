@@ -1,45 +1,33 @@
-# Worker understanding assessment
+# Worker Understanding Audit
 
-## PC understanding status
+## PC understanding
+- Active task in progress data is `task-07-populate-production-rag`.
+- Latest local evidence includes a red gate summary and open backend edits.
+- Prior Ring directive already warned against repeating blocked backend loops until prerequisite acceptance.
 
-- **Assessment:** Partial and currently misaligned with dependency state.
-- **Why:** Evidence shows active task remains pending with dependency-hold context, yet backend edits and a red gate are present.
-- **Correction:** Hold-only pass; do not continue backend implementation until dependency acceptance evidence is published.
-
-Evidence:
-
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/memory.md`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/previous-ring-qwen3-directive.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-git-status.txt`
-
-## LP understanding status
-
-- **Assessment:** Inadequate on explanation quality, but repair path is clear.
-- **Why:** Local understanding explicitly lacked a requirement-to-assertion mapping; Codex marked revise and provided concrete checklist items.
-- **Correction:** Execute checklist exactly on the single owned spec file before next gate.
-
-Evidence:
-
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/lp-runtime/local_understanding.md`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/lp-runtime/gate_summary.md`
-
-## Directed next-pass packages
-
-### Package A
+### PC actionable package
 - **Level:** 2
 - **Role:** PC
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `BE-07-A:ACCEPTED` required before resume
-- **allowed_paths:** none (hold)
-- **Exact gate:** none during hold
-- **SURGICAL review:** required for eventual closure once resumed
+- **Dependencies:** `BE-07-A:ACCEPTED`
+- **allowed_paths:** none for this pass (hold-only)
+- **Exact gate:** deferred until unblocked (`./scripts/task-gate.sh all`)
+- **SURGICAL review:** required once gate-green evidence exists
 
-### Package B
-- **Level:** 1
-- **Role:** LP
+## LP understanding
+- Active task is `task-fe-03d-dom-state-tests`.
+- A gate-green checkpoint exists (attempt 6, head `a8db23a...`) and changed path is scoped to the owned frontend spec.
+- Closure is incomplete because Codex ACCEPT is not yet recorded.
+
+### LP actionable package
+- **Level:** 1 (review closure)
+- **Role:** LP + SURGICAL reviewer
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED` (already satisfied)
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **SURGICAL review:** required `ACCEPT` before closure
+- **Dependencies:** prior task accepted; now needs mandatory review acceptance
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` if revise requested
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **SURGICAL review:** immediate ACCEPT/REVISE decision required
+
+## Evidence-backed confidence
+- High confidence that LP is in review-ready state due explicit checkpoint + gate_exit 0 evidence.
+- High confidence that PC should remain held due dependency-sensitive sequencing and no new unblocking proof.
