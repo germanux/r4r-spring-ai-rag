@@ -1,23 +1,33 @@
-# Backend ↔ Frontend handoff (cycle 20260806T174553Z)
+# Backend ↔ Frontend handoff (cycle 20260806T184128Z)
 
-## Queue status
-- **Backend (PC): HOLD** on `task-07-populate-production-rag` pending dependency/order correction.
-- **Frontend (LP): CONTINUE** on `task-fe-03d-dom-state-tests` with Codex REVISE checklist.
+## Queue decisions
+- **Backend lane (PC task context): REVIEW** on `task-07-populate-production-rag` via SURGICAL review-only disposition.
+- **Frontend lane (LP task context): CONTINUE** on `task-fe-03d-dom-state-tests` with one bounded Level-1 revise pass.
 
-## Ownership disjointness
-- **PC/backend writable scope when resumed:** backend paths only (`pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**` per task plan).
-- **LP/frontend writable scope now:** `frontend/src/app/features/rag/rag-page.component.spec.ts` only.
-- No immediate path overlap between the current LP pass and the held backend PC pass.
+## Ownership and scope separation
+- **Backend review package (Level 3, SURGICAL):**
+  - task ID: `task-07-populate-production-rag`
+  - dependency context: `BE-07-B` depends on `BE-07-A:ACCEPTED`
+  - allowed_paths for any resumed PC implementation: `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+  - current pass objective is review/disposition; no Ring product edits.
+- **Frontend correction package (Level 1, LP):**
+  - task ID: `task-fe-03d-dom-state-tests` (`FE-03D-A`)
+  - allowed_paths: `frontend/src/app/features/rag/rag-page.component.spec.ts`
 
-## Dependency and sequencing controls
-1. `BE-07-B` (PC execution) is blocked by `BE-07-A:ACCEPTED` per `.opencode/task-plan.hierarchy.json`.
-2. Therefore backend queue remains paused for implementation until prerequisite acceptance + SURGICAL disposition of current red diff.
-3. Frontend queue can continue independently because it is bounded to FE-03D scope and does not require backend code edits.
+These active directives are disjoint (backend vs one frontend spec file), so concurrent progression is safe.
 
-## Required review checkpoints
-- **LP result:** exact frontend gate green + SURGICAL `ACCEPT`.
-- **PC result (after release from hold):** exact backend gate green + SURGICAL `ACCEPT`.
+## Sequencing controls
+1. PC cannot be closed on gate status alone; current packet still lacks SURGICAL Codex disposition and has checkpoint-commit failure evidence.
+2. LP must convert REVISE instructions into a concrete non-empty scoped patch and produce consistent gate evidence.
+3. Both lanes require SURGICAL `ACCEPT` before closure under `.opencode/task-plan.hierarchy.json` review policy.
 
-## Integration risks to carry forward
-- Premature backend resume risks another invalid task-07 attempt without prerequisite documentation/verification (`BE-07-A`).
-- Frontend may loop on green/no-diff unless Codex REVISE requirements are converted into explicit selector-level assertions.
+## Exact gates to preserve
+- Backend (`task-07-populate-production-rag`):
+  - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
+- Frontend (`task-fe-03d-dom-state-tests`):
+  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+  - pre-gate: `git diff --check`
+
+## Integration risks to monitor next cycle
+- PC packet inconsistency (checkpoint gate green vs gate summary red) can cause incorrect release decisions unless surgically reconciled.
+- LP may continue REVISE churn if selector/assertion mapping is not explicitly reflected in both tests and understanding evidence.

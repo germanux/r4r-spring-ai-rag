@@ -1,28 +1,39 @@
-# Worker understanding assessment (cycle 20260806T174553Z)
+# Worker understanding assessment (cycle 20260806T184128Z)
 
 ## PC understanding
 ### Observed
-- PC is actively editing backend ingestion/vector/test files with a red gate outcome.
-- Prior ring directive already stated dependency hold (`BE-07-B` depends on `BE-07-A:ACCEPTED`).
+- PC produced a gate-green checkpoint request with concrete backend edits for `task-07-populate-production-rag`.
+- Controller state is `CHECKPOINT_COMMIT_FAILED`, and no Codex review outcome is present in the current PC runtime bundle.
+- Packaged diagnostics are inconsistent (`checkpoint gate_exit=0` vs `gate_summary exit=1`).
 
-### Gap
-- Execution sequencing is not yet aligned with hierarchy dependency and review closure requirements.
+### Understanding gap
+- The queue is currently at a **review/closure integrity** problem, not a missing new backend coding objective.
+- Without SURGICAL disposition and reconciled evidence, another implementation pass risks duplicate work and contradictory release state.
 
 ### Next bounded instruction
-- **Level 3, SURGICAL reviewer action first:** produce keep-or-revert disposition on current backend red diff.
-- Keep PC on hold for implementation until dependency acceptance is evidenced.
+- **Level 3 / SURGICAL / task-07 review package**
+  - dependencies: `BE-07-B` dependency chain and mandatory review policy
+  - allowed_paths: review-only disposition now; backend task scope only if reopened
+  - exact gate reference: backend task-07 gate command from `.opencode/task-plan.backend.json`
+  - required output: explicit ACCEPT/REVISE keep-or-revert guidance for current diff and commit failure context.
 
 ## LP understanding
 ### Observed
-- LP has green deterministic gate evidence.
-- Codex still issued `REVISE` and request packet recorded `changed_paths: []`.
-- Local understanding report mapped requirements to memory artifacts instead of concrete DOM selectors/assertions.
+- LP remains on `task-fe-03d-dom-state-tests` with latest gate exit `2` and Codex `REVISE`.
+- Codex packet provides very specific selector-level corrections and warns against synthetic/unscoped test patterns.
 
-### Gap
-- LP treated green gate as completion despite unresolved acceptance contract and missing material patch.
+### Understanding gap
+- Prior attempts did not consistently translate acceptance requirements into clean, scoped, evidence-consistent test updates.
 
 ### Next bounded instruction
-- **Level 1, LP revise pass:** one spec-file patch implementing Codex-listed loading + independent reset assertions, with explicit requirement-to-selector/assertion mapping.
+- **Level 1 / LP / FE-03D-A correction pass**
+  - dependencies: `task-fe-03c-citations:ACCEPTED`
+  - allowed_paths: `frontend/src/app/features/rag/rag-page.component.spec.ts`
+  - exact gate: `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` (after `git diff --check`)
+  - required SURGICAL review: Codex `ACCEPT` before closure.
 
-## Shared closure rule reminder
-For both workers, task closure requires **exact gate green + SURGICAL Codex `ACCEPT` + controller-owned commit**, not gate status alone.
+## Shared closure reminder
+No queue can be closed on gate status alone. Required closure chain is:
+1) exact gate green,
+2) SURGICAL Codex `ACCEPT`,
+3) controller-owned commit/checkpoint completion.

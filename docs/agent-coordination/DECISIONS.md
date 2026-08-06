@@ -1700,3 +1700,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - PC runtime manifest exposes no codex_review/codex_plan artifact for the current red gate, so this cycle cannot claim a completed SURGICAL disposition.
 - RUN_DIR includes gate summaries but not full gate logs, limiting first-failure granularity to packaged diagnostic classification.
+
+## Cycle `20260806T184128Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-07-populate-production-rag`
+- Reason: Current PC evidence shows a gate-green checkpoint request with backend product changes, but no SURGICAL Codex disposition yet and controller status CHECKPOINT_COMMIT_FAILED; closure cannot proceed without surgical review and commit-path disposition.
+- Next action: Run one Level-3 SURGICAL review-only pass on the current task-07 backend diff and checkpoint-commit-failed state, then issue ACCEPT/REVISE keep-or-revert guidance before any new PC implementation pass.
+- Avoid repeating: Do not start another PC implementation/gate loop on task-07 before SURGICAL disposition of the current diff and checkpoint-commit failure evidence.
+- Acceptance gates:
+  - Exact backend task gate for task-07-populate-production-rag from .opencode/task-plan.backend.json: bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0".
+  - Mandatory SURGICAL Codex review policy from .opencode/task-plan.hierarchy.json: closure requires exact-gate-green + surgical-accept + controller commit.
+  - Dependency control remains in force: BE-07-B depends on BE-07-A:ACCEPTED per .opencode/task-plan.hierarchy.json; any mismatch must be resolved in the surgical disposition.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T184128Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T184128Z/pc-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T184128Z/pc-runtime/controller_state.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T184128Z/pc-git-status.txt`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP remains PENDING with latest gate exit 2 and Codex REVISE instructions requiring concrete spec-file DOM assertion fixes; current evidence does not prove accepted correction.
+- Next action: Execute one Level-1 revise pass only in frontend/src/app/features/rag/rag-page.component.spec.ts implementing the mandated loading and split reset assertions, then run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests with consistent evidence packaging.
+- Avoid repeating: Do not submit another stale/contradictory evidence packet or synthetic test rewrite that bypasses the selector-level assertions mandated by Codex REVISE.
+- Acceptance gates:
+  - Respect FE-03D-A allowed_paths from .opencode/task-plan.hierarchy.json: frontend/src/app/features/rag/rag-page.component.spec.ts.
+  - Pre-gate hygiene required by current Codex packet: git diff --check.
+  - Exact frontend gate from .opencode/task-plan.frontend.json: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+  - Closure requires SURGICAL Codex ACCEPT after gate-green evidence.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T184128Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T184128Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T184128Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T184128Z/lp-git-status.txt`
+
+### Integration risks
+
+- PC evidence currently mixes a gate-green checkpoint request with a stale-looking gate summary marked test-failure; without surgical reconciliation, release decisions may be made on inconsistent diagnostics.
+- Controller checkpoint commit failure for PC can strand valid backend changes without traceable checkpoint head, increasing rework and merge-risk.
+- LP has repeated REVISE cycles on FE-03D; another non-conforming spec patch risks continued frontend queue churn despite bounded scope.
+
+### Evidence limitations
+
+- RUN_DIR provides gate summaries but not the full gate-full logs, so first-failure root-cause confirmation is limited.
+- PC runtime bundle has no codex_review artifact for the current checkpoint request, so no SURGICAL ACCEPT/REVISE outcome can be claimed in this cycle.

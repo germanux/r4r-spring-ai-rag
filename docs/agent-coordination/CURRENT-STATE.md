@@ -1,40 +1,44 @@
-# Global coordination summary (RUN_ID: 20260806T174553Z)
+# Global coordination summary (RUN_ID: 20260806T184128Z)
 
-## What changed in this Ring cycle
-- Reviewed bounded evidence in RUN_DIR for Ring, PC, LP status and runtime packets.
-- Classified first current defects per queue.
-- Issued queue decisions that preserve dependency order, write-scope safety, and mandatory SURGICAL review policy.
+## Cycle outcome
+Ring reviewed bounded RUN_DIR evidence for PC, LP, and Ring snapshots and produced queue decisions grounded in current runtime artifacts.
 
-## Decisions
-### PC — `HOLD` (`task-07-populate-production-rag`)
-- Evidence shows red backend gate and dirty backend product files.
-- Hierarchy dependency requires `BE-07-A:ACCEPTED` before `BE-07-B` execution.
-- No new RUN_DIR evidence proves dependency satisfaction or completed SURGICAL disposition.
-- Next action is review-first (Level 3 SURGICAL), then resume PC only after dependency release.
+## PC decision — REVIEW (`task-07-populate-production-rag`)
+- Evidence shows a gate-green checkpoint request with non-empty backend changes.
+- Controller state reports `CHECKPOINT_COMMIT_FAILED` (exit `67`), and no current SURGICAL Codex review outcome is present.
+- Diagnostic packet is inconsistent (`checkpoint gate_exit=0` vs `gate_summary exit=1`), so closure is unsafe without Level-3 surgical disposition.
 
-### LP — `CONTINUE` (`task-fe-03d-dom-state-tests`)
-- Gate is green but Codex decision is REVISE, with no material changed paths in the request packet.
-- First defect is acceptance-contract miss: required DOM assertions/mapping not delivered as scoped patch.
-- Next action is one Level-1 bounded revise pass in the single allowed spec file.
+### Directed package
+- **Level:** 3
+- **Role:** SURGICAL Codex
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** hierarchy dependency context `BE-07-B -> BE-07-A:ACCEPTED`; mandatory surgical review policy
+- **allowed_paths:** review-only disposition now; backend scope only if implementation resumes
+- **Exact gate reference:** backend task-07 command from `.opencode/task-plan.backend.json`
+- **Acceptance condition:** SURGICAL ACCEPT/REVISE disposition + reconciled evidence + controller-owned commit path.
 
-## Required work packages (explicit)
-1. **Level 3 / SURGICAL / review package**
-   - **Task ID:** `task-07-populate-production-rag`
-   - **Dependencies:** `BE-07-A:ACCEPTED` before PC execution package
-   - **allowed_paths:** review-only disposition now; later backend task scope when resumed
-   - **Exact gate (when resumed):** task-07 backend gate from `.opencode/task-plan.backend.json`
-   - **Acceptance:** SURGICAL keep/revert disposition + later gate-green + SURGICAL `ACCEPT`
+## LP decision — CONTINUE (`task-fe-03d-dom-state-tests`)
+- Evidence remains `PENDING` with latest gate exit `2` and Codex `REVISE`.
+- Codex packet specifies exact loading/reset assertion corrections and evidence consistency requirements.
 
-2. **Level 1 / LP / correction package**
-   - **Task ID:** `task-fe-03d-dom-state-tests` (`FE-03D-A`)
-   - **Dependencies:** `task-fe-03c-citations:ACCEPTED`
-   - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-   - **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-   - **Acceptance:** non-empty scoped patch, gate green, SURGICAL Codex `ACCEPT`
+### Directed package
+- **Level:** 1
+- **Role:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests` (`FE-03D-A`)
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` (after `git diff --check`)
+- **Acceptance condition:** non-empty scoped patch, gate green, SURGICAL Codex `ACCEPT`.
+
+## Cross-queue integration posture
+- Backend and frontend write scopes remain disjoint for this cycle (backend review context vs one frontend spec file).
+- Main near-term risks are PC evidence inconsistency and LP REVISE-loop churn.
 
 ## Evidence limitations
-- PC full gate logs/Codex review artifact were not present in RUN_DIR snapshot; only packaged summaries were available.
-- Therefore no claim is made that PC failure root cause is fully diagnosed or that SURGICAL has already accepted current backend changes.
+- RUN_DIR contains summary-level diagnostics but not full gate logs.
+- No PC codex_review artifact exists in this snapshot, so no surgical acceptance claim is possible.
 
-## Repository edits by Ring in this cycle
-- None outside the required staged artifacts under `runtime/ring-agent/ring/20260806T174553Z/output/`.
+## Ring repository edits in this cycle
+- None to repository product/test/config/docs content.
+- Only the six required staged artifacts were written under:
+  - `runtime/ring-agent/ring/20260806T184128Z/output/`
