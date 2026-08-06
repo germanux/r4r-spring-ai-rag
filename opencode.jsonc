@@ -58,6 +58,20 @@
             "context": 28672,
             "output": 6144
           }
+        },
+        "gemma4-e4b-lp-16k": {
+          "name": "gemma4-e4b-lp-16k",
+          "limit": {
+            "context": 16384,
+            "output": 4096
+          }
+        },
+        "gemma4-e4b-lp-16k:latest": {
+          "name": "gemma4-e4b-lp-16k:latest",
+          "limit": {
+            "context": 16384,
+            "output": 4096
+          }
         }
       }
     },
