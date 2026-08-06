@@ -2208,3 +2208,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - RUN_DIR contains LP gate summary but not the full gate-full.log payload; diagnosis relies on summarized diagnostics plus Codex correction packet.
 - PC evidence in this RUN_DIR shows no Codex review artifact for task-07, so ACCEPT/REVISE outcome cannot be asserted yet.
+
+## Cycle `20260806T193633Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-07-populate-production-rag`
+- Reason: PC submitted a gate-green checkpoint request (gate_exit=0) for task-07, but codex_decision remains null and progress still marks the task BLOCKED; closure cannot proceed without mandatory SURGICAL review.
+- Next action: Run one level-3 SURGICAL review-only pass on the existing task-07 checkpoint evidence and return ACCEPT or REVISE before any additional PC implementation pass.
+- Avoid repeating: Do not run another PC edit/gate loop while the same task-07 gate-green request still has codex_decision=null.
+- Acceptance gates:
+  - Exact task gate remains the backend task-07 gate from .opencode/task-plan.backend.json (bash -lc rm -rf target && ./scripts/task-gate.sh all && ... SELECT count(*) FROM vector_store ... test rows > 0).
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193633Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193633Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193633Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193633Z/pc-runtime/previous-ring-qwen3-directive.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP remains red on the deterministic FE-03D gate (exit=2), Codex has already returned REVISE with explicit corrective instructions, and the current diff still shows a large unvalidated spec rewrite.
+- Next action: Execute one bounded level-1 correction pass in frontend/src/app/features/rag/rag-page.component.spec.ts exactly per the Codex correction packet, then run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests once with consistent diagnostics.
+- Avoid repeating: Do not reintroduce synthetic or invalid tests, direct innerHTML mutation, manual loading flag mutation, invalid RAGAnswerResult shapes, or mismatched gate diagnostics.
+- Acceptance gates:
+  - Whitespace guard: git diff --check must pass before rerunning FE-03D gate.
+  - Exact frontend gate from .opencode/task-plan.frontend.json: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193633Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193633Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193633Z/lp-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193633Z/lp-git-diff-stat.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T193633Z/lp-runtime/progress.json`
+
+### Integration risks
+
+- Backend queue can stall if task-07 remains in BLOCKED state despite a green gate because mandatory SURGICAL acceptance is still missing.
+- LP is a level-1 single-file task but current FE spec churn is high (105-line delta), increasing risk of reintroducing non-contract assertions and another gate-failure loop.
+- If LP proceeds without aligning local understanding to the Codex packet selectors/assertions, repeated red-gate attempts may consume attempt budget without improving closure evidence.
+
+### Evidence limitations
+
+- No codex_review artifact is present in this RUN_DIR for either PC or LP, so acceptance/revision outcomes are inferred only from request and memory summaries.
+- Only gate summaries are present in this RUN_DIR snapshot; full gate logs are referenced but not included here for direct inspection.
+- No checkpoint metadata is present for current PC/LP attempts (checkpoint_head is null).

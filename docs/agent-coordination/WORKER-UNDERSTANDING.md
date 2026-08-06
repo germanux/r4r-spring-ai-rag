@@ -1,21 +1,41 @@
-# Worker understanding assessment (cycle 20260806T193132Z)
+# Worker understanding assessment
 
-## PC understanding
-- **Signal quality:** adequate for checkpoint handoff, but no fresh Codex outcome yet.
-- **Evidence:** PC request shows gate-green checkpoint (`gate_exit=0`) and no `codex_decision`.
-- **Interpretation:** this is not a new implementation request; it is a review-closure request.
-- **Required next understanding behavior:** PC must avoid new edits until SURGICAL resolves ACCEPT/REVISE on current evidence.
+## PC understanding status
 
-## LP understanding
-- **Signal quality:** inadequate in attempt-06 per Codex.
-- **Evidence:** `codex-qwen3-extra-instructions.md` explicitly states LP invented selectors/state/content and did not map requirements to exact DOM assertions.
-- **Interpretation:** failure is implementation discipline and requirement-traceability, not missing instructions.
-- **Required next understanding behavior:** LP local understanding must map every FE-03D requirement to concrete selector/assertion pairs and align with final gate diagnostics.
+Evidence indicates PC executed within backend task scope and reached a green deterministic gate checkpoint for `task-07-populate-production-rag`. The current blocker is procedural: mandatory SURGICAL disposition is missing (`codex_decision=null`).
 
-## Bounded directives emitted from this understanding
-1. **PC / Level 3 SURGICAL review package** — review-only closure decision for `task-07-populate-production-rag`.
-2. **LP / Level 1 correction package** — single-file FE-03D spec fix and exact gate rerun.
+- **Assessment:** adequate task execution signal; insufficient closure signal.
+- **First defect to address:** unresolved review state, not new code change.
+- **Next bounded action:** route one SURGICAL review-only pass for the existing checkpoint evidence.
 
-## Acceptance evidence expected next cycle
-- PC: artifact proving SURGICAL `ACCEPT` or `REVISE` for the current checkpoint.
-- LP: scoped spec diff, clean `git diff --check`, gate exit `0`, and SURGICAL review result.
+Package details:
+
+- **Level:** 3
+- **Role:** SURGICAL
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** checkpoint request evidence + hierarchy closure policy
+- **allowed_paths:** read-only evidence review for this pass
+- **Exact gate/constraint:** closure requires `exact-gate-green + scope-clean + surgical-accept + controller-commit`
+
+## LP understanding status
+
+Codex explicitly marked LP understanding as inadequate for the prior red attempt and provided highly specific corrections. Current LP diff size (single spec file but large changes) plus red gate evidence indicates understanding-to-assertion mapping remains the key weakness.
+
+- **Assessment:** correction intent present, but requirement mapping to selectors/assertions is still unproven.
+- **First defect to address:** unresolved FE-03D red gate with known correction packet.
+- **Next bounded action:** one LP pass implementing only prescribed loading/reset DOM assertions, then exact gate.
+
+Package details:
+
+- **Level:** 1
+- **Role:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED` and existing Codex REVISE packet
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Required SURGICAL review:** mandatory after gate-green
+
+## Shared instruction to prevent waste
+
+- Do not repeat unchanged failing attempts.
+- Do not claim acceptance without explicit SURGICAL `ACCEPT` evidence.
