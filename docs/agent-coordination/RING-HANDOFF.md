@@ -1,33 +1,32 @@
-# Backend ↔ Frontend handoff (cycle 20260806T184128Z)
+# Backend ↔ Frontend handoff (cycle 20260806T184628Z)
 
-## Queue decisions
-- **Backend lane (PC task context): REVIEW** on `task-07-populate-production-rag` via SURGICAL review-only disposition.
-- **Frontend lane (LP task context): CONTINUE** on `task-fe-03d-dom-state-tests` with one bounded Level-1 revise pass.
+## Queue separation decision
+- **Backend owner path (PC/SURGICAL review):** task `task-07-populate-production-rag` evidence disposition only.
+- **Frontend owner path (LP):** task `task-fe-03d-dom-state-tests` spec correction only.
+- Write scopes are disjoint in this cycle (backend `src/**` + `docs/backend/**` vs frontend spec file), so both lanes can progress concurrently without overlap.
 
-## Ownership and scope separation
-- **Backend review package (Level 3, SURGICAL):**
-  - task ID: `task-07-populate-production-rag`
-  - dependency context: `BE-07-B` depends on `BE-07-A:ACCEPTED`
-  - allowed_paths for any resumed PC implementation: `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-  - current pass objective is review/disposition; no Ring product edits.
-- **Frontend correction package (Level 1, LP):**
-  - task ID: `task-fe-03d-dom-state-tests` (`FE-03D-A`)
-  - allowed_paths: `frontend/src/app/features/rag/rag-page.component.spec.ts`
+## Backend package
+- **Level:** 3 review package
+- **Role:** SURGICAL Codex
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** validate BE-07-A/BE-07-B sequencing before closure.
+- **allowed_paths (if revise implementation is required):** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`.
+- **Exact gate constraint:** task-07 backend gate command from `.opencode/task-plan.backend.json`.
+- **Required SURGICAL review:** yes (this is the action itself).
 
-These active directives are disjoint (backend vs one frontend spec file), so concurrent progression is safe.
+## Frontend package
+- **Level:** 1 implementation package
+- **Role:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED`.
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+- **Exact gate constraint:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
+- **Required SURGICAL review:** yes, after gate-green.
 
-## Sequencing controls
-1. PC cannot be closed on gate status alone; current packet still lacks SURGICAL Codex disposition and has checkpoint-commit failure evidence.
-2. LP must convert REVISE instructions into a concrete non-empty scoped patch and produce consistent gate evidence.
-3. Both lanes require SURGICAL `ACCEPT` before closure under `.opencode/task-plan.hierarchy.json` review policy.
+## Integration risks to watch
+1. **Backend dependency-order risk:** hierarchy marks BE-07-B dependent on BE-07-A acceptance; any mismatch must be resolved during SURGICAL disposition.
+2. **Frontend evidence-consistency risk:** previous LP attempts mixed stale/insufficient diagnostics; next packet must align manifest, gate log, and task-gate result from one execution.
 
-## Exact gates to preserve
-- Backend (`task-07-populate-production-rag`):
-  - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
-- Frontend (`task-fe-03d-dom-state-tests`):
-  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-  - pre-gate: `git diff --check`
-
-## Integration risks to monitor next cycle
-- PC packet inconsistency (checkpoint gate green vs gate summary red) can cause incorrect release decisions unless surgically reconciled.
-- LP may continue REVISE churn if selector/assertion mapping is not explicitly reflected in both tests and understanding evidence.
+## Handoff readiness
+- Frontend can execute immediately with bounded correction.
+- Backend should not open a new coding loop until SURGICAL review outcome on the existing task-07 checkpoint.
