@@ -1,40 +1,40 @@
 # Backend ↔ Frontend handoff
 
-## Queue separation decision
+## Queue separation and ownership
 
-- **Backend owner (PC path):** `task-07-populate-production-rag`
-- **Frontend owner (LP path):** `task-fe-03d-dom-state-tests`
-- **Scope overlap check:** none in current evidence-backed actions.
+- **Backend (PC track)**
+  - Active task: `task-07-populate-production-rag`
+  - Current status: gate-green checkpoint requested, awaiting mandatory SURGICAL review
+  - Current changed backend paths (from request):
+    - `docs/backend/production-ingestion-evidence.md`
+    - `src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionService.java`
+    - `src/main/java/com/riansares/r4r/vector/PgVectorKnowledgeStore.java`
+    - `src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionServiceIT.java`
+    - `src/test/java/com/riansares/r4r/ingestion/TestChildApplicationContextInitializer.java`
 
-Current bounded scopes are disjoint:
+- **Frontend (LP track)**
+  - Active task: `task-fe-03d-dom-state-tests`
+  - Current status: deterministic gate red; Codex `REVISE` pending implementation
+  - Bounded edit scope for next pass:
+    - `frontend/src/app/features/rag/rag-page.component.spec.ts`
 
-- Backend work references `src/main/**`, `src/test/**`, `docs/backend/**`.
-- Frontend LP correction is restricted to `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+These scopes are disjoint (backend Java/docs vs frontend spec), so LP correction can continue while PC remains review-held.
 
-## Required routing for this cycle
+## Coordinated next actions
 
-### 1) Backend package
+1. **PC lane (hold for review):**
+   - **Level 3 / SURGICAL review-only package** on current `task-07` checkpoint.
+   - No additional PC implementation until Codex returns `ACCEPT` or `REVISE`.
 
-- **Implementation level:** 3
-- **Assigned role:** SURGICAL
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** existing PC gate-green checkpoint request + mandatory review policy
-- **allowed_paths:** review-only pass on current checkpoint evidence; no new PC implementation until verdict
-- **Exact gate constraint:** preserve canonical task-07 gate from `.opencode/task-plan.backend.json`
-- **Required SURGICAL review:** immediate, explicit `ACCEPT` or `REVISE`
+2. **LP lane (continue bounded correction):**
+   - **Level 1 / LP package** to apply exact Codex corrections in one spec file.
+   - Run `git diff --check` then exact FE-03D gate once.
 
-### 2) Frontend package
+## Cross-stack dependency notes
 
-- **Implementation level:** 1
-- **Assigned role:** LP
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** Codex `REVISE` packet already issued for this task
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Required SURGICAL review:** post-gate review is mandatory before closure
+- Frontend task `task-fe-03d-dom-state-tests` is DOM-state test stabilization and does not require backend task-07 acceptance to proceed.
+- Backend `task-07` acceptance remains prerequisite for later backend tasks (`task-08`, `task-09`) but does not block immediate LP corrective testing scope.
 
-## Integration risk controls
+## Required acceptance policy for both lanes
 
-1. Hold backend implementation churn while task-07 review verdict is pending to avoid redundant gate-green loops.
-2. Keep LP correction strictly single-file and assertion-focused; do not widen into production component changes.
-3. Enforce evidence consistency: the same attempt must provide matching understanding + gate summary + status for deterministic closure.
+- `exact-gate-green + scope-clean + surgical-accept + controller-commit` per `.opencode/task-plan.hierarchy.json`.
