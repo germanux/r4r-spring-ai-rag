@@ -1,4 +1,4 @@
-# Worker understanding assessment — run 20260806T192132Z
+# Worker understanding assessment — run 20260806T192632Z
 
 ## PC understanding quality
 
@@ -8,14 +8,15 @@ Evidence reviewed:
 - `worker-requests/PC.json`
 
 Assessment:
-- PC understanding is sufficient for current state: gate is already green and the only missing step is SURGICAL review outcome.
-- No additional implementation understanding is needed before review resolution.
+- PC understanding is sufficient for the current state: gate is already green and the missing closure element is the SURGICAL decision.
+- No additional PC implementation understanding is required before review resolution.
 
 Bounded next action:
-- **Level 3 / SURGICAL / task-07-populate-production-rag**
-- Resolve pending review request with `ACCEPT` or `REVISE`.
-- **allowed_paths:** read-only review (`[]`).
-- **Gate:** closure policy in `.opencode/task-plan.hierarchy.json`.
+- **Implementation level 3 / Assigned role SURGICAL / Task ID `task-07-populate-production-rag`**
+- Resolve pending review with explicit `ACCEPT` or `REVISE`.
+- **allowed_paths:** `[]` (read-only review).
+- **Exact gate / constraint:** closure rule `exact-gate-green + scope-clean + surgical-accept + controller-commit`.
+- **Required SURGICAL review:** yes (mandatory policy step).
 
 ## LP understanding quality
 
@@ -25,12 +26,12 @@ Evidence reviewed:
 - `lp-runtime/gate_summary.md`
 
 Assessment:
-- LP local understanding is incomplete: it explicitly says model-authored compact summary is missing and does not map each FE-03D requirement to concrete selectors/assertions.
-- This correlates with repeated red-gate behavior and synthetic test drift.
+- LP local understanding remains weak/incomplete: it reports missing model-authored compact summary and does not provide a requirement→selector/assertion map.
+- This aligns with repeated FE-03D red-gate churn.
 
 Bounded next action:
-- **Level 1 / LP / task-fe-03d-dom-state-tests**
-- Implement the prescribed spec-file-only corrections and include a requirement→selector/assertion mapping in next understanding evidence.
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` (for this pass).
-- **Gate:** `git diff --check` and `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
+- **Implementation level 1 / Assigned role LP / Task ID `task-fe-03d-dom-state-tests`**
+- Execute the prescribed spec-file-only correction packet and provide clear requirement-to-DOM-assertion mapping in next understanding evidence.
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` for this pass.
+- **Exact gate:** `git diff --check` and `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
 - **Required SURGICAL review:** yes, before closure.
