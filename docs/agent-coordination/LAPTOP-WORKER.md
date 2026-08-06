@@ -3,7 +3,7 @@
 ## Current evidence snapshot
 - Active task: `task-fe-03c-citations` (`lp-runtime/progress.json`)
 - Codex state in latest packet: `REVISE` with explicit missing FE-03C DOM assertions (`lp-runtime/codex-qwen3-extra-instructions.md`)
-- LP worktree: modified `frontend/src/app/features/rag/rag-page.component.spec.ts`, modified memory file, and untracked `r4r-gemma4-lp.patch` (`lp-git-status.txt`)
+- LP worktree: modified `frontend/src/app/features/rag/rag-page.component.spec.ts`, modified memory file, and untracked `../../patches-applied/r4r-gemma4-lp.patch` (`lp-git-status.txt`)
 - Diff magnitude: significant spec expansion in one file (`lp-git-diff-stat.txt`)
 
 ## First current defect
@@ -35,4 +35,4 @@ Then run `git diff --check` and the exact gate, and send the result for SURGICAL
 ## Avoid repeating
 - Treating generic Angular green runs as proof of FE-03C acceptance.
 - Re-entering long sessions without narrowing to the first missing DOM assertion set.
-- Allowing side artifacts (like `r4r-gemma4-lp.patch`) to distract from FE-03C-A scope.
+- Allowing side artifacts (like `../../patches-applied/r4r-gemma4-lp.patch`) to distract from FE-03C-A scope.

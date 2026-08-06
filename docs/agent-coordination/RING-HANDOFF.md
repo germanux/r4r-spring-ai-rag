@@ -35,7 +35,7 @@
 
 ## Integration risks to hold
 - False progress risk if either queue advances without explicit SURGICAL acceptance.
-- Frontend artifact hygiene risk from untracked `r4r-gemma4-lp.patch`; keep FE-03C correction strictly bounded to allowed path and gate evidence.
+- Frontend artifact hygiene risk from untracked `../../patches-applied/r4r-gemma4-lp.patch`; keep FE-03C correction strictly bounded to allowed path and gate evidence.
 
 ## Required validation gates
 - Backend exact gate: `./scripts/task-gate.sh task-06f-ingestion-validation`
