@@ -1,27 +1,34 @@
 # Backend ↔ Frontend handoff
 
-## Ownership and concurrency guard
+## Queue separation status
 
-- **PC (backend)** remains on `task-06e-child-process`.
-- **LP (frontend)** remains on `task-fe-03c-citations`.
-- Queues are disjoint this cycle; no cross-owned file edits requested.
+- **Backend (PC task-07):** closure-state review required; no new implementation pass authorized until SURGICAL decision is recorded.
+- **Frontend (LP FE-03D):** bounded correction pass is authorized on one spec file per Codex REVISE.
 
-## What backend needs from frontend
+Current scopes are disjoint (backend `src/**` + `docs/backend/**` vs frontend `frontend/**`), so no write-scope overlap is present in this cycle.
 
-Nothing blocking for this pass. LP should complete FE-03C test-evidence closure independently.
+## Directed work packages
 
-## What frontend needs from backend
+### Package A — backend closure classification
+- **Level:** 3
+- **Role:** SURGICAL
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** gate-green evidence from PC attempt 1
+- **allowed_paths:** review-only (no product edits requested in this pass)
+- **Exact gate/constraint:** hierarchy closure chain (`exact-gate-green + scope-clean + surgical-accept + controller-commit`)
+- **Required SURGICAL review:** this package is the SURGICAL review step.
 
-Nothing immediate for FE-03C. However, backend Task 06E is still gate-failing, so later backend-dependent validation phases remain risked until PC closes 06E.
+### Package B — frontend FE-03D correction
+- **Level:** 1
+- **Role:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependencies:** active Codex REVISE packet
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Required SURGICAL review:** mandatory after LP gate result for closure.
 
-## Integration risks to track
+## Integration risks to watch
 
-1. **Backend readiness risk**: Task 06E gate is still red (exit 2), so backend progression to 06f/07+ is not yet reliable.
-2. **Frontend scope risk**: FE-03C pass should be assertion-focused; component behavior changes in this pass could introduce unnecessary regressions.
-
-## Bounded cross-stack next checkpoint
-
-- Wait for:
-  - PC: gate-green + Codex ACCEPT on `task-06e-child-process`.
-  - LP: gate-green + Codex ACCEPT on `task-fe-03c-citations` with the new DOM assertions.
-- After both are evidenced, reassess downstream dependency coupling.
+1. Backend churn risk if PC repeats gate runs without SURGICAL closure decision.
+2. Frontend churn risk if LP broadens beyond the prescribed three-test correction.
+3. Any cross-queue scope expansion must be held and re-routed to level-3 SURGICAL.

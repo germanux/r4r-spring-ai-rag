@@ -1,39 +1,42 @@
-# Global coordination summary (run 20260805T202129Z)
+# Global coordination summary — RUN_ID 20260806T200135Z
 
-## Outcome
+## What is proven in current evidence
 
-Overall status: **READY**.
+1. **PC/backend task-07** has a green deterministic gate (`exit 0`) but is not closed due to missing SURGICAL decision and missing checkpoint metadata.
+2. **LP/frontend FE-03D** remains open with deterministic gate failure (`exit 2`) and an active Codex REVISE packet with explicit single-file correction instructions.
+3. PC and LP write scopes are currently disjoint; no overlap hold is required right now.
 
-- PC has an unresolved gate failure on the active backend task.
-- LP has a codex-revise request on the active frontend task with missing acceptance-proof tests.
+## Primary decisions
 
-No bounded Ring worktree code/policy edits were required in this cycle; only staged coordination artifacts were produced.
+- **PC:** `REVIEW` on `task-07-populate-production-rag` (Level 3 SURGICAL review-only pass).
+- **LP:** `CONTINUE` on `task-fe-03d-dom-state-tests` (Level 1 bounded correction, then gate).
 
-## Evidence-grounded diagnoses
+## Explicit work packages
 
-### PC
+### Backend package
+- **Level / Role:** Level 3 SURGICAL
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** existing gate-green attempt evidence
+- **allowed_paths:** review-only in this pass
+- **Exact gate/contract:** hierarchy closure (`exact-gate-green + scope-clean + surgical-accept + controller-commit`)
+- **Required SURGICAL review:** yes (this package is that review)
 
-- `pc-runtime/gate_summary.md`: classification `gate-failure`, exit `2`.
-- `pc-runtime/progress.json`: `task-06e-child-process` still `PENDING`.
-- `pc-git-status.txt` + `pc-git-diff-stat.txt`: in-flight edits present, concentrated in `TestChildApplicationContextInitializer.java`.
+### Frontend package
+- **Level / Role:** Level 1 LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependencies:** active Codex REVISE instructions
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Required SURGICAL review:** yes, mandatory for closure
 
-### LP
+## Risks and guardrails
 
-- `worker-request-manifest.json` and `worker-requests/LP.json`: active `codex-revise` request for `task-fe-03c-citations`.
-- `lp-runtime/checkpoint.json`: `no-product-diff`.
-- `lp-runtime/codex-qwen3-extra-instructions.md`: explicit missing FE-03C DOM assertions and bounded fix path.
+- Avoid backend rerun churn without closure evidence.
+- Keep LP patch narrow; prior failures came from speculative expansion and prohibited patterns.
+- Do not bypass deterministic gates or SURGICAL acceptance.
 
-## Directed next actions (one-pass bounded)
+## Ring worktree edits in this cycle
 
-- **PC**: one minimal first-failure-driven fix for Task 06E child-process contract, then rerun `./scripts/task-gate.sh task-06e-child-process`.
-- **LP**: add required FE-03C rendered-DOM assertions in `rag-page.component.spec.ts`, then rerun `./scripts/frontend-task-gate.sh task-fe-03c-citations`.
-
-## Acceptance gates enforced
-
-- Backend: `./scripts/task-gate.sh task-06e-child-process` exit `0` + Codex `ACCEPT`.
-- Frontend: `./scripts/frontend-task-gate.sh task-fe-03c-citations` exit `0` + Codex `ACCEPT`.
-
-## Explicit limitations
-
-- PC summary references `gate-full.log` for exact first-failure detail, but full log is not present in this snapshot.
-- No PC Codex review artifact is present in this RUN_DIR snapshot.
+- Wrote only staged outputs under:
+  - `runtime/ring-agent/ring/20260806T200135Z/output/`
+- No repository product/test/config/policy files were edited.

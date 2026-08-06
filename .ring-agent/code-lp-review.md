@@ -1,46 +1,45 @@
 # LP code review (frontend)
 
-## Current evidence reviewed
+## Current evidence
 
-- `runtime/ring-agent/ring/20260805T202129Z/worker-request-manifest.json`
-- `runtime/ring-agent/ring/20260805T202129Z/worker-requests/LP.json`
-- `runtime/ring-agent/ring/20260805T202129Z/lp-runtime/progress.json`
-- `runtime/ring-agent/ring/20260805T202129Z/lp-runtime/memory.md`
-- `runtime/ring-agent/ring/20260805T202129Z/lp-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260805T202129Z/lp-runtime/checkpoint.json`
-- `runtime/ring-agent/ring/20260805T202129Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- Active task: `task-fe-03d-dom-state-tests` (`lp-runtime/progress.json`).
+- Deterministic gate is failing with exit `2` (`lp-runtime/gate_summary.md`).
+- Codex decision is `REVISE` with explicit file-local instructions (`lp-runtime/codex_plan.json`, `lp-runtime/codex-qwen3-extra-instructions.md`).
+- Changed scope is a single test file: `frontend/src/app/features/rag/rag-page.component.spec.ts` (`worker-requests/LP.json`).
 
 ## First current defect
 
-The first current defect is **acceptance-evidence insufficiency for FE-03C despite a green gate**:
+The first defect is a **test-file quality and instruction-compliance regression** in `rag-page.component.spec.ts` (malformed additions, prohibited patterns, and whitespace/gate failure), already classified by Codex.
 
-- Active task is `task-fe-03c-citations` and remains `PENDING`.
-- A worker request exists with `reason: codex-revise` and `codex_decision: REVISE`.
-- Checkpoint status is `no-product-diff` and request `changed_paths` is empty.
-- Codex corrective instructions explicitly require missing rendered-DOM assertions for citation requirements.
+## Bounded next action package
 
-## Bounded next action for one worker pass
+- **Implementation level:** 1
+- **Assigned role:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependencies:**
+  - Active Codex REVISE packet is authoritative
+  - No backend dependency for this file-local correction
+- **allowed_paths:**
+  - `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:**
+  - `git diff --check`
+  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Required SURGICAL review:** mandatory after LP pass; closure requires SURGICAL `ACCEPT` and controller commit.
 
-Edit only:
+## Execution constraints for LP pass
 
-- `frontend/src/app/features/rag/rag-page.component.spec.ts`
+1. Restore valid suite structure and remove prohibited synthetic/manually-mutated patterns listed in Codex instructions.
+2. Add only the three prescribed DOM tests (controlled pending loading, success reset, transport-error reset).
+3. Preserve existing valid answer/abstention/citation/escaping/service-isolation coverage.
+4. Keep two-space indentation, balanced blocks, valid response shapes, and no trailing whitespace.
 
-Add rendered-DOM tests that prove all FE-03C missing points from the correction packet:
+## Acceptance evidence required in next cycle
 
-1. Out-of-order citation input renders in expected ordered output with displayed ordinal, source, and full heading path segment order.
-2. Response `{ answer: '...', abstained: false, citations: [] }` renders no `.citations-section`.
-3. Citation-like text embedded in answer is not parsed into citation DOM when structured citations are empty.
-
-Then run exactly:
-
-- `./scripts/frontend-task-gate.sh task-fe-03c-citations`
-
-## Acceptance conditions
-
-- Exact gate exits `0` after new FE-03C assertions are present.
-- Codex review for FE-03C returns `ACCEPT` on that state.
-- Keep scope inside frontend task FE-03C; do not advance to FE-03D or broader UI changes in this pass.
+1. `git diff --check` passes.
+2. FE-03D exact gate exits `0`.
+3. Local understanding report maps each requirement to concrete selectors/assertions.
+4. SURGICAL review returns `ACCEPT` for closure.
 
 ## Avoid repeating
 
-- Do not rely on an unchanged product diff plus green generic gate as FE-03C proof.
+Do not reintroduce innerHTML mutation, manual loading-state mutation, guessed selectors, invalid response shapes, or ad hoc test rewrites already rejected by Codex.
