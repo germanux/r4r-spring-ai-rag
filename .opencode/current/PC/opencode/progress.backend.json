@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "active_task": "task-07-populate-production-rag",
-  "last_run": "20260806T172052Z",
+  "last_run": "20260806T173217Z",
   "tasks": [
     {
       "id": "task-01-base",
