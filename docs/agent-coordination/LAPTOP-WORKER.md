@@ -1,42 +1,49 @@
-# LP code review (evidence cycle 20260806T184628Z)
+# LP code review (run 20260806T185129Z)
 
-## Current evidence read
-- `lp-runtime/progress.json`: active task `task-fe-03d-dom-state-tests` remains `PENDING`.
-- `lp-runtime/memory.md`: latest gate exit is `2`; latest Codex decision is `REVISE`.
-- `lp-runtime/codex-qwen3-extra-instructions.md`: explicit corrective recipe for replacing defective synthetic tests and restoring selector-based DOM assertions.
-- `lp-runtime/gate_summary.md`: deterministic gate failure captured for current pass.
-- `lp-git-diff-stat.txt`: substantial spec-file churn without proof of accepted correction.
+## Current evidence snapshot
 
-## First current defect (LP)
-The FE-03D patch did not satisfy the deterministic gate and Codex review contract. Evidence points to incorrect/synthetic test additions and inconsistent packaging versus required selector-level assertions.
+- Active task: `task-fe-03d-dom-state-tests` (`lp-runtime/progress.json`).
+- Deterministic gate is red (`exit 2`) (`lp-runtime/gate_summary.md`).
+- Codex disposition is `REVISE` with explicit selector-level repair instructions (`lp-runtime/memory.md`, `lp-runtime/codex-qwen3-extra-instructions.md`).
+- Current LP diff includes `.opencode/memory.frontend.md` plus `frontend/src/app/features/rag/rag-page.component.spec.ts` (`lp-git-status.txt`, `lp-git-diff-stat.txt`).
 
-## Bounded next action package
-- **Implementation level:** 1 (LP)
-- **Assigned role:** LP worker
+## First current defect (LP queue)
+
+The active spec patch introduced defective synthetic test patterns and failed the exact gate. The correction packet explicitly requires replacing those additions with controlled pending/loading assertions and two separate reset tests using fixture-rendered DOM.
+
+## Bounded next package
+
+### Package ID: FE-03D-A-LP-REVISE-01
+- **Implementation level:** 1
+- **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED` (already met)
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` (FE-03D-A scope)
-- **Exact gate:**
-  1. `git diff --check`
-  2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Required SURGICAL review:** mandatory after gate-green before closure.
+- **Dependencies:**
+  - `task-fe-03c-citations:ACCEPTED` (already satisfied in progress)
+  - Current Codex correction packet (`lp-runtime/codex-qwen3-extra-instructions.md`)
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Required SURGICAL review:** Yes, mandatory before closure.
 
-## Concrete correction to execute now
-1. Remove synthetic newly added tests called out by Codex.
-2. Restore one controlled-pending loading test that asserts:
-   - `.loading-state[role="status"]` text,
-   - disabled `textarea`,
-   - disabled `.submit-button`,
-   - second submit while pending does not create another service call.
-3. Split reset validation into two independent rendered-DOM tests:
-   - success-then-clear,
-   - transport-error-then-clear.
-4. Keep existing valid coverage intact and avoid invalid types/fields/DOM mutation shortcuts.
+### Exact work content required in this single pass
+1. Remove newly added synthetic success/abstention and synthetic `innerHTML` reset tests.
+2. Restore one controlled pending observable loading-state test asserting:
+   - `.loading-state[role="status"]` contains loading text,
+   - rendered `textarea` and `.submit-button` are disabled,
+   - duplicate submit while pending does not increase service calls beyond one.
+3. Split reset behavior into two independent tests:
+   - success reset clears answer/citations/error and restores idle state,
+   - transport-error reset clears error alert and restores idle state.
+4. Keep existing valid coverage intact; use valid project types only.
+5. Run `git diff --check` before the exact gate.
 
-## Acceptance evidence expected next
-- Final gate artifact reports exit `0` for FE-03D.
-- changed-paths scope remains exactly the spec file (plus controller-owned memory/progress metadata).
-- Local understanding maps each FE-03D requirement to exact selector + assertion.
+### Acceptance evidence required from this pass
+1. Non-empty scoped diff only in the allowed spec path.
+2. `git diff --check` clean.
+3. Exact FE-03D gate exit `0` from the same final run represented in task-gate and diagnostics artifacts.
+4. SURGICAL Codex review returns `ACCEPT` before closure.
 
-## Avoid repeating
-- Do not reintroduce `innerHTML` mutation, fake response types/fields, unnecessary async utilities, or mixed/contradictory evidence from different executions.
+## Do-not-repeat guard
+
+- Do not submit synthetic type-invalid tests.
+- Do not mutate DOM via `nativeElement.innerHTML`.
+- Do not produce mismatched evidence artifacts from different gate executions.
