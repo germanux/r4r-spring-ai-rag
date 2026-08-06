@@ -2022,3 +2022,48 @@ Append-only ledger generated after each validated Ring cycle.
 - pc-runtime manifest shows codex_review, codex_plan, gate_summary, and checkpoint as null in this RUN_DIR snapshot, so only checkpoint request metadata is available for PC.
 - lp-runtime codex_review.json and codex_plan.json here are runner command envelopes, not the full semantic decision payload; corrective requirements were taken from codex-qwen3-extra-instructions.md.
 - No CodeGraph reconnaissance artifact is present in either worker-runtime directory for this cycle.
+
+## Cycle `20260806T191631Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-07-populate-production-rag`
+- Reason: PC submitted a gate-green checkpoint request (gate_exit=0) but closure is blocked because codex_decision is still null; policy requires SURGICAL ACCEPT before controller commit.
+- Next action: Run one SURGICAL review-only pass on the existing task-07 checkpoint evidence and return ACCEPT or REVISE before any further PC edits.
+- Avoid repeating: Do not run another PC implementation/gate loop while the current gate-green request still has codex_decision=null.
+- Acceptance gates:
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+  - Exact backend task gate from .opencode/task-plan.backend.json for task-07-populate-production-rag must remain satisfied.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T191631Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T191631Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T191631Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T191631Z/pc-runtime/previous-ring-qwen3-directive.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP is still red on the deterministic FE gate (exit 2), and current evidence identifies defective synthetic tests plus required bounded spec corrections in rag-page.component.spec.ts.
+- Next action: Apply one bounded correction pass in frontend/src/app/features/rag/rag-page.component.spec.ts per the current Codex correction packet, then run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests once and publish consistent diagnostics.
+- Avoid repeating: Do not reintroduce synthetic/invalid tests, direct innerHTML mutation, or mismatched diagnostics unrelated to the final gate execution.
+- Acceptance gates:
+  - Exact frontend task gate from .opencode/task-plan.frontend.json: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+  - Codex correction constraint: keep write scope limited to frontend/src/app/features/rag/rag-page.component.spec.ts for this repair pass.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T191631Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T191631Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T191631Z/lp-runtime/previous-ring-qwen3-directive.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T191631Z/lp-git-status.txt`
+
+### Integration risks
+
+- PC queue can stall or churn if implementation resumes before mandatory SURGICAL review of the existing gate-green checkpoint.
+- LP has repeated FE-03D attempts; another non-prescriptive edit risks continued gate failures and delayed frontend progression.
+
+### Evidence limitations
+
+- RUN_DIR includes gate summaries but not the full gate logs referenced by those summaries.
+- lp-runtime/codex_plan.json and lp-runtime/codex_review.json expose runner metadata only; no model-authored plan/review payload is present in this snapshot.
