@@ -1,42 +1,44 @@
-# Worker understanding check
+# Worker understanding alignment — RUN 20260806T003326Z
 
-## PC understanding (task-06f-ingestion-validation)
+## PC (backend) — required understanding for next pass
 
-What must be understood now:
+1. Current state is **gate-green, no-product-diff, not closed**.
+2. The missing artifact is a **SURGICAL decision**, not another gate rerun.
+3. `task-06f-ingestion-validation` closure still requires:
+   - exact gate evidence (`./scripts/task-gate.sh task-06f-ingestion-validation`, exit `0`), and
+   - SURGICAL Codex `ACCEPT` per `.opencode/task-plan.hierarchy.json`.
 
-- Current status is **gate-green + no-product-diff**; this is not a coding-failure state.
-- Mandatory closure requirement is still missing: SURGICAL Codex decision (`ACCEPT` or `REVISE`).
-- Next pass is a **review pass**, not a speculative new backend edit.
+### PC bounded next action
 
-Evidence:
+- **Implementation level:** Level 3
+- **Assigned role:** SURGICAL reviewer
+- **Task ID:** `task-06f-ingestion-validation` (`BE-06F-A` context)
+- **Dependencies:** existing run `20260806T001814Z` evidence package
+- **allowed_paths:** read-only review
+- **Exact gate:** validate existing gate-green evidence; emit `ACCEPT` or `REVISE`
+- **Required SURGICAL review:** yes (this pass)
 
-- `pc-runtime/gate_summary.md` shows exit code 0.
-- `pc-runtime/checkpoint.json` shows `status: no-product-diff`.
-- `worker-requests/PC.json` shows `codex_decision: null`.
+## LP (frontend) — required understanding for next pass
 
-Acceptance understanding:
+1. FE-03C is still **REVISE**, not complete.
+2. Existing spec edits are unaccepted until preflight + exact gate + SURGICAL review complete.
+3. Mandatory proof is rendered DOM behavior for citation contract, including:
+   - ordered structured citation rendering,
+   - no citation section for empty citations,
+   - no parsing of citation-like text from answer body.
 
-- Task closes only with exact gate green + SURGICAL `ACCEPT` + controller commit policy.
+### LP bounded next action
 
-## LP understanding (task-fe-03c-citations)
+- **Implementation level:** Level 1
+- **Assigned role:** LP
+- **Task ID:** `task-fe-03c-citations` (`FE-03C-A`)
+- **Dependencies:** codex revise packet; `task-fe-03b-answer-abstention:ACCEPTED`
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03c-citations`
+- **Required SURGICAL review:** yes, mandatory for closure
 
-What must be understood now:
+## Shared anti-drift reminders
 
-- The task is in **REVISE** state and requires specific FE-03C rendered-DOM proofs.
-- Existing work in `rag-page.component.spec.ts` is unaccepted until required assertions and gate evidence are complete.
-- Do not treat generic green frontend tests as sufficient FE-03C acceptance.
-
-Evidence:
-
-- `lp-runtime/codex-qwen3-extra-instructions.md` provides mandatory assertion requirements.
-- `lp-git-status.txt` and `lp-git-diff-stat.txt` confirm ongoing diff in the spec file.
-- `lp-runtime/progress.json` shows `task-fe-03c-citations` still `PENDING`.
-
-Acceptance understanding:
-
-- Required: scope-clean LP diff in allowed path, `git diff --check`, exact frontend gate green, then SURGICAL `ACCEPT`.
-
-## Ring corrections made this cycle
-
-- No repository product/test/script/config edits were made.
-- Only staged coordination artifacts were produced under this run `OUTPUT_DIR`.
+- Do not widen scope beyond task `allowed_paths`.
+- Do not claim completion without direct gate and SURGICAL evidence.
+- Do not bypass deterministic preflight or exact gate definitions.

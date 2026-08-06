@@ -1,45 +1,40 @@
-# LP code review (frontend queue)
+# LP code review — RUN 20260806T003326Z
 
 ## Evidence reviewed
 
-- `runtime/ring-agent/ring/20260806T000832Z/lp-runtime/progress.json`
-- `runtime/ring-agent/ring/20260806T000832Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `runtime/ring-agent/ring/20260806T000832Z/lp-git-status.txt`
-- `runtime/ring-agent/ring/20260806T000832Z/lp-git-diff-stat.txt`
-- `runtime/ring-agent/ring/20260806T000832Z/lp-runtime/gate_summary.md`
+- `lp-runtime/progress.json` → active task `task-fe-03c-citations` remains `PENDING`.
+- `lp-runtime/codex-qwen3-extra-instructions.md` → Codex decision is `REVISE`, with mandatory FE-03C rendered-DOM assertions.
+- `lp-git-status.txt` → dirty task-owned file: `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+- `lp-git-diff-stat.txt` → sizable unaccepted spec diff (`108` insertions in spec file).
+- `lp-runtime/memory.md` → latest exact gate not run in this LP run, no checkpoint recorded.
 
-## First current defect
+## First current defect (LP)
 
-LP is still in `task-fe-03c-citations` revise flow with an unaccepted spec diff.
-
-- Current dirty product file: `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-- Codex extra instructions explicitly require missing rendered-DOM assertions (ordered structured citations, empty-citation omission, and non-parsing of citation-like answer text).
-- No ACCEPT evidence is present in this RUN_DIR snapshot.
-
-The first defect is therefore **incomplete FE-03C proof in tests**, not a cross-layer architecture issue.
+The FE-03C correction is in-flight but unproven: LP has an unaccepted spec diff and an outstanding Codex `REVISE` mandate for missing citation-contract DOM proof. Current evidence does not show a completed revise pass (`git diff --check` + exact gate + SURGICAL review outcome) for this attempt.
 
 ## Bounded next action package
 
-- **Implementation level:** 1
+### Action FE-03C-A-REV2
+
+- **Implementation level:** Level 1
 - **Assigned role:** LP
-- **Task ID:** `FE-03C-A` under parent `task-fe-03c-citations`
-- **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED` (satisfied)
+- **Task ID:** `task-fe-03c-citations` (work package `FE-03C-A`)
+- **Dependencies:**
+  - `task-fe-03b-answer-abstention:ACCEPTED` (already satisfied)
+  - Codex `REVISE` packet must be fully resolved in this pass.
 - **allowed_paths:**
   - `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03c-citations`
-- **Required SURGICAL review:** mandatory after gate and scope-clean evidence
+- **Exact gate / constraint:**
+  - Preflight: `git diff --check`
+  - Exact gate: `./scripts/frontend-task-gate.sh task-fe-03c-citations`
+  - Assertions must prove: ordered structured citations, omitted citation section for empty citations, and no parsing of citation-like text from answer body.
+- **Required SURGICAL review:** Yes (mandatory before closure).
+- **Acceptance evidence required:**
+  - Clean preflight output.
+  - Exact gate exit `0` for `task-fe-03c-citations`.
+  - SURGICAL Codex decision `ACCEPT`.
 
-### One-pass instruction
+## Do not repeat
 
-In one LP pass, finish FE-03C-A exactly as Codex mandated:
-
-1. Add DOM assertions for out-of-order structured citations rendered in correct order with ordinal, source, and complete heading path segment order.
-2. Add DOM assertion that `.citations-section` is absent for `{ abstained:false, citations:[] }` success responses.
-3. Add DOM assertion that citation-like text in answer body is not parsed into citation items when structured citations are empty.
-4. Run `git diff --check` and the exact frontend gate.
-5. Hand off to SURGICAL for ACCEPT/REVISE.
-
-## Avoid repeating
-
-- Do **not** stop at generic green runs with incomplete FE-03C assertions.
-- Do **not** edit component/template unless newly failing focused tests prove a real component defect.
+- Do **not** rely on generic Angular green runs as FE-03C completion evidence.
+- Do **not** add or modify component/template files unless a failing focused test proves a real component defect.

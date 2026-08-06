@@ -1,41 +1,37 @@
-# PC code review (backend queue)
+# PC code review — RUN 20260806T003326Z
 
 ## Evidence reviewed
 
-- `runtime/ring-agent/ring/20260806T000832Z/pc-runtime/progress.json`
-- `runtime/ring-agent/ring/20260806T000832Z/pc-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260806T000832Z/pc-runtime/checkpoint.json`
-- `runtime/ring-agent/ring/20260806T000832Z/worker-requests/PC.json`
-- `runtime/ring-agent/ring/20260806T000832Z/pc-git-status.txt`
-- `runtime/ring-agent/ring/20260806T000832Z/pc-git-diff-stat.txt`
+- `pc-runtime/progress.json` → active task `task-06f-ingestion-validation` is still `PENDING`, with latest gate-green metadata recorded.
+- `pc-runtime/gate_summary.md` → exact gate classified `green`, exit `0`.
+- `pc-runtime/checkpoint.json` → checkpoint status `no-product-diff`, `product_paths: []`, `head_after: null`.
+- `worker-requests/PC.json` → controller request reason is `gate-green-no-checkpoint`, `codex_decision: null`.
+- `pc-runtime/memory.md` and `pc-git-status.txt` → no task-owned product diff in the current snapshot.
 
-## First current defect
+## First current defect (PC)
 
-`task-06f-ingestion-validation` is not blocked by a failing gate; it is blocked by missing closure evidence.
-
-- Gate evidence is green (`exit 0`) on attempt 1.
-- Checkpoint status is `no-product-diff`.
-- Worker request is `gate-green-no-checkpoint` with `codex_decision: null`.
-
-So the immediate defect is **review-state incompleteness** (no SURGICAL ACCEPT/REVISE recorded), not backend implementation failure.
+The backend task is not blocked by failing tests; it is blocked by missing SURGICAL closure evidence. We have a green deterministic gate and no product changes in the checkpoint, but no Codex/SURGICAL `ACCEPT` or `REVISE` decision has been recorded for this current package.
 
 ## Bounded next action package
 
-- **Implementation level:** 3
-- **Assigned role:** SURGICAL Codex reviewer (OpenCode)
-- **Task ID:** `task-06f-ingestion-validation` (review pass over BE-06F state)
-- **Dependencies:** `task-06e-child-process:ACCEPTED` (already satisfied)
-- **allowed_paths (for any subsequent PC revise pass only):**
-  - `src/test/resources/application.yml`
-  - `.opencode/current/PC/**`
-- **Exact gate constraint:** `./scripts/task-gate.sh task-06f-ingestion-validation` must remain green (`exit 0`)
-- **Required SURGICAL review:** mandatory before closure per `.opencode/task-plan.hierarchy.json` (`review_policy.closure_requires` includes `surgical-accept`)
+### Action PC-06F-REVIEW-01
 
-### One-pass instruction
+- **Implementation level:** Level 3
+- **Assigned role:** SURGICAL (review pass only)
+- **Task ID:** `task-06f-ingestion-validation` (work package context: `BE-06F-A`)
+- **Dependencies:**
+  - Exact gate already green for attempt `20260806T001814Z`.
+  - Existing checkpoint evidence present.
+- **allowed_paths:** `[]` (read-only review; no code edits requested in this pass)
+- **Exact gate / constraint:**
+  - Validate existing evidence against `./scripts/task-gate.sh task-06f-ingestion-validation` exit `0`.
+  - Return explicit `ACCEPT` or `REVISE` per `.opencode/task-plan.hierarchy.json` review policy.
+- **Required SURGICAL review:** Mandatory; this is the action itself.
+- **Acceptance evidence required:**
+  - Non-null Codex decision (`ACCEPT` or `REVISE`) tied to this task/run evidence.
+  - If `REVISE`, provide first-failure correction packet before any widened backend edits.
 
-Run one SURGICAL review on the already gate-green package. If SURGICAL returns `ACCEPT`, close task-06f. If SURGICAL returns `REVISE`, dispatch exactly one bounded PC correction pass under BE-06F-A scope, then rerun the exact gate once.
+## Do not repeat
 
-## Avoid repeating
-
-- Do **not** rerun unchanged backend gates while Codex decision is pending.
-- Do **not** widen scope into BE-06F-B or unrelated backend code without a new first failure.
+- Do **not** rerun unchanged backend gates just to produce another green result.
+- Do **not** expand into `BE-06F-B` until `BE-06F-A` receives explicit SURGICAL disposition.
