@@ -1,30 +1,39 @@
-# PC code review — run 20260806T150915Z
+# PC code review (Ring)
 
-## Current evidence verdict
-- **First current defect:** PC is positioned on `task-07-populate-production-rag` while the hierarchy prerequisite for its executable package is still unsatisfied (`BE-07-A` not accepted).
-- **Observed state in this run snapshot:**
-  - Active backend task remains `task-07-populate-production-rag` (`pc-runtime/progress.json`).
-  - Current PC gate evidence is red (`test-failure`) and points to backend tests (`pc-runtime/gate_summary.md`).
-  - No task-owned product diff exists; only memory file changed (`pc-git-status.txt`, `pc-git-diff-stat.txt`).
+## Current queue status
+- **Implementation level:** Level 2 (PC)
+- **Assigned role:** PC
+- **Active task:** `task-07-populate-production-rag`
+- **Related work package:** `BE-07-B` (blocked by `BE-07-A`)
+- **Decision this cycle:** **HOLD**
+
+## First current defect
+PC activity is currently out of sequence with hierarchy dependencies: `BE-07-B` cannot proceed until `BE-07-A:ACCEPTED`, but current PC evidence already contains backend product edits and a red gate summary in task-07 context.
+
+## Evidence reviewed
+- `runtime/ring-agent/ring/20260806T155109Z/pc-runtime/progress.json`
+- `runtime/ring-agent/ring/20260806T155109Z/pc-git-status.txt`
+- `runtime/ring-agent/ring/20260806T155109Z/pc-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260806T155109Z/pc-runtime/previous-ring-qwen3-directive.json`
+- `.opencode/task-plan.hierarchy.json`
 
 ## Bounded next action package
-- **Implementation level:** Level 2 (PC)
-- **Assigned role:** PC (backend)
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `BE-07-A:ACCEPTED` before BE-07-B execution
-- **allowed_paths:** `src/**`, `docs/backend/**` (for BE-07-B from hierarchy)
-- **Exact gate:** `./scripts/task-gate.sh all` (then task-07 command sequence per `.opencode/task-plan.backend.json`)
-- **Required SURGICAL review:** Mandatory before closure (`ACCEPT` required)
+- **Owner:** PC (Level 2)
+- **Dependencies:** `BE-07-A:ACCEPTED` required before `BE-07-B`
+- **allowed_paths (canonical):** for `BE-07-B`: `src/**`, `docs/backend/**`
+- **Exact gate:** `./scripts/task-gate.sh all` (as declared for `BE-07-B` in hierarchy plan)
+- **Required SURGICAL review:** Mandatory before closure per review policy
 
-### This pass instruction
-**HOLD the PC queue for one pass.** Do not rerun task-07 or full backend gates until acceptance evidence for `BE-07-A` is present. After dependency unlock, execute exactly one first-failure correction cycle.
+### One-pass action
+Keep PC idle for one pass. Do not rerun backend gates and do not add new backend edits until newer evidence proves `BE-07-A` acceptance.
 
-## Acceptance conditions (for release from HOLD)
-1. Evidence shows `BE-07-A` accepted.
-2. PC produces a task-owned bounded diff within allowed paths.
-3. Exact gate evidence is fresh for the current attempt.
+## Acceptance conditions
+1. New run evidence explicitly shows `BE-07-A` accepted/unblocked.
+2. PC resumes exactly one first-failure correction pass within `BE-07-B` scope.
+3. Exact gate evidence is captured.
 4. SURGICAL Codex returns `ACCEPT` before closure.
 
 ## Avoid repeating
-- Re-running expensive backend gates with unchanged dependency state.
-- Producing memory-only updates without task-owned product evidence.
+- Re-running task-07/all backend gates while dependency remains blocked.
+- Producing additional backend diffs without prerequisite acceptance evidence.

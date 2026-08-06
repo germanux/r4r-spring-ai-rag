@@ -1,37 +1,31 @@
-# Backend ↔ Frontend handoff — run 20260806T150915Z
+# Backend ↔ Frontend handoff (Ring)
 
-## Queue ownership and separation
-- **Backend owner (PC):** currently held on `task-07-populate-production-rag` until dependency unlock.
-- **Frontend owner (LP):** continue `task-fe-03d-dom-state-tests` revise cycle.
-- No overlapping write scopes are authorized in this pass.
+## Queue separation decision
+- **Backend (PC): HOLD** on `task-07-populate-production-rag` until dependency unblocks.
+- **Frontend (LP): CONTINUE** on `task-fe-03d-dom-state-tests` with a single-file revise pass.
 
-## Backend status to frontend
-- Backend remains blocked by task-package dependency ordering (`BE-07-B` requires `BE-07-A:ACCEPTED`).
-- Frontend work should proceed independently; no backend API-contract expansion is requested in this cycle.
+This keeps backend/frontend ownership disjoint and avoids overlapping write scopes in the next pass.
 
-## Frontend status to backend
-- Frontend has a targeted Codex revise request with explicit assertions and bounded single-file scope.
-- No backend path writes are requested from LP.
+## Backend package
+- **Level / role:** Level 2 / PC
+- **Task ID:** `task-07-populate-production-rag` (`BE-07-B`)
+- **Dependencies:** `BE-07-A:ACCEPTED` (not yet proven)
+- **allowed_paths:** `src/**`, `docs/backend/**`
+- **Exact gate:** `./scripts/task-gate.sh all`
+- **SURGICAL review requirement:** required before closure
 
-## Active directives for next pass
-1. **PC HOLD package**
-   - **Level:** 2
-   - **Role:** PC
-   - **Task:** `task-07-populate-production-rag`
-   - **Dependencies:** `BE-07-A:ACCEPTED`
-   - **allowed_paths:** `src/**`, `docs/backend/**`
-   - **Exact gate (when unblocked):** `./scripts/task-gate.sh all` + task-07 command
-   - **SURGICAL:** required for closure
+## Frontend package
+- **Level / role:** Level 1 / LP
+- **Task ID:** `task-fe-03d-dom-state-tests` (`FE-03D-A`)
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED` (satisfied)
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **SURGICAL review requirement:** required before closure
 
-2. **LP CONTINUE package**
-   - **Level:** 1
-   - **Role:** LP
-   - **Task:** `task-fe-03d-dom-state-tests`
-   - **Dependencies:** `task-fe-03c-citations:ACCEPTED`
-   - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-   - **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-   - **SURGICAL:** required for closure
+## Integration-risk watch
+1. Resuming backend task-07 before BE-07-A acceptance risks repeated blocked runs and non-actionable backend churn.
+2. Advancing frontend without strict DOM-level assertions risks false confidence in FE-03D behavior proof.
 
-## Integration risk watch
-- Repeated backend gate executions before dependency acceptance.
-- Frontend false-green attempts that skip required DOM assertions.
+## Handoff contract for next cycle
+- Do not dispatch PC execution until BE-07-A acceptance evidence appears in a newer snapshot.
+- Dispatch LP for one revise pass only, with preflight `git diff --check` and exact gate rerun.

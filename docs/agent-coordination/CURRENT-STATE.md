@@ -1,28 +1,38 @@
-# Global summary — run 20260806T150915Z
+# Global coordination summary (RUN_ID 20260806T155109Z)
 
-## Executive status
-- **Overall:** `READY`
-- **PC:** `HOLD` on `task-07-populate-production-rag`
-- **LP:** `CONTINUE` on `task-fe-03d-dom-state-tests`
+## Outcome
+- **Overall status:** READY
+- **PC:** HOLD
+- **LP:** CONTINUE
 
-## Evidence-grounded findings
-1. PC remains on task-07 without task-owned product changes and with red gate summary evidence; dependency ordering from hierarchy still blocks effective BE-07-B execution until BE-07-A is accepted.
-2. LP has a codex-revise request with explicit corrective instructions; prior attempt was gate-green but produced no product diff and therefore no proof of required DOM assertions.
+## Why
+1. **PC / backend** remains dependency-blocked for task-07 progression: hierarchy requires `BE-07-A:ACCEPTED` before `BE-07-B`. Current snapshot does not prove that acceptance and already shows backend churn plus red gate evidence.
+2. **LP / frontend** has a concrete, single-file codex-revise packet with deterministic next steps and exact gate.
 
-## Directed next actions
-- **PC (Level 2, backend):** hold queue one pass; wait for BE-07-A acceptance evidence before any task-07 rerun.
-- **LP (Level 1, frontend):** implement bounded single-file test assertions, run `git diff --check`, rerun exact frontend task gate, resubmit for SURGICAL review.
+## Directed next passes
 
-## Acceptance contract reminders
-- No task closure without exact gate green **and** SURGICAL Codex `ACCEPT`.
-- Keep backend/frontend ownership disjoint; no cross-queue write-scope expansion.
+### Package A — backend hold
+- **Level:** 2
+- **Role:** PC
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** `BE-07-A:ACCEPTED`
+- **allowed_paths:** `src/**`, `docs/backend/**` (only when unblocked)
+- **Exact gate:** `./scripts/task-gate.sh all` (only when unblocked)
+- **SURGICAL review:** required before closure
 
-## Primary evidence referenced
-- `pc-runtime/progress.json`
-- `pc-runtime/gate_summary.md`
-- `pc-git-status.txt`
-- `lp-runtime/progress.json`
-- `lp-runtime/checkpoint.json`
-- `lp-runtime/codex-qwen3-extra-instructions.md`
-- `worker-request-manifest.json`
-- `worker-requests/LP.json`
+### Package B — frontend revise
+- **Level:** 1
+- **Role:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **SURGICAL review:** required before closure
+
+## Evidence limitations noted this cycle
+- RUN_DIR snapshot provides gate summaries, not full gate logs inline for both queues.
+- No PC codex review acceptance artifact is present in this snapshot, so no backend acceptance claim is possible.
+
+## Repository edits by Ring this cycle
+- No repository product/test/config/docs code was modified.
+- Only the six staged coordination artifacts under `runtime/ring-agent/ring/20260806T155109Z/output/` were written.

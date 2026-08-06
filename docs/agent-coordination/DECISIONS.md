@@ -1217,3 +1217,51 @@ Append-only ledger generated after each validated Ring cycle.
 - This snapshot does not include gate-full.log bodies; only summarized diagnostics were available in RUN_DIR.
 - codex_review.json/codex_plan.json here are execution wrappers and do not include full reviewer narrative; actionable Codex guidance was taken from lp-runtime/codex-qwen3-extra-instructions.md.
 - No explicit backend-phase-active evidence artifact is present in this RUN_DIR snapshot.
+
+## Cycle `20260806T155109Z` â READY
+
+### PC
+
+- Decision: `HOLD`
+- Task: `task-07-populate-production-rag`
+- Reason: Current hierarchy dependency for BE-07-B remains unmet (BE-07-A is still PENDING), while the latest PC snapshot already shows new backend diffs and a red task-07-context gate summary; further PC execution now would repeat blocked work instead of first unblocking dependencies.
+- Next action: Keep PC idle for one pass and do not run backend gates or add backend edits until BE-07-A acceptance evidence is present in a newer run snapshot.
+- Avoid repeating: Do not rerun task-07/all backend gate loops or broaden backend fixes while BE-07-A is still unaccepted.
+- Acceptance gates:
+  - Dependency constraint: BE-07-B depends on BE-07-A:ACCEPTED (.opencode/task-plan.hierarchy.json)
+  - Exact task gate for task-07 remains the command defined in .opencode/task-plan.backend.json
+  - Closure requires SURGICAL Codex ACCEPT per .opencode/task-plan.hierarchy.json review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T155109Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T155109Z/pc-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T155109Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T155109Z/pc-runtime/previous-ring-qwen3-directive.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP has an explicit codex-revise request after gate exit 2 on the owned spec file; current evidence cites missing rendered textarea/disablement and reset-removal DOM assertions plus whitespace/indentation defects.
+- Next action: Run one bounded revise pass in rag-page.component.spec.ts only: fix whitespace/indentation, add the missing DOM assertions, run git diff --check, then rerun the exact frontend gate.
+- Avoid repeating: Do not submit another gate run without a non-empty task-owned spec diff and explicit DOM-level assertion coverage mapping.
+- Acceptance gates:
+  - Work package FE-03D-A scope: frontend/src/app/features/rag/rag-page.component.spec.ts
+  - Preflight gate: git diff --check
+  - Exact gate: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Closure requires SURGICAL Codex ACCEPT per .opencode/task-plan.hierarchy.json review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T155109Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T155109Z/worker-requests/LP.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T155109Z/lp-runtime/codex_plan.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T155109Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T155109Z/lp-runtime/memory.md`
+
+### Integration risks
+
+- If PC continues task-07 execution before BE-07-A acceptance, backend effort can churn on blocked prerequisites and create non-actionable test noise.
+- If LP resolves gate formatting only but omits required DOM assertions, FE-03D acceptance can be falsely perceived as close while behavior proof remains incomplete.
+
+### Evidence limitations
+
+- This RUN_DIR snapshot includes gate summaries but not full gate logs inline; first-failure stack traces were not re-validated from gate-full.log in this cycle.
+- Codex review payload for PC is absent in this snapshot (manifest codex_review is null), so no SURGICAL acceptance claim can be made for PC changes.
