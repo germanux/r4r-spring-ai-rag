@@ -1169,3 +1169,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - No Codex review artifact is present in RUN_DIR for either worker in this cycle (codex_decision remains null).
 - Only summarized gate diagnostics are present in RUN_DIR snapshots; full gate logs are referenced but not included here.
+
+## Cycle `20260806T150915Z` â READY
+
+### PC
+
+- Decision: `HOLD`
+- Task: `task-07-populate-production-rag`
+- Reason: PC is still on task-07 with no task-owned product diff in this snapshot, while hierarchy dependency BE-07-B requires BE-07-A:ACCEPTED first; current PC evidence still shows a red gate summary from task-07 context and no new acceptance evidence.
+- Next action: Keep PC idle for one pass; do not rerun task-07/all backend gates until BE-07-A acceptance evidence is present, then resume with first-failure-only correction inside task-07 scope.
+- Avoid repeating: Do not rerun task-07/all backend gate loops without new dependency evidence or a task-owned correction diff.
+- Acceptance gates:
+  - Dependency gate: BE-07-B depends on BE-07-A:ACCEPTED (.opencode/task-plan.hierarchy.json)
+  - Exact parent gate for task-07 remains the command in .opencode/task-plan.backend.json
+  - Closure still requires SURGICAL Codex ACCEPT per .opencode/task-plan.hierarchy.json review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150915Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150915Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150915Z/pc-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150915Z/pc-runtime/pre_edit_understanding.md`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP has an explicit codex-revise request: gate is green but checkpoint is no-product-diff and Codex-required DOM assertions are still missing, so acceptance criteria are not yet proven.
+- Next action: Execute one bounded LP revise pass on rag-page.component.spec.ts to add the missing fixture-level DOM assertions, run git diff --check, then rerun ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests and submit non-empty task-owned diff plus full gate evidence.
+- Avoid repeating: Do not submit another gate-green/no-product-diff attempt or rely on generic gate success without explicit DOM-assertion coverage evidence.
+- Acceptance gates:
+  - Work package FE-03D-A scope: frontend/src/app/features/rag/rag-page.component.spec.ts
+  - Exact gate: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Closure still requires SURGICAL Codex ACCEPT per .opencode/task-plan.hierarchy.json review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150915Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150915Z/worker-requests/LP.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150915Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150915Z/lp-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150915Z/lp-runtime/memory.md`
+
+### Integration risks
+
+- Backend queue remains blocked at task-07 while prerequisite BE-07-A is unaccepted; repeated PC reruns would burn cycles without unlocking dependency.
+- Frontend gate can pass without proving required DOM assertions when no task-owned diff is produced; this can create false completion signals unless Codex revise instructions are enforced.
+
+### Evidence limitations
+
+- This snapshot does not include gate-full.log bodies; only summarized diagnostics were available in RUN_DIR.
+- codex_review.json/codex_plan.json here are execution wrappers and do not include full reviewer narrative; actionable Codex guidance was taken from lp-runtime/codex-qwen3-extra-instructions.md.
+- No explicit backend-phase-active evidence artifact is present in this RUN_DIR snapshot.

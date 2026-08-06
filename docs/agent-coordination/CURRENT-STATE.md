@@ -1,27 +1,28 @@
-# Global coordination summary (run 20260806T150415Z)
+# Global summary — run 20260806T150915Z
 
-## Outcome
-`overall_status: READY`
+## Executive status
+- **Overall:** `READY`
+- **PC:** `HOLD` on `task-07-populate-production-rag`
+- **LP:** `CONTINUE` on `task-fe-03d-dom-state-tests`
 
-Ring completed an evidence-first review of RUN_DIR and issued bounded queue decisions without repository code edits.
+## Evidence-grounded findings
+1. PC remains on task-07 without task-owned product changes and with red gate summary evidence; dependency ordering from hierarchy still blocks effective BE-07-B execution until BE-07-A is accepted.
+2. LP has a codex-revise request with explicit corrective instructions; prior attempt was gate-green but produced no product diff and therefore no proof of required DOM assertions.
 
-## PC status
-- Active task remains `task-07-populate-production-rag`.
-- First current defect: dependency state mismatch (BE-07-A not accepted) plus red gate evidence with no task-scoped product diff.
-- Decision: **HOLD** PC queue until hierarchy prerequisites are satisfied.
+## Directed next actions
+- **PC (Level 2, backend):** hold queue one pass; wait for BE-07-A acceptance evidence before any task-07 rerun.
+- **LP (Level 1, frontend):** implement bounded single-file test assertions, run `git diff --check`, rerun exact frontend task gate, resubmit for SURGICAL review.
 
-## LP status
-- Active task `task-fe-03c-citations` has gate-green checkpoint (`01b8aa1b100f7c042eb0cbc327917594a505980a`).
-- First current defect: closure incomplete because SURGICAL review decision is still missing.
-- Decision: **REVIEW** current checkpoint; no new LP implementation pass unless Codex requests revise.
+## Acceptance contract reminders
+- No task closure without exact gate green **and** SURGICAL Codex `ACCEPT`.
+- Keep backend/frontend ownership disjoint; no cross-queue write-scope expansion.
 
-## Directed work packages
-1. **PC hold package** — Level 2, role PC, task `task-07-populate-production-rag`, dependency `BE-07-A:ACCEPTED`, exact gate per backend task plan, SURGICAL review mandatory on closure.
-2. **LP review package** — Level 1, role LP, task `task-fe-03c-citations`, allowed path `frontend/src/app/features/rag/rag-page.component.spec.ts`, exact gate already green, SURGICAL `ACCEPT` required.
-
-## Explicit limitations
-- No Codex review artifact exists in this RUN_DIR for either queue.
-- Full gate logs are referenced by summaries but not included directly in this snapshot.
-
-## Ring worktree edits this cycle
-- None outside the six required staged output artifacts under `runtime/ring-agent/ring/20260806T150415Z/output/`.
+## Primary evidence referenced
+- `pc-runtime/progress.json`
+- `pc-runtime/gate_summary.md`
+- `pc-git-status.txt`
+- `lp-runtime/progress.json`
+- `lp-runtime/checkpoint.json`
+- `lp-runtime/codex-qwen3-extra-instructions.md`
+- `worker-request-manifest.json`
+- `worker-requests/LP.json`

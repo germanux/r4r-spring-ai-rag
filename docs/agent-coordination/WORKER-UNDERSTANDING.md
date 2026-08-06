@@ -1,29 +1,30 @@
-# Worker understanding assessment
+# Worker understanding assessment — run 20260806T150915Z
 
-## PC
-- **Observed understanding:** PC memory acknowledges no proven acceptance and identifies task-07 objective, but pre-edit report still explores implementation hypotheses despite an explicit prior Ring block.
-- **Evidence:** `pc-runtime/memory.md`, `pc-runtime/pre_edit_understanding.md`, `pc-runtime/previous-ring-qwen3-directive.json`.
+## PC understanding
+- **Evidence:** `pc-runtime/pre_edit_understanding.md`, `pc-runtime/gate_summary.md`, `pc-runtime/progress.json`.
+- **Assessment:** Partial. PC recognizes dependency blocking language, but still frames potential code-repair hypotheses for a task currently blocked by package dependency and lacking task-owned diff evidence.
 - **Correction package:**
-  - **Level:** 2 (PC)
+  - **Level:** 2
+  - **Role:** PC
   - **Task ID:** `task-07-populate-production-rag`
-  - **Action:** HOLD
-  - **Dependency condition:** wait for `BE-07-A:ACCEPTED`
-  - **allowed_paths:** unchanged (no new writes while held)
-  - **Exact gate:** none until unblocked
-  - **SURGICAL review:** still mandatory when work resumes
+  - **Dependencies:** `BE-07-A:ACCEPTED`
+  - **allowed_paths:** `src/**`, `docs/backend/**`
+  - **Exact gate:** `./scripts/task-gate.sh all` + task-07 command (only after unblocked)
+  - **SURGICAL review:** mandatory before closure
 
-## LP
-- **Observed understanding:** LP produced a gate-green checkpoint with one in-scope file. Historical Codex REVISE notes highlighted missing requirement mapping quality, but latest run has fresh gate evidence and checkpoint ready for review.
-- **Evidence:** `lp-runtime/memory.md`, `lp-runtime/checkpoint.json`, `worker-requests/LP.json`, `lp-runtime/codex-qwen3-extra-instructions.md`.
+## LP understanding
+- **Evidence:** `lp-runtime/pre_edit_understanding.md`, `lp-runtime/local_understanding.md`, `lp-runtime/codex-qwen3-extra-instructions.md`, `worker-requests/LP.json`.
+- **Assessment:** Insufficient on last pass. LP skipped pre-edit understanding and produced no task-owned diff despite a green gate, so required DOM behavior coverage was not demonstrated.
 - **Correction package:**
-  - **Level:** 1 (LP)
-  - **Task ID:** `task-fe-03c-citations`
-  - **Action:** REVIEW
-  - **Dependency condition:** none additional for review; closure waits on Codex
+  - **Level:** 1
+  - **Role:** LP
+  - **Task ID:** `task-fe-03d-dom-state-tests`
+  - **Dependencies:** `task-fe-03c-citations:ACCEPTED`
   - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-  - **Exact gate:** already green for current attempt
-  - **SURGICAL review:** required now (`ACCEPT` or `REVISE`)
+  - **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+  - **SURGICAL review:** mandatory before closure
 
-## Ring guidance quality bar for next pass
-1. Do not convert a gate-green checkpoint into acceptance without explicit SURGICAL `ACCEPT` evidence.
-2. Do not dispatch backend implementation while hierarchy dependency state is unmet.
+## Required evidence quality next pass
+- Non-empty task-owned diff.
+- Accurate requirement-to-assertion mapping in understanding notes.
+- Full exact-gate evidence retained for SURGICAL review.

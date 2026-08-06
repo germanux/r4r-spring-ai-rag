@@ -1,36 +1,37 @@
-# Backend ↔ Frontend handoff
+# Backend ↔ Frontend handoff — run 20260806T150915Z
 
-## Queue separation decision
-- **Backend (PC): HOLD** on `task-07-populate-production-rag` until hierarchy dependency `BE-07-A:ACCEPTED` exists.
-- **Frontend (LP): REVIEW** on `task-fe-03c-citations` checkpoint; no new implementation dispatch until SURGICAL decision.
+## Queue ownership and separation
+- **Backend owner (PC):** currently held on `task-07-populate-production-rag` until dependency unlock.
+- **Frontend owner (LP):** continue `task-fe-03d-dom-state-tests` revise cycle.
+- No overlapping write scopes are authorized in this pass.
 
-This keeps ownership disjoint and avoids overlapping write scopes.
+## Backend status to frontend
+- Backend remains blocked by task-package dependency ordering (`BE-07-B` requires `BE-07-A:ACCEPTED`).
+- Frontend work should proceed independently; no backend API-contract expansion is requested in this cycle.
 
-## Active work packages
+## Frontend status to backend
+- Frontend has a targeted Codex revise request with explicit assertions and bounded single-file scope.
+- No backend path writes are requested from LP.
 
-### 1) Backend hold package
-- **Level:** 2 (PC)
-- **Role:** PC
-- **Task ID:** `task-07-populate-production-rag` (blocked behind `BE-07-A`)
-- **Dependencies:** `BE-07-A:ACCEPTED`, backend-phase-active
-- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **Exact gate:** task-07 gate command in `.opencode/task-plan.backend.json`
-- **SURGICAL requirement:** mandatory review/accept on completion
+## Active directives for next pass
+1. **PC HOLD package**
+   - **Level:** 2
+   - **Role:** PC
+   - **Task:** `task-07-populate-production-rag`
+   - **Dependencies:** `BE-07-A:ACCEPTED`
+   - **allowed_paths:** `src/**`, `docs/backend/**`
+   - **Exact gate (when unblocked):** `./scripts/task-gate.sh all` + task-07 command
+   - **SURGICAL:** required for closure
 
-### 2) Frontend review package
-- **Level:** 1 (LP)
-- **Role:** LP
-- **Task ID:** `task-fe-03c-citations` (`FE-03C-A`)
-- **Dependencies:** satisfied for current checkpoint; closure pending review
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03c-citations` (green evidence present)
-- **SURGICAL requirement:** mandatory `ACCEPT` before progressing to FE-03D
+2. **LP CONTINUE package**
+   - **Level:** 1
+   - **Role:** LP
+   - **Task:** `task-fe-03d-dom-state-tests`
+   - **Dependencies:** `task-fe-03c-citations:ACCEPTED`
+   - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+   - **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+   - **SURGICAL:** required for closure
 
-## Integration risks to watch
-1. Premature backend resume can waste cycles on task-07 while dependency state is still invalid.
-2. Frontend may carry incomplete FE-03C acceptance if FE-03D starts before Codex confirms assertion coverage.
-
-## Next coordination checkpoint
-Proceed when either:
-- BE-07-A acceptance evidence is published (then reopen PC with one bounded pass), or
-- SURGICAL Codex returns FE-03C decision (ACCEPT/REVISE) for LP checkpoint.
+## Integration risk watch
+- Repeated backend gate executions before dependency acceptance.
+- Frontend false-green attempts that skip required DOM assertions.
