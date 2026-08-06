@@ -1265,3 +1265,52 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This RUN_DIR snapshot includes gate summaries but not full gate logs inline; first-failure stack traces were not re-validated from gate-full.log in this cycle.
 - Codex review payload for PC is absent in this snapshot (manifest codex_review is null), so no SURGICAL acceptance claim can be made for PC changes.
+
+## Cycle `20260806T160044Z` â READY
+
+### PC
+
+- Decision: `HOLD`
+- Task: `task-07-populate-production-rag`
+- Reason: The backend queue is still dependency-blocked for BE-07-B because BE-07-A is not accepted, while the newest snapshot already shows fresh backend edits and another red gate context; continuing now would repeat blocked work instead of unblocking prerequisites.
+- Next action: Run one hold pass only: keep PC idle, do not run backend gates, and do not add backend edits until acceptance evidence for BE-07-A is present in a newer run snapshot.
+- Avoid repeating: Do not rerun task-07/all backend gate loops or chase unrelated backend test failures while BE-07-A remains unaccepted.
+- Acceptance gates:
+  - Dependency constraint from .opencode/task-plan.hierarchy.json: BE-07-B depends on BE-07-A:ACCEPTED
+  - When unblocked, exact parent gate remains ./scripts/task-gate.sh all as defined by task-07-populate-production-rag
+  - Closure still requires SURGICAL Codex ACCEPT per .opencode/task-plan.hierarchy.json review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160044Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160044Z/pc-runtime/previous-ring-qwen3-directive.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160044Z/pc-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160044Z/pc-runtime/gate_summary.md`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: Current LP evidence includes an explicit codex-revise request after deterministic gate exit 2 on the owned spec file; the packet cites missing DOM assertions plus whitespace/indentation defects that must be corrected before another acceptance attempt.
+- Next action: Revise only frontend/src/app/features/rag/rag-page.component.spec.ts per the Codex checklist, then run git diff --check followed by ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+- Avoid repeating: Do not run the frontend gate again without implementing every Codex-listed DOM assertion and fixing whitespace/indentation first.
+- Acceptance gates:
+  - Write scope stays on frontend/src/app/features/rag/rag-page.component.spec.ts for this revise pass
+  - Preflight gate: git diff --check
+  - Exact gate: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Closure requires SURGICAL Codex ACCEPT per .opencode/task-plan.hierarchy.json review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160044Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160044Z/worker-requests/LP.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160044Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160044Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160044Z/lp-git-status.txt`
+
+### Integration risks
+
+- Backend progression risk: PC is active on task-07 but dependency BE-07-A remains pending; additional PC execution can create non-actionable churn before prerequisites are met.
+- Scope-drift risk in LP revise loop: repeated partial edits to the same spec without requirement-to-assertion mapping can keep producing gate/codex revise cycles.
+- Unreviewed backend diff risk: current PC snapshot includes changes in ingestion/vector/test files without a corresponding Codex ACCEPT artifact in this run.
+
+### Evidence limitations
+
+- RUN_DIR includes only summary diagnostics; full gate logs (gate-full.log) are referenced but not staged in this snapshot.
+- No PC worker-request file is present in this run, so PC next action is inferred from progress, prior directive, and current git/gate evidence.

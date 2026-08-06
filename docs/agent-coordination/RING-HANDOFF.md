@@ -1,31 +1,38 @@
-# Backend ↔ Frontend handoff (Ring)
+# Backend ↔ Frontend handoff
 
-## Queue separation decision
-- **Backend (PC): HOLD** on `task-07-populate-production-rag` until dependency unblocks.
-- **Frontend (LP): CONTINUE** on `task-fe-03d-dom-state-tests` with a single-file revise pass.
+## Queue split for this cycle
+- **Backend (PC): HOLD**
+  - Block reason: task-07 backend execution is still gated by unmet `BE-07-A` acceptance.
+  - Current backend edits exist, but no new unblock evidence is present in this run.
+- **Frontend (LP): CONTINUE**
+  - Execute one bounded revise pass for `task-fe-03d-dom-state-tests` on the owned spec file.
 
-This keeps backend/frontend ownership disjoint and avoids overlapping write scopes in the next pass.
+## Ownership and overlap check
+- PC current changed paths: `src/main/**`, `src/test/**` (backend layer).
+- LP current changed path: `frontend/src/app/features/rag/rag-page.component.spec.ts` (frontend layer).
+- **Result:** no active write-scope overlap in this run snapshot.
 
-## Backend package
-- **Level / role:** Level 2 / PC
-- **Task ID:** `task-07-populate-production-rag` (`BE-07-B`)
-- **Dependencies:** `BE-07-A:ACCEPTED` (not yet proven)
-- **allowed_paths:** `src/**`, `docs/backend/**`
-- **Exact gate:** `./scripts/task-gate.sh all`
-- **SURGICAL review requirement:** required before closure
+## Proposed bounded actions
 
-## Frontend package
-- **Level / role:** Level 1 / LP
-- **Task ID:** `task-fe-03d-dom-state-tests` (`FE-03D-A`)
+### Action A — backend hold
+- **Implementation level:** 2
+- **Assigned role:** PC
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** `BE-07-A:ACCEPTED`
+- **allowed_paths:** none during hold pass (future canonical package scope: `src/**`, `docs/backend/**`)
+- **Exact gate:** deferred while blocked; resume only after dependency acceptance evidence
+- **Required SURGICAL review:** required before any closure when backend work resumes
+
+### Action B — frontend revise
+- **Implementation level:** 1
+- **Assigned role:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
 - **Dependencies:** `task-fe-03c-citations:ACCEPTED` (satisfied)
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
 - **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **SURGICAL review requirement:** required before closure
+- **Required SURGICAL review:** Codex `ACCEPT` required before closure
 
-## Integration-risk watch
-1. Resuming backend task-07 before BE-07-A acceptance risks repeated blocked runs and non-actionable backend churn.
-2. Advancing frontend without strict DOM-level assertions risks false confidence in FE-03D behavior proof.
-
-## Handoff contract for next cycle
-- Do not dispatch PC execution until BE-07-A acceptance evidence appears in a newer snapshot.
-- Dispatch LP for one revise pass only, with preflight `git diff --check` and exact gate rerun.
+## Integration-risk notes
+1. If backend is resumed before dependency acceptance, PC can accumulate non-actionable churn and stale failures.
+2. Repeated LP revise loops without strict checklist closure can stall frontend phase progression.
+3. Existing unreviewed backend diffs should not be treated as accepted progress absent SURGICAL Codex `ACCEPT` evidence.

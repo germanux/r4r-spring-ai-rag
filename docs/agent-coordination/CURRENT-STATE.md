@@ -1,38 +1,40 @@
-# Global coordination summary (RUN_ID 20260806T155109Z)
+# Global coordination summary — RUN_ID 20260806T160044Z
 
 ## Outcome
-- **Overall status:** READY
-- **PC:** HOLD
-- **LP:** CONTINUE
+Ring produced a mixed decision set:
+- **PC:** `HOLD`
+- **LP:** `CONTINUE`
+- **Overall status:** `READY` (actionable next pass exists without violating scope boundaries)
 
-## Why
-1. **PC / backend** remains dependency-blocked for task-07 progression: hierarchy requires `BE-07-A:ACCEPTED` before `BE-07-B`. Current snapshot does not prove that acceptance and already shows backend churn plus red gate evidence.
-2. **LP / frontend** has a concrete, single-file codex-revise packet with deterministic next steps and exact gate.
+## Evidence-grounded diagnosis
+1. **Backend:** PC remains on `task-07-populate-production-rag`, but dependency sequencing is unresolved and latest evidence still shows red-gate context plus new backend diffs.
+2. **Frontend:** LP has an explicit Codex `REVISE` packet for `task-fe-03d-dom-state-tests` with a single-file correction path and deterministic gate requirements.
 
-## Directed next passes
+## Directed next pass
 
-### Package A — backend hold
-- **Level:** 2
-- **Role:** PC
+### PC directive
+- **Implementation level:** 2
+- **Assigned role:** PC
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `BE-07-A:ACCEPTED`
-- **allowed_paths:** `src/**`, `docs/backend/**` (only when unblocked)
-- **Exact gate:** `./scripts/task-gate.sh all` (only when unblocked)
-- **SURGICAL review:** required before closure
+- **Dependencies:** `BE-07-A:ACCEPTED` before backend execution
+- **allowed_paths:** none during hold pass
+- **Exact gate:** deferred while dependency blocked
+- **Required SURGICAL review:** mandatory for eventual closure
 
-### Package B — frontend revise
-- **Level:** 1
-- **Role:** LP
+### LP directive
+- **Implementation level:** 1
+- **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
 - **Dependencies:** `task-fe-03c-citations:ACCEPTED`
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **SURGICAL review:** required before closure
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` (after `git diff --check`)
+- **Required SURGICAL review:** Codex `ACCEPT`
 
-## Evidence limitations noted this cycle
-- RUN_DIR snapshot provides gate summaries, not full gate logs inline for both queues.
-- No PC codex review acceptance artifact is present in this snapshot, so no backend acceptance claim is possible.
+## Risks to monitor immediately
+- Backend churn while blocked can hide the true first actionable defect for task-07.
+- Repeated LP partial revisions can keep producing gate exit 2 / Codex revise loops.
+- Unreviewed backend changes must not be treated as accepted progress.
 
-## Repository edits by Ring this cycle
-- No repository product/test/config/docs code was modified.
-- Only the six staged coordination artifacts under `runtime/ring-agent/ring/20260806T155109Z/output/` were written.
+## Evidence limitations
+- Full gate logs are referenced but not staged in this RUN_DIR bundle.
+- No PC worker-request artifact is present in this snapshot; PC hold decision is inferred from progress + prior directive + current red-gate/diff evidence.

@@ -1,44 +1,36 @@
-# LP code review (Ring)
+# LP code review (frontend)
 
-## Current queue status
-- **Implementation level:** Level 1 (LP)
-- **Assigned role:** LP
-- **Active task:** `task-fe-03d-dom-state-tests`
-- **Related work package:** `FE-03D-A`
-- **Decision this cycle:** **CONTINUE**
+## Evidence reviewed (RUN_DIR)
+- `worker-request-manifest.json` and `worker-requests/LP.json` → explicit `codex-revise` request for `task-fe-03d-dom-state-tests`.
+- `lp-runtime/gate_summary.md` → deterministic gate failed (`exit=2`) and points to `rag-page.component.spec.ts`.
+- `lp-runtime/codex_plan.json` and `lp-runtime/codex-qwen3-extra-instructions.md` → concrete correction checklist (missing DOM assertions + whitespace/indentation defects).
+- `lp-git-status.txt` / `lp-git-diff-stat.txt` → only frontend memory + owned spec file are modified.
 
 ## First current defect
-The latest LP pass is still red (`gate exit 2`) on the owned spec file and carries an explicit Codex revise packet: missing required DOM assertions (rendered textarea/button disabled checks and reset-removal checks) plus whitespace/indentation cleanup.
+The owned spec file still does not satisfy the Codex correction packet: whitespace hygiene and required rendered-DOM assertions are incomplete, so the same gate/codex revise loop is repeating.
 
-## Evidence reviewed
-- `runtime/ring-agent/ring/20260806T155109Z/worker-request-manifest.json`
-- `runtime/ring-agent/ring/20260806T155109Z/worker-requests/LP.json`
-- `runtime/ring-agent/ring/20260806T155109Z/lp-runtime/codex_plan.json`
-- `runtime/ring-agent/ring/20260806T155109Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `runtime/ring-agent/ring/20260806T155109Z/lp-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260806T155109Z/lp-runtime/memory.md`
+## Ring decision for this cycle
+**Action:** `CONTINUE` (LP)
 
-## Bounded next action package
+### Bounded work package
+- **Implementation level:** Level 1
+- **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Owner:** LP (Level 1)
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED` (already satisfied)
-- **allowed_paths (canonical):** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED` (already satisfied in `lp-runtime/progress.json`)
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
 - **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Required SURGICAL review:** Mandatory before closure per review policy
+- **Required SURGICAL review:** mandatory Codex `ACCEPT` before closure
 
-### One-pass action
-Revise only `rag-page.component.spec.ts` to:
-1. remove trailing whitespace / malformed indentation,
-2. assert rendered `textarea` and `.submit-button` are disabled during pending submit,
-3. strengthen reset assertions to prove `.answer-content`, `.citations-section`, and `.error-state` removal with idle-state restoration,
-4. run `git diff --check` before rerunning the exact gate.
+## One-pass next action
+Apply one bounded revise pass in `rag-page.component.spec.ts` only, implementing the Codex checklist (DOM disablement assertions, duplicate-submit call-count protection, reset-state removals, whitespace/indentation cleanup), then run:
+1. `git diff --check`
+2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
 
-## Acceptance conditions
-1. Non-empty task-owned diff exists only in the allowed path.
+## Acceptance conditions for this pass
+1. Diff scope remains limited to the single owned spec file.
 2. `git diff --check` is clean.
-3. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` exits 0.
-4. SURGICAL Codex review returns `ACCEPT`.
+3. Exact frontend gate exits `0`.
+4. SURGICAL Codex review returns `ACCEPT` (not `REVISE`).
 
 ## Avoid repeating
-- Another gate run with formatting defects.
-- Generic “gate green” claims without explicit DOM-assertion mapping evidence.
+Do not launch another gate run with partial checklist coverage or unresolved whitespace defects.

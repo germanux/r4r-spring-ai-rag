@@ -1,39 +1,33 @@
-# PC code review (Ring)
+# PC code review (backend)
 
-## Current queue status
-- **Implementation level:** Level 2 (PC)
-- **Assigned role:** PC
-- **Active task:** `task-07-populate-production-rag`
-- **Related work package:** `BE-07-B` (blocked by `BE-07-A`)
-- **Decision this cycle:** **HOLD**
+## Evidence reviewed (RUN_DIR)
+- `pc-runtime/progress.json` → active task is `task-07-populate-production-rag`.
+- `pc-runtime/previous-ring-qwen3-directive.json` → prior Ring directive explicitly held PC until `BE-07-A` acceptance.
+- `pc-git-status.txt` / `pc-git-diff-stat.txt` → fresh backend edits exist in ingestion/vector/test files.
+- `pc-runtime/gate_summary.md` → deterministic gate remains red (`exit=1`, test-failure classification).
 
 ## First current defect
-PC activity is currently out of sequence with hierarchy dependencies: `BE-07-B` cannot proceed until `BE-07-A:ACCEPTED`, but current PC evidence already contains backend product edits and a red gate summary in task-07 context.
+PC is executing or editing while the hierarchy dependency for backend work package `BE-07-B` is still unmet (`BE-07-A` not accepted). This is coordination-sequence drift, not a green-path implementation opportunity.
 
-## Evidence reviewed
-- `runtime/ring-agent/ring/20260806T155109Z/pc-runtime/progress.json`
-- `runtime/ring-agent/ring/20260806T155109Z/pc-git-status.txt`
-- `runtime/ring-agent/ring/20260806T155109Z/pc-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260806T155109Z/pc-runtime/previous-ring-qwen3-directive.json`
-- `.opencode/task-plan.hierarchy.json`
+## Ring decision for this cycle
+**Action:** `HOLD` (PC)
 
-## Bounded next action package
-- **Task ID:** `task-07-populate-production-rag`
-- **Owner:** PC (Level 2)
-- **Dependencies:** `BE-07-A:ACCEPTED` required before `BE-07-B`
-- **allowed_paths (canonical):** for `BE-07-B`: `src/**`, `docs/backend/**`
-- **Exact gate:** `./scripts/task-gate.sh all` (as declared for `BE-07-B` in hierarchy plan)
-- **Required SURGICAL review:** Mandatory before closure per review policy
+### Bounded work package
+- **Implementation level:** Level 2 (PC queue), with coordination hold enforced by Ring
+- **Assigned role:** PC
+- **Task ID:** `task-07-populate-production-rag` (blocked at `BE-07-B` dependency boundary)
+- **Dependencies:** `BE-07-A:ACCEPTED` required before any `BE-07-B` execution
+- **allowed_paths:** none for this hold pass (no product edits). Canonical future scope after unblock remains `src/**`, `docs/backend/**` per hierarchy package `BE-07-B`
+- **Exact gate:** deferred while blocked; once unblocked, use task-07 exact gate (`./scripts/task-gate.sh all` within the task-07 command flow)
+- **Required SURGICAL review:** mandatory before closure (policy requirement for level 2)
 
-### One-pass action
-Keep PC idle for one pass. Do not rerun backend gates and do not add new backend edits until newer evidence proves `BE-07-A` acceptance.
+## One-pass next action
+Keep PC idle for one pass: do not run backend gates, do not add backend edits, and wait for explicit evidence that `BE-07-A` is accepted in a newer run snapshot.
 
-## Acceptance conditions
-1. New run evidence explicitly shows `BE-07-A` accepted/unblocked.
-2. PC resumes exactly one first-failure correction pass within `BE-07-B` scope.
-3. Exact gate evidence is captured.
-4. SURGICAL Codex returns `ACCEPT` before closure.
+## Acceptance conditions for this hold cycle
+1. No new backend product diffs are introduced by PC during the hold pass.
+2. No redundant gate rerun occurs while dependency remains unresolved.
+3. Backend queue resumes only after dependency evidence (`BE-07-A:ACCEPTED`) is visible.
 
 ## Avoid repeating
-- Re-running task-07/all backend gates while dependency remains blocked.
-- Producing additional backend diffs without prerequisite acceptance evidence.
+Do not rerun task-07/all loops or attempt backend test triage while the prerequisite package is still pending.
