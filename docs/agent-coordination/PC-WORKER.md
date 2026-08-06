@@ -1,23 +1,33 @@
-## PC code review — run 20260806T145914Z
+# PC code review (Ring)
 
-### Evidence reviewed
-- `pc-runtime/progress.json`: active task is `task-07-populate-production-rag` and still `PENDING`.
-- `pc-runtime/memory.md`: latest gate is "not run; exit=unknown" for this task cycle.
-- `pc-runtime/previous-ring-qwen3-directive.json`: prior directive explicitly holds backend execution until `BE-07-A:ACCEPTED`.
-- `pc-git-status.txt` and `pc-git-diff-stat.txt`: only `.opencode/memory.backend.md` is modified; no product-path patch evidence for task-07.
+## Evidence read first (RUN_DIR)
+- `pc-runtime/progress.json`
+- `pc-runtime/gate_summary.md`
+- `pc-runtime/previous-ring-qwen3-directive.json`
+- `pc-git-status.txt`
+- `pc-git-diff-stat.txt`
+- `.opencode/task-plan.hierarchy.json`
 
-### First current defect
-PC queue is positioned on `task-07-populate-production-rag` without dependency readiness evidence (`BE-07-A` acceptance is missing), so any immediate task-07 gate run would violate the dependency sequence and create avoidable churn.
+## First current defect
+PC is attempting/positioned for `task-07-populate-production-rag` while hierarchy prerequisites remain unmet. In the canonical hierarchy, `BE-07-B` (PC) depends on `BE-07-A:ACCEPTED`, and `BE-07-A` is still `PENDING`. The latest PC evidence also shows a failing gate summary and no task-scoped product diff in this snapshot.
 
-### Bounded next action package
-- **Implementation level:** Level 2 (PC) with dependency hold.
-- **Assigned role:** PC.
-- **Task ID:** `task-07-populate-production-rag` (blocked by hierarchy package `BE-07-A`).
-- **Dependencies:** `BE-07-A:ACCEPTED` required before `BE-07-B` execution.
-- **allowed_paths:** none for this pass (hold/no code edits).
-- **Exact gate:** do **not** execute task gate until dependency is satisfied; once unblocked, task gate remains:
-  - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
-- **Required SURGICAL review:** mandatory `ACCEPT` before closure per hierarchy review policy.
+## Decision
+- **Implementation level:** Level 2 (PC), but **held by dependency**
+- **Assigned role:** PC
+- **Task ID:** `task-07-populate-production-rag` (work package dependency: `BE-07-A -> BE-07-B`)
+- **Dependencies:** `BE-07-A:ACCEPTED` and backend-phase activation evidence
+- **allowed_paths (when unblocked):** per directive and backend plan (`pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`)
+- **Exact gate (when unblocked):** task-07 gate command in `.opencode/task-plan.backend.json`
+- **Required SURGICAL review:** Mandatory before closure per hierarchy `review_policy`
 
-### Acceptance condition for this Ring cycle
-PC remains on HOLD with no new backend implementation dispatch until explicit evidence of `BE-07-A:ACCEPTED` appears in current runtime evidence.
+## Bounded next action for one worker pass
+**Do not run PC backend gates now.** Hold the queue until BE-07-A is accepted; then resume with one bounded first-failure pass only.
+
+## Acceptance conditions
+1. BE-07-A accepted with direct evidence.
+2. PC resumes within declared `allowed_paths` only.
+3. Exact task-07 gate result is captured.
+4. SURGICAL Codex returns `ACCEPT` before closure.
+
+## Avoid repeating
+Do not repeat backend gate cycles without changed dependency state or changed code evidence.

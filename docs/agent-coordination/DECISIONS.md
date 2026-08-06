@@ -1121,3 +1121,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - No current-run gate_summary, codex_review, or checkpoint artifacts are present in this RUN_DIR for either worker.
 - No full worker diffs are included in RUN_DIR snapshots; only git status and diff-stat are available for this cycle.
+
+## Cycle `20260806T150415Z` â READY
+
+### PC
+
+- Decision: `HOLD`
+- Task: `task-07-populate-production-rag`
+- Reason: PC remains blocked on task-07 execution dependencies: BE-07-B requires BE-07-A:ACCEPTED, but BE-07-A is still PENDING in the hierarchy. Current PC evidence also shows a red gate summary and no task-scoped product diff in this run snapshot.
+- Next action: Keep the backend PC queue idle and do not rerun task-07 or all-backend gates until BE-07-A acceptance evidence and backend-phase activation are explicitly present.
+- Avoid repeating: Do not run backend task-07 or full backend gate cycles again while BE-07-A remains unaccepted and no new dependency evidence exists.
+- Acceptance gates:
+  - Dependency gate: BE-07-B depends on BE-07-A:ACCEPTED per .opencode/task-plan.hierarchy.json
+  - Exact parent task gate for task-07 remains the command in .opencode/task-plan.backend.json
+  - Closure requires SURGICAL Codex ACCEPT per .opencode/task-plan.hierarchy.json review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150415Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150415Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150415Z/pc-runtime/previous-ring-qwen3-directive.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150415Z/pc-git-diff-stat.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150415Z/pc-git-status.txt`
+
+### LP
+
+- Decision: `REVIEW`
+- Task: `task-fe-03c-citations`
+- Reason: LP has a gate-green checkpoint for task-fe-03c-citations with one task-owned changed path, but Codex decision is still null; acceptance is pending mandatory SURGICAL review.
+- Next action: Route the existing LP checkpoint commit for one SURGICAL Codex review pass against FE-03C acceptance criteria; only issue a new LP revise pass if Codex returns REVISE.
+- Avoid repeating: Do not start FE-03D or reopen speculative FE-03C edits before SURGICAL review of checkpoint 01b8aa1b100f7c042eb0cbc327917594a505980a.
+- Acceptance gates:
+  - Exact gate: ./scripts/frontend-task-gate.sh task-fe-03c-citations
+  - Work package FE-03C-A allowed_paths: frontend/src/app/features/rag/rag-page.component.spec.ts
+  - Closure requires SURGICAL Codex ACCEPT per .opencode/task-plan.hierarchy.json review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150415Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150415Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150415Z/lp-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150415Z/worker-requests/LP.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T150415Z/lp-git-status.txt`
+
+### Integration risks
+
+- If PC resumes task-07 early, unresolved backend test-failure signals (KnowledgeIngestionCliTest and RagQueryControllerTest named in current gate summary) may consume cycles without satisfying hierarchy dependencies.
+- LP gate-green status can still miss acceptance-contract coverage; advancing frontend queue before SURGICAL review risks carrying an under-specified FE-03C baseline into FE-03D.
+
+### Evidence limitations
+
+- No Codex review artifact is present in RUN_DIR for either worker in this cycle (codex_decision remains null).
+- Only summarized gate diagnostics are present in RUN_DIR snapshots; full gate logs are referenced but not included here.
