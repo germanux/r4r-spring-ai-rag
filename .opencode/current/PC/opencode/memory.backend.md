@@ -3,19 +3,20 @@
 ## Current state
 
 - Worker: PC.
-- Run: 20260806T174140Z.
+- Run: 20260806T175436Z.
 - Last accepted task: task-06f-ingestion-validation.
 - Active task: task-07-populate-production-rag.
 - Current attempt: 1.
-- Latest exact gate: not run; exit=unknown.
+- Latest exact gate: task-gate; exit=0.
 - Latest Codex decision: pending.
-- Checkpoint: none; head=not recorded.
+- Checkpoint: pending; head=not recorded.
 - Accepted: task-01-base, task-02-ingestion, task-03-pgvector, task-04-rag, task-05-rag-api, task-06-production-ingestion-cli, task-06b-cli-contract, task-06c-spring-lifecycle, task-06d-failure-classification, task-06e-child-process, task-06f-ingestion-validation.
 - Remaining: task-07-populate-production-rag, task-08-rag-semantic-evaluation, task-09-production-smoke.
 - Exact plan: `.opencode/task-plan.backend.json`.
 
 ## Files currently owned or edited
 
+- `docs/backend/production-ingestion-evidence.md`
 - `src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionService.java`
 - `src/main/java/com/riansares/r4r/vector/PgVectorKnowledgeStore.java`
 - `src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionServiceIT.java`
@@ -23,11 +24,12 @@
 
 ## Demonstrated by current evidence
 
-- No new acceptance claim has been demonstrated in this run yet.
+- The exact deterministic task gate completed with exit code 0.
+- The checkpoint contains only task-owned product paths plus controller progress/memory.
 
 ## Still unproven or below expectations
 
-- Populate the persistent PC pgvector database and prove idempotent ingestion.
+- Codex has not yet accepted the current checkpoint.
 
 ## Approaches not to repeat
 
@@ -35,7 +37,7 @@
 
 ## Next exact action
 
-Review the exact gate evidence and make one coherent, task-scoped repair.
+Preserve a deterministic gate-green checkpoint, generate final evidence and request Codex review.
 
 ## Fixed decisions
 
@@ -62,6 +64,6 @@ Review the exact gate evidence and make one coherent, task-scoped repair.
 - task-06d-failure-classification: ACCEPTED — accepted at 2026-08-04T08:15:06.995514+00:00; last green attempt=1
 - task-06e-child-process: ACCEPTED — accepted at 2026-08-05T20:55:14.801213+00:00; last green attempt=1
 - task-06f-ingestion-validation: ACCEPTED — accepted at 2026-08-06T01:33:53.234680+00:00; last green attempt=1
-- task-07-populate-production-rag: BLOCKED — accepted at not accepted; last green attempt=none
+- task-07-populate-production-rag: BLOCKED — accepted at not accepted; last green attempt=1
 - task-08-rag-semantic-evaluation: PENDING — accepted at not accepted; last green attempt=none
 - task-09-production-smoke: PENDING — accepted at not accepted; last green attempt=none

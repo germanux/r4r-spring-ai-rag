@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "active_task": "task-07-populate-production-rag",
-  "last_run": "20260806T174140Z",
+  "last_run": "20260806T175436Z",
   "tasks": [
     {
       "id": "task-01-base",
@@ -79,7 +79,10 @@
     {
       "id": "task-07-populate-production-rag",
       "status": "BLOCKED",
-      "accepted_at": null
+      "accepted_at": null,
+      "last_gate_green_at": "2026-08-06T18:41:26.001728+00:00",
+      "last_gate_green_attempt": 1,
+      "last_gate_green_run": "20260806T175436Z"
     },
     {
       "id": "task-08-rag-semantic-evaluation",
