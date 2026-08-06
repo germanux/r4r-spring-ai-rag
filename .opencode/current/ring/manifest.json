@@ -9,9 +9,9 @@
       "target": "opencode/memory.md"
     },
     {
-      "bytes": 1720,
+      "bytes": 1776,
       "producer": "local-llm",
-      "sha256": "fc76df0b066b15e37534cd414506b64c57097d24a01c701f0da9f2044761dd8b",
+      "sha256": "bba19a1d65c8aaaff9db90fba426083d18fec042e64e07e4b868f5b6de70135b",
       "source": ".opencode/current/ring/worker-understanding.md",
       "target": "worker-understanding.md"
     }
