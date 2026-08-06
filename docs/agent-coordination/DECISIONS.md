@@ -1408,3 +1408,50 @@ Append-only ledger generated after each validated Ring cycle.
 
 - RUN_DIR snapshot includes gate summaries but not full gate-full.log payloads for independent first-failure reclassification.
 - No fresh Codex review decision artifact for LP attempt 6 is present yet; only the review request/checkpoint evidence is available.
+
+## Cycle `20260806T171220Z` â READY
+
+### PC
+
+- Decision: `HOLD`
+- Task: `task-07-populate-production-rag`
+- Reason: Active backend task-07 remains dependency-blocked by BE-07-A, yet the newest evidence shows fresh backend edits plus a red deterministic gate (test-failure). Another PC implementation pass would repeat blocked work instead of clearing the prerequisite sequence.
+- Next action: Hold PC implementation: do not rerun task-07 gate and do not widen backend edits until BE-07-A is accepted and Ring reissues an unblocked pass.
+- Avoid repeating: Do not rerun task-07/all backend gate loops while BE-07-A is still unaccepted.
+- Acceptance gates:
+  - Dependency constraint from .opencode/task-plan.hierarchy.json: BE-07-B requires BE-07-A:ACCEPTED before backend ingestion execution.
+  - When unblocked, run the exact task-07 gate from .opencode/task-plan.backend.json (task-07-populate-production-rag).
+  - Closure still requires SURGICAL Codex ACCEPT after a gate-green pass.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171220Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171220Z/pc-runtime/previous-ring-qwen3-directive.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171220Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171220Z/pc-git-status.txt`
+
+### LP
+
+- Decision: `REVIEW`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP has a fresh gate-green checkpoint for the active frontend task and an explicit worker review request, but Codex decision remains null; the first current defect is missing SURGICAL review closure, not missing implementation.
+- Next action: Submit the existing LP checkpoint for one SURGICAL Codex review pass and return ACCEPT or REVISE without adding new scope.
+- Avoid repeating: Do not rerun the same frontend gate without a Codex ACCEPT or a new scoped REVISE instruction.
+- Acceptance gates:
+  - Exact gate already recorded green: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests (exit 0, checkpoint head 6bd6087d3deec5c01ef1284c508611afdc41de14).
+  - Task remains open until SURGICAL Codex returns ACCEPT per mandatory review policy.
+  - If Codex returns REVISE, keep edits inside frontend/src/app/features/rag/rag-page.component.spec.ts and rerun the same exact gate.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171220Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171220Z/worker-requests/LP.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171220Z/lp-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171220Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171220Z/lp-runtime/progress.json`
+
+### Integration risks
+
+- Backend sequencing risk: task-07 execution is still blocked by BE-07-A; continued PC backend edits before prerequisite acceptance can produce churn and non-actionable failures.
+- Quality signal risk: LP local-understanding evidence remains weak; a green gate alone may hide requirement-mapping gaps unless SURGICAL verifies the exact diff.
+
+### Evidence limitations
+
+- No PC codex_plan/codex_review artifact is present in this RUN_DIR snapshot (pc-runtime/manifest.json fields are null).
+- Gate summaries reference full logs outside this snapshot; this cycle relied on packaged summaries plus status/diff evidence.

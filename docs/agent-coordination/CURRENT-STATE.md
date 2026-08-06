@@ -1,40 +1,34 @@
-# Global Summary — Ring Cycle 20260806T164153Z
+# Global coordination summary — run 20260806T171220Z
 
-## Outcome
-`overall_status = READY`
+## Overall status
 
-The cycle has one review-forward action (LP) and one dependency hold action (PC). No repository code edits were made by Ring; only staged coordination artifacts were written.
+`READY` for supervisory publication: decisions are evidence-grounded and bounded for one pass per worker.
 
-## Evidence highlights
-- LP emitted a gate-green checkpoint request for `task-fe-03d-dom-state-tests` with one scoped file change.
-- LP task remains `PENDING` because mandatory SURGICAL Codex `ACCEPT` is not yet present.
-- PC remains on `task-07-populate-production-rag` with open backend edits and prior red gate context; no new evidence unblocks dependency sequencing.
+## PC decision
 
-## Decisions
+- **Action:** `HOLD`
+- **Task:** `task-07-populate-production-rag`
+- **Why:** Dependency sequence still unresolved (`BE-07-A` prerequisite), while current PC evidence shows red gate + ongoing backend edits.
+- **Next single action:** hold backend implementation until prerequisite acceptance is explicit.
 
-### PC
-- **Action:** HOLD
-- **Level / role:** Level 2 / PC
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** must satisfy `BE-07-A:ACCEPTED` before execution package proceeds
-- **allowed_paths:** none in this pass (hold-only)
-- **Exact gate when unblocked:** `./scripts/task-gate.sh all`
-- **SURGICAL requirement:** mandatory ACCEPT after gate-green
+## LP decision
 
-### LP
-- **Action:** REVIEW
-- **Level / role:** Level 1 / LP with SURGICAL Codex review
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** prior FE citations task already accepted; now review closure pending
-- **allowed_paths for any revise:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` (already green)
-- **SURGICAL requirement:** immediate ACCEPT/REVISE decision
+- **Action:** `REVIEW`
+- **Task:** `task-fe-03d-dom-state-tests`
+- **Why:** Gate-green checkpoint exists and review request is present, but no Codex decision yet.
+- **Next single action:** run one SURGICAL review pass on current checkpoint and return `ACCEPT` or `REVISE`.
 
-## Integration-risk posture
-1. Prevent backend queue from advancing out of order.
-2. Close LP checkpoint quickly to avoid stale rework.
-3. Preserve strict backend/frontend scope disjointness.
+## Integration risks
+
+1. Continuing PC edits on blocked task-07 can create churn and obscure the true first actionable backend failure.
+2. LP requirement-mapping evidence quality is weak; accepting only on gate status would be unsafe without SURGICAL diff validation.
 
 ## Evidence limitations
-- Full gate logs are not included in this snapshot; only summarized diagnostics were available.
-- No Codex review outcome artifact for LP attempt 6 yet (request exists, decision pending).
+
+1. No packaged PC Codex plan/review/correction artifact in this RUN_DIR cycle.
+2. Gate summaries reference full logs externally; this cycle used packaged summaries plus status/diff metadata.
+
+## Required review policy reminders
+
+- Every LP/PC result still requires SURGICAL Codex review before closure.
+- No bypass of exact gates, no scope widening, no Git history operations by workers.
