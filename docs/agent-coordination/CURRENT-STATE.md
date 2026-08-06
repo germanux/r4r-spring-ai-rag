@@ -1,29 +1,40 @@
-# Global coordination summary — run 20260806T172722Z
+# Global Coordination Summary — RUN_ID 20260806T174052Z
 
-## Executive status
-- **Overall:** `READY`
-- **PC:** `HOLD` on `task-07-populate-production-rag`
-- **LP:** `CONTINUE` on `task-fe-03d-dom-state-tests`
+## Overall status
 
-## Why these decisions
-- PC backend work remains dependency-blocked by hierarchy (`BE-07-B` requires `BE-07-A:ACCEPTED`) and currently carries an unreviewed red gate with dirty backend paths.
-- LP frontend work has a green gate but remains unaccepted because Codex issued `REVISE` and the latest checkpoint is `no-product-diff` with missing required assertion mapping.
+`READY` — actionable directives are clear for both queues, with backend held and frontend continuing a bounded correction.
 
-## Ordered next actions
-1. **SURGICAL review pass (Level 3, backend):** disposition current PC red-gate/diff state (keep-or-revert guidance), while PC stays paused.
-2. **LP revise pass (Level 1, frontend):** implement the mandated DOM loading/reset assertions only in `rag-page.component.spec.ts`, then run `git diff --check` and the exact FE gate.
-3. **Post-pass review rule:** both lanes require SURGICAL Codex `ACCEPT` before closure.
+## Evidence-led decisions
 
-## Acceptance conditions by lane
-- **Backend:** dependency release (`BE-07-A:ACCEPTED`) + exact task-07 gate green + SURGICAL `ACCEPT`.
-- **Frontend:** non-empty scoped patch + clean diff check + exact FE-03D gate green + SURGICAL `ACCEPT`.
+### PC (backend)
+- Active task: `task-07-populate-production-rag`.
+- Current state: red gate (`test-failure`) + dirty backend task paths.
+- Decision: **HOLD** new PC implementation.
+- Why: hierarchy dependency ordering and missing SURGICAL disposition on current red diff.
 
-## Explicit limitations
-- This cycle used staged evidence in `RUN_DIR`; it did not inspect live worker trees directly.
-- Full gate logs are referenced by summaries but not fully bundled in this snapshot.
-- No PC Codex review artifact is present in the current run snapshot.
+### LP (frontend)
+- Active task: `task-fe-03d-dom-state-tests`.
+- Current state: gate green but `no-product-diff`; unresolved Codex REVISE instructions.
+- Decision: **CONTINUE** one Level-1 revise pass in one spec file.
+
+## Required next worker pass packages
+
+1. **SURGICAL review-only package for PC evidence (Level 3)**
+   - Task context: `task-07-populate-production-rag`
+   - Purpose: keep-or-revert disposition on current red-gate diff; preserve hierarchy ordering.
+
+2. **LP implementation package (Level 1)**
+   - Task ID: `task-fe-03d-dom-state-tests`
+   - Scope: `frontend/src/app/features/rag/rag-page.component.spec.ts`
+   - Gate: `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+   - Closure still requires SURGICAL Codex `ACCEPT`.
+
+## Integration risks tracked
+
+- Backend task-07 churn without prerequisite acceptance can produce non-closable cycles.
+- Unreviewed backend red diff may encode incorrect ingestion/vector-store behavior.
+- Frontend gate-green/no-product-diff can mask unresolved assertion requirements.
 
 ## Ring worktree edits in this cycle
-- No repository product/test/config/policy files were edited.
-- Wrote only the six required staged artifacts under:
-  - `runtime/ring-agent/ring/20260806T172722Z/output/`
+
+- No repository code or documentation outside the required staged OUTPUT_DIR artifacts was edited.

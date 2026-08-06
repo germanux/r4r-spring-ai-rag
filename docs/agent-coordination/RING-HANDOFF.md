@@ -1,30 +1,32 @@
-# Backend ↔ Frontend handoff — run 20260806T172722Z
+# Backend ↔ Frontend Handoff — RUN_ID 20260806T174052Z
 
-## Queue state snapshot
-- **Backend (PC active task):** `task-07-populate-production-rag` is blocked/held.
-- **Frontend (LP active task):** `task-fe-03d-dom-state-tests` continues with Codex `REVISE` corrections.
+## Queue separation decision
 
-## Ownership separation for next pass
+- **Backend (PC): HOLD** on `task-07-populate-production-rag` until dependency and review constraints are satisfied.
+- **Frontend (LP): CONTINUE** one bounded revise pass on `task-fe-03d-dom-state-tests`.
 
-### Backend lane
-- **Implementation level:** Level 3 review pass (SURGICAL), with PC on HOLD.
-- **Assigned role:** SURGICAL reviewer.
-- **Task ID:** `task-07-populate-production-rag`.
-- **Dependencies:** `BE-07-B` cannot proceed until `BE-07-A:ACCEPTED`.
-- **allowed_paths (for future PC implementation when unblocked):** backend task scope from plan (`pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`).
-- **Exact gate (when unblocked):** task-07 backend command from `.opencode/task-plan.backend.json`.
-- **Required SURGICAL review:** immediate review disposition over current red-gate + dirty-diff evidence; later mandatory `ACCEPT` after gate-green run.
+No cross-queue write overlap is authorized in this cycle.
 
-### Frontend lane
-- **Implementation level:** Level 1.
-- **Assigned role:** LP.
-- **Task ID:** `task-fe-03d-dom-state-tests` (`FE-03D-A`).
-- **Dependencies:** satisfied (`task-fe-03c-citations:ACCEPTED`).
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` only.
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
-- **Required SURGICAL review:** Codex `ACCEPT` required before closure.
+## Backend package (held)
+
+- **Level / owner:** Level 3 SURGICAL review support; PC implementation paused.
+- **Task ID:** `task-07-populate-production-rag` (hierarchy package `BE-07-B`).
+- **Dependency:** `BE-07-A:ACCEPTED` is required first.
+- **PC allowed_paths when resumed:** `src/**`, `docs/backend/**`.
+- **Exact gate when resumed:** task-07 backend compound command from `.opencode/task-plan.backend.json`.
+- **Reason for hold:** current evidence shows test-failure + dirty backend task files and no current SURGICAL disposition in RUN_DIR.
+
+## Frontend package (active)
+
+- **Level / owner:** Level 1 LP.
+- **Task ID:** `task-fe-03d-dom-state-tests` (hierarchy package `FE-03D-A`).
+- **Dependency:** `task-fe-03c-citations:ACCEPTED` (already true per LP progress).
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` (after `git diff --check`).
+- **Reason to continue:** gate-green but no-product-diff; Codex REVISE packet still requires concrete DOM assertion fixes.
 
 ## Integration-risk controls
-1. Keep PC paused to prevent additional backend churn before dependency release and surgical disposition.
-2. Keep LP strictly single-file scoped to avoid frontend/backed scope bleed and preserve deterministic Codex reviewability.
-3. Do not advance FE-03D-B / later frontend tasks until FE-03D-A is accepted.
+
+1. Keep backend and frontend ownership disjoint this cycle.
+2. Do not advance backend task-07 implementation while prerequisite `BE-07-A` remains unaccepted.
+3. Require SURGICAL Codex review for both queues before any closure claim.
