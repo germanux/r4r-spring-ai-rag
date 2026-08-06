@@ -1,40 +1,33 @@
-# PC code review — run 20260806T010642Z
+# PC code review (Ring)
 
-## Current evidence read
+## Current evidence snapshot
+- Active task: `task-06f-ingestion-validation` (`pc-runtime/progress.json`)
+- Gate state: **green**, exit `0` (`pc-runtime/gate_summary.md`)
+- Checkpoint: `no-product-diff`, `head_after: null` (`pc-runtime/checkpoint.json`)
+- Worker request reason: `gate-green-no-checkpoint` with `codex_decision: null` (`worker-requests/PC.json`)
+- PC worktree diff: only `.opencode/memory.backend.md` dirty (`pc-git-status.txt`)
 
-- `pc-runtime/progress.json`: active task `task-06f-ingestion-validation` is still `PENDING`, but `last_gate_green_attempt=1` and `last_gate_green_run=20260806T005600Z`.
-- `pc-runtime/gate_summary.md`: deterministic gate classification is `green`, exit `0`.
-- `pc-runtime/checkpoint.json`: `status=no-product-diff`, `product_paths=[]`, `head_after=null`.
-- `worker-requests/PC.json`: reason is `gate-green-no-checkpoint`, `codex_decision=null`.
-- `pc-git-status.txt` / `pc-git-diff-stat.txt`: only `.opencode/memory.backend.md` changed in worker tree snapshot, no product-path evidence in this run package.
-
-## First current defect (PC queue)
-
-The first blocker is **not a failing backend gate**. The current blocker is **missing SURGICAL closure decision** on a gate-green package.
-
-PC task closure cannot proceed until SURGICAL returns `ACCEPT` or `REVISE` for the current evidence.
+## First current defect
+The first blocker is **missing SURGICAL closure decision**, not backend implementation failure. The task is still `PENDING` despite a green exact gate because Codex/SURGICAL acceptance is not recorded.
 
 ## Bounded next action package
-
-- **Implementation level:** Level 3 (review authority)
-- **Assigned role:** SURGICAL Codex (OpenCode reviewer pass)
-- **Task ID:** `task-06f-ingestion-validation` (work package `BE-06F-A`)
-- **Dependencies:** `task-06e-child-process:ACCEPTED` (already satisfied)
-- **allowed_paths:** `src/test/resources/application.yml`, `.opencode/current/PC/**` (from hierarchy package scope)
-- **Exact gate:** `./scripts/task-gate.sh task-06f-ingestion-validation` must remain green (`exit 0`)
-- **Required SURGICAL review:** mandatory; closure requires explicit `ACCEPT` per `.opencode/task-plan.hierarchy.json` `review_policy`
+- **Work package:** `BE-06F-A`
+- **Implementation level:** **Level 2**
+- **Assigned role:** **PC** (with mandatory **SURGICAL** review before closure)
+- **Task ID:** `task-06f-ingestion-validation`
+- **Dependencies:** `task-06e-child-process:ACCEPTED`
+- **allowed_paths:** `src/test/resources/application.yml`, `.opencode/current/PC/**`
+- **Exact gate:** `./scripts/task-gate.sh task-06f-ingestion-validation`
+- **Required SURGICAL review:** `ACCEPT` required by `.opencode/task-plan.hierarchy.json` review policy
 
 ### One-pass instruction
-
-Run a single SURGICAL review on the existing gate-green checkpoint evidence and emit `ACCEPT` or `REVISE`. Do not start new PC edits before that verdict.
+Do **not** start new backend edits first. Route the current gate-green package for one SURGICAL decision pass (`ACCEPT` or `REVISE`). If `REVISE` is returned, execute only the first concrete correction inside `BE-06F-A` scope, then re-run the exact gate.
 
 ## Acceptance conditions
-
-1. SURGICAL emits an explicit decision for current BE-06F-A evidence.
-2. Deterministic gate evidence remains `exit 0` for `task-06f-ingestion-validation`.
-3. No out-of-scope backend expansion occurs while review is pending.
+1. SURGICAL returns explicit `ACCEPT` for the current package, or explicit `REVISE` with bounded correction instructions.
+2. Exact gate remains green (`./scripts/task-gate.sh task-06f-ingestion-validation`).
+3. No scope expansion beyond `BE-06F-A` unless a new first failure requires formal reclassification.
 
 ## Avoid repeating
-
-- Do **not** rerun unchanged BE-06F cycles without new first-failure evidence.
-- Do **not** treat gate-green/no-diff as equivalent to accepted task closure.
+- Re-running unchanged backend gates without a new failure signal.
+- Advancing to `task-07` before `task-06f` has SURGICAL acceptance evidence.

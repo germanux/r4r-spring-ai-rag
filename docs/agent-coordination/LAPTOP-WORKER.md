@@ -1,45 +1,38 @@
-# LP code review — run 20260806T010642Z
+# LP code review (Ring)
 
-## Current evidence read
+## Current evidence snapshot
+- Active task: `task-fe-03c-citations` (`lp-runtime/progress.json`)
+- Codex state in latest packet: `REVISE` with explicit missing FE-03C DOM assertions (`lp-runtime/codex-qwen3-extra-instructions.md`)
+- LP worktree: modified `frontend/src/app/features/rag/rag-page.component.spec.ts`, modified memory file, and untracked `r4r-gemma4-lp.patch` (`lp-git-status.txt`)
+- Diff magnitude: significant spec expansion in one file (`lp-git-diff-stat.txt`)
 
-- `lp-runtime/progress.json`: active task `task-fe-03c-citations` is `PENDING` with prior gate-green metadata only.
-- `lp-runtime/codex-qwen3-extra-instructions.md`: Codex decision is `REVISE` with mandatory DOM-assertion corrections.
-- `lp-git-status.txt`: dirty product file present: `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-- `lp-git-diff-stat.txt`: substantial spec-only delta (`108` inserted lines in the task-owned spec file).
-- `lp-runtime/manifest.json`: no checkpoint or codex review artifact published for this run snapshot.
-
-## First current defect (LP queue)
-
-LP is still in an **unaccepted FE-03C revision state**. The unresolved defect is incomplete proof for FE-03C acceptance criteria unless the exact Codex-mandated rendered-DOM assertions are fully present and re-gated.
+## First current defect
+The first defect is **incomplete/unaccepted FE-03C correction evidence**. LP has pending spec changes but no demonstrated SURGICAL acceptance for the revised assertions.
 
 ## Bounded next action package
-
-- **Implementation level:** Level 1
-- **Assigned role:** LP
-- **Task ID:** `task-fe-03c-citations` (work package `FE-03C-A`)
-- **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED` (already satisfied)
+- **Work package:** `FE-03C-A`
+- **Implementation level:** **Level 1**
+- **Assigned role:** **LP**
+- **Task ID:** `task-fe-03c-citations`
+- **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED`
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
 - **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03c-citations`
-- **Required SURGICAL review:** mandatory after gate-green result
+- **Required SURGICAL review:** mandatory `ACCEPT` before closure
 
 ### One-pass instruction
-
-Complete FE-03C-A exactly as constrained in Codex instructions:
-
-1. DOM test for out-of-order structured citations rendered in correct ordinal order with correct source and full ordered heading-path segments.
-2. DOM test proving `.citations-section` is absent for `{ abstained: false, citations: [] }`.
-3. DOM test proving citation-like text in answer body is not parsed into citation DOM when structured `citations` is empty.
-
-Then run `git diff --check`, run the exact frontend gate, and stop for SURGICAL review.
+Complete FE-03C Codex-mandated rendered-DOM assertions in the spec file only:
+1. Ordered structured citation rendering (out-of-order input, asserted output order, ordinal, source, heading-path segment order).
+2. No citation section for `{ abstained:false, citations:[] }`.
+3. Citation-like text in `answer` must remain answer text only; no `.citation-item`/`.citations-section` when structured citations are empty.
+Then run `git diff --check` and the exact gate, and send the result for SURGICAL review.
 
 ## Acceptance conditions
-
-1. Diff remains within `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-2. `git diff --check` is clean.
+1. Changes remain within `FE-03C-A` allowed path.
+2. `git diff --check` passes.
 3. `./scripts/frontend-task-gate.sh task-fe-03c-citations` exits `0`.
-4. SURGICAL returns `ACCEPT` before closing `task-fe-03c-citations`.
+4. SURGICAL returns `ACCEPT` for FE-03C.
 
 ## Avoid repeating
-
-- Do **not** rely on generic green Angular runs without verifying FE-03C DOM-specific assertions.
-- Do **not** submit partial citation assertions that miss order/path/empty-citation omission constraints.
+- Treating generic Angular green runs as proof of FE-03C acceptance.
+- Re-entering long sessions without narrowing to the first missing DOM assertion set.
+- Allowing side artifacts (like `r4r-gemma4-lp.patch`) to distract from FE-03C-A scope.
