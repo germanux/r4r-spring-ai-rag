@@ -1,33 +1,36 @@
-# Global coordination summary (run 20260806T185129Z)
+# Global coordination summary (RUN_ID: 20260806T185629Z)
 
-## Overall status: READY
+## Executive status
 
-This cycle has actionable, evidence-backed next steps for both active queues with no required repository edits by Ring.
+- **Overall:** `READY` for bounded next actions.
+- **PC:** `HOLD` on `task-07-populate-production-rag` until mandatory SURGICAL disposition is recorded for the current gate-green checkpoint evidence.
+- **LP:** `CONTINUE` on `task-fe-03d-dom-state-tests` with one tightly scoped correction pass in `rag-page.component.spec.ts`.
 
-## What changed in this decision cycle
+## Evidence-backed findings
 
-1. **PC queue (`task-07-populate-production-rag`)**
-   - First defect identified: missing SURGICAL disposition for a gate-green checkpoint.
-   - Decision: `REVIEW` (SURGICAL review-only pass first).
+1. Backend gate already green (`pc-runtime/gate_summary.md`), but controller reports `CHECKPOINT_COMMIT_FAILED` (`pc-runtime/controller_state.json`) and worker request has `codex_decision: null` (`worker-requests/PC.json`).
+2. Frontend gate currently red (`lp-runtime/gate_summary.md`, exit `2`) with explicit Codex `REVISE` correction packet requiring selector-level DOM test fixes (`lp-runtime/codex-qwen3-extra-instructions.md`).
 
-2. **LP queue (`task-fe-03d-dom-state-tests`)**
-   - First defect identified: current spec patch is red and conflicts with Codex-prescribed FE-03D assertions.
-   - Decision: `CONTINUE` with one bounded LP correction pass in the spec file, then rerun exact gate.
+## Next-cycle routing
 
-## Evidence anchors used
+### Backend route
+- **Implementation level:** 3
+- **Role:** SURGICAL review-only
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** existing gate-green checkpoint evidence
+- **allowed_paths:** read-only review now; if REVISE then backend task-07 allowed scope
+- **Exact gate / closure constraints:** retain task-07 gate green; require `surgical-accept` and successful controller commit
 
-- Backend: `worker-requests/PC.json`, `pc-runtime/gate_summary.md`, `pc-runtime/progress.json`, `pc-git-status.txt`
-- Frontend: `lp-runtime/gate_summary.md`, `lp-runtime/memory.md`, `lp-runtime/codex-qwen3-extra-instructions.md`, `lp-git-status.txt`
-- Policy/gates: `.opencode/task-plan.hierarchy.json`, `.opencode/task-plan.backend.json`, `.opencode/task-plan.frontend.json`
+### Frontend route
+- **Implementation level:** 1
+- **Role:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependencies:** Codex REVISE packet
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Closure constraints:** `exact-gate-green + scope-clean + surgical-accept + controller-commit`
 
-## Integration risks being actively controlled
+## Do-not-repeat controls
 
-- Preventing false closure on backend task-07 without SURGICAL decision.
-- Preventing repeated LP red-gate loops by enforcing the exact Codex correction packet.
-- Maintaining backend/frontend queue disjointness while sequencing review and correction work.
-
-## Explicit next supervisory checks
-
-1. Confirm SURGICAL disposition is produced for current PC checkpoint before any new backend implementation pass.
-2. Confirm LP rerun evidence is internally consistent (diff scope, `git diff --check`, exact gate exit, aligned diagnostics).
-3. Require SURGICAL `ACCEPT` before marking either task accepted/closed.
+- Do not run another PC implementation loop before SURGICAL disposition of the existing task-07 diff.
+- Do not reintroduce LP synthetic tests or invalid test data structures rejected by Codex.

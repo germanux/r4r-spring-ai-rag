@@ -1,35 +1,37 @@
-# Backend ↔ Frontend handoff (run 20260806T185129Z)
+# Backend ↔ Frontend handoff (RUN_ID: 20260806T185629Z)
 
-## Queue status
+## Queue state summary
 
-## Backend (PC lane)
-- **Task:** `task-07-populate-production-rag`
-- **State:** Gate-green checkpoint captured; pending SURGICAL disposition.
-- **Current owner action:** REVIEW (no new PC coding pass yet).
+- **Backend (PC, task-07):** Gate green but closure blocked by missing SURGICAL disposition and checkpoint commit failure evidence.
+- **Frontend (LP, task-fe-03d):** Active correction required; current gate red with Codex `REVISE` instructions.
 
-### Package
-- **ID:** SURG-BE-07-REVIEW-01
-- **Level / role:** 3 / SURGICAL
-- **Dependencies:** existing PC checkpoint evidence in this RUN_DIR
-- **allowed_paths:** `[]` (review-only)
-- **Exact gate:** validate against previously executed task-07 exact gate evidence
-- **SURGICAL review:** this package is the required review event
+## Disjoint ownership enforcement
 
-## Frontend (LP lane)
-- **Task:** `task-fe-03d-dom-state-tests`
-- **State:** red gate + Codex `REVISE`; correction required in spec test file.
-- **Current owner action:** CONTINUE (one bounded correction pass).
+- Backend ownership remains in `docs/backend/**`, `src/main/**`, `src/test/**`, `pom.xml` per task plan.
+- Frontend LP correction is restricted to `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+- No overlapping write scopes are authorized in this cycle.
 
-### Package
-- **ID:** FE-03D-A-LP-REVISE-01
-- **Level / role:** 1 / LP
-- **Dependencies:** task-fe-03c accepted; Codex correction packet available
+## Bounded actions for this cycle
+
+### 1) Backend review hold
+- **Implementation level:** 3
+- **Assigned role:** SURGICAL (review-only)
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** existing PC gate-green evidence
+- **allowed_paths:** read-only evidence/diff review; if REVISE then task-07 backend scope only
+- **Exact gate:** preserve task-07 gate green state; closure requires `surgical-accept` and controller commit success
+- **Required SURGICAL review:** yes (mandatory)
+
+### 2) Frontend LP correction
+- **Implementation level:** 1
+- **Assigned role:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependencies:** Codex REVISE packet instructions
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **SURGICAL review:** mandatory after gate rerun and before closure
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Required SURGICAL review:** yes (mandatory)
 
-## Cross-stack risk and coordination rule
+## Integration risks to watch
 
-- No active backend/frontend write-scope overlap is being dispatched in this cycle.
-- Hold any new frontend PC work (`FE-03D-B` onward) until LP correction evidence is revalidated and SURGICAL disposition is recorded.
-- Hold any new backend PC implementation until SURGICAL review resolves the existing task-07 checkpoint (`ACCEPT` or `REVISE`).
+1. If backend PC resumes coding before SURGICAL disposition, gate-green evidence may be invalidated and review traceability lost.
+2. If frontend LP widens scope beyond FE-03D single file, controller scope enforcement is likely to reject the pass.
