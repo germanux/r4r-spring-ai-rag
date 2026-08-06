@@ -1,41 +1,34 @@
-# PC code review (backend queue)
+# PC Code Review (Ring)
 
-## Current evidence snapshot
+## Evidence inspected
+- `runtime/ring-agent/ring/20260806T164153Z/pc-runtime/progress.json`
+- `runtime/ring-agent/ring/20260806T164153Z/pc-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260806T164153Z/pc-git-status.txt`
+- `runtime/ring-agent/ring/20260806T164153Z/pc-git-diff-stat.txt`
+- `runtime/ring-agent/ring/20260806T164153Z/pc-runtime/previous-ring-qwen3-directive.json`
 
-- Active PC task remains `task-07-populate-production-rag` and is still `PENDING` in progress state.
-- Prior Ring directive already placed PC on hold until dependency unblock (`BE-07-A:ACCEPTED`).
-- Current snapshot nonetheless shows fresh backend working-tree edits and a red exact-gate context (`exit=1`, test-failure classification).
+## Current diagnosis
+PC is still on `task-07-populate-production-rag` (`PENDING`) with no new checkpoint request in this cycle and with backend working-tree edits present. The latest captured gate context for this lane is red (`exit 1`) and the previous Ring directive already marked dependency sequencing risk for task-07 execution.
 
-Evidence:
+The first current defect is **execution-order violation risk**, not a missing implementation patch: backend work should remain held until the prerequisite package is accepted.
 
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/progress.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/previous-ring-qwen3-directive.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-git-status.txt`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/gate_summary.md`
-
-## First current defect
-
-Queue dependency discipline is not satisfied for backend task-07 execution: prerequisite `BE-07-A` is not evidenced as accepted, while PC already accumulated additional backend edits and another red-gate context. This is the first defect to correct before any new backend implementation.
-
-## Bounded next action package
-
-- **Implementation level:** Level 2 (PC execution discipline hold)
-- **Assigned role:** PC
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `BE-07-A:ACCEPTED` (from `.opencode/task-plan.hierarchy.json`) before BE-07-B-style backend execution continues
+## Bounded work package to issue now
+- **Implementation level:** Level 2 (PC)
+- **Assigned role:** PC developer
+- **Task ID:** `task-07-populate-production-rag` (dependency-sensitive hold)
+- **Dependencies:** `BE-07-A:ACCEPTED` before BE-07 execution work
 - **allowed_paths:** none for this pass (hold-only; no product edits)
-- **Exact gate:** none for hold pass; when unblocked, resume with `./scripts/task-gate.sh all`
-- **Required SURGICAL review:** mandatory before closure of resumed implementation pass per hierarchy `review_policy`
+- **Exact gate:** none during hold; when unblocked use `./scripts/task-gate.sh all`
+- **Required SURGICAL review:** still mandatory before closure once a gate-green patch/checkpoint exists
 
-### Pass objective
+### Next action (single pass)
+Do one hold-only pass: no backend gate rerun and no additional backend edits until Ring has evidence that `BE-07-A` is accepted and unblocks PC.
 
-Run one hold-only pass: no backend gate loop, no additional backend edits, no scope widening. Wait for newer evidence that prerequisite acceptance is present.
-
-### Acceptance evidence for this hold pass
-
-1. Newer coordination snapshot still shows no unauthorized additional backend edits during hold.
-2. Resume signal only after evidence of dependency acceptance is published.
+## Acceptance conditions for this coordination step
+1. PC remains paused on task-07 execution changes.
+2. No new backend scope expansion occurs while prerequisite remains unresolved.
+3. Future resume directive must explicitly re-open with the exact gate and SURGICAL review requirement.
 
 ## Avoid repeating
-
-Do **not** rerun backend task-07/all gates while dependency is still blocked and no prerequisite acceptance evidence exists.
+- Do **not** loop `task-07` backend gates while prerequisite acceptance is unresolved.
+- Do **not** treat unrelated test failures as current priority until sequencing is valid.

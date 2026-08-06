@@ -1,47 +1,40 @@
-# Global coordination summary — run `20260806T160956Z`
+# Global Summary — Ring Cycle 20260806T164153Z
 
 ## Outcome
+`overall_status = READY`
 
-- **Overall status:** `READY`
-- **PC decision:** `HOLD` on `task-07-populate-production-rag`
-- **LP decision:** `CONTINUE` on `task-fe-03d-dom-state-tests`
+The cycle has one review-forward action (LP) and one dependency hold action (PC). No repository code edits were made by Ring; only staged coordination artifacts were written.
 
-## What changed in this coordination cycle
+## Evidence highlights
+- LP emitted a gate-green checkpoint request for `task-fe-03d-dom-state-tests` with one scoped file change.
+- LP task remains `PENDING` because mandatory SURGICAL Codex `ACCEPT` is not yet present.
+- PC remains on `task-07-populate-production-rag` with open backend edits and prior red gate context; no new evidence unblocks dependency sequencing.
 
-1. Confirmed backend queue remains dependency-blocked for productive task-07 execution while new backend edits and a red gate are already present.
-2. Confirmed LP has a fresh Codex revise packet with explicit single-file corrections and deterministic gate requirements.
-3. Kept backend/frontend ownership disjoint for the next pass (PC hold vs LP single-file frontend revise).
+## Decisions
 
-## Action packages
-
-### PC package
-- **Implementation level:** 2
-- **Assigned role:** PC
+### PC
+- **Action:** HOLD
+- **Level / role:** Level 2 / PC
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `BE-07-A:ACCEPTED` before backend execution continues
-- **allowed_paths:** none for this hold pass
-- **Exact gate:** none during hold (resume gate remains `./scripts/task-gate.sh all`)
-- **Required SURGICAL review:** mandatory before eventual closure of resumed implementation
+- **Dependencies:** must satisfy `BE-07-A:ACCEPTED` before execution package proceeds
+- **allowed_paths:** none in this pass (hold-only)
+- **Exact gate when unblocked:** `./scripts/task-gate.sh all`
+- **SURGICAL requirement:** mandatory ACCEPT after gate-green
 
-### LP package
-- **Implementation level:** 1
-- **Assigned role:** LP
+### LP
+- **Action:** REVIEW
+- **Level / role:** Level 1 / LP with SURGICAL Codex review
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Required SURGICAL review:** mandatory `ACCEPT` before closure
+- **Dependencies:** prior FE citations task already accepted; now review closure pending
+- **allowed_paths for any revise:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` (already green)
+- **SURGICAL requirement:** immediate ACCEPT/REVISE decision
 
-## Key risks to monitor next cycle
+## Integration-risk posture
+1. Prevent backend queue from advancing out of order.
+2. Close LP checkpoint quickly to avoid stale rework.
+3. Preserve strict backend/frontend scope disjointness.
 
-- Repeating backend gate loops before dependency unblock will continue generating noise without closing prerequisite work.
-- LP may repeat revise loops unless every Codex checklist item is mapped to explicit assertions before rerun.
-
-## Evidence basis (primary)
-
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/progress.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/previous-ring-qwen3-directive.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/pc-runtime/gate_summary.md`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/worker-request-manifest.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T160956Z/lp-runtime/gate_summary.md`
+## Evidence limitations
+- Full gate logs are not included in this snapshot; only summarized diagnostics were available.
+- No Codex review outcome artifact for LP attempt 6 yet (request exists, decision pending).
