@@ -1553,3 +1553,52 @@ Append-only ledger generated after each validated Ring cycle.
 - PC snapshot contains no current codex_review artifact, so acceptance/rejection state for the latest backend diff is not directly evidenced.
 - LP codex_review.json in this snapshot is process metadata from attempt-02 and does not contain a fresh attempt-03 decision payload.
 - Only summarized gate evidence was provided in RUN_DIR; full gate logs were not inspected in this cycle.
+
+## Cycle `20260806T172722Z` â READY
+
+### PC
+
+- Decision: `HOLD`
+- Task: `task-07-populate-production-rag`
+- Reason: PC is currently blocked by hierarchy dependency (BE-07-B requires BE-07-A:ACCEPTED), and current evidence still shows an unreviewed red gate plus dirty backend task paths.
+- Next action: Route one Level-3 SURGICAL review-only pass over the current PC gate-failure and diff evidence to decide keep-or-revert, while keeping PC implementation paused until BE-07-A is accepted.
+- Avoid repeating: Do not run another PC implementation/gate loop for task-07 while BE-07-A is still unaccepted and the current red diff has not received SURGICAL disposition.
+- Acceptance gates:
+  - Dependency gate from .opencode/task-plan.hierarchy.json: BE-07-B depends on BE-07-A:ACCEPTED.
+  - When unblocked, exact backend gate from .opencode/task-plan.backend.json task-07-populate-production-rag must pass: bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0".
+  - Closure requires SURGICAL Codex ACCEPT after gate-green evidence.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T172722Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T172722Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T172722Z/pc-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T172722Z/pc-runtime/previous-ring-qwen3-directive.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: Latest LP gate is green, but the checkpoint is no-product-diff and Codex returned REVISE with explicit missing DOM assertions and requirement-to-assertion mapping defects.
+- Next action: Execute one Level-1 LP revise pass limited to frontend/src/app/features/rag/rag-page.component.spec.ts implementing the Codex-mandated loading and independent reset assertions, then run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+- Avoid repeating: Do not resubmit another gate-green/no-product-diff attempt or controller-memory-only mapping; provide a real scoped patch and explicit requirement-to-assertion mapping.
+- Acceptance gates:
+  - Pre-gate hygiene: git diff --check with no whitespace errors.
+  - Exact frontend gate: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+  - Respect FE-03D-A Level-1 allowed_paths from .opencode/task-plan.hierarchy.json: frontend/src/app/features/rag/rag-page.component.spec.ts.
+  - Closure requires SURGICAL Codex ACCEPT after gate-green evidence.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T172722Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T172722Z/lp-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T172722Z/worker-requests/LP.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T172722Z/lp-runtime/local_understanding.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T172722Z/lp-runtime/gate_summary.md`
+
+### Integration risks
+
+- Backend task-07 has dirty implementation paths plus red deterministic gate evidence; without immediate SURGICAL keep-or-revert disposition, stale partial changes can accumulate and obscure first-failure diagnosis.
+- LP has repeated gate-green/non-closure cycles on FE-03D due to missing required assertions and weak local understanding, which risks false progress and queue churn.
+
+### Evidence limitations
+
+- PC runtime snapshot in this RUN_DIR includes gate_summary but no codex_review.json or worker-request packet for the current PC attempt.
+- Only summarized gate diagnostics are present in RUN_DIR; full gate-full.log artifacts are referenced but not packaged in this snapshot.
+- Ring did not inspect live PC/LP worktrees directly; conclusions are based on staged RUN_DIR evidence and versioned coordination artifacts.

@@ -1,51 +1,45 @@
-# LP code review (Ring)
+# LP code review — run 20260806T172722Z
 
-## Current evidence snapshot
+## Current evidence reviewed
+- `runtime/ring-agent/ring/20260806T172722Z/lp-runtime/progress.json`
+- `runtime/ring-agent/ring/20260806T172722Z/lp-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260806T172722Z/lp-runtime/checkpoint.json`
+- `runtime/ring-agent/ring/20260806T172722Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260806T172722Z/lp-runtime/local_understanding.md`
+- `runtime/ring-agent/ring/20260806T172722Z/worker-requests/LP.json`
 
-- Active frontend task: `task-fe-03d-dom-state-tests` (`lp-runtime/progress.json`).
-- Latest deterministic gate is green, exit `0` (`lp-runtime/gate_summary.md`).
-- Checkpoint result: `no-product-diff` with `product_paths: []` (`lp-runtime/checkpoint.json`).
-- Worker request for attempt-03 also reports `changed_paths: []` and `codex_decision: null` (`worker-requests/LP.json`).
-- Prior Codex packet remains `REVISE` with explicit missing assertions in
-  `lp-runtime/codex-qwen3-extra-instructions.md`.
+## First current defect (LP)
+The latest deterministic gate is green, but the attempt is not closable:
+- Codex decision is `REVISE` with explicit missing assertions and structure corrections.
+- Checkpoint status is `no-product-diff` (`changed_paths: []`).
+- Local understanding does not map requirements to concrete DOM assertions.
 
-## First current defect
+This is a **correction-before-new-work** situation.
 
-LP reran a green gate without producing scoped product changes after a mandatory REVISE packet that required concrete test assertions.
+## Decision
+- **Action:** `CONTINUE`
+- **Active task ID:** `task-fe-03d-dom-state-tests`
+- **Why now:** task remains pending; required DOM assertion corrections are prescribed and bounded to one test file.
 
-This is a process-and-evidence defect: the acceptance gap remains open because required corrections were not evidenced in the latest attempt.
-
-## Directed action package
-
-- **Implementation level:** Level 1 (LP)
-- **Assigned role:** LP frontend worker
-- **Task ID:** `task-fe-03d-dom-state-tests` (work package focus: `FE-03D-A`)
-- **Dependencies:**
-  - `task-fe-03c-citations:ACCEPTED` (already satisfied)
-  - Apply all unresolved Codex REVISE assertions from the latest packet
-- **allowed_paths:**
-  - Canonical FE-03D-A scope: `frontend/src/app/features/rag/rag-page.component.spec.ts`
+## Bounded next action package
+- **Implementation level:** Level 1
+- **Assigned role:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests` (work package `FE-03D-A`)
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED` (already satisfied per progress evidence)
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
 - **Exact gate:**
-  - `git diff --check`
-  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Required SURGICAL review:** mandatory `ACCEPT` before closure
+  1. `git diff --check`
+  2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Required SURGICAL review:** mandatory Codex `ACCEPT` after gate-green evidence and non-empty scoped patch.
 
-## Bounded next LP pass
-
-In one pass, implement only the mandated assertion set in the spec file:
-
-1. Loading-state DOM assertions for `.loading-state[role="status"]`, `textarea`, and `.submit-button` disabled behavior.
-2. Single duplicate-submit guard assertion (exactly one additional submit while pending; total service calls remain one).
-3. Split reset coverage into independent success-reset and transport-error-reset tests.
-4. Produce explicit requirement-to-assertion mapping in local understanding evidence.
-
-## Acceptance conditions
-
-1. Scoped diff present in the exact spec file (no production code changes).
-2. `git diff --check` clean.
-3. Exact frontend gate green.
-4. SURGICAL Codex review returns `ACCEPT`.
+## Mandatory assertions to implement in this pass (from Codex packet)
+1. Loading-state DOM assertions must query `.loading-state[role="status"]`, `textarea`, and `.submit-button`, and verify visible loading plus rendered-control `disabled === true`.
+2. Pending duplicate-submit guard must call `component.onSubmit()` exactly once more while first request is pending, and assert `ragApiService.query` total calls remains exactly one.
+3. Replace combined reset test with two independent tests:
+   - success-reset path (answer/citations present before clear; absent after clear; idle restored),
+   - transport-error-reset path (`role="alert"` present before clear; absent after clear; idle restored).
+4. Preserve existing answer/abstention/citation/transport-alert/service-isolation coverage.
+5. Produce an explicit requirement→DOM query/assertion mapping in local understanding evidence.
 
 ## Avoid repeating
-
-Do not submit another gate-green/no-diff attempt; implement every explicit REVISE item first.
+Do **not** submit another gate-green/no-product-diff cycle or memory-only requirement mapping.

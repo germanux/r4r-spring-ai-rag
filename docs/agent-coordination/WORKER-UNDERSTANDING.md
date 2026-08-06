@@ -1,52 +1,33 @@
-# Worker understanding assessment
+# Worker understanding assessment — run 20260806T172722Z
 
-## PC understanding
+## PC understanding quality
+- Evidence shows task awareness (`task-07-populate-production-rag`) and edited backend files, but closure evidence is incomplete.
+- `pc-runtime/gate_summary.md` reports a red deterministic gate, while `pc-runtime/memory.md` still says latest exact gate is unknown/not run.
+- No current `codex_review.json` is present in this run snapshot for PC.
 
-### Evidence read
+### PC correction package
+- **Implementation level:** Level 3
+- **Assigned role:** SURGICAL
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** review now; implementation later gated by `BE-07-A:ACCEPTED`
+- **allowed_paths:** review evidence in RUN_DIR and currently changed backend files (no broadened scope)
+- **Exact gate:** once unblocked, run task-07 exact backend gate from plan
+- **Required SURGICAL review:** mandatory keep/revert guidance now; mandatory final `ACCEPT` later
 
-- `pc-runtime/progress.json`
-- `pc-runtime/gate_summary.md`
-- `pc-git-status.txt`
-- `pc-runtime/previous-ring-qwen3-directive.json`
+## LP understanding quality
+- LP produced a green gate but with `no-product-diff` and Codex `REVISE` outstanding.
+- `local_understanding.md` is explicitly inadequate for this task: requirement mapping points to controller memory instead of concrete DOM assertions.
 
-### Assessment
-
-PC is operating in a backend area where current work is both red-gate and dependency-constrained by hierarchy sequencing. The immediate issue is not lack of coding effort; it is incorrect execution order and unresolved review state.
-
-### Correction package
-
-- **Level:** 3 (SURGICAL review)
-- **Owner:** SURGICAL
-- **Task ID:** `task-07-populate-production-rag` with BE-07 dependency guard
-- **Dependencies:** `BE-07-A:ACCEPTED` before PC implementation resumes
-- **allowed_paths:** review-only this cycle; eventual PC scope remains backend task plan scope
-- **Exact gate:** none now (hold); enforce task-07 exact gate only after unblocked
-- **SURGICAL requirement:** mandatory keep/revert/revise disposition on current PC diff
-
-## LP understanding
-
-### Evidence read
-
-- `lp-runtime/codex-qwen3-extra-instructions.md`
-- `lp-runtime/checkpoint.json`
-- `worker-requests/LP.json`
-- `lp-runtime/progress.json`
-- `lp-git-status.txt`
-
-### Assessment
-
-LP produced a gate-green attempt without product changes after a Codex `REVISE` packet that required specific missing assertions. This indicates a mismatch between acceptance requirements and executed edits/evidence.
-
-### Correction package
-
-- **Level:** 1
-- **Owner:** LP
+### LP correction package
+- **Implementation level:** Level 1
+- **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** apply unresolved Codex REVISE items
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED` satisfied
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
 - **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **SURGICAL requirement:** mandatory Codex `ACCEPT` before closure
+- **Required SURGICAL review:** Codex must return `ACCEPT` after revised assertions and evidence mapping
 
-## Shared rule reaffirmed
-
-Neither queue may close on gate status alone; both require exact gate evidence plus SURGICAL acceptance.
+## Evidence-grounded coaching for next pass
+1. Treat Codex REVISE packets as executable checklists, not narrative guidance.
+2. Ensure local understanding maps each requirement to specific selectors/assertions.
+3. Require non-empty scoped diffs for revise passes unless the package is explicitly review-only.

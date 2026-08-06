@@ -1,38 +1,30 @@
-# Backend ↔ Frontend handoff
+# Backend ↔ Frontend handoff — run 20260806T172722Z
 
-## Queue status
+## Queue state snapshot
+- **Backend (PC active task):** `task-07-populate-production-rag` is blocked/held.
+- **Frontend (LP active task):** `task-fe-03d-dom-state-tests` continues with Codex `REVISE` corrections.
 
-- **Backend (PC task-07): HOLD**
-  - Reason: dependency sequencing and red-gate unresolved backend diff.
-  - No new PC coding pass authorized this cycle.
+## Ownership separation for next pass
 
-- **Frontend (LP task-fe-03d): CONTINUE**
-  - Reason: pending task with unresolved Codex REVISE and no-product-diff latest attempt.
-  - One bounded LP revise pass is authorized.
+### Backend lane
+- **Implementation level:** Level 3 review pass (SURGICAL), with PC on HOLD.
+- **Assigned role:** SURGICAL reviewer.
+- **Task ID:** `task-07-populate-production-rag`.
+- **Dependencies:** `BE-07-B` cannot proceed until `BE-07-A:ACCEPTED`.
+- **allowed_paths (for future PC implementation when unblocked):** backend task scope from plan (`pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`).
+- **Exact gate (when unblocked):** task-07 backend command from `.opencode/task-plan.backend.json`.
+- **Required SURGICAL review:** immediate review disposition over current red-gate + dirty-diff evidence; later mandatory `ACCEPT` after gate-green run.
 
-## Disjoint ownership and write scopes
+### Frontend lane
+- **Implementation level:** Level 1.
+- **Assigned role:** LP.
+- **Task ID:** `task-fe-03d-dom-state-tests` (`FE-03D-A`).
+- **Dependencies:** satisfied (`task-fe-03c-citations:ACCEPTED`).
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` only.
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
+- **Required SURGICAL review:** Codex `ACCEPT` required before closure.
 
-- Backend package context (blocked):
-  - Task ID: `task-07-populate-production-rag`
-  - Level: 2 execution blocked; Level 3 review required now
-  - allowed_paths (eventual PC execution): `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-
-- Frontend package context (active):
-  - Task ID: `task-fe-03d-dom-state-tests`
-  - Level: 1
-  - allowed_paths (this pass): `frontend/src/app/features/rag/rag-page.component.spec.ts`
-
-No overlapping write scope is permitted between these two actions.
-
-## Integration risk control
-
-1. **Backend hold prevents invalid sequencing** (`BE-07-B` before `BE-07-A`).
-2. **Frontend continue prevents idle queue time** while backend waits on prerequisite acceptance.
-3. **Mandatory SURGICAL review remains required for both queues before closure.**
-
-## Exact gates to enforce
-
-- Backend (when unblocked): task-07 backend exact gate from `.opencode/task-plan.backend.json`.
-- Frontend (current pass):
-  - `git diff --check`
-  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+## Integration-risk controls
+1. Keep PC paused to prevent additional backend churn before dependency release and surgical disposition.
+2. Keep LP strictly single-file scoped to avoid frontend/backed scope bleed and preserve deterministic Codex reviewability.
+3. Do not advance FE-03D-B / later frontend tasks until FE-03D-A is accepted.
