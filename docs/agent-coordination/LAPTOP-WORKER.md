@@ -1,49 +1,49 @@
 # LP code review (Ring)
 
-## Current evidence-based status
+## Current evidence verdict
 
-- Active task: `task-fe-03d-dom-state-tests` (`lp-runtime/progress.json`).
-- Latest gate is red: exit `2` (`lp-runtime/memory.md`, `lp-runtime/gate_summary.md`).
-- Codex disposition is `REVISE` with explicit corrections targeting invalid synthetic tests and inconsistent evidence packaging (`lp-runtime/codex-qwen3-extra-instructions.md`).
-- Current LP product diff exists in `frontend/src/app/features/rag/rag-page.component.spec.ts` (`lp-git-status.txt`, `lp-git-diff-stat.txt`).
+- Active task: `task-fe-03d-dom-state-tests`.
+- Deterministic gate status: **failed** (`exit 2`, `gate-failure`).
+- Codex status: **REVISE** with explicit correction packet.
+- First current defect: the spec includes defective synthetic tests and inconsistent understanding/evidence packaging versus the active REVISE instructions.
 
-## First current defect (LP)
+Evidence:
 
-The first defect is **incorrect FE-03D test implementation** in `rag-page.component.spec.ts`: added synthetic patterns and invalid constructs do not prove the required DOM behavior and are called out directly by Codex.
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/lp-runtime/gate_summary.md`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/lp-runtime/memory.md`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/lp-runtime/codex-qwen3-extra-instructions.md`
 
-## Bounded next action package
+## Bounded action package
 
-- **Implementation level:** Level 1
+### PKG-LP-FE03D-SPEC-REPAIR
+
+- **Implementation level:** 1
 - **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
 - **Dependencies:**
-  - Follow the active Codex `REVISE` packet exactly.
-  - Keep frontend queue isolated from backend work.
+  - Active Codex REVISE packet must be followed exactly.
+  - Existing accepted predecessor task: `task-fe-03c-citations`.
 - **allowed_paths:**
-  - Canonical task scope: `frontend/**`, `docs/frontend/**` (`.opencode/task-plan.frontend.json`)
-  - Active correction constraint (stricter): `frontend/src/app/features/rag/rag-page.component.spec.ts` only (`codex-qwen3-extra-instructions.md`)
-- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` after `git diff --check`.
-- **Required SURGICAL review:** Yes (mandatory before closure under hierarchy policy).
+  - `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:**
+  - `git diff --check`
+  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Required SURGICAL review:** yes, mandatory before closure (`ACCEPT` required).
 
-## Acceptance conditions
+## Prescribed one-pass correction focus
 
-1. Replace defective added tests with the prescribed:
-   - one controlled-pending loading/disabled DOM test,
-   - one success-reset DOM test,
-   - one transport-error-reset DOM test.
-2. Preserve existing valid answer/abstention/citation/escaping/service-isolation coverage.
-3. Hygiene passes: `git diff --check` clean.
-4. Exact FE-03D gate exits `0`.
-5. Evidence consistency: changed paths, `task-gate.json`, and full gate log must describe the same final run.
-6. SURGICAL Codex returns `ACCEPT` for closure.
+1. Remove defective synthetic additions called out by Codex.
+2. Restore one controlled pending-observable loading-state test with DOM selector assertions:
+   - `.loading-state[role="status"]`
+   - rendered `textarea`
+   - `.submit-button`
+   - assert single service call even after one extra `onSubmit()` during pending state.
+3. Split reset behavior into two independent fixture-rendered tests:
+   - success-reset path (answer/citations present before clear; absent after clear; idle present),
+   - transport-error reset path (error alert present before clear; absent after clear; idle present).
+4. Publish internally consistent evidence from the same final gate execution.
 
 ## Avoid repeating
 
-- Do not reintroduce synthetic tests, fake state fields, direct `innerHTML` mutation, or stale/mismatched diagnostic bundles.
-
-## Evidence paths
-
-- `runtime/ring-agent/ring/20260806T190129Z/lp-runtime/memory.md`
-- `runtime/ring-agent/ring/20260806T190129Z/lp-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260806T190129Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `runtime/ring-agent/ring/20260806T190129Z/lp-git-status.txt`
+- Do not add fake response fields, invalid state values, direct `innerHTML` mutations, or unnecessary timing helpers.
+- Do not submit mismatched diagnostics (`task-gate.json`, manifest, and full log must refer to the same run).

@@ -1,38 +1,38 @@
-# Global summary (Ring cycle `20260806T190129Z`)
+# Global coordination summary (run 20260806T190630Z)
 
-## Outcome
+## Overall status
 
-- **Overall status:** `READY`
-- **PC:** `REVIEW` on `task-07-populate-production-rag` (SURGICAL disposition missing on gate-green checkpoint).
-- **LP:** `CONTINUE` on `task-fe-03d-dom-state-tests` (red gate + explicit Codex REVISE packet).
+- **READY** for bounded next passes.
+- No repository code edits were made by Ring in this cycle.
 
-## Why these are the first current defects
+## Evidence-grounded decisions
 
-1. **PC first defect = missing closure review**
-   - Gate already green in request evidence, but `codex_decision=null` and no checkpoint head recorded.
-   - Therefore acceptance is unproven; another implementation pass is not the next correct action.
+### PC
 
-2. **LP first defect = incorrect spec implementation**
-   - Deterministic gate failed (exit 2).
-   - Codex provides concrete corrective instructions for invalid synthetic tests in the FE-03D spec.
+- **Action:** `HOLD`
+- **Task:** `task-07-populate-production-rag`
+- **Why:** gate-green checkpoint evidence exists, but closure evidence is incomplete (`codex_decision: null`).
+- **Next:** run one SURGICAL review-only pass on current evidence; no additional PC implementation until disposition is returned.
 
-## Required next passes
+### LP
 
-- **SURGICAL Level 3 review-only pass for PC task-07** before any new backend coding.
-- **LP Level 1 bounded correction pass** in one file, then exact FE gate + SURGICAL review.
+- **Action:** `CONTINUE`
+- **Task:** `task-fe-03d-dom-state-tests`
+- **Why:** deterministic gate is red (`exit 2`) and Codex REVISE packet prescribes a bounded spec-only correction.
+- **Next:** execute one constrained repair in `frontend/src/app/features/rag/rag-page.component.spec.ts`, then `git diff --check` and exact frontend gate.
 
-## Constraints enforced
+## Integration risks to monitor
 
-- No queue overlap: backend review and frontend spec correction are disjoint.
-- Mandatory closure policy remains: `exact-gate-green + scope-clean + surgical-accept + controller-commit`.
-- No runtime-control writes were performed in this cycle.
+1. Backend schedule risk: task-07 cannot advance to task-08 until SURGICAL disposition is recorded.
+2. Frontend churn risk: repeated FE-03D retries if LP does not align tests and understanding artifact with the active REVISE packet.
 
-## Evidence limitations
+## Acceptance conditions carried forward
 
-- PC Codex decision artifact is absent in this run snapshot (only metadata indicates `null`).
-- LP codex_plan/review files are metadata wrappers; detailed directives were taken from the extra-instructions packet.
+- Global closure policy (all levels): `exact-gate-green + scope-clean + surgical-accept + controller-commit`.
+- PC task gate authority: `.opencode/task-plan.backend.json` task `task-07-populate-production-rag`.
+- LP task gate authority: `.opencode/task-plan.frontend.json` task `task-fe-03d-dom-state-tests`.
 
-## Ring worktree edits
+## Evidence limitations in this snapshot
 
-- No repository code/config/test/docs edits were made.
-- Only the six staged output artifacts under `runtime/ring-agent/ring/20260806T190129Z/output/` were written.
+- RUN_DIR contains gate summaries and metadata; full logs referenced by summaries are not included in this staged snapshot.
+- No fresh LP worker-request JSON exists in this RUN_DIR; LP status is derived from runtime progress/memory/gate artifacts.

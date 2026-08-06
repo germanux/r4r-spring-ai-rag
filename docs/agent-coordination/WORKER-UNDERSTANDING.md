@@ -1,41 +1,30 @@
 # Worker understanding assessment (Ring)
 
-## PC understanding
+## PC understanding quality
 
-### Observed
-- PC artifacts show active task-07 and a gate-green request, but no Codex decision yet.
-- Previous Ring directive already warned not to repeat implementation loops before SURGICAL review.
+- **Observed:** PC evidence correctly surfaces active task and changed backend paths, and a gate-green request was emitted.
+- **Gap:** closure-state understanding is incomplete at queue level because Codex disposition is still null; this is a process-state defect, not a proven code defect.
+- **Required next understanding behavior:** explicitly treat task-07 as not closable until SURGICAL `ACCEPT` is recorded.
 
-### Diagnosis
-- Primary gap is not coding comprehension but **closure-state handling**: evidence indicates readiness for review, not further coding.
+Evidence:
 
-### Next bounded instruction
-- **Level 3 / SURGICAL / task-07-populate-production-rag**
-- **Dependencies:** existing gate-green request artifacts.
-- **allowed_paths:** read-only review (`[]`).
-- **Exact gate/constraint:** enforce hierarchy closure contract (`exact-gate-green + scope-clean + surgical-accept + controller-commit`).
-- **Required SURGICAL review:** yes (this step).
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/worker-requests/PC.json`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/pc-runtime/progress.json`
 
-## LP understanding
+## LP understanding quality
 
-### Observed
-- LP memory records gate exit 2 and Codex `REVISE`.
-- `local_understanding.md` is explicitly inadequate and does not provide selector-to-assertion mapping.
-- Codex correction packet is precise and actionable.
+- **Observed:** LP local-understanding artifact states Codex must inspect the diff and does not provide requirement-to-selector mapping.
+- **Codex-assessed issue:** understanding is inadequate; prior report treated old green evidence as sufficient despite active REVISE and current red gate.
+- **Impact:** repeated implementation churn and inconsistent evidence packaging risk.
 
-### Diagnosis
-- LP misunderstood or incompletely applied FE-03D requirements, introducing synthetic tests and invalid constructs.
+Evidence:
 
-### Next bounded instruction
-- **Level 1 / LP / task-fe-03d-dom-state-tests**
-- **Dependencies:** active Codex `REVISE` packet.
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` only.
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
-- **Required SURGICAL review:** yes, post-gate.
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/lp-runtime/local_understanding.md`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/lp-runtime/gate_summary.md`
 
-## Evidence paths
+## One-pass understanding gates for next cycle
 
-- `runtime/ring-agent/ring/20260806T190129Z/pc-runtime/previous-ring-qwen3-directive.json`
-- `runtime/ring-agent/ring/20260806T190129Z/worker-requests/PC.json`
-- `runtime/ring-agent/ring/20260806T190129Z/lp-runtime/local_understanding.md`
-- `runtime/ring-agent/ring/20260806T190129Z/lp-runtime/codex-qwen3-extra-instructions.md`
+1. LP must map each FE-03D requirement to exact selector + assertion in the next understanding report.
+2. LP diagnostic manifest, full log, and `task-gate.json` must all reference the same final gate execution.
+3. PC queue must not claim completion until SURGICAL review output is present (`ACCEPT` or `REVISE`).
