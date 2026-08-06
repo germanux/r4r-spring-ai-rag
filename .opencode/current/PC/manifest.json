@@ -2,16 +2,16 @@
   "agent": "PC",
   "artifacts": [
     {
-      "bytes": 3435,
+      "bytes": 3572,
       "producer": "local-llm",
-      "sha256": "c516bc1b5580da0d5a6ef7ffcf291bac57862fb52cc26a23ed0e46de2a7ee75c",
+      "sha256": "d7f074eb793db7c5447945b0a39bef36ef58324f869e16dbd815a7aed02ab277",
       "source": ".opencode/memory.backend.md",
       "target": "opencode/memory.backend.md"
     },
     {
       "bytes": 2829,
       "producer": "local-llm",
-      "sha256": "707506d29cc49f090fdd341b98953eb90f59e45ceb8a7db2fb25e8b0f5362e21",
+      "sha256": "85d35f5f78d4355884cd018cd359748487229b1f5c7ff926f6fb8a438200f9ea",
       "source": ".opencode/progress.backend.json",
       "target": "opencode/progress.backend.json"
     }
