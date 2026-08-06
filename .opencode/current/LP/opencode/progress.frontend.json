@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "active_task": null,
+  "active_task": "task-fe-03d-dom-state-tests",
   "last_run": "20260806T145913Z",
   "tasks": [
     {
@@ -46,7 +46,10 @@
     {
       "id": "task-fe-03d-dom-state-tests",
       "status": "PENDING",
-      "accepted_at": null
+      "accepted_at": null,
+      "last_gate_green_at": "2026-08-06T16:41:43.891878+00:00",
+      "last_gate_green_attempt": 6,
+      "last_gate_green_run": "20260806T145913Z"
     },
     {
       "id": "task-fe-03e-security-accessibility",
