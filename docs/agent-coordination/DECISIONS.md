@@ -1455,3 +1455,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - No PC codex_plan/codex_review artifact is present in this RUN_DIR snapshot (pc-runtime/manifest.json fields are null).
 - Gate summaries reference full logs outside this snapshot; this cycle relied on packaged summaries plus status/diff evidence.
+
+## Cycle `20260806T171721Z` â READY
+
+### PC
+
+- Decision: `HOLD`
+- Task: `task-07-populate-production-rag`
+- Reason: Current backend queue is still dependency-blocked for implementation: BE-07-B requires BE-07-A accepted first. Latest PC evidence also shows fresh backend code edits with a red deterministic gate, so another PC coding pass now would repeat blocked and wasteful work instead of clearing prerequisite sequencing.
+- Next action: Hold PC implementation and request SURGICAL review of the existing backend diff/gate evidence to decide keep-or-revert strategy while BE-07-A remains unaccepted.
+- Avoid repeating: Do not rerun backend task-07/all gate loops while BE-07-A is still unaccepted and unresolved failing backend edits remain.
+- Acceptance gates:
+  - Dependency constraint from .opencode/task-plan.hierarchy.json: BE-07-B depends on BE-07-A:ACCEPTED.
+  - When unblocked, task-07 exact gate from .opencode/task-plan.backend.json must pass: bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test "$rows" -gt 0".
+  - Closure requires SURGICAL Codex ACCEPT after a gate-green pass.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171721Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171721Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171721Z/pc-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171721Z/pc-runtime/previous-ring-qwen3-directive.json`
+
+### LP
+
+- Decision: `START`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP has a gate-green checkpoint but a newer Codex decision REVISE with explicit omitted assertions; current LP status shows only memory changed after that request, so the first defect is unimplemented Codex corrections in the scoped spec file.
+- Next action: Run one LP revise pass only on frontend/src/app/features/rag/rag-page.component.spec.ts to implement the mandated loading/reset DOM assertions, then run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+- Avoid repeating: Do not rerun the same gate or submit for review without first applying every explicit Codex REVISE assertion and producing requirement-to-assertion mapping evidence.
+- Acceptance gates:
+  - Exact frontend gate: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+  - Pre-gate hygiene: git diff --check with no whitespace errors.
+  - Keep write scope to frontend/src/app/features/rag/rag-page.component.spec.ts per Codex revise packet.
+  - Closure requires SURGICAL Codex ACCEPT after gate green.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171721Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171721Z/worker-requests/LP.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171721Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171721Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T171721Z/lp-git-status.txt`
+
+### Integration risks
+
+- Backend queue churn risk: PC currently has modified backend production/test files despite dependency hold, increasing drift and merge-risk if additional passes continue before BE-07-A closure.
+- Frontend sequencing risk: repeated gate-green but REVISE cycles can stall FE-03d closure if Codex-required DOM assertions are partially applied again.
+
+### Evidence limitations
+
+- No PC Codex review/correction packet is present in this RUN_DIR snapshot; backend diagnosis is based on gate summary, status and prior directive evidence.
+- Only summarized gate diagnostics are available in this snapshot; full gate logs were not directly provided under RUN_DIR packaged files for this cycle.

@@ -1,34 +1,26 @@
-# Global coordination summary — run 20260806T171220Z
+# Global Summary — Run 20260806T171721Z
 
-## Overall status
+## Outcome
+`overall_status: READY`
 
-`READY` for supervisory publication: decisions are evidence-grounded and bounded for one pass per worker.
+## Evidence-grounded decisions
+- **PC:** `HOLD` on `task-07-populate-production-rag`.
+  - Reason: dependency-sequencing conflict plus fresh backend edits with a red gate (`test-failure`, exit 1).
+- **LP:** `START` on `task-fe-03d-dom-state-tests`.
+  - Reason: Codex `REVISE` is pending execution despite prior gate-green checkpoint.
 
-## PC decision
-
-- **Action:** `HOLD`
-- **Task:** `task-07-populate-production-rag`
-- **Why:** Dependency sequence still unresolved (`BE-07-A` prerequisite), while current PC evidence shows red gate + ongoing backend edits.
-- **Next single action:** hold backend implementation until prerequisite acceptance is explicit.
-
-## LP decision
-
-- **Action:** `REVIEW`
-- **Task:** `task-fe-03d-dom-state-tests`
-- **Why:** Gate-green checkpoint exists and review request is present, but no Codex decision yet.
-- **Next single action:** run one SURGICAL review pass on current checkpoint and return `ACCEPT` or `REVISE`.
+## Priority next actions
+1. Keep backend queue paused for implementation until dependency order is satisfied and SURGICAL reviews current backend diff/gate package.
+2. Execute one LP revise pass exactly per Codex correction packet, then rerun the exact frontend gate and resubmit for SURGICAL review.
 
 ## Integration risks
-
-1. Continuing PC edits on blocked task-07 can create churn and obscure the true first actionable backend failure.
-2. LP requirement-mapping evidence quality is weak; accepting only on gate status would be unsafe without SURGICAL diff validation.
+- Continued backend churn before dependency clearance can increase drift and rework.
+- Repeated frontend gate-green without implementing all revise assertions can prolong review loops.
 
 ## Evidence limitations
+- No PC Codex review artifact is present in this RUN_DIR snapshot.
+- Only summarized gate diagnostics are packaged in this cycle snapshot.
 
-1. No packaged PC Codex plan/review/correction artifact in this RUN_DIR cycle.
-2. Gate summaries reference full logs externally; this cycle used packaged summaries plus status/diff metadata.
-
-## Required review policy reminders
-
-- Every LP/PC result still requires SURGICAL Codex review before closure.
-- No bypass of exact gates, no scope widening, no Git history operations by workers.
+## Ring worktree edits this cycle
+- No repository code/config/test/documentation edits were made.
+- Only the six required staged coordination artifacts were written under `runtime/ring-agent/ring/20260806T171721Z/output/`.
