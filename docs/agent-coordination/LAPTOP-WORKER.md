@@ -1,37 +1,32 @@
-# LP Code Review (Ring)
+# LP code review — run 20260806T171220Z
 
-## Evidence inspected
-- `runtime/ring-agent/ring/20260806T164153Z/worker-request-manifest.json`
-- `runtime/ring-agent/ring/20260806T164153Z/worker-requests/LP.json`
-- `runtime/ring-agent/ring/20260806T164153Z/lp-runtime/progress.json`
-- `runtime/ring-agent/ring/20260806T164153Z/lp-runtime/checkpoint.json`
-- `runtime/ring-agent/ring/20260806T164153Z/lp-runtime/memory.md`
-- `runtime/ring-agent/ring/20260806T164153Z/lp-runtime/codex_plan.json`
+## First current defect
 
-## Current diagnosis
-LP produced a **gate-green checkpoint** on `task-fe-03d-dom-state-tests` (attempt 6, exit 0) scoped to one owned file:
-`frontend/src/app/features/rag/rag-page.component.spec.ts`.
+Implementation is already present and gate-green for `task-fe-03d-dom-state-tests`, but closure evidence is incomplete because `codex_decision` is still `null`. The immediate defect is review-state, not test implementation.
 
-The first current defect is **missing closure review evidence**: Codex acceptance is not yet present (`codex_decision: null` in the request). This is now a review/closure step, not a fresh implementation step.
+## Evidence consulted
 
-## Bounded work package to issue now
-- **Implementation level:** Level 1 package under review closure
-- **Assigned role:** LP checkpoint routed to SURGICAL Codex reviewer
+- `runtime/ring-agent/ring/20260806T171220Z/worker-request-manifest.json`
+- `runtime/ring-agent/ring/20260806T171220Z/worker-requests/LP.json`
+- `runtime/ring-agent/ring/20260806T171220Z/lp-runtime/checkpoint.json`
+- `runtime/ring-agent/ring/20260806T171220Z/lp-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260806T171220Z/lp-runtime/progress.json`
+- `runtime/ring-agent/ring/20260806T171220Z/lp-runtime/memory.md`
+
+## Bounded action package
+
+- **Implementation level:** Level 1 review closure
+- **Assigned role:** LP (review handoff), SURGICAL (mandatory reviewer)
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** prior accepted `task-fe-03c-citations` (already satisfied), then Codex ACCEPT required
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` (if revision is requested)
-- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Required SURGICAL review:** mandatory ACCEPT/REVISE decision before task closure
+- **Dependencies:** Deterministic gate already green; pending Codex decision only
+- **allowed_paths:** Keep prior scope constrained to `frontend/src/app/features/rag/rag-page.component.spec.ts` if REVISE is returned
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` (already green at run `20260806T164305Z`, attempt `1`, exit `0`)
+- **Required SURGICAL review:** Required now; task cannot close without Codex `ACCEPT`
 
-### Next action (single pass)
-Run one SURGICAL Codex review pass on checkpoint head `a8db23a480bbc8735eba64226e83ccb67013c4b2` and return `ACCEPT` or `REVISE`.
+### Next LP pass (single objective)
 
-## Acceptance conditions for this coordination step
-1. Codex review outcome is captured for LP attempt 6.
-2. If `ACCEPT`, controller may close per policy.
-3. If `REVISE`, LP receives one narrow follow-up restricted to the same spec file and reruns the exact gate.
+Submit checkpoint head `6bd6087d3deec5c01ef1284c508611afdc41de14` for one SURGICAL Codex review pass and return `ACCEPT` or `REVISE` without widening scope.
 
 ## Avoid repeating
-- Do **not** rerun the same frontend gate again without either:
-  - a Codex `REVISE` requiring edits, or
-  - a new evidence-backed defect.
+
+Do not rerun the same frontend gate unless Codex returns `REVISE` with a scoped correction.

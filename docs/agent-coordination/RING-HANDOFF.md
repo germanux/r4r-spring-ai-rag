@@ -1,36 +1,40 @@
-# Backend ↔ Frontend Handoff
+# Backend ↔ Frontend handoff — run 20260806T171220Z
 
-## Queue status snapshot
-- **Backend (PC):** HOLD on `task-07-populate-production-rag` pending prerequisite sequencing (`BE-07-A` acceptance required before BE-07 execution work).
-- **Frontend (LP):** REVIEW on `task-fe-03d-dom-state-tests` with gate-green checkpoint awaiting SURGICAL Codex decision.
+## Queue state summary
 
-## Disjoint ownership and scope control
-### Backend package
-- **Level:** 2
-- **Owner:** PC
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `BE-07-A:ACCEPTED`
-- **allowed_paths (when unblocked):** `src/**`, `docs/backend/**`
-- **Gate (when unblocked):** `./scripts/task-gate.sh all`
-- **SURGICAL requirement:** ACCEPT required for closure
+- **Backend (PC):** `task-07-populate-production-rag` is active but must remain **held** due to prerequisite sequencing (`BE-07-A` not accepted).
+- **Frontend (LP):** `task-fe-03d-dom-state-tests` has a gate-green checkpoint and is awaiting **SURGICAL review decision**.
 
-### Frontend package
-- **Level:** 1 (under mandatory review)
-- **Owner:** LP
+## Disjoint ownership and dependency guard
+
+1. Keep current LP review flow frontend-only until Codex returns `ACCEPT`/`REVISE`.
+2. Keep PC backend implementation paused; do not consume compute on blocked task-07 gate loops.
+3. Do not overlap writable scopes across queues while dependency state is unresolved.
+
+## Action packages
+
+### Package A (immediate)
+- **Level:** 1
+- **Role:** LP + SURGICAL reviewer
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED` (already satisfied)
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` (already green at attempt 6)
-- **SURGICAL requirement:** Codex `ACCEPT` still required
+- **Dependencies:** Gate green evidence already produced
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` (if revision required)
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Required SURGICAL review:** Yes (mandatory before closure)
 
-## Integration risks and controls
-1. **Risk:** PC backend work resumes early and violates BE-07 dependency order.
-   - **Control:** keep PC HOLD until explicit evidence of `BE-07-A` acceptance.
-2. **Risk:** LP checkpoint remains unreviewed, causing stale context and redundant reruns.
-   - **Control:** prioritize immediate SURGICAL review for LP attempt 6.
-3. **Risk:** cross-queue scope bleed.
-   - **Control:** preserve strict backend/frontend allowed_paths disjointness and single-owner passes.
+### Package B (immediate control)
+- **Level:** 2 control action
+- **Role:** PC
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** `BE-07-A:ACCEPTED` required before `BE-07-B`
+- **allowed_paths:** unchanged prior backend task scope; **no new edits authorized while held**
+- **Exact gate:** deferred until unblocked; then run exact task-07 gate from `.opencode/task-plan.backend.json`
+- **Required SURGICAL review:** Yes after any later gate-green pass
 
-## Immediate bounded next actions
-1. Route LP checkpoint for SURGICAL review now.
-2. Keep PC queue paused (no gate rerun, no scope widening) until dependency evidence changes.
+## Evidence anchors
+
+- `runtime/ring-agent/ring/20260806T171220Z/pc-runtime/previous-ring-qwen3-directive.json`
+- `runtime/ring-agent/ring/20260806T171220Z/pc-runtime/progress.json`
+- `runtime/ring-agent/ring/20260806T171220Z/pc-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260806T171220Z/worker-request-manifest.json`
+- `runtime/ring-agent/ring/20260806T171220Z/lp-runtime/checkpoint.json`
