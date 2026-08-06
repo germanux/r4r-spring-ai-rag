@@ -2350,3 +2350,50 @@ Append-only ledger generated after each validated Ring cycle.
 
 - No new Codex review artifact is present for the current PC request (codex_decision remains null).
 - This cycle includes gate summaries and status snapshots, but not the full gate logs referenced by those summaries.
+
+## Cycle `20260806T195134Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-07-populate-production-rag`
+- Reason: The backend exact gate is green (exit 0), but the controller recorded CHECKPOINT_COMMIT_FAILED and the worker request still has codex_decision=null, so task-07 cannot close without a SURGICAL review pass and commit-failure triage.
+- Next action: Run one level-3 SURGICAL review-only pass on the existing task-07 evidence and classify the checkpoint commit failure before any new PC edit/gate loop.
+- Avoid repeating: Do not run another unchanged PC implementation/gate pass while task-07 remains codex_decision=null and checkpoint commit status is failed.
+- Acceptance gates:
+  - Mandatory hierarchy closure from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+  - Exact backend task gate for task-07 from .opencode/task-plan.backend.json: bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0".
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195134Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195134Z/pc-runtime/controller_state.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195134Z/pc-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195134Z/worker-requests/PC.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: The LP queue remains on the first current defect: deterministic FE-03D gate failure (exit 2) with a Codex REVISE packet that prescribes bounded corrections in rag-page.component.spec.ts.
+- Next action: Execute one level-1 bounded correction pass in frontend/src/app/features/rag/rag-page.component.spec.ts exactly per the active Codex REVISE packet, then run whitespace guard and the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce synthetic tests, direct innerHTML mutation, manual loading-flag mutation, invalid response shapes, or mismatched diagnostics already rejected by Codex.
+- Acceptance gates:
+  - Whitespace guard: git diff --check.
+  - Exact frontend task gate from .opencode/task-plan.frontend.json: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+  - Mandatory hierarchy closure from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195134Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195134Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195134Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195134Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- Backend queue closure risk: task-07 currently has gate-green evidence but CHECKPOINT_COMMIT_FAILED, which can stall controller-owned commit and acceptance flow if not triaged first.
+- Frontend queue churn risk: repeated FE-03D red runs are likely if LP diverges again from the explicit Codex REVISE packet.
+- Release coordination risk: backend is awaiting mandatory SURGICAL review while frontend is still pre-acceptance, so cross-stack readiness remains blocked.
+
+### Evidence limitations
+
+- Only gate summaries are present in RUN_DIR; full gate logs are referenced but not included in this snapshot.
+- No current-run Codex ACCEPT/REVISE artifact exists for the new PC checkpoint request yet (codex_decision is null).
+- LP controller_state/checkpoint artifacts are absent in this snapshot, so closure state relies on progress, gate summary and codex extra-instructions evidence.
