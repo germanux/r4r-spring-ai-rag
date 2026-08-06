@@ -1,30 +1,28 @@
-# Worker understanding assessment (Ring)
+# Worker understanding assessment
 
-## PC understanding quality
+## PC understanding
 
-- **Observed:** PC evidence correctly surfaces active task and changed backend paths, and a gate-green request was emitted.
-- **Gap:** closure-state understanding is incomplete at queue level because Codex disposition is still null; this is a process-state defect, not a proven code defect.
-- **Required next understanding behavior:** explicitly treat task-07 as not closable until SURGICAL `ACCEPT` is recorded.
+### What is demonstrated
+- PC correctly advanced `task-07-populate-production-rag` to a gate-green checkpoint request (`gate_exit=0`).
 
-Evidence:
+### What is missing
+- Closure understanding remains incomplete because the request still has `codex_decision=null`; this is not closable under hierarchy policy.
 
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/worker-requests/PC.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/pc-runtime/progress.json`
+### Required next understanding statement (for next PC interaction)
+- "My next step is not new implementation; it is to wait for SURGICAL ACCEPT/REVISE on the existing checkpoint evidence, because closure requires surgical-accept in addition to gate green."
 
-## LP understanding quality
+## LP understanding
 
-- **Observed:** LP local-understanding artifact states Codex must inspect the diff and does not provide requirement-to-selector mapping.
-- **Codex-assessed issue:** understanding is inadequate; prior report treated old green evidence as sufficient despite active REVISE and current red gate.
-- **Impact:** repeated implementation churn and inconsistent evidence packaging risk.
+### What is demonstrated
+- LP is actively working the correct task (`task-fe-03d-dom-state-tests`) and has current red-gate awareness in memory.
 
-Evidence:
+### What is deficient
+- Local understanding artifacts are weak/incomplete (`pre_edit_understanding` skipped; `local_understanding` missing selector-to-assertion mapping), and the current patch introduced invalid synthetic tests per Codex packet.
 
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/lp-runtime/local_understanding.md`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/lp-runtime/gate_summary.md`
+### Required next understanding statement (before LP edit)
+- "I will implement only the three prescribed DOM-test corrections in rag-page.component.spec.ts, map each FE-03D requirement to exact selectors/assertions, and provide one internally consistent final gate evidence set."
 
-## One-pass understanding gates for next cycle
+## Bounded directives derived from understanding gaps
 
-1. LP must map each FE-03D requirement to exact selector + assertion in the next understanding report.
-2. LP diagnostic manifest, full log, and `task-gate.json` must all reference the same final gate execution.
-3. PC queue must not claim completion until SURGICAL review output is present (`ACCEPT` or `REVISE`).
+1. **PC (Level 3 review hold):** SURGICAL review-only disposition first; no new PC code edits.
+2. **LP (Level 1 correction):** single-file spec correction exactly per Codex REVISE constraints; then exact gate and evidence consistency check.

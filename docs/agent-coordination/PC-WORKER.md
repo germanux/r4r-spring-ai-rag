@@ -1,37 +1,43 @@
-# PC code review (Ring)
+# PC code review (Ring cycle 20260806T191130Z)
 
-## Current evidence verdict
+## Evidence reviewed
 
-- Active task: `task-07-populate-production-rag`.
-- Deterministic gate status in current request: **green** (`gate_exit: 0`).
-- First current defect: **closure evidence is incomplete** (no Codex disposition yet; `codex_decision: null`).
+- `runtime/ring-agent/ring/20260806T191130Z/worker-requests/PC.json`
+- `runtime/ring-agent/ring/20260806T191130Z/pc-runtime/progress.json`
+- `runtime/ring-agent/ring/20260806T191130Z/pc-runtime/memory.md`
+- `runtime/ring-agent/ring/20260806T191130Z/pc-runtime/previous-ring-qwen3-directive.json`
+- `runtime/ring-agent/ring/20260806T191130Z/pc-git-status.txt`
 
-Evidence:
+## First current defect
 
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/worker-requests/PC.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/pc-runtime/progress.json`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/pc-runtime/gate_summary.md`
+The first current defect is **process-closure incompleteness**, not a proven code failure:
 
-## Bounded action package
+- PC submitted a `gate-green-checkpoint` request for `task-07-populate-production-rag` with `gate_exit: 0`.
+- The same request has `codex_decision: null` and `checkpoint_head: null`.
+- Under `.opencode/task-plan.hierarchy.json`, closure requires `exact-gate-green + scope-clean + surgical-accept + controller-commit`.
 
-### PKG-PC-07-REVIEW-ONLY
+Result: the task cannot be closed and additional PC edits are currently wasteful until SURGICAL disposition is produced.
 
-- **Implementation level:** 3
-- **Assigned role:** SURGICAL (`r4r-surgical-architect` / `r4r-surgical-fixer` as configured)
+## Bounded next action package
+
+- **Implementation level:** 3 (SURGICAL review)
+- **Assigned role:** SURGICAL Codex (`r4r-surgical-architect` / `r4r-surgical-fixer` review lane)
 - **Task ID:** `task-07-populate-production-rag`
 - **Dependencies:**
-  - Existing gate-green checkpoint evidence for task-07 (attempt 1) is already available.
-  - No additional PC code changes before review output.
-- **allowed_paths:**
-  - Read-only review of current evidence packet for task-07.
-  - No product-file writes in this pass.
+  - Existing gate-green request evidence must remain authoritative for the review pass.
+  - No new PC implementation pass before review outcome.
+- **allowed_paths:** `[]` (review-only; no repository writes)
 - **Exact gate / constraint:**
-  - Closure contract from `.opencode/task-plan.hierarchy.json`: `exact-gate-green + scope-clean + surgical-accept + controller-commit`.
-  - Task gate contract from `.opencode/task-plan.backend.json` for `task-07-populate-production-rag` remains authoritative.
-- **Required SURGICAL review:** mandatory (this package is itself a SURGICAL review pass).
+  - Closure rule: `exact-gate-green + scope-clean + surgical-accept + controller-commit`.
+  - Parent task gate contract remains from `.opencode/task-plan.backend.json` task `task-07-populate-production-rag`.
+- **Required SURGICAL review:** mandatory before closure and before any further PC loop.
 
-## Next PC queue posture
+## Acceptance evidence required for this package
 
-- **PC action this cycle:** `HOLD`.
-- **Unblock condition:** SURGICAL returns `ACCEPT` or `REVISE` on the current gate-green evidence.
-- **Avoid repeating:** do not rerun another full PC implementation/gate cycle while the current result has `codex_decision: null`.
+1. SURGICAL emits explicit `ACCEPT` or `REVISE` for the checkpoint evidence.
+2. If `REVISE`, next PC pass must target only first current failure from that review packet.
+3. If `ACCEPT`, controller-owned closure steps proceed without reopening implementation scope.
+
+## Avoid repeating
+
+Do not re-run the full backend implementation/gate loop with no new diagnostic signal while `codex_decision` is still null.
