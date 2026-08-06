@@ -1,50 +1,42 @@
-# Global summary — Ring coordination cycle 20260806T191130Z
+# Global Summary — Coordination Cycle 20260806T191631Z
 
 ## Executive status
+Overall status: **READY**.  
+No repository edits were made by Ring in this cycle; only staged coordination artifacts were written under `OUTPUT_DIR`.
 
-- **Overall:** `READY`
-- **PC:** move to **SURGICAL review-first** on existing checkpoint evidence for `task-07-populate-production-rag`.
-- **LP:** **continue one bounded correction pass** on `task-fe-03d-dom-state-tests` in one spec file.
+## Evidence-grounded findings
+1. **PC queue:** active `task-07-populate-production-rag` has a gate-green checkpoint request (`gate_exit=0`) but no SURGICAL verdict yet (`codex_decision=null`). Closure is therefore unproven.
+2. **LP queue:** active `task-fe-03d-dom-state-tests` is currently red (`gate exit 2`), with bounded corrective guidance focused on one frontend spec file.
+3. **Scope separation:** backend and frontend next actions are disjoint; no overlapping write scopes are required in this cycle.
 
-## Why these are the first current actions
+## Routed actions
 
-1. **PC evidence is gate-green but unclosed** (`codex_decision: null`), so the first defect is missing mandatory review disposition, not proven product failure.
-2. **LP evidence is currently red** (`exit 2`) with a precise Codex REVISE correction packet; first defect is known and bounded.
-
-## Action packages (explicit)
-
-### Package PC-REV-07
+### PC routed action
 - **Level:** 3
-- **Assigned role:** SURGICAL
+- **Role:** SURGICAL Codex
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** existing checkpoint request only
-- **allowed_paths:** review-only
-- **Exact gate/constraint:** hierarchy closure rule + task-07 gate contract
-- **Acceptance evidence:** explicit SURGICAL `ACCEPT` or `REVISE`
+- **Dependencies:** existing PC checkpoint request and gate-green evidence
+- **allowed_paths:** `[]` (review-only)
+- **Exact gate/constraint:** hierarchy closure policy + task-07 gate remains satisfied
+- **SURGICAL review:** mandatory and immediate
 
-### Package LP-FE03D-FIX-01
+### LP routed action
 - **Level:** 1
-- **Assigned role:** LP
+- **Role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** active Codex REVISE packet
+- **Dependencies:** `task-fe-03c-citations: ACCEPTED`
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Acceptance evidence:** clean `git diff --check`, gate exit 0, consistent diagnostics, then SURGICAL `ACCEPT`
+- **Exact gate:** `git diff --check` + `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **SURGICAL review:** mandatory after gate result
 
 ## Risks and controls
+- **Risk:** backend churn from re-running PC implementation before review.  
+  **Control:** hold PC edits until SURGICAL ACCEPT/REVISE outcome.
+- **Risk:** LP repeated red cycles due broad/unfocused test rewrites.  
+  **Control:** single-file bounded correction with prescribed DOM assertions.
+- **Risk:** evidence mismatch across summaries/log manifests.  
+  **Control:** require all LP diagnostics to reference the same final gate execution.
 
-- **Risk:** premature PC rework without review outcome causes churn.
-  - **Control:** hold PC implementation and force review-first decision.
-- **Risk:** LP repeats synthetic test patterns and fails gate again.
-  - **Control:** single-file prescriptive correction tied to explicit selectors/assertions and evidence consistency.
-
-## Evidence limitations in this snapshot
-
-- PC runtime snapshot lacks direct Codex review/plan/gate-summary artifacts.
-- LP codex plan/review files are wrapper command records; semantic corrective detail was taken from `codex-qwen3-extra-instructions.md`.
-
-## Ring repository edits this cycle
-
-- No repository product/test/config edits were made.
-- Only the six staged coordination artifacts were written under:
-  - `runtime/ring-agent/ring/20260806T191130Z/output/`
+## Evidence limitations
+- Full gate logs are referenced but not included in this RUN_DIR snapshot.
+- Codex plan/review artifacts for LP expose runner metadata only in this snapshot.
