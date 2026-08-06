@@ -5,11 +5,11 @@
 - Worker: PC.
 - Run: 20260806T011733Z.
 - Last accepted task: task-06f-ingestion-validation.
-- Active task: None.
+- Active task: task-07-populate-production-rag.
 - Current attempt: 1.
-- Latest exact gate: task-gate; exit=0.
-- Latest Codex decision: ACCEPT.
-- Checkpoint: no-product-diff; head=not recorded.
+- Latest exact gate: not run; exit=unknown.
+- Latest Codex decision: pending.
+- Checkpoint: none; head=not recorded.
 - Accepted: task-01-base, task-02-ingestion, task-03-pgvector, task-04-rag, task-05-rag-api, task-06-production-ingestion-cli, task-06b-cli-contract, task-06c-spring-lifecycle, task-06d-failure-classification, task-06e-child-process, task-06f-ingestion-validation.
 - Remaining: task-07-populate-production-rag, task-08-rag-semantic-evaluation, task-09-production-smoke.
 - Exact plan: `.opencode/task-plan.backend.json`.
@@ -20,12 +20,11 @@
 
 ## Demonstrated by current evidence
 
-- The exact deterministic task gate completed with exit code 0.
-- The checkpoint contains only task-owned product paths plus controller progress/memory.
+- No new acceptance claim has been demonstrated in this run yet.
 
 ## Still unproven or below expectations
 
-- Awaiting the next Codex decision or exact gate evidence.
+- Populate the persistent PC pgvector database and prove idempotent ingestion.
 
 ## Approaches not to repeat
 
@@ -33,7 +32,7 @@
 
 ## Next exact action
 
-Record ACCEPT, create the final controller commit and advance the queue.
+Review the exact gate evidence and make one coherent, task-scoped repair.
 
 ## Fixed decisions
 
