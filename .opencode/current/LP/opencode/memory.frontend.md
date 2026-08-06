@@ -3,13 +3,13 @@
 ## Current state
 
 - Worker: LP.
-- Run: 20260806T002939Z.
+- Run: 20260806T145913Z.
 - Last accepted task: task-fe-03b-answer-abstention.
 - Active task: task-fe-03c-citations.
-- Current attempt: 2.
-- Latest exact gate: not run; exit=unknown.
+- Current attempt: 1.
+- Latest exact gate: task-gate; exit=0.
 - Latest Codex decision: pending.
-- Checkpoint: none; head=not recorded.
+- Checkpoint: pending; head=not recorded.
 - Accepted: task-fe-01-angular17-bootstrap, task-fe-02-rag-client, task-fe-03-rag-ui, task-fe-03b-answer-abstention.
 - Remaining: task-fe-03c-citations, task-fe-03d-dom-state-tests, task-fe-03e-security-accessibility, task-fe-03f-final-validation, task-fe-04-playwright.
 - Exact plan: `.opencode/task-plan.frontend.json`.
@@ -20,25 +20,20 @@
 
 ## Demonstrated by current evidence
 
-- No new acceptance claim has been demonstrated in this run yet.
+- The exact deterministic task gate completed with exit code 0.
+- The checkpoint contains only task-owned product paths plus controller progress/memory.
 
 ## Still unproven or below expectations
 
-- The local edit session did not complete; no acceptance claim can be made from it.
+- Codex has not yet accepted the current checkpoint.
 
 ## Approaches not to repeat
 
-- Do not repeat the stopped OpenCode session without changing the plan; stop_reason=session-timeout.
+- Do not repeat an unchanged failing action without new evidence.
 
 ## Next exact action
 
-OpenCode edit failed transiently with exit 124. Start a fresh local session, preserve the current worktree, diagnose the concrete error below and continue the same active task. Do not revert already validated changes.
-
-Previous action:
-Resume the unfinished revision by applying the complete CURRENT CODEX-TO-LOCAL EXTRA INSTRUCTIONS included below. Do not wait for another Codex review before making the requested correction.
-
-Failure tail:
-[r4r-watchdog] stopped OpenCode session: reason=session-timeout elapsed=3600.1s
+Preserve a deterministic gate-green checkpoint, generate final evidence and request Codex review.
 
 ## Fixed decisions
 

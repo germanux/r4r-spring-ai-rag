@@ -111,6 +111,114 @@ describe('RagPageComponent', () => {
     expect(component.questionControl.enabled).toBeTrue();
   });
 
+  it('renders ordered citations with source and complete heading path', () => {
+    submit();
+    querySubject.next({
+      ...successResponse,
+      answer: 'A grounded answer',
+      citations: [
+        { ordinal: 2, source: 'Doc B', headingPath: ['Section 1', 'Subsection A'], label: 'B' },
+        { ordinal: 3, source: 'Doc C', headingPath: ['Section 2'], label: 'C' },
+        { ordinal: 1, source: 'Doc A', headingPath: ['Intro'], label: 'A' }
+      ]
+    });
+    fixture.detectChanges();
+
+    const citationItems = fixture.nativeElement.querySelectorAll('.citation-item');
+
+    // Check that citations are ordered by ordinal
+    expect(citationItems[0].textContent?.trim()).toContain('1.');
+    expect(citationItems[0].textContent?.trim()).toContain('Doc A');
+    expect(citationItems[0].textContent?.trim()).toContain('(Intro)');
+
+    expect(citationItems[1].textContent?.trim()).toContain('2.');
+    expect(citationItems[1].textContent?.trim()).toContain('Doc B');
+    expect(citationItems[1].textContent?.trim()).toContain('(Section 1 > Subsection A)');
+
+    expect(citationItems[2].textContent?.trim()).toContain('3.');
+    expect(citationItems[2].textContent?.trim()).toContain('Doc C');
+    expect(citationItems[2].textContent?.trim()).toContain('(Section 2)');
+  });
+
+  it('renders citations in ordinal order even when input is out of order', () => {
+    submit();
+    querySubject.next({
+      ...successResponse,
+      answer: 'A grounded answer',
+      citations: [
+        { ordinal: 3, source: 'Doc C', headingPath: ['Section 2'], label: 'C' },
+        { ordinal: 1, source: 'Doc A', headingPath: ['Intro'], label: 'A' },
+        { ordinal: 2, source: 'Doc B', headingPath: ['Section 1', 'Subsection A'], label: 'B' }
+      ]
+    });
+    fixture.detectChanges();
+
+    const citationItems = fixture.nativeElement.querySelectorAll('.citation-item');
+
+    // Check that citations are ordered by ordinal regardless of input order
+    expect(citationItems[0].textContent?.trim()).toContain('1.');
+    expect(citationItems[0].textContent?.trim()).toContain('Doc A');
+    expect(citationItems[0].textContent?.trim()).toContain('(Intro)');
+
+    expect(citationItems[1].textContent?.trim()).toContain('2.');
+    expect(citationItems[1].textContent?.trim()).toContain('Doc B');
+    expect(citationItems[1].textContent?.trim()).toContain('(Section 1 > Subsection A)');
+
+    expect(citationItems[2].textContent?.trim()).toContain('3.');
+    expect(citationItems[2].textContent?.trim()).toContain('Doc C');
+    expect(citationItems[2].textContent?.trim()).toContain('(Section 2)');
+  });
+
+  it('omits citation section when citations array is empty', () => {
+    submit();
+    querySubject.next({ answer: 'No citations needed', abstained: false, citations: [] });
+    fixture.detectChanges();
+
+    // Check that citations section is not present
+    expect(fixture.nativeElement.querySelector('.citations-section')).toBeNull();
+  });
+
+  it('does not parse citation-like answer text into citations', () => {
+    submit();
+    querySubject.next({
+      answer: 'This is [1] Fake Source > Fake Heading a citation-like string but should remain as plain text',
+      abstained: false,
+      citations: []
+    });
+    fixture.detectChanges();
+
+    // Check that the citation-like text remains in the answer content
+    const answerContent = fixture.nativeElement.querySelector('.answer-content') as HTMLElement;
+    expect(answerContent.textContent).toContain('[1] Fake Source > Fake Heading');
+
+    // Check that no citation items are created
+    expect(fixture.nativeElement.querySelectorAll('.citation-item').length).toBe(0);
+
+    // Check that citations section is not present
+    expect(fixture.nativeElement.querySelector('.citations-section')).toBeNull();
+  });
+
+  it('does not create citations when answer contains citation-like text but citations array is empty', () => {
+    submit();
+    querySubject.next({
+      answer: 'According to [2] Some Source > Some Heading, this is an example of citation-like text in the answer.',
+      abstained: false,
+      citations: []
+    });
+    fixture.detectChanges();
+
+    // Check that citation-like text remains in the answer content
+    const answerContent = fixture.nativeElement.querySelector('.answer-content') as HTMLElement;
+    expect(answerContent.textContent).toContain('[2] Some Source > Some Heading');
+
+    // Verify no citation items were created
+    const citationItems = fixture.nativeElement.querySelectorAll('.citation-item');
+    expect(citationItems.length).toBe(0);
+
+    // Verify citations section is absent
+    expect(fixture.nativeElement.querySelector('.citations-section')).toBeNull();
+  });
+
   it('clears the result and resets the form', () => {
     submit();
     querySubject.next(successResponse);
