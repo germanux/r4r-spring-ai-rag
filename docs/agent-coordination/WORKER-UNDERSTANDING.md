@@ -1,32 +1,32 @@
-# Worker understanding assessment — run 20260806T195634Z
+# Worker understanding assessment
 
-## PC understanding signal
+## PC understanding quality
 
-### Evidence
-- `pc-runtime/memory.md` shows active task-07 but no new acceptance claim.
-- `worker-requests/PC.json` shows green gate evidence with unresolved closure fields (`codex_decision: null`, `checkpoint_head: null`).
+- Evidence indicates process awareness of gate-green status, but the pass did not produce closure metadata (`codex_decision` and `checkpoint_head` remain null).
+- Defect type: **workflow/closure understanding gap**, not necessarily code gap.
 
-### Assessment
-PC is not currently blocked by unclear implementation instructions; the blocker is closure workflow evidence. The next pass should be a SURGICAL review-classification step, not another PC coding loop.
+### Required next understanding output (PC)
 
-### Required next understanding output
-- Explicitly distinguish **gate success evidence** from **task closure evidence**.
-- Confirm no fresh code edits are started until SURGICAL issues `REVISE`.
+- **Level 3 / SURGICAL reviewer** must classify one of:
+  1. Gate-green plus acceptable diff => `ACCEPT` path with controller closure evidence.
+  2. Gate-green but non-acceptable diff => `REVISE` packet with first concrete defect and bounded write scope.
 
-## LP understanding signal
+## LP understanding quality
 
-### Evidence
-- `lp-runtime/codex-qwen3-extra-instructions.md` states: "Inadequate local-model understanding".
-- Codex lists concrete misunderstandings (invented selectors/state values, malformed loading fragment, invalid response shapes).
-- Gate remains red (`lp-runtime/gate_summary.md`, exit 2).
+- `local_understanding.md` is explicitly inadequate per Codex extra instructions.
+- Defect type: **requirement-to-assertion mapping gap** and prohibited-pattern regression in a single spec file.
 
-### Assessment
-LP understanding is currently below requirement for this task unless it follows the active correction packet exactly. Instruction quality is sufficient; execution drift is the failure mode.
+### Required next understanding output (LP)
 
-### Required next understanding output
-- Map each FE-03D requirement to exact DOM selector + assertion before editing.
-- Keep scope to one file and mirror Codex packet terminology in local reasoning and final evidence.
+For `task-fe-03d-dom-state-tests`, LP must include a concise mapping from requirement to selector/assertion:
 
-## Coordination implication
+1. Loading status → `.loading-state[role="status"]`
+2. Disabled controls → `textarea` and `.submit-button`
+3. Transport failure → `.error-state[role="alert"]`
+4. Answer visibility → `.answer-content`
+5. Reset cleanup → absence of answer/error/citations + presence of `.idle-state`
 
-Proceed with LP bounded correction, but keep PC on review-first path. Do not reopen architectural scope for either queue in this cycle.
+## Bounded actions with closure contract
+
+- **PC path:** Level 3 SURGICAL review-only classification on `task-07-populate-production-rag`; required closure contract is hierarchy policy (`exact-gate-green + scope-clean + surgical-accept + controller-commit`).
+- **LP path:** Level 1 LP single-file correction on `task-fe-03d-dom-state-tests`; exact gate must pass, then SURGICAL must review and `ACCEPT` before closure.

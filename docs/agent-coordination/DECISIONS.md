@@ -2442,3 +2442,49 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This RUN_DIR snapshot has no controller_state, codex_review, or checkpoint artifacts for PC or LP (manifest sources are null), so closure/commit-failure root cause cannot be proven from this cycle alone.
 - LP gate diagnostics in this snapshot include only summary-level evidence; full gate-full.log content is referenced but not staged under this RUN_DIR copy.
+
+## Cycle `20260806T200135Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-07-populate-production-rag`
+- Reason: The backend exact gate is green (exit 0), but closure is incomplete: the active worker request still has codex_decision=null and checkpoint_head=null, and progress keeps task-07 in BLOCKED state. This is a closure/review defect, not a new implementation defect.
+- Next action: Run one level-3 SURGICAL review-only pass on the existing task-07 evidence to issue ACCEPT or REVISE and classify checkpoint/closure state before any new PC edit or gate rerun.
+- Avoid repeating: Do not run another unchanged PC implementation/gate pass while codex_decision is null and closure checkpoint state is unresolved.
+- Acceptance gates:
+  - Mandatory hierarchy closure from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+  - Exact backend task gate for task-07-populate-production-rag from .opencode/task-plan.backend.json (already green for run 20260806T200011Z; do not rerun unless SURGICAL requests changes).
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T200135Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T200135Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T200135Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T200135Z/pc-runtime/previous-ring-qwen3-directive.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: The frontend deterministic gate is failing (exit 2), Codex already issued REVISE, and the defect is localized to rag-page.component.spec.ts with explicit correction steps and whitespace-first verification.
+- Next action: Execute one level-1 bounded correction pass in frontend/src/app/features/rag/rag-page.component.spec.ts exactly per the active Codex REVISE packet, then run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests once.
+- Avoid repeating: Do not reintroduce synthetic tests, innerHTML mutation, manual loading-flag mutation, invalid response shapes, guessed selectors, or mismatched diagnostics already rejected by Codex.
+- Acceptance gates:
+  - Whitespace guard: git diff --check.
+  - Exact frontend task gate from .opencode/task-plan.frontend.json: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+  - Mandatory hierarchy closure from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T200135Z/worker-requests/LP.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T200135Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T200135Z/lp-runtime/codex_plan.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T200135Z/lp-runtime/codex-qwen3-extra-instructions.md`
+
+### Integration risks
+
+- If PC reruns task-07 without first resolving missing SURGICAL decision and checkpoint state, the queue can churn on duplicate gate passes with no closure evidence.
+- LP has repeated instruction-comprehension drift; another broad/speculative rewrite in the same file risks repeated gate failure and wasted cycles.
+- PC backend and LP frontend scopes are currently disjoint; any cross-queue scope expansion should be held and routed to level-3 SURGICAL.
+
+### Evidence limitations
+
+- This cycle includes gate summaries and request metadata in RUN_DIR, but not full gate logs; detailed assertion-level failure traces are delegated to Codex review artifacts.
+- No new SURGICAL ACCEPT/REVISE output for PC task-07 is present in this RUN_DIR snapshot.
