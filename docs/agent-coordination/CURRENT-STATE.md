@@ -1,52 +1,44 @@
-# Global coordination summary — RUN 20260806T003326Z
+# Global coordination summary — run 20260806T010642Z
 
-## Overall status
+## Executive status
 
-**READY** — both queues have bounded, evidence-backed next actions with no cross-scope conflict.
+- **Overall:** `READY` for bounded next passes.
+- **PC:** switch to mandatory SURGICAL review decision on a gate-green/no-product-diff package.
+- **LP:** continue FE-03C corrective implementation pass under existing Codex `REVISE` instructions.
 
-## What changed in this coordination cycle
+## Evidence-grounded findings
 
-- Reviewed bounded RUN_DIR evidence for Ring/PC/LP snapshots.
-- Classified first current defect per queue:
-  - **PC defect:** missing SURGICAL closure decision despite gate-green no-diff package.
-  - **LP defect:** FE-03C revise not yet proven by complete DOM-contract evidence and closure chain.
-- Issued one focused next action per queue, preserving backend/frontend disjoint ownership.
+1. Backend `task-06f-ingestion-validation` is already exact-gate green (`pc-runtime/gate_summary.md`, exit `0`) and has no product diff (`pc-runtime/checkpoint.json`), but no SURGICAL closure decision exists (`worker-requests/PC.json`: `codex_decision=null`).
+2. Frontend `task-fe-03c-citations` remains pending with active spec diff (`lp-git-status.txt`, `lp-git-diff-stat.txt`) and explicit Codex `REVISE` instructions requiring additional DOM assertions (`lp-runtime/codex-qwen3-extra-instructions.md`).
 
-## Action routing
+## Action packages to execute next
 
-### PC route
-
-- **Implementation level:** Level 3 (review)
-- **Assigned role:** SURGICAL
+### Package A (backend)
+- **Level:** 3 (review authority)
+- **Role:** SURGICAL Codex
 - **Task ID:** `task-06f-ingestion-validation` (`BE-06F-A`)
-- **Dependencies:** gate-green evidence from run `20260806T001814Z`
-- **allowed_paths:** read-only review pass
-- **Exact gate:** existing `./scripts/task-gate.sh task-06f-ingestion-validation` evidence must remain authoritative
-- **Required SURGICAL review:** pending, mandatory
+- **Dependencies:** `task-06e-child-process:ACCEPTED`
+- **allowed_paths:** `src/test/resources/application.yml`, `.opencode/current/PC/**`
+- **Exact gate:** `./scripts/task-gate.sh task-06f-ingestion-validation`
+- **Closure rule:** SURGICAL `ACCEPT` mandatory
 
-### LP route
-
-- **Implementation level:** Level 1
-- **Assigned role:** LP
+### Package B (frontend)
+- **Level:** 1
+- **Role:** LP
 - **Task ID:** `task-fe-03c-citations` (`FE-03C-A`)
-- **Dependencies:** Codex revise packet + accepted FE-03B parent
+- **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED`
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` and `./scripts/frontend-task-gate.sh task-fe-03c-citations`
-- **Required SURGICAL review:** mandatory after LP pass
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03c-citations`
+- **Closure rule:** SURGICAL `ACCEPT` mandatory
 
-## Evidence-grounded risks
+## Risks and controls
 
-1. Repeated backend reruns without SURGICAL disposition can waste cycles and delay BE-06F closure.
-2. Frontend FE-03C may appear green while still missing citation-contract proof unless assertions target rendered DOM behaviors required by Codex revise instructions.
-3. Any LP scope drift beyond the single spec file risks invalidating FE-03C-A and triggering another revise loop.
+- **Risk:** Premature closure claims without SURGICAL verdict.  
+  **Control:** enforce review_policy closure sequence (`exact-gate-green` + `surgical-accept`).
+- **Risk:** LP assertion coverage drift from FE-03C contract.  
+  **Control:** verify required DOM assertions before accepting gate-green as sufficient.
 
-## Evidence limitations in this cycle
+## Evidence limitations
 
-- No `codex_review`/`codex_plan` artifacts were present for the latest worker manifests.
-- Full gate logs and live worker worktrees were intentionally not inspected directly in this Ring cycle.
-- LP diff content was available only as status/statistics, not full hunk detail.
-
-## Ring worktree edits
-
-- No repository code/tests/scripts/config/docs edits were made.
-- Only the six required staged output artifacts were written under this run’s `OUTPUT_DIR`.
+- This RUN_DIR snapshot does not include a new `codex_review` artifact for either queue.
+- Gate summaries reference full logs outside this bundle; only summarized diagnostics are directly available here.

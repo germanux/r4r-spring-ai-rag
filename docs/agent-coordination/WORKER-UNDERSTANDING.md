@@ -1,44 +1,28 @@
-# Worker understanding alignment — RUN 20260806T003326Z
+# Worker understanding assessment — run 20260806T010642Z
 
-## PC (backend) — required understanding for next pass
+## PC understanding
 
-1. Current state is **gate-green, no-product-diff, not closed**.
-2. The missing artifact is a **SURGICAL decision**, not another gate rerun.
-3. `task-06f-ingestion-validation` closure still requires:
-   - exact gate evidence (`./scripts/task-gate.sh task-06f-ingestion-validation`, exit `0`), and
-   - SURGICAL Codex `ACCEPT` per `.opencode/task-plan.hierarchy.json`.
+Evidence from `pc-runtime/memory.md`, `pc-runtime/gate_summary.md`, and `worker-requests/PC.json` is internally consistent on the key point: gate is green and closure is pending review.
 
-### PC bounded next action
+- **Accurate:** PC memory states latest gate exit `0` and pending Codex decision.
+- **Gap:** No new Codex review artifact is present in this RUN_DIR snapshot (`pc-runtime/manifest.json` has `codex_review: null`).
+- **Ring judgment:** Understanding is adequate for a **review-only** next step; no new backend implementation pass should start.
 
-- **Implementation level:** Level 3
-- **Assigned role:** SURGICAL reviewer
-- **Task ID:** `task-06f-ingestion-validation` (`BE-06F-A` context)
-- **Dependencies:** existing run `20260806T001814Z` evidence package
-- **allowed_paths:** read-only review
-- **Exact gate:** validate existing gate-green evidence; emit `ACCEPT` or `REVISE`
-- **Required SURGICAL review:** yes (this pass)
+## LP understanding
 
-## LP (frontend) — required understanding for next pass
+LP evidence reflects unresolved revision work, and Codex has already supplied precise corrective instructions.
 
-1. FE-03C is still **REVISE**, not complete.
-2. Existing spec edits are unaccepted until preflight + exact gate + SURGICAL review complete.
-3. Mandatory proof is rendered DOM behavior for citation contract, including:
-   - ordered structured citation rendering,
-   - no citation section for empty citations,
-   - no parsing of citation-like text from answer body.
+- **Accurate:** LP memory keeps `task-fe-03c-citations` as pending and points to required correction flow.
+- **Gap:** Current snapshot still lacks a completed acceptance bundle (`checkpoint: null`, `codex_review: null` in `lp-runtime/manifest.json`).
+- **Ring judgment:** Understanding is partially adequate but execution is incomplete; LP must finish FE-03C-A exactly as prescribed and re-run gate.
 
-### LP bounded next action
+## Required next understanding checkpoints
 
-- **Implementation level:** Level 1
-- **Assigned role:** LP
-- **Task ID:** `task-fe-03c-citations` (`FE-03C-A`)
-- **Dependencies:** codex revise packet; `task-fe-03b-answer-abstention:ACCEPTED`
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03c-citations`
-- **Required SURGICAL review:** yes, mandatory for closure
+1. **PC (Level 3 review handoff):** SURGICAL decision must be recorded (`ACCEPT`/`REVISE`) before any queue advancement.
+2. **LP (Level 1 implementation):** post-edit evidence must explicitly map each FE-03C assertion to rendered DOM behavior and confirm exact-gate result.
 
-## Shared anti-drift reminders
+## Acceptance evidence required for this cycle’s next closure claim
 
-- Do not widen scope beyond task `allowed_paths`.
-- Do not claim completion without direct gate and SURGICAL evidence.
-- Do not bypass deterministic preflight or exact gate definitions.
+- Deterministic gate evidence for the task’s exact gate.
+- Scope-clean diff (`git diff --check` preflight where required).
+- Mandatory SURGICAL `ACCEPT` recorded for the active task.

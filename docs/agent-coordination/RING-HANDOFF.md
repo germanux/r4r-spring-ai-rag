@@ -1,40 +1,40 @@
-# Backend ↔ Frontend handoff — RUN 20260806T003326Z
+# Backend ↔ Frontend handoff — run 20260806T010642Z
 
-## Queue status summary
+## Queue state summary
 
-- **Backend (PC lane):** `task-06f-ingestion-validation` is gate-green and awaiting mandatory SURGICAL disposition.
-- **Frontend (LP lane):** `task-fe-03c-citations` remains in Codex `REVISE` with active local spec diff and no accepted closure evidence.
+- **Backend (PC):** `task-06f-ingestion-validation` is gate-green but pending mandatory SURGICAL closure decision.
+- **Frontend (LP):** `task-fe-03c-citations` has an active unaccepted spec diff under Codex `REVISE` instructions.
 
-## Ownership and scope separation
+## Ownership and write-scope separation
 
-### Backend package in this cycle
+### Backend package in scope now
 
-- **Implementation level:** Level 3 (review step)
-- **Assigned role:** SURGICAL
+- **Level:** 3 review pass (SURGICAL)
+- **Role:** SURGICAL Codex reviewer
 - **Task ID:** `task-06f-ingestion-validation` / `BE-06F-A`
-- **Dependencies:** Existing gate-green evidence package from run `20260806T001814Z`.
-- **allowed_paths:** read-only review in this pass (no backend write scope expansion).
-- **Exact gate:** validate prior `./scripts/task-gate.sh task-06f-ingestion-validation` exit `0` evidence.
-- **Required SURGICAL review:** mandatory and currently pending.
+- **Dependencies:** `task-06e-child-process:ACCEPTED`
+- **allowed_paths:** `src/test/resources/application.yml`, `.opencode/current/PC/**`
+- **Exact gate:** `./scripts/task-gate.sh task-06f-ingestion-validation`
+- **Required review:** explicit SURGICAL `ACCEPT` or `REVISE`
 
-### Frontend package in this cycle
+### Frontend package in scope now
 
-- **Implementation level:** Level 1
-- **Assigned role:** LP
+- **Level:** 1
+- **Role:** LP
 - **Task ID:** `task-fe-03c-citations` / `FE-03C-A`
-- **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED` plus Codex revise requirements.
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` only.
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03c-citations`.
-- **Required SURGICAL review:** mandatory before task closure.
+- **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED`
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03c-citations`
+- **Required review:** SURGICAL `ACCEPT` before closure
 
-## Integration-risk controls
+## Integration-risk notes
 
-1. **No overlapping write scopes** in this cycle (backend review-only vs frontend spec-only edit scope).
-2. **Hold backend implementation churn** until SURGICAL decision arrives for BE-06F-A.
-3. **Block frontend promotion** unless FE-03C assertions explicitly prove structured citation rendering contract in DOM.
+1. Advancing backend to `task-07-*` before SURGICAL acceptance of `task-06f-*` would violate dependency sequencing.
+2. Frontend FE-03C can report green while still missing contract-specific DOM assertions unless Codex-required checks are explicitly verified.
+3. Keep backend and frontend edits disjoint during this cycle; no cross-queue write expansion is justified by current evidence.
 
-## Handoff decision
+## Immediate coordination directive
 
-- Keep both queues active but bounded.
-- Prioritize SURGICAL review return on backend package to unblock final disposition.
-- Continue LP corrective FE-03C-A pass without widening frontend scope.
+- Hold backend implementation edits; execute SURGICAL review decision only.
+- Continue LP FE-03C-A correction pass and re-gate once.
+- Require SURGICAL review for both queues before any closure claim.
