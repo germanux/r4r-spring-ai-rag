@@ -2305,3 +2305,48 @@ Append-only ledger generated after each validated Ring cycle.
 - This RUN_DIR includes LP gate summary but not LP full gate log tail, so diagnosis uses controller-classified failure evidence plus Codex correction packet.
 - PC runtime snapshot includes no Codex review artifact yet (codex_review=null), so acceptance state is inferred from worker request and progress only.
 - No direct worker-runtime checkpoint hash/head was recorded for the PC request (checkpoint_head=null).
+
+## Cycle `20260806T194634Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-07-populate-production-rag`
+- Reason: PC produced a gate-green checkpoint request for task-07 (gate_exit=0) but codex_decision is still null, so closure is blocked by mandatory SURGICAL review.
+- Next action: Run one level-3 SURGICAL review-only pass on the existing task-07 checkpoint evidence and return ACCEPT or REVISE before any new PC edit/gate loop.
+- Avoid repeating: Do not run another unchanged PC implementation/gate pass while this same task-07 request remains codex_decision=null.
+- Acceptance gates:
+  - Mandatory hierarchy closure: exact-gate-green + scope-clean + surgical-accept + controller-commit (.opencode/task-plan.hierarchy.json).
+  - Exact backend task gate remains authoritative for task-07 from .opencode/task-plan.backend.json: bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0".
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194634Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194634Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194634Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194634Z/pc-runtime/progress.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP remains red on the deterministic FE-03D gate (exit=2), and Codex already issued a REVISE packet with explicit bounded corrections in rag-page.component.spec.ts.
+- Next action: Execute one bounded level-1 correction pass in frontend/src/app/features/rag/rag-page.component.spec.ts exactly per the Codex correction packet, then run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests once with fresh consistent diagnostics.
+- Avoid repeating: Do not reintroduce synthetic/invalid tests, direct innerHTML mutation, manual loading-flag mutation, invalid RAGAnswerResult shapes, or mismatched gate diagnostics.
+- Acceptance gates:
+  - Whitespace guard must pass first: git diff --check.
+  - Exact frontend gate from .opencode/task-plan.frontend.json: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+  - Mandatory hierarchy closure: exact-gate-green + scope-clean + surgical-accept + controller-commit (.opencode/task-plan.hierarchy.json).
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194634Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194634Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194634Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T194634Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- Backend task-07 currently has unreviewed gate-green evidence; accepting or extending it without SURGICAL review risks shipping unverified ingestion/idempotency behavior.
+- LP repeatedly editing FE-03D without following the Codex packet risks further selector/fixture drift and prolonged frontend gate churn.
+
+### Evidence limitations
+
+- No new Codex review artifact is present for the current PC request (codex_decision remains null).
+- This cycle includes gate summaries and status snapshots, but not the full gate logs referenced by those summaries.
