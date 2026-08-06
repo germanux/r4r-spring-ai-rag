@@ -1,26 +1,29 @@
-# Global Summary — Run 20260806T171721Z
+# Global coordination summary (RUN_ID: 20260806T172221Z)
 
-## Outcome
-`overall_status: READY`
+## Decision outcome
 
-## Evidence-grounded decisions
-- **PC:** `HOLD` on `task-07-populate-production-rag`.
-  - Reason: dependency-sequencing conflict plus fresh backend edits with a red gate (`test-failure`, exit 1).
-- **LP:** `START` on `task-fe-03d-dom-state-tests`.
-  - Reason: Codex `REVISE` is pending execution despite prior gate-green checkpoint.
+- **overall_status:** `READY`
+- **PC:** `HOLD` on `task-07-populate-production-rag`
+- **LP:** `CONTINUE` on `task-fe-03d-dom-state-tests`
 
-## Priority next actions
-1. Keep backend queue paused for implementation until dependency order is satisfied and SURGICAL reviews current backend diff/gate package.
-2. Execute one LP revise pass exactly per Codex correction packet, then rerun the exact frontend gate and resubmit for SURGICAL review.
+## Why
 
-## Integration risks
-- Continued backend churn before dependency clearance can increase drift and rework.
-- Repeated frontend gate-green without implementing all revise assertions can prolong review loops.
+1. Backend evidence shows a red deterministic gate and dirty backend paths while hierarchy dependencies still block PC implementation sequencing (`BE-07-B` requires `BE-07-A:ACCEPTED`).
+2. Frontend evidence shows a gate-green attempt with `no-product-diff` despite prior Codex `REVISE` directives requiring explicit missing DOM assertions.
 
-## Evidence limitations
-- No PC Codex review artifact is present in this RUN_DIR snapshot.
-- Only summarized gate diagnostics are packaged in this cycle snapshot.
+## Next bounded actions
 
-## Ring worktree edits this cycle
-- No repository code/config/test/documentation edits were made.
-- Only the six required staged coordination artifacts were written under `runtime/ring-agent/ring/20260806T171721Z/output/`.
+- **PC side (Level 3, SURGICAL):** review/disposition pass on current backend diff+gate evidence; keep PC coding paused until dependency is accepted.
+- **LP side (Level 1, LP):** one scoped revise pass in `frontend/src/app/features/rag/rag-page.component.spec.ts`, then `git diff --check` and exact frontend gate.
+
+## Acceptance contract
+
+- Exact task gate must be green for each queue.
+- Write scope must remain inside canonical `allowed_paths`.
+- **SURGICAL Codex `ACCEPT` is required before closure for both LP and PC outputs.**
+
+## Evidence limitations noted
+
+- No current PC codex review artifact in this run snapshot.
+- LP codex review file present is runtime metadata for an earlier attempt, not a fresh decision payload.
+- Gate full logs were not inspected directly in this Ring cycle; decisions rely on provided summaries and runtime manifests.
