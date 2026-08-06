@@ -2397,3 +2397,48 @@ Append-only ledger generated after each validated Ring cycle.
 - Only gate summaries are present in RUN_DIR; full gate logs are referenced but not included in this snapshot.
 - No current-run Codex ACCEPT/REVISE artifact exists for the new PC checkpoint request yet (codex_decision is null).
 - LP controller_state/checkpoint artifacts are absent in this snapshot, so closure state relies on progress, gate summary and codex extra-instructions evidence.
+
+## Cycle `20260806T195634Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-07-populate-production-rag`
+- Reason: The backend exact gate for task-07 is recorded as green (gate_exit=0), but closure evidence is incomplete in this cycle: codex_decision is null and checkpoint_head is null, while progress still marks task-07 BLOCKED.
+- Next action: Run one level-3 SURGICAL review-only pass on the existing task-07 evidence to issue ACCEPT/REVISE and classify the missing checkpoint/closure state before any new PC edit or gate rerun.
+- Avoid repeating: Do not run another unchanged PC implementation/gate pass while task-07 still has codex_decision=null and no recorded closure checkpoint head.
+- Acceptance gates:
+  - Mandatory hierarchy closure from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+  - Exact backend task gate from .opencode/task-plan.backend.json for task-07-populate-production-rag: bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0".
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195634Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195634Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195634Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195634Z/pc-runtime/previous-ring-qwen3-directive.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: The frontend active task remains unresolved with a deterministic gate failure (exit 2), and Codex has already issued a REVISE correction packet with bounded instructions focused on rag-page.component.spec.ts.
+- Next action: Execute one level-1 bounded correction pass in frontend/src/app/features/rag/rag-page.component.spec.ts exactly per the active Codex REVISE packet, then run git diff --check and the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce synthetic tests, direct innerHTML mutation, manual loading-flag mutation, invalid response shapes, or mismatched diagnostics already rejected by Codex.
+- Acceptance gates:
+  - Whitespace guard: git diff --check.
+  - Exact frontend task gate from .opencode/task-plan.frontend.json: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+  - Mandatory hierarchy closure from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195634Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195634Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195634Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T195634Z/lp-git-status.txt`
+
+### Integration risks
+
+- Backend task-07 may remain indefinitely blocked despite a green gate if SURGICAL ACCEPT/REVISE and controller closure evidence are not produced for the current request.
+- LP has already produced a large speculative spec diff (94 insertions/26 deletions) and Codex marked understanding inadequate; repeating broad edits risks another deterministic FE-03D gate failure and rework churn.
+
+### Evidence limitations
+
+- This RUN_DIR snapshot has no controller_state, codex_review, or checkpoint artifacts for PC or LP (manifest sources are null), so closure/commit-failure root cause cannot be proven from this cycle alone.
+- LP gate diagnostics in this snapshot include only summary-level evidence; full gate-full.log content is referenced but not staged under this RUN_DIR copy.

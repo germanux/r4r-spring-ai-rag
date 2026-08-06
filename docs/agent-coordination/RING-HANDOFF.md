@@ -1,42 +1,38 @@
-# Backend ↔ Frontend handoff
+# Backend ↔ Frontend handoff — run 20260806T195634Z
 
-## Queue status
+## Queue status split
 
-- **Backend (PC parent task `task-07-populate-production-rag`):** gate-green evidence exists, but closure is blocked by `CHECKPOINT_COMMIT_FAILED` and pending Codex decision (`codex_decision=null`).
-- **Frontend (LP parent task `task-fe-03d-dom-state-tests`):** deterministic gate is red (exit `2`) with an active Codex `REVISE` packet.
+- **Backend (PC task-07):** hold implementation; move to **SURGICAL review-only closure pass** first.
+- **Frontend (LP task-fe-03d):** continue **one bounded correction pass** in a single spec file.
 
-## Coordination decision
+## Ownership and write-scope disjointness
 
-1. **Backend:** hold new PC implementation work; route an immediate **Level 3 SURGICAL review-only** pass for task-07 checkpoint evidence and commit-failure classification.
-2. **Frontend:** continue **Level 1 LP** bounded correction in one spec file exactly per Codex packet, then rerun guard + exact gate once.
+- Backend active scope (if implementation is required after review): `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`.
+- Frontend active scope: `frontend/src/app/features/rag/rag-page.component.spec.ts`.
 
-## Ownership and scope separation
+No scope overlap is present in this cycle; keep queues disjoint.
 
-- Backend path ownership (current PC evidence): `docs/backend/**`, `src/main/**`, `src/test/**`.
-- Frontend path ownership (current LP evidence): `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-- No current write-scope overlap is required between PC and LP passes.
+## Cross-stack integration risk notes
 
-## Proposed action records
+1. Backend task-07 is blocked on closure evidence (`codex_decision` and checkpoint/commit trail), not on a newly demonstrated failing gate.
+2. Frontend task-fe-03d remains red and should not be widened into production code changes; keep it test-only.
 
-### Action A (backend)
+## Coordinated next actions
+
+### Action A (Backend)
 - **Level:** 3
 - **Role:** SURGICAL
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** existing gate-green checkpoint request and controller failure evidence
-- **allowed_paths:** backend task scope only for product fixes; otherwise operational surgical package if controller-level defect
-- **Exact gate:** task-07 gate command from `.opencode/task-plan.backend.json`
-- **Mandatory review:** SURGICAL is the actor and final reviewer for closure under hierarchy policy
+- **Dependencies:** existing gate-green request evidence
+- **allowed_paths:** review-only initially; if fix needed, backend task plan scope only
+- **Exact gate:** backend task-07 gate command from `.opencode/task-plan.backend.json`
+- **Required review:** SURGICAL decision must be explicit (`ACCEPT` or `REVISE`)
 
-### Action B (frontend)
+### Action B (Frontend)
 - **Level:** 1
 - **Role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** Codex REVISE packet and accepted prior frontend tasks
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` (bounded execution scope)
+- **Dependencies:** Codex REVISE packet already present
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
 - **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Mandatory review:** SURGICAL review required after LP gate-green result
-
-## Integration risk watchlist
-
-- Backend acceptance cannot progress until checkpoint commit failure is classified/resolved.
-- Frontend may continue to churn if LP deviates from already-prescribed corrections.
+- **Required review:** SURGICAL Codex `ACCEPT` before closure

@@ -1,39 +1,32 @@
-# Worker understanding assessment
+# Worker understanding assessment — run 20260806T195634Z
 
-## PC understanding
-
-### Evidence
-- `pc-runtime/memory.md` correctly reports gate-green state and pending Codex acceptance.
-- `pc-runtime/controller_state.json` shows `CHECKPOINT_COMMIT_FAILED`.
-
-### Assessment
-- PC understanding of task state is mostly accurate (gate-green but not accepted).
-- Missing emphasis in worker memory: checkpoint commit failure is now the immediate blocker, not additional implementation.
-
-### Directed next action
-- **Level 3 / SURGICAL / task-07-populate-production-rag**
-- **Dependency:** existing PC checkpoint request
-- **allowed_paths:** backend task scope only unless triage proves controller-only issue
-- **Exact gate:** task-07 authoritative command from `.opencode/task-plan.backend.json`
-- **Required review condition:** SURGICAL `ACCEPT` (or bounded `REVISE`) plus controller-owned commit success before closure
-
-## LP understanding
+## PC understanding signal
 
 ### Evidence
-- `lp-runtime/memory.md` acknowledges unfinished FE-03D work and pending Codex decision.
-- `lp-runtime/codex-qwen3-extra-instructions.md` explicitly says local understanding was inadequate and enumerates precise corrections.
+- `pc-runtime/memory.md` shows active task-07 but no new acceptance claim.
+- `worker-requests/PC.json` shows green gate evidence with unresolved closure fields (`codex_decision: null`, `checkpoint_head: null`).
 
 ### Assessment
-- LP currently has an execution/discipline gap, not a missing instruction problem.
-- Required behavior-to-selector mapping was not demonstrated; prior patch introduced rejected synthetic patterns.
+PC is not currently blocked by unclear implementation instructions; the blocker is closure workflow evidence. The next pass should be a SURGICAL review-classification step, not another PC coding loop.
 
-### Directed next action
-- **Level 1 / LP / task-fe-03d-dom-state-tests**
-- **Dependencies:** Codex REVISE packet; prior FE-03C acceptance
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Required review condition:** SURGICAL `ACCEPT` is mandatory even after LP gate-green
+### Required next understanding output
+- Explicitly distinguish **gate success evidence** from **task closure evidence**.
+- Confirm no fresh code edits are started until SURGICAL issues `REVISE`.
 
-## Ring confidence level
+## LP understanding signal
 
-- Confidence is **high** on the first-current-defect identification for both queues because each blocker is explicitly recorded in the latest runtime evidence.
+### Evidence
+- `lp-runtime/codex-qwen3-extra-instructions.md` states: "Inadequate local-model understanding".
+- Codex lists concrete misunderstandings (invented selectors/state values, malformed loading fragment, invalid response shapes).
+- Gate remains red (`lp-runtime/gate_summary.md`, exit 2).
+
+### Assessment
+LP understanding is currently below requirement for this task unless it follows the active correction packet exactly. Instruction quality is sufficient; execution drift is the failure mode.
+
+### Required next understanding output
+- Map each FE-03D requirement to exact DOM selector + assertion before editing.
+- Keep scope to one file and mirror Codex packet terminology in local reasoning and final evidence.
+
+## Coordination implication
+
+Proceed with LP bounded correction, but keep PC on review-first path. Do not reopen architectural scope for either queue in this cycle.

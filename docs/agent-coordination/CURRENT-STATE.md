@@ -1,45 +1,44 @@
-# Global coordination summary (RUN_ID 20260806T195134Z)
+# Global summary — run 20260806T195634Z
 
-## What changed in this cycle
+## Executive status
 
-- Reviewed bounded runtime evidence for Ring/PC/LP from `RUN_DIR`.
-- Identified first current defect per queue:
-  - **PC:** checkpoint commit failure after green gate (`CHECKPOINT_COMMIT_FAILED`) with pending Codex decision.
-  - **LP:** deterministic FE-03D gate failure with active Codex `REVISE` packet not yet fully applied.
-- Issued bounded next actions with explicit levels, ownership, dependencies, allowed paths, gates, and mandatory SURGICAL review requirements.
+- **Overall:** `READY`
+- **PC:** `REVIEW` on `task-07-populate-production-rag`
+- **LP:** `CONTINUE` on `task-fe-03d-dom-state-tests`
 
-## Decision summary
+## Why these decisions
 
-### PC
-- **Action:** `REVIEW`
-- **Task:** `task-07-populate-production-rag`
-- **Why:** Gate passed, but closure chain failed at checkpoint commit and lacks Codex verdict.
-- **Next pass owner:** SURGICAL (level 3 review-only triage).
+1. **PC:** Current evidence shows a green gate request for task-07, but closure is incomplete (`codex_decision=null`, `checkpoint_head=null`) and progress still marks the task blocked. First defect is closure-evidence gap, so SURGICAL review must run before any new PC implementation loop.
+2. **LP:** Current evidence still shows deterministic FE-03D gate failure (exit 2) and an active Codex REVISE packet with precise bounded corrections. First defect remains in the LP spec diff and should be corrected directly.
 
-### LP
-- **Action:** `CONTINUE`
-- **Task:** `task-fe-03d-dom-state-tests`
-- **Why:** Gate red and explicit Codex corrective packet already exists.
-- **Next pass owner:** LP (level 1 bounded fix in one spec file), then SURGICAL review.
+## Required next passes
 
-## Integration posture
+### Backend pass
+- **Level/role:** Level 3 SURGICAL
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependency:** existing gate-green request
+- **allowed_paths:** review-only first; backend task scope only if REVISE requires edits
+- **Exact gate:** task-07 backend gate from `.opencode/task-plan.backend.json`
+- **Acceptance:** explicit SURGICAL decision + hierarchy closure conditions
 
-- Overall status: **READY** (actionable next steps exist; no evidence blackout).
-- Backend/frontend write scopes remain disjoint for the proposed passes.
-- Primary risk is process closure integrity (backend checkpoint commit path) plus frontend rework churn if Codex packet is not followed exactly.
+### Frontend pass
+- **Level/role:** Level 1 LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependency:** active Codex REVISE packet
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Acceptance:** gate green + SURGICAL `ACCEPT`
 
-## Evidence anchors used
+## Integration risks
 
-- `pc-runtime/gate_summary.md`
-- `pc-runtime/controller_state.json`
-- `pc-runtime/checkpoint.json`
-- `worker-requests/PC.json`
-- `lp-runtime/gate_summary.md`
-- `lp-runtime/codex-qwen3-extra-instructions.md`
-- `lp-runtime/progress.json`
+- Prolonged backend stall if closure evidence remains unresolved despite green gate.
+- Frontend churn risk if LP repeats broad speculative edits instead of the prescribed correction packet.
 
-## Repository edits by Ring in this cycle
+## Evidence limitations
 
-- No repository code/tests/config/docs were modified.
-- Only the required staged coordination artifacts were written under:
-  - `runtime/ring-agent/ring/20260806T195134Z/output/`
+- No `controller_state`, `codex_review`, or `checkpoint` artifacts are staged for PC/LP in this RUN_DIR snapshot.
+- LP full gate log is referenced externally; only summary-level diagnostics are present in this snapshot.
+
+## Ring repository edits in this cycle
+
+No repository product/test/config/docs edits were made. Only the six staged coordination artifacts under `runtime/ring-agent/ring/20260806T195634Z/output/` were written.
