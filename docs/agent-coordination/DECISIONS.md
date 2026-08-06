@@ -1890,3 +1890,48 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This RUN_DIR includes gate summaries but not full gate logs, so failure/root-cause detail is limited to summarized diagnostics and Codex correction text.
 - No new LP controller_state.json is present in this snapshot; LP run-state is inferred from progress, memory, gate summary, and git-status evidence.
+
+## Cycle `20260806T190129Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-07-populate-production-rag`
+- Reason: The latest PC request is gate-green (exit 0) but has no Codex disposition (codex_decision=null) and no checkpoint head, while task-07 remains BLOCKED; closure is therefore unproven and another implementation pass would be wasteful.
+- Next action: Run one SURGICAL review-only pass on the existing task-07 checkpoint evidence and return ACCEPT or REVISE before any further PC implementation/gate cycle.
+- Avoid repeating: Do not rerun full PC implementation and gate loops on task-07 while codex_decision remains null for the current gate-green checkpoint evidence.
+- Acceptance gates:
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+  - Task gate contract for task-07-populate-production-rag from .opencode/task-plan.backend.json must remain satisfied (gate already recorded exit 0 in current request evidence).
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190129Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190129Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190129Z/pc-runtime/previous-ring-qwen3-directive.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP is on the active frontend task with a red deterministic gate (exit 2), and Codex REVISE instructions identify defective synthetic tests and prescribe a bounded spec-only correction.
+- Next action: Execute one bounded LP correction pass in frontend/src/app/features/rag/rag-page.component.spec.ts following the Codex packet exactly, then run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests once and publish consistent evidence.
+- Avoid repeating: Do not reintroduce synthetic/invalid tests, direct innerHTML mutation, or mismatched diagnostic evidence that does not correspond to the final gate execution.
+- Acceptance gates:
+  - Exact frontend gate from .opencode/task-plan.frontend.json: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+  - Write-scope constraint from Codex correction packet: frontend/src/app/features/rag/rag-page.component.spec.ts only.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190129Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190129Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190129Z/lp-runtime/codex-qwen3-extra-instructions.md`
+
+### Integration risks
+
+- PC closure risk: gate-green backend diff could be discarded or churned if SURGICAL review is skipped while codex_decision is null.
+- LP quality risk: repeated FE-03D failures are likely if the worker continues using synthetic test constructs instead of fixture-rendered DOM assertions required by Codex.
+- Evidence-consistency risk: LP local-understanding/report quality is currently inadequate, increasing chance of another red gate with stale or contradictory diagnostics.
+
+### Evidence limitations
+
+- This RUN_DIR snapshot does not include a PC codex_review artifact for task-07; only the request metadata shows codex_decision=null.
+- LP codex_plan.json and codex_review.json in this snapshot contain execution metadata, not the detailed decision payload; detailed directives were taken from codex-qwen3-extra-instructions.md and memory.md.
+- The full LP gate log referenced by gate_summary.md is not embedded in the copied ring snapshot files read during this cycle.
