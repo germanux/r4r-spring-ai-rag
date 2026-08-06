@@ -1,33 +1,29 @@
-# Worker understanding assessment — run 20260806T172722Z
+# Worker Understanding Audit — RUN_ID 20260806T174052Z
 
-## PC understanding quality
-- Evidence shows task awareness (`task-07-populate-production-rag`) and edited backend files, but closure evidence is incomplete.
-- `pc-runtime/gate_summary.md` reports a red deterministic gate, while `pc-runtime/memory.md` still says latest exact gate is unknown/not run.
-- No current `codex_review.json` is present in this run snapshot for PC.
+## PC understanding status
 
-### PC correction package
-- **Implementation level:** Level 3
-- **Assigned role:** SURGICAL
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** review now; implementation later gated by `BE-07-A:ACCEPTED`
-- **allowed_paths:** review evidence in RUN_DIR and currently changed backend files (no broadened scope)
-- **Exact gate:** once unblocked, run task-07 exact backend gate from plan
-- **Required SURGICAL review:** mandatory keep/revert guidance now; mandatory final `ACCEPT` later
+- Evidence shows good identification of likely failing backend symbols (`KnowledgeIngestionService`, `PgVectorKnowledgeStore`) in `pc-runtime/pre_edit_understanding.md` and `pc-runtime/codegraph_reconnaissance.md`.
+- However, execution governance is still defective for current cycle because task-07 dependency ordering from hierarchy remains unresolved (`BE-07-B` requires `BE-07-A:ACCEPTED`) and gate is red.
 
-## LP understanding quality
-- LP produced a green gate but with `no-product-diff` and Codex `REVISE` outstanding.
-- `local_understanding.md` is explicitly inadequate for this task: requirement mapping points to controller memory instead of concrete DOM assertions.
+**Bounded next action**
+- **Level 3 / SURGICAL review-only support** on current PC red-gate diff.
+- PC should not add new implementation edits until dependency and SURGICAL disposition are explicit.
 
-### LP correction package
-- **Implementation level:** Level 1
-- **Assigned role:** LP
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED` satisfied
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Required SURGICAL review:** Codex must return `ACCEPT` after revised assertions and evidence mapping
+## LP understanding status
 
-## Evidence-grounded coaching for next pass
-1. Treat Codex REVISE packets as executable checklists, not narrative guidance.
-2. Ensure local understanding maps each requirement to specific selectors/assertions.
-3. Require non-empty scoped diffs for revise passes unless the package is explicitly review-only.
+- LP local understanding is currently inadequate for closure:
+  - It states missing model-authored summary.
+  - Requirement mapping points to memory file instead of concrete test assertions.
+  - Latest attempt is gate-green with `no-product-diff`, so no demonstrable implementation update exists.
+
+**Bounded next action**
+- **Level 1 / LP implementation** limited to `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+- Implement Codex-mandated loading + independent reset assertion set.
+- Re-run `git diff --check` and exact frontend gate.
+- Submit for mandatory SURGICAL Codex review.
+
+## Acceptance conditions for understanding quality
+
+1. Each worker report must map task requirements to concrete code/test assertions, not controller memory summaries.
+2. Gate-green evidence must be paired with a non-empty scoped patch where Codex requested a revision.
+3. No closure claims without explicit SURGICAL `ACCEPT` evidence.
