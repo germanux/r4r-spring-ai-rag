@@ -47,8 +47,8 @@
       "id": "task-fe-03d-dom-state-tests",
       "status": "PENDING",
       "accepted_at": null,
-      "last_gate_green_at": "2026-08-06T17:12:11.087508+00:00",
-      "last_gate_green_attempt": 1,
+      "last_gate_green_at": "2026-08-06T17:40:51.439381+00:00",
+      "last_gate_green_attempt": 4,
       "last_gate_green_run": "20260806T164305Z"
     },
     {
