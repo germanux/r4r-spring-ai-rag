@@ -1,39 +1,37 @@
-# Backend ↔ Frontend handoff (Ring)
+# Backend ↔ Frontend handoff and queue isolation
 
-## Queue status snapshot
+## Current queue status
 
-### Backend (PC queue)
+- **Backend (PC active task):** `task-07-populate-production-rag`
+  - Current state is a gate-green checkpoint request awaiting SURGICAL disposition.
+- **Frontend (LP active task):** `task-fe-03d-dom-state-tests`
+  - Current state is deterministic red gate with a bounded Codex REVISE packet.
 
-- **Task:** `task-07-populate-production-rag`
-- **State from evidence:** gate-green request is present, but closure is blocked pending SURGICAL disposition (`codex_decision: null`).
-- **Decision this cycle:** `HOLD` PC implementation; run SURGICAL review-only pass.
+## Ownership and write-scope separation for next pass
 
-### Frontend (LP queue)
+### Package A (Backend review hold)
+- **Level:** 3
+- **Owner:** SURGICAL
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** existing PC checkpoint evidence only
+- **allowed_paths:** review-only (`[]`)
+- **Exact gate/constraint:** hierarchy closure policy (`exact-gate-green + scope-clean + surgical-accept + controller-commit`)
 
-- **Task:** `task-fe-03d-dom-state-tests`
-- **State from evidence:** red gate (`exit 2`) with Codex `REVISE` and explicit, spec-only correction guidance.
-- **Decision this cycle:** `CONTINUE` with one bounded LP repair pass.
+### Package B (Frontend correction)
+- **Level:** 1
+- **Owner:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependencies:** active Codex REVISE correction packet
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` (single-file bounded pass)
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
 
-## Ownership disjointness and dependency control
+## Integration risk controls
 
-- Backend and frontend write scopes remain disjoint in this cycle:
-  - Backend review concerns `src/**` + `docs/backend/**` evidence for task-07.
-  - Frontend correction is constrained to `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-- No cross-queue product-path overlap is authorized.
-- Any newly discovered cross-layer or ambiguous requirement must be escalated to **Level 3 SURGICAL** and the overlapping queue held.
+1. **No overlapping write scopes:** backend review pass is read-only; frontend correction is single spec file.
+2. **No backend implementation churn before review:** PC stays held for implementation until SURGICAL emits ACCEPT/REVISE.
+3. **No phase crossover:** LP does not write backend docs/code in this cycle despite hierarchy BE-07 LP sub-packages existing historically.
 
-## Action packages for this cycle
+## Required SURGICAL checkpoints
 
-1. **PKG-PC-07-REVIEW-ONLY**
-   - Level 3, owner SURGICAL, task `task-07-populate-production-rag`
-   - Dependency: existing gate-green request evidence
-   - allowed_paths: review-only evidence pass (no product writes)
-   - gate/constraint: closure policy (`exact-gate-green + scope-clean + surgical-accept + controller-commit`)
-   - required SURGICAL review: yes (this is that review)
-
-2. **PKG-LP-FE03D-SPEC-REPAIR**
-   - Level 1, owner LP, task `task-fe-03d-dom-state-tests`
-   - Dependency: active REVISE packet + accepted `task-fe-03c-citations`
-   - allowed_paths: `frontend/src/app/features/rag/rag-page.component.spec.ts`
-   - exact gate: `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-   - required SURGICAL review: yes before closure
+- SURGICAL must review LP output before FE-03D closure.
+- SURGICAL must disposition the existing PC checkpoint before any additional PC coding pass.

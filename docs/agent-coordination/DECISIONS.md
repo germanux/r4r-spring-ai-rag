@@ -1978,3 +1978,47 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This RUN_DIR snapshot provides gate summaries and metadata, but not the full gate logs referenced by those summaries.
 - No new LP worker-request packet is present in this snapshot; LP status is inferred from lp-runtime progress/memory/gate artifacts.
+
+## Cycle `20260806T191130Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-07-populate-production-rag`
+- Reason: Current PC evidence is a gate-green checkpoint request with gate_exit=0 but codex_decision=null and checkpoint_head=null, so task closure is unproven and another implementation loop would be redundant before mandatory SURGICAL review.
+- Next action: Run one SURGICAL review-only pass on the existing task-07 checkpoint evidence and return ACCEPT or REVISE before any new PC edits.
+- Avoid repeating: Do not run another full PC implementation/gate cycle while codex_decision remains null for the current gate-green request.
+- Acceptance gates:
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+  - Exact backend task gate for task-07-populate-production-rag from .opencode/task-plan.backend.json must remain satisfied.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T191130Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T191130Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T191130Z/pc-runtime/previous-ring-qwen3-directive.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP remains on the active frontend task with a deterministic red gate (exit 2), and the current Codex REVISE packet identifies incorrect synthetic tests plus a bounded spec-only correction in rag-page.component.spec.ts.
+- Next action: Execute one bounded LP correction pass in frontend/src/app/features/rag/rag-page.component.spec.ts exactly per the Codex packet, then run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests once and publish consistent evidence.
+- Avoid repeating: Do not reintroduce synthetic/invalid tests, direct innerHTML mutation, or mismatched diagnostics unrelated to the final gate execution.
+- Acceptance gates:
+  - Exact frontend gate from .opencode/task-plan.frontend.json: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+  - Codex correction constraint: write scope limited to frontend/src/app/features/rag/rag-page.component.spec.ts.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T191130Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T191130Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T191130Z/lp-runtime/codex-qwen3-extra-instructions.md`
+
+### Integration risks
+
+- If PC resumes implementation before SURGICAL disposition on the gate-green checkpoint, backend churn may invalidate already-sufficient evidence and delay closure.
+- Hierarchy work-package ownership for task-07 includes LP/PC split (BE-07-A/B/C), but current active parent-task execution is in PC runtime; dispatch must avoid cross-queue write-scope overlap.
+
+### Evidence limitations
+
+- pc-runtime manifest shows codex_review, codex_plan, gate_summary, and checkpoint as null in this RUN_DIR snapshot, so only checkpoint request metadata is available for PC.
+- lp-runtime codex_review.json and codex_plan.json here are runner command envelopes, not the full semantic decision payload; corrective requirements were taken from codex-qwen3-extra-instructions.md.
+- No CodeGraph reconnaissance artifact is present in either worker-runtime directory for this cycle.

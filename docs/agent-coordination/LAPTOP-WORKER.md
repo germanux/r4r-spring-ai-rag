@@ -1,49 +1,51 @@
-# LP code review (Ring)
+# LP code review (Ring cycle 20260806T191130Z)
 
-## Current evidence verdict
+## Evidence reviewed
 
-- Active task: `task-fe-03d-dom-state-tests`.
-- Deterministic gate status: **failed** (`exit 2`, `gate-failure`).
-- Codex status: **REVISE** with explicit correction packet.
-- First current defect: the spec includes defective synthetic tests and inconsistent understanding/evidence packaging versus the active REVISE instructions.
+- `runtime/ring-agent/ring/20260806T191130Z/lp-runtime/progress.json`
+- `runtime/ring-agent/ring/20260806T191130Z/lp-runtime/memory.md`
+- `runtime/ring-agent/ring/20260806T191130Z/lp-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260806T191130Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260806T191130Z/lp-git-diff-stat.txt`
 
-Evidence:
+## First current defect
 
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/lp-runtime/gate_summary.md`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/lp-runtime/memory.md`
-- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/lp-runtime/codex-qwen3-extra-instructions.md`
+`task-fe-03d-dom-state-tests` remains red (`exit 2`). The active Codex REVISE packet reports that recently added tests are synthetic/invalid and do not prove required DOM behavior, specifically around loading and reset semantics.
 
-## Bounded action package
+## Bounded correction package
 
-### PKG-LP-FE03D-SPEC-REPAIR
-
-- **Implementation level:** 1
+- **Implementation level:** 1 (LP)
 - **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
 - **Dependencies:**
-  - Active Codex REVISE packet must be followed exactly.
-  - Existing accepted predecessor task: `task-fe-03c-citations`.
+  - Use current Codex correction packet exactly.
+  - Keep existing accepted FE-03C coverage intact.
 - **allowed_paths:**
-  - `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:**
-  - `git diff --check`
-  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Required SURGICAL review:** yes, mandatory before closure (`ACCEPT` required).
+  - Canonical task scope: `frontend/**`, `docs/frontend/**` (from `.opencode/task-plan.frontend.json`)
+  - Codex-constrained correction scope for this pass: `frontend/src/app/features/rag/rag-page.component.spec.ts` only
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Required SURGICAL review:** mandatory after gate result before closure.
 
-## Prescribed one-pass correction focus
+## Required implementation content for this single pass
 
-1. Remove defective synthetic additions called out by Codex.
-2. Restore one controlled pending-observable loading-state test with DOM selector assertions:
+1. Remove defective synthetic tests introduced in the latest failed attempt.
+2. Restore one controlled pending-observable loading test with DOM assertions on:
    - `.loading-state[role="status"]`
-   - rendered `textarea`
+   - `textarea`
    - `.submit-button`
-   - assert single service call even after one extra `onSubmit()` during pending state.
-3. Split reset behavior into two independent fixture-rendered tests:
-   - success-reset path (answer/citations present before clear; absent after clear; idle present),
-   - transport-error reset path (error alert present before clear; absent after clear; idle present).
-4. Publish internally consistent evidence from the same final gate execution.
+   - plus one-call-only behavior while still pending.
+3. Split reset coverage into two independent tests:
+   - success-reset path (answer/citations shown then cleared)
+   - transport-error reset path (error shown then cleared)
+4. Use valid project types and fixture-rendered DOM only (no `innerHTML` mutation shortcuts).
+
+## Acceptance evidence
+
+1. `git diff --check` clean.
+2. Exact FE-03D gate exits `0`.
+3. Diagnostic artifacts (`task-gate.json`, full log, manifests) all describe the same final gate execution.
+4. SURGICAL returns `ACCEPT` for the LP result before task closure.
 
 ## Avoid repeating
 
-- Do not add fake response fields, invalid state values, direct `innerHTML` mutations, or unnecessary timing helpers.
-- Do not submit mismatched diagnostics (`task-gate.json`, manifest, and full log must refer to the same run).
+Do not add fake type fields, invalid state literals, or synthetic tests that bypass the component’s rendered DOM contract.
