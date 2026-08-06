@@ -1,28 +1,41 @@
-# Worker understanding assessment (RUN_ID: 20260806T185629Z)
+# Worker understanding assessment (Ring)
 
 ## PC understanding
 
-Evidence (`pc-runtime/memory.md`, `pc-runtime/pre_edit_understanding.md`) is coherent with current state: gate already green, no claim of acceptance, and acknowledgment that Codex decision is pending. Main issue is not understanding quality; it is unresolved closure workflow (`CHECKPOINT_COMMIT_FAILED` + no Codex disposition).
+### Observed
+- PC artifacts show active task-07 and a gate-green request, but no Codex decision yet.
+- Previous Ring directive already warned not to repeat implementation loops before SURGICAL review.
 
-### PC next understanding requirement
-- Keep the next pass explicitly non-implementation unless SURGICAL returns `REVISE`.
-- If `REVISE` arrives, map each requested correction to exact backend file edits before running any new gate.
+### Diagnosis
+- Primary gap is not coding comprehension but **closure-state handling**: evidence indicates readiness for review, not further coding.
+
+### Next bounded instruction
+- **Level 3 / SURGICAL / task-07-populate-production-rag**
+- **Dependencies:** existing gate-green request artifacts.
+- **allowed_paths:** read-only review (`[]`).
+- **Exact gate/constraint:** enforce hierarchy closure contract (`exact-gate-green + scope-clean + surgical-accept + controller-commit`).
+- **Required SURGICAL review:** yes (this step).
 
 ## LP understanding
 
-Evidence indicates weak understanding quality in the latest cycle:
-- `lp-runtime/local_understanding.md` is generic and does not map FE-03D requirements to selectors/assertions.
-- Codex packet explicitly flags misunderstanding and implementation defects (`lp-runtime/codex-qwen3-extra-instructions.md`).
+### Observed
+- LP memory records gate exit 2 and Codex `REVISE`.
+- `local_understanding.md` is explicitly inadequate and does not provide selector-to-assertion mapping.
+- Codex correction packet is precise and actionable.
 
-### LP next understanding requirement (mandatory)
-- Before editing, produce a selector-level map for FE-03D requirements:
-  - loading indicator assertion
-  - textarea/button disablement assertion while pending
-  - success reset assertions
-  - transport-error reset assertions
-- After gate run, ensure local understanding references the same final gate execution (task-gate metadata + diagnostics consistency).
+### Diagnosis
+- LP misunderstood or incompletely applied FE-03D requirements, introducing synthetic tests and invalid constructs.
 
-## Bounded packages and review requirement
+### Next bounded instruction
+- **Level 1 / LP / task-fe-03d-dom-state-tests**
+- **Dependencies:** active Codex `REVISE` packet.
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` only.
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
+- **Required SURGICAL review:** yes, post-gate.
 
-1. **PC hold/review package** — Level 3, SURGICAL, `task-07-populate-production-rag`, read-only review scope, closure gate contract enforced, SURGICAL required.
-2. **LP correction package** — Level 1, LP, `task-fe-03d-dom-state-tests`, allowed path `frontend/src/app/features/rag/rag-page.component.spec.ts`, exact FE-03D gate, SURGICAL required.
+## Evidence paths
+
+- `runtime/ring-agent/ring/20260806T190129Z/pc-runtime/previous-ring-qwen3-directive.json`
+- `runtime/ring-agent/ring/20260806T190129Z/worker-requests/PC.json`
+- `runtime/ring-agent/ring/20260806T190129Z/lp-runtime/local_understanding.md`
+- `runtime/ring-agent/ring/20260806T190129Z/lp-runtime/codex-qwen3-extra-instructions.md`

@@ -1,36 +1,38 @@
-# Global coordination summary (RUN_ID: 20260806T185629Z)
+# Global summary (Ring cycle `20260806T190129Z`)
 
-## Executive status
+## Outcome
 
-- **Overall:** `READY` for bounded next actions.
-- **PC:** `HOLD` on `task-07-populate-production-rag` until mandatory SURGICAL disposition is recorded for the current gate-green checkpoint evidence.
-- **LP:** `CONTINUE` on `task-fe-03d-dom-state-tests` with one tightly scoped correction pass in `rag-page.component.spec.ts`.
+- **Overall status:** `READY`
+- **PC:** `REVIEW` on `task-07-populate-production-rag` (SURGICAL disposition missing on gate-green checkpoint).
+- **LP:** `CONTINUE` on `task-fe-03d-dom-state-tests` (red gate + explicit Codex REVISE packet).
 
-## Evidence-backed findings
+## Why these are the first current defects
 
-1. Backend gate already green (`pc-runtime/gate_summary.md`), but controller reports `CHECKPOINT_COMMIT_FAILED` (`pc-runtime/controller_state.json`) and worker request has `codex_decision: null` (`worker-requests/PC.json`).
-2. Frontend gate currently red (`lp-runtime/gate_summary.md`, exit `2`) with explicit Codex `REVISE` correction packet requiring selector-level DOM test fixes (`lp-runtime/codex-qwen3-extra-instructions.md`).
+1. **PC first defect = missing closure review**
+   - Gate already green in request evidence, but `codex_decision=null` and no checkpoint head recorded.
+   - Therefore acceptance is unproven; another implementation pass is not the next correct action.
 
-## Next-cycle routing
+2. **LP first defect = incorrect spec implementation**
+   - Deterministic gate failed (exit 2).
+   - Codex provides concrete corrective instructions for invalid synthetic tests in the FE-03D spec.
 
-### Backend route
-- **Implementation level:** 3
-- **Role:** SURGICAL review-only
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** existing gate-green checkpoint evidence
-- **allowed_paths:** read-only review now; if REVISE then backend task-07 allowed scope
-- **Exact gate / closure constraints:** retain task-07 gate green; require `surgical-accept` and successful controller commit
+## Required next passes
 
-### Frontend route
-- **Implementation level:** 1
-- **Role:** LP
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** Codex REVISE packet
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Closure constraints:** `exact-gate-green + scope-clean + surgical-accept + controller-commit`
+- **SURGICAL Level 3 review-only pass for PC task-07** before any new backend coding.
+- **LP Level 1 bounded correction pass** in one file, then exact FE gate + SURGICAL review.
 
-## Do-not-repeat controls
+## Constraints enforced
 
-- Do not run another PC implementation loop before SURGICAL disposition of the existing task-07 diff.
-- Do not reintroduce LP synthetic tests or invalid test data structures rejected by Codex.
+- No queue overlap: backend review and frontend spec correction are disjoint.
+- Mandatory closure policy remains: `exact-gate-green + scope-clean + surgical-accept + controller-commit`.
+- No runtime-control writes were performed in this cycle.
+
+## Evidence limitations
+
+- PC Codex decision artifact is absent in this run snapshot (only metadata indicates `null`).
+- LP codex_plan/review files are metadata wrappers; detailed directives were taken from the extra-instructions packet.
+
+## Ring worktree edits
+
+- No repository code/config/test/docs edits were made.
+- Only the six staged output artifacts under `runtime/ring-agent/ring/20260806T190129Z/output/` were written.

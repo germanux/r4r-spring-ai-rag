@@ -1,43 +1,40 @@
-# PC code review (RUN_ID: 20260806T185629Z)
+# PC code review (Ring)
 
-## Current evidence
+## Current evidence-based status
 
-- Active backend task: `task-07-populate-production-rag` (`pc-runtime/progress.json`).
-- Deterministic gate is green: exit `0` (`pc-runtime/gate_summary.md`).
-- Controller run ended in `CHECKPOINT_COMMIT_FAILED` / exit `67` (`pc-runtime/controller_state.json`).
-- Worker request exists with `codex_decision: null` and `reason: gate-green-checkpoint` (`worker-requests/PC.json`).
+- Active task: `task-07-populate-production-rag` (`pc-runtime/progress.json`).
+- Deterministic gate evidence exists with `gate_exit: 0` for attempt 1 (`worker-requests/PC.json`).
+- Closure evidence is incomplete: `codex_decision` is `null` and `checkpoint_head` is `null` in the same request artifact.
+- Task remains `BLOCKED` in progress state, so no acceptance can be claimed.
 
-## First current defect
+## First current defect (PC)
 
-The first blocking defect is **missing mandatory SURGICAL disposition on the already gate-green backend diff**, combined with a failed automatic checkpoint commit. This is a review/integration closure defect, not a new coding defect.
+The first defect is **process/closure incompleteness**, not an implementation bug: the gate-green checkpoint has not yet received SURGICAL Codex disposition (`ACCEPT`/`REVISE`). Running another PC implementation loop now would duplicate effort and risk drift from the already-green evidence.
 
 ## Bounded next action package
 
-### Package: BE-07-REVIEW-HOLD
-- **Implementation level:** 3
-- **Assigned role:** SURGICAL (`r4r-surgical-architect`/`r4r-surgical-fixer`) review-only pass
+- **Implementation level:** Level 3
+- **Assigned role:** SURGICAL Codex (review-only)
 - **Task ID:** `task-07-populate-production-rag`
 - **Dependencies:**
-  - Existing gate-green evidence already captured for run `20260806T185545Z`
-  - No additional PC edits before review
-- **allowed_paths:**
-  - Read-only review of current diff/evidence for task-07 (no product writes in this pass)
-  - If Codex returns `REVISE`, follow-up PC edits must stay in task plan scope:
-    - `pom.xml`
-    - `src/main/**`
-    - `src/test/**`
-    - `docs/backend/**`
-- **Exact gate:**
-  - Preserve current green status of task-07 exact gate from `.opencode/task-plan.backend.json`
-  - Closure contract from `.opencode/task-plan.hierarchy.json`: `exact-gate-green + scope-clean + surgical-accept + controller-commit`
-- **Required SURGICAL review:** Mandatory before closure (no bypass).
+  - Existing gate-green evidence from `run_id=20260806T190026Z`, attempt 1.
+  - Mandatory review policy in `.opencode/task-plan.hierarchy.json`.
+- **allowed_paths:** `[]` (read-only review pass; no product edits)
+- **Exact gate:** Reuse existing exact task gate contract from `.opencode/task-plan.backend.json` for `task-07-populate-production-rag`; do **not** trigger a new PC implementation cycle unless Codex returns `REVISE`.
+- **Required SURGICAL review:** Yes (mandatory for closure).
 
-## Acceptance evidence required for closure
+## Acceptance conditions
 
-1. SURGICAL decision recorded as `ACCEPT` or `REVISE` for the current task-07 diff.
-2. Controller no longer reports `CHECKPOINT_COMMIT_FAILED` for the accepted checkpoint/commit flow.
-3. No out-of-scope backend writes beyond task-07 allowed paths.
+1. SURGICAL emits explicit `ACCEPT` or `REVISE` for the existing checkpoint evidence.
+2. If `ACCEPT`: controller completes closure path (`exact-gate-green + scope-clean + surgical-accept + controller-commit`).
+3. If `REVISE`: Ring issues one bounded PC correction pass on the first cited defect only.
 
 ## Avoid repeating
 
-- Do **not** run another full PC implementation + gate cycle while `codex_decision` remains null for the existing gate-green checkpoint evidence.
+- Do not run another full backend gate+implementation loop while `codex_decision` for the current gate-green evidence remains `null`.
+
+## Evidence paths
+
+- `runtime/ring-agent/ring/20260806T190129Z/worker-requests/PC.json`
+- `runtime/ring-agent/ring/20260806T190129Z/pc-runtime/progress.json`
+- `runtime/ring-agent/ring/20260806T190129Z/pc-runtime/previous-ring-qwen3-directive.json`
