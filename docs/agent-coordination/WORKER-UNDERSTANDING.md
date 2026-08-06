@@ -1,52 +1,28 @@
-# Worker understanding assessment (run 20260806T185129Z)
+# Worker understanding assessment (RUN_ID: 20260806T185629Z)
 
-## PC understanding quality
+## PC understanding
 
-Evidence shows a coherent checkpoint handoff pattern (gate-green request with bounded changed paths), but the closure state is still unresolved because no SURGICAL disposition is attached yet.
+Evidence (`pc-runtime/memory.md`, `pc-runtime/pre_edit_understanding.md`) is coherent with current state: gate already green, no claim of acceptance, and acknowledgment that Codex decision is pending. Main issue is not understanding quality; it is unresolved closure workflow (`CHECKPOINT_COMMIT_FAILED` + no Codex disposition).
 
-- Supporting evidence:
-  - `worker-requests/PC.json` (`gate_exit: 0`, `codex_decision: null`)
-  - `pc-runtime/gate_summary.md` (green)
-  - `pc-runtime/progress.json` (task remains `BLOCKED`)
+### PC next understanding requirement
+- Keep the next pass explicitly non-implementation unless SURGICAL returns `REVISE`.
+- If `REVISE` arrives, map each requested correction to exact backend file edits before running any new gate.
 
-### Understanding correction for next pass
+## LP understanding
 
-- Treat this as a **review gap**, not an implementation gap.
-- Next pass must be SURGICAL review-only; PC should not start another broad code/gate loop before disposition.
+Evidence indicates weak understanding quality in the latest cycle:
+- `lp-runtime/local_understanding.md` is generic and does not map FE-03D requirements to selectors/assertions.
+- Codex packet explicitly flags misunderstanding and implementation defects (`lp-runtime/codex-qwen3-extra-instructions.md`).
 
-#### Action package (PC understanding)
-- **Implementation level:** 3
-- **Assigned role:** SURGICAL
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** existing gate-green checkpoint evidence and closure policy
-- **allowed_paths:** `[]` (read-only review)
-- **Exact gate:** validate current evidence against the task-07 exact gate already executed
-- **Required SURGICAL review:** mandatory (this pass provides it)
+### LP next understanding requirement (mandatory)
+- Before editing, produce a selector-level map for FE-03D requirements:
+  - loading indicator assertion
+  - textarea/button disablement assertion while pending
+  - success reset assertions
+  - transport-error reset assertions
+- After gate run, ensure local understanding references the same final gate execution (task-gate metadata + diagnostics consistency).
 
-## LP understanding quality
+## Bounded packages and review requirement
 
-Understanding is currently inadequate and inconsistent with authoritative evidence.
-
-- Supporting evidence:
-  - `lp-runtime/local_understanding.md` states missing model-authored summary and defers inspection.
-  - `lp-runtime/codex-qwen3-extra-instructions.md` explicitly flags inadequate understanding and lists selector-level required fixes.
-  - `lp-runtime/gate_summary.md` confirms red gate (`exit 2`).
-
-### Understanding correction for next pass
-
-- The next LP understanding report must map each FE-03D requirement to exact selectors/assertions implemented in the spec.
-- Evidence artifacts (task-gate, gate-full log, diagnostics manifest) must all refer to the same final gate execution.
-- Keep scope strictly to the single spec file required by the correction packet.
-
-#### Action package (LP understanding)
-- **Implementation level:** 1
-- **Assigned role:** LP
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** current Codex REVISE packet + accepted task-fe-03c prerequisite
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Required SURGICAL review:** mandatory after rerun evidence
-
-## Required review chain reminder
-
-For both queues, closure still requires SURGICAL `ACCEPT` after exact gate evidence and scope cleanliness.
+1. **PC hold/review package** — Level 3, SURGICAL, `task-07-populate-production-rag`, read-only review scope, closure gate contract enforced, SURGICAL required.
+2. **LP correction package** — Level 1, LP, `task-fe-03d-dom-state-tests`, allowed path `frontend/src/app/features/rag/rag-page.component.spec.ts`, exact FE-03D gate, SURGICAL required.

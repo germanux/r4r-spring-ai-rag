@@ -1,46 +1,43 @@
-# PC code review (run 20260806T185129Z)
+# PC code review (RUN_ID: 20260806T185629Z)
 
-## Current evidence snapshot
+## Current evidence
 
-- Active task: `task-07-populate-production-rag` (`pc-runtime/progress.json`).
-- Deterministic gate summary is green (`exit 0`) (`pc-runtime/gate_summary.md`).
-- Controller captured a gate-green checkpoint request with changed backend paths (`worker-requests/PC.json`).
-- Task is still `BLOCKED` and there is no SURGICAL disposition yet (`codex_decision: null`) (`worker-requests/PC.json`, `pc-runtime/progress.json`).
+- Active backend task: `task-07-populate-production-rag` (`pc-runtime/progress.json`).
+- Deterministic gate is green: exit `0` (`pc-runtime/gate_summary.md`).
+- Controller run ended in `CHECKPOINT_COMMIT_FAILED` / exit `67` (`pc-runtime/controller_state.json`).
+- Worker request exists with `codex_decision: null` and `reason: gate-green-checkpoint` (`worker-requests/PC.json`).
 
-## First current defect (PC queue)
+## First current defect
 
-The first defect is **not a new backend implementation failure**; it is a **missing mandatory SURGICAL review decision** for the already produced gate-green diff. Closing or re-running implementation now would bypass the required acceptance chain.
+The first blocking defect is **missing mandatory SURGICAL disposition on the already gate-green backend diff**, combined with a failed automatic checkpoint commit. This is a review/integration closure defect, not a new coding defect.
 
-## Bounded next package
+## Bounded next action package
 
-### Package ID: SURG-BE-07-REVIEW-01
+### Package: BE-07-REVIEW-HOLD
 - **Implementation level:** 3
-- **Assigned role:** SURGICAL (`r4r-surgical-architect` / `r4r-surgical-fixer`)
+- **Assigned role:** SURGICAL (`r4r-surgical-architect`/`r4r-surgical-fixer`) review-only pass
 - **Task ID:** `task-07-populate-production-rag`
 - **Dependencies:**
-  - Existing gate-green checkpoint evidence from PC attempt 1 (`worker-requests/PC.json`).
-  - Closure policy in `.opencode/task-plan.hierarchy.json`.
-- **allowed_paths:** `[]` (review-only pass; no product writes)
-- **Exact gate:** Review-only disposition against the already-executed exact gate for `task-07-populate-production-rag`.
-- **Required SURGICAL review:** Yes (this package is the SURGICAL review itself).
+  - Existing gate-green evidence already captured for run `20260806T185545Z`
+  - No additional PC edits before review
+- **allowed_paths:**
+  - Read-only review of current diff/evidence for task-07 (no product writes in this pass)
+  - If Codex returns `REVISE`, follow-up PC edits must stay in task plan scope:
+    - `pom.xml`
+    - `src/main/**`
+    - `src/test/**`
+    - `docs/backend/**`
+- **Exact gate:**
+  - Preserve current green status of task-07 exact gate from `.opencode/task-plan.backend.json`
+  - Closure contract from `.opencode/task-plan.hierarchy.json`: `exact-gate-green + scope-clean + surgical-accept + controller-commit`
+- **Required SURGICAL review:** Mandatory before closure (no bypass).
 
-### Acceptance evidence required from this pass
-1. Explicit SURGICAL `ACCEPT` or `REVISE` attached to the current checkpoint diff.
-2. If `REVISE`, one bounded correction target naming exact files and one exact rerun gate.
-3. Confirmation that closure policy remains: `exact-gate-green + scope-clean + surgical-accept + controller-commit`.
+## Acceptance evidence required for closure
 
-## Follow-on only if SURGICAL returns REVISE
+1. SURGICAL decision recorded as `ACCEPT` or `REVISE` for the current task-07 diff.
+2. Controller no longer reports `CHECKPOINT_COMMIT_FAILED` for the accepted checkpoint/commit flow.
+3. No out-of-scope backend writes beyond task-07 allowed paths.
 
-### Package ID: BE-07-B-PC-REVISE-01 (conditional)
-- **Implementation level:** 2
-- **Assigned role:** PC
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `SURG-BE-07-REVIEW-01:REVISE`
-- **allowed_paths:** `src/**`, `docs/backend/**` (from hierarchy BE-07-B) and must remain within task plan allowed paths.
-- **Exact gate:** backend task-07 gate from `.opencode/task-plan.backend.json`.
-- **Required SURGICAL review:** Mandatory before closure (per hierarchy policy).
+## Avoid repeating
 
-## Do-not-repeat guard
-
-- Do **not** run another full PC implementation loop before SURGICAL disposition of current evidence.
-- Do **not** claim acceptance from gate-green checkpoint alone.
+- Do **not** run another full PC implementation + gate cycle while `codex_decision` remains null for the existing gate-green checkpoint evidence.
