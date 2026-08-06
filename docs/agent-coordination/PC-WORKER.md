@@ -1,32 +1,46 @@
-# PC code review (evidence cycle 20260806T184628Z)
+# PC code review (run 20260806T185129Z)
 
-## Current evidence read
-- `pc-runtime/progress.json`: active task is `task-07-populate-production-rag`; status remains `BLOCKED`; last gate-green attempt recorded.
-- `worker-requests/PC.json`: controller requested handling for a **gate-green checkpoint** with `codex_decision: null`.
-- `pc-runtime/memory.md`: latest gate exit `0`; Codex decision still pending.
-- `pc-git-status.txt`: backend/product changes are present and not yet controller-closed.
+## Current evidence snapshot
 
-## First current defect (PC)
-The backend pass is **not closure-ready** because SURGICAL disposition is missing for the current task-07 diff/evidence packet. No current-run artifact proves `ACCEPT` or final controller commit.
+- Active task: `task-07-populate-production-rag` (`pc-runtime/progress.json`).
+- Deterministic gate summary is green (`exit 0`) (`pc-runtime/gate_summary.md`).
+- Controller captured a gate-green checkpoint request with changed backend paths (`worker-requests/PC.json`).
+- Task is still `BLOCKED` and there is no SURGICAL disposition yet (`codex_decision: null`) (`worker-requests/PC.json`, `pc-runtime/progress.json`).
 
-## Bounded next action package
-- **Implementation level:** 3 (SURGICAL review lane)
-- **Assigned role:** SURGICAL Codex (`r4r-surgical-architect` / `r4r-surgical-fixer` review-only disposition)
+## First current defect (PC queue)
+
+The first defect is **not a new backend implementation failure**; it is a **missing mandatory SURGICAL review decision** for the already produced gate-green diff. Closing or re-running implementation now would bypass the required acceptance chain.
+
+## Bounded next package
+
+### Package ID: SURG-BE-07-REVIEW-01
+- **Implementation level:** 3
+- **Assigned role:** SURGICAL (`r4r-surgical-architect` / `r4r-surgical-fixer`)
 - **Task ID:** `task-07-populate-production-rag`
 - **Dependencies:**
-  - `task-06f-ingestion-validation:ACCEPTED` (already shown)
-  - Validate hierarchy dependency alignment for `BE-07-B` requiring `BE-07-A:ACCEPTED` before closure.
-- **allowed_paths (for any follow-up implementation after disposition):**
-  - from backend plan task-07: `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-  - from hierarchy BE-07-B: `src/**`, `docs/backend/**`
-- **Exact gate:**
-  - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
-- **Required SURGICAL review:** mandatory before closure per `.opencode/task-plan.hierarchy.json` (`exact-gate-green + scope-clean + surgical-accept + controller-commit`).
+  - Existing gate-green checkpoint evidence from PC attempt 1 (`worker-requests/PC.json`).
+  - Closure policy in `.opencode/task-plan.hierarchy.json`.
+- **allowed_paths:** `[]` (review-only pass; no product writes)
+- **Exact gate:** Review-only disposition against the already-executed exact gate for `task-07-populate-production-rag`.
+- **Required SURGICAL review:** Yes (this package is the SURGICAL review itself).
 
-## Acceptance evidence expected next
-1. A recorded SURGICAL `ACCEPT` or `REVISE` tied to this exact task-07 checkpoint.
-2. If `REVISE`, one bounded follow-up correction pass only.
-3. No dependency bypass around BE-07-A/BE-07-B sequencing.
+### Acceptance evidence required from this pass
+1. Explicit SURGICAL `ACCEPT` or `REVISE` attached to the current checkpoint diff.
+2. If `REVISE`, one bounded correction target naming exact files and one exact rerun gate.
+3. Confirmation that closure policy remains: `exact-gate-green + scope-clean + surgical-accept + controller-commit`.
 
-## Avoid repeating
-- Do not start a fresh PC coding/gate loop on task-07 without first obtaining the SURGICAL disposition for the already gate-green backend diff.
+## Follow-on only if SURGICAL returns REVISE
+
+### Package ID: BE-07-B-PC-REVISE-01 (conditional)
+- **Implementation level:** 2
+- **Assigned role:** PC
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** `SURG-BE-07-REVIEW-01:REVISE`
+- **allowed_paths:** `src/**`, `docs/backend/**` (from hierarchy BE-07-B) and must remain within task plan allowed paths.
+- **Exact gate:** backend task-07 gate from `.opencode/task-plan.backend.json`.
+- **Required SURGICAL review:** Mandatory before closure (per hierarchy policy).
+
+## Do-not-repeat guard
+
+- Do **not** run another full PC implementation loop before SURGICAL disposition of current evidence.
+- Do **not** claim acceptance from gate-green checkpoint alone.

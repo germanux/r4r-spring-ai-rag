@@ -1795,3 +1795,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - pc-runtime manifest lists codex_review, codex_plan, gate_summary and checkpoint as null in this snapshot, so this cycle cannot independently verify PC patch-level findings beyond status/memory/request artifacts.
 - RUN_DIR contains LP gate summary and Codex directives but not the full gate-full.log or patch content; detailed compile/test failure lines are inferred from summarized evidence.
+
+## Cycle `20260806T185129Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-07-populate-production-rag`
+- Reason: The backend exact gate is green (exit 0) and a gate-green checkpoint request exists, but no SURGICAL Codex disposition is present (codex_decision=null), so closure is unproven and the first defect is missing mandatory review evidence.
+- Next action: Run one SURGICAL review-only pass on the existing task-07 diff/evidence and return ACCEPT or REVISE before any additional PC implementation pass.
+- Avoid repeating: Do not rerun a full PC implementation cycle on task-07 before SURGICAL disposition of the current gate-green checkpoint evidence.
+- Acceptance gates:
+  - Exact backend task gate for task-07-populate-production-rag from .opencode/task-plan.backend.json must remain satisfied.
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+  - Do not run another PC implementation/gate loop until the current checkpoint diff receives SURGICAL ACCEPT/REVISE disposition.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T185129Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T185129Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T185129Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T185129Z/pc-git-status.txt`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: Frontend evidence is red (gate exit 2) and Codex marked REVISE with concrete selector-level corrections; the first defect is the invalid synthetic/spec changes in rag-page.component.spec.ts that do not satisfy FE-03D DOM behavior proof.
+- Next action: Execute one bounded LP correction pass in rag-page.component.spec.ts only, implement the mandated loading + split reset DOM assertions, then run git diff --check and the exact FE-03D gate once and refresh evidence.
+- Avoid repeating: Do not reintroduce synthetic tests, invalid types/fields, direct innerHTML mutation, or inconsistent gate/evidence packaging disconnected from the final gate run.
+- Acceptance gates:
+  - Write-scope constraint from hierarchy FE-03D-A correction packet: frontend/src/app/features/rag/rag-page.component.spec.ts only.
+  - Pre-gate hygiene required by Codex packet: git diff --check.
+  - Exact frontend gate from .opencode/task-plan.frontend.json: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T185129Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T185129Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T185129Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T185129Z/lp-git-status.txt`
+
+### Integration risks
+
+- PC task-07 is at gate-green-checkpoint state but still BLOCKED in progress.json; accepting without explicit SURGICAL disposition would violate closure policy.
+- Hierarchy dependency BE-07-B depends on BE-07-A acceptance; current run evidence shows task-level progress but does not explicitly record BE-07-A acceptance state.
+- LP evidence quality risk: Codex reported understanding/evidence inconsistency, so another red gate is likely if selector-to-assertion mapping is not followed exactly.
+
+### Evidence limitations
+
+- This RUN_DIR contains gate summaries and worker memory snapshots, but not the full backend gate log or full backend patch artifact for independent line-by-line review in this cycle.
+- codex_plan.json and codex_review.json in LP runtime contain execution metadata only; the substantive review directives are sourced from codex-qwen3-extra-instructions.md and memory.md.
