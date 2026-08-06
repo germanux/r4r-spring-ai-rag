@@ -1,42 +1,39 @@
-# Global Summary — Coordination Cycle 20260806T191631Z
+# Global coordination summary — run 20260806T192132Z
 
-## Executive status
-Overall status: **READY**.  
-No repository edits were made by Ring in this cycle; only staged coordination artifacts were written under `OUTPUT_DIR`.
+## Overall status
 
-## Evidence-grounded findings
-1. **PC queue:** active `task-07-populate-production-rag` has a gate-green checkpoint request (`gate_exit=0`) but no SURGICAL verdict yet (`codex_decision=null`). Closure is therefore unproven.
-2. **LP queue:** active `task-fe-03d-dom-state-tests` is currently red (`gate exit 2`), with bounded corrective guidance focused on one frontend spec file.
-3. **Scope separation:** backend and frontend next actions are disjoint; no overlapping write scopes are required in this cycle.
+`READY` — both queues have a clear bounded next action backed by current RUN_DIR evidence.
 
-## Routed actions
+## Decision summary
 
-### PC routed action
-- **Level:** 3
-- **Role:** SURGICAL Codex
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** existing PC checkpoint request and gate-green evidence
-- **allowed_paths:** `[]` (review-only)
-- **Exact gate/constraint:** hierarchy closure policy + task-07 gate remains satisfied
-- **SURGICAL review:** mandatory and immediate
+### PC
+- **Action:** `REVIEW`
+- **Task:** `task-07-populate-production-rag`
+- **Why:** gate is green, but closure is blocked by missing SURGICAL decision (`codex_decision=null`).
+- **Next:** one SURGICAL review-only pass; no further PC coding until decision lands.
 
-### LP routed action
-- **Level:** 1
-- **Role:** LP
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations: ACCEPTED`
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` + `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **SURGICAL review:** mandatory after gate result
+### LP
+- **Action:** `CONTINUE`
+- **Task:** `task-fe-03d-dom-state-tests`
+- **Why:** deterministic frontend gate is red (exit 2) and memory identifies invalid synthetic tests to replace.
+- **Next:** one bounded correction pass in `frontend/src/app/features/rag/rag-page.component.spec.ts`, then run the exact gate once with consistent diagnostics.
 
-## Risks and controls
-- **Risk:** backend churn from re-running PC implementation before review.  
-  **Control:** hold PC edits until SURGICAL ACCEPT/REVISE outcome.
-- **Risk:** LP repeated red cycles due broad/unfocused test rewrites.  
-  **Control:** single-file bounded correction with prescribed DOM assertions.
-- **Risk:** evidence mismatch across summaries/log manifests.  
-  **Control:** require all LP diagnostics to reference the same final gate execution.
+## Required acceptance conditions (both queues)
+
+From `.opencode/task-plan.hierarchy.json`:
+- `exact-gate-green`
+- `scope-clean`
+- `surgical-accept`
+- `controller-commit`
 
 ## Evidence limitations
-- Full gate logs are referenced but not included in this RUN_DIR snapshot.
-- Codex plan/review artifacts for LP expose runner metadata only in this snapshot.
+
+- Gate summaries are present, but not full `gate-full.log` content in this staged snapshot.
+- LP Codex plan/review artifacts are metadata wrappers without detailed rationale payload.
+- No PC codex review artifact is present yet for the pending checkpoint request.
+
+## Ring worktree edits this cycle
+
+- No repository code/tests/config/docs were edited.
+- Only the six required staged output artifacts were written under:
+  - `runtime/ring-agent/ring/20260806T192132Z/output/`

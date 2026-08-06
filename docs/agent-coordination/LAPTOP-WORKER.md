@@ -1,47 +1,39 @@
-# LP Code Review — RUN 20260806T191631Z
+# LP code review — run 20260806T192132Z
 
-## Evidence reviewed
-- `runtime/ring-agent/ring/20260806T191631Z/lp-runtime/progress.json`
-- `runtime/ring-agent/ring/20260806T191631Z/lp-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260806T191631Z/lp-runtime/memory.md`
-- `runtime/ring-agent/ring/20260806T191631Z/lp-runtime/previous-ring-qwen3-directive.json`
-- `runtime/ring-agent/ring/20260806T191631Z/lp-git-status.txt`
+## Current evidence
 
-## Current diagnosis (first current defect)
-`task-fe-03d-dom-state-tests` remains red (`exit 2`). Current Codex-guided evidence points to an LP test-authoring defect in `frontend/src/app/features/rag/rag-page.component.spec.ts`: synthetic/invalid tests and reset assertions that do not match required DOM-state behavior.
+- Active frontend task is `task-fe-03d-dom-state-tests` (`lp-runtime/progress.json`).
+- Latest deterministic gate is red (`lp-runtime/gate_summary.md`, exit `2`).
+- LP memory records Codex `REVISE` and a prescriptive correction packet focused on `rag-page.component.spec.ts` (`lp-runtime/memory.md`).
 
-## Decision
-**Action:** CONTINUE  
-**Task:** `task-fe-03d-dom-state-tests`
+## First current defect
+
+The first defect is in the current LP patch behavior: synthetic/invalid DOM tests were introduced and did not satisfy FE-03D deterministic assertions, leaving the gate red.
 
 ## Bounded next action package
-- **Implementation level:** Level 1
+
+- **Implementation level:** 1
 - **Assigned role:** LP
-- **Task ID:** `task-fe-03d-dom-state-tests` (frontend plan)
+- **Task ID:** `task-fe-03d-dom-state-tests`
 - **Dependencies:**
-  - `task-fe-03c-citations: ACCEPTED` (already satisfied)
-  - Continue under current REVISE guidance captured in LP memory/directive evidence
+  - `task-fe-03c-citations:ACCEPTED`
+  - Existing Codex correction constraints captured in LP memory/directive
 - **allowed_paths:**
   - Canonical task scope: `frontend/**`, `docs/frontend/**` (from `.opencode/task-plan.frontend.json`)
-  - **This repair pass constraint:** `frontend/src/app/features/rag/rag-page.component.spec.ts` only
-- **Exact gate / constraints:**
+  - **This pass constrained to:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate / constraint:**
   - `git diff --check`
   - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-  - Closure policy from `.opencode/task-plan.hierarchy.json`: `exact-gate-green + scope-clean + surgical-accept + controller-commit`
-- **Required SURGICAL review:** **Mandatory** after LP gate result
+  - Closure policy: `exact-gate-green + scope-clean + surgical-accept + controller-commit`
+- **Required SURGICAL review:** mandatory after LP gate-green result
 
-## Required correction content (bounded)
-1. Remove synthetic success/abstention and synthetic `innerHTML` reset patterns.
-2. Restore one controlled pending-observable loading test with DOM assertions on loading text and disabled controls.
-3. Split reset checks into two fixture-rendered tests:
-   - success-reset path,
-   - transport-error-reset path.
-4. Preserve existing answer/abstention/citation/escaping/service-isolation coverage.
+## Acceptance evidence required
 
-## Acceptance evidence required next cycle
-1. Deterministic FE-03D gate result for the final edited test file.
-2. Diagnostics (`gate summary`, task-gate evidence, manifest references) all describing the same final gate run.
-3. SURGICAL decision on the LP patch (`ACCEPT` or `REVISE`).
+1. LP publishes one coherent diff limited to the spec file above.
+2. Deterministic FE-03D gate is green for that exact pass.
+3. Diagnostics are internally consistent (manifest, task-gate output, and gate summary refer to the same final run).
+4. SURGICAL returns `ACCEPT` before controller closeout.
 
 ## Avoid repeating
-- Do not reintroduce fake response shapes, invalid state fields, direct `nativeElement.innerHTML` mutation, or unrelated test churn.
+
+Do **not** re-add synthetic tests, invalid state shapes, direct `innerHTML` mutation, or mixed diagnostics from non-final runs.
