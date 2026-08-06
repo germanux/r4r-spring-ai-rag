@@ -2114,3 +2114,50 @@ Append-only ledger generated after each validated Ring cycle.
 - This RUN_DIR snapshot provides gate summaries but not gate-full.log contents, so first-failure stack details are indirect.
 - lp-runtime/codex_plan.json and lp-runtime/codex_review.json contain invocation metadata only (no model rationale payload).
 - No PC codex review artifact is present in this RUN_DIR; only codex_decision=null request evidence is available.
+
+## Cycle `20260806T192632Z` â READY
+
+### PC
+
+- Decision: `REVIEW`
+- Task: `task-07-populate-production-rag`
+- Reason: PC already produced a gate-green checkpoint request (gate_exit=0) for task-07, but codex_decision is still null, so closure is blocked by mandatory SURGICAL review policy.
+- Next action: Run one SURGICAL review-only pass on the existing task-07 checkpoint evidence and return ACCEPT or REVISE before any further PC implementation pass.
+- Avoid repeating: Do not run another PC edit/gate loop while the same gate-green request still has codex_decision=null.
+- Acceptance gates:
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+  - Exact backend task gate for task-07-populate-production-rag from .opencode/task-plan.backend.json must remain satisfied.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T192632Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T192632Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T192632Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T192632Z/pc-runtime/previous-ring-qwen3-directive.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP is still red on the deterministic frontend gate (exit=2), and current memory identifies synthetic/invalid test additions that must be replaced with the prescribed DOM assertions in rag-page.component.spec.ts.
+- Next action: Apply one bounded correction pass in frontend/src/app/features/rag/rag-page.component.spec.ts per the current Codex correction packet, then run git diff --check and ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests once with consistent diagnostics.
+- Avoid repeating: Do not reintroduce synthetic/invalid tests, direct innerHTML mutation, invalid RAGAnswerResult shapes, or mismatched diagnostics unrelated to the final gate run.
+- Acceptance gates:
+  - Exact frontend task gate from .opencode/task-plan.frontend.json: ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests.
+  - Closure policy from .opencode/task-plan.hierarchy.json: exact-gate-green + scope-clean + surgical-accept + controller-commit.
+  - Codex correction constraint: keep this repair pass write scope limited to frontend/src/app/features/rag/rag-page.component.spec.ts.
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T192632Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T192632Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T192632Z/lp-runtime/previous-ring-qwen3-directive.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T192632Z/lp-git-status.txt`
+
+### Integration risks
+
+- Backend queue can churn or stall if PC implementation resumes before SURGICAL returns ACCEPT/REVISE on the current gate-green checkpoint.
+- Frontend FE-03D may continue to fail if LP keeps synthetic test patterns instead of the prescribed Subject-driven DOM assertions.
+- task-07 evidence depends on .env and Docker-backed database state; runtime drift can invalidate reproducibility between attempts.
+
+### Evidence limitations
+
+- This RUN_DIR snapshot includes gate summaries but not gate-full.log contents, so detailed failure stacks are indirect.
+- lp-runtime/codex_plan.json and lp-runtime/codex_review.json are invocation metadata wrappers and do not include rationale payload.
+- No PC codex review artifact is present in this RUN_DIR; only the pending request with codex_decision=null is available.
