@@ -1,47 +1,39 @@
 # Backend ↔ Frontend handoff (Ring)
 
-## Queue separation decision
+## Queue status snapshot
 
-- **Backend (PC task-07):** hold implementation; route to **SURGICAL review-only** because gate is already green but Codex disposition is missing.
-- **Frontend (LP task-fe-03d):** continue one bounded spec-file correction pass per Codex `REVISE` packet.
+### Backend (PC queue)
 
-This keeps backend/frontend ownership disjoint and avoids overlapping write scopes.
+- **Task:** `task-07-populate-production-rag`
+- **State from evidence:** gate-green request is present, but closure is blocked pending SURGICAL disposition (`codex_decision: null`).
+- **Decision this cycle:** `HOLD` PC implementation; run SURGICAL review-only pass.
 
-## Active bounded work packages
+### Frontend (LP queue)
 
-### 1) Backend closure review package
+- **Task:** `task-fe-03d-dom-state-tests`
+- **State from evidence:** red gate (`exit 2`) with Codex `REVISE` and explicit, spec-only correction guidance.
+- **Decision this cycle:** `CONTINUE` with one bounded LP repair pass.
 
-- **Implementation level:** Level 3
-- **Assigned role:** SURGICAL
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** Existing gate-green checkpoint request (`worker-requests/PC.json`).
-- **allowed_paths:** `[]` (read-only review pass)
-- **Exact gate:** Reuse previously recorded exact gate evidence for task-07; no new PC gate run unless `REVISE`.
-- **Required SURGICAL review:** This package itself is the mandatory review.
-- **Acceptance evidence:** Explicit Codex `ACCEPT`/`REVISE` attached to the current checkpoint evidence.
+## Ownership disjointness and dependency control
 
-### 2) Frontend correction package
+- Backend and frontend write scopes remain disjoint in this cycle:
+  - Backend review concerns `src/**` + `docs/backend/**` evidence for task-07.
+  - Frontend correction is constrained to `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+- No cross-queue product-path overlap is authorized.
+- Any newly discovered cross-layer or ambiguous requirement must be escalated to **Level 3 SURGICAL** and the overlapping queue held.
 
-- **Implementation level:** Level 1
-- **Assigned role:** LP
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** Active Codex `REVISE` instructions and red gate diagnostics.
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` (stricter-than-plan correction scope).
-- **Exact gate:**
-  1. `git diff --check`
-  2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Required SURGICAL review:** Mandatory post-gate `ACCEPT` before closure.
-- **Acceptance evidence:** Gate exit 0 + consistent diagnostics + Codex `ACCEPT`.
+## Action packages for this cycle
 
-## Integration risks to monitor next cycle
+1. **PKG-PC-07-REVIEW-ONLY**
+   - Level 3, owner SURGICAL, task `task-07-populate-production-rag`
+   - Dependency: existing gate-green request evidence
+   - allowed_paths: review-only evidence pass (no product writes)
+   - gate/constraint: closure policy (`exact-gate-green + scope-clean + surgical-accept + controller-commit`)
+   - required SURGICAL review: yes (this is that review)
 
-1. **Backend closure risk:** if PC is re-dispatched before SURGICAL disposition, existing green evidence may churn.
-2. **Frontend repeat-failure risk:** LP may fail again if selector-level assertions are not implemented exactly as directed.
-3. **Evidence quality risk:** LP understanding artifacts were previously inadequate; next run must map requirements to selectors/assertions explicitly.
-
-## Evidence basis
-
-- `runtime/ring-agent/ring/20260806T190129Z/worker-requests/PC.json`
-- `runtime/ring-agent/ring/20260806T190129Z/pc-runtime/progress.json`
-- `runtime/ring-agent/ring/20260806T190129Z/lp-runtime/memory.md`
-- `runtime/ring-agent/ring/20260806T190129Z/lp-runtime/codex-qwen3-extra-instructions.md`
+2. **PKG-LP-FE03D-SPEC-REPAIR**
+   - Level 1, owner LP, task `task-fe-03d-dom-state-tests`
+   - Dependency: active REVISE packet + accepted `task-fe-03c-citations`
+   - allowed_paths: `frontend/src/app/features/rag/rag-page.component.spec.ts`
+   - exact gate: `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+   - required SURGICAL review: yes before closure

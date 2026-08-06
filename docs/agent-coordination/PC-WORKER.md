@@ -1,40 +1,37 @@
 # PC code review (Ring)
 
-## Current evidence-based status
+## Current evidence verdict
 
-- Active task: `task-07-populate-production-rag` (`pc-runtime/progress.json`).
-- Deterministic gate evidence exists with `gate_exit: 0` for attempt 1 (`worker-requests/PC.json`).
-- Closure evidence is incomplete: `codex_decision` is `null` and `checkpoint_head` is `null` in the same request artifact.
-- Task remains `BLOCKED` in progress state, so no acceptance can be claimed.
+- Active task: `task-07-populate-production-rag`.
+- Deterministic gate status in current request: **green** (`gate_exit: 0`).
+- First current defect: **closure evidence is incomplete** (no Codex disposition yet; `codex_decision: null`).
 
-## First current defect (PC)
+Evidence:
 
-The first defect is **process/closure incompleteness**, not an implementation bug: the gate-green checkpoint has not yet received SURGICAL Codex disposition (`ACCEPT`/`REVISE`). Running another PC implementation loop now would duplicate effort and risk drift from the already-green evidence.
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/worker-requests/PC.json`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/pc-runtime/progress.json`
+- `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T190630Z/pc-runtime/gate_summary.md`
 
-## Bounded next action package
+## Bounded action package
 
-- **Implementation level:** Level 3
-- **Assigned role:** SURGICAL Codex (review-only)
+### PKG-PC-07-REVIEW-ONLY
+
+- **Implementation level:** 3
+- **Assigned role:** SURGICAL (`r4r-surgical-architect` / `r4r-surgical-fixer` as configured)
 - **Task ID:** `task-07-populate-production-rag`
 - **Dependencies:**
-  - Existing gate-green evidence from `run_id=20260806T190026Z`, attempt 1.
-  - Mandatory review policy in `.opencode/task-plan.hierarchy.json`.
-- **allowed_paths:** `[]` (read-only review pass; no product edits)
-- **Exact gate:** Reuse existing exact task gate contract from `.opencode/task-plan.backend.json` for `task-07-populate-production-rag`; do **not** trigger a new PC implementation cycle unless Codex returns `REVISE`.
-- **Required SURGICAL review:** Yes (mandatory for closure).
+  - Existing gate-green checkpoint evidence for task-07 (attempt 1) is already available.
+  - No additional PC code changes before review output.
+- **allowed_paths:**
+  - Read-only review of current evidence packet for task-07.
+  - No product-file writes in this pass.
+- **Exact gate / constraint:**
+  - Closure contract from `.opencode/task-plan.hierarchy.json`: `exact-gate-green + scope-clean + surgical-accept + controller-commit`.
+  - Task gate contract from `.opencode/task-plan.backend.json` for `task-07-populate-production-rag` remains authoritative.
+- **Required SURGICAL review:** mandatory (this package is itself a SURGICAL review pass).
 
-## Acceptance conditions
+## Next PC queue posture
 
-1. SURGICAL emits explicit `ACCEPT` or `REVISE` for the existing checkpoint evidence.
-2. If `ACCEPT`: controller completes closure path (`exact-gate-green + scope-clean + surgical-accept + controller-commit`).
-3. If `REVISE`: Ring issues one bounded PC correction pass on the first cited defect only.
-
-## Avoid repeating
-
-- Do not run another full backend gate+implementation loop while `codex_decision` for the current gate-green evidence remains `null`.
-
-## Evidence paths
-
-- `runtime/ring-agent/ring/20260806T190129Z/worker-requests/PC.json`
-- `runtime/ring-agent/ring/20260806T190129Z/pc-runtime/progress.json`
-- `runtime/ring-agent/ring/20260806T190129Z/pc-runtime/previous-ring-qwen3-directive.json`
+- **PC action this cycle:** `HOLD`.
+- **Unblock condition:** SURGICAL returns `ACCEPT` or `REVISE` on the current gate-green evidence.
+- **Avoid repeating:** do not rerun another full PC implementation/gate cycle while the current result has `codex_decision: null`.
