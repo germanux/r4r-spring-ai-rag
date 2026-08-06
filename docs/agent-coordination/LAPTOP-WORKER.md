@@ -1,30 +1,33 @@
-## LP code review — run 20260806T145914Z
+# LP code review (Ring)
 
-### Evidence reviewed
-- `lp-runtime/progress.json`: active task `task-fe-03c-citations` is still `PENDING`.
-- `lp-runtime/memory.md`: attempt 2, latest exact gate not run in this cycle, prior session timed out.
-- `lp-runtime/codex-qwen3-extra-instructions.md`: Codex decision is `REVISE` with mandatory DOM-test additions.
-- `lp-git-status.txt` and `lp-git-diff-stat.txt`: dirty task file `frontend/src/app/features/rag/rag-page.component.spec.ts` with substantial additions pending validation.
+## Evidence read first (RUN_DIR)
+- `lp-runtime/progress.json`
+- `lp-runtime/gate_summary.md`
+- `lp-runtime/checkpoint.json`
+- `worker-requests/LP.json`
+- `lp-git-status.txt`
+- `lp-runtime/codex-qwen3-extra-instructions.md`
+- `.opencode/task-plan.hierarchy.json`
 
-### First current defect
-FE-03C has unresolved Codex REVISE requirements and no new gate evidence in this run, so current edits are unproven and cannot be routed for closure.
+## First current defect
+No new failing gate is present. The current defect is **incomplete closure state**: LP produced a gate-green checkpoint for `task-fe-03c-citations`, but mandatory SURGICAL review has not yet been recorded (`codex_decision: null`).
 
-### Bounded next action package
-- **Implementation level:** Level 1 (LP).
-- **Assigned role:** LP.
-- **Task ID:** `task-fe-03c-citations` (work package `FE-03C-A`, revise pass).
-- **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED` (already satisfied).
-- **allowed_paths:**
-  - `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:**
-  - `git diff --check`
-  - `./scripts/frontend-task-gate.sh task-fe-03c-citations`
-- **Required SURGICAL review:** mandatory Codex `ACCEPT` after gate-green evidence.
+## Decision
+- **Implementation level:** Level 1 (LP)
+- **Assigned role:** LP (execution already done for this pass)
+- **Task ID:** `task-fe-03c-citations` (`FE-03C-A`)
+- **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED` (already satisfied)
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03c-citations` (already green in attempt-01)
+- **Required SURGICAL review:** Mandatory `ACCEPT` before closure
 
-### Required content in the LP pass (from current Codex packet)
-1. Assert rendered citation ordering and ordinal/source/heading-path text from structured response fields when incoming citations are out of order.
-2. Assert `.citations-section` is absent for a non-abstained success response with `citations: []`.
-3. Assert citation-like text in `answer` is not parsed into citation DOM nodes when structured citations are empty.
+## Bounded next action for one worker pass
+Run **review-only handoff**: submit checkpoint `01b8aa1b100f7c042eb0cbc327917594a505980a` for SURGICAL Codex acceptance against FE-03C contract coverage. Do not start FE-03D yet.
 
-### Avoid repeating
-Do not run another long session without first implementing the explicit three-assertion REVISE checklist and producing fresh gate output.
+## Acceptance conditions
+1. SURGICAL Codex decision exists for this checkpoint.
+2. Decision is `ACCEPT` (or `REVISE` with a bounded new LP directive).
+3. No scope expansion beyond FE-03C allowed path unless escalated.
+
+## Avoid repeating
+Do not launch another speculative LP coding pass before Codex reviews the current gate-green checkpoint.

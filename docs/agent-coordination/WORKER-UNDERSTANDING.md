@@ -1,20 +1,29 @@
-## Worker understanding check — run 20260806T145914Z
+# Worker understanding assessment
 
-### PC understanding
-- Current evidence correctly shows no new acceptance and no task-07 gate run.
-- Prior Ring directive remains valid: hold task-07 implementation until `BE-07-A` dependency is accepted.
-- **Required next understanding update for PC:** explicitly record that this pass is a dependency hold, not an implementation retry.
+## PC
+- **Observed understanding:** PC memory acknowledges no proven acceptance and identifies task-07 objective, but pre-edit report still explores implementation hypotheses despite an explicit prior Ring block.
+- **Evidence:** `pc-runtime/memory.md`, `pc-runtime/pre_edit_understanding.md`, `pc-runtime/previous-ring-qwen3-directive.json`.
+- **Correction package:**
+  - **Level:** 2 (PC)
+  - **Task ID:** `task-07-populate-production-rag`
+  - **Action:** HOLD
+  - **Dependency condition:** wait for `BE-07-A:ACCEPTED`
+  - **allowed_paths:** unchanged (no new writes while held)
+  - **Exact gate:** none until unblocked
+  - **SURGICAL review:** still mandatory when work resumes
 
-### LP understanding
-- Current evidence shows LP recognized timeout but still lacks proof that Codex REVISE requirements were fully mapped to rendered-DOM assertions.
-- Codex packet is specific and should be translated into three concrete DOM tests in the spec file.
-- **Required next understanding update for LP:** pre/post mapping must reference FE-03C requirements and each new DOM assertion, not only memory/task metadata.
+## LP
+- **Observed understanding:** LP produced a gate-green checkpoint with one in-scope file. Historical Codex REVISE notes highlighted missing requirement mapping quality, but latest run has fresh gate evidence and checkpoint ready for review.
+- **Evidence:** `lp-runtime/memory.md`, `lp-runtime/checkpoint.json`, `worker-requests/LP.json`, `lp-runtime/codex-qwen3-extra-instructions.md`.
+- **Correction package:**
+  - **Level:** 1 (LP)
+  - **Task ID:** `task-fe-03c-citations`
+  - **Action:** REVIEW
+  - **Dependency condition:** none additional for review; closure waits on Codex
+  - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+  - **Exact gate:** already green for current attempt
+  - **SURGICAL review:** required now (`ACCEPT` or `REVISE`)
 
-### Cross-worker clarity
-- No evidence of overlap in active write scopes this cycle (PC hold; LP frontend spec-only).
-- Both queues still require SURGICAL Codex acceptance before closure claims.
-
-### Acceptance conditions for understanding quality
-1. Worker note maps requirement → exact file → exact assertion/gate evidence.
-2. No claim of gate pass, acceptance, or review outcome without artifact-backed proof.
-3. Avoid repeating unchanged execution paths that previously timed out or were dependency-blocked.
+## Ring guidance quality bar for next pass
+1. Do not convert a gate-green checkpoint into acceptance without explicit SURGICAL `ACCEPT` evidence.
+2. Do not dispatch backend implementation while hierarchy dependency state is unmet.

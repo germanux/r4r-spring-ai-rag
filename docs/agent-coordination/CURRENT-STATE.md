@@ -1,23 +1,27 @@
-## Global summary — run 20260806T145914Z
+# Global coordination summary (run 20260806T150415Z)
 
-This cycle is **READY** with one actionable frontend correction and one backend dependency hold.
+## Outcome
+`overall_status: READY`
 
-## What was verified from current RUN_DIR evidence
-- PC: active backend task is `task-07-populate-production-rag`, but no current gate/review/checkpoint evidence exists; only memory file drift is present.
-- LP: active frontend task `task-fe-03c-citations` has in-progress spec edits plus a Codex `REVISE` packet with explicit missing DOM assertions.
-- No worker request bundle was preloaded (`worker-request-manifest.json` has empty requests array).
+Ring completed an evidence-first review of RUN_DIR and issued bounded queue decisions without repository code edits.
 
-## Ring decisions
-- **PC → HOLD** (`task-07-populate-production-rag`)
-  - Reason: dependency chain still blocks execution (`BE-07-A` required before `BE-07-B`).
-- **LP → CONTINUE** (`task-fe-03c-citations`)
-  - Reason: first current defect is unresolved REVISE requirements without fresh exact-gate proof.
+## PC status
+- Active task remains `task-07-populate-production-rag`.
+- First current defect: dependency state mismatch (BE-07-A not accepted) plus red gate evidence with no task-scoped product diff.
+- Decision: **HOLD** PC queue until hierarchy prerequisites are satisfied.
 
-## Required next actions (bounded)
-1. LP (Level 1) performs one spec-only correction pass and reruns exact FE-03C gate.
-2. PC (Level 2) stays idle until dependency acceptance is evidenced; no premature backend gate cycles.
-3. Both paths remain review-closed only by SURGICAL Codex `ACCEPT`.
+## LP status
+- Active task `task-fe-03c-citations` has gate-green checkpoint (`01b8aa1b100f7c042eb0cbc327917594a505980a`).
+- First current defect: closure incomplete because SURGICAL review decision is still missing.
+- Decision: **REVIEW** current checkpoint; no new LP implementation pass unless Codex requests revise.
 
-## Evidence limitations
-- Current snapshot lacks gate summaries, Codex review outputs, and checkpoints for both workers.
-- Snapshot includes only status/diff-stat, not full patch content; final quality claims must wait for fresh gate + review artifacts.
+## Directed work packages
+1. **PC hold package** — Level 2, role PC, task `task-07-populate-production-rag`, dependency `BE-07-A:ACCEPTED`, exact gate per backend task plan, SURGICAL review mandatory on closure.
+2. **LP review package** — Level 1, role LP, task `task-fe-03c-citations`, allowed path `frontend/src/app/features/rag/rag-page.component.spec.ts`, exact gate already green, SURGICAL `ACCEPT` required.
+
+## Explicit limitations
+- No Codex review artifact exists in this RUN_DIR for either queue.
+- Full gate logs are referenced by summaries but not included directly in this snapshot.
+
+## Ring worktree edits this cycle
+- None outside the six required staged output artifacts under `runtime/ring-agent/ring/20260806T150415Z/output/`.
