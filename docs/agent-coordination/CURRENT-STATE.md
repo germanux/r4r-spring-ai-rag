@@ -1,40 +1,40 @@
-# Global Coordination Summary — RUN_ID 20260806T174052Z
+# Global coordination summary (RUN_ID: 20260806T174553Z)
 
-## Overall status
+## What changed in this Ring cycle
+- Reviewed bounded evidence in RUN_DIR for Ring, PC, LP status and runtime packets.
+- Classified first current defects per queue.
+- Issued queue decisions that preserve dependency order, write-scope safety, and mandatory SURGICAL review policy.
 
-`READY` — actionable directives are clear for both queues, with backend held and frontend continuing a bounded correction.
+## Decisions
+### PC — `HOLD` (`task-07-populate-production-rag`)
+- Evidence shows red backend gate and dirty backend product files.
+- Hierarchy dependency requires `BE-07-A:ACCEPTED` before `BE-07-B` execution.
+- No new RUN_DIR evidence proves dependency satisfaction or completed SURGICAL disposition.
+- Next action is review-first (Level 3 SURGICAL), then resume PC only after dependency release.
 
-## Evidence-led decisions
+### LP — `CONTINUE` (`task-fe-03d-dom-state-tests`)
+- Gate is green but Codex decision is REVISE, with no material changed paths in the request packet.
+- First defect is acceptance-contract miss: required DOM assertions/mapping not delivered as scoped patch.
+- Next action is one Level-1 bounded revise pass in the single allowed spec file.
 
-### PC (backend)
-- Active task: `task-07-populate-production-rag`.
-- Current state: red gate (`test-failure`) + dirty backend task paths.
-- Decision: **HOLD** new PC implementation.
-- Why: hierarchy dependency ordering and missing SURGICAL disposition on current red diff.
+## Required work packages (explicit)
+1. **Level 3 / SURGICAL / review package**
+   - **Task ID:** `task-07-populate-production-rag`
+   - **Dependencies:** `BE-07-A:ACCEPTED` before PC execution package
+   - **allowed_paths:** review-only disposition now; later backend task scope when resumed
+   - **Exact gate (when resumed):** task-07 backend gate from `.opencode/task-plan.backend.json`
+   - **Acceptance:** SURGICAL keep/revert disposition + later gate-green + SURGICAL `ACCEPT`
 
-### LP (frontend)
-- Active task: `task-fe-03d-dom-state-tests`.
-- Current state: gate green but `no-product-diff`; unresolved Codex REVISE instructions.
-- Decision: **CONTINUE** one Level-1 revise pass in one spec file.
+2. **Level 1 / LP / correction package**
+   - **Task ID:** `task-fe-03d-dom-state-tests` (`FE-03D-A`)
+   - **Dependencies:** `task-fe-03c-citations:ACCEPTED`
+   - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+   - **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+   - **Acceptance:** non-empty scoped patch, gate green, SURGICAL Codex `ACCEPT`
 
-## Required next worker pass packages
+## Evidence limitations
+- PC full gate logs/Codex review artifact were not present in RUN_DIR snapshot; only packaged summaries were available.
+- Therefore no claim is made that PC failure root cause is fully diagnosed or that SURGICAL has already accepted current backend changes.
 
-1. **SURGICAL review-only package for PC evidence (Level 3)**
-   - Task context: `task-07-populate-production-rag`
-   - Purpose: keep-or-revert disposition on current red-gate diff; preserve hierarchy ordering.
-
-2. **LP implementation package (Level 1)**
-   - Task ID: `task-fe-03d-dom-state-tests`
-   - Scope: `frontend/src/app/features/rag/rag-page.component.spec.ts`
-   - Gate: `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-   - Closure still requires SURGICAL Codex `ACCEPT`.
-
-## Integration risks tracked
-
-- Backend task-07 churn without prerequisite acceptance can produce non-closable cycles.
-- Unreviewed backend red diff may encode incorrect ingestion/vector-store behavior.
-- Frontend gate-green/no-product-diff can mask unresolved assertion requirements.
-
-## Ring worktree edits in this cycle
-
-- No repository code or documentation outside the required staged OUTPUT_DIR artifacts was edited.
+## Repository edits by Ring in this cycle
+- None outside the required staged artifacts under `runtime/ring-agent/ring/20260806T174553Z/output/`.

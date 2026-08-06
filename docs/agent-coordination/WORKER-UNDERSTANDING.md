@@ -1,29 +1,28 @@
-# Worker Understanding Audit — RUN_ID 20260806T174052Z
+# Worker understanding assessment (cycle 20260806T174553Z)
 
-## PC understanding status
+## PC understanding
+### Observed
+- PC is actively editing backend ingestion/vector/test files with a red gate outcome.
+- Prior ring directive already stated dependency hold (`BE-07-B` depends on `BE-07-A:ACCEPTED`).
 
-- Evidence shows good identification of likely failing backend symbols (`KnowledgeIngestionService`, `PgVectorKnowledgeStore`) in `pc-runtime/pre_edit_understanding.md` and `pc-runtime/codegraph_reconnaissance.md`.
-- However, execution governance is still defective for current cycle because task-07 dependency ordering from hierarchy remains unresolved (`BE-07-B` requires `BE-07-A:ACCEPTED`) and gate is red.
+### Gap
+- Execution sequencing is not yet aligned with hierarchy dependency and review closure requirements.
 
-**Bounded next action**
-- **Level 3 / SURGICAL review-only support** on current PC red-gate diff.
-- PC should not add new implementation edits until dependency and SURGICAL disposition are explicit.
+### Next bounded instruction
+- **Level 3, SURGICAL reviewer action first:** produce keep-or-revert disposition on current backend red diff.
+- Keep PC on hold for implementation until dependency acceptance is evidenced.
 
-## LP understanding status
+## LP understanding
+### Observed
+- LP has green deterministic gate evidence.
+- Codex still issued `REVISE` and request packet recorded `changed_paths: []`.
+- Local understanding report mapped requirements to memory artifacts instead of concrete DOM selectors/assertions.
 
-- LP local understanding is currently inadequate for closure:
-  - It states missing model-authored summary.
-  - Requirement mapping points to memory file instead of concrete test assertions.
-  - Latest attempt is gate-green with `no-product-diff`, so no demonstrable implementation update exists.
+### Gap
+- LP treated green gate as completion despite unresolved acceptance contract and missing material patch.
 
-**Bounded next action**
-- **Level 1 / LP implementation** limited to `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-- Implement Codex-mandated loading + independent reset assertion set.
-- Re-run `git diff --check` and exact frontend gate.
-- Submit for mandatory SURGICAL Codex review.
+### Next bounded instruction
+- **Level 1, LP revise pass:** one spec-file patch implementing Codex-listed loading + independent reset assertions, with explicit requirement-to-selector/assertion mapping.
 
-## Acceptance conditions for understanding quality
-
-1. Each worker report must map task requirements to concrete code/test assertions, not controller memory summaries.
-2. Gate-green evidence must be paired with a non-empty scoped patch where Codex requested a revision.
-3. No closure claims without explicit SURGICAL `ACCEPT` evidence.
+## Shared closure rule reminder
+For both workers, task closure requires **exact gate green + SURGICAL Codex `ACCEPT` + controller-owned commit**, not gate status alone.
