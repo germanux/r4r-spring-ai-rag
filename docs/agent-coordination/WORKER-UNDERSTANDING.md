@@ -1,36 +1,34 @@
-# Worker understanding audit
+# Worker understanding check (RUN 20260806T143139Z)
 
-## PC understanding check
-Evidence indicates PC correctly preserved a gate-green `task-06f` attempt with no product diff, but closure criteria remain unmet because SURGICAL acceptance is missing.
+## PC (backend)
 
-### Required understanding for next pass
-- A green exact gate is **not** completion.
-- `task-06f` closes only after SURGICAL `ACCEPT`.
-- Do not open new backend implementation scope until current review decision is recorded.
+What PC must understand now:
 
-### Concrete package restatement
-- **Level 2 / PC / BE-06F-A**
-- **Task ID:** `task-06f-ingestion-validation`
-- **Dependencies:** `task-06e-child-process:ACCEPTED`
-- **allowed_paths:** `src/test/resources/application.yml`, `.opencode/current/PC/**`
-- **Gate:** `./scripts/task-gate.sh task-06f-ingestion-validation`
-- **Reviewer:** SURGICAL (mandatory)
+1. `task-07-populate-production-rag` is active in progress metadata, but there is no current task-07 gate evidence in this run.
+2. Hierarchy work package `BE-07-B` is dependency-gated by `BE-07-A:ACCEPTED`.
+3. Therefore this pass is **HOLD**, not implement.
 
-## LP understanding check
-Codex packet shows LP previously mis-scoped FE-03C understanding toward generic green runs. Current evidence still shows pending FE-03C with an unaccepted spec diff.
+Required next behavior:
 
-### Required understanding for next pass
-- FE-03C is assertion-completeness work, not generic build stability work.
-- Rendered DOM assertions must prove structured citation behavior and non-parsing of citation-like answer text.
-- Completion requires exact gate green **and** SURGICAL `ACCEPT`.
+- Make no backend code edits this pass.
+- Wait for explicit dependency release, then run one bounded task-07 pass and stop for SURGICAL review.
 
-### Concrete package restatement
-- **Level 1 / LP / FE-03C-A**
-- **Task ID:** `task-fe-03c-citations`
-- **Dependencies:** `task-fe-03b-answer-abstention:ACCEPTED`
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Gate:** `./scripts/frontend-task-gate.sh task-fe-03c-citations`
-- **Reviewer:** SURGICAL (mandatory)
+## LP (frontend)
 
-## Ring cycle note
-No repository code edits were performed by Ring in this cycle; only staged coordination artifacts were produced.
+What LP must understand now:
+
+1. FE-03C exact gate is already green in current evidence.
+2. Task remains PENDING because SURGICAL decision is not yet recorded.
+3. Current dirty set includes non-task files that can block scope-clean closure.
+
+Required next behavior:
+
+- Do review-first flow: submit existing FE-03C evidence to SURGICAL.
+- Avoid new edits unless Codex returns `REVISE`.
+- If revised, keep edits strictly in `rag-page.component.spec.ts` and rerun exact gate.
+
+## Shared non-negotiables
+
+- No Git history operations by workers.
+- Exact gate + SURGICAL ACCEPT are both required for closure.
+- Do not broaden scope beyond declared allowed paths.

@@ -1029,3 +1029,49 @@ Append-only ledger generated after each validated Ring cycle.
 
 - No Codex review artifact (accept/revise file) is present in this RUN_DIR for either worker; status is inferred from manifest nulls, previous directives, and extra-instruction snapshots.
 - RUN_DIR includes diff stats and status but not full patch content for LP product changes, so correctness of current assertions cannot be verified directly here.
+
+## Cycle `20260806T143139Z` â READY
+
+### PC
+
+- Decision: `HOLD`
+- Task: `task-07-populate-production-rag`
+- Reason: PC is marked active on task-07 but has no task-07 gate evidence yet, and hierarchy work package BE-07-B is explicitly dependent on BE-07-A acceptance before execution.
+- Next action: Hold PC implementation and keep the backend queue idle until BE-07-A is accepted and backend-phase activation is explicitly confirmed.
+- Avoid repeating: Do not run backend all+ingestion gate cycles for task-07 before BE-07-A dependency is accepted.
+- Acceptance gates:
+  - Dependency gate: BE-07-B requires BE-07-A:ACCEPTED per .opencode/task-plan.hierarchy.json
+  - Exact gate for task-07 remains the task-plan.backend.json command for task-07-populate-production-rag
+  - Closure requires SURGICAL Codex ACCEPT per .opencode/task-plan.hierarchy.json review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T143139Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T143139Z/pc-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T143139Z/pc-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T143139Z/worker-request-manifest.json`
+
+### LP
+
+- Decision: `REVIEW`
+- Task: `task-fe-03c-citations`
+- Reason: LP has a green exact gate snapshot for task-fe-03c-citations, but task status remains PENDING and Codex/SURGICAL review is still missing in current runtime evidence.
+- Next action: Submit the current FE-03C evidence package and diff for one SURGICAL review pass (ACCEPT or REVISE) before any additional LP edits.
+- Avoid repeating: Do not start another speculative FE-03C edit pass while a gate-green package is awaiting SURGICAL decision.
+- Acceptance gates:
+  - Exact gate: ./scripts/frontend-task-gate.sh task-fe-03c-citations exits 0
+  - Scope-clean and allowed_paths compliance for FE-03C-A (frontend/src/app/features/rag/rag-page.component.spec.ts)
+  - Closure requires SURGICAL Codex ACCEPT per .opencode/task-plan.hierarchy.json review_policy
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T143139Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T143139Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T143139Z/lp-runtime/manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260806T143139Z/lp-git-status.txt`
+
+### Integration risks
+
+- Backend progression risk: task-07 execution can be started out of order unless BE-07-A dependency enforcement is respected.
+- Frontend closure risk: LP worktree includes non-task dirty paths (coordination docs/memory) alongside FE-03C spec changes, which can fail scope-clean closure checks.
+
+### Evidence limitations
+
+- No current-run Codex review artifact is present for either worker in this RUN_DIR snapshot (manifest sources codex_review/codex_plan are null).
+- RUN_DIR provides diff statistics and status, but not full patch hunks for LP code edits in this cycle.

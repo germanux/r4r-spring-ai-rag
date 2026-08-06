@@ -1,43 +1,30 @@
-# Global coordination summary (RUN_ID: 20260806T013138Z)
+# Global summary (RUN 20260806T143139Z)
 
-## Outcome
-Overall status: **READY**.
+## Executive status
 
-This cycle found no new cross-layer code defect requiring immediate SURGICAL implementation. The first current blockers are closure/acceptance blockers:
-- PC backend task is gate-green but awaiting mandatory SURGICAL review decision.
-- LP frontend task remains in REVISE with pending FE-03C assertion completion and no acceptance.
+- **Overall:** READY
+- **PC:** HOLD on backend task-07 pending dependency readiness.
+- **LP:** REVIEW on FE-03C with gate-green evidence awaiting SURGICAL decision.
 
-## Evidence used (bounded RUN_DIR)
-- `pc-runtime/gate_summary.md`, `pc-runtime/checkpoint.json`, `pc-runtime/progress.json`, `worker-requests/PC.json`
-- `lp-runtime/codex-qwen3-extra-instructions.md`, `lp-runtime/progress.json`, `lp-git-status.txt`, `lp-git-diff-stat.txt`
-- `.opencode/task-plan.hierarchy.json` for level/routing/review policy and allowed package scope.
+## Evidence-backed findings
 
-## Directed next actions
-### 1) Backend package
-- Work package: `BE-06F-A`
-- Implementation level: **2**
-- Assigned role: **PC**
-- Task ID: `task-06f-ingestion-validation`
-- Dependencies: `task-06e-child-process:ACCEPTED`
-- `allowed_paths`: `src/test/resources/application.yml`, `.opencode/current/PC/**`
-- Exact gate: `./scripts/task-gate.sh task-06f-ingestion-validation`
-- Required SURGICAL review: explicit `ACCEPT` required before closure
+1. PC runtime shows active `task-07-populate-production-rag`, no task-07 gate run yet, and no product-path dirty implementation in this snapshot.
+2. LP runtime shows green FE-03C gate evidence, but task status is still PENDING and codex review artifact is absent.
+3. LP dirty set includes frontend test changes plus non-task docs/memory paths that may violate scope-clean closure checks.
 
-### 2) Frontend package
-- Work package: `FE-03C-A`
-- Implementation level: **1**
-- Assigned role: **LP**
-- Task ID: `task-fe-03c-citations`
-- Dependencies: `task-fe-03b-answer-abstention:ACCEPTED`
-- `allowed_paths`: `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- Exact gate: `./scripts/frontend-task-gate.sh task-fe-03c-citations`
-- Required SURGICAL review: explicit `ACCEPT` required before closure
+## Priority ordering for next cycle
 
-## Acceptance contract (both queues)
-- Exact task gate must be green.
-- Write scope must remain inside package `allowed_paths`.
-- SURGICAL Codex must return explicit `ACCEPT` before task closure.
+1. **First:** SURGICAL review pass for LP FE-03C current evidence (`ACCEPT` or `REVISE`).
+2. **Second:** Keep PC paused until task-07 dependency release is authoritative.
+3. **Third:** After dependency release, run one bounded PC execution pass for task-07 and stop for SURGICAL review.
 
-## Evidence limitations
-- No direct Codex accept/revise artifact file is present in this RUN_DIR for this cycle; decision state is derived from manifest nulls and existing instruction snapshots.
-- LP full patch content is not present in RUN_DIR, only status/stat summaries, so detailed assertion quality is not independently revalidated here.
+## Required gates/constraints retained
+
+- FE-03C exact gate: `./scripts/frontend-task-gate.sh task-fe-03c-citations`.
+- Task-07 exact gate: command declared in `.opencode/task-plan.backend.json`.
+- Mandatory review policy: SURGICAL ACCEPT required for closure of LP/PC tasks.
+
+## Limitations
+
+- No current-run codex review/plan files were captured in this RUN_DIR for either worker.
+- LP diff content is summarized by status/statistics only in this evidence set.
