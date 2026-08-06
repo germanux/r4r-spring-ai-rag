@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "active_task": "task-07-populate-production-rag",
-  "last_run": "20260806T145911Z",
+  "last_run": "20260806T163543Z",
   "tasks": [
     {
       "id": "task-01-base",
@@ -78,7 +78,7 @@
     },
     {
       "id": "task-07-populate-production-rag",
-      "status": "PENDING",
+      "status": "BLOCKED",
       "accepted_at": null
     },
     {
