@@ -1,46 +1,50 @@
-# LP code review (evidence cycle 20260806T193132Z)
-
-## Current verdict
-- **Queue status:** continue with one tightly bounded correction pass.
-- **Active task:** `task-fe-03d-dom-state-tests`.
-- **First current defect:** LP attempt remains red (`exit=2`) and Codex marked it `REVISE` due to defective/synthetic test additions and requirement mismatch.
+# LP code review (frontend)
 
 ## Evidence reviewed
-- `runtime/ring-agent/ring/20260806T193132Z/worker-requests/LP.json` (Codex `REVISE`, explicit corrective next action)
-- `runtime/ring-agent/ring/20260806T193132Z/lp-runtime/memory.md` (enumerated defects and required replacement tests)
-- `runtime/ring-agent/ring/20260806T193132Z/lp-runtime/codex-qwen3-extra-instructions.md` (mandatory bounded correction packet)
-- `runtime/ring-agent/ring/20260806T193132Z/lp-runtime/gate_summary.md` (deterministic gate failure)
-- `runtime/ring-agent/ring/20260806T193132Z/lp-runtime/controller_state.json` (`GLOBAL_ATTEMPT_LIMIT_REACHED`)
 
-## Bounded work package
-- **Implementation level:** **Level 1**
-- **Assigned role:** **LP**
+- `runtime/ring-agent/ring/20260806T193633Z/lp-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260806T193633Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260806T193633Z/lp-runtime/progress.json`
+- `runtime/ring-agent/ring/20260806T193633Z/lp-git-status.txt`
+- `runtime/ring-agent/ring/20260806T193633Z/lp-git-diff-stat.txt`
+- `runtime/ring-agent/ring/20260806T193633Z/lp-runtime/previous-ring-qwen3-directive.json`
+
+## First current defect
+
+The deterministic FE gate for `task-fe-03d-dom-state-tests` is still red (`exit=2`), and Codex has already issued a concrete `REVISE` packet. The working tree shows a substantial spec-only delta (`rag-page.component.spec.ts`) that is not yet validated by a green rerun in this cycle.
+
+## Bounded next action package
+
+- **Implementation level:** 1 (LP)
+- **Assigned role:** LP (laptop-qwen3-worker)
 - **Task ID:** `task-fe-03d-dom-state-tests`
 - **Dependencies:**
-  - Prior accepted frontend baseline through `task-fe-03c-citations`
-  - Active Codex correction packet for attempt-06
-- **allowed_paths (task authority):** from `.opencode/task-plan.frontend.json` = `frontend/**`, `docs/frontend/**`
-- **allowed_paths (this pass, stricter):** `frontend/src/app/features/rag/rag-page.component.spec.ts` only
-- **Exact gate:** `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Pre-gate guard:** `git diff --check`
+  - `task-fe-03c-citations:ACCEPTED` (shown in LP progress ledger)
+  - Existing Codex correction packet for FE-03D
+- **allowed_paths:**
+  - `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:**
+  - `git diff --check`
+  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Required SURGICAL review:** mandatory after a green LP gate; no closure without SURGICAL `ACCEPT`.
 
-## Required implementation in this single pass
-1. Remove defective additions called out by Codex (synthetic tests, malformed loading fragment, invalid state mutations, unnecessary async helpers).
-2. Rebuild one controlled-pending loading test with selector-based DOM assertions and duplicate-submit call-count protection.
-3. Add two independent reset tests:
-   - success-path reset (answer/citations present before clear, absent after clear)
-   - transport-error reset (alert present before clear, absent after clear)
-4. Keep existing valid answer/abstention/citation/escaping/service-isolation coverage unchanged.
+## Prescribed correction focus (single LP pass)
+
+1. Remove defective synthetic additions called out by Codex.
+2. Keep one controlled-pending loading assertion path with no manual loading-flag mutation.
+3. Add independent reset tests for success and transport error using fixture-rendered DOM selectors specified in the packet.
+4. Preserve valid existing coverage (answer, abstention, citations, transport alert, escaping, service isolation).
+5. Produce one consistent evidence set (understanding + gate diagnostics aligned to same run).
 
 ## Acceptance conditions
-- Non-empty scoped patch limited to the single spec file above.
-- `git diff --check` passes.
-- Exact FE-03D gate exits `0` with consistent diagnostics.
-- SURGICAL Codex review returns `ACCEPT` before closure.
+
+1. Whitespace guard passes (`git diff --check`).
+2. Exact FE-03D gate returns exit `0`.
+3. Diff remains within LP allowed path.
+4. SURGICAL Codex reviews that exact result and returns `ACCEPT` for closure.
 
 ## Avoid repeating
-- Reintroducing synthetic DOM mutations or invalid response shapes.
-- Producing mismatched gate artifacts/local-understanding that do not describe the same final run.
 
-## Required SURGICAL review for closure
-Mandatory after the pass; LP cannot self-close even if gate turns green.
+- Do not invent test IDs/state values/response shapes.
+- Do not mutate `nativeElement.innerHTML` or internal loading flags.
+- Do not rerun unchanged failing patches with mismatched diagnostics.
