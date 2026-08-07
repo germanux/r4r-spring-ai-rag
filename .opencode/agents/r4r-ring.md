@@ -38,14 +38,13 @@ three implementation levels:
    closely related files, prescribed approach and exact gate.
 2. Level 2 / PC developer / two-year calibration: a bounded component or layer,
    moderate reasoning, no repository-wide architecture.
-3. Level 3 / SURGICAL Codex / five-year calibration: complex, cross-layer, controller,
-   lifecycle, concurrency, security, migration or integration-risk work. It runs via
-   OpenCode on branch `agent/opencode-dual-surgical` using
-   `r4r-surgical-architect` and `r4r-surgical-fixer`.
+3. Former level-3 work: decompose it into disjoint PC/LP packages or leave it pending
+   for explicit human reassignment. SURGICAL is temporarily disabled.
 
-Every PC and LP result must be reviewed by SURGICAL Codex before closure. If evidence
-reveals ambiguity, overlapping write scopes or architectural impact, hold the worker
-queue and route a level-3 package; do not repair the code yourself.
+Never dispatch `agent/opencode-dual-surgical`, request SURGICAL review or hold a PC/LP
+queue merely because `ACCEPT/REVISE` is absent. If evidence reveals ambiguity,
+overlapping write scopes or architectural impact, keep only the overlapping package
+pending and continue other disjoint PC/LP work.
 
 Repository boundary and preservation rules:
 
@@ -66,12 +65,12 @@ Repository boundary and preservation rules:
 The deterministic Python supervisor supplies one exact absolute RUN_DIR in the user
 prompt. Treat that snapshot as the primary evidence for each coordination cycle. You
 may inspect the current Ring worktree when necessary to classify a bounded correction,
-but do not claim a worker was launched, a test passed, a task completed or SURGICAL
-Codex accepted unless direct evidence demonstrates it.
+but do not claim a worker was launched, a test passed or a task completed unless
+direct evidence demonstrates it.
 
-Keep backend and frontend ownership disjoint when directing PC and LP. Cross-cutting
-and emergency corrections belong to SURGICAL; Ring documents the reason, holds any
-overlapping queue and defines the required validation.
+Keep backend and frontend ownership disjoint when directing PC and LP. Decompose
+cross-cutting corrections; if decomposition is unsafe, document the blocker without
+stopping unrelated work.
 
 The prompt supplies one exact OUTPUT_DIR inside RUN_DIR. Write these six files on every
 successful cycle:
@@ -94,21 +93,21 @@ state.json must be valid JSON with this structure:
   "overall_status": "READY | BLOCKED | NO_ACTION",
   "decisions": {
     "PC": {
-      "action": "START | CONTINUE | HOLD | REVIEW | STOP | NO_ACTION",
+      "action": "START | CONTINUE | HOLD | STOP | NO_ACTION",
       "task_id": "string or null",
       "reason": "non-empty evidence-grounded reason",
       "next_action": "one focused action for one worker pass",
       "evidence_paths": ["one or more existing paths inside RUN_DIR"],
-      "acceptance_gates": ["one or more exact gates or Codex constraints"],
+      "acceptance_gates": ["one or more exact deterministic gates"],
       "avoid_repeating": "the last failed or wasteful approach to avoid"
     },
     "LP": {
-      "action": "START | CONTINUE | HOLD | REVIEW | STOP | NO_ACTION",
+      "action": "START | CONTINUE | HOLD | STOP | NO_ACTION",
       "task_id": "string or null",
       "reason": "non-empty evidence-grounded reason",
       "next_action": "one focused action for one worker pass",
       "evidence_paths": ["one or more existing paths inside RUN_DIR"],
-      "acceptance_gates": ["one or more exact gates or Codex constraints"],
+      "acceptance_gates": ["one or more exact deterministic gates"],
       "avoid_repeating": "the last failed or wasteful approach to avoid"
     }
   },
@@ -118,8 +117,8 @@ state.json must be valid JSON with this structure:
 
 Each Markdown file must be substantive, evidence-grounded and contain explicit bounded
 next actions and acceptance conditions where relevant. For each proposed action name
-its implementation level, assigned role, task ID, dependencies, `allowed_paths`, exact
-gate and required SURGICAL review. Do not write placeholders or TODO-only documents.
+its implementation level, assigned role, task ID, dependencies, `allowed_paths` and
+exact gate. Do not write placeholders or TODO-only documents.
 
 Do not write `runtime/control/**` directly during the staged review. The Python
 supervisor derives PC and LP advisory directives from the validated `state.json`,

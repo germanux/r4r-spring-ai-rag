@@ -130,6 +130,7 @@ for key in (
     "autoCommit",
     "bootstrapCommit",
     "checkpointOnGreen",
+    "requireSurgicalReview",
     "maxSessionSeconds",
     "idleSeconds",
     "maxSessionSteps",
@@ -155,10 +156,11 @@ runtime_max_transient="${values[12]}"
 runtime_auto_commit="${values[13]}"
 runtime_bootstrap_commit="${values[14]}"
 runtime_checkpoint_on_green="${values[15]}"
-runtime_max_session_seconds="${values[16]}"
-runtime_idle_seconds="${values[17]}"
-runtime_max_session_steps="${values[18]}"
-runtime_repeat_event_budget="${values[19]}"
+runtime_require_surgical_review="${values[16]}"
+runtime_max_session_seconds="${values[17]}"
+runtime_idle_seconds="${values[18]}"
+runtime_max_session_steps="${values[19]}"
+runtime_repeat_event_budget="${values[20]}"
 
 # Una sola fuente de verdad para OpenCode: opencode.jsonc de la raíz.
 unset OPENCODE_CONFIG || true
@@ -201,6 +203,7 @@ export R4R_PEER_PATHS_JSON="$peer_paths_json"
 export R4R_AUTO_COMMIT="${R4R_AUTO_COMMIT:-$runtime_auto_commit}"
 export R4R_BOOTSTRAP_COMMIT="${R4R_BOOTSTRAP_COMMIT:-$runtime_bootstrap_commit}"
 export R4R_CHECKPOINT_ON_GREEN="${R4R_CHECKPOINT_ON_GREEN:-$runtime_checkpoint_on_green}"
+export R4R_REQUIRE_SURGICAL_REVIEW="${R4R_REQUIRE_SURGICAL_REVIEW:-$runtime_require_surgical_review}"
 export R4R_MAX_ATTEMPTS_PER_TASK="${R4R_MAX_ATTEMPTS_PER_TASK:-$runtime_max_attempts}"
 export R4R_MAX_NO_PROGRESS_CYCLES="${R4R_MAX_NO_PROGRESS_CYCLES:-$runtime_max_no_progress}"
 export R4R_MAX_TRANSIENT_FAILURES="${R4R_MAX_TRANSIENT_FAILURES:-$runtime_max_transient}"
@@ -350,9 +353,9 @@ export PYTHONPATH="$ROOT/py-codex-agent/src${PYTHONPATH:+:$PYTHONPATH}"
 export R4R_CODEGRAPH_POLICY="${R4R_CODEGRAPH_POLICY:-advisory}"
 export R4R_REQUIRE_CODEGRAPH="${R4R_REQUIRE_CODEGRAPH:-true}"
 
-printf '[r4r] worker=%s agent=%s endpoint=%s model=%s plan=%s auto_commit=%s bootstrap_commit=%s git_author=%s<%s>\n' \
+printf '[r4r] worker=%s agent=%s endpoint=%s model=%s plan=%s auto_commit=%s bootstrap_commit=%s surgical_review=%s git_author=%s<%s>\n' \
   "$DEST" "$agent" "$base_url" "$model" "$plan" \
-  "$R4R_AUTO_COMMIT" "$R4R_BOOTSTRAP_COMMIT" \
+  "$R4R_AUTO_COMMIT" "$R4R_BOOTSTRAP_COMMIT" "$R4R_REQUIRE_SURGICAL_REVIEW" \
   "$R4R_GIT_AUTHOR_NAME" "$R4R_GIT_AUTHOR_EMAIL"
 
 exec "$PYTHON" \

@@ -788,7 +788,7 @@ def _validate_state_json(path: Path, run_id: str) -> str | None:
     decisions = payload.get("decisions")
     if not isinstance(decisions, dict):
         return "decisions must be an object"
-    allowed_actions = {"START", "CONTINUE", "HOLD", "REVIEW", "STOP", "NO_ACTION"}
+    allowed_actions = {"START", "CONTINUE", "HOLD", "STOP", "NO_ACTION"}
     for worker in ("PC", "LP"):
         decision = decisions.get(worker)
         if not isinstance(decision, dict):

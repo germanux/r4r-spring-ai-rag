@@ -3,7 +3,8 @@ set -Eeuo pipefail
 
 DEVELOPMENT_ROOT="${R4R_DEVELOPMENT_ROOT:-$HOME/Desarrollo}"
 INTEGRATION_ROOT="${R4R_INTEGRATION_WORKTREE:-$DEVELOPMENT_ROOT/r4r-integration.git}"
-INTERVAL="${R4R_BRANCH_SYNC_INTERVAL:-15min}"
+INTERVAL="${R4R_BRANCH_SYNC_INTERVAL:-1h}"
+INITIAL_DELAY="${R4R_BRANCH_SYNC_INITIAL_DELAY:-2min}"
 UNIT_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
 SERVICE="$UNIT_DIR/r4r-agent-branch-sync.service"
 TIMER="$UNIT_DIR/r4r-agent-branch-sync.timer"
@@ -11,22 +12,44 @@ ACTION="${1:-install}"
 
 usage() {
   cat <<'USAGE'
-Usage: ./scripts/install-r4r-branch-sync-systemd.sh [install|uninstall]
+Usage: ./scripts/install-r4r-branch-sync-systemd.sh [install|status|uninstall]
 
-Installs a user-level fallback timer. Every fifteen minutes, by default, it runs the
-complete worktree-aware hot-sync pass with fetch, centralization, propagation,
-pushes, dirty-state preservation and prior-runtime restoration.
+Installs a user-level fallback timer. It performs one synchronous verification pass
+at installation, waits two minutes after a later timer activation, and then runs the
+complete worktree-aware hot-sync pass once per hour by default.
 
 Environment:
   R4R_DEVELOPMENT_ROOT
   R4R_INTEGRATION_WORKTREE
-  R4R_BRANCH_SYNC_INTERVAL   default: 15min
+  R4R_BRANCH_SYNC_INTERVAL        default: 1h
+  R4R_BRANCH_SYNC_INITIAL_DELAY   default: 2min
 USAGE
 }
 
-[[ "$ACTION" == install || "$ACTION" == uninstall || "$ACTION" == -h || "$ACTION" == --help ]] \
+[[ "$ACTION" == install || "$ACTION" == status || "$ACTION" == uninstall || "$ACTION" == -h || "$ACTION" == --help ]] \
   || { usage >&2; exit 2; }
 [[ "$ACTION" != -h && "$ACTION" != --help ]] || { usage; exit 0; }
+
+if [[ "$ACTION" == status ]]; then
+  echo "Timer enabled:"
+  systemctl --user is-enabled r4r-agent-branch-sync.timer 2>/dev/null || true
+  echo "Timer/service state:"
+  systemctl --user show \
+    r4r-agent-branch-sync.timer \
+    r4r-agent-branch-sync.service \
+    -p Id -p ActiveState -p SubState -p Result -p ExecMainStatus \
+    --no-pager 2>/dev/null || true
+  echo "Schedule:"
+  systemctl --user list-timers r4r-agent-branch-sync.timer --all --no-pager \
+    2>/dev/null || true
+  echo "Recent service log:"
+  if command -v journalctl >/dev/null 2>&1; then
+    journalctl --user -u r4r-agent-branch-sync.service -n 80 --no-pager || true
+  else
+    echo "journalctl unavailable"
+  fi
+  exit 0
+fi
 
 if [[ "$ACTION" == uninstall ]]; then
   systemctl --user disable --now r4r-agent-branch-sync.timer 2>/dev/null || true
@@ -71,9 +94,10 @@ cat >"$TIMER" <<EOF
 Description=Run R4R hot-sync every $INTERVAL
 
 [Timer]
-OnActiveSec=$INTERVAL
+OnActiveSec=$INITIAL_DELAY
 OnUnitInactiveSec=$INTERVAL
-AccuracySec=15s
+AccuracySec=1min
+RandomizedDelaySec=2min
 Persistent=false
 Unit=r4r-agent-branch-sync.service
 
@@ -98,9 +122,21 @@ if command -v crontab >/dev/null 2>&1; then
 fi
 
 systemctl --user daemon-reload
-systemctl --user enable --now r4r-agent-branch-sync.timer
 systemctl --user reset-failed r4r-agent-branch-sync.service 2>/dev/null || true
+systemctl --user enable --now r4r-agent-branch-sync.timer
+
+# Run once synchronously so an inactive timer, dirty hub or authentication failure
+# is reported during installation instead of looking like a silent scheduler stall.
+if ! systemctl --user start r4r-agent-branch-sync.service; then
+  echo "ERROR: initial R4R branch synchronization failed." >&2
+  echo "Inspect with: $0 status" >&2
+  systemctl --user status r4r-agent-branch-sync.service --no-pager >&2 || true
+  exit 1
+fi
 
 echo "Installed: $SERVICE"
 echo "Installed: $TIMER"
-systemctl --user list-timers r4r-agent-branch-sync.timer --no-pager
+echo "Interval: $INTERVAL (initial delay after activation: $INITIAL_DELAY)"
+systemctl --user is-enabled r4r-agent-branch-sync.timer
+systemctl --user is-active r4r-agent-branch-sync.timer
+systemctl --user list-timers r4r-agent-branch-sync.timer --all --no-pager

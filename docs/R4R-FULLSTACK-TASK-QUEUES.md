@@ -1,5 +1,11 @@
 # R4R full-stack hierarchy and detailed task queues
 
+> Temporary operational override: SURGICAL dispatch and mandatory review are disabled.
+> Its branch and profiles remain for a later redesign. PC and LP continue on their
+> independent queues; an exact green gate plus clean scope lets the deterministic
+> controller close a task without `ACCEPT/REVISE`. Any older SURGICAL ownership or
+> reviewer field below is historical and non-operative.
+
 ## Canonical decision
 
 R4R has four roles but only three implementation levels. The experience figures are
@@ -8,11 +14,12 @@ calibration metaphors for autonomy and risk; they do not describe a model biogra
 | Role | Calibration | Function | May edit code? |
 |---|---:|---|---|
 | RING | 10 years | Technical lead: decompose, classify, assign, hold, verify evidence | No |
-| SURGICAL | 5 years | Codex through OpenCode: complex implementation and mandatory review | Yes, isolated surgical worktree |
+| SURGICAL | 5 years | Temporarily disabled; retained for later redesign | No dispatch |
 | PC | 2 years | Bounded developer for medium work in one component or layer | Yes, task scope only |
 | LP | 6 months | Junior for small, prescriptive work packages | Yes, task scope only |
 
-SURGICAL uses branch `agent/opencode-dual-surgical` and the two-stage OpenCode lane:
+The retained SURGICAL branch is `agent/opencode-dual-surgical`, but Ring must not
+dispatch it while the temporary override is active. Its former two-stage lane was:
 
 1. `r4r-surgical-architect` performs read-only diagnosis and review.
 2. `r4r-surgical-fixer` implements the smallest coherent level-3 correction.
@@ -53,8 +60,9 @@ concurrency, migrations, security boundaries, production process management or a
 change whose incorrect implementation could corrupt evidence or other branches. Target
 45–90 minutes; split it again if possible.
 
-SURGICAL also reviews every level-1 and level-2 result. Ring coordinates that review
-but does not substitute its own code judgment.
+SURGICAL does not currently review level-1 or level-2 results. Ring coordinates
+ownership and evidence while the deterministic controller enforces exact gates and
+scope cleanliness.
 
 ## Non-breaking activation rule
 
@@ -218,8 +226,8 @@ level is a retrospective classification, not authorization to rerun them.
 29. `OPS-TOK-02` — level 3 / SURGICAL — enforce 64 KiB delta context, warning at
     80,000 tokens and stop at 120,000 tokens or 30 steps.
 
-30. `OPS-SYNC-01` — level 3 / SURGICAL — remove `collect-agent-artifacts.py` and every
-    invocation; prove `runtime/` is wholly ignored and not relocated into Git.
+30. `OPS-SYNC-01` — ACCEPTED — remove `collect-agent-artifacts.py` and every
+    invocation; keep runtime, progress, memory and `.opencode/current/` outside Git.
 
 31. `OPS-SYNC-02` — level 2 / PC — add synchronization `--dry-run` coverage using
     temporary repositories.
@@ -227,8 +235,8 @@ level is a retrospective classification, not authorization to rerun them.
 32. `OPS-SYNC-03` — level 3 / SURGICAL — fail closed on dirty trees, overlapping
     write scopes and merge conflicts; never force-push or resolve conflicts silently.
 
-33. `OPS-EVID-01` — level 2 / PC — enforce one writer and one
-    `.ring-agent/evidence/<task>/<agent>-attempt-NN.md` path per attempt.
+33. `OPS-EVID-01` — ACCEPTED — enforce one writer and one
+    `.ring-agent/evidence/<task>/<agent>-attempt-NN.md` path per semantic attempt.
 
 34. `OPS-EVID-02` — level 1 / LP — document evidence naming and the absolute ban on
     versioning `runtime/**`.
@@ -252,16 +260,15 @@ level is a retrospective classification, not authorization to rerun them.
 
 ## Closure contract
 
-Every package closes only when all are true:
+Every active PC/LP package closes only when all are true:
 
 1. dependencies are accepted;
 2. diff is limited to canonical `allowed_paths`;
 3. `git diff --check` is clean;
 4. the exact package/parent gate is green;
 5. evidence names the exact gate, exit code and changed paths;
-6. SURGICAL Codex returns `ACCEPT` through OpenCode;
-7. the deterministic controller creates the closing commit;
-8. Ring records the result but makes no code edit.
+6. the deterministic controller creates the closing commit;
+7. Ring records the result but makes no code edit.
 
 Generic build success, a checkpoint, a Ring recommendation or a model's narrative
 claim is not acceptance evidence.

@@ -22,8 +22,16 @@ build/
 dist/
 # Ephemeral agent state; durable summaries live in .ring-agent/evidence/.
 /runtime/
-# Defence in depth against legacy collectors relocating ephemeral runtime data.
-/.opencode/current/*/runtime/
+/.opencode/current/
+/.opencode/memory*.md
+# Ring's live operational view is regenerated locally. Only task-scoped evidence
+# below .ring-agent/evidence/ is durable.
+/.ring-agent/backend-frontend-handoff.md
+/.ring-agent/code-lp-review.md
+/.ring-agent/code-pc-review.md
+/.ring-agent/global-summary.md
+/.ring-agent/state.json
+/.ring-agent/worker-understanding.md
 # PostgreSQL runtime data and local backups
 /docker-postgres/data/app/*
 !/docker-postgres/data/app/.gitkeep

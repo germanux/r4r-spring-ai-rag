@@ -80,6 +80,8 @@ class RingLoopTest(unittest.TestCase):
             self.assertIn("never delete, unlink, remove, rename or move", prompt)
             self.assertIn("may additionally make bounded, non-destructive edits", prompt)
             self.assertIn("`docs/agent-coordination/`", prompt)
+            self.assertIn("SURGICAL is temporarily disabled", prompt)
+            self.assertNotIn("HOLD | REVIEW | STOP", prompt)
 
     def test_directive_validation_accepts_current_advisory_json(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -234,6 +236,7 @@ class RingLoopTest(unittest.TestCase):
             decisions = (coordination / "DECISIONS.md").read_text(encoding="utf-8")
             self.assertIn(f"## Cycle `{run_id}`", decisions)
             self.assertIn("Decision: `CONTINUE`", decisions)
+            self.assertIn("Decision fingerprint:", decisions)
             self.assertEqual(
                 publication["coordination_commit"]["status"],
                 "not-git-worktree",
@@ -241,6 +244,48 @@ class RingLoopTest(unittest.TestCase):
             ring_loop._publish_staged_outputs(paths, run_dir, run_id)
             decisions = (coordination / "DECISIONS.md").read_text(encoding="utf-8")
             self.assertEqual(decisions.count(f"## Cycle `{run_id}`"), 1)
+
+            second_run_id = "20260803T170000Z"
+            second_run_dir = ring / "runtime" / "ring-agent" / "ring" / second_run_id
+            second_output = second_run_dir / "output"
+            second_output.mkdir(parents=True)
+            second_state = json.loads(json.dumps(state))
+            second_state["run_id"] = second_run_id
+            for worker in ("PC", "LP"):
+                path = second_run_dir / f"{worker.lower()}-runtime" / "progress.json"
+                path.parent.mkdir(parents=True)
+                path.write_text("{}\n", encoding="utf-8")
+                second_state["decisions"][worker]["evidence_paths"] = [str(path)]
+            (second_output / "state.json").write_text(
+                json.dumps(second_state), encoding="utf-8"
+            )
+            for name in ring_loop.STAGED_OUTPUT_NAMES:
+                if name != "state.json":
+                    (second_output / name).write_text(
+                        f"# regenerated {name}\nno semantic change\n",
+                        encoding="utf-8",
+                    )
+
+            second_publication = ring_loop._publish_staged_outputs(
+                paths, second_run_dir, second_run_id
+            )
+
+            self.assertTrue(second_publication["published"], second_publication)
+            self.assertFalse(second_publication["semantic_change"])
+            self.assertEqual(
+                "no-semantic-change",
+                second_publication["coordination_commit"]["status"],
+            )
+            self.assertEqual(
+                2,
+                len(list((ring / ".ring-agent" / "evidence").glob("*/*.md"))),
+            )
+            decisions = (coordination / "DECISIONS.md").read_text(encoding="utf-8")
+            self.assertNotIn(f"## Cycle `{second_run_id}`", decisions)
+            self.assertNotIn(
+                "no semantic change",
+                (coordination / "CURRENT-STATE.md").read_text(encoding="utf-8"),
+            )
             for worker in ("PC", "LP"):
                 directive_path = (
                     ring / "runtime" / "control" / worker / "ring-qwen3-directive.json"
@@ -283,6 +328,94 @@ class RingLoopTest(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "overlapping write_scope"):
                 ring_loop._load_task_assignments(ring, state)
+
+    def test_identical_semantic_cycle_does_not_create_second_git_commit(self) -> None:
+        import subprocess
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            ring = root / "ring"
+            ring.mkdir()
+            subprocess.run(["git", "init", "-q"], cwd=ring, check=True)
+            subprocess.run(
+                ["git", "config", "user.name", "R4R test"], cwd=ring, check=True
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "r4r@example.invalid"],
+                cwd=ring,
+                check=True,
+            )
+            baseline = ring / "baseline.txt"
+            baseline.write_text("baseline\n", encoding="utf-8")
+            subprocess.run(["git", "add", "baseline.txt"], cwd=ring, check=True)
+            subprocess.run(
+                ["git", "commit", "-q", "-m", "baseline"], cwd=ring, check=True
+            )
+            _configure_task_plans(ring)
+            paths = WorktreePaths(ring, root / "pc", root / "lp")
+
+            def publish(run_id: str, summary: str) -> dict[str, object]:
+                run_dir = ring / "runtime" / "ring-agent" / "ring" / run_id
+                output = run_dir / "output"
+                output.mkdir(parents=True)
+                decisions = {}
+                for worker in ("PC", "LP"):
+                    evidence = run_dir / f"{worker.lower()}-runtime" / "progress.json"
+                    evidence.parent.mkdir(parents=True)
+                    evidence.write_text("{}\n", encoding="utf-8")
+                    decisions[worker] = {
+                        "action": "CONTINUE",
+                        "task_id": f"task-{worker.lower()}",
+                        "reason": f"{worker} still needs the same correction",
+                        "next_action": f"apply the focused {worker} correction",
+                        "evidence_paths": [str(evidence)],
+                        "acceptance_gates": [f"run the exact {worker} gate"],
+                        "avoid_repeating": "do not repeat the rejected approach",
+                    }
+                state = {
+                    "schema_version": 1,
+                    "run_id": run_id,
+                    "overall_status": "READY",
+                    "decisions": decisions,
+                    "integration_risks": [],
+                    "evidence_limitations": [],
+                }
+                (output / "state.json").write_text(
+                    json.dumps(state), encoding="utf-8"
+                )
+                for name in ring_loop.STAGED_OUTPUT_NAMES:
+                    if name != "state.json":
+                        (output / name).write_text(
+                            f"# {name}\n{summary}\n", encoding="utf-8"
+                        )
+                return ring_loop._publish_staged_outputs(paths, run_dir, run_id)
+
+            first = publish("20260803T160000Z", "first wording")
+            first_head = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=ring,
+                text=True,
+                stdout=subprocess.PIPE,
+                check=True,
+            ).stdout.strip()
+            second = publish("20260803T170000Z", "regenerated wording")
+            second_head = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=ring,
+                text=True,
+                stdout=subprocess.PIPE,
+                check=True,
+            ).stdout.strip()
+
+            self.assertEqual("committed", first["coordination_commit"]["status"])
+            self.assertEqual(
+                "no-semantic-change", second["coordination_commit"]["status"]
+            )
+            self.assertEqual(first_head, second_head)
+            self.assertEqual(
+                2,
+                len(list((ring / ".ring-agent" / "evidence").glob("*/*.md"))),
+            )
 
     def test_inactive_overlapping_task_scope_does_not_block_dispatch(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -55,9 +55,9 @@ level-1 packages: one observable behavior, one or two closely related files, a
 prescribed approach and one exact gate.
 
 Do not invent architecture, add abstractions not requested by the package, change a
-public contract or resolve cross-component ambiguity. Stop and request PC or SURGICAL
-escalation when the work cannot remain level 1. Every green result is reviewed by
-SURGICAL Codex through OpenCode before closure.
+public contract or resolve cross-component ambiguity. Return a bounded blocker to Ring
+when the work cannot remain level 1. SURGICAL is temporarily disabled; a green exact
+gate closes through the deterministic controller without an `ACCEPT/REVISE` handoff.
 
 Your queue is exclusively:
 .opencode/task-plan.frontend.json
@@ -85,7 +85,7 @@ At the start of every invocation:
 9. Apply one bounded Angular change.
 10. Produce the post-edit understanding report.
 11. Run the exact frontend gate again.
-12. Stop for SURGICAL Codex review through OpenCode.
+12. Let the deterministic controller close the task when the exact gate is green.
 
 ## Frontend ownership
 

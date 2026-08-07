@@ -5,7 +5,8 @@ set -Eeuo pipefail
 # boundaries. Dirty worktrees are attempted, not rejected pre-emptively.
 # No stash, reset or force-push is used. A recovery snapshot is written before
 # attempting an incoming merge over local uncommitted changes.
-# Structured Codex/local-LLM artifacts are published before the branch is pushed.
+# Volatile progress, memory and current-state files remain local and ignored.
+# Only commits already created for task-owned product paths are synchronized.
 
 PHASE="${1:-}"
 case "$PHASE" in
@@ -24,12 +25,11 @@ HUB_WORKTREE="${R4R_INTEGRATION_WORKTREE:-$DEVELOPMENT_ROOT/r4r-integration.git}
 LOCK_PATH="${R4R_GIT_LOCK:-$DEVELOPMENT_ROOT/.r4r-runtime/git.lock}"
 PUSH_POLICY="${R4R_AGENT_SYNC_PUSH_POLICY:-strict}"
 BACKUP_ROOT="${R4R_AGENT_SYNC_BACKUP_ROOT:-$DEVELOPMENT_ROOT/.r4r-runtime/agent-sync-backups}"
-ARTIFACT_COLLECTOR="${R4R_ARTIFACT_COLLECTOR:-$ROOT/scripts/collect-agent-artifacts.py}"
 
 log() { printf '[r4r-agent-sync] %s\n' "$*"; }
 die() { printf '[r4r-agent-sync] ERROR: %s\n' "$*" >&2; exit 2; }
 
-for command in git flock realpath tar sha256sum awk stat python3; do
+for command in git flock realpath tar sha256sum awk stat; do
   command -v "$command" >/dev/null 2>&1 || die "required command unavailable: $command"
 done
 
@@ -126,22 +126,6 @@ state_fingerprint() {
   } | sha256sum | awk '{print $1}'
 }
 
-publish_agent_artifacts() {
-  local agent="" worker=""
-  case "$BRANCH" in
-    agent/ring-agent-worker) agent=ring; worker=RING ;;
-    agent/pc-qwen3-worker) agent=PC; worker=PC ;;
-    agent/laptop-qwen3-worker) agent=LP; worker=LP ;;
-    *) return 0 ;;
-  esac
-  [[ -f "$ARTIFACT_COLLECTOR" ]] || die "artifact collector not found: $ARTIFACT_COLLECTOR"
-  python3 "$ARTIFACT_COLLECTOR" \
-    --repo "$ROOT" \
-    --agent "$agent" \
-    --worker-id "$worker" \
-    --commit
-}
-
 merge_inbound_or_defer() {
   local path="$1" ref="$2" label="$3" before_state after_state
   backup_dirty_state "$path" "$BRANCH"
@@ -157,9 +141,8 @@ merge_inbound_or_defer() {
   return 1
 }
 
-publish_agent_artifacts
-
 if ! is_clean "$HUB_WORKTREE"; then
+  git -C "$HUB_WORKTREE" status --short >&2 || true
   die "integration worktree is dirty; refusing automatic synchronization"
 fi
 

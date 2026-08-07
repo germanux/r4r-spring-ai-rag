@@ -137,8 +137,6 @@ def deterministic_commit_subject(destination: Path) -> str:
 
     if paths and all(path.startswith("docs/") or path.endswith(".md") for path in paths):
         return "docs(project): update coordinated agent records"
-    if any("collect-agent-artifacts" in path for path in lowered):
-        return "feat(sync): archive structured agent artifacts"
     if any("drive-import" in path for path in lowered):
         return "fix(drive): refine bidirectional project synchronization"
     if any(path.startswith("frontend/") for path in lowered):
@@ -238,8 +236,8 @@ def secret_env_name(name: str) -> bool:
 def excluded_relative(relative: Path) -> bool:
     if not relative.parts:
         return True
-    # Raw runtime stays machine-local. The deterministic artifact collector
-    # publishes the durable Markdown/JSON view under .opencode/current/.
+    # Raw runtime and regenerated agent state stay machine-local. Durable task
+    # evidence is authored directly under .ring-agent/evidence/.
     if relative.parts[0] == "runtime":
         return True
     if any(part in EXCLUDED_DIRS for part in relative.parts[:-1]):

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 import fcntl
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -38,7 +39,7 @@ DIRECTIVE_MAX_AGE_SECONDS = int(
     os.environ.get("R4R_RING_DIRECTIVE_MAX_AGE_SECONDS", "10800")
 )
 EVENT_MIN_INTERVAL_SECONDS = int(
-    os.environ.get("R4R_RING_EVENT_MIN_INTERVAL_SECONDS", "300")
+    os.environ.get("R4R_RING_EVENT_MIN_INTERVAL_SECONDS", "3600")
 )
 INTEGRATION_SYNC_ENABLED = (
     os.environ.get("R4R_AGENT_INTEGRATION_SYNC", "true").lower() == "true"
@@ -402,12 +403,11 @@ VALID_RING_ACTIONS = {
     "START",
     "CONTINUE",
     "HOLD",
-    "REVIEW",
     "STOP",
     "NO_ACTION",
 }
 VALID_OVERALL_STATUSES = {"READY", "BLOCKED", "NO_ACTION"}
-ACTIVE_DISPATCH_ACTIONS = {"START", "CONTINUE", "REVIEW"}
+ACTIVE_DISPATCH_ACTIONS = {"START", "CONTINUE"}
 
 
 def _atomic_write_text(path: Path, content: str) -> None:
@@ -417,9 +417,85 @@ def _atomic_write_text(path: Path, content: str) -> None:
     os.replace(temporary, path)
 
 
-def _decision_ledger_entry(run_id: str, state: dict[str, Any]) -> str:
+def _normalized_semantic_value(value: Any) -> Any:
+    """Normalize ordering and whitespace before deciding whether state changed."""
+    if isinstance(value, dict):
+        return {
+            key: _normalized_semantic_value(item)
+            for key, item in sorted(value.items())
+        }
+    if isinstance(value, list):
+        normalized = [_normalized_semantic_value(item) for item in value]
+        return sorted(
+            normalized,
+            key=lambda item: json.dumps(
+                item,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ),
+        )
+    if isinstance(value, str):
+        return " ".join(value.split())
+    return value
+
+
+def _semantic_fingerprint(value: Any) -> str:
+    payload = json.dumps(
+        _normalized_semantic_value(value),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _decision_payload(decision: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: value
+        for key, value in decision.items()
+        if key not in {"evidence_path", "evidence_paths"}
+    }
+
+
+def _coordination_fingerprint(state: dict[str, Any]) -> str:
+    return _semantic_fingerprint(
+        {
+            "overall_status": state["overall_status"],
+            "decisions": {
+                worker: _decision_payload(state["decisions"][worker])
+                for worker in ("PC", "LP")
+            },
+            "integration_risks": state["integration_risks"],
+            "evidence_limitations": state["evidence_limitations"],
+        }
+    )
+
+
+def _last_coordination_fingerprint(path: Path) -> str | None:
+    if not path.is_file():
+        return None
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    matches = re.findall(
+        r"^- Decision fingerprint: `([0-9a-f]{64})`$",
+        content,
+        flags=re.MULTILINE,
+    )
+    return matches[-1] if matches else None
+
+
+def _decision_ledger_entry(
+    run_id: str,
+    state: dict[str, Any],
+    fingerprint: str,
+) -> str:
     lines = [
         f"## Cycle `{run_id}` â {state['overall_status']}",
+        "",
+        f"- Decision fingerprint: `{fingerprint}`",
         "",
     ]
     for worker in ("PC", "LP"):
@@ -454,8 +530,8 @@ def _append_decision_ledger(
     destination: Path,
     run_id: str,
     state: dict[str, Any],
-) -> None:
-    marker = f"## Cycle `{run_id}`"
+) -> bool:
+    fingerprint = _coordination_fingerprint(state)
     if destination.is_file():
         existing = destination.read_text(encoding="utf-8")
     else:
@@ -463,10 +539,15 @@ def _append_decision_ledger(
             "# R4R agent coordination decisions\n\n"
             "Append-only ledger generated after each validated Ring cycle.\n"
         )
-    if marker in existing:
-        return
-    content = existing.rstrip() + "\n\n" + _decision_ledger_entry(run_id, state)
+    if _last_coordination_fingerprint(destination) == fingerprint:
+        return False
+    content = existing.rstrip() + "\n\n" + _decision_ledger_entry(
+        run_id,
+        state,
+        fingerprint,
+    )
     _atomic_write_text(destination, content)
+    return True
 
 
 def _commit_coordination_files_locked(
@@ -715,10 +796,14 @@ def _attempt_evidence_content(
     worker: str,
     decision: dict[str, Any],
 ) -> str:
+    fingerprint = _semantic_fingerprint(
+        {"worker": worker, "decision": _decision_payload(decision)}
+    )
     lines = [
         f"# Ring evidence: {decision['task_id']}",
         "",
         f"- Run: `{run_id}`",
+        f"- Decision fingerprint: `{fingerprint}`",
         f"- Worker: `{worker}`",
         f"- Assigned agent: `{decision['assigned_agent']}`",
         f"- Model: `{decision['model']}`",
@@ -764,21 +849,29 @@ def _publish_task_evidence(
     )
     author = _safe_slug(decision["assigned_agent"], fallback=worker.lower())
     existing = sorted(task_dir.glob(f"{author}-attempt-*.md"))
-    marker = f"- Run: `{run_id}`"
+    fingerprint = _semantic_fingerprint(
+        {"worker": worker, "decision": _decision_payload(decision)}
+    )
+    marker = f"- Decision fingerprint: `{fingerprint}`"
     highest_attempt = 0
+    latest_path: Path | None = None
     for path in existing:
         match = re.fullmatch(
             rf"{re.escape(author)}-attempt-(\d+)\.md",
             path.name,
         )
         if match:
-            highest_attempt = max(highest_attempt, int(match.group(1)))
+            attempt = int(match.group(1))
+            if attempt > highest_attempt:
+                highest_attempt = attempt
+                latest_path = path
+    if latest_path is not None:
         try:
-            if marker in path.read_text(encoding="utf-8"):
-                decision["evidence_path"] = path.relative_to(ring).as_posix()
-                return path
+            if marker in latest_path.read_text(encoding="utf-8"):
+                decision["evidence_path"] = latest_path.relative_to(ring).as_posix()
+                return latest_path
         except OSError:
-            continue
+            pass
     destination = task_dir / f"{author}-attempt-{highest_attempt + 1:02d}.md"
     decision["evidence_path"] = destination.relative_to(ring).as_posix()
     _atomic_write_text(
@@ -954,6 +1047,16 @@ def _publish_staged_outputs(
         )
         return result
 
+    coordination_dir = paths.ring / "docs" / "agent-coordination"
+    decisions_path = coordination_dir / "DECISIONS.md"
+    coordination_fingerprint = _coordination_fingerprint(normalized_state)
+    semantic_change = (
+        _last_coordination_fingerprint(decisions_path)
+        != coordination_fingerprint
+    )
+    result["coordination_fingerprint"] = coordination_fingerprint
+    result["semantic_change"] = semantic_change
+
     task_evidence_files = []
     for worker in ("PC", "LP"):
         evidence_path = _publish_task_evidence(
@@ -994,7 +1097,6 @@ def _publish_staged_outputs(
         _atomic_write_text(destination, content)
         result["promoted_files"][name] = str(destination)
 
-    coordination_dir = paths.ring / "docs" / "agent-coordination"
     versioned_destinations = {
         "code-pc-review.md": coordination_dir / "PC-WORKER.md",
         "code-lp-review.md": coordination_dir / "LAPTOP-WORKER.md",
@@ -1002,21 +1104,26 @@ def _publish_staged_outputs(
         "worker-understanding.md": coordination_dir / "WORKER-UNDERSTANDING.md",
         "global-summary.md": coordination_dir / "CURRENT-STATE.md",
     }
-    for name, destination in versioned_destinations.items():
-        _atomic_write_text(
-            destination,
-            (output_dir / name).read_text(encoding="utf-8"),
+    if semantic_change:
+        for name, destination in versioned_destinations.items():
+            _atomic_write_text(
+                destination,
+                (output_dir / name).read_text(encoding="utf-8"),
+            )
+            result["versioned_files"][name] = str(destination)
+        _append_decision_ledger(decisions_path, run_id, normalized_state)
+        result["versioned_files"]["decisions"] = str(decisions_path)
+        commit_result = _commit_coordination_files(
+            paths.ring,
+            [*versioned_destinations.values(), decisions_path, *task_evidence_files],
+            run_id,
         )
-        result["versioned_files"][name] = str(destination)
-
-    decisions_path = coordination_dir / "DECISIONS.md"
-    _append_decision_ledger(decisions_path, run_id, normalized_state)
-    result["versioned_files"]["decisions"] = str(decisions_path)
-    commit_result = _commit_coordination_files(
-        paths.ring,
-        [*versioned_destinations.values(), decisions_path, *task_evidence_files],
-        run_id,
-    )
+    else:
+        commit_result = {
+            "status": "no-semantic-change",
+            "commit": None,
+            "detail": "task, action, constraints and diagnosis are unchanged",
+        }
     result["coordination_commit"] = commit_result
     if commit_result["status"] == "failed":
         result["reason"] = "coordination-commit-failed"
@@ -1098,8 +1205,10 @@ worker memory, checkpoint, Codex plan/review, correction packet, local understan
 CodeGraph report, gate summary and prior Ring directive.
 
 Identify the first current defect for PC and LP. Prefer correction before new
-implementation. Do not claim a test passed, a task completed, Codex accepted or a
-worker started unless direct evidence proves it.
+implementation. Do not claim a test passed, a task completed or a worker started
+unless direct evidence proves it. SURGICAL is temporarily disabled: never dispatch
+`agent/opencode-dual-surgical`, request its review, or hold PC/LP because an
+`ACCEPT/REVISE` decision is absent. Continue disjoint PC/LP work normally.
 
 Write these six staged files below OUTPUT_DIR on every successful cycle:
 - {output_dir}/state.json
@@ -1123,7 +1232,7 @@ state.json must be valid JSON with this exact structure:
   "overall_status": "READY | BLOCKED | NO_ACTION",
   "decisions": {{
     "PC": {{
-      "action": "START | CONTINUE | HOLD | REVIEW | STOP | NO_ACTION",
+      "action": "START | CONTINUE | HOLD | STOP | NO_ACTION",
       "task_id": "exact active task id or null",
       "reason": "non-empty evidence-grounded diagnosis",
       "next_action": "one focused action for one worker pass",
@@ -1131,12 +1240,12 @@ state.json must be valid JSON with this exact structure:
         "one or more existing paths inside RUN_DIR supporting the decision"
       ],
       "acceptance_gates": [
-        "one or more exact task, gate or Codex constraints"
+        "one or more exact task or deterministic gate constraints"
       ],
       "avoid_repeating": "the last failed or wasteful approach to avoid"
     }},
     "LP": {{
-      "action": "START | CONTINUE | HOLD | REVIEW | STOP | NO_ACTION",
+      "action": "START | CONTINUE | HOLD | STOP | NO_ACTION",
       "task_id": "exact active task id or null",
       "reason": "non-empty evidence-grounded diagnosis",
       "next_action": "one focused action for one worker pass",
@@ -1144,7 +1253,7 @@ state.json must be valid JSON with this exact structure:
         "one or more existing paths inside RUN_DIR supporting the decision"
       ],
       "acceptance_gates": [
-        "one or more exact task, gate or Codex constraints"
+        "one or more exact task or deterministic gate constraints"
       ],
       "avoid_repeating": "the last failed or wasteful approach to avoid"
     }}

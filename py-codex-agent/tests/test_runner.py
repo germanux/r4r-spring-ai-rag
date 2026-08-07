@@ -25,6 +25,31 @@ from r4r_codex_agent.runner import (
 
 
 class RunnerTest(unittest.TestCase):
+    def test_surgical_review_is_disabled_by_default(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            progress = repo / ".opencode" / "progress.backend.json"
+            task = Task(
+                "task-01",
+                "task.md",
+                "bounded objective",
+                ("src/**",),
+                ("true",),
+                "task commit",
+            )
+            plan = TaskPlan(1, (task,), ("true",))
+            environment = {
+                "R4R_WORKER_ID": "PC",
+                "R4R_GIT_AUTHOR_NAME": "R4R Test Agent",
+                "R4R_GIT_AUTHOR_EMAIL": "r4r-test@example.invalid",
+            }
+            with patch.dict(os.environ, environment, clear=False):
+                with patch.dict(os.environ, {}, clear=False):
+                    os.environ.pop("R4R_REQUIRE_SURGICAL_REVIEW", None)
+                    runner = AutomaticRunner(repo, plan, progress)
+
+            self.assertFalse(runner.require_surgical_review)
+
     def test_runs_without_shell_and_preserves_exit(self):
         with tempfile.TemporaryDirectory() as directory:
             result = run_command(("python3", "-c", "raise SystemExit(7)"), Path(directory))
@@ -868,7 +893,7 @@ class RunnerTest(unittest.TestCase):
         self.assertGreaterEqual(result.observed_steps, 4)
         self.assertEqual(0, result.meaningful_events)
 
-    def test_green_checkpoint_commits_product_memory_and_progress_but_stays_pending(self):
+    def test_green_checkpoint_commits_only_product_but_keeps_local_state(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)
             self._init_repo(repo)
@@ -937,13 +962,11 @@ class RunnerTest(unittest.TestCase):
                 .stdout.splitlines()
             )
             self.assertEqual(
-                {
-                    "src/main/App.java",
-                    ".opencode/progress.backend.json",
-                    ".opencode/memory.backend.md",
-                },
+                {"src/main/App.java"},
                 committed,
             )
+            self.assertTrue(runner.progress_path.is_file())
+            self.assertTrue(runner.memory_path.is_file())
             memory = runner.memory_path.read_text(encoding="utf-8")
             self.assertIn("Still unproven or below expectations", memory)
             self.assertIn("does not mark the task ACCEPTED", memory)

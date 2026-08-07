@@ -86,6 +86,7 @@ const metadata = {
     autoCommit: canonical.defaults.autoCommit,
     bootstrapCommit: canonical.defaults.bootstrapCommit,
     checkpointOnGreen: canonical.defaults.checkpointOnGreen,
+    requireSurgicalReview: canonical.defaults.requireSurgicalReview ?? false,
     maxSessionSeconds: profile.runtime?.maxSessionSeconds ?? canonical.defaults.maxSessionSeconds,
     idleSeconds: profile.runtime?.idleSeconds ?? canonical.defaults.idleSeconds,
     maxSessionSteps: profile.runtime?.maxSessionSteps ?? canonical.defaults.maxSessionSteps,

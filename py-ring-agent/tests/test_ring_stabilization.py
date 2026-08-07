@@ -14,12 +14,39 @@ from r4r_ring_agent.ring_stabilization import (
     STATUS_SUCCESS,
     _classify_final_status,
     _parse_frontmatter,
+    _validate_state_json,
     normalize_tool_error,
     validate_artifacts,
 )
 
 
 class RingStabilizationTests(unittest.TestCase):
+    def test_review_action_is_rejected_while_surgical_is_disabled(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "state.json"
+            run_id = "20260806T150000Z"
+            decision = {
+                "action": "CONTINUE",
+                "task_id": "task-01",
+                "reason": "Continue bounded work.",
+                "acceptance_gates": ["Run the exact deterministic gate."],
+            }
+            payload = {
+                "schema_version": 1,
+                "run_id": run_id,
+                "overall_status": "READY",
+                "decisions": {"PC": dict(decision), "LP": dict(decision)},
+                "integration_risks": [],
+                "evidence_limitations": [],
+            }
+            payload["decisions"]["LP"]["action"] = "REVIEW"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+
+            self.assertEqual(
+                "decisions.LP.action is invalid",
+                _validate_state_json(path, run_id),
+            )
+
     def test_external_directory_children_share_root_signature(self):
         root = Path("/home/german/Desarrollo/r4r-pc-worker.git")
         first, threshold1 = normalize_tool_error(

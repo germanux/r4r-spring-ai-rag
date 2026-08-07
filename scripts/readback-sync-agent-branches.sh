@@ -9,9 +9,8 @@ set -Eeuo pipefail
 #   * centralize each source branch in agent/integration;
 #   * after each source round, attempt to propagate the pinned hub commit to
 #     every worktree, including active and dirty ones;
-#   * before collection, publish only explicit Ring/PC/LP current-state files under
-#     .opencode/current/{ring,PC,LP}; runtime remains ignored and task evidence stays
-#     under .ring-agent/evidence with one writer per attempt;
+#   * keep runtime, progress, memory and .opencode/current machine-local;
+#   * keep task evidence under .ring-agent/evidence with one writer per semantic attempt;
 #   * push the hub and every updated branch;
 #   * preserve staged, unstaged and untracked work exactly as Git found it.
 #
@@ -27,6 +26,8 @@ RING_WORKTREE_HINT="${R4R_RING_WORKTREE:-$DEVELOPMENT_ROOT/r4r-ring-agent.git}"
 PC_WORKTREE_HINT="${R4R_PC_WORKTREE:-$DEVELOPMENT_ROOT/r4r-pc-worker.git}"
 LP_WORKTREE_HINT="${R4R_LP_WORKTREE:-$DEVELOPMENT_ROOT/r4r-lp-worker.git}"
 HUB_BRANCH="${R4R_INTEGRATION_BRANCH:-agent/integration}"
+SURGICAL_BRANCH="${R4R_SURGICAL_BRANCH:-agent/opencode-dual-surgical}"
+SURGICAL_SYNC_ENABLED="${R4R_SURGICAL_SYNC_ENABLED:-false}"
 REMOTE="${R4R_SYNC_REMOTE:-origin}"
 PUSH_POLICY="strict"
 FETCH=true
@@ -79,9 +80,11 @@ Default: complete automatic hot-sync pass
   - fetches and centralizes committed source refs in agent/integration;
   - attempts propagation to active and dirty worktrees;
   - preserves staged, unstaged and untracked work without stashing or unstaging;
-  - preserves only explicit Ring/PC/LP current-state files in .opencode/current;
-  - never copies runtime; durable task evidence remains in .ring-agent/evidence;
+  - never copies or commits runtime, progress, memory or .opencode/current;
+  - durable task evidence remains in .ring-agent/evidence;
   - defers only when Git rejects a merge or another Git operation is pending.
+  - excludes agent/opencode-dual-surgical from collection and propagation while
+    R4R_SURGICAL_SYNC_ENABLED is not true.
 
 Options:
   --hub BRANCH             Hub branch (default: agent/integration).
@@ -157,7 +160,6 @@ COMMON_DIR="$(realpath -e "$COMMON_DIR")"
 LOG_ROOT="${R4R_BRANCH_SYNC_RUNTIME_ROOT:-$DEVELOPMENT_ROOT/.r4r-runtime/branch-sync}"
 ALERT_ROOT="$LOG_ROOT/alerts"
 BACKUP_RUN_ROOT="$LOG_ROOT/backups/$SYNC_STAMP"
-ARTIFACT_COLLECTOR="${R4R_ARTIFACT_COLLECTOR:-$REPOSITORY/scripts/collect-agent-artifacts.py}"
 mkdir -p "$LOG_ROOT/conflicts" "$ALERT_ROOT" "$BACKUP_RUN_ROOT"
 
 # One scheduler lock plus one shared Git transaction lock used by workers and Drive.
@@ -182,6 +184,9 @@ sanitize() { printf '%s' "$1" | tr -cs 'A-Za-z0-9._-' '_'; }
 branch_is_excluded() {
   local branch="$1" pattern
   [[ "$branch" == "$HUB_BRANCH" ]] && return 0
+  if [[ "$SURGICAL_SYNC_ENABLED" != true && "$branch" == "$SURGICAL_BRANCH" ]]; then
+    return 0
+  fi
   for pattern in "${EXCLUDES[@]}"; do
     # shellcheck disable=SC2053
     [[ "$branch" == $pattern ]] && return 0
@@ -481,26 +486,6 @@ visible_status() {
   git -C "$1" status --porcelain=v1 --untracked-files=all -- . ':(exclude)runtime/**'
 }
 
-collect_agent_artifacts() {
-  local path="$1" agent="$2" worker="$3" branch
-  [[ -n "$path" && -d "$path" ]] || { warn "$agent: worktree unavailable; artifact collection skipped"; return 0; }
-  [[ -f "$ARTIFACT_COLLECTOR" ]] || die "artifact collector not found: $ARTIFACT_COLLECTOR"
-  if merge_in_progress "$path" || [[ -n "$(unmerged_paths "$path" || true)" ]]; then
-    warn "$agent: Git operation pending; artifact collection deferred"
-    return 0
-  fi
-  branch="$(git -C "$path" branch --show-current)"
-  if "$DRY_RUN"; then
-    log "DRY-RUN: curate explicit $agent current-state files from $branch"
-    return 0
-  fi
-  python3 "$ARTIFACT_COLLECTOR" \
-    --repo "$path" \
-    --agent "$agent" \
-    --worker-id "$worker" \
-    --commit
-}
-
 collect_ref_into_hub() {
   local incoming="$1" label="$2" merge_log report paths body
   if git -C "$INTEGRATION_WORKTREE" merge-base --is-ancestor "$incoming" HEAD; then
@@ -689,11 +674,22 @@ fi
 ! "$SOURCES_EXPLICIT" && SOURCES=("${SUBSCRIBED[@]}")
 mapfile -t TARGETS < <(printf '%s\n' "${TARGETS[@]}" | awk 'NF && !seen[$0]++')
 mapfile -t SOURCES < <(printf '%s\n' "${SOURCES[@]}" | awk 'NF && !seen[$0]++')
+mapfile -t TARGETS < <(
+  for branch in "${TARGETS[@]}"; do
+    branch_is_excluded "$branch" || printf '%s\n' "$branch"
+  done
+)
+mapfile -t SOURCES < <(
+  for branch in "${SOURCES[@]}"; do
+    branch_is_excluded "$branch" || printf '%s\n' "$branch"
+  done
+)
 
 log "repository:             $REPOSITORY"
 log "Git common dir:         $COMMON_DIR"
 log "integration worktree:   $INTEGRATION_WORKTREE"
 log "hub branch:             $HUB_BRANCH"
+log "surgical branch sync:   $SURGICAL_SYNC_ENABLED"
 log "subscribed worktrees:   ${SUBSCRIBED[*]:-(none)}"
 log "source sequence:        ${SOURCES[*]:-(none)}"
 log "propagation targets:    ${TARGETS[*]:-(none)}"
@@ -713,15 +709,10 @@ while IFS=$'\t' read -r branch path; do
   fi
 done < <(all_worktree_records)
 
-# //TODO: Remove the obsolete artifact collector and its supporting code when the
-# repository cleanup is performed. Disabled because task evidence is already
-# durable in .ring-agent/evidence and runtime must remain entirely ignored.
-# collect_agent_artifacts "$RING_WORKTREE" ring RING
-# collect_agent_artifacts "$PC_WORKTREE" PC PC
-# collect_agent_artifacts "$LP_WORKTREE" LP LP
-
-[[ -z "$(visible_status "$INTEGRATION_WORKTREE")" ]] \
-  || die "integration worktree is dirty; refusing to mix synchronization changes"
+if [[ -n "$(visible_status "$INTEGRATION_WORKTREE")" ]]; then
+  visible_status "$INTEGRATION_WORKTREE" >&2 || true
+  die "integration worktree is dirty; refusing to mix synchronization changes"
+fi
 
 # Avoid interrupting agents every three minutes when every branch already converged.
 if ! sync_is_needed; then

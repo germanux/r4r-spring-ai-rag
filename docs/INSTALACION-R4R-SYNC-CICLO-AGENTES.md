@@ -23,6 +23,11 @@ El paquete se descomprime en la raíz de `~/Desarrollo/r4r-ring-agent.git`.
 - Ante un rechazo o conflicto, el merge se aborta y no se ejecutan `unstage`,
   `stash`, `reset`, `force-push` ni resoluciones automáticas.
 - El temporizador general se conserva como respaldo, no como vía principal.
+- El respaldo se ejecuta una vez durante la instalación y luego cada hora. Los eventos
+  de Ring también quedan limitados a una hora y un ciclo sin cambio semántico no crea
+  evidencia ni commit.
+- Progreso, memoria, `.opencode/current/` y la vista operativa de Ring permanecen
+  locales e ignorados. Los controladores solo confirman rutas funcionales de la tarea.
 - `r4r-drive-import-safe.py --bidirectional` sincroniza Insync ↔ Git, exportando
   únicamente ficheros versionados y notificando cambios simultáneos.
 
@@ -46,35 +51,18 @@ chmod +x \
   scripts/sync-agent-branches.sh \
   scripts/install-r4r-branch-sync-systemd.sh
 
-# Versiona solo esta implementación; no incluye los seis documentos pendientes
-# de Ring ni otros cambios locales.
-git add -- \
-  scripts/agent-integration-sync.sh \
-  scripts/sync-agent-branches.sh \
-  scripts/install-r4r-branch-sync-systemd.sh \
-  py-codex-agent/src/r4r_codex_agent/runner.py \
-  py-ring-agent/src/r4r_ring_agent/ring_loop.py \
-  docs/INSTALACION-R4R-SYNC-CICLO-AGENTES.md
+# Revisa el conjunto aplicado, confirma únicamente el parche de sincronización y
+# publícalo antes de reinstalar. El servicio rechaza deliberadamente un hub sucio.
+git diff --check
+git status --short
 
-git commit --only \
-  -m "feat(sync): synchronize agents at safe lifecycle boundaries" -- \
-  scripts/agent-integration-sync.sh \
-  scripts/sync-agent-branches.sh \
-  scripts/install-r4r-branch-sync-systemd.sh \
-  py-codex-agent/src/r4r_codex_agent/runner.py \
-  py-ring-agent/src/r4r_ring_agent/ring_loop.py \
-  docs/INSTALACION-R4R-SYNC-CICLO-AGENTES.md
+# Continúa solo cuando el commit ya esté publicado y esta salida quede vacía.
+test -z "$(git status --porcelain)"
 
-git push origin agent/ring-agent-worker
-
-# Reinstala el temporizador, ahora como respaldo cada 15 minutos. El instalador
-# elimina automáticamente el override antiguo schedule.conf de tres minutos.
-R4R_BRANCH_SYNC_INTERVAL=15min \
-  ./scripts/install-r4r-branch-sync-systemd.sh install
-
-# Haz una última propagación con los agentes detenidos. Es el bootstrap que lleva
-# runner.py y agent-integration-sync.sh a las ramas PC y LP.
-systemctl --user start r4r-agent-branch-sync.service
+# Reinstala el temporizador como respaldo cada hora. El instalador elimina el
+# override antiguo, ejecuta una pasada inicial y falla de forma visible si el hub
+# está sucio, falta autenticación o la sincronización no puede completarse.
+./scripts/install-r4r-branch-sync-systemd.sh install
 
 ./scripts/run-ring-system.sh start
 ```
@@ -84,8 +72,10 @@ No hace falta modificar ni reinicializar el manifiesto de Google Drive.
 ## Comprobación
 
 ```bash
-systemctl --user list-timers --all |
-  grep -E 'r4r-(agent-branch-sync|drive-import-safe)'
+cd ~/Desarrollo/r4r-integration.git
+./scripts/install-r4r-branch-sync-systemd.sh status
+
+git status --short
 
 journalctl --user \
   -u r4r-agent-branch-sync.service \
@@ -96,6 +86,11 @@ journalctl --user \
 pgrep -af 'run-ring|run-worker|opencode|r4r_codex_agent'
 ollama ps
 ```
+
+El estado correcto es `enabled` y `active (waiting)` para el timer, con una hora
+próxima visible en `list-timers`. Si aparece `integration worktree is dirty`, no es
+un fallo silencioso de `systemd`: la protección se ha activado y el propio journal
+lista los ficheros que deben confirmarse o retirarse antes de reintentar.
 
 En las consolas de Ring, PC y LP deben aparecer estas líneas:
 
@@ -121,7 +116,8 @@ cd ~/Desarrollo/r4r-ring-agent.git
 ```
 
 Ring queda conectado automáticamente en `ring_loop.py`: sincroniza al arrancar y
-después de cada commit de coordinación. PC y LP hacen lo mismo desde `runner.py`.
+después de cada cambio semántico de coordinación. PC y LP hacen lo mismo desde
+`runner.py` al crear un checkpoint funcional o cerrar una tarea.
 
 ## Prueba de Google Drive sin modificar archivos
 

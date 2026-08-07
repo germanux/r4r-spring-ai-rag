@@ -10,10 +10,9 @@ coordination role:
   classifies risk, assigns one owner, checks dependencies and decides whether evidence
   is sufficient. It writes only staged coordination outputs. Ring never edits product,
   test, script, controller, configuration or policy code.
-- **SURGICAL / senior developer and reviewer — 5-year calibration, level 3.** Codex
-  runs through OpenCode using the `r4r-surgical-architect` and
-  `r4r-surgical-fixer` profiles on branch `agent/opencode-dual-surgical`. It implements
-  cross-cutting or high-risk work and reviews every PC and LP result before closure.
+- **SURGICAL — temporarily disabled.** Its branch and profiles are retained for a
+  later redesign, but Ring must not dispatch it and PC/LP closure must not wait for
+  `ACCEPT` or `REVISE` from it.
 - **PC / developer — 2-year calibration, level 2.** PC performs bounded medium-risk
   implementation within the active backend or frontend phase. It does not make
   repository-wide architecture, lifecycle or Git-synchronization decisions.
@@ -36,15 +35,14 @@ it does not implement them.
 - A level-1 LP package targets 15–35 minutes, one or two closely related files and one
   exact assertion or visible behavior.
 - A level-2 PC package targets 30–60 minutes, one component or layer and one exact gate.
-- A level-3 SURGICAL package targets 45–90 minutes and may cross layers only when the
-  work cannot safely be decomposed further.
+- A former level-3 package must be decomposed into disjoint PC/LP work or left pending
+  for explicit human reassignment while SURGICAL is disabled.
 - The hard OpenCode session ceiling is 90 minutes (`5400` seconds). Reaching the
   ceiling stops the session; it does not authorize a broader scope or an unreviewed
   commit.
 - Every subtask has one objective, explicit dependencies, one canonical `allowed_paths`
-  write scope, one exact gate and one controller-owned closing commit. A subtask may
-  create an earlier gate-green checkpoint, but closure still requires SURGICAL Codex
-  `ACCEPT` through OpenCode.
+  write scope, one exact gate and one controller-owned closing commit. A green exact
+  gate and clean scope are sufficient for the controller to close the task.
 - Split work again when one task mixes independent concerns such as entrypoint,
   lifecycle, exception classification, subprocess proof, DOM behavior, accessibility
   or final integration validation.
@@ -62,8 +60,9 @@ it does not implement them.
   documentation, task plans, agent profiles or `AGENTS.md`.
 - Ring never deletes, moves, renames or truncates repository content.
 - Ring never writes Git history, launches workers or applies a SURGICAL patch.
-- When Ring identifies a code or policy correction, it creates a bounded level-1,
-  level-2 or level-3 work package and routes it to LP, PC or SURGICAL respectively.
+- When Ring identifies a code or policy correction, it creates a bounded level-1 or
+  level-2 work package and routes it to LP or PC. It never routes to SURGICAL while the
+  temporary disablement is active.
 
 ## Concurrency
 
@@ -71,14 +70,15 @@ it does not implement them.
 - Every task's `allowed_paths` entry is its canonical `write_scope`; do not create a
   second scope field that can drift from controller enforcement.
 - Before publishing directives, Ring validates active task IDs against the configured
-  plans and rejects dispatch when write scopes overlap. A level-3 SURGICAL task holds
-  overlapping PC/LP work until the surgical patch is integrated and revalidated.
+  plans and rejects simultaneous dispatch only when PC and LP write scopes overlap.
 - Peer-owned product paths are tolerated as concurrent background changes but are not
   writable by the PC or LP peer agent.
 - Each worker has separate progress, memory, control and run directories.
-- OpenCode/Qwen3 and OpenCode/Codex never write Git history.
-- The deterministic Python controller may create a task-scoped checkpoint immediately
-  after the exact gate is green, and a closing commit after Codex `ACCEPT`.
+- Worker progress, memory, `.opencode/current/` and Ring's live `.ring-agent/*.json`
+  or summary files are machine-local, regenerated state and must remain ignored.
+- OpenCode/local-model sessions never write Git history.
+- The deterministic Python controller may create a task-scoped checkpoint and the
+  closing commit immediately after the exact gate is green and scope is clean.
 - A checkpoint preserves useful compilable work but does not mark the task accepted.
 - Do not run `git add`, `git commit`, `git reset`, `git checkout`, `git merge` or
   `git push` from a model/tool session; only the controller owns automated commits.
@@ -98,12 +98,11 @@ it does not implement them.
 1. Run the selected queue's exact gate.
 2. Classify the first current failure and retain the full evidence.
 3. Use focused CodeGraph/Code-Graph-RAG retrieval when useful.
-4. Follow the bounded Ring work package; escalate ambiguity to SURGICAL instead of
-   widening scope.
+4. Follow the bounded Ring work package; return unresolved ambiguity to Ring instead
+   of widening scope.
 5. Edit one coherent batch inside the current worker's allowed paths.
-6. Re-run the exact gate. When green, let the controller write worker memory and a
-   task-scoped checkpoint before handing the same evidence to SURGICAL Codex through
-   OpenCode.
+6. Re-run the exact gate. When green, let the controller write worker memory, close
+   the task and advance the queue without a SURGICAL handoff.
 7. Stop on scope/Git violations and bounded-session watchdog triggers; retry only with
    a changed plan or new evidence.
 
@@ -112,9 +111,8 @@ it does not implement them.
 - Backend tasks use Spring AI abstractions; no handwritten Ollama HTTP client.
 - Frontend tests and Playwright must not require a live LLM.
 - Flyway owns the backend schema.
-- A level-1 or level-2 task completes only with its exact gate green and SURGICAL
-  Codex `ACCEPT`. A level-3 task requires its exact gate, a read-only surgical review
-  pass and controller acceptance of the emitted patch.
+- A PC or LP task completes when its exact gate is green, its diff is scope-clean and
+  the deterministic controller records the result and closing commit.
 - Never recursively search generated or runtime-heavy directories:
   `frontend/node_modules/**`, `frontend/dist/**`, `frontend/.angular/**`,
   `node_modules/**`, `runtime/**` and `.r4r/**`.
@@ -124,5 +122,8 @@ it does not implement them.
   `.ring-agent/evidence/<task-id>/`. Each file has one writer, and its task-derived
   `write_scope` is recorded in the summary and worker directive. The directive also
   records `assigned_agent`, `model`, `branch` and the exclusive `evidence_path`.
+- A new evidence attempt and coordination commit require a semantic transition in
+  task, action, scope, gate, diagnosis or next action. Polling timestamps, run IDs and
+  regenerated runtime paths never justify a Git commit.
 - Binary bundles, patches, PID/lock files and bulk text logs remain only in ignored
   runtime storage; they are never copied into `.ring-agent/evidence/`.

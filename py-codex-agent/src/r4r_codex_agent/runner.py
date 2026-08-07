@@ -535,6 +535,10 @@ class AutomaticRunner:
         self.checkpoint_on_green = (
             os.environ.get("R4R_CHECKPOINT_ON_GREEN", "true").lower() == "true"
         )
+        self.require_surgical_review = (
+            os.environ.get("R4R_REQUIRE_SURGICAL_REVIEW", "false").lower()
+            == "true"
+        )
         self.integration_sync_enabled = (
             os.environ.get("R4R_AGENT_INTEGRATION_SYNC", "true").lower() == "true"
         )
@@ -904,7 +908,7 @@ class AutomaticRunner:
             )
         if self._commit_if_needed(
                 task.commit_message,
-                (*task.allowed_paths, str(self.progress_path.relative_to(self.repo)), str(self.memory_path.relative_to(self.repo))),
+                task.allowed_paths,
             ) is None:
             return self._finish("BOOTSTRAP_COMMIT_FAILED", 67)
         return 0
@@ -953,11 +957,7 @@ class AutomaticRunner:
 
             committed_head = self._commit_if_needed(
                 commit_task.commit_message,
-                (
-                    *commit_task.allowed_paths,
-                    str(self.progress_path.relative_to(self.repo)),
-                    str(self.memory_path.relative_to(self.repo)),
-                ),
+                commit_task.allowed_paths,
             )
             if committed_head is None:
                 raise RuntimeError(
@@ -1245,12 +1245,20 @@ class AutomaticRunner:
                 self.memory_context["demonstrated"] = [
                     "The exact deterministic task gate completed successfully.",
                 ]
-                self.memory_context["outstanding"] = [
-                    "Codex has not yet accepted the current checkpoint.",
-                ]
-                self.memory_context["next_action"] = (
-                    "Preserve a deterministic gate-green checkpoint, generate final evidence and request Codex review."
-                )
+                if self.require_surgical_review:
+                    self.memory_context["outstanding"] = [
+                        "Codex has not yet accepted the current checkpoint.",
+                    ]
+                    self.memory_context["next_action"] = (
+                        "Preserve a deterministic gate-green checkpoint, generate "
+                        "final evidence and request Codex review."
+                    )
+                else:
+                    self.memory_context["outstanding"] = []
+                    self.memory_context["next_action"] = (
+                        "Preserve the gate-green evidence and finalize the task "
+                        "without a SURGICAL review handoff."
+                    )
                 try:
                     self._checkpoint_green(task, gate, attempt, attempt_dir)
                 except RuntimeError as exception:
@@ -1338,6 +1346,41 @@ class AutomaticRunner:
                         )
                     self._write_local_understanding(attempt_dir, assimilation.stdout)
 
+            if not self.require_surgical_review:
+                self.memory_context["codex_decision"] = None
+                if gate.exit_code != 0:
+                    next_action = (
+                        "Fix the first current deterministic gate failure in the next "
+                        "bounded attempt. Surgical review is temporarily disabled."
+                    )
+                    self.memory_context["next_action"] = next_action
+                    self._write_memory()
+                    self._request_ring_review(
+                        task,
+                        reason="gate-red",
+                        attempt=attempt,
+                        gate=gate,
+                        checkpoint_head=self.memory_context.get("checkpoint_head"),
+                    )
+                    attempt += 1
+                    continue
+
+                self.memory_context["outstanding"] = []
+                self.memory_context["next_action"] = (
+                    "Finalize the gate-green task and advance the queue without a "
+                    "SURGICAL ACCEPT/REVISE decision."
+                )
+                self._write_memory()
+                self._request_ring_review(
+                    task,
+                    reason="gate-green-auto-accepted",
+                    attempt=attempt,
+                    gate=gate,
+                    checkpoint_head=self.memory_context.get("checkpoint_head"),
+                )
+                self._write_codex_extra_instructions(task, {"decision": "ACCEPT"})
+                return self._finalize_accepted_task(task)
+
             try:
                 review = self._codex_review(task, gate, attempt_dir)
             except RuntimeError as exception:
@@ -1414,38 +1457,7 @@ class AutomaticRunner:
                     continue
 
                 self._write_codex_extra_instructions(task, review)
-                self._accept_progress(task)
-                self.verified_green.add(task.id)
-                self._write_progress(None)
-                self._write_memory()
-                if not self.auto_commit:
-                    manual_paths = self._manual_commit_paths(task)
-                    guidance = self._manual_commit_guidance(
-                        task, manual_paths,
-                    )
-                    print(
-                        f"\n[r4r] manual commit required\n{guidance}",
-                        flush=True,
-                    )
-                    return self._finish(
-                        "TASK_ACCEPTED_COMMIT_REQUIRED",
-                        0,
-                        {
-                            "task": task.id,
-                            "suggested_commit_message": task.commit_message,
-                            "commit_paths": manual_paths,
-                        },
-                    )
-                if self._commit_if_needed(
-                    task.commit_message,
-                    (*task.allowed_paths, str(self.progress_path.relative_to(self.repo)), str(self.memory_path.relative_to(self.repo))),
-                ) is None:
-                    return self._finish(
-                        "AUTO_COMMIT_FAILED",
-                        67,
-                        {"task": task.id},
-                    )
-                return 0
+                return self._finalize_accepted_task(task)
 
             self._write_codex_extra_instructions(task, review)
             if review["decision"] == "BLOCKED":
@@ -2653,6 +2665,35 @@ next instruction packet.
         self.progress["active_task"] = None
         self.progress["last_run"] = self.run_id
 
+    def _finalize_accepted_task(self, task: Task) -> int:
+        self._accept_progress(task)
+        self.verified_green.add(task.id)
+        self._write_progress(None)
+        self._write_memory()
+        if not self.auto_commit:
+            manual_paths = self._manual_commit_paths(task)
+            guidance = self._manual_commit_guidance(task, manual_paths)
+            print(f"\n[r4r] manual commit required\n{guidance}", flush=True)
+            return self._finish(
+                "TASK_ACCEPTED_COMMIT_REQUIRED",
+                0,
+                {
+                    "task": task.id,
+                    "suggested_commit_message": task.commit_message,
+                    "commit_paths": manual_paths,
+                },
+            )
+        if self._commit_if_needed(
+            task.commit_message,
+            task.allowed_paths,
+        ) is None:
+            return self._finish(
+                "AUTO_COMMIT_FAILED",
+                67,
+                {"task": task.id},
+            )
+        return 0
+
     def _mark_blocked(self, task: Task) -> None:
         item = task_progress(self.progress, task.id)
         item["status"] = "BLOCKED"
@@ -2726,7 +2767,7 @@ next instruction packet.
                 "changed_paths": list(product_paths),
                 "demonstrated": [
                     "The exact deterministic task gate completed with exit code 0.",
-                    "The checkpoint contains only task-owned product paths plus controller progress/memory.",
+                    "The checkpoint contains only task-owned product paths; controller state remains local.",
                 ],
                 "checkpoint_status": (
                     "disabled" if not self.checkpoint_on_green
@@ -2776,11 +2817,7 @@ next instruction packet.
         )
         head = self._commit_if_needed(
             message,
-            (
-                *task.allowed_paths,
-                str(self.progress_path.relative_to(self.repo)),
-                str(self.memory_path.relative_to(self.repo)),
-            ),
+            task.allowed_paths,
         )
         checkpoint_payload["head_after"] = head
         checkpoint_payload["status"] = "created" if head else "failed"
@@ -2860,14 +2897,15 @@ next instruction packet.
             "## Fixed decisions",
             "",
             "- OpenCode/Qwen3 and Codex never write Git history.",
-            "- The deterministic Python controller may create a gate-green checkpoint and a final ACCEPT commit.",
+            "- The deterministic Python controller may create a gate-green checkpoint and a final task commit.",
             "- A gate-green checkpoint preserves useful work but does not mark the task ACCEPTED.",
-            "- A task completes only after its exact gate is green and Codex returns `ACCEPT`.",
+            "- A task completes when its exact gate is green and its task-owned scope is clean.",
             "- PostgreSQL only in Docker; Flyway owns application schema.",
             "- Spring AI abstractions; no handwritten Ollama HTTP client.",
             "- Every red gate retains complete diagnostics for Codex.",
             "- CodeGraph is focused retrieval evidence, not authority to expand task scope.",
-            "- Markdown/JSON activity is published under `.opencode/current/{ring,PC,LP}/`; raw runtime is never committed directly.",
+            "- Progress, memory and `.opencode/current/` are machine-local state and are never committed.",
+            "- Durable task evidence lives under `.ring-agent/evidence/<task-id>/` and changes only on a semantic transition.",
             "",
             "## Task ledger",
             "",
@@ -2881,60 +2919,18 @@ next instruction packet.
         self.memory_path.parent.mkdir(parents=True, exist_ok=True)
         self.memory_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    @staticmethod
-    def _versioned_trace_patterns() -> tuple[str, ...]:
-        """Return the durable per-agent artifacts that belong in Git history."""
-        return (
-            ".opencode/current/**",
-        )
-
-    def _publish_current_artifacts(self) -> None:
-        """Materialize this worker's Markdown/JSON record before a Git commit."""
-        collector = self.repo / "scripts" / "collect-agent-artifacts.py"
-        if not collector.is_file():
-            raise RuntimeError(f"Agent artifact collector not found: {collector}")
-        worker = self.worker_id.upper()
-        agent = {"RING": "ring", "PC": "PC", "LP": "LP"}.get(worker)
-        if agent is None:
-            raise RuntimeError(f"Unsupported R4R worker id for artifact collection: {self.worker_id}")
-        collected = run_command(
-            (
-                sys.executable,
-                str(collector),
-                "--repo",
-                str(self.repo),
-                "--agent",
-                agent,
-                "--worker-id",
-                worker,
-            ),
-            self.repo,
-        )
-        if collected.exit_code != 0:
-            raise RuntimeError(
-                "Unable to publish permanent agent artifacts:\n"
-                + collected.stdout
-                + collected.stderr
-            )
-
     def _commit_if_needed(
         self,
         message: str,
         allowed_patterns: Sequence[str] | None = None,
     ) -> str | None:
-        if allowed_patterns is not None:
-            allowed_patterns = (
-                *allowed_patterns,
-                *self._versioned_trace_patterns(),
-            )
         # Serialize only the short add/check/commit section with every R4R Git
         # automation. Model work and gates remain concurrent. Manual Git commands
         # do not honor this cooperative lock.
         committed_head: str | None = None
         with exclusive_file_lock(self.git_commit_lock_path):
-            self._publish_current_artifacts()
-            # Raw runtime is deliberately visible but is never committed directly.
-            # Its Markdown/JSON record is committed from .opencode/current instead.
+            # Runtime, progress, memory and current-state mirrors are local-only.
+            # Only task-owned product paths may enter a controller commit.
             changed = tuple(
                 path for path in git_changed_paths(self.repo)
                 if not path.startswith("runtime/")
@@ -2971,7 +2967,7 @@ next instruction packet.
                 )
                 return None
 
-            # --only commits the selected task/progress paths and deliberately
+            # --only commits the selected task paths and deliberately
             # leaves peer work, downloads and unrelated staged paths untouched.
             # Per-command identity avoids races through shared .git/config.
             commit_env = os.environ.copy()
@@ -3054,7 +3050,7 @@ next instruction packet.
         return committed_head
 
     def _sync_with_integration(self, phase: str, *, required: bool) -> bool:
-        if not self.integration_sync_enabled:
+        if not getattr(self, "integration_sync_enabled", False):
             return True
         if not self.integration_sync_script.is_file():
             message = f"integration sync script not found: {self.integration_sync_script}"

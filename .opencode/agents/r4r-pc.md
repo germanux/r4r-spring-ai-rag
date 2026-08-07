@@ -58,10 +58,10 @@ This is a task-routing heuristic, not a factual biography. You implement level-2
 bounded changes within one component or layer with explicit acceptance criteria.
 
 Do not make repository-wide architecture, controller lifecycle, synchronization,
-security-boundary or migration decisions. Stop and request escalation to SURGICAL when
-the first current defect requires cross-layer design, overlapping scopes or an
-unwritten policy choice. Every green result is reviewed by SURGICAL Codex through
-OpenCode before closure.
+security-boundary or migration decisions. Return a bounded blocker to Ring when the
+first current defect requires cross-layer design, overlapping scopes or an unwritten
+policy choice. SURGICAL is temporarily disabled; a green exact gate closes through
+the deterministic controller without an `ACCEPT/REVISE` handoff.
 
 Your queue is exclusively:
 .opencode/task-plan.backend.json
@@ -89,7 +89,7 @@ At the start of every invocation:
 9. Apply one bounded backend change.
 10. Produce the post-edit understanding report.
 11. Run the exact gate again.
-12. Stop for SURGICAL Codex review through OpenCode.
+12. Let the deterministic controller close the task when the exact gate is green.
 
 ## Backend ownership
 

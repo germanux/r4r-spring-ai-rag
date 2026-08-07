@@ -6,6 +6,12 @@ El paquete se descomprime en la raíz de `~/Desarrollo/r4r-ring-agent.git`.
 
 - `scripts/sync-agent-branches.sh` ya no detiene agentes ni usa `git stash`.
 - Las ramas con worktree activo, sucio o en conflicto se omiten y se reintentan.
+- El respaldo `systemd` se ejecuta una vez al instalarse y después cada hora; tras
+  reactivar el timer espera dos minutos y añade hasta dos minutos de desfase para que
+  dos equipos no golpeen el remoto simultáneamente.
+- `.opencode/current/`, las memorias, el progreso y la vista operativa de Ring son
+  estado local ignorado. Los SHA-256 de recuperación permanecen solo bajo
+  `~/Desarrollo/.r4r-runtime/` y nunca generan commits.
 - `runner.py`, el sincronizador de ramas y Google Drive usan el mismo bloqueo:
   `~/Desarrollo/.r4r-runtime/git.lock`.
 - `r4r-drive-import-safe.py --bidirectional` sincroniza Insync ↔ Git, exportando
@@ -27,8 +33,9 @@ systemctl --user stop \
 # Descomprime aquí el ZIP con sustitución de ficheros.
 
 chmod +x \
-  r4r-drive-import-safe.py \
+  scripts/r4r-drive-import-safe.py \
   scripts/sync-agent-branches.sh \
+  scripts/install-r4r-branch-sync-systemd.sh \
   scripts/install-r4r-drive-sync-systemd.sh
 
 ./scripts/install-r4r-branch-sync-systemd.sh install
@@ -43,8 +50,10 @@ migra automáticamente. No ejecutes `--initialize` sobre un manifiesto ya válid
 ## Comprobación
 
 ```bash
-systemctl --user list-timers --all |
-  grep -E 'r4r-(agent-branch-sync|drive-import-safe)'
+cd ~/Desarrollo/r4r-integration.git
+./scripts/install-r4r-branch-sync-systemd.sh status
+
+git status --short
 
 journalctl --user \
   -u r4r-agent-branch-sync.service \
@@ -56,10 +65,15 @@ pgrep -af 'run-ring|run-worker|opencode|r4r_codex_agent'
 ollama ps
 ```
 
-En el journal del sincronizador pueden aparecer `skipped ... active` o
-`skipped ... dirty`. Es un aplazamiento seguro, no un error. Los commits de las
-ramas sí se centralizan en `agent/integration`; la actualización del worktree
-se reintenta cuando quede limpio e inactivo.
+Si `status` muestra el timer inactivo, reinstálalo. Si el journal muestra
+`integration worktree is dirty`, el servicio está funcionando y se ha detenido de
+forma segura: confirma o retira primero esos cambios reales. El instalador devuelve
+error inmediatamente si la pasada inicial no puede sincronizar.
+
+En el journal del sincronizador pueden aparecer ramas aplazadas por una operación Git
+pendiente. Es un aplazamiento seguro. Los commits funcionales ya confirmados se
+centralizan en `agent/integration`; ningún ciclo crea commits de memoria, progreso,
+timestamps o manifiestos SHA-256.
 
 ## Prueba de Google Drive sin modificar archivos
 

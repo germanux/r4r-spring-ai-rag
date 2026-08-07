@@ -58,6 +58,7 @@ done
 }
 
 SELF_PID="$$"
+CALLER_PID="$PPID"
 SELF_PGID="$(ps -o pgid= -p "$SELF_PID" | tr -d ' ')"
 CURRENT_USER="$(id -un)"
 
@@ -85,6 +86,7 @@ is_target_root() {
 
   [[ "$pid" =~ ^[0-9]+$ ]] || return 1
   [[ "$pid" != "$SELF_PID" ]] || return 1
+  [[ "$pid" != "$CALLER_PID" ]] || return 1
   [[ -r "/proc/$pid/cmdline" ]] || return 1
 
   cmd="$(read_cmdline "$pid")"
@@ -119,6 +121,7 @@ add_descendants() {
   while read -r child; do
     [[ -n "$child" ]] || continue
     [[ "$child" != "$SELF_PID" ]] || continue
+    [[ "$child" != "$CALLER_PID" ]] || continue
     if [[ -z "${TARGET_PIDS[$child]+x}" ]]; then
       TARGET_PIDS["$child"]=1
       add_descendants "$child"
@@ -230,6 +233,7 @@ signal_targets() {
 
   for pid in "${!TARGET_PIDS[@]}"; do
     [[ "$pid" != "$SELF_PID" ]] || continue
+    [[ "$pid" != "$CALLER_PID" ]] || continue
     kill "-$signal" "$pid" 2>/dev/null || true
   done
 }

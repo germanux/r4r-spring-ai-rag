@@ -68,6 +68,7 @@ The launcher rejects a path whose branch is not `agent/laptop-qwen3-worker`.
 
 ## Strict result rule
 
-Canonical `.ring-agent/*` and `.opencode/current/ring/worker-understanding.md` files are
-promoted only when the status is `SUCCESS`. Partial staged artifacts remain in the run
-directory for diagnosis and are never silently promoted.
+Operational `.ring-agent/*` and `.opencode/current/ring/worker-understanding.md` files
+are promoted locally only when the status is `SUCCESS`; they are regenerated and
+ignored by Git. Durable `.ring-agent/evidence/<task>/...` is written only for a new
+semantic attempt. Partial staged artifacts remain in the run directory for diagnosis.

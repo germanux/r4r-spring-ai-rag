@@ -9,8 +9,9 @@ The controller runs one locked task at a time:
 5. read-only local pre-edit understanding;
 6. read-only Codex plan;
 7. bounded OpenCode edit;
-8. exact task gate, local assimilation and Codex review;
-9. controlled progress/commit on green plus `ACCEPT`.
+8. exact task gate and local assimilation;
+9. controlled progress/commit on green; optional Codex review only when explicitly
+   re-enabled.
 
 Identical diagnostic fingerprints reuse the latest Codex plan during
 `R4R_CODEX_MIN_INTERVAL_SECONDS` (default 3600). New evidence bypasses the cooldown.
@@ -35,6 +36,10 @@ For a manual Maven lifecycle that needs the disposable integration database:
 Active-task lock files are disabled. The controller resumes from
 `.opencode/progress.json` and accepts task-scoped dirty work plus maintenance paths.
 A stale `runtime/locks/active-task.json` is deleted on startup.
+
+Progress, memory and `.opencode/current/` are machine-local continuity state. They are
+ignored and never included in a checkpoint or closing commit. Durable cross-agent
+evidence is written separately under `.ring-agent/evidence/<task-id>/`.
 
 ## Local file-change sound
 
@@ -96,8 +101,10 @@ the task specification, exact gate or current Codex correction packet.
 ## Gate-green checkpoints and session watchdog
 
 The deterministic controller can create a task-scoped checkpoint immediately after the
-exact gate turns green (`R4R_CHECKPOINT_ON_GREEN=true`). The task remains pending until
-Codex returns `ACCEPT`. OpenCode/Qwen3 and Codex never execute Git writes.
+exact gate turns green (`R4R_CHECKPOINT_ON_GREEN=true`). With the current canonical
+`requireSurgicalReview: false`, it then closes and advances the task without waiting
+for `ACCEPT/REVISE`. Set `R4R_REQUIRE_SURGICAL_REVIEW=true` only when the redesigned
+review lane is deliberately re-enabled. Model sessions never execute Git writes.
 
 OpenCode JSONL sessions are bounded by wall time, useful inactivity, step count and
 repeated-event budgets. `step_start` alone is not progress. Every watchdog stop is

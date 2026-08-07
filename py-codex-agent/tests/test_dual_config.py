@@ -20,6 +20,12 @@ class DualConfigTest(unittest.TestCase):
         for key in ("plan", "progress", "memory", "controlDir"):
             self.assertNotEqual(pc[key], lp[key])
 
-    def test_automatic_commits_are_disabled(self):
-        self.assertFalse(self.config["defaults"]["autoCommit"])
-        self.assertFalse(self.config["defaults"]["bootstrapCommit"])
+    def test_controller_owned_task_commits_are_enabled(self):
+        self.assertTrue(self.config["defaults"]["autoCommit"])
+        self.assertTrue(self.config["defaults"]["bootstrapCommit"])
+
+    def test_volatile_agent_state_is_ignored(self):
+        ignore = (self.repo / ".gitignore").read_text(encoding="utf-8")
+        self.assertIn("/.opencode/current/", ignore)
+        self.assertIn("/.opencode/memory*.md", ignore)
+        self.assertIn("/.ring-agent/state.json", ignore)
