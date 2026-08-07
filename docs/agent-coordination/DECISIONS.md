@@ -2584,3 +2584,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This run snapshot includes gate summaries but not full gate logs; first-failure details are inferred from summary classification plus Codex REVISE packet.
 - No new codex_decision/checkpoint metadata is present for PC in this run, so acceptance cannot be claimed despite gate_exit=0 request evidence.
+
+## Cycle `20260807T005023Z` â READY
+
+- Decision fingerprint: `c97df047641f92f4fa742bbd65cba09967249895e8d17e9f20605c9f4c281e7a`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: PC already produced a gate-green checkpoint request for task-07 (gate_exit=0), but closure proof is incomplete in current evidence because codex_decision and checkpoint_head are still null and progress remains BLOCKED.
+- Next action: Run one bounded closure pass for task-07: keep current backend/doc scope, run git diff --check, then run the exact task-07 deterministic gate once and retain closure evidence proving non-zero vector_store rows and idempotent behavior for controller acceptance.
+- Avoid repeating: Do not block on SURGICAL ACCEPT/REVISE and do not spend another unchanged full-cycle run without producing closure-complete evidence for task-07.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005023Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005023Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005023Z/pc-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005023Z/pc-runtime/previous-ring-qwen3-directive.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP has an in-progress frontend spec diff and active Codex REVISE instructions; current run has no new green gate evidence, so the first defect remains correction quality/completeness in rag-page.component.spec.ts.
+- Next action: Apply one level-1 corrective pass only in frontend/src/app/features/rag/rag-page.component.spec.ts per the Codex packet: remove rejected synthetic/manual patterns, add the controlled-pending loading test and two independent reset tests, then run git diff --check and the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce previously rejected patterns (synthetic responses, innerHTML mutation, manual loading-flag mutation, guessed selectors, invalid response shapes, brace/indentation damage).
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005023Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005023Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005023Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005023Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- PC task-07 can churn in BLOCKED state despite gate_exit=0 if closure metadata remains incomplete (codex_decision/checkpoint_head null).
+- LP FE-03D has a large spec-only diff (87 insertions/18 deletions) and explicit REVISE feedback; another unconstrained edit pass risks repeating structural mistakes and delaying frontend queue progression.
+
+### Evidence limitations
+
+- Current RUN_DIR snapshots do not include a new gate_summary for either worker; assessment relies on progress/memory, status snapshots and prior directive/correction packet.
+- No Codex review/plan artifacts are present in current pc-runtime or lp-runtime manifests (fields are null), so completion must be inferred from available deterministic request/status evidence only.

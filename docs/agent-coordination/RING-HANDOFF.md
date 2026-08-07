@@ -1,42 +1,41 @@
-# Backend ↔ Frontend handoff
+# Backend ↔ Frontend handoff — run 20260807T005023Z
 
-## Queue status split
+## Queue status
 
-- **Backend (PC):** `task-07-populate-production-rag` remains active; gate-green request exists but closure proof is incomplete in current run metadata.
-- **Frontend (LP):** `task-fe-03d-dom-state-tests` remains active with gate failure exit `2` and explicit Codex REVISE instructions.
+- **Backend (PC):** active `task-07-populate-production-rag`; gate-green request exists but closure metadata incomplete.
+- **Frontend (LP):** active `task-fe-03d-dom-state-tests`; Codex REVISE packet still pending full corrective application.
 
-These are disjoint write scopes in this cycle:
+## Disjoint ownership and write scopes
 
-- PC scope: backend Java/tests/docs (`pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`)
-- LP scope: one frontend spec file (`frontend/src/app/features/rag/rag-page.component.spec.ts`)
+- **PC allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+- **LP allowed_paths:** `frontend/**`, `docs/frontend/**` (current corrective pass narrowed to one spec file)
 
-No overlap blocker is present; both queues can continue independently.
+No write-scope overlap is required for current passes, so both queues can proceed independently.
 
-## Coordinated risk notes
+## Coordination packages
 
-1. **Backend closure-risk:** If PC does not preserve deterministic row-count/idempotence evidence with the exact gate artifacts, task-07 may remain administratively blocked despite green execution.
-2. **Frontend regression-risk:** FE-03D can keep failing if LP mixes prior defective insertions with new assertions instead of first restoring valid syntax/structure.
-
-## Current pass directives
-
-### Package A
-- **Implementation level:** Level 2
-- **Role:** PC
+### Package PC-07-CLOSURE
+- **Level / role:** Level 2 / PC
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `task-06f-ingestion-validation:ACCEPTED`
-- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+- **Dependencies:** backend task chain through `task-06f-ingestion-validation` accepted
+- **allowed_paths:** backend plan scope above
 - **Exact gate:**
   - `git diff --check`
-  - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
-  - `exact-gate-green + scope-clean + controller-commit`
+  - task-07 deterministic command from backend plan (full ingestion + `vector_store` row-count assertion)
+  - closure policy: exact-gate-green + scope-clean + controller commit
 
-### Package B
-- **Implementation level:** Level 1
-- **Role:** LP
+### Package LP-FE03D-REVISE
+- **Level / role:** Level 1 / LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
+- **Dependencies:** `task-fe-03c-citations` accepted
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
 - **Exact gate:**
   - `git diff --check`
   - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-  - `exact-gate-green + scope-clean + controller-commit`
+  - closure policy: exact-gate-green + scope-clean + controller commit
+
+## Integration risks to watch
+
+1. Backend queue may stall if closure metadata is not captured after a green gate.
+2. Frontend queue may churn if LP diverges from the explicit Codex correction packet.
+3. Cross-stack sequencing risk is low in this cycle because PC and LP changes are disjoint and no shared files are targeted.

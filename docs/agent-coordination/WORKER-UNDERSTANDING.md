@@ -1,39 +1,36 @@
-# Worker understanding checks
+# Worker understanding check — run 20260807T005023Z
 
-## PC (task-07-populate-production-rag)
+## PC understanding snapshot
 
-What PC must demonstrate in the next pass:
+Evidence indicates PC achieved a green deterministic gate for task-07 in run `20260807T002957Z`, and captured task-owned backend/doc changes. However, closure markers are not complete in this run snapshot (`codex_decision` and `checkpoint_head` null), so understanding must now focus on **closure discipline** rather than additional feature edits.
 
-1. Understand that the current defect is **not** new ingestion architecture; it is incomplete closure evidence for an already gate-green attempt.
-2. Keep work within Level-2 bounded scope only:
-   - `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`.
-3. Execute the deterministic closure sequence once, preserving artifacts that prove:
-   - gate success,
-   - non-zero `vector_store` row count,
-   - idempotent behavior evidence expected by task-07 intent.
+### Required next understanding proof (PC)
+- Keep scope bounded to backend task-07 allowed paths.
+- Preserve deterministic evidence that `vector_store` row count is non-zero.
+- Provide closure-ready artifacts so controller can finalize without SURGICAL dependency.
 
-**Exact gate:**
-- `git diff --check`
-- `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
-- closure: `exact-gate-green + scope-clean + controller-commit`
+## LP understanding snapshot
 
-## LP (task-fe-03d-dom-state-tests)
+LP memory and correction packet show the worker is mid-revision on FE-03D. Codex explicitly called prior understanding inadequate and prescribed exact selector-level assertions and forbidden patterns.
 
-What LP must demonstrate in the next pass:
+### Required next understanding proof (LP)
+- Implement only the three prescribed test additions in the single spec file.
+- Map DOM requirements to selectors exactly:
+  - loading: `.loading-state[role="status"]`
+  - disabled controls: `textarea`, `.submit-button`
+  - transport failure: `.error-state[role="alert"]`
+  - answer visibility: `.answer-content`
+  - reset cleanup: absence of answer/error/citations + presence of `.idle-state`
+- Keep valid existing coverage intact.
 
-1. Apply Codex REVISE literally in one small Level-1 patch in only:
-   - `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-2. Restore valid structure before adding assertions.
-3. Implement only the prescribed three tests (pending-loading/duplicate-submit, success-reset, transport-error-reset).
-4. Preserve existing valid FE-03D coverage and avoid all rejected anti-patterns.
+## Bounded actions and gates
 
-**Exact gate:**
-- `git diff --check`
-- `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- closure: `exact-gate-green + scope-clean + controller-commit`
+1. **PC (Level 2, task-07-populate-production-rag)**
+   - Dependencies: prior backend tasks accepted.
+   - allowed_paths: `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`.
+   - Gate: `git diff --check` + exact task-07 deterministic command.
 
-## Shared do-not-repeat guidance
-
-- No SURGICAL dispatch or waiting for SURGICAL ACCEPT/REVISE.
-- No scope widening.
-- No unchanged retry loops without new evidence.
+2. **LP (Level 1, task-fe-03d-dom-state-tests)**
+   - Dependencies: task-fe-03c accepted.
+   - allowed_paths: `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+   - Gate: `git diff --check` + `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.

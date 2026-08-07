@@ -1,32 +1,42 @@
-# Global summary for run 20260807T002711Z
+# Global summary — run 20260807T005023Z
 
-## Overall decision
+This cycle reviewed bounded evidence under `runtime/ring-agent/ring/20260807T005023Z` and produced PC/LP decisions without modifying product code.
 
-`READY` — continue both queues with disjoint bounded corrections.
+## What is currently true
 
-## Evidence-backed findings
+- PC active task: `task-07-populate-production-rag`.
+- LP active task: `task-fe-03d-dom-state-tests`.
+- PC has a gate-green request on record (`gate_exit=0`) but closure metadata is incomplete in the current snapshot.
+- LP has an active REVISE correction packet and one modified frontend spec file; no new green gate evidence is present in this run snapshot.
 
-- **PC:** `worker-requests/PC.json` reports `gate_exit=0` for `task-07-populate-production-rag`, but `codex_decision` and `checkpoint_head` are null, and `pc-runtime/progress.json` still marks task-07 `BLOCKED`. First defect: closure-proof completeness.
-- **LP:** `lp-runtime/gate_summary.md` is a deterministic gate failure (`exit=2`) and `lp-runtime/codex-qwen3-extra-instructions.md` gives explicit REVISE instructions for a single spec file. First defect: incorrect FE-03D test patch shape.
+## Decisions
 
-## Directed next actions
+- **PC: CONTINUE** on task-07 with a closure-focused bounded pass (not new scope expansion).
+- **LP: CONTINUE** on FE-03D with one Level-1 corrective pass strictly following Codex mandatory instructions.
 
-1. **PC / Level 2 / `task-07-populate-production-rag`**
-   - dependencies: prior task-06f accepted
-   - allowed_paths: `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-   - gate: `git diff --check` + exact task-07 deterministic command + closure policy
+## Priority-ordered next actions
 
-2. **LP / Level 1 / `task-fe-03d-dom-state-tests`**
-   - dependencies: task-fe-03c accepted
-   - allowed_paths: `frontend/src/app/features/rag/rag-page.component.spec.ts`
-   - gate: `git diff --check` + `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` + closure policy
+1. PC closure-proof completion for task-07 (Level 2, backend scope, exact deterministic gate).
+2. LP FE-03D correction completion (Level 1, single-file frontend scope, exact FE gate).
 
-## Risks and limits
+## Risks and controls
 
-- Risk: false sense of completion on PC if gate success is not accompanied by durable row-count/idempotence evidence.
-- Risk: repeated FE-03D failures if LP reuses rejected synthetic/manual patterns.
-- Limitation: this run includes gate summaries but not full logs; no new PC codex/checkpoint closure metadata in snapshot.
+- Risk: PC remains BLOCKED if closure markers are not captured after green gate.
+  - Control: require explicit closure evidence and controller closure policy.
+- Risk: LP repeats rejected testing patterns.
+  - Control: enforce correction packet instructions and single-file scope.
+
+## Evidence limitations
+
+- No new gate-summary artifact is present in this RUN_DIR for either worker.
+- Codex plan/review artifacts are absent in current worker runtime manifests, so decisions rely on request/progress/memory/directive evidence.
 
 ## Ring worktree edits in this cycle
 
-No repository code/config/docs were edited. Only the six staged output artifacts under this run `OUTPUT_DIR` were written.
+- Added staged coordination artifacts only under:
+  - `runtime/ring-agent/ring/20260807T005023Z/output/state.json`
+  - `runtime/ring-agent/ring/20260807T005023Z/output/code-pc-review.md`
+  - `runtime/ring-agent/ring/20260807T005023Z/output/code-lp-review.md`
+  - `runtime/ring-agent/ring/20260807T005023Z/output/backend-frontend-handoff.md`
+  - `runtime/ring-agent/ring/20260807T005023Z/output/worker-understanding.md`
+  - `runtime/ring-agent/ring/20260807T005023Z/output/global-summary.md`

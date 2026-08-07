@@ -1,42 +1,45 @@
-# LP code review (current cycle)
+# LP code review — run 20260807T005023Z
 
 ## Evidence reviewed
 
-- `runtime/ring-agent/ring/20260807T002711Z/lp-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260807T002711Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `runtime/ring-agent/ring/20260807T002711Z/lp-runtime/progress.json`
-- `runtime/ring-agent/ring/20260807T002711Z/lp-git-status.txt`
-- `runtime/ring-agent/ring/20260807T002711Z/lp-git-diff-stat.txt`
+- `runtime/ring-agent/ring/20260807T005023Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260807T005023Z/lp-runtime/progress.json`
+- `runtime/ring-agent/ring/20260807T005023Z/lp-runtime/memory.md`
+- `runtime/ring-agent/ring/20260807T005023Z/lp-runtime/previous-ring-qwen3-directive.json`
+- `runtime/ring-agent/ring/20260807T005023Z/lp-git-status.txt`
+- `runtime/ring-agent/ring/20260807T005023Z/lp-git-diff-stat.txt`
 
-## First current defect
+## Current diagnosis (first defect)
 
-Task `task-fe-03d-dom-state-tests` is still failing the exact gate (`exit=2`), with one active modified file: `frontend/src/app/features/rag/rag-page.component.spec.ts`. Codex provided explicit REVISE instructions; defect is **incorrect test-shape implementation**, not missing requirements.
+Active frontend task is `task-fe-03d-dom-state-tests` with one modified file and an explicit Codex `REVISE` packet. The current snapshot shows no new gate execution proof for this run, so the first defect remains **spec correction quality in `rag-page.component.spec.ts`**.
 
-## Bounded next action package
+## Bounded next package
 
 - **Implementation level:** Level 1
 - **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:**
-  - `task-fe-03c-citations: ACCEPTED` (already satisfied in `lp-runtime/progress.json`)
-  - Current Codex REVISE packet for FE-03D
-- **allowed_paths:**
-  - `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Focused action (single pass):**
-  1. Restore valid suite structure and remove rejected patterns (synthetic responses, manual flag/DOM mutation, guessed selectors, invalid response shapes, formatting damage).
-  2. Implement only the three required tests from Codex packet:
-     - controlled pending loading + duplicate-submit guard,
-     - independent success-reset case,
-     - independent transport-error-reset case.
-  3. Keep all existing valid FE-03D coverage intact.
+- **Dependencies:** `task-fe-03c-citations` accepted (already true per progress)
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:**
+  1. `git diff --check`
+  2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+  3. Closure policy: exact-gate-green + scope-clean + controller commit
 
-## Exact acceptance gate
+## Mandatory correction content from evidence packet
 
-1. `git diff --check`
-2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-3. Hierarchy closure policy: `exact-gate-green + scope-clean + controller-commit`
+1. Remove rejected synthetic/manual patterns and structural damage.
+2. Add one controlled-pending loading/duplicate-submission test.
+3. Add one independent success-reset test with citations.
+4. Add one independent transport-error-reset test with a fresh Subject.
+5. Preserve existing valid answer/abstention/citation/error/escaping coverage.
+
+## Acceptance evidence required
+
+1. Non-empty scoped patch limited to the single spec file.
+2. `git diff --check` clean.
+3. FE-03D gate exits 0.
+4. Local understanding maps selectors/assertions to all required DOM behaviors.
 
 ## Avoid repeating
 
-- Do **not** reintroduce the previously rejected anti-patterns listed in `codex-qwen3-extra-instructions.md`.
-- Do **not** widen scope beyond the single spec file.
+Do not reintroduce previously rejected patterns: `innerHTML` mutation, manual loading-flag mutation, guessed selectors, invalid response shapes, unnecessary `of/tick`, or brace/indentation regressions.
