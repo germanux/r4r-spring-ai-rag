@@ -1,49 +1,50 @@
-# LP code review (evidence-grounded)
+# LP code review (frontend)
 
-## Current diagnosis
+## Evidence reviewed
 
-- Active frontend task is `task-fe-03d-dom-state-tests`.
-- `lp-runtime/controller_state.json` is `GLOBAL_ATTEMPT_LIMIT_REACHED` (`attempts: 17`, `limit: 6`, exit `70`).
-- `lp-runtime/progress.json` still marks task `BLOCKED`.
-- A large uncommitted diff remains in one file (`frontend/src/app/features/rag/rag-page.component.spec.ts`; 109 insertions/20 deletions in this snapshot).
-- `lp-runtime/codex-qwen3-extra-instructions.md` contains a precise one-file `REVISE` correction packet that has not yet been completed with new green gate evidence.
+- `runtime/ring-agent/ring/20260807T024439Z/lp-runtime/controller_state.json`
+- `runtime/ring-agent/ring/20260807T024439Z/lp-runtime/progress.json`
+- `runtime/ring-agent/ring/20260807T024439Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260807T024439Z/lp-git-status.txt`
+- `runtime/ring-agent/ring/20260807T024439Z/lp-git-diff-stat.txt`
 
-Primary defect is **execution control blockage** (attempt-limit stop), with unresolved one-file correction work still pending.
+## First current defect
 
-## Directed next package
+The first active defect is **execution blocked by controller guardrail**:
+
+- `controller_state.json` reports `GLOBAL_ATTEMPT_LIMIT_REACHED` (exit 70, attempts 17, limit 6).
+- Active task remains `task-fe-03d-dom-state-tests` with status `BLOCKED` in `progress.json`.
+
+So LP cannot produce fresh gate evidence until attempt budget is reset/rearmed.
+
+## Bounded next package (post-reset)
 
 - **Implementation level:** Level 1
 - **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations` accepted (already satisfied)
-- **allowed_paths (canonical):** `frontend/**`, `docs/frontend/**`
-- **Narrowed write scope for this pass:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Action state now:** HOLD until attempt budget is reset/rearmed by controller policy; then execute exactly one bounded repair pass.
+- **Dependencies:**
+  - attempt-budget reset/rearm by controller/supervisor
+  - `task-fe-03c-citations:ACCEPTED` (already satisfied)
+- **allowed_paths (narrowed):**
+  - `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:**
+  1. `git diff --check`
+  2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
 
-## Exact gate and acceptance conditions (when unblocked)
+## Prescribed one-pass correction
 
-1. Apply only the existing Codex FE-03D correction packet in the spec file.
-2. `git diff --check`
-3. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-4. Closure policy evidence present: `exact-gate-green + scope-clean + controller-commit`
+Use the existing Codex REVISE packet only:
 
-### Must be explicitly proven in that pass
+1. Revert defective additions and restore valid spec structure.
+2. Add exactly one controlled-pending loading/duplicate-submit DOM test.
+3. Add one success-reset DOM test.
+4. Add one transport-error-reset DOM test.
+5. Preserve existing valid answer/abstention/citation/escaping coverage.
 
-- Controlled pending submission shows loading status and disabled controls.
-- Success path plus reset clears answer/citations/error and restores idle state.
-- Transport-error path plus reset clears alert and restores idle state.
-- Existing valid answer/abstention/citation/escaping coverage remains intact.
+## Acceptance evidence required
+
+Accept only with exact-gate-green + scope-clean + controller commit evidence.
 
 ## Avoid repeating
 
-- Do **not** run broad retries or restructure tests outside the correction packet.
-- Do **not** rerun the gate before the one-file repair is applied.
-
-## Evidence consulted
-
-- `runtime/ring-agent/ring/20260807T023359Z/lp-runtime/controller_state.json`
-- `runtime/ring-agent/ring/20260807T023359Z/lp-runtime/progress.json`
-- `runtime/ring-agent/ring/20260807T023359Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `runtime/ring-agent/ring/20260807T023359Z/lp-git-status.txt`
-- `runtime/ring-agent/ring/20260807T023359Z/lp-git-diff-stat.txt`
-- `runtime/ring-agent/ring/20260807T023359Z/worker-requests/LP.json`
+Do **not** perform another broad or malformed spec rewrite before applying the one-file correction packet.

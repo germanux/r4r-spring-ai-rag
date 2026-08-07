@@ -1,44 +1,45 @@
-# PC code review (evidence-grounded)
+# PC code review (backend)
 
-## Current diagnosis
+## Evidence reviewed
 
-- Active task in progress is `task-07-populate-production-rag`.
-- `pc-runtime/gate_summary.md` shows deterministic gate classification `green` and exit `0`.
-- `pc-runtime/controller_state.json` reports `CHECKPOINT_COMMIT_FAILED` with exit code `67`.
-- `pc-runtime/checkpoint.json` reports `status: failed` and `head_after: null`.
-- `pc-runtime/progress.json` still marks task-07 as `BLOCKED`.
+- `runtime/ring-agent/ring/20260807T024439Z/pc-runtime/controller_state.json`
+- `runtime/ring-agent/ring/20260807T024439Z/pc-runtime/checkpoint.json`
+- `runtime/ring-agent/ring/20260807T024439Z/pc-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260807T024439Z/pc-runtime/progress.json`
+- `runtime/ring-agent/ring/20260807T024439Z/pc-git-status.txt`
 
-This is a **closure-quality defect**, not a first-failure test defect: task acceptance evidence is incomplete despite a green gate.
+## First current defect
 
-## Directed next package
+The first active defect is **closure failure**, not a red task gate:
+
+- Gate result is green (`exit 0`) in `gate_summary.md`.
+- Controller status is `CHECKPOINT_COMMIT_FAILED` (`exit_code 67`) in `controller_state.json`.
+- Checkpoint has `status: failed` with `head_after: null` in `checkpoint.json`.
+- `progress.json` still marks `task-07-populate-production-rag` as `BLOCKED`.
+
+## Bounded next package
 
 - **Implementation level:** Level 2
 - **Assigned role:** PC
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `task-06f-ingestion-validation` accepted (already satisfied)
-- **allowed_paths (canonical):** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **One-pass objective:** Produce closure-ready evidence (gate green + scope clean + controller commit metadata) without widening scope.
+- **Dependencies:** `task-06f-ingestion-validation:ACCEPTED` (already satisfied)
+- **allowed_paths:**
+  - `pom.xml`
+  - `src/main/**`
+  - `src/test/**`
+  - `docs/backend/**`
+- **Exact gate:**
+  1. `git diff --check`
+  2. `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
 
-## Exact gate and acceptance conditions
+## Acceptance evidence required
 
-1. `git diff --check`
-2. `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
-3. Closure policy evidence present: `exact-gate-green + scope-clean + controller-commit`
+Accept only when all three are simultaneously true:
 
-### Required evidence artifacts for acceptance
-
-- Updated controller state showing successful completion for this pass.
-- Checkpoint metadata with non-null commit/head outcomes.
-- Row-count proof kept in task evidence (`rows > 0`).
+1. exact gate green,
+2. scope clean,
+3. controller commit/closure evidence present (no checkpoint-commit failure; non-null commit metadata).
 
 ## Avoid repeating
 
-- Do **not** submit another pass that only proves gate green while leaving checkpoint/controller closure metadata failed or null.
-
-## Evidence consulted
-
-- `runtime/ring-agent/ring/20260807T023359Z/pc-runtime/controller_state.json`
-- `runtime/ring-agent/ring/20260807T023359Z/pc-runtime/checkpoint.json`
-- `runtime/ring-agent/ring/20260807T023359Z/pc-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260807T023359Z/pc-runtime/progress.json`
-- `runtime/ring-agent/ring/20260807T023359Z/pc-git-status.txt`
+Do **not** submit another gate-green attempt that again leaves `checkpoint.json` failed or `head_after` null.

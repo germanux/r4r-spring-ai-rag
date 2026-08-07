@@ -1,36 +1,31 @@
-# Worker understanding assessment
+# Worker understanding check
 
-## PC understanding
+## PC understanding requirement
 
-### Evidence
-- `pc-runtime/memory.md` correctly states gate green and active task context.
-- `pc-runtime/pre_edit_understanding.md` was skipped because gate already green.
-- `pc-runtime/controller_state.json` + `checkpoint.json` show closure failure was not resolved.
+- **Level / role / task:** Level 2, PC, `task-07-populate-production-rag`
+- **Core understanding to demonstrate:** the failing point is closure metadata, not task-gate correctness.
+- **Dependencies:** prior accepted backend chain through `task-06f-ingestion-validation`.
+- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+- **Exact gate:**
+  - `git diff --check`
+  - task-07 exact gate command from `.opencode/task-plan.backend.json`
+- **Acceptance condition:** controller/checkpoint artifacts must prove successful closure commit after a green gate.
 
-### Assessment
-- Technical direction is mostly understood (task scope and gate), but completion criteria were under-enforced in execution.
-- Missing point: a green gate is insufficient without successful checkpoint/controller closure metadata.
+### Misunderstanding to avoid
 
-### Required understanding for next pass
-- Treat this as a closure pass, not a feature pass.
-- Prove all three: deterministic gate green, scope clean, and controller-commit success.
+Do not treat another gate-green result alone as sufficient while `checkpoint.json` remains failed or `head_after` remains null.
 
-## LP understanding
+## LP understanding requirement
 
-### Evidence
-- `lp-runtime/codex-qwen3-extra-instructions.md` explicitly marks prior understanding as inadequate and gives a selector-by-selector correction packet.
-- `lp-runtime/controller_state.json` indicates repeated retries ended at global attempt limit.
+- **Level / role / task:** Level 1, LP, `task-fe-03d-dom-state-tests`
+- **Core understanding to demonstrate:** execute only the prescribed one-file DOM-test correction packet after attempt rearm.
+- **Dependencies:** attempt-budget reset/rearm + `task-fe-03c-citations:ACCEPTED`.
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:**
+  - `git diff --check`
+  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Acceptance condition:** corrected spec structure, three targeted tests added, exact gate green, scope clean, controller commit evidence.
 
-### Assessment
-- Current understanding is insufficiently anchored to the prescribed DOM selectors and bounded one-file plan.
-- Repeated attempt churn suggests execution drift from the correction packet.
+### Misunderstanding to avoid
 
-### Required understanding for next pass (after unblock)
-- Map every FE-03D requirement directly to required selectors/assertions in the spec file.
-- Keep changes exclusive to `rag-page.component.spec.ts` and avoid synthetic/internal-state shortcuts prohibited by packet.
-- Run `git diff --check` before the exact FE-03D gate.
-
-## Coordinator enforcement notes
-
-- SURGICAL remains disabled; no reviewer handoff is required for PC/LP progress.
-- Backend and frontend paths remain disjoint, so PC can proceed while LP is held for controller attempt-budget unblock.
+Do not broaden scope, mutate component internals/HTML directly, or invent selectors/state values that are not part of the current component contract.

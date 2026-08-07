@@ -1,46 +1,32 @@
 # Backend ↔ Frontend handoff
 
-## Queue status split
+## Current queue status
 
-### Backend (PC)
-- **Task:** `task-07-populate-production-rag`
-- **State:** actionable now (`CONTINUE`)
-- **Defect type:** closure-quality evidence gap after green deterministic gate
-- **Implementation level / owner:** Level 2 / PC
+- **Backend (PC):** actionable now; task-07 gate already green but closure evidence failed.
+- **Frontend (LP):** temporarily blocked by `GLOBAL_ATTEMPT_LIMIT_REACHED` until reset/rearm.
 
-### Frontend (LP)
-- **Task:** `task-fe-03d-dom-state-tests`
-- **State:** temporarily blocked (`HOLD`) due controller global attempt-limit stop
-- **Defect type:** worker execution budget stop + unresolved one-file correction packet
-- **Implementation level / owner:** Level 1 / LP
+## Ownership and scope separation
 
-## Scope overlap check
+- **PC package** (`task-07-populate-production-rag`, Level 2): `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+- **LP package** (`task-fe-03d-dom-state-tests`, Level 1): `frontend/src/app/features/rag/rag-page.component.spec.ts`
 
-- PC allowed_paths: `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- LP allowed_paths: `frontend/**`, `docs/frontend/**` (narrowed this pass to one spec file)
-- **Result:** No backend/frontend write-scope overlap; safe to continue backend while frontend is held.
+These scopes are disjoint; no backend/frontend write overlap is introduced.
 
-## Bounded packages
+## Coordination decision
 
-1. **Package PC-07-CLOSURE (Level 2, PC)**
-   - **Task ID:** `task-07-populate-production-rag`
-   - **Dependencies:** task-06f accepted
-   - **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-   - **Exact gate:**
-     - `git diff --check`
-     - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
-   - **Acceptance evidence:** controller/checkpoint success metadata + row-count proof + scope-clean diff.
+1. Continue PC immediately on closure-only pass.
+2. Hold LP until attempt-budget reset is confirmed.
+3. After reset, resume LP with the existing Codex REVISE packet and one exact FE-03D gate attempt.
 
-2. **Package LP-03D-REPAIR (Level 1, LP, pending unblock)**
-   - **Task ID:** `task-fe-03d-dom-state-tests`
-   - **Dependencies:** task-fe-03c accepted; controller attempt budget reset/rearm
-   - **allowed_paths (narrowed):** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-   - **Exact gate:**
-     - `git diff --check`
-     - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-   - **Acceptance evidence:** one-file scoped patch, green gate, and controller completion.
+## Integration risks to monitor
 
-## Integration risks to watch
+- Repeated backend gate-green runs without commit closure keep task-07 blocked indefinitely.
+- Frontend queue can stall if attempt-budget reset is not explicitly rearmed.
+- Any widening of LP scope beyond the single spec file risks repeating prior malformed rewrites.
 
-- If PC repeats gate-green without resolving checkpoint commit metadata, backend queue can deadlock on closure.
-- LP repeated spec rewrites can regress existing DOM assertions; enforce one-file correction packet exactly.
+## Evidence anchors
+
+- `runtime/ring-agent/ring/20260807T024439Z/pc-runtime/controller_state.json`
+- `runtime/ring-agent/ring/20260807T024439Z/pc-runtime/checkpoint.json`
+- `runtime/ring-agent/ring/20260807T024439Z/lp-runtime/controller_state.json`
+- `runtime/ring-agent/ring/20260807T024439Z/lp-runtime/codex-qwen3-extra-instructions.md`
