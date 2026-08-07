@@ -2788,7 +2788,21 @@ next instruction packet.
             return None
         if progress_item.get("recovery_authorization_consumed") == authorization_id:
             return None
-        if int(progress_item.get("recovery_grants_total") or 0) >= 1:
+        try:
+            policy_version = int(value.get("recovery_policy_version") or 1)
+        except (TypeError, ValueError):
+            return None
+        grants_total = int(progress_item.get("recovery_grants_total") or 0)
+        consumed_policy_version = int(
+            progress_item.get("recovery_repair_policy_version") or 0
+        )
+        legacy_v1_upgrade = (
+            grants_total == 1
+            and bool(progress_item.get("recovery_authorization_consumed"))
+            and policy_version == 2
+            and consumed_policy_version < policy_version
+        )
+        if grants_total >= 1 and not legacy_v1_upgrade:
             return None
         try:
             expires_at = datetime.fromisoformat(
@@ -2804,21 +2818,31 @@ next instruction packet.
         progress_item["status"] = "IN_PROGRESS"
         progress_item["recovery_authorization_consumed"] = authorization_id
         progress_item["recovery_authorized_at"] = datetime.now(timezone.utc).isoformat()
-        progress_item["recovery_grants_total"] = 1
+        progress_item["recovery_grants_total"] = grants_total + 1
+        progress_item["recovery_repair_policy_version"] = policy_version
         self._write_progress(task.id)
         return authorization_id
 
     def _repair_trailing_whitespace(self, task: Task) -> list[str]:
         """Apply the narrow deterministic repair allowed by recovery policy."""
-        check = run_command(("git", "diff", "--check"), self.repo)
-        evidence = check.stdout + "\n" + check.stderr
+        checks = (
+            run_command(("git", "diff", "--check"), self.repo),
+            run_command(("git", "diff", "--cached", "--check"), self.repo),
+        )
+        evidence = "\n".join(
+            result.stdout + "\n" + result.stderr for result in checks
+        )
         candidates = {
             match.group(1)
             for match in re.finditer(
                 r"^(.+?):\d+: trailing whitespace\.$", evidence, re.MULTILINE
             )
         }
+        staged = _nul_paths(
+            run_command(("git", "diff", "--cached", "--name-only", "-z"), self.repo)
+        )
         repaired: list[str] = []
+        restage: list[str] = []
         for relative in sorted(candidates):
             if not path_is_allowed(relative, task.allowed_paths):
                 continue
@@ -2829,10 +2853,19 @@ next instruction packet.
             normalized = "\n".join(
                 line.rstrip(" \t") for line in original.split("\n")
             )
-            if normalized == original:
-                continue
-            path.write_text(normalized, encoding="utf-8")
-            repaired.append(relative)
+            if normalized != original:
+                path.write_text(normalized, encoding="utf-8")
+                repaired.append(relative)
+            if relative in staged:
+                restage.append(relative)
+                if relative not in repaired:
+                    repaired.append(relative)
+        if restage:
+            add = run_command(("git", "add", "--", *restage), self.repo)
+            if add.exit_code != 0:
+                raise RuntimeError(
+                    add.stderr.strip() or "Unable to refresh repaired staged paths"
+                )
         return repaired
 
     def _write_progress(self, active_task: str | None) -> None:
