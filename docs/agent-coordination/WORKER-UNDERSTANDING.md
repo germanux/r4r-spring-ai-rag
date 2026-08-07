@@ -1,25 +1,43 @@
-# Worker understanding assessment
+# Worker understanding assessment — run 20260807T013028Z
 
 ## PC understanding
 
-- **Evidence read:** `worker-requests/PC.json`, `worker-request-manifest.json`, `pc-runtime/progress.json`, `pc-runtime/memory.md`.
-- **Assessment:** PC appears to understand task scope and produced scoped backend changes with gate exit 0, but the handoff remains incomplete for closure (task still BLOCKED). This is a packaging/completion issue rather than scope misunderstanding.
-- **Required next understanding proof:** provide explicit mapping between gate execution, vector row-count proof, and closure artifacts needed for controller acceptance.
+Evidence indicates PC is functionally close (gate summary green) but procedurally incomplete for closure:
+
+- `worker-requests/PC.json` reports `gate_exit: 0`.
+- The same request leaves `codex_decision` and `next_action` null.
+- `pc-runtime/progress.json` still marks active task as `BLOCKED`.
+
+**Conclusion:** understanding of backend implementation appears adequate; understanding/execution of closure evidence packaging is incomplete.
+
+**Bounded correction directive:**
+- **Level:** 2
+- **Role:** PC
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependency:** `task-06f-ingestion-validation: ACCEPTED`
+- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+- **Gate:** `git diff --check` + exact task-07 command from backend plan
 
 ## LP understanding
 
-- **Evidence read:** `lp-runtime/gate_summary.md`, `lp-runtime/codex_plan.json`, `lp-runtime/codex-qwen3-extra-instructions.md`, `lp-runtime/memory.md`.
-- **Assessment:** LP understanding is currently below bar per Codex packet: prior pass introduced prohibited patterns and structural regressions in the spec file.
-- **Required next understanding proof:** local pass must align each FE-03D requirement to concrete selectors/assertions and avoid all prohibited edits called out in the correction packet.
+Evidence indicates LP still has a local test-spec execution gap:
 
-## Assigned bounded next actions
+- `lp-runtime/gate_summary.md` is failing (`exit 2`).
+- `lp-runtime/codex_plan.json` and `codex-qwen3-extra-instructions.md` provide explicit single-file corrections.
+- `lp-git-status.txt` shows only the spec file changed, but failure persists.
 
-1. **PC / Level 2 / task-07-populate-production-rag**
-   - **dependencies:** task-06f accepted
-   - **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-   - **gate:** `git diff --check` + exact task-07 composite gate command
+**Conclusion:** LP has bounded instructions but has not yet completed a compliant FE-03D repair.
 
-2. **LP / Level 1 / task-fe-03d-dom-state-tests**
-   - **dependencies:** task-fe-03c accepted
-   - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-   - **gate:** `git diff --check` + `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+**Bounded correction directive:**
+- **Level:** 1
+- **Role:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependency:** `task-fe-03c-citations: ACCEPTED`
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+
+## Shared anti-patterns to avoid this cycle
+
+- Re-running unchanged failing steps without a scoped correction.
+- Expanding outside canonical allowed paths.
+- Claiming task completion from partial evidence (checkpoint or summary alone).

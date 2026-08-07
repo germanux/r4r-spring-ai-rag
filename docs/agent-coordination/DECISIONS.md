@@ -2969,3 +2969,54 @@ Append-only ledger generated after each validated Ring cycle.
 
 - RUN_DIR includes no new LP run artifacts after 20260807T005022Z beyond the packaged gate summary and Codex packet.
 - RUN_DIR does not include PC full gate logs for 20260807T012439Z, so closure guidance relies on checkpoint request metadata plus progress/state files.
+
+## Cycle `20260807T013028Z` â READY
+
+- Decision fingerprint: `4a4111de96271a2b396aa0a49cbd3e73f6ab5f4a6d308f99f925810b74f30a3b`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: Current snapshot shows a gate-green checkpoint request (exit 0) while runtime progress still marks task-07 BLOCKED, and the request metadata has codex_decision=null and next_action=null; closure-complete evidence is still missing.
+- Next action: Run one closure-focused pass for task-07: keep backend scope, run git diff --check, run the exact task-07 gate once, and return explicit command exit + non-zero vector_store count evidence suitable for controller closure.
+- Avoid repeating: Do not submit another gate-green checkpoint request without closure-complete diagnostics/metadata; that repeats the BLOCKED loop.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T013028Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T013028Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T013028Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T013028Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T013028Z/pc-git-status.txt`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: The latest LP gate summary is failing (exit 2), and the active Codex correction packet identifies a bounded single-file spec repair still not completed.
+- Next action: Apply one level-1 correction only in rag-page.component.spec.ts per Codex plan/extra instructions, then run git diff --check and the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce malformed suite structure, trailing whitespace, forbidden synthetic/internal-state patterns, or guessed selectors already rejected by Codex guidance.
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T013028Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T013028Z/lp-runtime/codex_plan.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T013028Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T013028Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T013028Z/lp-git-status.txt`
+
+### Integration risks
+
+- PC task-07 can remain indefinitely BLOCKED if gate-green evidence is resubmitted without closure metadata and explicit vector_store count proof.
+- LP task-fe-03d is a queue gate for downstream frontend tasks; repeated single-file spec regressions delay all FE-03e/03f/04 work.
+- Backend/frontend should remain disjoint this cycle; any LP changes outside frontend/** or PC changes outside backend scope risk overlap rejection by supervisor.
+
+### Evidence limitations
+
+- RUN_DIR snapshot provides gate summaries but not full gate logs; this cycle cannot independently reclassify underlying failure internals beyond captured summaries.
+- Ring evidence here is snapshot-based and does not include live post-snapshot worker reruns.

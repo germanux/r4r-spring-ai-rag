@@ -1,32 +1,43 @@
-# Backend ↔ Frontend handoff
+# Backend ↔ Frontend handoff — run 20260807T013028Z
 
-## Concurrency and scope
+## Concurrency and scope separation
 
-- **PC lane (backend):** `task-07-populate-production-rag`, backend paths (`pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`).
-- **LP lane (frontend):** `task-fe-03d-dom-state-tests`, single frontend spec path (`frontend/src/app/features/rag/rag-page.component.spec.ts`).
-- **Scope overlap check:** none observed from current directives/evidence, so parallel progress is safe.
+- **PC (backend)** remains on `task-07-populate-production-rag`.
+  - Scope: `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`.
+- **LP (frontend)** remains on `task-fe-03d-dom-state-tests`.
+  - Scope for this pass: `frontend/src/app/features/rag/rag-page.component.spec.ts`.
 
-## Dispatch decisions
+These scopes are disjoint for this cycle; continue both queues in parallel without overlap hold.
 
-### Package A
+## Current cross-stack status
+
+- Backend: gate summary is green but closure metadata/evidence is incomplete for task acceptance.
+- Frontend: deterministic gate is red; single-file spec correction is still required.
+
+## Directed next actions
+
+### Action A
 - **Implementation level:** Level 2
-- **Assigned role:** PC
+- **Role:** PC
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** backend task chain through accepted `task-06f-ingestion-validation`
+- **Dependencies:** `task-06f-ingestion-validation: ACCEPTED`
 - **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **Exact gate:** `git diff --check` then task-07 backend composite gate command
-- **Handoff objective:** convert gate-green checkpoint state into closure-complete acceptance evidence (including non-zero `vector_store` proof).
+- **Exact gate:**
+  - `git diff --check`
+  - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
 
-### Package B
+### Action B
 - **Implementation level:** Level 1
-- **Assigned role:** LP
+- **Role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** accepted `task-fe-03c-citations`
+- **Dependencies:** `task-fe-03c-citations: ACCEPTED`
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Handoff objective:** finish one-file DOM-state test correction per Codex packet and re-establish deterministic gate green.
+- **Exact gate:**
+  - `git diff --check`
+  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
 
-## Integration risks to monitor next cycle
+## Integration risks to monitor
 
-1. Backend task-07 can stall again if proof artifacts omit row-count/exit details despite green gate.
-2. Frontend FE-03D can fail early on formatting/structure errors before runtime assertions execute.
+1. PC can loop in BLOCKED state if gate-green submissions continue without closure-complete diagnostics.
+2. LP failure on FE-03D blocks downstream frontend tasks (`task-fe-03e`, `task-fe-03f`, `task-fe-04`).
+3. Any write-scope drift will cause supervisor rejection despite functional progress.
