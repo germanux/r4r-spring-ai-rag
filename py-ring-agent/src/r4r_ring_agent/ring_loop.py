@@ -35,11 +35,16 @@ RING_MODEL = os.environ.get(
     "R4R_RING_MODEL",
     "openai/gpt-5.6-luna",
 )
+RING_FALLBACK_MODEL = os.environ.get(
+    "R4R_RING_FALLBACK_MODEL",
+    "openai/gpt-5.3-codex",
+)
 RING_VARIANT = os.environ.get("R4R_RING_VARIANT", "low")
+RING_FALLBACK_VARIANT = os.environ.get("R4R_RING_FALLBACK_VARIANT", "low")
 ESCALATION_AGENT = os.environ.get("R4R_ESCALATION_AGENT", "r4r-escalation")
 ESCALATION_MODEL = os.environ.get(
     "R4R_ESCALATION_MODEL",
-    "openai/gpt-5.6-sol",
+    "openai/gpt-5.3-codex",
 )
 ESCALATION_VARIANT = os.environ.get("R4R_ESCALATION_VARIANT", "high")
 REVIEW_INTERVAL_SECONDS = int(
@@ -49,7 +54,7 @@ SESSION_TIMEOUT_SECONDS = int(
     os.environ.get("R4R_RING_SESSION_TIMEOUT_SECONDS", str(90 * 60))
 )
 FIRST_OUTPUT_TIMEOUT_SECONDS = int(
-    os.environ.get("R4R_RING_FIRST_OUTPUT_TIMEOUT_SECONDS", "300")
+    os.environ.get("R4R_RING_FIRST_OUTPUT_TIMEOUT_SECONDS", "120")
 )
 RUN_IMMEDIATELY = os.environ.get("R4R_RING_RUN_IMMEDIATELY", "true").lower() == "true"
 OPENCODE_BIN = os.environ.get("R4R_OPENCODE_BIN", "opencode")
@@ -1852,6 +1857,9 @@ def _command(
     paths: WorktreePaths,
     run_dir: Path,
     run_id: str,
+    *,
+    model: str = RING_MODEL,
+    variant: str = RING_VARIANT,
 ) -> tuple[str, ...]:
     return (
         OPENCODE_BIN,
@@ -1861,9 +1869,9 @@ def _command(
         "--agent",
         RING_AGENT,
         "--model",
-        RING_MODEL,
+        model,
         "--variant",
-        RING_VARIANT,
+        variant,
         "--format",
         "json",
         "--auto",
@@ -1908,17 +1916,17 @@ def _escalation_prompt(
 ) -> str:
     output_dir = run_dir / "output"
     worker_list = ", ".join(workers)
-    return f"""You are the on-demand R4R Sol escalation reviewer.
+    return f"""You are the on-demand R4R high-reasoning escalation reviewer.
 This is a fresh OpenCode session. Do not resume another transcript.
 
-Luna requested escalation for: {worker_list}.
+The Ring coordinator requested escalation for: {worker_list}.
 - RUN_ID: {run_id}
 - RUN_DIR: {run_dir}
 - LUNA_DRAFT: {draft_dir}
 - OUTPUT_DIR: {output_dir}
 - RING_WORKTREE: {paths.ring}
 
-Read the bounded evidence in RUN_DIR, the complete Luna draft and
+Read the bounded evidence in RUN_DIR, the complete coordinator draft and
 `.opencode/task-plan.json`. PC and LP are equivalent fullstack workers. Resolve the
 explicitly escalated decision, verify dependencies and disjoint `allowed_paths`, then
 write a complete replacement set of these six files:
@@ -1929,7 +1937,7 @@ write a complete replacement set of these six files:
 - {output_dir}/worker-understanding.md
 - {output_dir}/global-summary.md
 
-Use the exact state.json structure from the Luna draft, but every final action must be
+Use the exact state.json structure from the coordinator draft, but every final action must be
 one of START, CONTINUE, RETRY_AUTHORIZED, HOLD, STOP or NO_ACTION. `ESCALATE` is not a
 valid final action. Use only task IDs in the canonical plan and existing evidence paths
 inside RUN_DIR. Never edit product, tests, controller, configuration, policy, task-plan,
@@ -2113,6 +2121,43 @@ def run_ring_loop(
                 stop_poll=stop_poll,
             )
             result = luna_result
+            effective_model = RING_MODEL
+            effective_variant = RING_VARIANT
+            fallback: dict[str, Any] = {
+                "requested": False,
+                "model": RING_FALLBACK_MODEL,
+                "variant": RING_FALLBACK_VARIANT,
+            }
+            if (
+                luna_result.stop_reason == "first_output_timeout"
+                and active_command is None
+                and RING_FALLBACK_MODEL
+                and RING_FALLBACK_MODEL != RING_MODEL
+            ):
+                fallback["requested"] = True
+                result = run_streamed(
+                    _command(
+                        paths,
+                        run_dir,
+                        run_id,
+                        model=RING_FALLBACK_MODEL,
+                        variant=RING_FALLBACK_VARIANT,
+                    ),
+                    paths.ring,
+                    run_dir / "opencode.fallback.console.log",
+                    timeout_seconds=SESSION_TIMEOUT_SECONDS,
+                    first_output_timeout_seconds=FIRST_OUTPUT_TIMEOUT_SECONDS,
+                    stop_poll=stop_poll,
+                )
+                effective_model = RING_FALLBACK_MODEL
+                effective_variant = RING_FALLBACK_VARIANT
+                fallback.update(
+                    {
+                        "exit_code": result.exit_code,
+                        "duration_seconds": result.duration_seconds,
+                        "stop_reason": result.stop_reason,
+                    }
+                )
             escalation: dict[str, Any] = {
                 "requested": False,
                 "workers": [],
@@ -2120,7 +2165,7 @@ def run_ring_loop(
                 "model": ESCALATION_MODEL,
                 "variant": ESCALATION_VARIANT,
             }
-            if luna_result.exit_code == 0 and not luna_result.stop_reason:
+            if result.exit_code == 0 and not result.stop_reason:
                 escalated_workers = _draft_escalations(run_dir / "output")
                 if escalated_workers:
                     escalation["requested"] = True
@@ -2129,7 +2174,6 @@ def run_ring_loop(
                         draft_dir = _stage_luna_draft(run_dir)
                     except (OSError, ValueError) as exception:
                         escalation["error"] = str(exception)
-                        result = luna_result
                     else:
                         result = run_streamed(
                             _escalation_command(
@@ -2198,12 +2242,14 @@ def run_ring_loop(
                         "exit_code": result.exit_code,
                         "effective_exit_code": effective_exit_code,
                         "duration_seconds": result.duration_seconds,
+                        "primary_duration_seconds": luna_result.duration_seconds,
                         "luna_duration_seconds": luna_result.duration_seconds,
                         "publication": publication,
                         "stop_reason": result.stop_reason,
                         "agent": RING_AGENT,
-                        "model": RING_MODEL,
-                        "variant": RING_VARIANT,
+                        "model": effective_model,
+                        "variant": effective_variant,
+                        "fallback": fallback,
                         "escalation": escalation,
                         "review_interval_seconds": REVIEW_INTERVAL_SECONDS,
                         "event_min_interval_seconds": EVENT_MIN_INTERVAL_SECONDS,

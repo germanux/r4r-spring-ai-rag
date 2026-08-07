@@ -34,7 +34,8 @@ resolved.default_agent = profile.agentId;
 resolved.provider ??= {};
 resolved.provider[profile.provider] ??= { options: {}, models: {} };
 const provider = resolved.provider[profile.provider];
-if (!provider.models?.[profile.model]) {
+const requiresDeclaredModel = provider.npm === "@ai-sdk/openai-compatible";
+if (requiresDeclaredModel && !provider.models?.[profile.model]) {
   throw new Error(
     `opencode.jsonc does not declare ${profile.provider}/${profile.model}`,
   );
@@ -71,6 +72,7 @@ const metadata = {
   role: profile.role,
   provider: profile.provider,
   model: profile.model,
+  reasoningVariant: profile.reasoningVariant ?? "low",
   endpoint,
   worker: profile.worker,
   plan: profile.plan,

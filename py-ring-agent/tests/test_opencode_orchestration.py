@@ -240,9 +240,13 @@ class CanonicalConfigurationTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         config = json.loads((root / "config/r4r-agents.json").read_text())
         self.assertEqual(config["agents"]["RING"]["model"], "gpt-5.6-luna")
-        self.assertEqual(config["agents"]["PC"]["model"], "gpt-5.6-terra")
-        self.assertEqual(config["agents"]["LP"]["model"], "gpt-5.6-terra")
-        self.assertEqual(config["agents"]["ESCALATION"]["model"], "gpt-5.6-sol")
+        self.assertEqual(config["agents"]["PC"]["model"], "gpt-5.3-codex")
+        self.assertEqual(config["agents"]["LP"]["model"], "gpt-5.3-codex")
+        self.assertEqual(config["agents"]["ESCALATION"]["model"], "gpt-5.3-codex")
+        self.assertEqual(config["agents"]["RING"]["reasoningVariant"], "low")
+        self.assertEqual(config["agents"]["PC"]["reasoningVariant"], "low")
+        self.assertEqual(config["agents"]["LP"]["reasoningVariant"], "low")
+        self.assertEqual(config["agents"]["ESCALATION"]["reasoningVariant"], "high")
         self.assertEqual(
             config["agents"]["PC"]["plan"],
             config["agents"]["LP"]["plan"],

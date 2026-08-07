@@ -30,7 +30,7 @@ write only the six staged artifacts under the supplied OUTPUT_DIR.
 Use `START`, `CONTINUE` or `RETRY_AUTHORIZED` only with an exact task ID from the
 canonical plan. Use `HOLD`, `STOP` or `NO_ACTION` when no safe task is available.
 If evidence is ambiguous, cross-cutting or high-risk, use `ESCALATE`; the deterministic
-supervisor will run the read-only `r4r-escalation` Sol profile and require a replacement
+supervisor will run the read-only `r4r-escalation` high-reasoning profile and require a replacement
 decision before publishing worker assignments.
 
 Never write Git history, launch workers, bypass gates or retry a consumed recovery

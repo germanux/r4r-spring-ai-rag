@@ -9,8 +9,10 @@ PgVector -> retrieval -> cited non-web RAG service.
 
 Canonical task plan -> Ring assignment -> OpenCode worker implementation ->
 deterministic gate -> global acceptance ledger -> next dependency-ready task. Ring
-uses GPT-5.6 Luna, both full-stack workers use GPT-5.6 Terra, and only Ring may
-request an on-demand GPT-5.6 Sol escalation.
+uses GPT-5.6 Luna `low`, both full-stack workers use GPT-5.3 Codex `low`
+(`medium` for an authorized retry), and only Ring may request an on-demand
+GPT-5.3 Codex `high` escalation. A Ring session that produces no streamed output
+falls back once to GPT-5.3 Codex `low`.
 
 The controller is deliberately bounded. Assignments are expiring, scoped and
 single-use; worker sessions have time, activity, step, repetition and context

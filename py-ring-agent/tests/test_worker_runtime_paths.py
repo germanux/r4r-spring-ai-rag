@@ -13,6 +13,29 @@ SCRIPT = Path(__file__).resolve().parents[1] / "run-worker-streamed.py"
 
 
 class WorkerRuntimePathTests(unittest.TestCase):
+    def test_runner_validation_targets_the_script_not_the_shell_binary(self) -> None:
+        code = (
+            "import importlib.util,json; "
+            f"spec=importlib.util.spec_from_file_location('worker_runtime', {str(SCRIPT)!r}); "
+            "module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module); "
+            "print(json.dumps([str(module.RUNNER_SCRIPT), list(module.RUNNER)]))"
+        )
+        completed = subprocess.run(
+            [sys.executable, "-c", code],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stdout)
+        self.assertEqual(
+            json.loads(completed.stdout),
+            [
+                "scripts/run-opencode-worker.sh",
+                ["bash", "./scripts/run-opencode-worker.sh", "--destination"],
+            ],
+        )
+
     def test_environment_overrides_all_authoritative_worktrees(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)

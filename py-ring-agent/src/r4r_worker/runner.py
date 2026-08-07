@@ -648,6 +648,9 @@ class AutomaticRunner:
         self.opencode_bin = os.environ.get("R4R_OPENCODE_BIN", "opencode")
         self.opencode_agent = os.environ.get("R4R_OPENCODE_AGENT", "r4r-pc")
         self.opencode_model = os.environ.get("R4R_OPENCODE_MODEL", "").strip() or None
+        self.opencode_variant = (
+            os.environ.get("R4R_OPENCODE_VARIANT", "low").strip() or "low"
+        )
         self.compact_local_worker = (
             os.environ.get("R4R_COMPACT_LOCAL_WORKER", "false").lower() == "true"
         )
@@ -863,10 +866,17 @@ class AutomaticRunner:
                 f"{provider_id}"
             )
         models = provider.get("models") if isinstance(provider, dict) else None
-        if not isinstance(models, dict) or model_id not in models:
+        requires_base_url = provider.get("npm") == "@ai-sdk/openai-compatible"
+        if requires_base_url and (
+            not isinstance(models, dict) or model_id not in models
+        ):
             raise RuntimeError(
                 f"OpenCode agent {self.opencode_agent} references unknown model "
                 f"{provider_id}/{model_id}"
+            )
+        if models is not None and not isinstance(models, dict):
+            raise RuntimeError(
+                f"OpenCode provider {provider_id} has invalid models configuration"
             )
 
         # Validate only the provider selected by this agent. Native providers
@@ -874,7 +884,6 @@ class AutomaticRunner:
         # providers (our Ollama endpoints) require an explicit absolute URL.
         options = provider.get("options")
         base_url = options.get("baseURL") if isinstance(options, dict) else None
-        requires_base_url = provider.get("npm") == "@ai-sdk/openai-compatible"
         if requires_base_url and (
             not isinstance(base_url, str) or not base_url.strip() or "{env:" in base_url
         ):
@@ -1210,8 +1219,8 @@ class AutomaticRunner:
                 )
 
             if current_gate.exit_code != 0:
-                # Terra performs the bounded repair directly. Sol is reachable
-                # only when Ring/Luna emits ESCALATE and the Ring supervisor
+                # GPT-5.3 Codex performs the bounded repair directly. High
+                # reasoning is reachable only when Ring emits ESCALATE and the supervisor
                 # launches a separate escalation session.
                 next_action = next_action or (
                     "Fix the first current deterministic gate failure described "
@@ -1238,6 +1247,8 @@ class AutomaticRunner:
                         "--agent",
                         self.opencode_agent,
                         *((("--model", self.opencode_model)) if self.opencode_model else ()),
+                        "--variant",
+                        self.opencode_variant,
                         "--format",
                         "json",
                         "--auto",

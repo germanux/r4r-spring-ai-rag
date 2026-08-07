@@ -23,7 +23,8 @@ LP_WORKTREE = Path(
     os.environ.get("R4R_LP_WORKTREE", str(DEVELOPMENT_ROOT / "r4r-lp-worker.git"))
 ).expanduser()
 DESTINATION = "PC"  # PC or LP
-RUNNER = ("bash", "./scripts/run-opencode-worker.sh", "--destination")
+RUNNER_SCRIPT = Path("scripts/run-opencode-worker.sh")
+RUNNER = ("bash", f"./{RUNNER_SCRIPT.as_posix()}", "--destination")
 SESSION_TIMEOUT_SECONDS = None  # The inner harness owns its session TTL.
 
 HERE = Path(__file__).resolve().parent
@@ -40,7 +41,7 @@ def main() -> int:
     ring_repo = require_git_worktree(paths.ring, "RING")
     worker_repo = require_git_worktree(paths.worker(destination), destination)
 
-    runner_path = worker_repo / RUNNER[0]
+    runner_path = worker_repo / RUNNER_SCRIPT
     if not runner_path.is_file():
         raise SystemExit(f"worker runner is missing: {runner_path}")
 

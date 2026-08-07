@@ -120,7 +120,7 @@ ensure_opencode_models() {
     echo "OpenCode cannot read its authenticated model catalog." >&2
     exit 2
   }
-  for model in openai/gpt-5.6-luna openai/gpt-5.6-terra openai/gpt-5.6-sol; do
+  for model in openai/gpt-5.6-luna openai/gpt-5.3-codex; do
     grep -Fq -- "$model" <<<"$available" || {
       echo "Required OpenCode model is unavailable: $model" >&2
       exit 2
@@ -278,5 +278,5 @@ printf 'LP Git author: %s <%s>\n' \
   "${R4R_LP_GIT_AUTHOR_EMAIL:-germanux@gmail.com}"
 echo "PostgreSQL runs only in Docker."
 echo "If Docker group membership was added, log out and back in to avoid sudo fallback."
-echo "OpenCode models: Luna for Ring, Terra for PC/LP, Sol for escalations."
+echo "OpenCode models: Luna low for Ring; GPT-5.3 Codex low/medium/high for workers and escalation."
 echo "Next: ./scripts/verify.sh all && ./scripts/run-ring-system.sh start"

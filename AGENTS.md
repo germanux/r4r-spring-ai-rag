@@ -6,13 +6,13 @@ R4R has three persistent logical agents:
 
 - **RING** coordinates only. It uses `openai/gpt-5.6-luna`, reads bounded evidence,
   generates assignments and never implements code.
-- **PC** is a fullstack worker. It uses `openai/gpt-5.6-terra` and executes exactly
-  one Ring-generated assignment at a time.
+- **PC** is a fullstack worker. It uses `openai/gpt-5.3-codex` with `low` reasoning
+  by default and executes exactly one Ring-generated assignment at a time.
 - **LP** is a fullstack worker with the same capabilities and model as PC. Its separate
   worktree, progress, memory, runtime and Git identity remain isolated.
 
 A fourth OpenCode profile, **ESCALATION**, is invoked only when Ring marks a decision
-`ESCALATE`. It uses `openai/gpt-5.6-sol`, is read-only outside staged Ring output,
+`ESCALATE`. It uses `openai/gpt-5.3-codex` with `high` reasoning, is read-only outside staged Ring output,
 and must return a complete replacement decision. It is not a persistent worker or an
 independent task queue.
 
@@ -47,7 +47,7 @@ runtime.
 
 OpenCode sessions never write Git history. The deterministic `r4r_worker` controller
 inside `py-ring-agent` owns validation, checkpointing and final commits. Ring and the
-Sol escalation never commit or launch workers.
+high-reasoning escalation never commit or launch workers.
 
 The session limits are:
 

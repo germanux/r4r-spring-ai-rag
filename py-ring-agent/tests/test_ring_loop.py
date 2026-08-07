@@ -34,7 +34,7 @@ def _configure_task_plans(
                 if worker == "PC"
                 else "agent/laptop-qwen3-worker"
             ),
-            "model": "gpt-5.6-terra",
+            "model": "gpt-5.3-codex",
             "plan": plan_name,
         }
         plan_path = ring / plan_name
@@ -134,12 +134,12 @@ class RingLoopTest(unittest.TestCase):
                         "agents": {
                             "PC": {
                                 "agentId": "r4r-pc",
-                                "model": "gpt-5.6-terra",
+                                "model": "gpt-5.3-codex",
                                 "branch": "agent/pc-qwen3-worker",
                             },
                             "LP": {
                                 "agentId": "r4r-lp",
-                                "model": "gpt-5.6-terra",
+                                "model": "gpt-5.3-codex",
                                 "branch": "agent/laptop-qwen3-worker",
                             },
                         }
@@ -265,12 +265,12 @@ class RingLoopTest(unittest.TestCase):
                         "agents": {
                             "PC": {
                                 "agentId": "r4r-pc",
-                                "model": "gpt-5.6-terra",
+                                "model": "gpt-5.3-codex",
                                 "branch": "agent/pc-qwen3-worker",
                             },
                             "LP": {
                                 "agentId": "r4r-lp",
-                                "model": "gpt-5.6-terra",
+                                "model": "gpt-5.3-codex",
                                 "branch": "agent/laptop-qwen3-worker",
                             },
                         }
@@ -350,6 +350,19 @@ class RingLoopTest(unittest.TestCase):
             self.assertIn("global-progress.json", prompt)
             self.assertIn("ESCALATE", prompt)
             self.assertIn("Never assign overlapping", prompt)
+
+            fallback = ring_loop._command(
+                paths,
+                run_dir,
+                "run-1",
+                model="openai/gpt-5.3-codex",
+                variant="medium",
+            )
+            self.assertEqual(
+                fallback[fallback.index("--model") + 1],
+                "openai/gpt-5.3-codex",
+            )
+            self.assertEqual(fallback[fallback.index("--variant") + 1], "medium")
 
     def test_directive_validation_accepts_current_advisory_json(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -573,7 +586,7 @@ class RingLoopTest(unittest.TestCase):
                 self.assertTrue(directive["write_scope"])
                 self.assertIn(directive["assigned_agent"], {"r4r-pc", "r4r-lp"})
                 self.assertTrue(directive["branch"].startswith("agent/"))
-                self.assertEqual(directive["model"], "gpt-5.6-terra")
+                self.assertEqual(directive["model"], "gpt-5.3-codex")
                 self.assertTrue(directive["assignment_id"])
                 self.assertTrue(directive["evidence_path"].startswith(
                     f".ring-agent/evidence/task-{worker.lower()}/"

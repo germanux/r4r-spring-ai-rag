@@ -1,7 +1,7 @@
 ---
 description: R4R LP fullstack worker; executes exactly one Ring-generated assignment
 mode: primary
-model: openai/gpt-5.6-terra
+model: openai/gpt-5.3-codex
 steps: 30
 temperature: 0.25
 permission:
@@ -77,7 +77,7 @@ Before editing:
 
 Do not modify controller, orchestration, synchronization, task-plan or agent-policy
 files from a product assignment. Return ambiguity, scope overlap or architecture-wide
-work to Ring for a Sol escalation.
+work to Ring for a high-reasoning escalation.
 
 OpenCode never writes Git history. The deterministic controller alone may checkpoint
 and commit after the exact gate is green. Stop after one assignment result.

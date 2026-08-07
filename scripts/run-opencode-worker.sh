@@ -112,6 +112,7 @@ for key in (
     "agent",
     "provider",
     "model",
+    "reasoningVariant",
     "endpoint",
     "worker",
     "plan",
@@ -148,29 +149,30 @@ PYMETA
 agent="${values[0]}"
 provider="${values[1]}"
 model="${values[2]}"
-base_url="${values[3]%/}"
-worker="${values[4]}"
-plan="${values[5]}"
-progress="${values[6]}"
-legacy_progress="${values[7]}"
-memory="${values[8]}"
-legacy_memory="${values[9]}"
-control_dir="${values[10]}"
-resolved_config="${values[11]}"
-peer_paths_json="${values[12]}"
-runtime_max_attempts="${values[13]}"
-runtime_max_no_progress="${values[14]}"
-runtime_max_transient="${values[15]}"
-runtime_auto_commit="${values[16]}"
-runtime_bootstrap_commit="${values[17]}"
-runtime_checkpoint_on_green="${values[18]}"
-runtime_max_session_seconds="${values[19]}"
-runtime_idle_seconds="${values[20]}"
-runtime_max_session_steps="${values[21]}"
-runtime_repeat_event_budget="${values[22]}"
-runtime_context_delta_bytes="${values[23]}"
-runtime_context_warning_tokens="${values[24]}"
-runtime_context_stop_tokens="${values[25]}"
+reasoning_variant="${values[3]}"
+base_url="${values[4]%/}"
+worker="${values[5]}"
+plan="${values[6]}"
+progress="${values[7]}"
+legacy_progress="${values[8]}"
+memory="${values[9]}"
+legacy_memory="${values[10]}"
+control_dir="${values[11]}"
+resolved_config="${values[12]}"
+peer_paths_json="${values[13]}"
+runtime_max_attempts="${values[14]}"
+runtime_max_no_progress="${values[15]}"
+runtime_max_transient="${values[16]}"
+runtime_auto_commit="${values[17]}"
+runtime_bootstrap_commit="${values[18]}"
+runtime_checkpoint_on_green="${values[19]}"
+runtime_max_session_seconds="${values[20]}"
+runtime_idle_seconds="${values[21]}"
+runtime_max_session_steps="${values[22]}"
+runtime_repeat_event_budget="${values[23]}"
+runtime_context_delta_bytes="${values[24]}"
+runtime_context_warning_tokens="${values[25]}"
+runtime_context_stop_tokens="${values[26]}"
 
 # opencode.jsonc is canonical; the resolver writes one derived per-worker view.
 unset OPENCODE_CONFIG || true
@@ -250,24 +252,28 @@ print(match.group(1))
 PYMODEL
 )"
 export R4R_OPENCODE_MODEL="$full_model"
-
-python3 - "$ROOT/opencode.jsonc" "$full_model" <<'PYCONFIG'
+if [[ -z "${R4R_OPENCODE_VARIANT:-}" ]]; then
+  R4R_OPENCODE_VARIANT="$(
+    python3 - "$ROOT/$control_dir/assignment.json" "$reasoning_variant" <<'PYVARIANT'
 import json
 import sys
+from pathlib import Path
 
-path, full = sys.argv[1], sys.argv[2]
-provider, model = full.split("/", 1)
-
-with open(path, encoding="utf-8") as handle:
-    data = json.load(handle)
-
+assignment_path = Path(sys.argv[1])
+variant = sys.argv[2]
 try:
-    data["provider"][provider]["models"][model]
-except KeyError as exc:
-    raise SystemExit(
-        f"opencode.jsonc no contiene {full}; falta la clave {exc}"
-    )
-PYCONFIG
+    assignment = json.loads(assignment_path.read_text(encoding="utf-8"))
+except (OSError, json.JSONDecodeError):
+    assignment = {}
+if str(assignment.get("action", "")).upper() == "RETRY_AUTHORIZED":
+    variant = "medium"
+if variant not in {"low", "medium", "high", "xhigh"}:
+    raise SystemExit(f"Unsupported reasoning variant: {variant}")
+print(variant)
+PYVARIANT
+  )"
+fi
+export R4R_OPENCODE_VARIANT
 
 echo "OK: configuración OpenCode canónica para $DEST"
 
@@ -276,8 +282,8 @@ if [[ ! -f "$ROOT/$memory" && -n "$legacy_memory" && -f "$ROOT/$legacy_memory" ]
 fi
 
 if (( DOCTOR_LOCAL )); then
-  printf 'Agente: %s\nProveedor: %s\nModelo: %s\nEndpoint: %s\nPlan: %s\nProgreso: %s\nAutor Git: %s <%s>\nConfig canónica: %s\nMetadata resuelta: %s\n' \
-    "$agent" "$provider" "$model" "${base_url:-nativo}" "$plan" "$progress" \
+  printf 'Agente: %s\nProveedor: %s\nModelo: %s\nRazonamiento: %s\nEndpoint: %s\nPlan: %s\nProgreso: %s\nAutor Git: %s <%s>\nConfig canónica: %s\nMetadata resuelta: %s\n' \
+    "$agent" "$provider" "$model" "$R4R_OPENCODE_VARIANT" "${base_url:-nativo}" "$plan" "$progress" \
     "$R4R_GIT_AUTHOR_NAME" "$R4R_GIT_AUTHOR_EMAIL" \
     "$ROOT/opencode.jsonc" "$ROOT/$resolved_config"
   exit 0
@@ -314,8 +320,8 @@ echo "OK: modelo visible en OpenCode: $full_model"
 
 if (( DOCTOR )); then
   echo "OK: diagnóstico completo"
-  printf 'Agente: %s\nProveedor: %s\nModelo: %s\nEndpoint: %s\nPlan: %s\nProgreso: %s\nAutor Git: %s <%s>\nConfig: %s\n' \
-    "$agent" "$provider" "$model" "${base_url:-nativo}" "$plan" "$progress" \
+  printf 'Agente: %s\nProveedor: %s\nModelo: %s\nRazonamiento: %s\nEndpoint: %s\nPlan: %s\nProgreso: %s\nAutor Git: %s <%s>\nConfig: %s\n' \
+    "$agent" "$provider" "$model" "$R4R_OPENCODE_VARIANT" "${base_url:-nativo}" "$plan" "$progress" \
     "$R4R_GIT_AUTHOR_NAME" "$R4R_GIT_AUTHOR_EMAIL" "$ROOT/opencode.jsonc"
   exit 0
 fi
@@ -326,6 +332,7 @@ if (( SMOKE )); then
       --dir "$ROOT" \
       --agent "$agent" \
       --model "$full_model" \
+      --variant "$R4R_OPENCODE_VARIANT" \
       --format json \
       --auto \
       'Reply exactly: R4R_SMOKE_OK. Do not call any tool.' \
@@ -356,8 +363,8 @@ export PYTHONPATH="$ROOT/py-ring-agent/src${PYTHONPATH:+:$PYTHONPATH}"
 export R4R_CODEGRAPH_POLICY="${R4R_CODEGRAPH_POLICY:-advisory}"
 export R4R_REQUIRE_CODEGRAPH="${R4R_REQUIRE_CODEGRAPH:-true}"
 
-printf '[r4r] worker=%s agent=%s provider=%s model=%s plan=%s auto_commit=%s bootstrap_commit=%s git_author=%s<%s>\n' \
-  "$DEST" "$agent" "$provider" "$model" "$plan" \
+printf '[r4r] worker=%s agent=%s provider=%s model=%s reasoning=%s plan=%s auto_commit=%s bootstrap_commit=%s git_author=%s<%s>\n' \
+  "$DEST" "$agent" "$provider" "$model" "$R4R_OPENCODE_VARIANT" "$plan" \
   "$R4R_AUTO_COMMIT" "$R4R_BOOTSTRAP_COMMIT" \
   "$R4R_GIT_AUTHOR_NAME" "$R4R_GIT_AUTHOR_EMAIL"
 
