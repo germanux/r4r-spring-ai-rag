@@ -1031,26 +1031,43 @@ class AutomaticRunner:
         attempts_total = max(persisted_attempts, historical_attempts)
         progress_item["attempts_total"] = attempts_total
         self._write_progress(task.id)
+        attempt_ceiling = self.max_attempts
         if self.max_attempts > 0 and attempts_total >= self.max_attempts:
-            self._mark_blocked(task)
-            self._request_ring_review(
-                task,
-                reason="global-attempt-limit",
-                attempt=attempts_total,
-                gate=initial_gate,
+            authorization_id = self._consume_retry_authorization(task, progress_item)
+            if authorization_id is None:
+                self._mark_blocked(task)
+                self._request_ring_review(
+                    task,
+                    reason="global-attempt-limit",
+                    attempt=attempts_total,
+                    gate=initial_gate,
+                )
+                return self._finish(
+                    "GLOBAL_ATTEMPT_LIMIT_REACHED",
+                    70,
+                    {"task": task.id, "attempts": attempts_total, "limit": self.max_attempts},
+                )
+            attempt_ceiling = attempts_total + 1
+            print(
+                f"[r4r] RETRY_AUTHORIZED task={task.id} "
+                f"authorization_id={authorization_id} attempt={attempt_ceiling}"
             )
-            return self._finish(
-                "GLOBAL_ATTEMPT_LIMIT_REACHED",
-                70,
-                {"task": task.id, "attempts": attempts_total, "limit": self.max_attempts},
-            )
+            repaired_paths = self._repair_trailing_whitespace(task)
+            if repaired_paths:
+                print(
+                    "[r4r] OPERATOR_REPAIR trailing-whitespace paths="
+                    + ",".join(repaired_paths)
+                )
+                initial_gate = self._run_gate(
+                    "operator-repair-gate", task.gate, task_root, stream=True
+                )
 
         attempt = attempts_total + 1
         transient_failures = 0
         no_progress_cycles = 0
         last_review_action = ""
 
-        while self.max_attempts <= 0 or attempt <= self.max_attempts:
+        while attempt_ceiling <= 0 or attempt <= attempt_ceiling:
             edit_result: CommandResult | None = None
             progress_item["attempts_total"] = attempt
             progress_item["last_attempt_at"] = datetime.now(timezone.utc).isoformat()
@@ -2739,6 +2756,84 @@ next instruction packet.
         self.progress["last_run"] = self.run_id
         self._write_progress(task.id)
         self._write_memory()
+
+    def _consume_retry_authorization(
+        self,
+        task: Task,
+        progress_item: dict[str, Any],
+    ) -> str | None:
+        """Consume one fresh Ring recovery grant before launching the worker.
+
+        The consumed identifier is persisted first, so guardian restarts cannot
+        reuse the same directive. A normal CONTINUE never bypasses the durable
+        task attempt ceiling.
+        """
+        path = getattr(self, "ring_directive_path", None)
+        if path is None or not Path(path).is_file():
+            return None
+        try:
+            value = json.loads(Path(path).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        if value.get("schema_version") != 1:
+            return None
+        if str(value.get("target") or "").upper() != self.worker_id:
+            return None
+        if str(value.get("task_id") or "") != task.id:
+            return None
+        if str(value.get("action") or "").upper() != "RETRY_AUTHORIZED":
+            return None
+        authorization_id = str(value.get("authorization_id") or "").strip()
+        if not authorization_id:
+            return None
+        if progress_item.get("recovery_authorization_consumed") == authorization_id:
+            return None
+        if int(progress_item.get("recovery_grants_total") or 0) >= 1:
+            return None
+        try:
+            expires_at = datetime.fromisoformat(
+                str(value.get("expires_at") or "").replace("Z", "+00:00")
+            )
+        except ValueError:
+            return None
+        if expires_at.tzinfo is None or expires_at <= datetime.now(timezone.utc):
+            return None
+
+        # Persist consumption before OpenCode can run. This is the one-shot
+        # boundary that prevents a supervisor restart from replaying the grant.
+        progress_item["status"] = "IN_PROGRESS"
+        progress_item["recovery_authorization_consumed"] = authorization_id
+        progress_item["recovery_authorized_at"] = datetime.now(timezone.utc).isoformat()
+        progress_item["recovery_grants_total"] = 1
+        self._write_progress(task.id)
+        return authorization_id
+
+    def _repair_trailing_whitespace(self, task: Task) -> list[str]:
+        """Apply the narrow deterministic repair allowed by recovery policy."""
+        check = run_command(("git", "diff", "--check"), self.repo)
+        evidence = check.stdout + "\n" + check.stderr
+        candidates = {
+            match.group(1)
+            for match in re.finditer(
+                r"^(.+?):\d+: trailing whitespace\.$", evidence, re.MULTILINE
+            )
+        }
+        repaired: list[str] = []
+        for relative in sorted(candidates):
+            if not path_is_allowed(relative, task.allowed_paths):
+                continue
+            path = self.repo / relative
+            if not path.is_file() or path.is_symlink():
+                continue
+            original = path.read_text(encoding="utf-8")
+            normalized = "\n".join(
+                line.rstrip(" \t") for line in original.split("\n")
+            )
+            if normalized == original:
+                continue
+            path.write_text(normalized, encoding="utf-8")
+            repaired.append(relative)
+        return repaired
 
     def _write_progress(self, active_task: str | None) -> None:
         self.progress["active_task"] = active_task
