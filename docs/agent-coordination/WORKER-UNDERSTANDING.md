@@ -1,40 +1,35 @@
-# Worker understanding calibration
+# Worker understanding assessment
 
-## PC understanding checkpoint
+## PC understanding
+- **Observed quality:** adequate on task objective (task-07 gate run succeeded), but closure handling is incomplete because checkpoint commit evidence remained unresolved.
+- **Evidence:**
+  - `pc-runtime/gate_summary.md` shows gate green.
+  - `pc-runtime/controller_state.json` + `pc-runtime/checkpoint.json` show checkpoint commit failure.
+  - `worker-requests/PC.json` shows null `codex_decision` and null `checkpoint_head`.
+- **Implication:** next pass should prioritize closure consistency, not feature expansion.
 
-- **Task:** `task-07-populate-production-rag`
-- **What is proven:** prior pass produced `gate_exit=0` request.
-- **What is not yet proven in current snapshot:** closure-complete acceptance evidence (request metadata/progress still indicate non-closed state).
-- **Required next understanding:** this is a closure-quality pass, not scope expansion. Keep to backend/doc allowed paths and emit deterministic evidence that controller can close.
+## LP understanding
+- **Observed quality:** inadequate in prior attempt for FE-03D; correction packet explicitly says the patch violated mandatory constraints.
+- **Evidence:**
+  - `lp-runtime/gate_summary.md` failed.
+  - `lp-runtime/codex_plan.json` identifies local test-file defects and required structure restoration.
+  - `lp-runtime/codex-qwen3-extra-instructions.md` lists rejected patterns and required selector/assertion mapping.
+- **Implication:** next pass must be strictly prescriptive and one-file bounded.
 
-### PC bounded directive
-- **Implementation level:** Level 2
-- **Owner:** PC
-- **Dependencies:** existing backend accepted chain
+## Required next passes (bounded)
+
+### PC pass
+- **Implementation level:** 2
+- **Role:** PC
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** none new (prior dependency already accepted)
 - **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **Exact gate:** `git diff --check` then exact task-07 command
+- **Exact gate:** `git diff --check` + exact task-07 gate command from backend plan.
 
-## LP understanding checkpoint
-
-- **Task:** `task-fe-03d-dom-state-tests`
-- **What is proven:** only one edited spec file with failed gate and Codex revise packet.
-- **Primary misunderstanding to correct:** using prohibited synthetic/manual patterns and destabilizing test structure instead of DOM-first assertions.
-- **Required next understanding:** map each requirement to stable selectors/assertions only:
-  - loading status → `.loading-state[role="status"]`
-  - disabled controls → `textarea`, `.submit-button`
-  - transport failure → `.error-state[role="alert"]`
-  - answer rendering → `.answer-content`
-  - reset cleanup → absence of answer/error/citations + presence of `.idle-state`
-
-### LP bounded directive
-- **Implementation level:** Level 1
-- **Owner:** LP
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-
-## Shared non-negotiables
-
-- No Git history operations by workers.
-- No scope widening.
-- Closure is controller-owned only after exact-gate-green + scope-clean.
+### LP pass
+- **Implementation level:** 1
+- **Role:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependencies:** none new (prior dependency already accepted)
+- **allowed_paths:** `frontend/**`, `docs/frontend/**` (with directive focus on one spec file)
+- **Exact gate:** `git diff --check` + `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.

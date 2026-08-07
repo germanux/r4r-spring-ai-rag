@@ -2681,3 +2681,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This RUN_DIR contains no new PC codex_review, gate_summary, or checkpoint file; PC diagnosis is based on worker request/progress/memory snapshots.
 - LP gate_summary is a bounded summary (no full gate log in RUN_DIR), so detailed failing assertions are inferred from Codex plan/instructions and diff evidence.
+
+## Cycle `20260807T010024Z` â READY
+
+- Decision fingerprint: `78a6fe71c85253676ee373209777145dcaf7e33068b59e4eb6be32b51a3a5655`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: PC produced a gate-green attempt (gate exit 0) for task-07, but closure failed at checkpoint commit; progress remains BLOCKED and controller state is CHECKPOINT_COMMIT_FAILED.
+- Next action: Run one closure-focused pass for task-07 in existing backend/doc scope: keep changes bounded, run git diff --check, run the exact task-07 gate once, and return complete evidence that allows controller checkpoint+final commit.
+- Avoid repeating: Do not run unchanged evidence-only loops that end with another checkpoint-commit failure without producing closure-complete diagnostics and a scope-clean patch.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T010024Z/pc-runtime/controller_state.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T010024Z/pc-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T010024Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T010024Z/worker-requests/PC.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP remains on a first-attempt gate failure (exit 2) with a single modified spec file; Codex correction evidence identifies whitespace/suite-structure defects and prohibited testing patterns that must be corrected before any new work.
+- Next action: Execute one level-1 corrective pass only in frontend/src/app/features/rag/rag-page.component.spec.ts: restore valid suite structure, remove rejected patterns, add the three prescribed DOM tests, then run git diff --check and the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce invalid spec structure, trailing whitespace, guessed selectors, innerHTML/internal-state mutations, or unnecessary of/tick/synthetic response usage flagged by Codex.
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T010024Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T010024Z/lp-runtime/codex_plan.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T010024Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T010024Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- PC task-07 is functionally gate-green but operationally blocked by checkpoint-commit failure; repeated reruns can create churn without semantic progress if closure evidence is not tightened.
+- LP FE-03D edits are concentrated in one spec file; restoring structure must preserve existing answer/abstention/citation/escaping/service-isolation coverage to avoid regressions.
+
+### Evidence limitations
+
+- This snapshot includes gate summaries, not full gate logs; root-cause detail for PC checkpoint commit failure is limited to controller/checkpoint metadata.
+- No direct worker-local codex review artifact is present in RUN_DIR for this LP attempt; guidance is inferred from codex_plan.json and codex extra instructions.

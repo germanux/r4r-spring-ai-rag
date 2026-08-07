@@ -1,55 +1,37 @@
 # LP code review (Ring)
 
-## Evidence reviewed (current RUN_DIR)
+## Current evidence read
+- `lp-runtime/progress.json`: active task `task-fe-03d-dom-state-tests` (`PENDING`).
+- `lp-runtime/gate_summary.md`: deterministic gate classification `gate-failure`, exit `2`.
+- `lp-git-status.txt` and `lp-git-diff-stat.txt`: one edited file, `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+- `lp-runtime/codex_plan.json`: explicit correction packet; defect is local test-file quality/structure, not infrastructure.
+- `lp-runtime/codex-qwen3-extra-instructions.md`: mandatory one-file corrective pass and prohibited patterns list.
 
-- `runtime/ring-agent/ring/20260807T005523Z/lp-runtime/progress.json`
-- `runtime/ring-agent/ring/20260807T005523Z/lp-runtime/memory.md`
-- `runtime/ring-agent/ring/20260807T005523Z/lp-runtime/codex_plan.json`
-- `runtime/ring-agent/ring/20260807T005523Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `runtime/ring-agent/ring/20260807T005523Z/lp-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260807T005523Z/lp-git-status.txt`
-- `runtime/ring-agent/ring/20260807T005523Z/lp-git-diff-stat.txt`
-
-## Current diagnosis
-
-1. Active LP task is `task-fe-03d-dom-state-tests`.
-2. There is an in-progress diff only in `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-3. Latest deterministic evidence is a gate failure (`exit 2`) plus Codex `REVISE` instructions that identify concrete local defects: formatting/syntax damage and prohibited patterns (manual state mutation, guessed selectors, invalid response shapes).
-
-## First current defect to correct
-
-**Defect class:** local test-file correction quality and rule compliance.
-
-The current patch must be repaired to satisfy FE-03D requirements with valid DOM-driven tests and clean formatting.
+## First current defect
+FE-03D test file regression in the LP patch: formatting/suite-structure damage plus prohibited testing patterns caused gate failure. Correction must happen before any new frontend implementation.
 
 ## Bounded next package
-
 - **Implementation level:** Level 1
 - **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED` (already satisfied)
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:**
-  1. `git diff --check`
-  2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Dependencies:** `task-fe-03c-citations: ACCEPTED` (already satisfied)
+- **allowed_paths (canonical):** `frontend/**`, `docs/frontend/**` (effective one-file focus from Codex packet: `frontend/src/app/features/rag/rag-page.component.spec.ts`)
+- **Objective for one pass:** Repair FE-03D spec and prove loading/disabled/error/answer/reset DOM behavior through the exact gate.
 
-## Prescribed one-pass correction
+### Exact action
+1. Edit only `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+2. Restore valid pre-attempt suite structure and preserve existing valid coverage.
+3. Remove rejected patterns (innerHTML mutation, internal loading-state mutation, guessed selectors, invalid response shapes, unnecessary `of`/`tick`).
+4. Add only the three prescribed tests from Codex packet:
+   - controlled-pending loading + duplicate-submit prevention test,
+   - success-reset test with citations,
+   - transport-error-reset test.
+5. Run `git diff --check`, then run `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` once.
 
-1. Restore valid pre-attempt suite structure (balanced braces/indentation; no displaced existing tests).
-2. Remove rejected patterns called out by Codex (`innerHTML` mutation, manual loading flags, guessed selectors, invalid shapes, unnecessary `of/tick`).
-3. Add exactly these FE-03D DOM checks:
-   - controlled-pending loading + duplicate-submit suppression test,
-   - independent success-reset test with citations,
-   - independent transport-error-reset test with a fresh Subject.
+### Acceptance gate
+- `git diff --check`
+- `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- Closure policy: `exact-gate-green + scope-clean + controller-commit`
 
-## Acceptance evidence required
-
-- Scoped non-empty patch only in the spec file.
-- `git diff --check` clean.
-- FE-03D task gate green once with consistent diagnostics and understanding notes.
-- Policy closure remains controller-owned (exact-gate-green + scope-clean + controller-commit).
-
-## Avoid repeating
-
-- Do **not** reintroduce previously rejected synthetic/manual patterns.
-- Do **not** submit another pass with formatting/trailing-whitespace regressions.
+### Avoid repeating
+- Do not reintroduce trailing whitespace, brace imbalance, synthetic/manual DOM state manipulation, or selector guesses already rejected by Codex.
