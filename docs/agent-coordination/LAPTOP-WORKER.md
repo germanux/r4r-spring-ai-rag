@@ -1,37 +1,42 @@
-# LP code review (Ring)
+# LP code review (evidence-based)
 
-## Current evidence read
-- `lp-runtime/progress.json`: active task `task-fe-03d-dom-state-tests` (`PENDING`).
-- `lp-runtime/gate_summary.md`: deterministic gate classification `gate-failure`, exit `2`.
-- `lp-git-status.txt` and `lp-git-diff-stat.txt`: one edited file, `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-- `lp-runtime/codex_plan.json`: explicit correction packet; defect is local test-file quality/structure, not infrastructure.
-- `lp-runtime/codex-qwen3-extra-instructions.md`: mandatory one-file corrective pass and prohibited patterns list.
+## Current diagnosis
 
-## First current defect
-FE-03D test file regression in the LP patch: formatting/suite-structure damage plus prohibited testing patterns caused gate failure. Correction must happen before any new frontend implementation.
+- Active task is `task-fe-03d-dom-state-tests` (`lp-runtime/progress.json`).
+- Gate summary is failing (`exit code 2`) and points to local spec-file issues (`lp-runtime/gate_summary.md`).
+- Codex correction packet is explicit: restore valid test-suite structure, remove prohibited patterns, and add only three prescribed DOM tests (`lp-runtime/codex_plan.json`, `lp-runtime/codex-qwen3-extra-instructions.md`).
+- Current diff is bounded to one file with significant edits (`lp-git-diff-stat.txt`):
+  - `frontend/src/app/features/rag/rag-page.component.spec.ts`
+
+First current defect for LP is **local FE-03D test-file correctness**, not architecture or cross-file scope.
 
 ## Bounded next package
+
 - **Implementation level:** Level 1
 - **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations: ACCEPTED` (already satisfied)
-- **allowed_paths (canonical):** `frontend/**`, `docs/frontend/**` (effective one-file focus from Codex packet: `frontend/src/app/features/rag/rag-page.component.spec.ts`)
-- **Objective for one pass:** Repair FE-03D spec and prove loading/disabled/error/answer/reset DOM behavior through the exact gate.
+- **Dependencies:** `task-fe-03c-citations` accepted (visible in `lp-runtime/progress.json`)
+- **allowed_paths (canonical):** `frontend/**`, `docs/frontend/**` (configured task plan); execute correction only in `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Next action (single pass):**
+  1. Restore valid suite structure and remove flagged defective additions.
+  2. Add only the three required tests:
+     - controlled-pending loading/duplicate-submit DOM test,
+     - success-reset DOM test,
+     - transport-error-reset DOM test.
+  3. Run precheck and exact gate once.
 
-### Exact action
-1. Edit only `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-2. Restore valid pre-attempt suite structure and preserve existing valid coverage.
-3. Remove rejected patterns (innerHTML mutation, internal loading-state mutation, guessed selectors, invalid response shapes, unnecessary `of`/`tick`).
-4. Add only the three prescribed tests from Codex packet:
-   - controlled-pending loading + duplicate-submit prevention test,
-   - success-reset test with citations,
-   - transport-error-reset test.
-5. Run `git diff --check`, then run `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` once.
+## Exact gate
 
-### Acceptance gate
-- `git diff --check`
-- `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- Closure policy: `exact-gate-green + scope-clean + controller-commit`
+1. `git diff --check`
+2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+3. Closure rule: `exact-gate-green + scope-clean + controller-commit`
 
-### Avoid repeating
-- Do not reintroduce trailing whitespace, brace imbalance, synthetic/manual DOM state manipulation, or selector guesses already rejected by Codex.
+## Acceptance evidence required
+
+- No trailing whitespace / parse-structure defects.
+- Exit 0 for FE-03D gate.
+- Final diff remains task-scoped and preserves existing valid coverage (answer, abstention, citations, transport alert, escaping, isolation).
+
+## Avoid repeating
+
+- Do **not** reintroduce `innerHTML` mutation, internal loading-state mutation, guessed selectors, unnecessary `of/tick`, synthetic invalid response shapes, or unbalanced braces.

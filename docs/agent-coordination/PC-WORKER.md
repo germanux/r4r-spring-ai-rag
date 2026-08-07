@@ -1,35 +1,39 @@
-# PC code review (Ring)
+# PC code review (evidence-based)
 
-## Current evidence read
-- `pc-runtime/gate_summary.md`: deterministic gate classification `green`, exit `0`.
-- `pc-runtime/controller_state.json`: run status `CHECKPOINT_COMMIT_FAILED`, exit code `67`, error `Automatic gate-green checkpoint commit failed`.
-- `pc-runtime/checkpoint.json`: `status: failed`, `head_after: null` despite gate-green timestamp.
-- `pc-runtime/progress.json`: active task `task-07-populate-production-rag`, task status still `BLOCKED`.
-- `worker-requests/PC.json`: reason `gate-green-checkpoint`, `codex_decision: null`, `checkpoint_head: null`.
+## Current diagnosis
 
-## First current defect
-Closure defect, not a new product defect: task-07 passed its exact deterministic gate, but controller checkpoint commit did not complete, so acceptance cannot close.
+- Active task is `task-07-populate-production-rag` (`pc-runtime/progress.json`).
+- Current request is `gate-green-checkpoint` with `gate_exit: 0`, but `checkpoint_head` is still `null` and task state remains non-accepted (`worker-requests/PC.json`, `pc-runtime/progress.json`).
+- Working tree includes five backend/doc changes already staged in scope (`pc-git-status.txt`):
+  - `docs/backend/production-ingestion-evidence.md`
+  - `src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionService.java`
+  - `src/main/java/com/riansares/r4r/vector/PgVectorKnowledgeStore.java`
+  - `src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionServiceIT.java`
+  - `src/test/java/com/riansares/r4r/ingestion/TestChildApplicationContextInitializer.java`
+
+First current defect for PC is **closure incompleteness after gate-green evidence**, not missing implementation scope.
 
 ## Bounded next package
+
 - **Implementation level:** Level 2
 - **Assigned role:** PC
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `task-06f-ingestion-validation: ACCEPTED` (already satisfied)
-- **allowed_paths (canonical):** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **Objective for one pass:** Produce closure-complete evidence for task-07 so controller can finish checkpoint/final commit.
+- **Dependencies:** `task-06f-ingestion-validation` already accepted (from `pc-runtime/progress.json` ledger)
+- **allowed_paths (canonical):** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**` (from `.opencode/task-plan.backend.json`)
+- **Next action (single pass):** Run a closure-focused pass only: keep scope-clean backend/doc diff, run whitespace precheck, run exact gate once, and return closure-complete evidence.
 
-### Exact action
-1. Keep current task-07 scope only (no new architecture, no cross-queue edits).
-2. Run `git diff --check` before expensive gate work.
-3. Run the exact task gate once:
-   - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
-4. Return evidence consistent across gate summary/checkpoint metadata/task status so controller can close.
+## Exact gate
 
-### Acceptance gate
-- `git diff --check`
-- Exact task-07 gate command above
-- Closure policy: `exact-gate-green + scope-clean + controller-commit`
+1. `git diff --check`
+2. `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
+3. Closure rule: `exact-gate-green + scope-clean + controller-commit`
 
-### Avoid repeating
-- Do **not** run unchanged loop iterations that only regenerate a gate-green result while leaving checkpoint commit unresolved.
-- Do **not** wait for SURGICAL review (disabled).
+## Acceptance evidence required
+
+- Gate result demonstrating exit 0 for the exact task-07 command.
+- Proof that changed paths remain inside the task allowed scope.
+- Closure-ready diagnostic bundle (no missing checkpoint/commit-critical data).
+
+## Avoid repeating
+
+- Do **not** repeat unchanged “gate-green but no closure completion” loops.

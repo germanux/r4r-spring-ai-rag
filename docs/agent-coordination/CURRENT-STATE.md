@@ -1,26 +1,36 @@
-# Global coordination summary (RUN_ID 20260807T010024Z)
+# Global summary for run 20260807T010525Z
 
-## Outcome
-- **Overall status:** READY
-- **Repository code edits by Ring:** none
-- **Staged coordination artifacts:** complete (6/6)
+## What was reviewed
 
-## Evidence-backed decisions
+- Bounded run evidence under `runtime/ring-agent/ring/20260807T010525Z` (git status snapshots, worker runtime manifests/progress/memory, prior directives, gate summary, codex plan, worker request manifest).
 
-### PC
-- Continue `task-07-populate-production-rag`.
-- Reason: deterministic gate already green, but controller checkpoint commit failed (`CHECKPOINT_COMMIT_FAILED`), leaving task blocked and not closable.
-- Next action: one closure-focused pass with exact task gate and scope-clean evidence.
+## Decisions
 
-### LP
-- Continue `task-fe-03d-dom-state-tests`.
-- Reason: first-attempt gate failure on one spec file; Codex packet provides concrete bounded corrections.
-- Next action: one-file corrective pass, then diff-check and exact frontend gate.
+- **PC:** `CONTINUE` on `task-07-populate-production-rag` (Level 2).
+  - Reason: gate-green request exists, but closure is still incomplete/BLOCKED.
+  - Next pass: closure-focused precheck + exact gate once + closure-complete diagnostics.
 
-## Key risks
-1. Repeated PC gate-green cycles can waste attempts if checkpoint/closure metadata stays unresolved.
-2. LP structural repair may unintentionally remove prior valid test coverage if not carefully restored.
+- **LP:** `CONTINUE` on `task-fe-03d-dom-state-tests` (Level 1).
+  - Reason: active FE-03D gate failure and explicit Codex correction packet for one-file test defects.
+  - Next pass: restore spec structure, add 3 prescribed DOM tests, run precheck + exact gate once.
 
-## Explicit limitations in this cycle
-- RUN_DIR snapshot provides summary diagnostics; full logs for deeper root-cause analysis are not included in the staged evidence subset.
-- No new Codex review artifact exists for LP in this run; directives rely on codex plan + extra instructions present in RUN_DIR.
+## Deterministic gates reiterated
+
+- PC: `git diff --check` then exact task-07 backend gate command from `.opencode/task-plan.backend.json`.
+- LP: `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
+- Both: closure requires `exact-gate-green + scope-clean + controller-commit`.
+
+## Risks
+
+- Backend may loop on gate-green but non-closable evidence if closure artifacts remain incomplete.
+- Frontend may loop on FE-03D if prohibited test patterns are reintroduced.
+
+## Evidence limitations
+
+- PC current RUN_DIR lacks controller_state/codex review/gate summary artifacts, so closure diagnosis is constrained to request/progress/directive evidence.
+- LP current RUN_DIR has summarized diagnostics, not full gate log.
+
+## Ring repository edits
+
+- No repository product/test/config code was edited.
+- Only the six required staged outputs were written under `OUTPUT_DIR`.

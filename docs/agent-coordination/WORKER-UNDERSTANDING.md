@@ -1,35 +1,28 @@
 # Worker understanding assessment
 
 ## PC understanding
-- **Observed quality:** adequate on task objective (task-07 gate run succeeded), but closure handling is incomplete because checkpoint commit evidence remained unresolved.
-- **Evidence:**
-  - `pc-runtime/gate_summary.md` shows gate green.
-  - `pc-runtime/controller_state.json` + `pc-runtime/checkpoint.json` show checkpoint commit failure.
-  - `worker-requests/PC.json` shows null `codex_decision` and null `checkpoint_head`.
-- **Implication:** next pass should prioritize closure consistency, not feature expansion.
+
+- Evidence indicates PC produced a gate-green request for task-07 but closure remains incomplete (`worker-requests/PC.json`, `pc-runtime/progress.json`).
+- Current memory still states “run initial exact gate and classify first failure,” which is stale relative to gate-green request evidence (`pc-runtime/memory.md`).
+
+### Required understanding correction (PC)
+
+- Treat this pass as **closure-focused**, not exploratory.
+- Preserve existing in-scope backend/doc changes.
+- Provide deterministic closure evidence after `git diff --check` + exact task-07 gate.
 
 ## LP understanding
-- **Observed quality:** inadequate in prior attempt for FE-03D; correction packet explicitly says the patch violated mandatory constraints.
-- **Evidence:**
-  - `lp-runtime/gate_summary.md` failed.
-  - `lp-runtime/codex_plan.json` identifies local test-file defects and required structure restoration.
-  - `lp-runtime/codex-qwen3-extra-instructions.md` lists rejected patterns and required selector/assertion mapping.
-- **Implication:** next pass must be strictly prescriptive and one-file bounded.
 
-## Required next passes (bounded)
+- Codex assessment explicitly marks local understanding as inadequate and details concrete misunderstandings/pattern violations (`lp-runtime/codex-qwen3-extra-instructions.md`).
+- Gate summary + codex plan agree the failure is local and bounded to the spec file (`lp-runtime/gate_summary.md`, `lp-runtime/codex_plan.json`).
 
-### PC pass
-- **Implementation level:** 2
-- **Role:** PC
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** none new (prior dependency already accepted)
-- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **Exact gate:** `git diff --check` + exact task-07 gate command from backend plan.
+### Required understanding correction (LP)
 
-### LP pass
-- **Implementation level:** 1
-- **Role:** LP
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** none new (prior dependency already accepted)
-- **allowed_paths:** `frontend/**`, `docs/frontend/**` (with directive focus on one spec file)
-- **Exact gate:** `git diff --check` + `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
+- Map each FE-03D requirement directly to concrete rendered selectors/assertions.
+- Apply only prescribed test additions and remove prohibited patterns.
+- Keep one-file bounded edit and execute precheck then exact gate once.
+
+## Confidence and limitations
+
+- Confidence is moderate for LP correction path (highly specific Codex packet).
+- Confidence is moderate-low for PC closure root cause because current RUN_DIR lacks controller_state/codex review artifacts for PC.
