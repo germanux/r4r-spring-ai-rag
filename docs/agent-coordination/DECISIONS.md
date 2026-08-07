@@ -2873,3 +2873,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - Current RUN_DIR does not include a fresh PC gate_summary.md or codex_plan.json for run 20260807T011518Z; diagnosis relies on worker request metadata plus progress/status snapshots.
 - LP gate-full.log is not bundled in RUN_DIR, so failure fingerprint details are limited to gate_summary.md and Codex plan text.
+
+## Cycle `20260807T012027Z` â READY
+
+- Decision fingerprint: `f379b32484b67556fdf813b03ef86b00475c83c03ac6084e7a3021d1e6a97800`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: Current RUN_DIR shows a gate-green checkpoint request for task-07 (gate_exit=0 with scoped backend changes), but progress still marks task-07 BLOCKED; the first current defect is closure incompleteness/evidence handoff, not missing implementation scope.
+- Next action: Run one closure-focused pass for task-07 using existing scoped changes: run git diff --check, run the exact task-07 gate once, and return closure-complete diagnostics including non-zero vector_store proof for controller checkpoint/final commit.
+- Avoid repeating: Do not submit another gate-green checkpoint request that omits closure-complete diagnostics/metadata and leaves task-07 in the same BLOCKED loop.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012027Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012027Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012027Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012027Z/pc-git-status.txt`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: Current RUN_DIR LP gate summary is failing (exit 2), and codex plan/extra instructions identify a bounded single-file spec defect set; first current defect remains local test-file correction and deterministic re-gate.
+- Next action: Apply one bounded level-1 correction in frontend/src/app/features/rag/rag-page.component.spec.ts only: restore valid suite structure, implement the prescribed controlled-pending loading test and two independent reset tests, then run git diff --check and the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce malformed spec structure, trailing whitespace, guessed selectors, internal state mutation, or unnecessary of/tick usage already rejected by Codex guidance.
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012027Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012027Z/lp-runtime/codex_plan.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012027Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012027Z/lp-git-status.txt`
+
+### Integration risks
+
+- PC can remain in a gate-green-but-unclosed loop if closure-complete diagnostics/proof are not returned with the same pass.
+- LP can fail early again at deterministic preflight (format/structure) before semantic DOM assertions execute.
+
+### Evidence limitations
+
+- This RUN_DIR contains summarized gate artifacts; full gate logs and Codex review bundles for the latest attempts are not mirrored here.
+- No direct worker-run artifact in this snapshot proves task acceptance or controller final commit for either active task.

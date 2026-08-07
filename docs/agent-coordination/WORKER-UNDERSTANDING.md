@@ -1,43 +1,40 @@
-# Worker understanding audit — run 20260807T011526Z
+# Worker understanding assessment — run 20260807T012027Z
 
-## PC understanding status
+## PC understanding
 
-Evidence indicates PC executed task work that reached a gate-green request, but the task remains `BLOCKED`. The required understanding for the next pass is operational, not architectural:
+### Evidence
+- `pc-runtime/progress.json` shows task-07 still `BLOCKED` with `last_gate_green_*` populated.
+- `worker-requests/PC.json` records `reason: gate-green-checkpoint`, `gate_exit: 0`, and scoped changed paths.
 
-- preserve current scoped backend changes,
-- run the exact task-07 gate once,
-- return closure-complete deterministic evidence so the controller can checkpoint/finalize.
+### Assessment
+PC has likely achieved a technically green gate pass, but handoff quality is still insufficient for deterministic closure. The defect is procedural/evidence-completeness, not broad architecture.
 
-### PC package
-
-- **Level:** 2
-- **Role:** PC
+### Next bounded directive
+- **Level / role:** Level 2 / PC
 - **Task ID:** `task-07-populate-production-rag`
 - **Dependencies:** `task-06f-ingestion-validation:ACCEPTED`
 - **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **Exact gate:**
-  - `git diff --check`
-  - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
+- **Exact gate:** `git diff --check` then exact task-07 gate command
+- **Acceptance condition:** closure-complete diagnostics including explicit non-zero `vector_store` proof and scope-clean diff.
 
-## LP understanding status
+## LP understanding
 
-Codex evidence explicitly marks the prior local understanding as inadequate and points to concrete test-file defects. The next pass must be strict, single-file, and selector-driven.
+### Evidence
+- `lp-runtime/gate_summary.md` indicates gate failure (`exit 2`).
+- `lp-runtime/codex_plan.json` and `lp-runtime/codex-qwen3-extra-instructions.md` provide prescriptive single-file corrections.
+- `lp-git-status.txt` confirms one modified file.
 
-### LP package
+### Assessment
+LP requires a tighter, prescriptive level-1 execution that follows Codex correction packet verbatim. Scope is correctly narrow and unambiguous.
 
-- **Level:** 1
-- **Role:** LP
+### Next bounded directive
+- **Level / role:** Level 1 / LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
 - **Dependencies:** `task-fe-03c-citations:ACCEPTED`
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:**
-  - `git diff --check`
-  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Acceptance condition:** valid suite structure + prescribed 3 DOM tests + green FE-03D gate.
 
-Required FE selector mapping for the next local understanding report:
+## Cross-worker coordination note
 
-- loading status → `.loading-state[role="status"]`
-- disabled controls → `textarea` and `.submit-button`
-- transport failure → `.error-state[role="alert"]`
-- answer visibility → `.answer-content`
-- reset cleanup → absence of `.answer-content` / `.citations-section` / `.error-state` and presence of `.idle-state`
+Backend and frontend scopes are disjoint in this cycle; no overlap blocker is present.

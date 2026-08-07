@@ -1,39 +1,46 @@
-# Backend ↔ Frontend handoff (disjoint execution)
+# Backend ↔ Frontend handoff — run 20260807T012027Z
 
-## Scope separation check
+## Queue status
 
-- **PC active scope (backend):** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **LP active scope (frontend):** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Backend (PC):** `task-07-populate-production-rag` continues.
+- **Frontend (LP):** `task-fe-03d-dom-state-tests` continues.
 
-Current scopes are disjoint; concurrent PC/LP work is safe without write-path overlap.
+## Ownership and scope separation
 
-## Backend package to execute
+The two actions remain disjoint and can proceed in parallel:
 
-- **Level:** 2
-- **Role:** PC
-- **Task:** `task-07-populate-production-rag`
+- **PC allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+- **LP allowed_paths (effective bounded package):** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+
+No path overlap is present between backend and frontend packages in this cycle.
+
+## Bounded action packets
+
+### Packet A
+- **Implementation level:** Level 2
+- **Assigned role:** PC
+- **Task ID:** `task-07-populate-production-rag`
 - **Dependencies:** `task-06f-ingestion-validation:ACCEPTED`
-- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
 - **Exact gate:**
-  1. `git diff --check`
-  2. `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
+  - `git diff --check`
+  - exact task-07 backend gate command from `.opencode/task-plan.backend.json`
+  - closure policy `exact-gate-green + scope-clean + controller-commit`
 
-## Frontend package to execute
-
-- **Level:** 1
-- **Role:** LP
-- **Task:** `task-fe-03d-dom-state-tests`
+### Packet B
+- **Implementation level:** Level 1
+- **Assigned role:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
 - **Dependencies:** `task-fe-03c-citations:ACCEPTED`
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
 - **Exact gate:**
-  1. `git diff --check`
-  2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+  - `git diff --check`
+  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+  - closure policy `exact-gate-green + scope-clean + controller-commit`
 
-## Integration risks to track
+## Integration risks to monitor
 
-1. Backend closure loop risk: repeated gate-green with incomplete closure artifacts can keep task-07 blocked.
-2. Frontend test fragility risk: FE-03D can fail pre-runtime on formatting/structure before semantic DOM assertions run.
+1. Backend closure can stall despite green gates if row-count proof and command-exit evidence remain incomplete.
+2. Frontend can fail before semantic assertions if file-format/structure issues recur.
 
-## Coordination rule for this cycle
+## Handoff decision
 
-Proceed with both packages in parallel lanes; do not hold either lane for SURGICAL review (disabled) or absent ACCEPT/REVISE metadata.
+Proceed with both packets concurrently; hold neither queue because SURGICAL is disabled and no write-scope overlap exists.

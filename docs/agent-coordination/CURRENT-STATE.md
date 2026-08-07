@@ -1,41 +1,57 @@
-# Global summary — ring cycle 20260807T011526Z
+# Global summary — ring cycle 20260807T012027Z
 
 ## Outcome
 
 `overall_status = READY`
 
-Both queues have evidence-backed, disjoint next actions:
+Both queues have evidence-backed, disjoint corrective next actions and no SURGICAL dependency.
 
-- **PC:** continue `task-07-populate-production-rag` with a closure-focused pass.
-- **LP:** continue `task-fe-03d-dom-state-tests` with the prescribed single-file corrective test edit.
+## Primary evidence used
 
-## Why these decisions are current
+- `runtime/ring-agent/ring/20260807T012027Z/pc-runtime/progress.json`
+- `runtime/ring-agent/ring/20260807T012027Z/worker-requests/PC.json`
+- `runtime/ring-agent/ring/20260807T012027Z/pc-git-status.txt`
+- `runtime/ring-agent/ring/20260807T012027Z/lp-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260807T012027Z/lp-runtime/codex_plan.json`
+- `runtime/ring-agent/ring/20260807T012027Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260807T012027Z/lp-git-status.txt`
 
-1. **PC evidence:** current RUN_DIR contains a gate-green checkpoint request for task-07, but progress still reports `BLOCKED`; this indicates closure incompleteness rather than missing implementation scope.
-2. **LP evidence:** current RUN_DIR contains a gate failure (`exit 2`) plus Codex corrective instructions concentrated in one spec file.
+## Decisions
 
-## Bounded directives
-
-### PC
-- **Level/role:** Level 2 / PC
+### PC decision
+- **Action:** `CONTINUE`
 - **Task ID:** `task-07-populate-production-rag`
+- **Why:** gate-green checkpoint evidence exists, but task remains `BLOCKED`; closure evidence is incomplete.
+- **Implementation level / role:** Level 2 / PC
 - **Dependencies:** `task-06f-ingestion-validation:ACCEPTED`
 - **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **Gate:** `git diff --check` then exact backend task-07 gate command.
+- **Exact gates:**
+  - `git diff --check`
+  - exact task-07 backend gate command
+  - closure rule `exact-gate-green + scope-clean + controller-commit`
 
-### LP
-- **Level/role:** Level 1 / LP
+### LP decision
+- **Action:** `CONTINUE`
 - **Task ID:** `task-fe-03d-dom-state-tests`
+- **Why:** deterministic gate failure plus explicit Codex single-file corrective packet.
+- **Implementation level / role:** Level 1 / LP
 - **Dependencies:** `task-fe-03c-citations:ACCEPTED`
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
+- **Exact gates:**
+  - `git diff --check`
+  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+  - closure rule `exact-gate-green + scope-clean + controller-commit`
 
-## Risks and limitations
+## Integration risks
 
-- **Risk:** PC may continue in a gate-green-but-unclosed loop without closure-complete diagnostics.
-- **Risk:** LP may fail early again on formatting/structure errors before semantic assertions run.
-- **Limitation:** no fresh PC gate_summary/codex review artifact is present in this RUN_DIR snapshot.
+1. Repeated PC gate-green loops without closure-proof detail can continue blocking task-07.
+2. LP can fail preflight again before behavioral assertions if structure/format regresses.
 
-## Ring repository edits this cycle
+## Evidence limitations
 
-No repository product/test/config/code edits were made. Only the six staged coordination artifacts under `runtime/ring-agent/ring/20260807T011526Z/output/` were written.
+- RUN_DIR provides gate summaries and planning artifacts, but not full mirrored gate logs for fresh independent reclassification.
+- No artifact in this snapshot proves final controller commit/acceptance for either active task.
+
+## Ring edits this cycle
+
+No repository code/tests/config/docs were edited. Only the six staged coordination files under `runtime/ring-agent/ring/20260807T012027Z/output/` were written.
