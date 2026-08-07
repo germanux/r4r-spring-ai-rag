@@ -1,41 +1,41 @@
-# LP code review (current cycle)
+# LP code review (run 20260807T021032Z)
 
 ## Evidence reviewed
 
-- `runtime/ring-agent/ring/20260807T020532Z/lp-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260807T020532Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `runtime/ring-agent/ring/20260807T020532Z/lp-runtime/memory.md`
-- `runtime/ring-agent/ring/20260807T020532Z/lp-runtime/progress.json`
-- `runtime/ring-agent/ring/20260807T020532Z/lp-git-status.txt`
-- `runtime/ring-agent/ring/20260807T020532Z/lp-git-diff-stat.txt`
+- `runtime/ring-agent/ring/20260807T021032Z/lp-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260807T021032Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260807T021032Z/lp-runtime/memory.md`
+- `runtime/ring-agent/ring/20260807T021032Z/lp-runtime/progress.json`
+- `runtime/ring-agent/ring/20260807T021032Z/lp-git-status.txt`
+- `runtime/ring-agent/ring/20260807T021032Z/lp-git-diff-stat.txt`
 
-## Current diagnosis
+## First current defect
 
-The first current LP defect remains the FE-03D one-file spec regression:
+The active FE-03D task remains red and unresolved in one file:
 
-- Deterministic gate summary is red (`exit code: 2`).
-- Codex correction packet is `REVISE` with explicit constraints for the same file.
-- Prior local pass timed out (`session-timeout`) and did not produce acceptance evidence.
-- Dirty state persists in one file: `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+- Deterministic gate summary reports `exit code: 2`.
+- Codex packet is `REVISE` with explicit one-file repair instructions.
+- Previous local pass timed out (`session-timeout`) and did not produce acceptance evidence.
+- Dirty state persists at `frontend/src/app/features/rag/rag-page.component.spec.ts`.
 
 ## Bounded next package
 
 - **Implementation level:** Level 1
 - **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations: ACCEPTED` (already evidenced)
+- **Dependencies:** `task-fe-03c-citations: ACCEPTED`
 - **allowed_paths:**
   - `frontend/src/app/features/rag/rag-page.component.spec.ts`
 
-### Exact next action for one pass
+### One focused next action (single pass)
 
 Apply exactly the existing FE-03D correction packet in `rag-page.component.spec.ts`:
 
-1. Restore valid suite structure and remove defective attempt additions called out in the packet.
-2. Keep only the three prescribed tests (controlled-pending loading/duplicate-submission, success-reset, transport-error-reset) using fixture-rendered DOM assertions.
+1. Restore valid suite structure and remove prohibited additions (synthetic fields/selectors, internal-state mutations, `innerHTML` mutation, `of`/`tick` misuse).
+2. Keep the three prescribed tests only: controlled-pending loading/duplicate-submit, success-reset with citations, transport-error-reset.
 3. Preserve existing valid answer/abstention/citation/escaping/service-isolation coverage.
 
-### Exact gate
+### Exact deterministic gate
 
 1. `git diff --check`
 2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
@@ -43,9 +43,9 @@ Apply exactly the existing FE-03D correction packet in `rag-page.component.spec.
 
 ## Acceptance evidence required
 
-- Gate exit `0` for FE-03D.
+- Gate exit `0` for FE-03D exact command.
 - Scoped diff only in `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-- Local understanding/report maps requirements to concrete selectors asserted in DOM:
+- Requirement-to-selector assertion map present in local understanding, including:
   - loading status: `.loading-state[role="status"]`
   - disabled controls: `textarea`, `.submit-button`
   - error alert: `.error-state[role="alert"]`
@@ -54,4 +54,4 @@ Apply exactly the existing FE-03D correction packet in `rag-page.component.spec.
 
 ## Avoid repeating
 
-Do not reintroduce malformed test structure, internal state mutations, guessed selectors, `innerHTML` mutation, or timeout-prone reruns without plan changes.
+Do not rerun with malformed test structure, guessed selectors, or timeout-prone no-plan retries.

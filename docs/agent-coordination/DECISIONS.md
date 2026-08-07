@@ -3368,3 +3368,54 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This RUN_DIR snapshot includes gate summaries but not full gate logs, so failure root-cause details are inferred from packaged summaries and correction packets.
 - Direct inspection of live PC/LP worker worktrees is out of scope; conclusions rely on staged status/diff/runtime evidence under RUN_DIR.
+
+## Cycle `20260807T021032Z` â READY
+
+- Decision fingerprint: `065d360677f15cc9be67a2518998ea3d3f75c63c7db88ae2627efc93a1d4cb14`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: Newest evidence shows a gate-green checkpoint request (gate_exit=0) for task-07, but closure metadata is incomplete (codex_decision, next_action, checkpoint_head are null) and progress still marks task-07 BLOCKED, so closure quality is the first current defect.
+- Next action: Run one closure-quality pass for task-07 only: keep scope unchanged, run git diff --check, execute the exact task-07 gate once, and return non-null closure metadata plus explicit vector_store row-count evidence.
+- Avoid repeating: Do not submit another gate-green checkpoint request with null codex_decision, next_action, or checkpoint_head.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T021032Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T021032Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T021032Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T021032Z/pc-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T021032Z/pc-runtime/previous-ring-qwen3-directive.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: Newest evidence still shows a failing FE-03D gate summary (exit 2), Codex REVISE correction instructions for one-file spec repair, timed-out prior local pass, and an uncommitted spec diff; the first current defect remains unresolved one-file test correction.
+- Next action: Apply exactly the one-file FE-03D correction packet in rag-page.component.spec.ts, then run git diff --check followed by ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests once.
+- Avoid repeating: Do not reintroduce malformed test structure, internal-state mutations, guessed selectors, innerHTML mutation, or timeout-prone reruns without applying the correction packet.
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T021032Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T021032Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T021032Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T021032Z/lp-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T021032Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- PC can keep producing non-closable checkpoint requests if closure metadata remains null even when gates are green.
+- LP can churn on red FE-03D gates if one-file correction constraints are only partially applied.
+- Backend/frontend sequencing risk is low this cycle because active write scopes are disjoint, but closure requires strict scope cleanliness in both queues.
+
+### Evidence limitations
+
+- This RUN_DIR snapshot does not include a fresh pc-runtime gate_summary.md for the latest PC request, so PC gate status is inferred from worker-request gate_exit=0 and progress metadata.
+- Ring did not inspect live PC/LP worktrees directly by policy; decisions are based on staged RUN_DIR evidence only.
