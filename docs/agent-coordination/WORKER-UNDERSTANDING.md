@@ -1,37 +1,43 @@
-# Worker understanding validation
+# Worker understanding audit — run 20260807T011526Z
 
 ## PC understanding status
 
-- Evidence indicates task understanding is directionally correct (task-07 objective unchanged), but operational closure is incomplete: request reason is `gate-green-checkpoint` with `checkpoint_head: null`.
-- Interpretation: this is a **closure execution defect**, not a requirement ambiguity.
+Evidence indicates PC executed task work that reached a gate-green request, but the task remains `BLOCKED`. The required understanding for the next pass is operational, not architectural:
 
-### PC next bounded instruction
+- preserve current scoped backend changes,
+- run the exact task-07 gate once,
+- return closure-complete deterministic evidence so the controller can checkpoint/finalize.
 
-- **Level / role / task:** Level 2 / PC / `task-07-populate-production-rag`
-- **Dependencies:** none beyond already accepted prior backend tasks
+### PC package
+
+- **Level:** 2
+- **Role:** PC
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** `task-06f-ingestion-validation:ACCEPTED`
 - **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
 - **Exact gate:**
-  1. `git diff --check`
-  2. canonical task-07 gate command from `.opencode/task-plan.backend.json`
-- **Acceptance condition:** deterministic gate green and closure-ready evidence (no scope drift).
+  - `git diff --check`
+  - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
 
 ## LP understanding status
 
-- Codex explicitly marked prior LP understanding as inadequate and tied defects to concrete anti-patterns in the modified spec.
-- LP now has explicit corrected instructions and selector-level expectations; ambiguity is low.
+Codex evidence explicitly marks the prior local understanding as inadequate and points to concrete test-file defects. The next pass must be strict, single-file, and selector-driven.
 
-### LP next bounded instruction
+### LP package
 
-- **Level / role / task:** Level 1 / LP / `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations: ACCEPTED`
+- **Level:** 1
+- **Role:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
 - **Exact gate:**
-  1. `git diff --check`
-  2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Acceptance condition:** red-gate root causes removed; prescribed loading/disable/reset assertions pass with valid suite structure.
+  - `git diff --check`
+  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
 
-## Cross-worker risk controls
+Required FE selector mapping for the next local understanding report:
 
-- Keep queues disjoint (backend vs frontend).
-- Do not broaden task scope or bypass deterministic gates.
-- Do not request SURGICAL; it is disabled and not required for PC/LP progression.
+- loading status → `.loading-state[role="status"]`
+- disabled controls → `textarea` and `.submit-button`
+- transport failure → `.error-state[role="alert"]`
+- answer visibility → `.answer-content`
+- reset cleanup → absence of `.answer-content` / `.citations-section` / `.error-state` and presence of `.idle-state`

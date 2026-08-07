@@ -1,37 +1,41 @@
-# Global summary for run 20260807T011026Z
+# Global summary — ring cycle 20260807T011526Z
 
-## What is currently proven
+## Outcome
 
-- PC has a gate-green attempt for `task-07-populate-production-rag` (`gate_exit=0`) with scoped backend changes present.
-- LP has an active failing attempt for `task-fe-03d-dom-state-tests` with a single edited frontend spec file and explicit Codex corrective plan.
-- PC and LP write scopes are disjoint; concurrent continuation is safe.
+`overall_status = READY`
 
-## First current defects
+Both queues have evidence-backed, disjoint next actions:
 
-1. **PC defect (closure):** task-07 remains `BLOCKED` despite gate-green evidence; current request still reports `checkpoint_head: null`.
-2. **LP defect (code):** FE-03D test file still contains defects identified by Codex (format/structure/prohibited-pattern issues), causing gate failure.
+- **PC:** continue `task-07-populate-production-rag` with a closure-focused pass.
+- **LP:** continue `task-fe-03d-dom-state-tests` with the prescribed single-file corrective test edit.
 
-## Routing decisions
+## Why these decisions are current
 
-- **PC:** `CONTINUE` on `task-07-populate-production-rag` with one closure-focused pass.
-- **LP:** `CONTINUE` on `task-fe-03d-dom-state-tests` with one prescriptive single-file correction pass.
+1. **PC evidence:** current RUN_DIR contains a gate-green checkpoint request for task-07, but progress still reports `BLOCKED`; this indicates closure incompleteness rather than missing implementation scope.
+2. **LP evidence:** current RUN_DIR contains a gate failure (`exit 2`) plus Codex corrective instructions concentrated in one spec file.
 
-## Exact gates to enforce
+## Bounded directives
 
-- PC: `git diff --check` + canonical backend task-07 gate command from `.opencode/task-plan.backend.json`.
-- LP: `git diff --check` + `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
+### PC
+- **Level/role:** Level 2 / PC
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** `task-06f-ingestion-validation:ACCEPTED`
+- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+- **Gate:** `git diff --check` then exact backend task-07 gate command.
 
-## Integration risks
+### LP
+- **Level/role:** Level 1 / LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
 
-- Backend queue advancement can stall if gate-green closure metadata remains incomplete.
-- Frontend queue remains blocked until FE-03D spec integrity and deterministic assertions are restored.
+## Risks and limitations
 
-## Evidence limitations
+- **Risk:** PC may continue in a gate-green-but-unclosed loop without closure-complete diagnostics.
+- **Risk:** LP may fail early again on formatting/structure errors before semantic assertions run.
+- **Limitation:** no fresh PC gate_summary/codex review artifact is present in this RUN_DIR snapshot.
 
-- This snapshot provides gate summaries, not full gate logs, so detailed failure internals are inferred from summarized diagnostics plus Codex plan artifacts.
-- No direct inspection of live PC/LP worker worktrees was performed; decisions rely on bounded RUN_DIR evidence as required.
+## Ring repository edits this cycle
 
-## Ring worktree edits in this cycle
-
-- No repository code or configuration edits were made.
-- Only the six required staged output artifacts were written under `runtime/ring-agent/ring/20260807T011026Z/output/`.
+No repository product/test/config/code edits were made. Only the six staged coordination artifacts under `runtime/ring-agent/ring/20260807T011526Z/output/` were written.

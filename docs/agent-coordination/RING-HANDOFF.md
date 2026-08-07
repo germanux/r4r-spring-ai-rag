@@ -1,31 +1,39 @@
-# Backend ↔ Frontend handoff
+# Backend ↔ Frontend handoff (disjoint execution)
 
-## Concurrency and scope check
+## Scope separation check
 
-- **PC active scope:** backend/doc paths (`pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`) under `task-07-populate-production-rag`.
-- **LP active scope:** single frontend spec file under `task-fe-03d-dom-state-tests`.
-- **Overlap assessment:** none. Disjoint backend/frontend scopes are safe for concurrent continuation.
+- **PC active scope (backend):** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+- **LP active scope (frontend):** `frontend/src/app/features/rag/rag-page.component.spec.ts`
 
-## Backend status for frontend awareness
+Current scopes are disjoint; concurrent PC/LP work is safe without write-path overlap.
 
-- Backend task-07 has gate-green evidence but remains non-accepted due to closure incompleteness (`checkpoint_head` missing in current request evidence).
-- Frontend should not wait on backend changes for FE-03D because LP work is self-contained in component DOM unit tests.
+## Backend package to execute
 
-## Frontend status for backend awareness
+- **Level:** 2
+- **Role:** PC
+- **Task:** `task-07-populate-production-rag`
+- **Dependencies:** `task-06f-ingestion-validation:ACCEPTED`
+- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+- **Exact gate:**
+  1. `git diff --check`
+  2. `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
 
-- FE-03D currently red with deterministic correction instructions and a single-file edit scope.
-- Backend should continue independently; no backend path is blocked by current frontend failure.
+## Frontend package to execute
 
-## Directed next actions
+- **Level:** 1
+- **Role:** LP
+- **Task:** `task-fe-03d-dom-state-tests`
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:**
+  1. `git diff --check`
+  2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
 
-1. **[Level 2, PC, task-07-populate-production-rag]**
-   - **Dependencies:** accepted task-06f baseline.
-   - **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`.
-   - **Exact gate:** `git diff --check` then the canonical task-07 command from `.opencode/task-plan.backend.json`.
-   - **Acceptance evidence:** gate exit 0, scope-clean diff, closure-ready metadata for controller checkpoint/commit.
+## Integration risks to track
 
-2. **[Level 1, LP, task-fe-03d-dom-state-tests]**
-   - **Dependencies:** task-fe-03c accepted.
-   - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-   - **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
-   - **Acceptance evidence:** FE-03D gate green with preserved prior valid test coverage and prescribed DOM assertions.
+1. Backend closure loop risk: repeated gate-green with incomplete closure artifacts can keep task-07 blocked.
+2. Frontend test fragility risk: FE-03D can fail pre-runtime on formatting/structure before semantic DOM assertions run.
+
+## Coordination rule for this cycle
+
+Proceed with both packages in parallel lanes; do not hold either lane for SURGICAL review (disabled) or absent ACCEPT/REVISE metadata.

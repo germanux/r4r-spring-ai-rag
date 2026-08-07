@@ -2825,3 +2825,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This run snapshot includes gate summaries but not the full gate-full.log payloads, so diagnosis is based on summarized deterministic evidence and Codex plan artifacts.
 - Ring reviewed only the bounded RUN_DIR evidence and did not inspect live PC/LP worktrees directly.
+
+## Cycle `20260807T011526Z` â READY
+
+- Decision fingerprint: `17ec1ea0622351a6914e1a67c98fbfb4b9501b1b647725bf4300365e98686a61`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: Current evidence shows a gate-green checkpoint request for task-07 (gate_exit=0, changed backend paths) while progress still marks task-07 BLOCKED, so the first current defect is closure incompleteness/evidence handoff, not missing feature scope.
+- Next action: Run one closure-focused backend pass for task-07: keep the existing scoped changes, run git diff --check, run the exact task-07 gate once, and return complete deterministic diagnostics (including non-zero vector_store proof) for controller checkpoint/final commit.
+- Avoid repeating: Do not repeat another gate-green request that omits closure-complete diagnostics/metadata and leaves task-07 in the same BLOCKED loop.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011526Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011526Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011526Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011526Z/pc-git-status.txt`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: Latest LP evidence reports deterministic gate failure (exit 2), and Codex plan/instructions identify a local single-file test defect set (trailing whitespace, malformed structure, prohibited test patterns) in rag-page.component.spec.ts.
+- Next action: Apply one bounded level-1 correction in rag-page.component.spec.ts only: restore valid suite structure, implement the prescribed controlled-pending loading test plus success-reset and transport-error-reset DOM tests, then run git diff --check and the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce malformed test structure, trailing whitespace, guessed selectors, innerHTML/internal-state mutation, or unnecessary of/tick usage already flagged by Codex.
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011526Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011526Z/lp-runtime/codex_plan.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011526Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011526Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- PC task-07 can remain indefinitely BLOCKED if closure evidence is incomplete despite gate-green execution.
+- LP FE-03D is sensitive to brittle selector/state assertions; another malformed spec edit can fail before semantic test execution.
+
+### Evidence limitations
+
+- Current RUN_DIR does not include a fresh PC gate_summary.md or codex_plan.json for run 20260807T011518Z; diagnosis relies on worker request metadata plus progress/status snapshots.
+- LP gate-full.log is not bundled in RUN_DIR, so failure fingerprint details are limited to gate_summary.md and Codex plan text.

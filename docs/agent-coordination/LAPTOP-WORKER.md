@@ -1,40 +1,45 @@
-# LP code review (frontend)
+# LP code review — run 20260807T011526Z
 
 ## Evidence reviewed
 
-- `runtime/ring-agent/ring/20260807T011026Z/lp-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260807T011026Z/lp-runtime/codex_plan.json`
-- `runtime/ring-agent/ring/20260807T011026Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `runtime/ring-agent/ring/20260807T011026Z/lp-git-status.txt`
-- `runtime/ring-agent/ring/20260807T011026Z/lp-git-diff-stat.txt`
+- `runtime/ring-agent/ring/20260807T011526Z/lp-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260807T011526Z/lp-runtime/codex_plan.json`
+- `runtime/ring-agent/ring/20260807T011526Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260807T011526Z/lp-git-status.txt`
+- `runtime/ring-agent/ring/20260807T011526Z/lp-git-diff-stat.txt`
 
 ## Current diagnosis
 
-Task `task-fe-03d-dom-state-tests` is still failing (`gate-failure`, exit code 2). Codex READY instructions point to a local defect in one file: trailing whitespace plus malformed test-suite structure and prohibited test patterns.
+The active LP task `task-fe-03d-dom-state-tests` has a deterministic gate failure (`exit 2`) and a single edited test file. Codex guidance is specific: restore valid suite structure and remove prohibited patterns before re-running the exact FE gate.
 
-## Bounded next work package
+## Bounded next action package
 
-- **Implementation level:** Level 1
-- **Assigned role:** LP
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations` accepted (already satisfied)
-- **allowed_paths (canonical write scope):**
-  - `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **One observable change set:** restore valid suite structure and implement only the three prescribed DOM tests from Codex plan.
+- **Implementation level:** Level 1  
+- **Assigned role:** LP  
+- **Task ID:** `task-fe-03d-dom-state-tests`  
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED` (already satisfied in progress evidence)  
+- **allowed_paths (canonical write scope):** `frontend/src/app/features/rag/rag-page.component.spec.ts`
 
-## Exact gate and acceptance conditions
+### One-pass objective
 
-1. `git diff --check`
-2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-3. Closure policy check: exact gate green + scope clean + controller-owned commit
+In one bounded edit pass on `rag-page.component.spec.ts` only:
 
-## Required assertion targets in this pass
+1. Restore valid test-suite structure and remove malformed/prohibited additions.
+2. Add exactly the prescribed DOM tests:
+   - controlled-pending loading + duplicate-submit guard,
+   - success-reset cleanup,
+   - transport-error-reset cleanup.
+3. Keep existing valid answer/abstention/citation/escaping/isolation coverage intact.
+4. Run:
+   - `git diff --check`
+   - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
 
-- Loading status: `.loading-state[role="status"]`
-- Disabled controls: `textarea` and `.submit-button`
-- Success render and reset: `.answer-content`, `.citations-section`, `.idle-state`
-- Error render and reset: `.error-state[role="alert"]`, then absence after `clear()`
+### Exact acceptance gate
+
+- `git diff --check` clean (no trailing whitespace).
+- FE-03D gate exits 0.
+- Closure policy satisfied: `exact-gate-green + scope-clean + controller-commit`.
 
 ## Avoid repeating
 
-Do not reintroduce invalid suite structure, trailing whitespace, guessed `data-testid` selectors, `innerHTML` mutation, internal-state mutation (`component.isLoading` / invented state), or unnecessary `of`/`tick` usage.
+Do not reintroduce prior failure patterns: unbalanced braces, invalid response shapes, guessed selectors, internal-state mutation, `innerHTML` mutation, or unnecessary `of`/`tick` usage.
