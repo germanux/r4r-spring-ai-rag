@@ -42,6 +42,7 @@ DIRECTIVE_MAX_AGE_SECONDS = int(
 EVENT_MIN_INTERVAL_SECONDS = int(
     os.environ.get("R4R_RING_EVENT_MIN_INTERVAL_SECONDS", "763")
 )
+WHITESPACE_REPAIR_POLICY_VERSION = 2
 INTEGRATION_SYNC_ENABLED = (
     os.environ.get("R4R_AGENT_INTEGRATION_SYNC", "true").lower() == "true"
 )
@@ -63,6 +64,24 @@ def _git(repo: Path, args: Sequence[str]) -> str:
         check=False,
     )
     return result.stdout
+
+
+def _git_diff_check(repo: Path) -> tuple[str, int]:
+    """Return combined unstaged and staged whitespace diagnostics."""
+    outputs: list[str] = []
+    failed = False
+    for args in (("diff", "--check"), ("diff", "--cached", "--check")):
+        result = subprocess.run(
+            ["git", *args],
+            cwd=repo,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+        )
+        outputs.append(result.stdout)
+        failed = failed or result.returncode != 0
+    return "".join(outputs), 1 if failed else 0
 
 
 def _integration_sync(repo: Path, phase: str) -> dict[str, Any]:
@@ -118,8 +137,12 @@ def _write_repo_evidence(label: str, repo: Path, run_dir: Path) -> None:
     (run_dir / f"{prefix}-git-diff-stat.txt").write_text(
         _git(repo, ["diff", "--stat"]), encoding="utf-8"
     )
+    diff_check, _ = _git_diff_check(repo)
     (run_dir / f"{prefix}-git-diff-check.txt").write_text(
-        _git(repo, ["diff", "--check"]), encoding="utf-8"
+        diff_check, encoding="utf-8"
+    )
+    (run_dir / f"{prefix}-git-diff-cached-check.txt").write_text(
+        _git(repo, ["diff", "--cached", "--check"]), encoding="utf-8"
     )
 
 
@@ -1043,9 +1066,16 @@ def _authorize_bounded_whitespace_recovery(
         )
         if not isinstance(item, dict) or item.get("status") != "BLOCKED":
             continue
-        if int(item.get("recovery_grants_total") or 0) >= 1:
-            continue
-        if item.get("recovery_authorization_consumed"):
+        grants_total = int(item.get("recovery_grants_total") or 0)
+        consumed_policy_version = int(
+            item.get("recovery_repair_policy_version") or 0
+        )
+        legacy_v1_grant = (
+            grants_total == 1
+            and bool(item.get("recovery_authorization_consumed"))
+            and consumed_policy_version < WHITESPACE_REPAIR_POLICY_VERSION
+        )
+        if grants_total >= 1 and not legacy_v1_grant:
             continue
 
         evidence_path = run_dir / f"{worker.lower()}-git-diff-check.txt"
@@ -1053,20 +1083,13 @@ def _authorize_bounded_whitespace_recovery(
             diagnostics = evidence_path.read_text(encoding="utf-8")
         except OSError:
             diagnostics = ""
-        checked = subprocess.run(
-            ["git", "diff", "--check"],
-            cwd=repositories[worker],
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            check=False,
-        )
-        if diagnostics != checked.stdout:
-            diagnostics = checked.stdout
+        current_diagnostics, diff_check_exit = _git_diff_check(repositories[worker])
+        if diagnostics != current_diagnostics:
+            diagnostics = current_diagnostics
             evidence_path.write_text(diagnostics, encoding="utf-8")
         findings = diagnostic_pattern.findall(diagnostics)
         if (
-            checked.returncode == 0
+            diff_check_exit == 0
             or not findings
             or any(message != "trailing whitespace." for _, message in findings)
         ):
@@ -1095,8 +1118,10 @@ def _authorize_bounded_whitespace_recovery(
             "the exact task gate once."
         )
         decision["avoid_repeating"] = (
-            "Do not reset the durable attempt counter or issue a second recovery grant."
+            "Do not reset the durable attempt counter or issue another grant at "
+            "the same or a newer recovery policy version."
         )
+        decision["recovery_policy_version"] = WHITESPACE_REPAIR_POLICY_VERSION
         authorized.append(worker)
     return authorized
 
@@ -1243,10 +1268,16 @@ def _publish_staged_outputs(
     if commit_result["status"] == "committed":
         result["integration_sync"] = _integration_sync(paths.ring, "checkpoint")
 
-    if semantic_change:
+    deterministic_authorizations = tuple(
+        result.get("deterministic_recovery_authorizations") or ()
+    )
+    workers_to_publish = (
+        ("PC", "LP") if semantic_change else deterministic_authorizations
+    )
+    if workers_to_publish:
         generated_at = datetime.now(timezone.utc)
         expires_at = generated_at + timedelta(seconds=DIRECTIVE_MAX_AGE_SECONDS)
-        for worker in ("PC", "LP"):
+        for worker in workers_to_publish:
             decision = normalized_state["decisions"][worker]
             directive = {
             "schema_version": 1,
@@ -1266,6 +1297,11 @@ def _publish_staged_outputs(
                 if decision["action"] == "RETRY_AUTHORIZED"
                 else None
             ),
+            "recovery_policy_version": (
+                decision.get("recovery_policy_version")
+                if decision["action"] == "RETRY_AUTHORIZED"
+                else None
+            ),
             "summary": decision["reason"],
             "next_action": decision["next_action"],
             "evidence_paths": decision["evidence_paths"],
@@ -1280,7 +1316,13 @@ def _publish_staged_outputs(
             result["directive_files"][worker] = str(destination)
 
     result["published"] = True
-    result["reason"] = "ok" if semantic_change else "no-semantic-change"
+    result["reason"] = (
+        "ok"
+        if semantic_change
+        else "recovery-authorization-refreshed"
+        if deterministic_authorizations
+        else "no-semantic-change"
+    )
     (run_dir / "ring-output-publication.json").write_text(
         json.dumps(result, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
