@@ -3220,3 +3220,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - RUN_DIR includes LP gate summary and Codex packet, but not a new LP rerun proving that the prescribed correction has been executed.
 - PC runtime snapshot has no Codex plan/review artifact in manifest sources for this run, so closure intent must be inferred from worker-request fields and prior directive.
+
+## Cycle `20260807T015530Z` â READY
+
+- Decision fingerprint: `d5113d3a20291a2afc56fdc69d0eb4b1941104813c37334ba5210188a709c566`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: Current evidence shows a green gate for task-07 (exit 0) but closure metadata is incomplete (codex_decision, next_action, checkpoint_head are null) and progress still marks task-07 BLOCKED, so acceptance is not yet evidenced.
+- Next action: Run one closure-quality pass for task-07 only: keep existing backend scope, run git diff --check, run the exact task-07 gate once, and return non-null closure metadata with explicit vector_store row-count evidence.
+- Avoid repeating: Do not submit another gate-green checkpoint request with null codex_decision/next_action/checkpoint_head fields.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015530Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015530Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015530Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015530Z/pc-git-status.txt`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: The active LP task remains pending with a failing deterministic gate (exit 2), and the current Codex REVISE packet identifies a bounded one-file spec correction not yet proven by a new green gate.
+- Next action: Apply exactly the bounded one-file correction in rag-page.component.spec.ts per the current Codex packet, then run git diff --check followed by the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce malformed suite structure, trailing whitespace, internal-state mutations, innerHTML mutation, guessed selectors, or other patterns rejected by the current Codex packet.
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015530Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015530Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015530Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015530Z/lp-git-status.txt`
+
+### Integration risks
+
+- PC and LP are both active; maintain strict backend/frontend scope separation to avoid cross-queue interference while task-07 and FE-03D run concurrently.
+- PC acceptance risk remains high until row-count proof and closure metadata are consistent in one request artifact.
+
+### Evidence limitations
+
+- RUN_DIR contains gate summaries but not full gate logs for this cycle, so diagnosis is limited to summarized gate outcomes and request metadata.
+- LP session ended by watchdog timeout in prior run; no new post-timeout gate attempt evidence is present in this snapshot.
