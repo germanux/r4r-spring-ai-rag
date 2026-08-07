@@ -1001,6 +1001,88 @@ def _validate_staged_state(
     return normalized_state
 
 
+def _authorize_bounded_whitespace_recovery(
+    paths: WorktreePaths,
+    state: dict[str, Any],
+) -> list[str]:
+    """Deterministically authorize one scoped repair for a blocked task.
+
+    The model may diagnose a blocked worker as HOLD or CONTINUE even when the
+    controller has requested the already-supported one-shot repair.  This
+    policy runs after state validation and only upgrades the decision when the
+    current worktree proves that every reported defect is trailing whitespace
+    inside the task write scope and no recovery grant has been consumed.
+    """
+    authorized: list[str] = []
+    repositories = {"PC": paths.pc, "LP": paths.lp}
+    progress_names = {"PC": "progress.backend.json", "LP": "progress.frontend.json"}
+    diagnostic_pattern = re.compile(r"^(.+?):\d+: (.+)$", re.MULTILINE)
+
+    for worker in ("PC", "LP"):
+        decision = state["decisions"][worker]
+        task_id = str(decision.get("task_id") or "")
+        if not task_id:
+            continue
+        progress_path = repositories[worker] / ".opencode" / progress_names[worker]
+        try:
+            progress = json.loads(progress_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        item = next(
+            (
+                value
+                for value in progress.get("tasks", [])
+                if isinstance(value, dict) and value.get("id") == task_id
+            ),
+            None,
+        )
+        if not isinstance(item, dict) or item.get("status") != "BLOCKED":
+            continue
+        if int(item.get("recovery_grants_total") or 0) >= 1:
+            continue
+        if item.get("recovery_authorization_consumed"):
+            continue
+
+        checked = subprocess.run(
+            ["git", "diff", "--check"],
+            cwd=repositories[worker],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+        )
+        diagnostics = checked.stdout
+        findings = diagnostic_pattern.findall(diagnostics)
+        if (
+            checked.returncode == 0
+            or not findings
+            or any(message != "trailing whitespace." for _, message in findings)
+        ):
+            continue
+        candidates = sorted({candidate for candidate, _ in findings})
+        scopes = [str(value).strip().rstrip("/") for value in decision["write_scope"]]
+        if not all(
+            any(candidate == scope or candidate.startswith(scope + "/") for scope in scopes)
+            for candidate in candidates
+        ):
+            continue
+
+        decision["action"] = "RETRY_AUTHORIZED"
+        decision["reason"] = (
+            "Deterministic recovery policy found trailing whitespace only inside "
+            "the authorized write scope of the blocked task."
+        )
+        decision["next_action"] = (
+            "Consume one recovery grant, remove scoped trailing whitespace, and rerun "
+            "the exact task gate once."
+        )
+        decision["avoid_repeating"] = (
+            "Do not reset the durable attempt counter or issue a second recovery grant."
+        )
+        authorized.append(worker)
+    return authorized
+
+
 def _publish_staged_outputs(
     paths: WorktreePaths,
     run_dir: Path,
@@ -1047,6 +1129,10 @@ def _publish_staged_outputs(
             encoding="utf-8",
         )
         return result
+
+    result["deterministic_recovery_authorizations"] = (
+        _authorize_bounded_whitespace_recovery(paths, normalized_state)
+    )
 
     coordination_dir = paths.ring / "docs" / "agent-coordination"
     decisions_path = coordination_dir / "DECISIONS.md"
