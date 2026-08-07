@@ -1,49 +1,36 @@
-# Worker understanding assessment
+# Worker Understanding Assessment
 
-## PC understanding
+## PC understanding and readiness
 
-Evidence shows PC can execute task-07 gate successfully, but closure signaling is incomplete:
+**Assessment:** Adequate for continuation, but closure discipline must be explicit.
 
-- `pc-runtime/gate_summary.md`: green, exit `0`.
-- `pc-runtime/controller_state.json`: `CHECKPOINT_COMMIT_FAILED`.
-- `worker-request-manifest.json`: null `codex_decision`, `next_action`, `checkpoint_head`.
+Evidence indicates PC already produced in-scope backend changes and a gate-green request for task-07. The present blocker is procedural/evidence completeness (`codex_decision`, `next_action`, `checkpoint_head` null), not a new architectural unknown.
 
-### Required next action for PC
+### Required understanding checkpoint for next pass
 
-- **Level:** 2
-- **Role:** PC
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `task-06f-ingestion-validation: ACCEPTED`
-- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **Exact gate:**
-  - `git diff --check`
-  - exact task-07 gate command from `.opencode/task-plan.backend.json`
-  - closure policy `exact-gate-green + scope-clean + controller-commit`
+- Treat this as **closure-quality** work, not new feature expansion.
+- Preserve task-07 scope and produce explicit non-zero `vector_store` count proof.
+- Ensure request/closure metadata fields are populated and consistent with executed gate.
 
-Interpretation: next pass is closure-evidence completion, not architecture/feature expansion.
+## LP understanding and readiness
 
-## LP understanding
+**Assessment:** Partially demonstrated; prior pass missed packet constraints.
 
-Evidence shows LP has a clear bounded correction packet but has not completed a passing FE-03D run:
+Codex packet explicitly identifies misunderstanding in the prior LP approach (malformed suite structure and prohibited patterns). The next pass must be tightly prescriptive and one-file only.
 
-- `lp-runtime/gate_summary.md`: gate failure, exit `2`.
-- `lp-runtime/codex_plan.json`: explicit single-file recovery instructions.
-- `lp-runtime/codex-qwen3-extra-instructions.md`: explicit prohibited patterns and exact test behaviors.
+### Required understanding checkpoint for next pass
 
-### Required next action for LP
+- Map required FE-03D behaviors to concrete selectors before editing:
+  - loading status → `.loading-state[role="status"]`
+  - disabled controls → `textarea`, `.submit-button`
+  - transport error → `.error-state[role="alert"]`
+  - answer visibility → `.answer-content`
+  - reset cleanup → absence of answer/error/citations + presence of `.idle-state`
+- Implement only the three prescribed tests and preserve existing valid coverage.
+- Run `git diff --check` before the gate and keep diagnostics aligned to the actual run.
 
-- **Level:** 1
-- **Role:** LP
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations: ACCEPTED`
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:**
-  - `git diff --check`
-  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-  - closure policy `exact-gate-green + scope-clean + controller-commit`
+## Role/level packaging confirmation
 
-Interpretation: one prescribed spec repair pass only; no production-code edits.
-
-## Coordination conclusion
-
-Both workers have one focused next action, active valid task IDs from configured plans, disjoint scopes, and deterministic gates. No SURGICAL dispatch is required or allowed.
+- **PC package:** Level 2, bounded backend closure task.
+- **LP package:** Level 1, one observable correction in one test file.
+- No SURGICAL dispatch required or permitted.

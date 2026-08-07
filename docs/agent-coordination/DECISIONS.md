@@ -3121,3 +3121,53 @@ Append-only ledger generated after each validated Ring cycle.
 
 - Full gate logs are referenced by summaries but not included in this RUN_DIR snapshot.
 - Ring reviewed only bounded RUN_DIR evidence and did not inspect live PC/LP worktrees directly.
+
+## Cycle `20260807T014529Z` â READY
+
+- Decision fingerprint: `7e4be4246373a2b55c1c2be576aeaeff0f6e0d0ef419bdaeba6e59cb9cfa1473`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: Current evidence shows task-07 gate exit=0 with in-scope backend changes, but closure metadata is incomplete (codex_decision, next_action, checkpoint_head are null), so the task remains non-accepted and needs one closure-quality pass with complete evidence.
+- Next action: Run one backend closure pass for task-07 only: keep allowed paths unchanged, run git diff --check, run the exact task-07 gate once, and return explicit command exit plus non-zero vector_store count evidence with complete closure metadata.
+- Avoid repeating: Do not submit another gate-green checkpoint request with null codex_decision/next_action/checkpoint_head fields.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T014529Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T014529Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T014529Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T014529Z/pc-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T014529Z/pc-runtime/previous-ring-qwen3-directive.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP remains on task-fe-03d with a failing deterministic gate (exit=2) and an active Codex REVISE packet that identifies a one-file spec correction not yet completed.
+- Next action: Apply exactly one LP-level correction in frontend/src/app/features/rag/rag-page.component.spec.ts per current codex_plan and codex extra instructions, then run git diff --check followed by the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce malformed suite structure, trailing whitespace, internal-state mutations, innerHTML mutation, guessed selectors, or other patterns explicitly rejected by the current Codex packet.
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T014529Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T014529Z/lp-runtime/codex_plan.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T014529Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T014529Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T014529Z/lp-git-status.txt`
+
+### Integration risks
+
+- PC task-07 and LP task-fe-03d are independent backend/frontend scopes, but both are closure-sensitive: incomplete metadata (PC) or inconsistent diagnostics vs. patch content (LP) can cause repeated non-acceptance even when partial technical progress exists.
+- PC task-07 depends on runtime environment and Docker-backed vector_store verification; a pass without retained non-zero row evidence risks another blocked closure state.
+
+### Evidence limitations
+
+- This RUN_DIR has no new PC codex_review/codex_plan/gate_summary/controller_state artifacts (manifest fields are null), so diagnosis relies on worker request metadata plus progress/memory snapshots.
+- LP evidence is from run 20260807T005022Z with pending correction instructions; no newer LP execution artifacts are present in this RUN_DIR.

@@ -1,63 +1,41 @@
-# Global coordination summary — run 20260807T014029Z
+# Global Coordination Summary — RUN_ID 20260807T014529Z
 
-## Evidence intake completed
+## Executive status
 
-Reviewed bounded evidence under:
+Overall status is **READY**: both queues have clear, disjoint, evidence-backed next actions.
 
-- `runtime/ring-agent/ring/20260807T014029Z/` (Ring/PC/LP git status snapshots)
-- `runtime/ring-agent/ring/20260807T014029Z/pc-runtime/`
-- `runtime/ring-agent/ring/20260807T014029Z/lp-runtime/`
-- prior coordination references (`.ring-agent/evidence/...` and `docs/agent-coordination/...`) for continuity only.
+## What the current evidence proves
 
-`opencode.console.log` was not read.
+- PC is on `task-07-populate-production-rag` with a gate-green request (`gate_exit=0`) and backend-only changed paths.
+- PC task is still not accepted because closure metadata in the request payload is incomplete.
+- LP is on `task-fe-03d-dom-state-tests` with latest gate failure (`exit=2`) and a current Codex `REVISE` packet prescribing a one-file correction.
 
-## Current decisions
+## First current defects selected
 
-1. **PC: CONTINUE** on `task-07-populate-production-rag`.
-   - Defect to correct first: closure-evidence/metadata failure after green gate (`CHECKPOINT_COMMIT_FAILED`, null request metadata).
-   - Package type: Level 2, closure-only backend pass.
+1. **PC defect:** closure/evidence completeness failure after gate-green execution.
+2. **LP defect:** unresolved FE-03D one-file spec correction with known prohibited patterns from prior attempt.
 
-2. **LP: CONTINUE** on `task-fe-03d-dom-state-tests`.
-   - Defect to correct first: unfinished one-file FE-03D spec correction with failing gate (`exit 2`).
-   - Package type: Level 1, single-file prescribed frontend test fix.
+## Directed work packages
 
-3. **Overall status: READY**.
-   - PC/LP allowed paths are disjoint (backend vs frontend), so continuation in parallel is safe.
+- **PC / Level 2 / task-07-populate-production-rag**
+  - Dependencies: task-06f accepted.
+  - allowed_paths: `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`.
+  - Gate: `git diff --check` + exact task-07 backend command.
+  - Acceptance: gate green, scope clean, controller commit, complete closure metadata.
 
-## Explicit next packages and gates
+- **LP / Level 1 / task-fe-03d-dom-state-tests**
+  - Dependencies: task-fe-03c accepted.
+  - allowed_paths: `frontend/**`, `docs/frontend/**` (effective single-file target in packet).
+  - Gate: `git diff --check` + `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
+  - Acceptance: gate green, scope clean, controller commit, patch consistent with packet constraints.
 
-### PC package
+## Risks and limits
 
-- **Level / Role / Task:** Level 2 / PC / `task-07-populate-production-rag`
-- **Dependencies:** `task-06f-ingestion-validation: ACCEPTED`
-- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **Exact gate:**
-  - `git diff --check`
-  - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
-  - closure policy `exact-gate-green + scope-clean + controller-commit`
+- Risk: repeated churn if evidence artifacts are inconsistent with executed actions.
+- Risk: PC closure can block again if metadata completeness is missed even with technical success.
+- Limitation: this RUN_DIR does not include new PC codex/gate/controller artifacts; diagnosis relies on request/progress/memory snapshots.
 
-### LP package
+## Ring worktree edits in this cycle
 
-- **Level / Role / Task:** Level 1 / LP / `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations: ACCEPTED`
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:**
-  - `git diff --check`
-  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-  - closure policy `exact-gate-green + scope-clean + controller-commit`
-
-## Integration risks
-
-- Repeated backend checkpoint loops can consume cycles without progress if closure metadata remains null.
-- Repeated frontend spec rewrites outside the active Codex packet can keep FE-03D red with no new signal.
-
-## Evidence limitations
-
-- Full gate logs are not embedded in this snapshot; only gate summaries are present.
-- No direct inspection of live worker worktrees was performed; conclusions are bounded to RUN_DIR artifacts.
-
-## Ring worktree edits this cycle
-
-- No repository product/test/config/documentation files were edited.
-- Only required staged outputs were written to:
-  - `runtime/ring-agent/ring/20260807T014029Z/output/`
+- No repository code/config/test/docs edits performed.
+- Only required staged outputs were written under `runtime/ring-agent/ring/20260807T014529Z/output/`.
