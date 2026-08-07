@@ -17,7 +17,7 @@ import subprocess
 import sys
 import time
 
-DEFAULT_INTERVAL_SECONDS = 15
+DEFAULT_INTERVAL_SECONDS = 763
 
 
 def parse_args() -> argparse.Namespace:
