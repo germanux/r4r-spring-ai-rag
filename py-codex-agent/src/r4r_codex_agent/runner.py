@@ -515,9 +515,9 @@ class AutomaticRunner:
         self.progress_path = progress_path
         self.progress = load_progress(progress_path, (task.id for task in plan.tasks))
         self.timeout = int(os.environ.get("R4R_COMMAND_TIMEOUT_SECONDS", "14400"))
-        # Every OpenCode invocation is already a fresh local-model session. Keep
-        # revising the same active task across fresh sessions instead of stopping
-        # after an arbitrary two-pass limit. Set to 0 for no controller cap.
+        # Durable per-task budget. The guardian may restart this process, so the
+        # count is persisted and reconciled with historical attempt directories.
+        # Zero is reserved for an explicit break-glass run.
         self.max_attempts = int(os.environ.get("R4R_MAX_ATTEMPTS_PER_TASK", "12"))
         self.max_transient_failures = int(
             os.environ.get("R4R_MAX_TRANSIENT_FAILURES", "3")
@@ -578,6 +578,7 @@ class AutomaticRunner:
         }
         self.opencode_bin = os.environ.get("R4R_OPENCODE_BIN", "opencode")
         self.opencode_agent = os.environ.get("R4R_OPENCODE_AGENT", "r4r-pc")
+        self.opencode_model = os.environ.get("R4R_OPENCODE_MODEL", "").strip() or None
         self.compact_local_worker = (
             os.environ.get(
                 "R4R_COMPACT_LOCAL_WORKER",
@@ -1018,14 +1019,43 @@ class AutomaticRunner:
         initial_gate = self._run_gate("initial-gate", task.gate, task_root, stream=True)
         next_action = self._resume_action_from_codex_extra(task)
 
-        attempt = 1
+        progress_item = task_progress(self.progress, task.id)
+        persisted_attempts = int(progress_item.get("attempts_total") or 0)
+        historical_attempts = sum(
+            1
+            for run_path in self.run_dir.parent.iterdir()
+            if run_path.is_dir()
+            for attempt_path in (run_path / task.id).glob("attempt-*")
+            if attempt_path.is_dir()
+        )
+        attempts_total = max(persisted_attempts, historical_attempts)
+        progress_item["attempts_total"] = attempts_total
+        self._write_progress(task.id)
+        if self.max_attempts > 0 and attempts_total >= self.max_attempts:
+            self._mark_blocked(task)
+            self._request_ring_review(
+                task,
+                reason="global-attempt-limit",
+                attempt=attempts_total,
+                gate=initial_gate,
+            )
+            return self._finish(
+                "GLOBAL_ATTEMPT_LIMIT_REACHED",
+                70,
+                {"task": task.id, "attempts": attempts_total, "limit": self.max_attempts},
+            )
+
+        attempt = attempts_total + 1
         transient_failures = 0
         no_progress_cycles = 0
         last_review_action = ""
 
         while self.max_attempts <= 0 or attempt <= self.max_attempts:
             edit_result: CommandResult | None = None
-            attempt_dir = task_root / f"attempt-{attempt:02d}"
+            progress_item["attempts_total"] = attempt
+            progress_item["last_attempt_at"] = datetime.now(timezone.utc).isoformat()
+            self._write_progress(task.id)
+            attempt_dir = task_root / f"attempt-{attempt:03d}"
             attempt_dir.mkdir(parents=True, exist_ok=True)
             self.memory_context["attempt"] = attempt
             self.memory_context["next_action"] = next_action or (
@@ -1118,6 +1148,7 @@ class AutomaticRunner:
                         str(self.repo),
                         "--agent",
                         self.opencode_agent,
+                        *((("--model", self.opencode_model)) if self.opencode_model else ()),
                         "--format",
                         "json",
                         "--auto",
@@ -1481,12 +1512,19 @@ class AutomaticRunner:
 
             attempt += 1
 
+        self._mark_blocked(task)
+        self._request_ring_review(
+            task,
+            reason="global-attempt-limit",
+            attempt=int(progress_item.get("attempts_total") or self.max_attempts),
+        )
         return self._finish(
             "GLOBAL_ATTEMPT_LIMIT_REACHED",
             70,
             {
                 "task": task.id,
-                "attempts": self.max_attempts,
+                "attempts": int(progress_item.get("attempts_total") or self.max_attempts),
+                "limit": self.max_attempts,
                 "recovery_packet": str(
                     self.codex_extra_instructions_path.relative_to(self.repo)
                 )
@@ -2502,7 +2540,7 @@ next instruction packet.
             body = str(review.get("next_action") or "").strip()
         reviewed_paths = review.get("paths") or []
         path_lines = "\n".join(f"- `{value}`" for value in reviewed_paths) or "- none"
-        content = f"""# Codex ↔ Qwen3 extra instructions
+        content = f"""# Codex â Qwen3 extra instructions
 
 - Generated at: {datetime.now(timezone.utc).isoformat()}
 - Active task: `{task.id}`
@@ -2912,7 +2950,7 @@ next instruction packet.
         ])
         for item in self.progress["tasks"]:
             lines.append(
-                f"- {item['id']}: {item['status']} — accepted at "
+                f"- {item['id']}: {item['status']} â accepted at "
                 f"{item.get('accepted_at') or 'not accepted'}; "
                 f"last green attempt={item.get('last_gate_green_attempt') or 'none'}"
             )

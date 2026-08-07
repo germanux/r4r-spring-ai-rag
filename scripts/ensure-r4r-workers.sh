@@ -286,6 +286,30 @@ wait_healthy() {
   return 1
 }
 
+worker_is_blocked() {
+  local worker="$1" worktree="$2" progress
+  case "$worker" in
+    PC) progress="$worktree/.opencode/progress.backend.json" ;;
+    LP) progress="$worktree/.opencode/progress.frontend.json" ;;
+    *) return 1 ;;
+  esac
+  [[ -f "$progress" ]] || return 1
+  python3 - "$progress" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+value = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+active = value.get("active_task")
+blocked = any(
+    item.get("id") == active and item.get("status") == "BLOCKED"
+    for item in value.get("tasks", [])
+    if isinstance(item, dict)
+)
+raise SystemExit(0 if blocked else 1)
+PY
+}
+
 ensure_one() {
   local worker="$1" worktree state healthy count log_file age
   worktree="$(worker_worktree "$worker")"
@@ -302,6 +326,10 @@ ensure_one() {
     warn "$worker: a wrapper process exists but its heartbeat is stale or mismatched; refusing a duplicate"
     warn "$worker state: $state"
     return 1
+  fi
+  if worker_is_blocked "$worker" "$worktree"; then
+    log "$worker: deliberately quiescent; active task is BLOCKED and requires Ring/operator intervention"
+    return 0
   fi
   if "$CHECK_ONLY"; then
     warn "$worker: inactive"

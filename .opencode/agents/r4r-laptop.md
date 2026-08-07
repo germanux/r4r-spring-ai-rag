@@ -1,9 +1,9 @@
 ---
 description: Six-month-calibrated R4R junior for small prescriptive level-1 work
 mode: primary
-model: ollama-laptop/gemma4-e4b-lp-16k
+model: ollama-laptop/qwen3-30b-coder-28k-6k-t33:latest
 steps: 120
-temperature: 1.0
+temperature: 0.33
 permission:
   "*": deny
   read:

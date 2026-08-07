@@ -94,7 +94,7 @@ done
 
 NODE_BIN="${R4R_NODE_BIN:-node}"
 command -v "$NODE_BIN" >/dev/null 2>&1 || {
-  echo "Node.js no está disponible: $NODE_BIN" >&2
+  echo "Node.js no estÃ¡ disponible: $NODE_BIN" >&2
   exit 2
 }
 
@@ -162,7 +162,7 @@ runtime_idle_seconds="${values[18]}"
 runtime_max_session_steps="${values[19]}"
 runtime_repeat_event_budget="${values[20]}"
 
-# Una sola fuente de verdad para OpenCode: opencode.jsonc de la raíz.
+# Una sola fuente de verdad para OpenCode: opencode.jsonc de la raÃ­z.
 unset OPENCODE_CONFIG || true
 unset OPENCODE_CONFIG_DIR || true
 unset OPENCODE_CONFIG_CONTENT || true
@@ -181,17 +181,17 @@ esac
 for identity_variable in R4R_GIT_AUTHOR_NAME R4R_GIT_AUTHOR_EMAIL; do
   identity_value="${!identity_variable:-}"
   [[ -n "$identity_value" ]] || {
-    echo "ERROR: $identity_variable está vacío para $DEST" >&2
+    echo "ERROR: $identity_variable estÃ¡ vacÃ­o para $DEST" >&2
     exit 2
   }
   [[ "$identity_value" != *$'\n'* && "$identity_value" != *$'\r'* ]] || {
-    echo "ERROR: $identity_variable debe ocupar una sola línea" >&2
+    echo "ERROR: $identity_variable debe ocupar una sola lÃ­nea" >&2
     exit 2
   }
 done
 
 [[ "$R4R_GIT_AUTHOR_EMAIL" == *@* ]] || {
-  echo "ERROR: identidad Git sin email válido: $R4R_GIT_AUTHOR_EMAIL" >&2
+  echo "ERROR: identidad Git sin email vÃ¡lido: $R4R_GIT_AUTHOR_EMAIL" >&2
   exit 2
 }
 
@@ -214,7 +214,7 @@ export R4R_OPENCODE_REPEAT_EVENT_BUDGET="${R4R_OPENCODE_REPEAT_EVENT_BUDGET:-$ru
 export R4R_OPENCODE_BIN="${R4R_OPENCODE_BIN:-opencode}"
 
 command -v "$R4R_OPENCODE_BIN" >/dev/null 2>&1 || {
-  echo "OpenCode no está en PATH" >&2
+  echo "OpenCode no estÃ¡ en PATH" >&2
   exit 2
 }
 
@@ -235,6 +235,7 @@ if match is None:
 print(match.group(1))
 PYMODEL
 )"
+export R4R_OPENCODE_MODEL="$full_model"
 
 python3 - "$ROOT/opencode.jsonc" "$full_model" <<'PYCONFIG'
 import json
@@ -254,10 +255,10 @@ except KeyError as exc:
     )
 PYCONFIG
 
-echo "OK: configuración OpenCode canónica para $DEST"
+echo "OK: configuraciÃ³n OpenCode canÃ³nica para $DEST"
 
 if (( DOCTOR_LOCAL )); then
-  printf 'Agente: %s\nModelo: %s\nEndpoint configurado: %s\nPlan: %s\nProgreso: %s\nAutor Git: %s <%s>\nConfig canónica: %s\nMetadata resuelta: %s\n' \
+  printf 'Agente: %s\nModelo: %s\nEndpoint configurado: %s\nPlan: %s\nProgreso: %s\nAutor Git: %s <%s>\nConfig canÃ³nica: %s\nMetadata resuelta: %s\n' \
     "$agent" "$model" "$base_url" "$plan" "$progress" \
     "$R4R_GIT_AUTHOR_NAME" "$R4R_GIT_AUTHOR_EMAIL" \
     "$ROOT/opencode.jsonc" "$ROOT/$resolved_config"
@@ -272,7 +273,7 @@ if (( ! SKIP_ENDPOINT )) && [[ "${R4R_OPENCODE_ENDPOINT_CHECK:-true}" == true ]]
 fi
 
 effective_models="$("$R4R_OPENCODE_BIN" models 2>&1)" || {
-  echo "ERROR: OpenCode no pudo cargar el catálogo efectivo" >&2
+  echo "ERROR: OpenCode no pudo cargar el catÃ¡logo efectivo" >&2
   printf '%s\n' "$effective_models" >&2
   exit 2
 }
@@ -284,8 +285,8 @@ clean_models="$(
 )"
 
 if ! grep -Fxq "$full_model" <<<"$clean_models"; then
-  echo "ERROR: OpenCode no publica el modelo canónico: $full_model" >&2
-  echo "Config canónica: $ROOT/opencode.jsonc" >&2
+  echo "ERROR: OpenCode no publica el modelo canÃ³nico: $full_model" >&2
+  echo "Config canÃ³nica: $ROOT/opencode.jsonc" >&2
   echo "Salida completa de 'opencode models':" >&2
   printf '%s\n' "$clean_models" >&2
   exit 2
@@ -294,7 +295,7 @@ fi
 echo "OK: modelo visible en OpenCode: $full_model"
 
 if (( DOCTOR )); then
-  echo "OK: diagnóstico completo"
+  echo "OK: diagnÃ³stico completo"
   printf 'Agente: %s\nModelo: %s\nEndpoint: %s\nPlan: %s\nProgreso: %s\nAutor Git: %s <%s>\nConfig: %s\n' \
     "$agent" "$model" "$base_url" "$plan" "$progress" \
     "$R4R_GIT_AUTHOR_NAME" "$R4R_GIT_AUTHOR_EMAIL" "$ROOT/opencode.jsonc"
@@ -329,13 +330,13 @@ fi
 
 if [[ "$DEST" == "PC" ]]; then
   docker info >/dev/null 2>&1 || {
-    echo "Docker no está disponible para los gates backend" >&2
+    echo "Docker no estÃ¡ disponible para los gates backend" >&2
     exit 2
   }
 fi
 
 command -v "${R4R_CODEX_BIN:-codex}" >/dev/null 2>&1 || {
-  echo "Codex CLI no está en PATH" >&2
+  echo "Codex CLI no estÃ¡ en PATH" >&2
   exit 2
 }
 
