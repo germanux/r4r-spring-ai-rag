@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from r4r_ring_agent import ring_loop
 from r4r_ring_agent.worktrees import WorktreePaths
@@ -64,6 +65,263 @@ def _configure_task_plans(
 
 
 class RingLoopTest(unittest.TestCase):
+    def test_failure_retry_delay_is_exponential_and_bounded(self) -> None:
+        with (
+            patch.object(ring_loop, "FAILURE_RETRY_BASE_SECONDS", 30),
+            patch.object(ring_loop, "FAILURE_RETRY_MAX_SECONDS", 300),
+        ):
+            self.assertEqual(30, ring_loop._failure_retry_delay(1))
+            self.assertEqual(60, ring_loop._failure_retry_delay(2))
+            self.assertEqual(240, ring_loop._failure_retry_delay(4))
+            self.assertEqual(300, ring_loop._failure_retry_delay(5))
+            self.assertEqual(300, ring_loop._failure_retry_delay(20))
+
+    def test_preflight_authorizes_scoped_whitespace_recovery_without_luna(self) -> None:
+        from datetime import datetime, timedelta, timezone
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            ring = root / "ring"
+            pc = root / "pc"
+            lp = root / "lp"
+            for repository in (ring, pc, lp):
+                repository.mkdir()
+                subprocess.run(["git", "init", "-q"], cwd=repository, check=True)
+                subprocess.run(
+                    ["git", "config", "user.name", "R4R Test"],
+                    cwd=repository,
+                    check=True,
+                )
+                subprocess.run(
+                    ["git", "config", "user.email", "r4r@example.invalid"],
+                    cwd=repository,
+                    check=True,
+                )
+
+            tasks = [
+                {
+                    "id": "task-pc",
+                    "command": "pc.md",
+                    "objective": "backend",
+                    "allowed_paths": ["src/**"],
+                    "gate": ["true"],
+                    "commit_message": "pc",
+                    "depends_on": [],
+                },
+                {
+                    "id": "task-lp",
+                    "command": "lp.md",
+                    "objective": "frontend",
+                    "allowed_paths": ["frontend/**"],
+                    "gate": ["true"],
+                    "commit_message": "lp",
+                    "depends_on": [],
+                },
+            ]
+            plan = ring / ".opencode" / "task-plan.json"
+            plan.parent.mkdir(parents=True)
+            plan.write_text(
+                json.dumps(
+                    {"schema_version": 1, "tasks": tasks, "final_gate": ["true"]}
+                ),
+                encoding="utf-8",
+            )
+            config = ring / "config" / "r4r-agents.json"
+            config.parent.mkdir(parents=True)
+            config.write_text(
+                json.dumps(
+                    {
+                        "agents": {
+                            "PC": {
+                                "agentId": "r4r-pc",
+                                "model": "gpt-5.6-terra",
+                                "branch": "agent/pc-qwen3-worker",
+                            },
+                            "LP": {
+                                "agentId": "r4r-lp",
+                                "model": "gpt-5.6-terra",
+                                "branch": "agent/laptop-qwen3-worker",
+                            },
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            fixtures = (
+                ("PC", pc, "task-pc", "src/App.java"),
+                ("LP", lp, "task-lp", "frontend/app.ts"),
+            )
+            for worker, repository, task_id, relative in fixtures:
+                product = repository / relative
+                product.parent.mkdir(parents=True)
+                product.write_text("clean\n", encoding="utf-8")
+                subprocess.run(["git", "add", relative], cwd=repository, check=True)
+                subprocess.run(
+                    ["git", "commit", "-q", "-m", "baseline"],
+                    cwd=repository,
+                    check=True,
+                )
+                product.write_text("dirty   \n", encoding="utf-8")
+                progress = repository / ".opencode" / f"progress.{worker.lower()}.json"
+                progress.parent.mkdir(parents=True)
+                progress.write_text(
+                    json.dumps(
+                        {
+                            "schema_version": 1,
+                            "active_task": task_id,
+                            "tasks": [
+                                {
+                                    "id": task_id,
+                                    "status": "BLOCKED",
+                                    "attempts_total": 17,
+                                }
+                            ],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                if worker == "PC":
+                    now = datetime.now(timezone.utc)
+                    previous = (
+                        ring
+                        / "runtime"
+                        / "control"
+                        / worker
+                        / "assignment.json"
+                    )
+                    previous.parent.mkdir(parents=True)
+                    previous.write_text(
+                        json.dumps(
+                            {
+                                "schema_version": 1,
+                                "assignment_id": "previous-continue",
+                                "target": worker,
+                                "task_id": task_id,
+                                "priority": "advisory",
+                                "action": "CONTINUE",
+                                "write_scope": ["src/**"],
+                                "generated_at": now.isoformat(),
+                                "expires_at": (now + timedelta(minutes=10)).isoformat(),
+                            }
+                        ),
+                        encoding="utf-8",
+                    )
+
+            paths = WorktreePaths(ring, pc, lp)
+            run_dir = ring / "runtime" / "ring-agent" / "ring" / "run-1"
+            run_dir.mkdir(parents=True)
+            result = ring_loop._dispatch_recovery_assignments(
+                paths, run_dir, "run-1"
+            )
+
+            self.assertEqual(["PC", "LP"], result["published"])
+            for worker, _repository, task_id, _relative in fixtures:
+                directive = json.loads(
+                    (
+                        ring
+                        / "runtime"
+                        / "control"
+                        / worker
+                        / "assignment.json"
+                    ).read_text(encoding="utf-8")
+                )
+                self.assertEqual("RETRY_AUTHORIZED", directive["action"])
+                self.assertEqual(task_id, directive["task_id"])
+                self.assertEqual(2, directive["recovery_policy_version"])
+                self.assertTrue(directive["authorization_id"])
+
+    def test_preflight_refreshes_only_the_same_expired_assignment(self) -> None:
+        from datetime import datetime, timedelta, timezone
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            ring, pc, lp = root / "ring", root / "pc", root / "lp"
+            for repository in (ring, pc, lp):
+                repository.mkdir()
+                subprocess.run(["git", "init", "-q"], cwd=repository, check=True)
+            task = {
+                "id": "task-pc",
+                "command": "pc.md",
+                "objective": "backend",
+                "allowed_paths": ["src/**"],
+                "gate": ["true"],
+                "commit_message": "pc",
+                "depends_on": [],
+            }
+            plan = ring / ".opencode" / "task-plan.json"
+            plan.parent.mkdir(parents=True)
+            plan.write_text(
+                json.dumps(
+                    {"schema_version": 1, "tasks": [task], "final_gate": ["true"]}
+                ),
+                encoding="utf-8",
+            )
+            config = ring / "config" / "r4r-agents.json"
+            config.parent.mkdir(parents=True)
+            config.write_text(
+                json.dumps(
+                    {
+                        "agents": {
+                            "PC": {
+                                "agentId": "r4r-pc",
+                                "model": "gpt-5.6-terra",
+                                "branch": "agent/pc-qwen3-worker",
+                            },
+                            "LP": {
+                                "agentId": "r4r-lp",
+                                "model": "gpt-5.6-terra",
+                                "branch": "agent/laptop-qwen3-worker",
+                            },
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+            progress = pc / ".opencode" / "progress.pc.json"
+            progress.parent.mkdir(parents=True)
+            progress.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "active_task": "task-pc",
+                        "tasks": [{"id": "task-pc", "status": "IN_PROGRESS"}],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            old = datetime.now(timezone.utc) - timedelta(hours=5)
+            assignment = ring / "runtime" / "control" / "PC" / "assignment.json"
+            assignment.parent.mkdir(parents=True)
+            assignment.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "assignment_id": "old",
+                        "target": "PC",
+                        "task_id": "task-pc",
+                        "priority": "advisory",
+                        "action": "CONTINUE",
+                        "write_scope": ["src/**"],
+                        "generated_at": old.isoformat(),
+                        "expires_at": (old + timedelta(hours=1)).isoformat(),
+                    }
+                ),
+                encoding="utf-8",
+            )
+            run_dir = ring / "runtime" / "ring-agent" / "ring" / "run-2"
+            run_dir.mkdir(parents=True)
+
+            result = ring_loop._dispatch_recovery_assignments(
+                WorktreePaths(ring, pc, lp), run_dir, "run-2"
+            )
+
+            self.assertEqual(["PC"], result["published"])
+            refreshed = json.loads(assignment.read_text(encoding="utf-8"))
+            self.assertEqual("CONTINUE", refreshed["action"])
+            self.assertEqual("task-pc", refreshed["task_id"])
+            self.assertEqual(["src/**"], refreshed["write_scope"])
+
     def test_command_uses_frontier_override_and_ring_worktree(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

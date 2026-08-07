@@ -1,0 +1,39 @@
+R4R - REPARACION DEL FLUJO RING / PC / LP
+==========================================
+
+Contenido
+---------
+Este ZIP contiene los ocho ficheros de la reparacion, conservando sus rutas
+relativas. No contiene .git, runtime, logs, credenciales ni ficheros adjuntos.
+
+Cambios principales
+-------------------
+1. Ring reintenta los fallos con backoff acotado de 30, 60, 120, 240 y 300 s.
+2. Ring recupera de forma controlada una asignacion caducada verificable.
+3. Los bloqueos exclusivos por espacios finales pueden recibir una autorizacion
+   RETRY_AUTHORIZED de un solo uso, sin reiniciar intentos ni saltar dependencias.
+4. El worker consume correctamente la autorizacion de recuperacion.
+5. El exportador de evidencias conserva solo sesiones recientes y evita
+   duplicados historicos.
+
+Aplicacion
+----------
+1. Haz una copia o commit de cualquier cambio local que quieras conservar.
+2. Descomprime el ZIP directamente en la raiz de r4r-ring-agent.git,
+   permitiendo sobrescribir los ficheros existentes.
+3. Ejecuta desde la raiz del repositorio:
+
+   PYTHONPATH=py-ring-agent/src python3 -m unittest discover \
+     -s py-ring-agent/tests -p 'test_*.py'
+   python3 -m compileall -q py-ring-agent/src py-ring-agent/tests
+   bash -n scripts/export-r4r-complete-evidence.sh
+   git diff --check
+
+Validacion realizada antes de empaquetar
+----------------------------------------
+- 107 pruebas: OK
+- Compilacion Python: OK
+- Sintaxis Bash: OK
+- git diff --check: limpio
+
+Generado: 08/08/2026

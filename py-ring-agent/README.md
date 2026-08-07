@@ -143,6 +143,14 @@ Ring reviews and guardian dispatch polling use separate intervals. The guardian 
 for newly published assignments every 15 seconds; Ring keeps its slower cognitive
 review cadence. A silent OpenCode child is terminated after five minutes so one stuck
 provider request cannot hold the complete system for the 90-minute session ceiling.
+Failed Ring sessions retry with bounded exponential delays of 30, 60, 120, 240 and
+300 seconds rather than waiting for the normal review interval.
+
+Before each cognitive session, Ring also runs a deterministic dispatch preflight. It
+may refresh only the same expired assignment for the same unfinished task and scope,
+or issue one non-replayable recovery authorization when every current defect is
+trailing whitespace inside a blocked task's canonical scope. It never selects a new
+task, resets attempt history, bypasses dependencies or publishes overlapping scopes.
 
 The defaults can be changed with:
 
@@ -150,6 +158,8 @@ The defaults can be changed with:
 export R4R_RING_REVIEW_INTERVAL_SECONDS=763
 export R4R_RING_DIRECTIVE_MAX_AGE_SECONDS=10800
 export R4R_RING_FIRST_OUTPUT_TIMEOUT_SECONDS=300
+export R4R_RING_FAILURE_RETRY_BASE_SECONDS=30
+export R4R_RING_FAILURE_RETRY_MAX_SECONDS=300
 ```
 
 ## Event-triggered worker reviews

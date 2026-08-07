@@ -4,9 +4,9 @@ import json
 import os
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
-from r4r_worker.contracts import Task, TaskPlan
+from r4r_worker.contracts import Task, TaskPlan, task_progress
 from r4r_worker.diagnostics import GateDiagnostics
 from r4r_worker.runner import (
     AutomaticRunner,
@@ -969,6 +969,79 @@ class RunnerTest(unittest.TestCase):
             self.assertIn("alpha staged", staged)
             self.assertNotIn("beta changed", staged)
             self.assertIn("beta changed", unstaged)
+
+    def test_retry_authorization_is_consumed_below_normal_attempt_ceiling(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            task = Task(
+                "task-01",
+                "task.md",
+                "repair",
+                ("src/**",),
+                ("true",),
+                "repair whitespace",
+            )
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner.run_dir = repo / "runtime" / "runs" / "PC" / "current"
+            runner.run_dir.mkdir(parents=True)
+            runner.memory_context = {}
+            runner.progress = {
+                "schema_version": 1,
+                "active_task": task.id,
+                "tasks": [
+                    {
+                        "id": task.id,
+                        "status": "BLOCKED",
+                        "attempts_total": 2,
+                    }
+                ],
+            }
+            runner.max_attempts = 6
+            runner.require_codegraph = False
+            runner.codegraph_policy = "off"
+            runner.compact_local_worker = True
+            runner._manual_commit_paths = MagicMock(return_value=())
+            runner._write_progress = MagicMock()
+            runner._write_memory = MagicMock()
+            green = CommandResult(("true",), 0, "", "")
+            runner._run_gate = MagicMock(return_value=green)
+            runner._resume_action_from_escalation_extra = MagicMock(
+                return_value=None
+            )
+            runner._consume_retry_authorization = MagicMock(return_value="grant-1")
+            runner._repair_trailing_whitespace = MagicMock(
+                return_value=["src/App.java"]
+            )
+            runner._record_gate_diagnostics = MagicMock(
+                return_value=GateDiagnostics(
+                    classification="green",
+                    summary="gate is green",
+                    fingerprint="green",
+                    source_paths=(),
+                    related_paths=(),
+                    log_path="log",
+                    summary_path="summary",
+                    manifest_path="manifest",
+                    bundle_path="bundle",
+                )
+            )
+            runner._checkpoint_green = MagicMock(return_value="head")
+            runner._notify = MagicMock()
+            runner._write_compact_local_understanding = MagicMock()
+            runner._request_ring_review = MagicMock()
+            runner._write_escalation_extra_instructions = MagicMock()
+            runner._finalize_accepted_task = MagicMock(return_value=0)
+
+            result = runner._execute_task(task)
+
+            self.assertEqual(0, result)
+            runner._consume_retry_authorization.assert_called_once()
+            runner._repair_trailing_whitespace.assert_called_once_with(task)
+            self.assertEqual(
+                3,
+                task_progress(runner.progress, task.id)["attempts_total"],
+            )
 
     def test_retry_authorization_allows_only_one_v1_to_v2_upgrade(self):
         with tempfile.TemporaryDirectory() as directory:

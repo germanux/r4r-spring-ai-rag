@@ -43,8 +43,12 @@ for branch in "${!WORKTREES[@]}"; do
   git -C "$INTEGRATION" worktree add -q "${WORKTREES[$branch]}" "$branch"
 done
 
+# The development branch must remain subscribed even without a linked worktree.
+git -C "$INTEGRATION" worktree remove "${WORKTREES[r4r-chatgpt]}"
+
 run_sync() {
   local output="$1"
+  shift
   R4R_REPOSITORY="$INTEGRATION" \
   R4R_DEVELOPMENT_ROOT="$TEST_ROOT" \
   R4R_INTEGRATION_WORKTREE="$INTEGRATION" \
@@ -60,14 +64,14 @@ run_sync() {
       --no-notify \
       --no-open-conflict-dir \
       --no-modal-alert \
-      --dry-run >"$output" 2>&1 || {
+      "$@" >"$output" 2>&1 || {
         sed -n '1,240p' "$output" >&2
         return 1
       }
 }
 
 disabled_log="$TEST_ROOT/disabled.log"
-run_sync "$disabled_log"
+run_sync "$disabled_log" --dry-run
 disabled_sources="$(grep -F 'source sequence:' "$disabled_log")"
 disabled_targets="$(grep -F 'propagation targets:' "$disabled_log")"
 for expected in \
@@ -87,4 +91,26 @@ done
 [[ "$disabled_sources" != *agent/opencode-dual-surgical* ]]
 [[ "$disabled_targets" != *agent/opencode-dual-surgical* ]]
 
-printf 'OK: PC/LP hot-sync remains active and the retired SURGICAL branch is excluded\n'
+# Prove both directions: a development commit reaches the hub, and a hub commit
+# reaches the unlinked permanent development branch in the same synchronization.
+printf 'hub-only\n' >"$INTEGRATION/hub-only.txt"
+git -C "$INTEGRATION" add hub-only.txt
+git -C "$INTEGRATION" commit -qm hub-only
+hub_only_commit="$(git -C "$INTEGRATION" rev-parse HEAD)"
+
+CHATGPT_EDIT="$TEST_ROOT/r4r-chatgpt-edit.git"
+git -C "$INTEGRATION" worktree add -q "$CHATGPT_EDIT" r4r-chatgpt
+printf 'development-only\n' >"$CHATGPT_EDIT/development-only.txt"
+git -C "$CHATGPT_EDIT" add development-only.txt
+git -C "$CHATGPT_EDIT" commit -qm development-only
+development_only_commit="$(git -C "$CHATGPT_EDIT" rev-parse HEAD)"
+git -C "$INTEGRATION" worktree remove "$CHATGPT_EDIT"
+
+bidirectional_log="$TEST_ROOT/bidirectional.log"
+run_sync "$bidirectional_log"
+git -C "$INTEGRATION" merge-base --is-ancestor \
+  "$development_only_commit" agent/integration
+git -C "$INTEGRATION" merge-base --is-ancestor \
+  "$hub_only_commit" r4r-chatgpt
+
+printf 'OK: r4r-chatgpt and agent/integration synchronize bidirectionally; retired SURGICAL remains excluded\n'

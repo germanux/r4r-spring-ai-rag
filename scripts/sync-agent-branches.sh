@@ -6,6 +6,7 @@ set -Eeuo pipefail
 # Default invocation:
 #   * fetch/prune origin;
 #   * discover every non-detached worktree attached to the same Git common dir;
+#   * always synchronize the permanent r4r-chatgpt development branch;
 #   * centralize each source branch in agent/integration;
 #   * after each source round, attempt to propagate the pinned hub commit to
 #     every worktree, including active and dirty ones;
@@ -26,6 +27,7 @@ RING_WORKTREE_HINT="${R4R_RING_WORKTREE:-$DEVELOPMENT_ROOT/r4r-ring-agent.git}"
 PC_WORKTREE_HINT="${R4R_PC_WORKTREE:-$DEVELOPMENT_ROOT/r4r-pc-worker.git}"
 LP_WORKTREE_HINT="${R4R_LP_WORKTREE:-$DEVELOPMENT_ROOT/r4r-lp-worker.git}"
 HUB_BRANCH="${R4R_INTEGRATION_BRANCH:-agent/integration}"
+DEVELOPMENT_BRANCH="${R4R_DEVELOPMENT_BRANCH:-r4r-chatgpt}"
 SURGICAL_BRANCH="${R4R_SURGICAL_BRANCH:-agent/opencode-dual-surgical}"
 REMOTE="${R4R_SYNC_REMOTE:-origin}"
 PUSH_POLICY="strict"
@@ -76,8 +78,10 @@ Usage: ./scripts/sync-agent-branches.sh [options]
 
 Default: complete automatic hot-sync pass
   - discovers every linked non-detached worktree;
+  - always includes r4r-chatgpt as the permanent development branch;
   - fetches and centralizes committed source refs in agent/integration;
-  - attempts propagation to active and dirty worktrees;
+  - propagates the resulting agent/integration commit back to r4r-chatgpt and
+    the active or dirty agent worktrees;
   - preserves staged, unstaged and untracked work without stashing or unstaging;
   - never copies or commits runtime, progress, memory or .opencode/current;
   - durable task evidence remains in .ring-agent/evidence;
@@ -283,6 +287,22 @@ resolve_branch_worktree() {
 branch_exists() { git -C "$REPOSITORY" show-ref --verify --quiet "refs/heads/$1"; }
 remote_ref_exists() { git -C "$REPOSITORY" show-ref --verify --quiet "refs/remotes/$REMOTE/$1"; }
 remote_exists() { git -C "$REPOSITORY" remote get-url "$REMOTE" >/dev/null 2>&1; }
+
+ensure_development_branch() {
+  local start_ref
+  branch_exists "$DEVELOPMENT_BRANCH" && return 0
+  if remote_ref_exists "$DEVELOPMENT_BRANCH"; then
+    start_ref="$REMOTE/$DEVELOPMENT_BRANCH"
+  else
+    start_ref="$HUB_BRANCH"
+  fi
+  if "$DRY_RUN"; then
+    log "DRY-RUN: git branch $DEVELOPMENT_BRANCH $start_ref"
+    return 0
+  fi
+  log "$DEVELOPMENT_BRANCH: creating permanent local development branch from $start_ref"
+  git -C "$REPOSITORY" branch "$DEVELOPMENT_BRANCH" "$start_ref"
+}
 
 merge_in_progress() {
   local worktree="$1" merge_head
@@ -656,6 +676,9 @@ fi
 
 git -C "$REPOSITORY" show-ref --verify --quiet "refs/heads/$HUB_BRANCH" \
   || die "local hub branch does not exist: $HUB_BRANCH"
+[[ "$DEVELOPMENT_BRANCH" != "$HUB_BRANCH" ]] \
+  || die "development branch must differ from hub branch: $HUB_BRANCH"
+ensure_development_branch
 INTEGRATION_WORKTREE="$(resolve_branch_worktree "$HUB_BRANCH" "$INTEGRATION_WORKTREE_HINT" || true)"
 [[ -n "$INTEGRATION_WORKTREE" ]] || die "hub worktree not found for $HUB_BRANCH"
 RING_WORKTREE="$(resolve_branch_worktree agent/ring-agent-worker "$RING_WORKTREE_HINT" || true)"
@@ -668,8 +691,8 @@ if "$ALL_LOCAL_BRANCHES"; then
     { printf '%s\n' "${SUBSCRIBED[@]}"; select_all_local_branches; } | awk 'NF && !seen[$0]++' | sort
   )
 fi
-! "$TARGETS_EXPLICIT" && TARGETS=("${SUBSCRIBED[@]}")
-! "$SOURCES_EXPLICIT" && SOURCES=("${SUBSCRIBED[@]}")
+! "$TARGETS_EXPLICIT" && TARGETS=("${SUBSCRIBED[@]}" "$DEVELOPMENT_BRANCH")
+! "$SOURCES_EXPLICIT" && SOURCES=("${SUBSCRIBED[@]}" "$DEVELOPMENT_BRANCH")
 mapfile -t TARGETS < <(printf '%s\n' "${TARGETS[@]}" | awk 'NF && !seen[$0]++')
 mapfile -t SOURCES < <(printf '%s\n' "${SOURCES[@]}" | awk 'NF && !seen[$0]++')
 mapfile -t TARGETS < <(
@@ -687,6 +710,7 @@ log "repository:             $REPOSITORY"
 log "Git common dir:         $COMMON_DIR"
 log "integration worktree:   $INTEGRATION_WORKTREE"
 log "hub branch:             $HUB_BRANCH"
+log "development branch:     $DEVELOPMENT_BRANCH"
 log "retired branch excluded: $SURGICAL_BRANCH"
 log "subscribed worktrees:   ${SUBSCRIBED[*]:-(none)}"
 log "source sequence:        ${SOURCES[*]:-(none)}"

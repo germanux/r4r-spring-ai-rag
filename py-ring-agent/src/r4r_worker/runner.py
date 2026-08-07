@@ -1115,21 +1115,8 @@ class AutomaticRunner:
         progress_item["attempts_total"] = attempts_total
         self._write_progress(task.id)
         attempt_ceiling = self.max_attempts
-        if self.max_attempts > 0 and attempts_total >= self.max_attempts:
-            authorization_id = self._consume_retry_authorization(task, progress_item)
-            if authorization_id is None:
-                self._mark_blocked(task)
-                self._request_ring_review(
-                    task,
-                    reason="global-attempt-limit",
-                    attempt=attempts_total,
-                    gate=initial_gate,
-                )
-                return self._finish(
-                    "GLOBAL_ATTEMPT_LIMIT_REACHED",
-                    70,
-                    {"task": task.id, "attempts": attempts_total, "limit": self.max_attempts},
-                )
+        authorization_id = self._consume_retry_authorization(task, progress_item)
+        if authorization_id is not None:
             attempt_ceiling = attempts_total + 1
             print(
                 f"[r4r] RETRY_AUTHORIZED task={task.id} "
@@ -1144,6 +1131,19 @@ class AutomaticRunner:
                 initial_gate = self._run_gate(
                     "operator-repair-gate", task.gate, task_root, stream=True
                 )
+        elif self.max_attempts > 0 and attempts_total >= self.max_attempts:
+            self._mark_blocked(task)
+            self._request_ring_review(
+                task,
+                reason="global-attempt-limit",
+                attempt=attempts_total,
+                gate=initial_gate,
+            )
+            return self._finish(
+                "GLOBAL_ATTEMPT_LIMIT_REACHED",
+                70,
+                {"task": task.id, "attempts": attempts_total, "limit": self.max_attempts},
+            )
 
         attempt = attempts_total + 1
         transient_failures = 0
