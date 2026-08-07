@@ -1,54 +1,42 @@
-# Global summary (run 20260807T021032Z)
+# Global Summary — Run 20260807T022858Z
 
-## Overall decision
+## Outcome
 
-**Status: READY**
+`overall_status: READY`
 
-- **PC:** CONTINUE `task-07-populate-production-rag`
-- **LP:** CONTINUE `task-fe-03d-dom-state-tests`
+Both queues have actionable, disjoint next passes based on current RUN_DIR evidence.
 
-No current evidence requires STOP/HOLD for either queue, and active write scopes remain disjoint.
+## PC decision
 
-## First current defects
+- **Action:** CONTINUE
+- **Task:** `task-07-populate-production-rag`
+- **Why:** gate is green but controller checkpoint commit failed, so task closure is incomplete.
+- **Next pass:** one closure-quality rerun with the exact task-07 gate and explicit vector row-count + closure metadata evidence.
 
-1. **PC defect (closure-quality):** latest request is gate-green but closure metadata is null (`codex_decision`, `next_action`, `checkpoint_head`), while progress still shows task-07 `BLOCKED`.
-2. **LP defect (one-file test correction):** FE-03D gate remains red (`exit 2`) with REVISE packet unresolved and prior session timeout.
+Primary evidence:
+- `pc-runtime/controller_state.json`
+- `pc-runtime/checkpoint.json`
+- `pc-runtime/gate_summary.md`
+- `pc-runtime/progress.json`
 
-## Directed next actions (bounded, one pass each)
+## LP decision
 
-### PC package
+- **Action:** CONTINUE
+- **Task:** `task-fe-03d-dom-state-tests`
+- **Why:** Codex REVISE packet remains unresolved; prior run timed out; one spec file still has uncommitted changes.
+- **Next pass:** apply exactly the one-file FE-03D correction packet and run deterministic FE-03D gate once.
 
-- **Implementation level:** Level 2
-- **Assigned role:** PC
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `task-06f-ingestion-validation: ACCEPTED`
-- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **Exact gate:**
-  - `git diff --check`
-  - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
-  - `Closure policy: exact-gate-green + scope-clean + controller-commit`
-- **Acceptance evidence:** non-null closure metadata + explicit `vector_store` count proof + green gate.
+Primary evidence:
+- `lp-runtime/codex-qwen3-extra-instructions.md`
+- `lp-runtime/memory.md`
+- `lp-runtime/progress.json`
+- `lp-git-status.txt`
 
-### LP package
+## Cross-stack risk and dependency notes
 
-- **Implementation level:** Level 1
-- **Assigned role:** LP
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations: ACCEPTED`
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:**
-  - `git diff --check`
-  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-  - `Closure policy: exact-gate-green + scope-clean + controller-commit`
-- **Acceptance evidence:** FE-03D gate green + one-file scope cleanliness + selector-mapped DOM assertions.
+- Write scopes are disjoint (backend vs frontend), so both passes can proceed in parallel.
+- Highest risk is repeated non-semantic retries (PC closure loop, LP structure regressions). Avoid by enforcing exact correction packets and gates.
 
-## Evidence limitations
+## Ring worktree edits in this cycle
 
-- Full PC gate logs for the latest request are not present in this snapshot; PC gate success is inferred from `gate_exit=0` in worker request plus progress metadata.
-- Live worker worktrees were not inspected directly; this cycle is grounded only on RUN_DIR staged evidence.
-
-## Ring worktree edits this cycle
-
-- No repository product/test/config/docs/plans were edited.
-- Only required staged artifacts were written under:
-  - `runtime/ring-agent/ring/20260807T021032Z/output/`
+No repository code or docs were modified. Only required staged artifacts were written under `runtime/ring-agent/ring/20260807T022858Z/output/`.

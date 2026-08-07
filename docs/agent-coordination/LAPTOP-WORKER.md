@@ -1,57 +1,35 @@
-# LP code review (run 20260807T021032Z)
+# LP Code Review (Ring)
 
-## Evidence reviewed
+## Current evidence-backed defect
 
-- `runtime/ring-agent/ring/20260807T021032Z/lp-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260807T021032Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `runtime/ring-agent/ring/20260807T021032Z/lp-runtime/memory.md`
-- `runtime/ring-agent/ring/20260807T021032Z/lp-runtime/progress.json`
-- `runtime/ring-agent/ring/20260807T021032Z/lp-git-status.txt`
-- `runtime/ring-agent/ring/20260807T021032Z/lp-git-diff-stat.txt`
+Task `task-fe-03d-dom-state-tests` remains unresolved.
 
-## First current defect
+- `lp-runtime/codex-qwen3-extra-instructions.md` is `REVISE` with a strict one-file repair packet.
+- `lp-runtime/memory.md` records a prior timeout (`session-timeout`) and no new acceptance.
+- `lp-git-status.txt` and `lp-git-diff-stat.txt` show an uncommitted diff in `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+- No LP controller-state or gate-summary artifact is present in this RUN_DIR to prove a fresh pass.
 
-The active FE-03D task remains red and unresolved in one file:
+The first current defect is still the **single-file FE-03D test correction**.
 
-- Deterministic gate summary reports `exit code: 2`.
-- Codex packet is `REVISE` with explicit one-file repair instructions.
-- Previous local pass timed out (`session-timeout`) and did not produce acceptance evidence.
-- Dirty state persists at `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-
-## Bounded next package
+## Bounded next work package
 
 - **Implementation level:** Level 1
 - **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations: ACCEPTED`
-- **allowed_paths:**
-  - `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
+- **allowed_paths (canonical):** `frontend/**`, `docs/frontend/**`
+- **Bounded write target for this pass:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:**
+  - `git diff --check`
+  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
 
-### One focused next action (single pass)
+## Acceptance conditions for this pass
 
-Apply exactly the existing FE-03D correction packet in `rag-page.component.spec.ts`:
-
-1. Restore valid suite structure and remove prohibited additions (synthetic fields/selectors, internal-state mutations, `innerHTML` mutation, `of`/`tick` misuse).
-2. Keep the three prescribed tests only: controlled-pending loading/duplicate-submit, success-reset with citations, transport-error-reset.
-3. Preserve existing valid answer/abstention/citation/escaping/service-isolation coverage.
-
-### Exact deterministic gate
-
-1. `git diff --check`
-2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-3. Closure policy: `exact-gate-green + scope-clean + controller-commit`
-
-## Acceptance evidence required
-
-- Gate exit `0` for FE-03D exact command.
-- Scoped diff only in `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-- Requirement-to-selector assertion map present in local understanding, including:
-  - loading status: `.loading-state[role="status"]`
-  - disabled controls: `textarea`, `.submit-button`
-  - error alert: `.error-state[role="alert"]`
-  - answer visibility: `.answer-content`
-  - reset cleanup: absence of answer/citation/error + presence of `.idle-state`
+1. Only the prescribed FE-03D correction packet behavior is implemented in the one spec file.
+2. Test structure is valid (balanced braces/indentation, no malformed additions called out by Codex).
+3. Deterministic FE-03D gate exits `0`.
+4. Scope is clean and controller can close with commit.
 
 ## Avoid repeating
 
-Do not rerun with malformed test structure, guessed selectors, or timeout-prone no-plan retries.
+Do **not** reintroduce internal-state mutations, guessed selectors, malformed spec structure, or timeout-prone reruns without first applying the correction packet.

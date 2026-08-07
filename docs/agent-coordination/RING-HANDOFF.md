@@ -1,41 +1,37 @@
-# Backend ↔ Frontend handoff (run 20260807T021032Z)
+# Backend ↔ Frontend Handoff
 
-## Scope and concurrency decision
+## Queue status
 
-Proceed PC and LP concurrently this cycle. Active scopes are disjoint and no overlap is evidenced.
+- **Backend (PC):** continue `task-07-populate-production-rag` closure-quality pass.
+- **Frontend (LP):** continue `task-fe-03d-dom-state-tests` one-file correction pass.
 
-- **PC scope:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **LP scope:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+## Ownership and scope separation
 
-## Backend package
+- PC active edits are backend paths (`src/main/**`, `src/test/**`, `docs/backend/**`) per `pc-git-status.txt`.
+- LP active edit is frontend spec path (`frontend/src/app/features/rag/rag-page.component.spec.ts`) per `lp-git-status.txt`.
+- **No current write-scope overlap** between PC and LP tasks.
 
-- **Implementation level:** Level 2
-- **Assigned role:** PC
+## Required packages for next pass
+
+### Package PC-07-CLOSE (Level 2, PC)
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `task-06f-ingestion-validation: ACCEPTED`
+- **Dependencies:** `task-06f-ingestion-validation:ACCEPTED`
 - **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **Focused action:** one closure-quality pass only; complete non-null closure metadata and explicit `vector_store` count evidence.
-- **Exact gate:**
+- **Gate:**
   1. `git diff --check`
-  2. `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
-  3. `Closure policy: exact-gate-green + scope-clean + controller-commit`
-- **Acceptance condition:** gate exit 0 + row-count proof + non-null closure metadata fields.
+  2. task-07 deterministic gate command from `.opencode/task-plan.backend.json`
+- **Acceptance evidence:** gate exit `0`, vector_store rows `> 0`, non-null closure metadata, controller-commit-capable state.
 
-## Frontend package
-
-- **Implementation level:** Level 1
-- **Assigned role:** LP
+### Package LP-FE03D-REPAIR (Level 1, LP)
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations: ACCEPTED`
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Focused action:** apply only the FE-03D one-file correction packet and keep valid existing coverage.
-- **Exact gate:**
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
+- **allowed_paths:** `frontend/**`, `docs/frontend/**` (bounded to one spec file this pass)
+- **Gate:**
   1. `git diff --check`
   2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-  3. `Closure policy: exact-gate-green + scope-clean + controller-commit`
-- **Acceptance condition:** FE-03D gate green with one-file clean scope and selector-mapped DOM assertions.
+- **Acceptance evidence:** one-file corrective diff consistent with Codex packet + gate exit `0`.
 
-## Integration risks to monitor next cycle
+## Integration risk watch
 
-1. Backend closure can stall again if gate-green evidence is submitted without non-null closure metadata.
-2. Frontend churn can continue if FE-03D packet constraints are partially applied.
+1. Backend loop risk: repeated gate-green with failed checkpoint commit can stall closure.
+2. Frontend churn risk: large one-file diff may keep reintroducing the same malformed test patterns.
