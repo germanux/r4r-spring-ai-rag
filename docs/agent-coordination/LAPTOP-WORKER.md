@@ -1,42 +1,40 @@
-# LP code review (evidence-based)
+# LP code review (frontend)
+
+## Evidence reviewed
+
+- `runtime/ring-agent/ring/20260807T011026Z/lp-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260807T011026Z/lp-runtime/codex_plan.json`
+- `runtime/ring-agent/ring/20260807T011026Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260807T011026Z/lp-git-status.txt`
+- `runtime/ring-agent/ring/20260807T011026Z/lp-git-diff-stat.txt`
 
 ## Current diagnosis
 
-- Active task is `task-fe-03d-dom-state-tests` (`lp-runtime/progress.json`).
-- Gate summary is failing (`exit code 2`) and points to local spec-file issues (`lp-runtime/gate_summary.md`).
-- Codex correction packet is explicit: restore valid test-suite structure, remove prohibited patterns, and add only three prescribed DOM tests (`lp-runtime/codex_plan.json`, `lp-runtime/codex-qwen3-extra-instructions.md`).
-- Current diff is bounded to one file with significant edits (`lp-git-diff-stat.txt`):
-  - `frontend/src/app/features/rag/rag-page.component.spec.ts`
+Task `task-fe-03d-dom-state-tests` is still failing (`gate-failure`, exit code 2). Codex READY instructions point to a local defect in one file: trailing whitespace plus malformed test-suite structure and prohibited test patterns.
 
-First current defect for LP is **local FE-03D test-file correctness**, not architecture or cross-file scope.
-
-## Bounded next package
+## Bounded next work package
 
 - **Implementation level:** Level 1
 - **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations` accepted (visible in `lp-runtime/progress.json`)
-- **allowed_paths (canonical):** `frontend/**`, `docs/frontend/**` (configured task plan); execute correction only in `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Next action (single pass):**
-  1. Restore valid suite structure and remove flagged defective additions.
-  2. Add only the three required tests:
-     - controlled-pending loading/duplicate-submit DOM test,
-     - success-reset DOM test,
-     - transport-error-reset DOM test.
-  3. Run precheck and exact gate once.
+- **Dependencies:** `task-fe-03c-citations` accepted (already satisfied)
+- **allowed_paths (canonical write scope):**
+  - `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **One observable change set:** restore valid suite structure and implement only the three prescribed DOM tests from Codex plan.
 
-## Exact gate
+## Exact gate and acceptance conditions
 
 1. `git diff --check`
 2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-3. Closure rule: `exact-gate-green + scope-clean + controller-commit`
+3. Closure policy check: exact gate green + scope clean + controller-owned commit
 
-## Acceptance evidence required
+## Required assertion targets in this pass
 
-- No trailing whitespace / parse-structure defects.
-- Exit 0 for FE-03D gate.
-- Final diff remains task-scoped and preserves existing valid coverage (answer, abstention, citations, transport alert, escaping, isolation).
+- Loading status: `.loading-state[role="status"]`
+- Disabled controls: `textarea` and `.submit-button`
+- Success render and reset: `.answer-content`, `.citations-section`, `.idle-state`
+- Error render and reset: `.error-state[role="alert"]`, then absence after `clear()`
 
 ## Avoid repeating
 
-- Do **not** reintroduce `innerHTML` mutation, internal loading-state mutation, guessed selectors, unnecessary `of/tick`, synthetic invalid response shapes, or unbalanced braces.
+Do not reintroduce invalid suite structure, trailing whitespace, guessed `data-testid` selectors, `innerHTML` mutation, internal-state mutation (`component.isLoading` / invented state), or unnecessary `of`/`tick` usage.

@@ -1,39 +1,36 @@
-# PC code review (evidence-based)
+# PC code review (backend)
+
+## Evidence reviewed
+
+- `runtime/ring-agent/ring/20260807T011026Z/worker-requests/PC.json`
+- `runtime/ring-agent/ring/20260807T011026Z/pc-runtime/progress.json`
+- `runtime/ring-agent/ring/20260807T011026Z/pc-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260807T011026Z/pc-git-status.txt`
+- `runtime/ring-agent/ring/20260807T011026Z/pc-runtime/previous-ring-qwen3-directive.json`
 
 ## Current diagnosis
 
-- Active task is `task-07-populate-production-rag` (`pc-runtime/progress.json`).
-- Current request is `gate-green-checkpoint` with `gate_exit: 0`, but `checkpoint_head` is still `null` and task state remains non-accepted (`worker-requests/PC.json`, `pc-runtime/progress.json`).
-- Working tree includes five backend/doc changes already staged in scope (`pc-git-status.txt`):
-  - `docs/backend/production-ingestion-evidence.md`
-  - `src/main/java/com/riansares/r4r/ingestion/KnowledgeIngestionService.java`
-  - `src/main/java/com/riansares/r4r/vector/PgVectorKnowledgeStore.java`
-  - `src/test/java/com/riansares/r4r/ingestion/KnowledgeIngestionServiceIT.java`
-  - `src/test/java/com/riansares/r4r/ingestion/TestChildApplicationContextInitializer.java`
+Task `task-07-populate-production-rag` has direct gate-green evidence (`gate_exit=0`) but is still `BLOCKED` in progress state and has `checkpoint_head: null` in the worker request. The first current defect is **closure incompleteness** (checkpoint/commit handoff readiness), not missing feature implementation.
 
-First current defect for PC is **closure incompleteness after gate-green evidence**, not missing implementation scope.
-
-## Bounded next package
+## Bounded next work package
 
 - **Implementation level:** Level 2
 - **Assigned role:** PC
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `task-06f-ingestion-validation` already accepted (from `pc-runtime/progress.json` ledger)
-- **allowed_paths (canonical):** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**` (from `.opencode/task-plan.backend.json`)
-- **Next action (single pass):** Run a closure-focused pass only: keep scope-clean backend/doc diff, run whitespace precheck, run exact gate once, and return closure-complete evidence.
+- **Dependencies:** `task-06f-ingestion-validation` accepted (already satisfied); no new cross-queue dependency added
+- **allowed_paths (canonical write scope):**
+  - `pom.xml`
+  - `src/main/**`
+  - `src/test/**`
+  - `docs/backend/**`
+- **One-pass objective:** produce closure-complete deterministic evidence for the already-green task-07 path.
 
-## Exact gate
+## Exact gate and acceptance conditions
 
 1. `git diff --check`
 2. `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
-3. Closure rule: `exact-gate-green + scope-clean + controller-commit`
-
-## Acceptance evidence required
-
-- Gate result demonstrating exit 0 for the exact task-07 command.
-- Proof that changed paths remain inside the task allowed scope.
-- Closure-ready diagnostic bundle (no missing checkpoint/commit-critical data).
+3. Closure policy check: exact gate green + scope clean + controller-owned checkpoint/commit
 
 ## Avoid repeating
 
-- Do **not** repeat unchanged “gate-green but no closure completion” loops.
+Do not repeat an unchanged “gate-green but still uncloseable” loop. The next pass must return complete, coherent diagnostics and metadata supporting immediate controller closure.

@@ -1,35 +1,31 @@
 # Backend ↔ Frontend handoff
 
-## Concurrency and scope safety
+## Concurrency and scope check
 
-- **PC stream (backend):** `task-07-populate-production-rag`, Level 2, allowed scope `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`.
-- **LP stream (frontend):** `task-fe-03d-dom-state-tests`, Level 1, practical scope this pass is one file: `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-- Write scopes are disjoint (`src/**` + `docs/backend/**` vs `frontend/**`), so both queues can continue without overlap hold.
+- **PC active scope:** backend/doc paths (`pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`) under `task-07-populate-production-rag`.
+- **LP active scope:** single frontend spec file under `task-fe-03d-dom-state-tests`.
+- **Overlap assessment:** none. Disjoint backend/frontend scopes are safe for concurrent continuation.
 
-## Current cross-stack state
+## Backend status for frontend awareness
 
-- Backend has gate-green evidence request but no closure completion yet for task-07.
-- Frontend has a known local test defect set with explicit corrective instructions.
+- Backend task-07 has gate-green evidence but remains non-accepted due to closure incompleteness (`checkpoint_head` missing in current request evidence).
+- Frontend should not wait on backend changes for FE-03D because LP work is self-contained in component DOM unit tests.
+
+## Frontend status for backend awareness
+
+- FE-03D currently red with deterministic correction instructions and a single-file edit scope.
+- Backend should continue independently; no backend path is blocked by current frontend failure.
 
 ## Directed next actions
 
-1. **PC / Level 2 / task-07-populate-production-rag**
-   - **Dependencies:** `task-06f-ingestion-validation` accepted.
+1. **[Level 2, PC, task-07-populate-production-rag]**
+   - **Dependencies:** accepted task-06f baseline.
    - **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`.
-   - **Exact gate:**
-     - `git diff --check`
-     - task-07 backend command from `.opencode/task-plan.backend.json`
-   - **Acceptance condition:** gate green + scope clean + controller commitability.
+   - **Exact gate:** `git diff --check` then the canonical task-07 command from `.opencode/task-plan.backend.json`.
+   - **Acceptance evidence:** gate exit 0, scope-clean diff, closure-ready metadata for controller checkpoint/commit.
 
-2. **LP / Level 1 / task-fe-03d-dom-state-tests**
-   - **Dependencies:** `task-fe-03c-citations` accepted.
-   - **allowed_paths:** `frontend/**`, `docs/frontend/**` (single-file correction expected).
-   - **Exact gate:**
-     - `git diff --check`
-     - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-   - **Acceptance condition:** FE-03D gate green with corrected DOM-state tests only.
-
-## Integration risks to watch next cycle
-
-- Repeated backend closure stalls despite gate-green requests can delay task-08 backend start.
-- Repeated FE-03D spec defects can delay FE-03e security/accessibility sequencing.
+2. **[Level 1, LP, task-fe-03d-dom-state-tests]**
+   - **Dependencies:** task-fe-03c accepted.
+   - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+   - **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
+   - **Acceptance evidence:** FE-03D gate green with preserved prior valid test coverage and prescribed DOM assertions.

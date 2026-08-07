@@ -2777,3 +2777,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - Current PC runtime manifest shows no controller_state, codex_plan, or gate_summary in this RUN_DIR snapshot, so closure diagnosis is inferred from worker request + progress + prior directive only.
 - LP snapshot includes only summarized gate diagnostics; the full gate log is not present inside this RUN_DIR evidence bundle.
+
+## Cycle `20260807T011026Z` â READY
+
+- Decision fingerprint: `ea64c6315fb93bcbb9f2eb368531435ab93522135cfd67287f360844b4c75a2c`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: Current evidence shows task-07 produced a gate-green request (gate_exit=0) but remains BLOCKED with checkpoint_head=null, so the first current defect is closure incompleteness rather than a new implementation gap.
+- Next action: Execute one closure-focused pass on task-07: keep existing scoped backend changes, run git diff --check, run the exact task-07 gate once, and return complete diagnostics for controller checkpoint/final commit.
+- Avoid repeating: Do not repeat an unchanged evidence loop that ends with gate green but without closure-complete diagnostics/checkpoint-ready metadata.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011026Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011026Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011026Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011026Z/pc-git-status.txt`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: The latest LP gate failed (exit 2) and Codex READY guidance identifies local test-file defects (trailing whitespace, malformed suite structure, and prohibited patterns) in the single edited spec file.
+- Next action: Apply one bounded level-1 corrective pass in rag-page.component.spec.ts: restore valid suite structure, implement the three prescribed DOM tests, run git diff --check, then run the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce malformed test structure, trailing whitespace, guessed selectors, innerHTML/internal-state mutation, or unnecessary of/tick usage flagged by Codex.
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011026Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011026Z/lp-runtime/codex_plan.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011026Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T011026Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- PC task-07 remains BLOCKED despite gate-green evidence; if closure metadata remains incomplete, backend queue advancement to task-08/task-09 will stall.
+- LP FE-03D remains red; continued malformed spec edits can delay frontend progression to security/accessibility and final validation tasks.
+
+### Evidence limitations
+
+- This run snapshot includes gate summaries but not the full gate-full.log payloads, so diagnosis is based on summarized deterministic evidence and Codex plan artifacts.
+- Ring reviewed only the bounded RUN_DIR evidence and did not inspect live PC/LP worktrees directly.
