@@ -402,12 +402,13 @@ STAGED_OUTPUT_NAMES = (
 VALID_RING_ACTIONS = {
     "START",
     "CONTINUE",
+    "RETRY_AUTHORIZED",
     "HOLD",
     "STOP",
     "NO_ACTION",
 }
 VALID_OVERALL_STATUSES = {"READY", "BLOCKED", "NO_ACTION"}
-ACTIVE_DISPATCH_ACTIONS = {"START", "CONTINUE"}
+ACTIVE_DISPATCH_ACTIONS = {"START", "CONTINUE", "RETRY_AUTHORIZED"}
 
 
 def _atomic_write_text(path: Path, content: str) -> None:
@@ -1155,6 +1156,12 @@ def _publish_staged_outputs(
             "generated_at": generated_at.isoformat(),
             "expires_at": expires_at.isoformat(),
             "priority": "advisory",
+            "action": decision["action"],
+            "authorization_id": (
+                f"{run_id}:{worker}:{decision['task_id']}"
+                if decision["action"] == "RETRY_AUTHORIZED"
+                else None
+            ),
             "summary": decision["reason"],
             "next_action": decision["next_action"],
             "evidence_paths": decision["evidence_paths"],
@@ -1213,6 +1220,12 @@ unless direct evidence proves it. SURGICAL is temporarily disabled: never dispat
 `agent/opencode-dual-surgical`, request its review, or hold PC/LP because an
 `ACCEPT/REVISE` decision is absent. Continue disjoint PC/LP work normally.
 
+`CONTINUE` never unlocks a BLOCKED task. Use `RETRY_AUTHORIZED` only when current
+evidence proves a bounded deterministic repair exists and the task has not already
+consumed a recovery grant. It authorizes exactly one additional attempt. If that
+attempt fails, use `HOLD` and request operator diagnosis; never issue another
+recovery authorization for the same blocked task.
+
 Write these six staged files below OUTPUT_DIR on every successful cycle:
 - {output_dir}/state.json
 - {output_dir}/code-pc-review.md
@@ -1235,7 +1248,7 @@ state.json must be valid JSON with this exact structure:
   "overall_status": "READY | BLOCKED | NO_ACTION",
   "decisions": {{
     "PC": {{
-      "action": "START | CONTINUE | HOLD | STOP | NO_ACTION",
+      "action": "START | CONTINUE | RETRY_AUTHORIZED | HOLD | STOP | NO_ACTION",
       "task_id": "exact active task id or null",
       "reason": "non-empty evidence-grounded diagnosis",
       "next_action": "one focused action for one worker pass",
@@ -1248,7 +1261,7 @@ state.json must be valid JSON with this exact structure:
       "avoid_repeating": "the last failed or wasteful approach to avoid"
     }},
     "LP": {{
-      "action": "START | CONTINUE | HOLD | STOP | NO_ACTION",
+      "action": "START | CONTINUE | RETRY_AUTHORIZED | HOLD | STOP | NO_ACTION",
       "task_id": "exact active task id or null",
       "reason": "non-empty evidence-grounded diagnosis",
       "next_action": "one focused action for one worker pass",

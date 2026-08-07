@@ -310,6 +310,45 @@ raise SystemExit(0 if blocked else 1)
 PY
 }
 
+worker_retry_authorized() {
+  local worker="$1" worktree="$2" progress directive
+  case "$worker" in
+    PC) progress="$worktree/.opencode/progress.backend.json" ;;
+    LP) progress="$worktree/.opencode/progress.frontend.json" ;;
+    *) return 1 ;;
+  esac
+  directive="$RING_WORKTREE/runtime/control/$worker/ring-qwen3-directive.json"
+  [[ -f "$progress" && -f "$directive" ]] || return 1
+  python3 - "$worker" "$progress" "$directive" <<'PY'
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+worker, progress_path, directive_path = sys.argv[1:]
+progress = json.loads(Path(progress_path).read_text(encoding="utf-8"))
+directive = json.loads(Path(directive_path).read_text(encoding="utf-8"))
+active = str(progress.get("active_task") or "")
+item = next((value for value in progress.get("tasks", []) if value.get("id") == active), {})
+authorization_id = str(directive.get("authorization_id") or "")
+try:
+    expires_at = datetime.fromisoformat(str(directive.get("expires_at") or "").replace("Z", "+00:00"))
+except ValueError:
+    raise SystemExit(1)
+valid = (
+    item.get("status") == "BLOCKED"
+    and directive.get("target") == worker
+    and directive.get("task_id") == active
+    and directive.get("action") == "RETRY_AUTHORIZED"
+    and authorization_id
+    and item.get("recovery_authorization_consumed") != authorization_id
+    and int(item.get("recovery_grants_total") or 0) < 1
+    and expires_at > datetime.now(timezone.utc)
+)
+raise SystemExit(0 if valid else 1)
+PY
+}
+
 ensure_one() {
   local worker="$1" worktree state healthy count log_file age
   worktree="$(worker_worktree "$worker")"
@@ -328,8 +367,12 @@ ensure_one() {
     return 1
   fi
   if worker_is_blocked "$worker" "$worktree"; then
-    log "$worker: deliberately quiescent; active task is BLOCKED and requires Ring/operator intervention"
-    return 0
+    if worker_retry_authorized "$worker" "$worktree"; then
+      log "$worker: BLOCKED task has a fresh one-shot RETRY_AUTHORIZED directive"
+    else
+      log "$worker: deliberately quiescent; active task is BLOCKED and requires RETRY_AUTHORIZED"
+      return 0
+    fi
   fi
   if "$CHECK_ONLY"; then
     warn "$worker: inactive"
