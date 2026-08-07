@@ -1,39 +1,32 @@
-# Global summary — RUN_ID 20260807T002210Z
+# Global summary for run 20260807T002711Z
 
-## What was reviewed
+## Overall decision
 
-Ring reviewed bounded evidence under:
+`READY` — continue both queues with disjoint bounded corrections.
 
-- `runtime/ring-agent/ring/20260807T002210Z/pc-runtime/**`
-- `runtime/ring-agent/ring/20260807T002210Z/lp-runtime/**`
-- `runtime/ring-agent/ring/20260807T002210Z/worker-requests/**`
-- `runtime/ring-agent/ring/20260807T002210Z/*git-status.txt`
-- task authorities: `.opencode/task-plan.hierarchy.json`, `.opencode/task-plan.backend.json`, `.opencode/task-plan.frontend.json`
+## Evidence-backed findings
 
-(`opencode.console.log` was not read.)
+- **PC:** `worker-requests/PC.json` reports `gate_exit=0` for `task-07-populate-production-rag`, but `codex_decision` and `checkpoint_head` are null, and `pc-runtime/progress.json` still marks task-07 `BLOCKED`. First defect: closure-proof completeness.
+- **LP:** `lp-runtime/gate_summary.md` is a deterministic gate failure (`exit=2`) and `lp-runtime/codex-qwen3-extra-instructions.md` gives explicit REVISE instructions for a single spec file. First defect: incorrect FE-03D test patch shape.
 
-## Decision outcome
+## Directed next actions
 
-- **overall_status:** `READY`
-- **PC:** `CONTINUE` on `task-07-populate-production-rag`
-  - Defect: closure evidence gap in this snapshot despite prior gate-green request.
-  - Action: one bounded closure-quality pass with exact task-07 gate evidence.
-- **LP:** `CONTINUE` on `task-fe-03d-dom-state-tests`
-  - Defect: known FE-03D spec failure with Codex REVISE.
-  - Action: one level-1 corrective pass in `rag-page.component.spec.ts`, then exact gate.
+1. **PC / Level 2 / `task-07-populate-production-rag`**
+   - dependencies: prior task-06f accepted
+   - allowed_paths: `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+   - gate: `git diff --check` + exact task-07 deterministic command + closure policy
 
-## Dependency and overlap check
+2. **LP / Level 1 / `task-fe-03d-dom-state-tests`**
+   - dependencies: task-fe-03c accepted
+   - allowed_paths: `frontend/src/app/features/rag/rag-page.component.spec.ts`
+   - gate: `git diff --check` + `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` + closure policy
 
-- Active task IDs are valid in configured backend/frontend plans.
-- Write scopes are disjoint (backend vs frontend), so concurrent progression is safe.
+## Risks and limits
 
-## Risks and limitations
+- Risk: false sense of completion on PC if gate success is not accompanied by durable row-count/idempotence evidence.
+- Risk: repeated FE-03D failures if LP reuses rejected synthetic/manual patterns.
+- Limitation: this run includes gate summaries but not full logs; no new PC codex/checkpoint closure metadata in snapshot.
 
-- Backend gate depends on external DB/container state.
-- Frontend spec file is structurally fragile due prior failed attempt.
-- This RUN_DIR lacks fresh `gate_summary/codex_review/checkpoint` artifacts for PC and lacks LP worker-request JSON; decisions rely on available progress/memory/request snapshots.
+## Ring worktree edits in this cycle
 
-## Ring worktree edits
-
-- No repository product/config/test/documentation files were edited.
-- Only the six required staged outputs were written under `runtime/ring-agent/ring/20260807T002210Z/output/`.
+No repository code/config/docs were edited. Only the six staged output artifacts under this run `OUTPUT_DIR` were written.

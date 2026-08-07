@@ -1,35 +1,39 @@
-# Worker understanding assessment
+# Worker understanding checks
 
-## PC understanding
+## PC (task-07-populate-production-rag)
 
-### Evidence
-- `pc-runtime/memory.md`
-- `worker-requests/PC.json`
-- `pc-runtime/manifest.json`
+What PC must demonstrate in the next pass:
 
-### Assessment
-PC evidence shows good awareness of active task and objective, but this snapshot lacks closure artifacts (`codex_decision`, checkpoint, gate summary). The first defect is procedural: completion proof is not fully represented in this run evidence.
+1. Understand that the current defect is **not** new ingestion architecture; it is incomplete closure evidence for an already gate-green attempt.
+2. Keep work within Level-2 bounded scope only:
+   - `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`.
+3. Execute the deterministic closure sequence once, preserving artifacts that prove:
+   - gate success,
+   - non-zero `vector_store` row count,
+   - idempotent behavior evidence expected by task-07 intent.
 
-### Required next understanding behavior
-- Treat `task-07-populate-production-rag` as active until controller closes it.
-- Produce evidence that directly demonstrates row-population/idempotency outcome under the exact gate.
-- Avoid adding unrelated backend refactors.
+**Exact gate:**
+- `git diff --check`
+- `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
+- closure: `exact-gate-green + scope-clean + controller-commit`
 
-## LP understanding
+## LP (task-fe-03d-dom-state-tests)
 
-### Evidence
-- `lp-runtime/memory.md`
-- `lp-runtime/codex-qwen3-extra-instructions.md`
-- `lp-runtime/progress.json`
+What LP must demonstrate in the next pass:
 
-### Assessment
-LP has explicit correction instructions and explicit anti-patterns from Codex REVISE. The defect is execution quality in one spec file, not requirement ambiguity.
+1. Apply Codex REVISE literally in one small Level-1 patch in only:
+   - `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+2. Restore valid structure before adding assertions.
+3. Implement only the prescribed three tests (pending-loading/duplicate-submit, success-reset, transport-error-reset).
+4. Preserve existing valid FE-03D coverage and avoid all rejected anti-patterns.
 
-### Required next understanding behavior
-- Map each FE-03D requirement to concrete selectors/assertions in the local understanding report.
-- Keep scope to `rag-page.component.spec.ts` for this pass.
-- Run whitespace guard before the exact FE gate and keep diagnostics consistent with the final patch.
+**Exact gate:**
+- `git diff --check`
+- `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- closure: `exact-gate-green + scope-clean + controller-commit`
 
-## Coordinator note
+## Shared do-not-repeat guidance
 
-SURGICAL is disabled per hierarchy authority. Neither queue should be blocked waiting for SURGICAL ACCEPT/REVISE; proceed with PC/LP bounded passes and controller closure criteria (`exact-gate-green + scope-clean + controller-commit`).
+- No SURGICAL dispatch or waiting for SURGICAL ACCEPT/REVISE.
+- No scope widening.
+- No unchanged retry loops without new evidence.

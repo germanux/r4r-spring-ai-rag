@@ -2536,3 +2536,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This RUN_DIR snapshot does not include fresh pc-runtime gate_summary/codex_review/checkpoint artifacts (manifest sources are null), so closure status is inferred from worker-request and progress snapshots.
 - No LP worker-request JSON is present in this RUN_DIR; LP diagnosis relies on progress/memory and Codex extra-instructions evidence.
+
+## Cycle `20260807T002711Z` â READY
+
+- Decision fingerprint: `a48fca33ce4b5b22020e02fcce06bae8982174c90ee7bb119785acb294934ea6`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: Current run evidence shows a gate-green worker request for task-07 (gate_exit=0) with backend changes present, but closure metadata is incomplete (codex_decision=null, checkpoint_head=null) and progress still records task-07 as BLOCKED; the first defect is closure-proof completeness, not new feature scope.
+- Next action: Run one bounded closure pass for task-07: keep the existing backend/doc scope, run git diff --check, run the exact task-07 deterministic command once, and retain deterministic evidence for non-zero vector_store rows plus idempotent repeat behavior.
+- Avoid repeating: Do not block task-07 waiting for SURGICAL ACCEPT/REVISE; SURGICAL is disabled and prior churn came from stale closure dependency.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002711Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002711Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002711Z/pc-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002711Z/pc-runtime/gate_summary.md`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: Current LP gate summary is failing (exit=2), LP has one modified test file, and Codex REVISE instructions explicitly describe the required repair pattern; the first defect remains in rag-page.component.spec.ts correction quality.
+- Next action: Apply one level-1 corrective pass only in rag-page.component.spec.ts per Codex REVISE: remove rejected synthetic/manual patterns, add the controlled-pending loading test and two independent reset tests, then run git diff --check and the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce synthetic responses, innerHTML mutation, manual loading-flag mutation, guessed selectors, invalid response shapes, or brace/indentation damage already rejected by Codex.
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002711Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002711Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002711Z/lp-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002711Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- PC task-07 can appear green while closure remains blocked if ingestion row-count/idempotence evidence is not persisted with the exact gate artifacts.
+- LP FE-03D may keep failing if the repair mixes old defective attempt code with new assertions instead of restoring valid suite structure first.
+
+### Evidence limitations
+
+- This run snapshot includes gate summaries but not full gate logs; first-failure details are inferred from summary classification plus Codex REVISE packet.
+- No new codex_decision/checkpoint metadata is present for PC in this run, so acceptance cannot be claimed despite gate_exit=0 request evidence.
