@@ -1,36 +1,36 @@
-# Worker Understanding Assessment
+# Worker understanding audit (cycle 20260807T015030Z)
 
-## PC understanding and readiness
+## PC understanding
+- Evidence shows PC executed task-07 to a green gate (`gate_exit=0`) but handed off incomplete closure metadata (`codex_decision`, `next_action`, `checkpoint_head` all null).
+- This indicates partial procedural understanding of closure requirements: execution evidence captured, closure contract not fully satisfied.
+- Required correction is procedural and bounded: produce complete closure-quality request metadata with deterministic row-count proof.
 
-**Assessment:** Adequate for continuation, but closure discipline must be explicit.
+### PC bounded directive
+- **Implementation level:** 2
+- **Role:** PC
+- **Task ID:** `task-07-populate-production-rag`
+- **Dependencies:** `task-06f-ingestion-validation:ACCEPTED`
+- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+- **Exact gate:**
+  - `git diff --check`
+  - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
 
-Evidence indicates PC already produced in-scope backend changes and a gate-green request for task-07. The present blocker is procedural/evidence completeness (`codex_decision`, `next_action`, `checkpoint_head` null), not a new architectural unknown.
+## LP understanding
+- LP has active one-file edits but current authoritative evidence still indicates failed gate and active Codex REVISE packet.
+- Codex notes explicit misunderstanding patterns from prior attempt (invalid suite structure and prohibited testing patterns).
+- Required correction is to follow the packet literally in a single file and provide consistent post-run diagnostics.
 
-### Required understanding checkpoint for next pass
+### LP bounded directive
+- **Implementation level:** 1
+- **Role:** LP
+- **Task ID:** `task-fe-03d-dom-state-tests`
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:**
+  - `git diff --check`
+  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
 
-- Treat this as **closure-quality** work, not new feature expansion.
-- Preserve task-07 scope and produce explicit non-zero `vector_store` count proof.
-- Ensure request/closure metadata fields are populated and consistent with executed gate.
-
-## LP understanding and readiness
-
-**Assessment:** Partially demonstrated; prior pass missed packet constraints.
-
-Codex packet explicitly identifies misunderstanding in the prior LP approach (malformed suite structure and prohibited patterns). The next pass must be tightly prescriptive and one-file only.
-
-### Required understanding checkpoint for next pass
-
-- Map required FE-03D behaviors to concrete selectors before editing:
-  - loading status → `.loading-state[role="status"]`
-  - disabled controls → `textarea`, `.submit-button`
-  - transport error → `.error-state[role="alert"]`
-  - answer visibility → `.answer-content`
-  - reset cleanup → absence of answer/error/citations + presence of `.idle-state`
-- Implement only the three prescribed tests and preserve existing valid coverage.
-- Run `git diff --check` before the gate and keep diagnostics aligned to the actual run.
-
-## Role/level packaging confirmation
-
-- **PC package:** Level 2, bounded backend closure task.
-- **LP package:** Level 1, one observable correction in one test file.
-- No SURGICAL dispatch required or permitted.
+## Shared no-repeat rules
+1. Do not widen scope beyond declared `allowed_paths`.
+2. Do not report acceptance without exact gate green evidence.
+3. Do not rely on SURGICAL review; it is disabled.

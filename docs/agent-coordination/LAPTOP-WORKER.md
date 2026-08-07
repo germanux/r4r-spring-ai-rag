@@ -1,38 +1,42 @@
-# LP Code Review (Frontend)
+# LP code review (Ring cycle 20260807T015030Z)
 
-## Evidence reviewed (current RUN_DIR)
-
-- `runtime/ring-agent/ring/20260807T014529Z/lp-runtime/progress.json`
-- `runtime/ring-agent/ring/20260807T014529Z/lp-runtime/memory.md`
-- `runtime/ring-agent/ring/20260807T014529Z/lp-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260807T014529Z/lp-runtime/codex_plan.json`
-- `runtime/ring-agent/ring/20260807T014529Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `runtime/ring-agent/ring/20260807T014529Z/lp-git-status.txt`
+## Evidence reviewed
+- `runtime/ring-agent/ring/20260807T015030Z/lp-runtime/progress.json`
+- `runtime/ring-agent/ring/20260807T015030Z/lp-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260807T015030Z/lp-runtime/codex_plan.json`
+- `runtime/ring-agent/ring/20260807T015030Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260807T015030Z/lp-git-status.txt`
+- `runtime/ring-agent/ring/20260807T015030Z/lp-git-diff-stat.txt`
 
 ## Current diagnosis
+- Active frontend task is `task-fe-03d-dom-state-tests`.
+- The deterministic gate summary reports failure (`exit=2`).
+- Codex decision is `REVISE` with prescriptive one-file corrections targeting `frontend/src/app/features/rag/rag-page.component.spec.ts`.
+- LP has an in-progress one-file diff, but no evidence in this RUN_DIR shows a successful rerun after applying all mandatory corrections.
 
-`task-fe-03d-dom-state-tests` remains pending with the latest deterministic gate failure (`exit code: 2`). The active Codex packet is explicit: this is a one-file local spec correction with known anti-patterns to remove and three prescribed DOM tests to implement safely. No newer LP execution evidence exists in this RUN_DIR to show completion.
+## First current defect (correction before new implementation)
+The defect is incomplete correction of a known failing test-file revision packet. No scope expansion is needed.
 
-## Directed next package
-
+## Bounded work package
 - **Implementation level:** Level 1
 - **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED` (already satisfied per progress evidence)
-- **allowed_paths (canonical):** `frontend/**`, `docs/frontend/**` (effective narrow focus path in packet: `frontend/src/app/features/rag/rag-page.component.spec.ts`)
-- **Next action (single worker pass):** complete exactly one bounded spec-file correction per Codex plan/extra instructions, then run deterministic gates once.
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED` (already satisfied by progress evidence)
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts` (narrowed to the codex packet focus path)
+- **Next action (single pass):**
+  1. Restore valid suite structure and remove rejected patterns listed in the Codex packet.
+  2. Keep only the prescribed three DOM tests (controlled-pending loading duplicate-submit guard, success-reset, transport-error-reset).
+  3. Run `git diff --check`.
+  4. Run `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` once.
+  5. Return consistent diagnostics plus requirement-to-selector assertion mapping in local understanding.
 
-## Exact gate and acceptance conditions
-
-1. `git diff --check`
-2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-3. Closure policy: exact-gate-green + scope-clean + controller-commit
-4. Patch quality constraints from packet:
-   - preserve valid existing suite coverage,
-   - remove malformed structure and prohibited patterns,
-   - include only the three required DOM tests,
-   - keep diagnostics/understanding consistent with final patch and executed gate.
+## Exact acceptance gate
+- `git diff --check`
+- `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- Closure policy: `exact-gate-green + scope-clean + controller-commit`
 
 ## Avoid repeating
+- Do **not** reintroduce malformed braces/indentation, trailing whitespace, guessed selectors, internal-state mutations, `innerHTML` mutation, synthetic response fields, or unnecessary `of`/`tick` usage rejected by the active packet.
 
-Do **not** reintroduce malformed braces/suite structure, trailing whitespace, internal-state mutation, `innerHTML` mutation, guessed selectors, or other explicitly rejected patterns.
+## Ring repository edits
+- None. Ring made no product/test/config edits.

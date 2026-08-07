@@ -3171,3 +3171,52 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This RUN_DIR has no new PC codex_review/codex_plan/gate_summary/controller_state artifacts (manifest fields are null), so diagnosis relies on worker request metadata plus progress/memory snapshots.
 - LP evidence is from run 20260807T005022Z with pending correction instructions; no newer LP execution artifacts are present in this RUN_DIR.
+
+## Cycle `20260807T015030Z` â READY
+
+- Decision fingerprint: `5e7cb7a768dc015ad92d8d6cf9b6d4a577047e1e6eaaaf648cdec8e45a34a410`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: Latest PC request reports gate_exit=0 but closure metadata is incomplete (codex_decision, next_action, checkpoint_head are null), and progress still marks task-07 as BLOCKED rather than accepted.
+- Next action: Run one closure-quality pass for task-07 only: keep scope unchanged, run git diff --check, run the exact task-07 gate once, and return explicit gate exit plus non-zero vector_store row-count evidence with non-null closure metadata fields.
+- Avoid repeating: Do not submit another gate-green checkpoint request with null codex_decision/next_action/checkpoint_head fields.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015030Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015030Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015030Z/pc-runtime/previous-ring-qwen3-directive.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015030Z/pc-git-status.txt`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP task-fe-03d remains pending with a failing deterministic gate (exit=2), and the current Codex REVISE packet identifies a one-file spec correction that is not yet demonstrated as completed.
+- Next action: Apply exactly the bounded one-file correction in rag-page.component.spec.ts per the active Codex packet, then run git diff --check followed by the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce malformed suite structure, trailing whitespace, internal-state mutations, innerHTML mutation, guessed selectors, or other patterns explicitly rejected by the current Codex packet.
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015030Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015030Z/lp-runtime/codex_plan.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015030Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015030Z/lp-git-status.txt`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T015030Z/lp-runtime/progress.json`
+
+### Integration risks
+
+- PC and LP are active simultaneously; maintain strict backend/frontend write-scope separation to avoid cross-queue contamination.
+- PC evidence currently proves a green gate but not closure-quality metadata; accepting without metadata would break deterministic task closure traceability.
+
+### Evidence limitations
+
+- RUN_DIR includes LP gate summary and Codex packet, but not a new LP rerun proving that the prescribed correction has been executed.
+- PC runtime snapshot has no Codex plan/review artifact in manifest sources for this run, so closure intent must be inferred from worker-request fields and prior directive.
