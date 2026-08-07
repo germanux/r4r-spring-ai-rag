@@ -3469,3 +3469,53 @@ Append-only ledger generated after each validated Ring cycle.
 
 - Current RUN_DIR contains no LP controller_state.json or LP gate_summary.md for this cycle, so LP completion cannot be inferred.
 - Current RUN_DIR contains no Codex review/plan artifacts for PC in this cycle; decision relies on controller/checkpoint/gate artifacts only.
+
+## Cycle `20260807T023359Z` â READY
+
+- Decision fingerprint: `a1314c50b25ac1a2f9e65525e211c1d07b85b3c57f4e9db70cefe97c83f94e7e`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: The exact gate is green (exit 0) but controller status is CHECKPOINT_COMMIT_FAILED (exit 67), checkpoint status is failed with head_after=null, and progress still marks task-07 BLOCKED; closure-quality evidence is incomplete.
+- Next action: Run one closure-only pass for task-07: keep current task scope, run git diff --check, run the exact task-07 gate once, and return controller/checkpoint evidence with non-null commit metadata plus vector_store row-count proof.
+- Avoid repeating: Do not submit another gate-green run that leaves checkpoint/controller closure metadata failed or null.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T023359Z/pc-runtime/controller_state.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T023359Z/pc-runtime/checkpoint.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T023359Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T023359Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T023359Z/pc-git-status.txt`
+
+### LP
+
+- Decision: `HOLD`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP is hard-stopped by GLOBAL_ATTEMPT_LIMIT_REACHED (attempts=17, limit=6) with task still BLOCKED; no new successful gate/controller completion evidence exists in this run.
+- Next action: After attempt-budget reset/rearm, execute exactly one bounded pass on rag-page.component.spec.ts using the existing Codex REVISE correction packet, then run git diff --check and the exact FE-03D gate once.
+- Avoid repeating: Do not run another unplanned broad retry or malformed spec rewrite; apply the one-file correction packet before any new gate attempt.
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T023359Z/lp-runtime/controller_state.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T023359Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T023359Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T023359Z/worker-requests/LP.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T023359Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- PC task-07 closure can remain stuck if checkpoint auto-commit failure cause is not surfaced with explicit metadata in the next pass.
+- LP task-fe-03d has repeated churn risk in a single spec file; uncontrolled retries can regress already-valid answer/abstention/citation coverage.
+
+### Evidence limitations
+
+- This RUN_DIR snapshot does not include a detailed error trace explaining why PC checkpoint auto-commit failed beyond controller/checkpoint status fields.
+- This RUN_DIR snapshot has no new LP gate_summary or full gate diagnostics for run 20260807T022855Z because execution terminated at global attempt limit.

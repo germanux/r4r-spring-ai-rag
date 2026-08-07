@@ -1,35 +1,49 @@
-# LP Code Review (Ring)
+# LP code review (evidence-grounded)
 
-## Current evidence-backed defect
+## Current diagnosis
 
-Task `task-fe-03d-dom-state-tests` remains unresolved.
+- Active frontend task is `task-fe-03d-dom-state-tests`.
+- `lp-runtime/controller_state.json` is `GLOBAL_ATTEMPT_LIMIT_REACHED` (`attempts: 17`, `limit: 6`, exit `70`).
+- `lp-runtime/progress.json` still marks task `BLOCKED`.
+- A large uncommitted diff remains in one file (`frontend/src/app/features/rag/rag-page.component.spec.ts`; 109 insertions/20 deletions in this snapshot).
+- `lp-runtime/codex-qwen3-extra-instructions.md` contains a precise one-file `REVISE` correction packet that has not yet been completed with new green gate evidence.
 
-- `lp-runtime/codex-qwen3-extra-instructions.md` is `REVISE` with a strict one-file repair packet.
-- `lp-runtime/memory.md` records a prior timeout (`session-timeout`) and no new acceptance.
-- `lp-git-status.txt` and `lp-git-diff-stat.txt` show an uncommitted diff in `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-- No LP controller-state or gate-summary artifact is present in this RUN_DIR to prove a fresh pass.
+Primary defect is **execution control blockage** (attempt-limit stop), with unresolved one-file correction work still pending.
 
-The first current defect is still the **single-file FE-03D test correction**.
-
-## Bounded next work package
+## Directed next package
 
 - **Implementation level:** Level 1
 - **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
+- **Dependencies:** `task-fe-03c-citations` accepted (already satisfied)
 - **allowed_paths (canonical):** `frontend/**`, `docs/frontend/**`
-- **Bounded write target for this pass:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:**
-  - `git diff --check`
-  - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Narrowed write scope for this pass:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Action state now:** HOLD until attempt budget is reset/rearmed by controller policy; then execute exactly one bounded repair pass.
 
-## Acceptance conditions for this pass
+## Exact gate and acceptance conditions (when unblocked)
 
-1. Only the prescribed FE-03D correction packet behavior is implemented in the one spec file.
-2. Test structure is valid (balanced braces/indentation, no malformed additions called out by Codex).
-3. Deterministic FE-03D gate exits `0`.
-4. Scope is clean and controller can close with commit.
+1. Apply only the existing Codex FE-03D correction packet in the spec file.
+2. `git diff --check`
+3. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+4. Closure policy evidence present: `exact-gate-green + scope-clean + controller-commit`
+
+### Must be explicitly proven in that pass
+
+- Controlled pending submission shows loading status and disabled controls.
+- Success path plus reset clears answer/citations/error and restores idle state.
+- Transport-error path plus reset clears alert and restores idle state.
+- Existing valid answer/abstention/citation/escaping coverage remains intact.
 
 ## Avoid repeating
 
-Do **not** reintroduce internal-state mutations, guessed selectors, malformed spec structure, or timeout-prone reruns without first applying the correction packet.
+- Do **not** run broad retries or restructure tests outside the correction packet.
+- Do **not** rerun the gate before the one-file repair is applied.
+
+## Evidence consulted
+
+- `runtime/ring-agent/ring/20260807T023359Z/lp-runtime/controller_state.json`
+- `runtime/ring-agent/ring/20260807T023359Z/lp-runtime/progress.json`
+- `runtime/ring-agent/ring/20260807T023359Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260807T023359Z/lp-git-status.txt`
+- `runtime/ring-agent/ring/20260807T023359Z/lp-git-diff-stat.txt`
+- `runtime/ring-agent/ring/20260807T023359Z/worker-requests/LP.json`

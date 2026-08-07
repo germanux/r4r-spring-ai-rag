@@ -1,23 +1,36 @@
-# Worker Understanding Check
+# Worker understanding assessment
 
-## PC understanding quality
+## PC understanding
 
-Evidence indicates PC has a valid technical implementation path for task-07 but is blocked at closure mechanics:
+### Evidence
+- `pc-runtime/memory.md` correctly states gate green and active task context.
+- `pc-runtime/pre_edit_understanding.md` was skipped because gate already green.
+- `pc-runtime/controller_state.json` + `checkpoint.json` show closure failure was not resolved.
 
-- Gate success is proven (`pc-runtime/gate_summary.md`).
-- Closure completion is not proven due to `CHECKPOINT_COMMIT_FAILED` (`pc-runtime/controller_state.json`).
+### Assessment
+- Technical direction is mostly understood (task scope and gate), but completion criteria were under-enforced in execution.
+- Missing point: a green gate is insufficient without successful checkpoint/controller closure metadata.
 
-Required understanding for the next pass: this is a **closure-quality** correction, not feature expansion. Keep task and scope fixed, produce complete closure metadata, and preserve deterministic row-count proof.
+### Required understanding for next pass
+- Treat this as a closure pass, not a feature pass.
+- Prove all three: deterministic gate green, scope clean, and controller-commit success.
 
-## LP understanding quality
+## LP understanding
 
-Codex explicitly flagged LP understanding as inadequate in the last revise packet (`lp-runtime/codex-qwen3-extra-instructions.md`), and prior execution timed out (`lp-runtime/memory.md`).
+### Evidence
+- `lp-runtime/codex-qwen3-extra-instructions.md` explicitly marks prior understanding as inadequate and gives a selector-by-selector correction packet.
+- `lp-runtime/controller_state.json` indicates repeated retries ended at global attempt limit.
 
-Required understanding for the next pass: implement only the three prescribed FE-03D DOM-state tests in the single spec file while preserving existing valid coverage and structure.
+### Assessment
+- Current understanding is insufficiently anchored to the prescribed DOM selectors and bounded one-file plan.
+- Repeated attempt churn suggests execution drift from the correction packet.
 
-## Directive precision for both workers
+### Required understanding for next pass (after unblock)
+- Map every FE-03D requirement directly to required selectors/assertions in the spec file.
+- Keep changes exclusive to `rag-page.component.spec.ts` and avoid synthetic/internal-state shortcuts prohibited by packet.
+- Run `git diff --check` before the exact FE-03D gate.
 
-- Enforce one focused pass per worker.
-- Run `git diff --check` before expensive gates.
-- No scope expansion, no Git history commands, no gate bypass.
-- Closure target remains: exact-gate-green + scope-clean + controller-commit.
+## Coordinator enforcement notes
+
+- SURGICAL remains disabled; no reviewer handoff is required for PC/LP progress.
+- Backend and frontend paths remain disjoint, so PC can proceed while LP is held for controller attempt-budget unblock.

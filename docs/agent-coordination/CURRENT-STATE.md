@@ -1,42 +1,43 @@
-# Global Summary — Run 20260807T022858Z
+# Global coordination summary — run 20260807T023359Z
 
-## Outcome
+## What was reviewed
 
-`overall_status: READY`
+- Primary bounded evidence under `runtime/ring-agent/ring/20260807T023359Z/`.
+- PC and LP runtime snapshots, controller/checkpoint status, progress, prior directives, and worker request manifest.
+- Canonical routing/level authority: `.opencode/task-plan.hierarchy.json`.
+- Canonical task IDs and gates: `.opencode/task-plan.backend.json`, `.opencode/task-plan.frontend.json`.
 
-Both queues have actionable, disjoint next passes based on current RUN_DIR evidence.
+## Current decisions
 
-## PC decision
-
-- **Action:** CONTINUE
+### PC
+- **Action:** `CONTINUE`
 - **Task:** `task-07-populate-production-rag`
-- **Why:** gate is green but controller checkpoint commit failed, so task closure is incomplete.
-- **Next pass:** one closure-quality rerun with the exact task-07 gate and explicit vector row-count + closure metadata evidence.
+- **Why:** deterministic gate is green but closure metadata failed (`CHECKPOINT_COMMIT_FAILED`, checkpoint `status: failed`), and progress remains `BLOCKED`.
+- **Next pass:** one closure-only pass with exact task gate + explicit controller/checkpoint success evidence.
 
-Primary evidence:
-- `pc-runtime/controller_state.json`
-- `pc-runtime/checkpoint.json`
-- `pc-runtime/gate_summary.md`
-- `pc-runtime/progress.json`
-
-## LP decision
-
-- **Action:** CONTINUE
+### LP
+- **Action:** `HOLD`
 - **Task:** `task-fe-03d-dom-state-tests`
-- **Why:** Codex REVISE packet remains unresolved; prior run timed out; one spec file still has uncommitted changes.
-- **Next pass:** apply exactly the one-file FE-03D correction packet and run deterministic FE-03D gate once.
+- **Why:** controller hard-stop `GLOBAL_ATTEMPT_LIMIT_REACHED` (17 attempts vs limit 6), with unresolved one-file correction packet and no new green gate evidence.
+- **Next pass (post-unblock):** execute exactly one bounded spec-file repair pass, then run `git diff --check` and exact FE-03D gate.
 
-Primary evidence:
-- `lp-runtime/codex-qwen3-extra-instructions.md`
-- `lp-runtime/memory.md`
-- `lp-runtime/progress.json`
-- `lp-git-status.txt`
+## First current defects identified
 
-## Cross-stack risk and dependency notes
+1. **PC defect:** closure pipeline failure after a green gate (checkpoint/controller failure blocks acceptance).
+2. **LP defect:** controller attempt-budget stop with unresolved correction and repeated churn risk.
 
-- Write scopes are disjoint (backend vs frontend), so both passes can proceed in parallel.
-- Highest risk is repeated non-semantic retries (PC closure loop, LP structure regressions). Avoid by enforcing exact correction packets and gates.
+## Risks
 
-## Ring worktree edits in this cycle
+- Repeating PC gate runs without fixing closure evidence can create perpetual blocked state.
+- Repeating LP retries without strict packet adherence can further destabilize `rag-page.component.spec.ts`.
 
-No repository code or docs were modified. Only required staged artifacts were written under `runtime/ring-agent/ring/20260807T022858Z/output/`.
+## Evidence limitations
+
+- No detailed root-cause trace for the PC auto-commit failure is present in this snapshot beyond status fields.
+- No new LP gate summary/full diagnostic bundle is present for the latest stopped run because execution ended at attempt-limit.
+
+## Ring repository edits in this cycle
+
+- No product/test/config/docs repository files were modified.
+- Only the six staged coordination artifacts were written under:
+  `runtime/ring-agent/ring/20260807T023359Z/output/`

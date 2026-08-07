@@ -1,37 +1,46 @@
-# Backend ↔ Frontend Handoff
+# Backend ↔ Frontend handoff
 
-## Queue status
+## Queue status split
 
-- **Backend (PC):** continue `task-07-populate-production-rag` closure-quality pass.
-- **Frontend (LP):** continue `task-fe-03d-dom-state-tests` one-file correction pass.
+### Backend (PC)
+- **Task:** `task-07-populate-production-rag`
+- **State:** actionable now (`CONTINUE`)
+- **Defect type:** closure-quality evidence gap after green deterministic gate
+- **Implementation level / owner:** Level 2 / PC
 
-## Ownership and scope separation
+### Frontend (LP)
+- **Task:** `task-fe-03d-dom-state-tests`
+- **State:** temporarily blocked (`HOLD`) due controller global attempt-limit stop
+- **Defect type:** worker execution budget stop + unresolved one-file correction packet
+- **Implementation level / owner:** Level 1 / LP
 
-- PC active edits are backend paths (`src/main/**`, `src/test/**`, `docs/backend/**`) per `pc-git-status.txt`.
-- LP active edit is frontend spec path (`frontend/src/app/features/rag/rag-page.component.spec.ts`) per `lp-git-status.txt`.
-- **No current write-scope overlap** between PC and LP tasks.
+## Scope overlap check
 
-## Required packages for next pass
+- PC allowed_paths: `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+- LP allowed_paths: `frontend/**`, `docs/frontend/**` (narrowed this pass to one spec file)
+- **Result:** No backend/frontend write-scope overlap; safe to continue backend while frontend is held.
 
-### Package PC-07-CLOSE (Level 2, PC)
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `task-06f-ingestion-validation:ACCEPTED`
-- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **Gate:**
-  1. `git diff --check`
-  2. task-07 deterministic gate command from `.opencode/task-plan.backend.json`
-- **Acceptance evidence:** gate exit `0`, vector_store rows `> 0`, non-null closure metadata, controller-commit-capable state.
+## Bounded packages
 
-### Package LP-FE03D-REPAIR (Level 1, LP)
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
-- **allowed_paths:** `frontend/**`, `docs/frontend/**` (bounded to one spec file this pass)
-- **Gate:**
-  1. `git diff --check`
-  2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Acceptance evidence:** one-file corrective diff consistent with Codex packet + gate exit `0`.
+1. **Package PC-07-CLOSURE (Level 2, PC)**
+   - **Task ID:** `task-07-populate-production-rag`
+   - **Dependencies:** task-06f accepted
+   - **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+   - **Exact gate:**
+     - `git diff --check`
+     - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
+   - **Acceptance evidence:** controller/checkpoint success metadata + row-count proof + scope-clean diff.
 
-## Integration risk watch
+2. **Package LP-03D-REPAIR (Level 1, LP, pending unblock)**
+   - **Task ID:** `task-fe-03d-dom-state-tests`
+   - **Dependencies:** task-fe-03c accepted; controller attempt budget reset/rearm
+   - **allowed_paths (narrowed):** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+   - **Exact gate:**
+     - `git diff --check`
+     - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+   - **Acceptance evidence:** one-file scoped patch, green gate, and controller completion.
 
-1. Backend loop risk: repeated gate-green with failed checkpoint commit can stall closure.
-2. Frontend churn risk: large one-file diff may keep reintroducing the same malformed test patterns.
+## Integration risks to watch
+
+- If PC repeats gate-green without resolving checkpoint commit metadata, backend queue can deadlock on closure.
+- LP repeated spec rewrites can regress existing DOM assertions; enforce one-file correction packet exactly.
