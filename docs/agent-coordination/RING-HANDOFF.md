@@ -1,46 +1,46 @@
 # Backend ↔ Frontend handoff
 
-## Queue status snapshot
+## Queue snapshot
 
-- **Backend (PC):** `task-07-populate-production-rag` is gate-green but still blocked at closure (`CHECKPOINT_COMMIT_FAILED`).
-- **Frontend (LP):** `task-fe-03d-dom-state-tests` remains red with a bounded single-file correction pending.
+- **Backend / PC:** `task-07-populate-production-rag` has a green gate but remains blocked by closure commit failure (`CHECKPOINT_COMMIT_FAILED`).
+- **Frontend / LP:** `task-fe-03d-dom-state-tests` remains red with an active single-file Codex correction packet.
 
-## Concurrency and scope safety
+## Concurrency and write-scope safety
 
-No write-scope overlap detected for the next pass:
+Next packages are disjoint and safe to run in parallel:
 
-- PC scope: `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- LP scope: `frontend/src/app/features/rag/rag-page.component.spec.ts` (within `frontend/**`)
+- **PC allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+- **LP allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
 
-These are disjoint backend/frontend paths, so both queues may continue in parallel.
+No backend/frontend path overlap is present.
 
-## Bounded next actions
+## Bounded packages for next pass
 
 ### PC package
 
 - **Level:** 2
 - **Role:** PC
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `task-06f-ingestion-validation` accepted
+- **Dependencies:** `task-06f-ingestion-validation: ACCEPTED`
 - **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
 - **Exact gate:**
   - `git diff --check`
-  - task-07 exact backend command from `.opencode/task-plan.backend.json`
-  - closure policy `exact-gate-green + scope-clean + controller-commit`
+  - `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
+  - Closure policy `exact-gate-green + scope-clean + controller-commit`
 
 ### LP package
 
 - **Level:** 1
 - **Role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations` accepted
+- **Dependencies:** `task-fe-03c-citations: ACCEPTED`
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
 - **Exact gate:**
   - `git diff --check`
   - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-  - closure policy `exact-gate-green + scope-clean + controller-commit`
+  - Closure policy `exact-gate-green + scope-clean + controller-commit`
 
-## Integration risks to watch
+## Integration risks to monitor
 
-1. Backend closure may continue to stall if evidence metadata is incomplete even when gate output is green.
-2. Frontend FE-03D can loop if LP reintroduces previously rejected spec patterns instead of following the current correction packet exactly.
+1. Backend queue can stall despite green gates if closure metadata stays incomplete.
+2. Frontend queue can stall if LP repeats patterns already rejected by Codex instead of applying the bounded correction packet exactly.
