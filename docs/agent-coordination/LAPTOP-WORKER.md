@@ -1,44 +1,55 @@
-# LP code review (evidence-based)
+# LP code review (Ring)
 
-## Current diagnosis
+## Evidence reviewed
 
-- Active task: `task-fe-03d-dom-state-tests` (`lp-runtime/progress.json`: `PENDING`).
-- Deterministic gate is failing (`lp-runtime/gate_summary.md`: classification `gate-failure`, exit `2`).
-- LP has one modified file in scope (`lp-git-status.txt`):
-  - `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- Current Codex packet is `REVISE` with explicit one-file corrective instructions (`lp-runtime/codex-qwen3-extra-instructions.md`).
-- Prior run also records watchdog timeout, so no acceptance can be inferred (`lp-runtime/memory.md`).
+- `runtime/ring-agent/ring/20260807T020031Z/lp-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260807T020031Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260807T020031Z/lp-runtime/memory.md`
+- `runtime/ring-agent/ring/20260807T020031Z/lp-runtime/progress.json`
+- `runtime/ring-agent/ring/20260807T020031Z/lp-git-status.txt`
+- `runtime/ring-agent/ring/20260807T020031Z/lp-git-diff-stat.txt`
 
 ## First current defect
 
-The FE-03D test-spec correction is incomplete/unproven: gate remains red and the required one-file DOM-test structure fix has not been demonstrated by a new green run.
+`task-fe-03d-dom-state-tests` remains pending with unresolved correction evidence:
 
-## Bounded next action package
+- Deterministic gate summary reports failure (`exit code: 2`).
+- Active Codex packet is `REVISE` with explicit one-file corrections.
+- Current run shows no new gate-green evidence.
+- Prior LP attempt also hit session timeout (`stop_reason=session-timeout` in memory).
+
+## Bounded next work package
 
 - **Implementation level:** Level 1
 - **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
-- **allowed_paths (canonical):** `frontend/**`, `docs/frontend/**` (effective edit target remains one file per current packet)
-- **Exact gate:**
-  1. `git diff --check`
-  2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+- **Dependencies:** `task-fe-03c-citations: ACCEPTED` (already satisfied)
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Objective:** Complete the prescribed one-file FE-03D spec correction and re-prove the task gate.
 
-## Required correction focus (single pass)
+### One-pass action
 
-Apply only the prescribed test repair in `rag-page.component.spec.ts`:
-- restore valid suite structure,
-- keep only the controlled-pending loading test,
-- add independent success-reset and transport-error-reset DOM tests,
-- preserve existing valid answer/abstention/citation/escaping coverage,
-- avoid all explicitly rejected patterns in the Codex packet.
+Apply exactly the correction packet in `codex-qwen3-extra-instructions.md`:
 
-## Acceptance evidence required
+1. Restore valid suite structure and remove defective attempt additions.
+2. Keep one controlled-pending loading/duplicate-submit DOM test.
+3. Add independent success-reset and transport-error-reset tests.
+4. Preserve existing valid answer/abstention/citation/escaping/service-isolation coverage.
+5. Run `git diff --check` then the exact FE-03D gate once.
 
-1. FE-03D exact gate exits `0`.
-2. Diff is whitespace-clean (`git diff --check`) and scope-clean.
-3. Run evidence and understanding report map selectors/assertions to FE-03D requirements consistently.
+### Exact gate
 
-## Avoid repeating
+```bash
+./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+```
 
-Do not reintroduce malformed braces/indentation, internal-state mutation, `innerHTML` mutation, guessed selectors, or synthetic response shapes rejected by the active packet.
+### Acceptance conditions
+
+- Diff is limited to the single allowed file.
+- `git diff --check` is clean.
+- FE-03D gate exits 0 on this pass.
+- Evidence is internally consistent (patch, diagnostics, and understanding reflect the same final run).
+
+### Avoid repeating
+
+Do not reintroduce malformed braces/indentation, internal-state mutations, `innerHTML` mutation, guessed selectors, or timeout-only reruns without plan change.

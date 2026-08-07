@@ -2,37 +2,36 @@
 
 ## PC understanding status
 
-Evidence indicates the backend worker completed a gate-green run but did not produce closure-complete metadata.
-
-- Supporting evidence:
-  - `pc-runtime/gate_summary.md` (green, exit 0)
-  - `worker-requests/PC.json` (null `codex_decision`, `next_action`, `checkpoint_head`)
-  - `pc-runtime/progress.json` (task-07 still `BLOCKED`)
+Evidence indicates PC successfully executed the task-07 gate path (`gate_exit=0`) but did not complete closure reporting fields. This suggests execution-level understanding is adequate, while controller-facing completion semantics are incomplete.
 
 ### Required understanding for next pass
 
-- This is a **Level 2 / PC** completion-quality pass, not a new feature pass.
-- Keep to **task-07** with canonical `allowed_paths` only.
-- Return coherent closure artifacts: gate outcome + row-count proof + non-null metadata.
+- A gate-green checkpoint is not closure by itself.
+- Worker request metadata must be complete and non-null for closure handling.
+- Task-07 must include explicit row-count proof (`vector_store`) in returned evidence.
 
 ## LP understanding status
 
-Evidence indicates the frontend worker has a red gate and a detailed REVISE packet but no demonstrated successful follow-up run.
+Evidence indicates LP has a precise correction packet but prior local understanding/execution quality was insufficient:
 
-- Supporting evidence:
-  - `lp-runtime/gate_summary.md` (exit 2)
-  - `lp-runtime/codex-qwen3-extra-instructions.md` (explicit one-file corrective map)
-  - `lp-git-status.txt` (single-file modification)
-  - `lp-runtime/memory.md` (prior timeout; no acceptance claim)
+- gate summary is failing (`exit 2`)
+- prior run timed out
+- Codex packet explicitly flags misunderstood/forbidden patterns
 
 ### Required understanding for next pass
 
-- This is a **Level 1 / LP** one-file correction in `rag-page.component.spec.ts`.
-- Keep edits prescriptive and minimal; do not widen into production code.
-- Prove FE-03D by DOM selectors/assertions via the exact gate.
+- Keep FE-03D correction strictly one-file and DOM-observable.
+- Use the specified selectors/assertion mapping (`.loading-state`, `.error-state`, `.answer-content`, `.citations-section`, `.idle-state`, disabled controls).
+- Preserve existing valid tests; do not introduce internal-state mutation patterns.
 
-## Shared constraints reaffirmed
+## Bounded directives
 
-1. No Git history operations by workers.
-2. Run `git diff --check` before expensive deterministic gates.
-3. Closure requires `exact-gate-green + scope-clean + controller-commit`.
+1. **PC / Level 2 / `task-07-populate-production-rag`**
+   - dependencies: `task-06f-ingestion-validation: ACCEPTED`
+   - allowed_paths: `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+   - exact gate: task-07 backend gate command (plus `git diff --check`)
+
+2. **LP / Level 1 / `task-fe-03d-dom-state-tests`**
+   - dependencies: `task-fe-03c-citations: ACCEPTED`
+   - allowed_paths: `frontend/src/app/features/rag/rag-page.component.spec.ts`
+   - exact gate: `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` (after `git diff --check`)
