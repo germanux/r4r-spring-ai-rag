@@ -2488,3 +2488,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This cycle includes gate summaries and request metadata in RUN_DIR, but not full gate logs; detailed assertion-level failure traces are delegated to Codex review artifacts.
 - No new SURGICAL ACCEPT/REVISE output for PC task-07 is present in this RUN_DIR snapshot.
+
+## Cycle `20260807T002210Z` â READY
+
+- Decision fingerprint: `5e6263c61875971ca39274e2eb0f9c2f4f022c845e8f863f7adc0318cea36e22`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: Primary evidence shows task-07 already produced a gate-green worker request (gate_exit=0) but closure evidence is incomplete in this snapshot (codex_decision=null, checkpoint_head=null, progress remains BLOCKED), so the first current defect is closure-proof completeness rather than new architecture work.
+- Next action: Run one bounded closure pass for task-07: keep edits inside existing task scope, execute git diff --check, then execute the exact task-07 gate once and retain deterministic evidence that ingestion populated rows and remained idempotent.
+- Avoid repeating: Do not block task-07 waiting for SURGICAL ACCEPT/REVISE; SURGICAL is disabled and stale closure dependency caused churn.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002210Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002210Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002210Z/pc-runtime/manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002210Z/pc-git-status.txt`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: Frontend evidence shows active task-fe-03d with latest exact gate exit=2 and Codex decision=REVISE; current uncommitted changes are isolated to rag-page.component.spec.ts and correction instructions are explicit.
+- Next action: Apply one level-1 corrective edit pass only in rag-page.component.spec.ts per the Codex REVISE packet, then run git diff --check and the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce synthetic tests, innerHTML mutation, manual loading-flag mutation, guessed selectors, invalid response shapes, or brace/indentation damage already rejected by Codex.
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002210Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002210Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002210Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T002210Z/lp-git-status.txt`
+
+### Integration risks
+
+- PC task-07 depends on mutable external DB/container state; missing or drifted environment variables can invalidate ingestion-count evidence even when code is unchanged.
+- LP FE-03D edits are in a fragile spec file with prior structural damage; mixing cleanup and new assertions can regress existing accepted coverage.
+
+### Evidence limitations
+
+- This RUN_DIR snapshot does not include fresh pc-runtime gate_summary/codex_review/checkpoint artifacts (manifest sources are null), so closure status is inferred from worker-request and progress snapshots.
+- No LP worker-request JSON is present in this RUN_DIR; LP diagnosis relies on progress/memory and Codex extra-instructions evidence.

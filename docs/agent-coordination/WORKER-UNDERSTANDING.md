@@ -1,32 +1,35 @@
 # Worker understanding assessment
 
-## PC understanding quality
+## PC understanding
 
-- Evidence indicates process awareness of gate-green status, but the pass did not produce closure metadata (`codex_decision` and `checkpoint_head` remain null).
-- Defect type: **workflow/closure understanding gap**, not necessarily code gap.
+### Evidence
+- `pc-runtime/memory.md`
+- `worker-requests/PC.json`
+- `pc-runtime/manifest.json`
 
-### Required next understanding output (PC)
+### Assessment
+PC evidence shows good awareness of active task and objective, but this snapshot lacks closure artifacts (`codex_decision`, checkpoint, gate summary). The first defect is procedural: completion proof is not fully represented in this run evidence.
 
-- **Level 3 / SURGICAL reviewer** must classify one of:
-  1. Gate-green plus acceptable diff => `ACCEPT` path with controller closure evidence.
-  2. Gate-green but non-acceptable diff => `REVISE` packet with first concrete defect and bounded write scope.
+### Required next understanding behavior
+- Treat `task-07-populate-production-rag` as active until controller closes it.
+- Produce evidence that directly demonstrates row-population/idempotency outcome under the exact gate.
+- Avoid adding unrelated backend refactors.
 
-## LP understanding quality
+## LP understanding
 
-- `local_understanding.md` is explicitly inadequate per Codex extra instructions.
-- Defect type: **requirement-to-assertion mapping gap** and prohibited-pattern regression in a single spec file.
+### Evidence
+- `lp-runtime/memory.md`
+- `lp-runtime/codex-qwen3-extra-instructions.md`
+- `lp-runtime/progress.json`
 
-### Required next understanding output (LP)
+### Assessment
+LP has explicit correction instructions and explicit anti-patterns from Codex REVISE. The defect is execution quality in one spec file, not requirement ambiguity.
 
-For `task-fe-03d-dom-state-tests`, LP must include a concise mapping from requirement to selector/assertion:
+### Required next understanding behavior
+- Map each FE-03D requirement to concrete selectors/assertions in the local understanding report.
+- Keep scope to `rag-page.component.spec.ts` for this pass.
+- Run whitespace guard before the exact FE gate and keep diagnostics consistent with the final patch.
 
-1. Loading status → `.loading-state[role="status"]`
-2. Disabled controls → `textarea` and `.submit-button`
-3. Transport failure → `.error-state[role="alert"]`
-4. Answer visibility → `.answer-content`
-5. Reset cleanup → absence of answer/error/citations + presence of `.idle-state`
+## Coordinator note
 
-## Bounded actions with closure contract
-
-- **PC path:** Level 3 SURGICAL review-only classification on `task-07-populate-production-rag`; required closure contract is hierarchy policy (`exact-gate-green + scope-clean + surgical-accept + controller-commit`).
-- **LP path:** Level 1 LP single-file correction on `task-fe-03d-dom-state-tests`; exact gate must pass, then SURGICAL must review and `ACCEPT` before closure.
+SURGICAL is disabled per hierarchy authority. Neither queue should be blocked waiting for SURGICAL ACCEPT/REVISE; proceed with PC/LP bounded passes and controller closure criteria (`exact-gate-green + scope-clean + controller-commit`).

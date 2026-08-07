@@ -1,36 +1,53 @@
-# PC code review (backend)
+# PC code review (Ring)
 
-## Current evidence
+## Evidence reviewed
 
-- Active task: `task-07-populate-production-rag` (`pc-runtime/progress.json`).
-- Deterministic backend gate status is green (`pc-runtime/gate_summary.md`, exit `0`).
-- Worker request is a **gate-green-checkpoint** handoff, but closure is incomplete: `codex_decision: null`, `checkpoint_head: null` (`worker-requests/PC.json`).
-- Task remains `BLOCKED` in progress despite gate-green evidence (`pc-runtime/progress.json`).
+- `runtime/ring-agent/ring/20260807T002210Z/worker-requests/PC.json`
+- `runtime/ring-agent/ring/20260807T002210Z/pc-runtime/progress.json`
+- `runtime/ring-agent/ring/20260807T002210Z/pc-runtime/memory.md`
+- `runtime/ring-agent/ring/20260807T002210Z/pc-runtime/manifest.json`
+- `runtime/ring-agent/ring/20260807T002210Z/pc-git-status.txt`
 
-## First current defect
+## Current diagnosis
 
-The first defect is **closure-state incompleteness**, not implementation correctness: there is no recorded SURGICAL decision or checkpoint head for the gate-green attempt.
+First current defect for PC is **closure-evidence incompleteness**, not a proven new backend implementation defect.
 
-## Bounded next action package
+- Task is still active as `task-07-populate-production-rag` and marked `BLOCKED` in progress.
+- Worker request shows a prior gate-green attempt (`gate_exit=0`) but `codex_decision=null` and `checkpoint_head=null`.
+- Manifest shows no captured gate summary/review/checkpoint for this snapshot (`gate_summary`, `codex_review`, `checkpoint` are `null`).
 
-- **Implementation level:** 3 (SURGICAL review-only pass)
-- **Assigned role:** SURGICAL Codex (`r4r-surgical-architect` / `r4r-surgical-fixer` lane)
+Because SURGICAL is disabled in `.opencode/task-plan.hierarchy.json`, this task must not be blocked waiting for SURGICAL ACCEPT/REVISE.
+
+## Bounded next package
+
+- **Implementation level:** Level 2
+- **Assigned role:** PC
 - **Task ID:** `task-07-populate-production-rag`
 - **Dependencies:**
-  - Exact gate already green for run `20260806T200011Z`
-  - Existing PC diff and evidence bundle from attempt 1
-- **allowed_paths:** none for review-only classification in this pass (no new implementation edit requested)
-- **Exact gate / closure constraint:**
-  - `.opencode/task-plan.hierarchy.json` closure chain: `exact-gate-green + scope-clean + surgical-accept + controller-commit`
-  - Backend task gate for task-07 remains authoritative from `.opencode/task-plan.backend.json`
-- **Required SURGICAL review:** mandatory before closure; produce ACCEPT/REVISE and explicit closure-state classification.
+  - Prior gate-green evidence exists (`worker-requests/PC.json`), but closure proof in this snapshot is incomplete.
+  - No overlap with LP active file scope.
+- **allowed_paths (canonical task scope):**
+  - `pom.xml`
+  - `src/main/**`
+  - `src/test/**`
+  - `docs/backend/**`
+- **Focused action (single pass):**
+  1. Keep changes bounded to task-07 scope only.
+  2. Run whitespace guard first: `git diff --check`.
+  3. Run exact task gate once and retain deterministic row-count/idempotency evidence.
+  4. Stop after evidence is produced for controller closure.
 
-## Acceptance evidence required in next cycle
+## Exact gate
 
-1. Explicit SURGICAL decision for task-07 (`ACCEPT` or `REVISE`).
-2. If `ACCEPT`, controller-owned closure artifacts (including checkpoint/commit state) must be present in current evidence.
-3. If `REVISE`, one bounded correction packet must identify first failure and scope-limited next edit.
+From `.opencode/task-plan.backend.json` for `task-07-populate-production-rag`:
+
+`bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
+
+Closure requirement from hierarchy policy:
+
+- `exact-gate-green + scope-clean + controller-commit`
 
 ## Avoid repeating
 
-Do not run another unchanged PC implementation/gate pass while `codex_decision` remains null and closure metadata is unresolved.
+- Do **not** hold for SURGICAL review; SURGICAL is disabled.
+- Do **not** run repeated unchanged heavy passes without adding closure-quality evidence.
