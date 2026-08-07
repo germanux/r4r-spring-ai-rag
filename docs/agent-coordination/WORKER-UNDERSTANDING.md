@@ -1,36 +1,40 @@
-# Worker understanding check — run 20260807T005023Z
+# Worker understanding calibration
 
-## PC understanding snapshot
+## PC understanding checkpoint
 
-Evidence indicates PC achieved a green deterministic gate for task-07 in run `20260807T002957Z`, and captured task-owned backend/doc changes. However, closure markers are not complete in this run snapshot (`codex_decision` and `checkpoint_head` null), so understanding must now focus on **closure discipline** rather than additional feature edits.
+- **Task:** `task-07-populate-production-rag`
+- **What is proven:** prior pass produced `gate_exit=0` request.
+- **What is not yet proven in current snapshot:** closure-complete acceptance evidence (request metadata/progress still indicate non-closed state).
+- **Required next understanding:** this is a closure-quality pass, not scope expansion. Keep to backend/doc allowed paths and emit deterministic evidence that controller can close.
 
-### Required next understanding proof (PC)
-- Keep scope bounded to backend task-07 allowed paths.
-- Preserve deterministic evidence that `vector_store` row count is non-zero.
-- Provide closure-ready artifacts so controller can finalize without SURGICAL dependency.
+### PC bounded directive
+- **Implementation level:** Level 2
+- **Owner:** PC
+- **Dependencies:** existing backend accepted chain
+- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+- **Exact gate:** `git diff --check` then exact task-07 command
 
-## LP understanding snapshot
+## LP understanding checkpoint
 
-LP memory and correction packet show the worker is mid-revision on FE-03D. Codex explicitly called prior understanding inadequate and prescribed exact selector-level assertions and forbidden patterns.
+- **Task:** `task-fe-03d-dom-state-tests`
+- **What is proven:** only one edited spec file with failed gate and Codex revise packet.
+- **Primary misunderstanding to correct:** using prohibited synthetic/manual patterns and destabilizing test structure instead of DOM-first assertions.
+- **Required next understanding:** map each requirement to stable selectors/assertions only:
+  - loading status → `.loading-state[role="status"]`
+  - disabled controls → `textarea`, `.submit-button`
+  - transport failure → `.error-state[role="alert"]`
+  - answer rendering → `.answer-content`
+  - reset cleanup → absence of answer/error/citations + presence of `.idle-state`
 
-### Required next understanding proof (LP)
-- Implement only the three prescribed test additions in the single spec file.
-- Map DOM requirements to selectors exactly:
-  - loading: `.loading-state[role="status"]`
-  - disabled controls: `textarea`, `.submit-button`
-  - transport failure: `.error-state[role="alert"]`
-  - answer visibility: `.answer-content`
-  - reset cleanup: absence of answer/error/citations + presence of `.idle-state`
-- Keep valid existing coverage intact.
+### LP bounded directive
+- **Implementation level:** Level 1
+- **Owner:** LP
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
+- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
 
-## Bounded actions and gates
+## Shared non-negotiables
 
-1. **PC (Level 2, task-07-populate-production-rag)**
-   - Dependencies: prior backend tasks accepted.
-   - allowed_paths: `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`.
-   - Gate: `git diff --check` + exact task-07 deterministic command.
-
-2. **LP (Level 1, task-fe-03d-dom-state-tests)**
-   - Dependencies: task-fe-03c accepted.
-   - allowed_paths: `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-   - Gate: `git diff --check` + `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`.
+- No Git history operations by workers.
+- No scope widening.
+- Closure is controller-owned only after exact-gate-green + scope-clean.

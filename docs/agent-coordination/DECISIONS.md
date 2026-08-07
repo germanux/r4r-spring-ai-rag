@@ -2632,3 +2632,52 @@ Append-only ledger generated after each validated Ring cycle.
 
 - Current RUN_DIR snapshots do not include a new gate_summary for either worker; assessment relies on progress/memory, status snapshots and prior directive/correction packet.
 - No Codex review/plan artifacts are present in current pc-runtime or lp-runtime manifests (fields are null), so completion must be inferred from available deterministic request/status evidence only.
+
+## Cycle `20260807T005523Z` â READY
+
+- Decision fingerprint: `5c6f4da25a6fb3f3a2c142446870600eebedc0970d1c8fefb647d62f7ac48c87`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: Current evidence shows a gate-green checkpoint request (gate_exit=0) for task-07, but closure is still incomplete because codex_decision and checkpoint_head are null and progress remains BLOCKED.
+- Next action: Run one bounded closure pass for task-07 in backend/doc scope: enforce git diff --check, execute the exact task-07 deterministic gate once, and retain closure-complete evidence proving non-zero vector_store rows and idempotent ingestion behavior for controller acceptance.
+- Avoid repeating: Do not wait on SURGICAL or rerun unchanged cycles without producing closure-complete evidence artifacts for task-07.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005523Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005523Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005523Z/pc-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005523Z/pc-runtime/previous-ring-qwen3-directive.json`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: Current LP evidence shows an unfinished revision with a deterministic gate failure and active Codex REVISE instructions focused on defects in rag-page.component.spec.ts (format/syntax damage and prohibited testing patterns).
+- Next action: Execute one level-1 corrective pass only in frontend/src/app/features/rag/rag-page.component.spec.ts: restore valid suite structure, remove rejected patterns, add the prescribed controlled-pending loading test plus two independent reset tests, then run git diff --check and the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce synthetic/manual test behaviors (innerHTML mutation, manual loading-flag mutation, guessed selectors, invalid response shapes, unnecessary of/tick usage) or brace/indentation damage.
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005523Z/lp-runtime/codex_plan.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005523Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005523Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T005523Z/lp-git-diff-stat.txt`
+
+### Integration risks
+
+- If LP keeps malformed spec structure, FE-03D will continue failing at pre-gate quality checks and block frontend progression.
+- If PC does not emit closure-complete evidence alongside gate-green results, task-07 may remain BLOCKED despite successful backend execution.
+- Shared docs area is split by scope (docs/backend for PC vs frontend spec for LP); accidental cross-scope edits would create avoidable controller rejection.
+
+### Evidence limitations
+
+- This RUN_DIR contains no new PC codex_review, gate_summary, or checkpoint file; PC diagnosis is based on worker request/progress/memory snapshots.
+- LP gate_summary is a bounded summary (no full gate log in RUN_DIR), so detailed failing assertions are inferred from Codex plan/instructions and diff evidence.

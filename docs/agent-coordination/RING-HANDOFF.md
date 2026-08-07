@@ -1,41 +1,37 @@
-# Backend ↔ Frontend handoff — run 20260807T005023Z
+# Backend ↔ Frontend handoff (Ring)
 
 ## Queue status
 
-- **Backend (PC):** active `task-07-populate-production-rag`; gate-green request exists but closure metadata incomplete.
-- **Frontend (LP):** active `task-fe-03d-dom-state-tests`; Codex REVISE packet still pending full corrective application.
+- **PC (backend):** `task-07-populate-production-rag` remains active; evidence indicates gate-green request but incomplete closure proof.
+- **LP (frontend):** `task-fe-03d-dom-state-tests` remains active; evidence indicates revise-required spec correction.
 
-## Disjoint ownership and write scopes
+## Disjoint execution plan
 
-- **PC allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **LP allowed_paths:** `frontend/**`, `docs/frontend/**` (current corrective pass narrowed to one spec file)
-
-No write-scope overlap is required for current passes, so both queues can proceed independently.
-
-## Coordination packages
-
-### Package PC-07-CLOSURE
-- **Level / role:** Level 2 / PC
+### Package A
+- **Implementation level:** Level 2
+- **Owner:** PC
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** backend task chain through `task-06f-ingestion-validation` accepted
-- **allowed_paths:** backend plan scope above
+- **Dependencies:** backend chain through `task-06f-ingestion-validation:ACCEPTED`
+- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
 - **Exact gate:**
   - `git diff --check`
-  - task-07 deterministic command from backend plan (full ingestion + `vector_store` row-count assertion)
-  - closure policy: exact-gate-green + scope-clean + controller commit
+  - task-07 gate command from backend plan (full deterministic command)
 
-### Package LP-FE03D-REVISE
-- **Level / role:** Level 1 / LP
+### Package B
+- **Implementation level:** Level 1
+- **Owner:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations` accepted
+- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
 - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
 - **Exact gate:**
   - `git diff --check`
   - `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-  - closure policy: exact-gate-green + scope-clean + controller commit
 
-## Integration risks to watch
+## Overlap and risk check
 
-1. Backend queue may stall if closure metadata is not captured after a green gate.
-2. Frontend queue may churn if LP diverges from the explicit Codex correction packet.
-3. Cross-stack sequencing risk is low in this cycle because PC and LP changes are disjoint and no shared files are targeted.
+- No write-scope overlap between Package A and B.
+- Primary integration risk is schedule coupling only: frontend can continue independently; backend closure evidence should not block LP correction.
+
+## Handoff rule
+
+Proceed with both packages in parallel advisory flow; hold only if a new evidence-backed scope overlap appears.
