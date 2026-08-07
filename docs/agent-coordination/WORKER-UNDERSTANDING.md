@@ -1,58 +1,36 @@
-# Worker understanding assessment (run 20260807T021032Z)
+# Worker understanding assessment
 
 ## PC understanding
 
 ### Evidence
-
-- `worker-requests/PC.json`: `gate_exit=0` with null `codex_decision`, `next_action`, `checkpoint_head`.
-- `pc-runtime/progress.json`: active task-07 still `BLOCKED` despite recorded last gate-green metadata.
-- `pc-git-status.txt`: scoped backend/doc edits are present.
+- `pc-runtime/memory.md` correctly states gate green and active task context.
+- `pc-runtime/pre_edit_understanding.md` was skipped because gate already green.
+- `pc-runtime/controller_state.json` + `checkpoint.json` show closure failure was not resolved.
 
 ### Assessment
+- Technical direction is mostly understood (task scope and gate), but completion criteria were under-enforced in execution.
+- Missing point: a green gate is insufficient without successful checkpoint/controller closure metadata.
 
-PC appears technically near closure on task-07, but closure packet completeness is below deterministic controller requirements. This is a finish-quality defect, not a new architecture or scope problem.
-
-### Required next pass
-
-- **Implementation level:** Level 2
-- **Assigned role:** PC
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `task-06f-ingestion-validation: ACCEPTED`
-- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **Exact gate:**
-  1. `git diff --check`
-  2. `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
-- **Acceptance condition:** non-null closure metadata + explicit row-count evidence + gate green.
-
----
+### Required understanding for next pass
+- Treat this as a closure pass, not a feature pass.
+- Prove all three: deterministic gate green, scope clean, and controller-commit success.
 
 ## LP understanding
 
 ### Evidence
-
-- `lp-runtime/gate_summary.md`: deterministic gate failure `exit 2`.
-- `lp-runtime/codex-qwen3-extra-instructions.md`: REVISE packet with explicit banned patterns and required selectors.
-- `lp-runtime/memory.md`: last attempt timed out; no acceptance evidence.
-- `lp-git-status.txt`: one-file uncommitted spec diff remains.
+- `lp-runtime/codex-qwen3-extra-instructions.md` explicitly marks prior understanding as inadequate and gives a selector-by-selector correction packet.
+- `lp-runtime/controller_state.json` indicates repeated retries ended at global attempt limit.
 
 ### Assessment
+- Current understanding is insufficiently anchored to the prescribed DOM selectors and bounded one-file plan.
+- Repeated attempt churn suggests execution drift from the correction packet.
 
-LP has clear bounded instructions; the issue is execution fidelity in a single spec file. Ambiguity is low, drift risk is high.
+### Required understanding for next pass (after unblock)
+- Map every FE-03D requirement directly to required selectors/assertions in the spec file.
+- Keep changes exclusive to `rag-page.component.spec.ts` and avoid synthetic/internal-state shortcuts prohibited by packet.
+- Run `git diff --check` before the exact FE-03D gate.
 
-### Required next pass
+## Coordinator enforcement notes
 
-- **Implementation level:** Level 1
-- **Assigned role:** LP
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations: ACCEPTED`
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:**
-  1. `git diff --check`
-  2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Acceptance condition:** one-file correction packet applied exactly, FE-03D gate green, and selector-mapped DOM assertions documented.
-
-## Cross-worker clarity
-
-- Keep backend and frontend scopes disjoint.
-- Do not widen to later tasks.
-- Do not repeat known failed/insufficient approaches.
+- SURGICAL remains disabled; no reviewer handoff is required for PC/LP progress.
+- Backend and frontend paths remain disjoint, so PC can proceed while LP is held for controller attempt-budget unblock.

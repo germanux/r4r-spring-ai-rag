@@ -1,57 +1,49 @@
-# LP code review (run 20260807T021032Z)
+# LP code review (evidence-grounded)
 
-## Evidence reviewed
+## Current diagnosis
 
-- `runtime/ring-agent/ring/20260807T021032Z/lp-runtime/gate_summary.md`
-- `runtime/ring-agent/ring/20260807T021032Z/lp-runtime/codex-qwen3-extra-instructions.md`
-- `runtime/ring-agent/ring/20260807T021032Z/lp-runtime/memory.md`
-- `runtime/ring-agent/ring/20260807T021032Z/lp-runtime/progress.json`
-- `runtime/ring-agent/ring/20260807T021032Z/lp-git-status.txt`
-- `runtime/ring-agent/ring/20260807T021032Z/lp-git-diff-stat.txt`
+- Active frontend task is `task-fe-03d-dom-state-tests`.
+- `lp-runtime/controller_state.json` is `GLOBAL_ATTEMPT_LIMIT_REACHED` (`attempts: 17`, `limit: 6`, exit `70`).
+- `lp-runtime/progress.json` still marks task `BLOCKED`.
+- A large uncommitted diff remains in one file (`frontend/src/app/features/rag/rag-page.component.spec.ts`; 109 insertions/20 deletions in this snapshot).
+- `lp-runtime/codex-qwen3-extra-instructions.md` contains a precise one-file `REVISE` correction packet that has not yet been completed with new green gate evidence.
 
-## First current defect
+Primary defect is **execution control blockage** (attempt-limit stop), with unresolved one-file correction work still pending.
 
-The active FE-03D task remains red and unresolved in one file:
-
-- Deterministic gate summary reports `exit code: 2`.
-- Codex packet is `REVISE` with explicit one-file repair instructions.
-- Previous local pass timed out (`session-timeout`) and did not produce acceptance evidence.
-- Dirty state persists at `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-
-## Bounded next package
+## Directed next package
 
 - **Implementation level:** Level 1
 - **Assigned role:** LP
 - **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations: ACCEPTED`
-- **allowed_paths:**
-  - `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Dependencies:** `task-fe-03c-citations` accepted (already satisfied)
+- **allowed_paths (canonical):** `frontend/**`, `docs/frontend/**`
+- **Narrowed write scope for this pass:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+- **Action state now:** HOLD until attempt budget is reset/rearmed by controller policy; then execute exactly one bounded repair pass.
 
-### One focused next action (single pass)
+## Exact gate and acceptance conditions (when unblocked)
 
-Apply exactly the existing FE-03D correction packet in `rag-page.component.spec.ts`:
+1. Apply only the existing Codex FE-03D correction packet in the spec file.
+2. `git diff --check`
+3. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
+4. Closure policy evidence present: `exact-gate-green + scope-clean + controller-commit`
 
-1. Restore valid suite structure and remove prohibited additions (synthetic fields/selectors, internal-state mutations, `innerHTML` mutation, `of`/`tick` misuse).
-2. Keep the three prescribed tests only: controlled-pending loading/duplicate-submit, success-reset with citations, transport-error-reset.
-3. Preserve existing valid answer/abstention/citation/escaping/service-isolation coverage.
+### Must be explicitly proven in that pass
 
-### Exact deterministic gate
-
-1. `git diff --check`
-2. `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-3. Closure policy: `exact-gate-green + scope-clean + controller-commit`
-
-## Acceptance evidence required
-
-- Gate exit `0` for FE-03D exact command.
-- Scoped diff only in `frontend/src/app/features/rag/rag-page.component.spec.ts`.
-- Requirement-to-selector assertion map present in local understanding, including:
-  - loading status: `.loading-state[role="status"]`
-  - disabled controls: `textarea`, `.submit-button`
-  - error alert: `.error-state[role="alert"]`
-  - answer visibility: `.answer-content`
-  - reset cleanup: absence of answer/citation/error + presence of `.idle-state`
+- Controlled pending submission shows loading status and disabled controls.
+- Success path plus reset clears answer/citations/error and restores idle state.
+- Transport-error path plus reset clears alert and restores idle state.
+- Existing valid answer/abstention/citation/escaping coverage remains intact.
 
 ## Avoid repeating
 
-Do not rerun with malformed test structure, guessed selectors, or timeout-prone no-plan retries.
+- Do **not** run broad retries or restructure tests outside the correction packet.
+- Do **not** rerun the gate before the one-file repair is applied.
+
+## Evidence consulted
+
+- `runtime/ring-agent/ring/20260807T023359Z/lp-runtime/controller_state.json`
+- `runtime/ring-agent/ring/20260807T023359Z/lp-runtime/progress.json`
+- `runtime/ring-agent/ring/20260807T023359Z/lp-runtime/codex-qwen3-extra-instructions.md`
+- `runtime/ring-agent/ring/20260807T023359Z/lp-git-status.txt`
+- `runtime/ring-agent/ring/20260807T023359Z/lp-git-diff-stat.txt`
+- `runtime/ring-agent/ring/20260807T023359Z/worker-requests/LP.json`
