@@ -1,37 +1,43 @@
-# Worker understanding check
+# Worker understanding assessment
 
-## PC understanding status
+## PC understanding
 
-Evidence indicates PC successfully executed the task-07 gate path (`gate_exit=0`) but did not complete closure reporting fields. This suggests execution-level understanding is adequate, while controller-facing completion semantics are incomplete.
+### Evidence
 
-### Required understanding for next pass
+- `pc-runtime/gate_summary.md` shows green deterministic gate.
+- `worker-requests/PC.json` still reports null closure metadata fields.
+- `pc-runtime/progress.json` keeps task-07 as `BLOCKED`.
 
-- A gate-green checkpoint is not closure by itself.
-- Worker request metadata must be complete and non-null for closure handling.
-- Task-07 must include explicit row-count proof (`vector_store`) in returned evidence.
+### Assessment
 
-## LP understanding status
+PC implementation appears close to done technically, but the closure packet is incomplete. The immediate issue is not a new backend architecture change; it is completion-quality evidence needed for deterministic closure.
 
-Evidence indicates LP has a precise correction packet but prior local understanding/execution quality was insufficient:
+### Required correction (one pass)
 
-- gate summary is failing (`exit 2`)
-- prior run timed out
-- Codex packet explicitly flags misunderstood/forbidden patterns
+- **Level 2 / PC / task-07-populate-production-rag**
+- Keep existing scope and produce complete closure metadata + row-count evidence with one exact gate run.
 
-### Required understanding for next pass
+---
 
-- Keep FE-03D correction strictly one-file and DOM-observable.
-- Use the specified selectors/assertion mapping (`.loading-state`, `.error-state`, `.answer-content`, `.citations-section`, `.idle-state`, disabled controls).
-- Preserve existing valid tests; do not introduce internal-state mutation patterns.
+## LP understanding
 
-## Bounded directives
+### Evidence
 
-1. **PC / Level 2 / `task-07-populate-production-rag`**
-   - dependencies: `task-06f-ingestion-validation: ACCEPTED`
-   - allowed_paths: `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-   - exact gate: task-07 backend gate command (plus `git diff --check`)
+- `lp-runtime/gate_summary.md`: gate failure exit 2.
+- `lp-runtime/codex-qwen3-extra-instructions.md`: explicit REVISE packet with banned patterns and required selector mapping.
+- `lp-runtime/memory.md`: prior pass timed out; no acceptance claim.
 
-2. **LP / Level 1 / `task-fe-03d-dom-state-tests`**
-   - dependencies: `task-fe-03c-citations: ACCEPTED`
-   - allowed_paths: `frontend/src/app/features/rag/rag-page.component.spec.ts`
-   - exact gate: `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests` (after `git diff --check`)
+### Assessment
+
+LP currently has an unresolved one-file test-suite correction. Instructions are already precise and bounded; the risk is execution drift (structure damage or selector/state misuse), not ambiguity.
+
+### Required correction (one pass)
+
+- **Level 1 / LP / task-fe-03d-dom-state-tests**
+- Apply only the prescribed one-file FE-03D correction packet and run the exact gate sequence.
+
+## Cross-worker clarity for next pass
+
+- Do not widen scope.
+- Do not rerun unchanged failing/insufficient approaches.
+- Report deterministic evidence that directly satisfies each gate and closure condition.

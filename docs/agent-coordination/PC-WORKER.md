@@ -1,53 +1,54 @@
-# PC code review (Ring)
+# PC code review (current cycle)
 
 ## Evidence reviewed
 
-- `runtime/ring-agent/ring/20260807T020031Z/worker-requests/PC.json`
-- `runtime/ring-agent/ring/20260807T020031Z/worker-request-manifest.json`
-- `runtime/ring-agent/ring/20260807T020031Z/pc-runtime/progress.json`
-- `runtime/ring-agent/ring/20260807T020031Z/pc-runtime/memory.md`
-- `runtime/ring-agent/ring/20260807T020031Z/pc-git-status.txt`
+- `runtime/ring-agent/ring/20260807T020532Z/worker-requests/PC.json`
+- `runtime/ring-agent/ring/20260807T020532Z/worker-request-manifest.json`
+- `runtime/ring-agent/ring/20260807T020532Z/pc-runtime/progress.json`
+- `runtime/ring-agent/ring/20260807T020532Z/pc-runtime/gate_summary.md`
+- `runtime/ring-agent/ring/20260807T020532Z/pc-git-status.txt`
 
-## First current defect
+## Current diagnosis
 
-Task-07 has a gate-green checkpoint request (`gate_exit: 0`) but closure evidence is incomplete:
+The first current PC defect is **closure-quality, not a proven red gate**:
 
-- `codex_decision: null`
-- `next_action: null`
-- `checkpoint_head: null`
-- progress still shows `task-07-populate-production-rag` as `BLOCKED`
+- The worker request is `reason: gate-green-checkpoint` with `gate_exit: 0`.
+- The same request still has `codex_decision: null`, `next_action: null`, `checkpoint_head: null`.
+- `pc-runtime/progress.json` keeps `task-07-populate-production-rag` in `BLOCKED` despite `last_gate_green_*` fields being present.
 
-This is a closure-quality/evidence defect, not a new feature request.
+This indicates incomplete closure evidence packaging for the active task, which prevents deterministic controller closure.
 
-## Bounded next work package
+## Bounded next package
 
 - **Implementation level:** Level 2
 - **Assigned role:** PC
 - **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `task-06f-ingestion-validation: ACCEPTED` (already satisfied)
-- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **Objective:** Convert gate-green execution into complete closure evidence for task-07.
+- **Dependencies:**
+  - `task-06f-ingestion-validation: ACCEPTED` (already evidenced in `pc-runtime/progress.json`)
+  - existing task scope only; no cross-queue changes
+- **allowed_paths:**
+  - `pom.xml`
+  - `src/main/**`
+  - `src/test/**`
+  - `docs/backend/**`
 
-### One-pass action
+### Exact next action for one pass
 
-1. Keep existing backend scope only (no scope expansion).
-2. Run `git diff --check`.
-3. Run the exact task-07 gate once.
-4. Return non-null closure metadata (`codex_decision`, `next_action`, `checkpoint_head`) and explicit `vector_store` row-count proof.
+Run one closure-quality pass for task-07 only: keep scope unchanged, run whitespace guard, execute the exact task gate once, and return non-null closure metadata together with explicit `vector_store` row-count proof.
 
 ### Exact gate
 
-```bash
-bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
-```
+1. `git diff --check`
+2. `bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"`
+3. Closure policy: `exact-gate-green + scope-clean + controller-commit`
 
-### Acceptance conditions
+## Acceptance evidence required
 
-- Exact gate exits 0 in the current pass.
-- Diff remains inside `allowed_paths`.
-- Closure metadata fields are non-null in worker request evidence.
-- Closure policy satisfied: `exact-gate-green + scope-clean + controller-commit`.
+- Non-null `codex_decision`, `next_action`, and `checkpoint_head` in the resulting closure packet/request.
+- Deterministic gate exit `0` for task-07 exact command.
+- Explicit recorded row count proving `vector_store > 0`.
+- Diff remains within PC allowed_paths.
 
-### Avoid repeating
+## Avoid repeating
 
-Do not submit another gate-green checkpoint payload with null closure fields.
+Do not submit another gate-green checkpoint request with null closure metadata fields.

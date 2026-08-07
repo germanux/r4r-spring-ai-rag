@@ -3318,3 +3318,53 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This RUN_DIR snapshot does not include a PC gate_summary.md or full gate log for run 20260807T015943Z; gate status is inferred from worker request metadata.
 - LP snapshot includes codex plan and correction packet but no successful follow-up run artifacts (no checkpoint and no gate-green confirmation).
+
+## Cycle `20260807T020532Z` â READY
+
+- Decision fingerprint: `0a3721c432dd0e5847b8235466dd2f444ef8d943b2df0bfd183b3777b5484b55`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: Current evidence shows a gate-green checkpoint request for task-07 (gate_exit=0), but closure metadata is incomplete (codex_decision, next_action, checkpoint_head are null) and progress still marks task-07 BLOCKED, so acceptance is not yet evidenced.
+- Next action: Run one closure-quality pass for task-07 only: keep scope unchanged, run git diff --check, run the exact task-07 gate once, and return non-null closure metadata plus explicit vector_store row-count evidence.
+- Avoid repeating: Do not submit another gate-green checkpoint request with null codex_decision, next_action, or checkpoint_head.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T020532Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T020532Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T020532Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T020532Z/pc-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T020532Z/pc-git-status.txt`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: The active LP task remains unaccepted with a failing deterministic gate summary (exit 2), a Codex REVISE correction packet for one-file test repairs, and a timed-out prior local pass; current worktree evidence still shows an uncommitted spec diff.
+- Next action: Apply exactly the one-file FE-03D correction packet in rag-page.component.spec.ts, then run git diff --check followed by the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce malformed test-suite structure, internal-state mutations, guessed selectors, innerHTML mutations, or timeout-prone no-plan reruns.
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T020532Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T020532Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T020532Z/lp-runtime/memory.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T020532Z/lp-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T020532Z/lp-git-status.txt`
+
+### Integration risks
+
+- PC task-07 can loop indefinitely if gate-green evidence is repeatedly returned without closure metadata required by the controller request packet.
+- LP FE-03D currently carries a large one-file spec diff; repeated structural mistakes in this test file can continue to block frontend progression to task-fe-03e.
+
+### Evidence limitations
+
+- This RUN_DIR snapshot includes gate summaries but not full gate logs, so failure root-cause details are inferred from packaged summaries and correction packets.
+- Direct inspection of live PC/LP worker worktrees is out of scope; conclusions rely on staged status/diff/runtime evidence under RUN_DIR.
