@@ -28,7 +28,7 @@ RING_MODEL = os.environ.get(
 )
 RING_VARIANT = os.environ.get("R4R_RING_VARIANT", "medium")
 REVIEW_INTERVAL_SECONDS = int(
-    os.environ.get("R4R_RING_REVIEW_INTERVAL_SECONDS", "3600")
+    os.environ.get("R4R_RING_REVIEW_INTERVAL_SECONDS", "763")
 )
 SESSION_TIMEOUT_SECONDS = int(
     os.environ.get("R4R_RING_SESSION_TIMEOUT_SECONDS", str(90 * 60))
@@ -39,7 +39,7 @@ DIRECTIVE_MAX_AGE_SECONDS = int(
     os.environ.get("R4R_RING_DIRECTIVE_MAX_AGE_SECONDS", "10800")
 )
 EVENT_MIN_INTERVAL_SECONDS = int(
-    os.environ.get("R4R_RING_EVENT_MIN_INTERVAL_SECONDS", "3600")
+    os.environ.get("R4R_RING_EVENT_MIN_INTERVAL_SECONDS", "763")
 )
 INTEGRATION_SYNC_ENABLED = (
     os.environ.get("R4R_AGENT_INTEGRATION_SYNC", "true").lower() == "true"
@@ -1058,20 +1058,21 @@ def _publish_staged_outputs(
     result["semantic_change"] = semantic_change
 
     task_evidence_files = []
-    for worker in ("PC", "LP"):
-        evidence_path = _publish_task_evidence(
-            paths.ring,
-            run_id,
-            worker,
-            normalized_state["decisions"][worker],
-        )
-        if evidence_path is not None:
-            task_evidence_files.append(evidence_path)
-            result["versioned_files"][f"{worker.lower()}-task-evidence"] = str(
-                evidence_path
+    if semantic_change:
+        for worker in ("PC", "LP"):
+            evidence_path = _publish_task_evidence(
+                paths.ring,
+                run_id,
+                worker,
+                normalized_state["decisions"][worker],
             )
-        else:
-            normalized_state["decisions"][worker]["evidence_path"] = None
+            if evidence_path is not None:
+                task_evidence_files.append(evidence_path)
+                result["versioned_files"][f"{worker.lower()}-task-evidence"] = str(
+                    evidence_path
+                )
+            else:
+                normalized_state["decisions"][worker]["evidence_path"] = None
 
     operational_destinations = {
         "state.json": paths.ring / ".ring-agent" / "state.json",
@@ -1085,17 +1086,18 @@ def _publish_staged_outputs(
             paths.ring / ".ring-agent" / "worker-understanding.md"
         ),
     }
-    for name, destination in operational_destinations.items():
-        if name == "state.json":
-            content = json.dumps(
-                normalized_state,
-                indent=2,
-                ensure_ascii=False,
-            ) + "\n"
-        else:
-            content = (output_dir / name).read_text(encoding="utf-8")
-        _atomic_write_text(destination, content)
-        result["promoted_files"][name] = str(destination)
+    if semantic_change:
+        for name, destination in operational_destinations.items():
+            if name == "state.json":
+                content = json.dumps(
+                    normalized_state,
+                    indent=2,
+                    ensure_ascii=False,
+                ) + "\n"
+            else:
+                content = (output_dir / name).read_text(encoding="utf-8")
+            _atomic_write_text(destination, content)
+            result["promoted_files"][name] = str(destination)
 
     versioned_destinations = {
         "code-pc-review.md": coordination_dir / "PC-WORKER.md",
@@ -1136,11 +1138,12 @@ def _publish_staged_outputs(
     if commit_result["status"] == "committed":
         result["integration_sync"] = _integration_sync(paths.ring, "checkpoint")
 
-    generated_at = datetime.now(timezone.utc)
-    expires_at = generated_at + timedelta(seconds=DIRECTIVE_MAX_AGE_SECONDS)
-    for worker in ("PC", "LP"):
-        decision = normalized_state["decisions"][worker]
-        directive = {
+    if semantic_change:
+        generated_at = datetime.now(timezone.utc)
+        expires_at = generated_at + timedelta(seconds=DIRECTIVE_MAX_AGE_SECONDS)
+        for worker in ("PC", "LP"):
+            decision = normalized_state["decisions"][worker]
+            directive = {
             "schema_version": 1,
             "target": worker,
             "task_id": decision["task_id"] or "NO_ACTIVE_TASK",
@@ -1157,16 +1160,16 @@ def _publish_staged_outputs(
             "evidence_paths": decision["evidence_paths"],
             "constraints": decision["acceptance_gates"],
             "avoid_repeating": decision["avoid_repeating"],
-        }
-        destination = _directive_path(paths.ring, worker)
-        _atomic_write_text(
-            destination,
-            json.dumps(directive, indent=2, ensure_ascii=False) + "\n",
-        )
-        result["directive_files"][worker] = str(destination)
+            }
+            destination = _directive_path(paths.ring, worker)
+            _atomic_write_text(
+                destination,
+                json.dumps(directive, indent=2, ensure_ascii=False) + "\n",
+            )
+            result["directive_files"][worker] = str(destination)
 
     result["published"] = True
-    result["reason"] = "ok"
+    result["reason"] = "ok" if semantic_change else "no-semantic-change"
     (run_dir / "ring-output-publication.json").write_text(
         json.dumps(result, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
