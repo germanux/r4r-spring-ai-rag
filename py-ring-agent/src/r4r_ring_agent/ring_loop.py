@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 import fcntl
+from fnmatch import fnmatchcase
 import hashlib
 import json
 import os
@@ -116,6 +117,9 @@ def _write_repo_evidence(label: str, repo: Path, run_dir: Path) -> None:
     )
     (run_dir / f"{prefix}-git-diff-stat.txt").write_text(
         _git(repo, ["diff", "--stat"]), encoding="utf-8"
+    )
+    (run_dir / f"{prefix}-git-diff-check.txt").write_text(
+        _git(repo, ["diff", "--check"]), encoding="utf-8"
     )
 
 
@@ -494,7 +498,7 @@ def _decision_ledger_entry(
     fingerprint: str,
 ) -> str:
     lines = [
-        f"## Cycle `{run_id}` â {state['overall_status']}",
+        f"## Cycle `{run_id}` Ã¢ÂÂ {state['overall_status']}",
         "",
         f"- Decision fingerprint: `{fingerprint}`",
         "",
@@ -1003,6 +1007,7 @@ def _validate_staged_state(
 
 def _authorize_bounded_whitespace_recovery(
     paths: WorktreePaths,
+    run_dir: Path,
     state: dict[str, Any],
 ) -> list[str]:
     """Deterministically authorize one scoped repair for a blocked task.
@@ -1043,6 +1048,11 @@ def _authorize_bounded_whitespace_recovery(
         if item.get("recovery_authorization_consumed"):
             continue
 
+        evidence_path = run_dir / f"{worker.lower()}-git-diff-check.txt"
+        try:
+            diagnostics = evidence_path.read_text(encoding="utf-8")
+        except OSError:
+            diagnostics = ""
         checked = subprocess.run(
             ["git", "diff", "--check"],
             cwd=repositories[worker],
@@ -1051,7 +1061,9 @@ def _authorize_bounded_whitespace_recovery(
             stderr=subprocess.STDOUT,
             check=False,
         )
-        diagnostics = checked.stdout
+        if diagnostics != checked.stdout:
+            diagnostics = checked.stdout
+            evidence_path.write_text(diagnostics, encoding="utf-8")
         findings = diagnostic_pattern.findall(diagnostics)
         if (
             checked.returncode == 0
@@ -1061,8 +1073,14 @@ def _authorize_bounded_whitespace_recovery(
             continue
         candidates = sorted({candidate for candidate, _ in findings})
         scopes = [str(value).strip().rstrip("/") for value in decision["write_scope"]]
+
+        def inside_scope(candidate: str, scope: str) -> bool:
+            if candidate == scope or candidate.startswith(scope + "/"):
+                return True
+            return fnmatchcase(candidate, scope)
+
         if not all(
-            any(candidate == scope or candidate.startswith(scope + "/") for scope in scopes)
+            any(inside_scope(candidate, scope) for scope in scopes)
             for candidate in candidates
         ):
             continue
@@ -1131,7 +1149,7 @@ def _publish_staged_outputs(
         return result
 
     result["deterministic_recovery_authorizations"] = (
-        _authorize_bounded_whitespace_recovery(paths, normalized_state)
+        _authorize_bounded_whitespace_recovery(paths, run_dir, normalized_state)
     )
 
     coordination_dir = paths.ring / "docs" / "agent-coordination"
