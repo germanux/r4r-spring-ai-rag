@@ -487,6 +487,29 @@ STAGED_OUTPUT_NAMES = (
     "worker-understanding.md",
     "global-summary.md",
 )
+
+
+def _ring_fallback_trigger(result: Any, output_dir: Path) -> str | None:
+    """Explain why a fresh fallback session is needed, if at all."""
+    if result.stop_reason:
+        return (
+            str(result.stop_reason)
+            if result.stop_reason in {"timeout", "first_output_timeout"}
+            else None
+        )
+    if result.exit_code != 0:
+        return f"exit-code-{result.exit_code}"
+    missing = [
+        name
+        for name in STAGED_OUTPUT_NAMES
+        if not (output_dir / name).is_file()
+        or not (output_dir / name).read_text(encoding="utf-8").strip()
+    ]
+    if missing:
+        return f"missing-or-empty: {', '.join(missing)}"
+    return None
+
+
 VALID_RING_ACTIONS = {
     "START",
     "CONTINUE",
@@ -2128,13 +2151,18 @@ def run_ring_loop(
                 "model": RING_FALLBACK_MODEL,
                 "variant": RING_FALLBACK_VARIANT,
             }
+            fallback_trigger = _ring_fallback_trigger(
+                luna_result,
+                run_dir / "output",
+            )
             if (
-                luna_result.stop_reason == "first_output_timeout"
+                fallback_trigger is not None
                 and active_command is None
                 and RING_FALLBACK_MODEL
                 and RING_FALLBACK_MODEL != RING_MODEL
             ):
                 fallback["requested"] = True
+                fallback["trigger"] = fallback_trigger
                 result = run_streamed(
                     _command(
                         paths,

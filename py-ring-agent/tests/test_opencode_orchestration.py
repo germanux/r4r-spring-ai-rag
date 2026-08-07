@@ -236,6 +236,14 @@ class RingEscalationTests(unittest.TestCase):
 
 
 class CanonicalConfigurationTests(unittest.TestCase):
+    def test_startup_checks_catalog_without_running_billable_model_probe(self) -> None:
+        root = Path(__file__).resolve().parents[2]
+        launcher = (root / "scripts/run-ring-system.sh").read_text(encoding="utf-8")
+
+        self.assertIn('$binary models', launcher)
+        self.assertNotIn('"$binary" run', launcher)
+        self.assertNotIn("neither Ring model produced", launcher)
+
     def test_models_and_single_plan_match_selected_architecture(self) -> None:
         root = Path(__file__).resolve().parents[2]
         config = json.loads((root / "config/r4r-agents.json").read_text())

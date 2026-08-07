@@ -71,9 +71,6 @@ prepare_opencode_models() {
   local binary="${R4R_OPENCODE_BIN:-opencode}" available model
   local primary_model="${R4R_RING_MODEL:-openai/gpt-5.6-luna}"
   local fallback_model="${R4R_RING_FALLBACK_MODEL:-openai/gpt-5.3-codex}"
-  local probe_timeout="${R4R_OPENCODE_PROBE_TIMEOUT_SECONDS:-60}"
-  local primary_probe_log="$RUNTIME/model-probe-primary.log"
-  local fallback_probe_log="$RUNTIME/model-probe-fallback.log"
   command -v "$binary" >/dev/null 2>&1 || {
     echo "ERROR: OpenCode is not available: $binary" >&2
     exit 2
@@ -88,46 +85,6 @@ prepare_opencode_models() {
       exit 2
     }
   done
-
-  [[ "$probe_timeout" =~ ^[1-9][0-9]*$ ]] || {
-    echo "ERROR: R4R_OPENCODE_PROBE_TIMEOUT_SECONDS must be a positive integer" >&2
-    exit 2
-  }
-  if [[ "${R4R_SKIP_OPENCODE_PROBE:-false}" != "true" ]]; then
-    command -v timeout >/dev/null 2>&1 || {
-      echo "ERROR: timeout is required for the OpenCode model probe" >&2
-      exit 2
-    }
-    probe_model() {
-      local candidate="$1" log_file="$2"
-      timeout --signal=TERM --kill-after=10s "${probe_timeout}s" \
-        "$binary" run \
-          --dir "$RING_ROOT" \
-          --agent r4r-ring \
-          --model "$candidate" \
-          --variant low \
-          --format json \
-          --auto \
-          'Reply only with OK. Do not use tools or edit files.' \
-          >"$log_file" 2>&1 \
-        && [[ -s "$log_file" ]] \
-        && grep -Eq '"type":"(text|step_finish)"' "$log_file"
-    }
-
-    if probe_model "$primary_model" "$primary_probe_log"; then
-      export R4R_RING_MODEL="$primary_model"
-    elif [[ "$fallback_model" != "$primary_model" ]] \
-      && probe_model "$fallback_model" "$fallback_probe_log"; then
-      echo "WARNING: $primary_model did not stream; using $fallback_model" >&2
-      export R4R_RING_MODEL="$fallback_model"
-    else
-      echo "ERROR: neither Ring model produced a streamed response" >&2
-      tail -n 40 "$primary_probe_log" >&2 || true
-      [[ "$fallback_model" == "$primary_model" ]] \
-        || tail -n 40 "$fallback_probe_log" >&2 || true
-      exit 2
-    fi
-  fi
 }
 
 archive_current_logs() {

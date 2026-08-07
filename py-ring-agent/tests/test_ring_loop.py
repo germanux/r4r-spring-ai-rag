@@ -65,6 +65,39 @@ def _configure_task_plans(
 
 
 class RingLoopTest(unittest.TestCase):
+    def test_fallback_covers_failed_or_incomplete_primary_session(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            clean_exit = ring_loop.SimpleNamespace(exit_code=0, stop_reason="")
+
+            trigger = ring_loop._ring_fallback_trigger(clean_exit, output)
+            self.assertIn("missing-or-empty", trigger or "")
+
+            for name in ring_loop.STAGED_OUTPUT_NAMES:
+                (output / name).write_text("complete\n", encoding="utf-8")
+            self.assertIsNone(ring_loop._ring_fallback_trigger(clean_exit, output))
+
+            failed = ring_loop.SimpleNamespace(exit_code=1, stop_reason="")
+            self.assertEqual(
+                "exit-code-1",
+                ring_loop._ring_fallback_trigger(failed, output),
+            )
+
+            timed_out = ring_loop.SimpleNamespace(
+                exit_code=124,
+                stop_reason="first_output_timeout",
+            )
+            self.assertEqual(
+                "first_output_timeout",
+                ring_loop._ring_fallback_trigger(timed_out, output),
+            )
+
+            stopped = ring_loop.SimpleNamespace(
+                exit_code=130,
+                stop_reason="system-stop",
+            )
+            self.assertIsNone(ring_loop._ring_fallback_trigger(stopped, output))
+
     def test_failure_retry_delay_is_exponential_and_bounded(self) -> None:
         with (
             patch.object(ring_loop, "FAILURE_RETRY_BASE_SECONDS", 30),
