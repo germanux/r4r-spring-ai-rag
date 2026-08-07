@@ -1,40 +1,25 @@
-# Worker understanding assessment — run 20260807T012027Z
+# Worker understanding assessment
 
 ## PC understanding
 
-### Evidence
-- `pc-runtime/progress.json` shows task-07 still `BLOCKED` with `last_gate_green_*` populated.
-- `worker-requests/PC.json` records `reason: gate-green-checkpoint`, `gate_exit: 0`, and scoped changed paths.
-
-### Assessment
-PC has likely achieved a technically green gate pass, but handoff quality is still insufficient for deterministic closure. The defect is procedural/evidence-completeness, not broad architecture.
-
-### Next bounded directive
-- **Level / role:** Level 2 / PC
-- **Task ID:** `task-07-populate-production-rag`
-- **Dependencies:** `task-06f-ingestion-validation:ACCEPTED`
-- **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
-- **Exact gate:** `git diff --check` then exact task-07 gate command
-- **Acceptance condition:** closure-complete diagnostics including explicit non-zero `vector_store` proof and scope-clean diff.
+- **Evidence read:** `worker-requests/PC.json`, `worker-request-manifest.json`, `pc-runtime/progress.json`, `pc-runtime/memory.md`.
+- **Assessment:** PC appears to understand task scope and produced scoped backend changes with gate exit 0, but the handoff remains incomplete for closure (task still BLOCKED). This is a packaging/completion issue rather than scope misunderstanding.
+- **Required next understanding proof:** provide explicit mapping between gate execution, vector row-count proof, and closure artifacts needed for controller acceptance.
 
 ## LP understanding
 
-### Evidence
-- `lp-runtime/gate_summary.md` indicates gate failure (`exit 2`).
-- `lp-runtime/codex_plan.json` and `lp-runtime/codex-qwen3-extra-instructions.md` provide prescriptive single-file corrections.
-- `lp-git-status.txt` confirms one modified file.
+- **Evidence read:** `lp-runtime/gate_summary.md`, `lp-runtime/codex_plan.json`, `lp-runtime/codex-qwen3-extra-instructions.md`, `lp-runtime/memory.md`.
+- **Assessment:** LP understanding is currently below bar per Codex packet: prior pass introduced prohibited patterns and structural regressions in the spec file.
+- **Required next understanding proof:** local pass must align each FE-03D requirement to concrete selectors/assertions and avoid all prohibited edits called out in the correction packet.
 
-### Assessment
-LP requires a tighter, prescriptive level-1 execution that follows Codex correction packet verbatim. Scope is correctly narrow and unambiguous.
+## Assigned bounded next actions
 
-### Next bounded directive
-- **Level / role:** Level 1 / LP
-- **Task ID:** `task-fe-03d-dom-state-tests`
-- **Dependencies:** `task-fe-03c-citations:ACCEPTED`
-- **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
-- **Exact gate:** `git diff --check` then `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`
-- **Acceptance condition:** valid suite structure + prescribed 3 DOM tests + green FE-03D gate.
+1. **PC / Level 2 / task-07-populate-production-rag**
+   - **dependencies:** task-06f accepted
+   - **allowed_paths:** `pom.xml`, `src/main/**`, `src/test/**`, `docs/backend/**`
+   - **gate:** `git diff --check` + exact task-07 composite gate command
 
-## Cross-worker coordination note
-
-Backend and frontend scopes are disjoint in this cycle; no overlap blocker is present.
+2. **LP / Level 1 / task-fe-03d-dom-state-tests**
+   - **dependencies:** task-fe-03c accepted
+   - **allowed_paths:** `frontend/src/app/features/rag/rag-page.component.spec.ts`
+   - **gate:** `git diff --check` + `./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests`

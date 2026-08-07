@@ -2921,3 +2921,51 @@ Append-only ledger generated after each validated Ring cycle.
 
 - This RUN_DIR contains summarized gate artifacts; full gate logs and Codex review bundles for the latest attempts are not mirrored here.
 - No direct worker-run artifact in this snapshot proves task acceptance or controller final commit for either active task.
+
+## Cycle `20260807T012527Z` â READY
+
+- Decision fingerprint: `6efd4a771f81e171d1ea97b00d5b7e159d41e30466bf8e7868c60638f82ded5d`
+
+### PC
+
+- Decision: `CONTINUE`
+- Task: `task-07-populate-production-rag`
+- Reason: PC submitted a gate-green checkpoint request (gate_exit=0) for task-07, but runtime progress still marks task-07 BLOCKED and the request carries no codex_decision/next_action metadata; closure evidence must be completed without widening scope.
+- Next action: Run one closure-focused pass for task-07: keep current backend-only scope, run git diff --check, run the exact task-07 gate once, and return closure-complete evidence including explicit non-zero vector_store count and command exit diagnostics for controller commit.
+- Avoid repeating: Do not submit another gate-green checkpoint request without closure-complete diagnostics/metadata, which keeps task-07 in a BLOCKED loop.
+- Acceptance gates:
+  - git diff --check
+  - bash -lc "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012527Z/worker-requests/PC.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012527Z/worker-request-manifest.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012527Z/pc-runtime/progress.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012527Z/pc-git-status.txt`
+
+### LP
+
+- Decision: `CONTINUE`
+- Task: `task-fe-03d-dom-state-tests`
+- Reason: LP remains on task-fe-03d with a failing gate summary (exit 2), and Codex correction packet identifies a bounded single-file spec defect set (structure damage, forbidden patterns, and missing prescribed DOM tests).
+- Next action: Apply one level-1 single-file correction in frontend/src/app/features/rag/rag-page.component.spec.ts per Codex packet, then run git diff --check and the exact FE-03D gate once.
+- Avoid repeating: Do not reintroduce malformed suite structure, trailing whitespace, synthetic response fields, internal state mutation, guessed selectors, or unnecessary of/tick usage already rejected by Codex guidance.
+- Acceptance gates:
+  - git diff --check
+  - ./scripts/frontend-task-gate.sh task-fe-03d-dom-state-tests
+  - Hierarchy closure policy: exact-gate-green + scope-clean + controller-commit
+- Evidence:
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012527Z/lp-runtime/gate_summary.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012527Z/lp-runtime/codex_plan.json`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012527Z/lp-runtime/codex-qwen3-extra-instructions.md`
+  - `/home/german/Desarrollo/r4r-ring-agent.git/runtime/ring-agent/ring/20260807T012527Z/lp-git-status.txt`
+
+### Integration risks
+
+- PC task-07 can appear green yet remain non-closable if vector_store proof and command-exit metadata are not recorded in closure evidence.
+- LP FE-03D remains high-churn in one spec file; any structure regression can fail fast at git diff --check before the deterministic gate runs.
+
+### Evidence limitations
+
+- RUN_DIR includes no new LP run artifacts after 20260807T005022Z beyond the packaged gate summary and Codex packet.
+- RUN_DIR does not include PC full gate logs for 20260807T012439Z, so closure guidance relies on checkpoint request metadata plus progress/state files.
