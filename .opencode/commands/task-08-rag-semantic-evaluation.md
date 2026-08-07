@@ -142,10 +142,10 @@ Run exactly the controller-supplied command. It performs a clean backend gate an
 requires `RagSemanticEvaluationTest` to exist and pass.
 
 During implementation, also run the live CLI once on the PC and preserve its sanitized
-result in the evidence document. Codex must reject unsupported success claims when the
+result in the evidence document. Ring must reject unsupported success claims when the
 live execution is missing.
 
 ## Completion
 
 Completion requires deterministic tests, one current live PC evaluation, thresholds
-met or a precise BLOCKED result, Codex review, automatic local commit and no push.
+met or a precise BLOCKED result, Ring review, automatic local commit and no push.

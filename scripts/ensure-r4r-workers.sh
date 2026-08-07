@@ -188,42 +188,21 @@ json_float_one_decimal() {
 }
 
 prepare_python_runtime() {
-  local worker="$1" worktree="$2" venv python src_root purelib pth tmp
-  venv="$worktree/py-codex-agent/.venv"
-  python="$venv/bin/python"
-  src_root="$worktree/py-codex-agent/src"
-  [[ -f "$src_root/r4r_codex_agent/cli.py" ]] || die "$worker controller source missing: $src_root"
-
-  if [[ ! -x "$python" ]]; then
-    log "$worker: creating isolated Python runtime"
-    python3 -m venv "$venv" || die "$worker could not create $venv; install python3-venv"
-  fi
-  if "$python" -c 'import r4r_codex_agent.cli' >/dev/null 2>&1; then
-    return 0
-  fi
-  purelib="$($python - <<'PY'
-import sysconfig
-print(sysconfig.get_paths()["purelib"])
-PY
-  )"
-  mkdir -p "$purelib"
-  pth="$purelib/r4r_codex_agent_worktree.pth"
-  tmp="$pth.tmp.$$"
-  printf '%s\n' "$src_root" >"$tmp"
-  chmod 0644 "$tmp"
-  mv -f "$tmp" "$pth"
-  "$python" -c 'import r4r_codex_agent.cli' >/dev/null 2>&1 \
-    || die "$worker controller remains unimportable after repairing $pth"
-  log "$worker: repaired Python controller runtime"
+  local worker="$1" worktree="$2" src_root
+  src_root="$worktree/py-ring-agent/src"
+  [[ -f "$src_root/r4r_worker/cli.py" ]] \
+    || die "$worker controller source missing: $src_root/r4r_worker"
+  PYTHONPATH="$src_root${PYTHONPATH:+:$PYTHONPATH}" \
+    python3 -c 'import r4r_worker.cli' >/dev/null 2>&1 \
+    || die "$worker OpenCode controller is not importable"
 }
 
 spawn_wrapper() {
   local worker="$1" worktree="$2" stamp log_path pid required resolved
-  for required in node opencode codex; do
+  for required in node opencode; do
     case "$required" in
       node) resolved="${R4R_NODE_BIN:-node}" ;;
       opencode) resolved="${R4R_OPENCODE_BIN:-opencode}" ;;
-      codex) resolved="${R4R_CODEX_BIN:-codex}" ;;
     esac
     command -v "$resolved" >/dev/null 2>&1 || {
       warn "$worker: required CLI unavailable in non-interactive PATH: $required ($resolved)"
@@ -286,65 +265,72 @@ wait_healthy() {
   return 1
 }
 
-worker_is_blocked() {
-  local worker="$1" worktree="$2" progress
-  case "$worker" in
-    PC) progress="$worktree/.opencode/progress.backend.json" ;;
-    LP) progress="$worktree/.opencode/progress.frontend.json" ;;
-    *) return 1 ;;
-  esac
-  [[ -f "$progress" ]] || return 1
-  python3 - "$progress" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-value = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-active = value.get("active_task")
-blocked = any(
-    item.get("id") == active and item.get("status") == "BLOCKED"
-    for item in value.get("tasks", [])
-    if isinstance(item, dict)
-)
-raise SystemExit(0 if blocked else 1)
-PY
-}
-
-worker_retry_authorized() {
+worker_dispatch_ready() {
   local worker="$1" worktree="$2" progress directive
   case "$worker" in
-    PC) progress="$worktree/.opencode/progress.backend.json" ;;
-    LP) progress="$worktree/.opencode/progress.frontend.json" ;;
+    PC) progress="$worktree/.opencode/progress.pc.json" ;;
+    LP) progress="$worktree/.opencode/progress.lp.json" ;;
     *) return 1 ;;
   esac
-  directive="$RING_WORKTREE/runtime/control/$worker/ring-qwen3-directive.json"
-  [[ -f "$progress" && -f "$directive" ]] || return 1
-  python3 - "$worker" "$progress" "$directive" <<'PY'
+  directive="$RING_WORKTREE/runtime/control/$worker/assignment.json"
+  [[ -f "$directive" ]] || return 1
+  PYTHONPATH="$RING_WORKTREE/py-ring-agent/src${PYTHONPATH:+:$PYTHONPATH}" \
+  python3 - "$worker" "$progress" "$directive" "$RING_WORKTREE" <<'PY'
 import json
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
-worker, progress_path, directive_path = sys.argv[1:]
-progress = json.loads(Path(progress_path).read_text(encoding="utf-8"))
-directive = json.loads(Path(directive_path).read_text(encoding="utf-8"))
-active = str(progress.get("active_task") or "")
-item = next((value for value in progress.get("tasks", []) if value.get("id") == active), {})
-authorization_id = str(directive.get("authorization_id") or "")
-try:
-    expires_at = datetime.fromisoformat(str(directive.get("expires_at") or "").replace("Z", "+00:00"))
-except ValueError:
-    raise SystemExit(1)
-valid = (
-    item.get("status") == "BLOCKED"
-    and directive.get("target") == worker
-    and directive.get("task_id") == active
-    and directive.get("action") == "RETRY_AUTHORIZED"
-    and authorization_id
-    and item.get("recovery_authorization_consumed") != authorization_id
-    and int(item.get("recovery_grants_total") or 0) < 1
-    and expires_at > datetime.now(timezone.utc)
+from r4r_ring_agent.assignment import (
+    global_progress_path,
+    load_global_progress,
+    validate_assignment,
 )
+from r4r_worker.contracts import load_task_plan
+
+worker, progress_path, directive_path, ring_root = sys.argv[1:]
+ring = Path(ring_root)
+directive = json.loads(Path(directive_path).read_text(encoding="utf-8"))
+plan = load_task_plan(ring / ".opencode" / "task-plan.json")
+ledger = load_global_progress(global_progress_path(ring))
+validated = validate_assignment(
+    directive,
+    worker=worker,
+    tasks={task.id: task for task in plan.tasks},
+    accepted_task_ids=tuple(ledger["accepted"]),
+    max_age_seconds=int(
+        __import__("os").environ.get("R4R_RING_DIRECTIVE_MAX_AGE_SECONDS", "10800")
+    ),
+)
+task_id = validated["task_id"]
+action = validated["action"]
+if not Path(progress_path).is_file():
+    raise SystemExit(0)
+progress = json.loads(Path(progress_path).read_text(encoding="utf-8"))
+item = next(
+    (value for value in progress.get("tasks", []) if value.get("id") == task_id),
+    {},
+)
+if item.get("status") == "ACCEPTED":
+    raise SystemExit(1)
+if item.get("status") == "BLOCKED" and action != "RETRY_AUTHORIZED":
+    raise SystemExit(1)
+valid = True
+if action == "RETRY_AUTHORIZED":
+    authorization_id = str(directive.get("authorization_id") or "")
+    policy_version = int(directive.get("recovery_policy_version") or 1)
+    grants_total = int(item.get("recovery_grants_total") or 0)
+    consumed_version = int(item.get("recovery_repair_policy_version") or 0)
+    legacy_v1_upgrade = (
+        grants_total == 1
+        and bool(item.get("recovery_authorization_consumed"))
+        and policy_version == 2
+        and consumed_version < policy_version
+    )
+    valid = (
+        bool(authorization_id)
+        and item.get("recovery_authorization_consumed") != authorization_id
+        and (grants_total < 1 or legacy_v1_upgrade)
+    )
 raise SystemExit(0 if valid else 1)
 PY
 }
@@ -366,13 +352,9 @@ ensure_one() {
     warn "$worker state: $state"
     return 1
   fi
-  if worker_is_blocked "$worker" "$worktree"; then
-    if worker_retry_authorized "$worker" "$worktree"; then
-      log "$worker: BLOCKED task has a fresh one-shot RETRY_AUTHORIZED directive"
-    else
-      log "$worker: deliberately quiescent; active task is BLOCKED and requires RETRY_AUTHORIZED"
-      return 0
-    fi
+  if ! worker_dispatch_ready "$worker" "$worktree"; then
+    log "$worker: deliberately quiescent; no fresh Ring-generated assignment"
+    return 0
   fi
   if "$CHECK_ONLY"; then
     warn "$worker: inactive"

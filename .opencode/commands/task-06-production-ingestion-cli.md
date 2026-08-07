@@ -32,6 +32,6 @@ this subtask; later subtasks own those concerns.
 
 ## Completion
 
-Gate exit `0`, Codex `ACCEPT`, then controller commit:
+Gate exit `0`, controller validation, then controller commit:
 
 `chore(ingestion): checkpoint compilable CLI baseline`

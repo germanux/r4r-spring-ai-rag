@@ -27,6 +27,6 @@ Make only the smallest correction directly proven by the first failing gate.
 
 ## Completion
 
-Gate `0`, Codex `ACCEPT`, controller commit:
+Gate `0`, controller validation and global acceptance:
 
 `test(ingestion): complete production CLI validation`

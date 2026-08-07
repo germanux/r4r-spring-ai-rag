@@ -97,8 +97,8 @@ is_target_root() {
   fi
 
   case "$cmd" in
-    *"r4r_codex_agent.cli"*|\
-    *"run-codex-agent.sh"*|\
+    *"r4r_worker.cli"*|\
+    *"run-opencode-worker.sh"*|\
     *"run-ring-system.py"*|\
     *"run-ring-agent.py"*|\
     *"run-ring-stabilized.py"*|\
@@ -176,8 +176,8 @@ unit_matches() {
       r4r-agent-branch-sync.service|r4r-agent-branch-sync.timer) return 1 ;;
     esac
   fi
-  [[ "$unit" =~ ^r4r-(ring|pc|lp|backend|frontend|codex|opencode|agent|worker) ]] ||
-  [[ "$unit" =~ ^(ring|pc|lp)-(r4r-)?(agent|worker|codex|opencode) ]] ||
+  [[ "$unit" =~ ^r4r-(ring|pc|lp|opencode|agent|worker) ]] ||
+  [[ "$unit" =~ ^(ring|pc|lp)-(r4r-)?(agent|worker|opencode) ]] ||
   [[ "$unit" =~ (r4r-ring-agent|r4r-pc-worker|r4r-lp-worker) ]]
 }
 

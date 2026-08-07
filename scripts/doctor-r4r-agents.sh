@@ -7,25 +7,23 @@ MODE="${1:---all}"
 
 case "$MODE" in
   --all)
-    "$ROOT/scripts/run-codex-agent.sh" --destination PC --doctor
-    "$ROOT/scripts/run-codex-agent.sh" --destination LP --doctor
+    bash "$ROOT/scripts/run-opencode-worker.sh" --destination PC --doctor
+    bash "$ROOT/scripts/run-opencode-worker.sh" --destination LP --doctor
     ;;
-  --pc) "$ROOT/scripts/run-codex-agent.sh" --destination PC --doctor ;;
-  --lp) "$ROOT/scripts/run-codex-agent.sh" --destination LP --doctor ;;
-  --local-pc) "$ROOT/scripts/run-codex-agent.sh" --destination PC --doctor-local ;;
-  --local-lp) "$ROOT/scripts/run-codex-agent.sh" --destination LP --doctor-local ;;
+  --pc) bash "$ROOT/scripts/run-opencode-worker.sh" --destination PC --doctor ;;
+  --lp) bash "$ROOT/scripts/run-opencode-worker.sh" --destination LP --doctor ;;
+  --local-pc) bash "$ROOT/scripts/run-opencode-worker.sh" --destination PC --doctor-local ;;
+  --local-lp) bash "$ROOT/scripts/run-opencode-worker.sh" --destination LP --doctor-local ;;
   *) echo "Uso: $0 [--all|--pc|--lp|--local-pc|--local-lp]" >&2; exit 2 ;;
 esac
 
-PYTHON="$ROOT/py-codex-agent/.venv/bin/python"
-[[ -x "$PYTHON" ]] || PYTHON=python3
-PYTHONPATH="$ROOT/py-codex-agent/src" "$PYTHON" - <<'PY'
-from r4r_codex_agent.runner import is_lock_auto_advance_path
+PYTHONPATH="$ROOT/py-ring-agent/src" python3 - <<'PY'
+from r4r_worker.runner import is_lock_auto_advance_path
 required = [
     "r4r-laptop.zip",
     "r4r-spring-ai.zip",
     "install-r4r-agents-stable-v3.1.sh",
-    "payload/py-codex-agent/runner.py",
+    "payload/py-ring-agent/src/r4r_worker/runner.py",
 ]
 failed = [value for value in required if not is_lock_auto_advance_path(value)]
 if failed:

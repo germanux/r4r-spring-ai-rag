@@ -7,13 +7,26 @@
     "maxNoProgressCycles": 2,
     "maxTransientFailures": 3,
     "autoCommit": true,
-    "bootstrapCommit": true,
+    "bootstrapCommit": false,
     "checkpointOnGreen": true,
-    "requireSurgicalReview": false,
     "maxSessionSeconds": 5400,
     "idleSeconds": 900,
-    "maxSessionSteps": 120,
-    "repeatEventBudget": 12
+    "maxSessionSteps": 30,
+    "repeatEventBudget": 12,
+    "contextDeltaBytes": 65536,
+    "contextWarningTokens": 80000,
+    "contextStopTokens": 120000
+  },
+  "orchestration": {
+    "canonicalPlan": ".opencode/task-plan.json",
+    "assignmentMode": "ring-generated",
+    "logicalAgents": [
+      "RING",
+      "PC",
+      "LP"
+    ],
+    "maxActiveTasksPerWorker": 1,
+    "escalationAgent": "ESCALATION"
   },
   "codeIntelligence": {
     "referenceManifest": "knowledge/code-repositories.md",
@@ -35,73 +48,60 @@
     }
   },
   "agents": {
+    "RING": {
+      "agentId": "r4r-ring",
+      "role": "fullstack-coordinator-no-implementation",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "modelLabel": "GPT-5.6 Luna",
+      "reasoningVariant": "low",
+      "worker": "opencode",
+      "branch": "agent/ring-agent-worker",
+      "plan": ".opencode/task-plan.json",
+      "controlDir": "runtime/control/RING",
+      "mayImplement": false
+    },
+    "ESCALATION": {
+      "agentId": "r4r-escalation",
+      "role": "on-demand-complex-analysis",
+      "provider": "openai",
+      "model": "gpt-5.6-sol",
+      "modelLabel": "GPT-5.6 Sol",
+      "reasoningVariant": "high",
+      "worker": "opencode",
+      "plan": ".opencode/task-plan.json",
+      "controlDir": "runtime/control/ESCALATION",
+      "persistentWorker": false
+    },
     "PC": {
       "agentId": "r4r-pc",
       "branch": "agent/pc-qwen3-worker",
-      "role": "backend-java21-spring-ai",
-      "provider": "ollama-pc",
-      "endpointEnv": "R4R_OPENCODE_PC_BASE_URL",
-      "defaultEndpoint": "http://127.0.0.1:11434/v1",
-      "model": "qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest",
-      "modelLabel": "Qwen3-Coder-Next 80B PC 168K/8K",
-      "contextTokens": 172032,
-      "outputTokens": 8192,
+      "role": "fullstack-worker",
+      "provider": "openai",
+      "model": "gpt-5.6-terra",
+      "modelLabel": "GPT-5.6 Terra",
+      "contextTokens": 1050000,
+      "outputTokens": 128000,
       "temperature": 0.25,
       "worker": "opencode",
-      "plan": ".opencode/task-plan.backend.json",
-      "progress": ".opencode/progress.backend.json",
-      "memory": ".opencode/memory.backend.md",
+      "plan": ".opencode/task-plan.json",
+      "progress": ".opencode/progress.pc.json",
+      "legacyProgress": ".opencode/progress.backend.json",
+      "memory": ".opencode/memory.pc.md",
+      "legacyMemory": ".opencode/memory.backend.md",
       "controlDir": "runtime/control/PC",
       "allowedPaths": [
         "pom.xml",
         "src/**",
         "knowledge/**",
         "docker-postgres/**",
-        "docs/backend/**"
-      ],
-      "peerPaths": [
         "frontend/**",
-        "docs/frontend/**"
+        "docs/**",
+        ".env.example",
+        ".gitignore",
+        "codegraph.json"
       ],
-      "mcp": [
-        "codegraph",
-        "code_graph_rag"
-      ],
-      "runtime": {
-        "maxSessionSeconds": 5400,
-        "idleSeconds": 900,
-        "maxSessionSteps": 120,
-        "repeatEventBudget": 12
-      }
-    },
-    "LP": {
-      "agentId": "r4r-laptop",
-      "branch": "agent/laptop-qwen3-worker",
-      "role": "frontend-angular17",
-      "provider": "ollama-laptop",
-      "endpointEnv": "R4R_OPENCODE_LP_BASE_URL",
-      "defaultEndpoint": "http://192.168.1.9:11434/v1",
-      "model": "qwen3-30b-coder-28k-6k-t33:latest",
-      "modelLabel": "Qwen3 Coder 30B Laptop 28K/6K t33",
-      "contextTokens": 28672,
-      "outputTokens": 6144,
-      "temperature": 0.33,
-      "worker": "opencode",
-      "plan": ".opencode/task-plan.frontend.json",
-      "progress": ".opencode/progress.frontend.json",
-      "memory": ".opencode/memory.frontend.md",
-      "controlDir": "runtime/control/LP",
-      "allowedPaths": [
-        "frontend/**",
-        "docs/frontend/**"
-      ],
-      "peerPaths": [
-        "pom.xml",
-        "src/**",
-        "knowledge/**",
-        "docker-postgres/**",
-        "docs/backend/**"
-      ],
+      "peerPaths": [],
       "mcp": [
         "codegraph",
         "code_graph_rag",
@@ -110,7 +110,48 @@
       "runtime": {
         "maxSessionSeconds": 5400,
         "idleSeconds": 900,
-        "maxSessionSteps": 120,
+        "maxSessionSteps": 30,
+        "repeatEventBudget": 12
+      }
+    },
+    "LP": {
+      "agentId": "r4r-lp",
+      "branch": "agent/laptop-qwen3-worker",
+      "role": "fullstack-worker",
+      "provider": "openai",
+      "model": "gpt-5.6-terra",
+      "modelLabel": "GPT-5.6 Terra",
+      "contextTokens": 1050000,
+      "outputTokens": 128000,
+      "temperature": 0.25,
+      "worker": "opencode",
+      "plan": ".opencode/task-plan.json",
+      "progress": ".opencode/progress.lp.json",
+      "legacyProgress": ".opencode/progress.frontend.json",
+      "memory": ".opencode/memory.lp.md",
+      "legacyMemory": ".opencode/memory.frontend.md",
+      "controlDir": "runtime/control/LP",
+      "allowedPaths": [
+        "pom.xml",
+        "src/**",
+        "knowledge/**",
+        "docker-postgres/**",
+        "frontend/**",
+        "docs/**",
+        ".env.example",
+        ".gitignore",
+        "codegraph.json"
+      ],
+      "peerPaths": [],
+      "mcp": [
+        "codegraph",
+        "code_graph_rag",
+        "playwright"
+      ],
+      "runtime": {
+        "maxSessionSeconds": 5400,
+        "idleSeconds": 900,
+        "maxSessionSteps": 30,
         "repeatEventBudget": 12
       }
     }

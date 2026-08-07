@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Deterministic Phase-3 supervisor for workers and The-Ring cognitive loop.
 
-The guardian keeps the authoritative PC and LP wrappers alive. A separately locked
-The-Ring process periodically reads both workers' evidence and publishes advisory
-per-worker directives. Git synchronization remains the responsibility of
+The guardian dispatches PC and LP only while each has a fresh Ring assignment. A
+separately locked Ring process reads both workers' evidence and publishes assignments.
+Git synchronization remains the responsibility of
 sync-agent-branches.sh.
 """
 from __future__ import annotations
@@ -18,6 +18,16 @@ import sys
 import time
 
 DEFAULT_INTERVAL_SECONDS = 763
+
+
+def _invalidate_startup_assignments(ring: Path) -> tuple[Path, ...]:
+    removed: list[Path] = []
+    for worker in ("PC", "LP"):
+        path = ring / "runtime" / "control" / worker / "assignment.json"
+        if path.exists():
+            path.unlink()
+            removed.append(path)
+    return tuple(removed)
 
 
 def parse_args() -> argparse.Namespace:
@@ -290,7 +300,14 @@ def main() -> int:
     try:
         if args.once:
             return guardian_iteration()
-        print(f"[r4r-system] supervising PC, LP and The-Ring every {args.interval}s")
+        # A supervisor restart is a new orchestration epoch. Remove only the
+        # ephemeral worker assignments so the guardian cannot replay an
+        # unexpired directive before Luna has reviewed current evidence.
+        _invalidate_startup_assignments(ring)
+        print(
+            f"[r4r-system] checking Ring assignments for PC and LP every "
+            f"{args.interval}s"
+        )
         ensure_ring_agent()
         while not stopping:
             guardian_iteration()

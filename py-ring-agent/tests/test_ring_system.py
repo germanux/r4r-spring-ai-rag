@@ -14,6 +14,24 @@ SCRIPT = Path(__file__).resolve().parents[1] / "run-ring-system.py"
 
 
 class RingSystemTests(unittest.TestCase):
+    def test_startup_invalidates_previous_worker_assignments(self) -> None:
+        spec = importlib.util.spec_from_file_location("run_ring_system", SCRIPT)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as temp:
+            ring = Path(temp)
+            for worker in ("PC", "LP"):
+                assignment = (
+                    ring / "runtime" / "control" / worker / "assignment.json"
+                )
+                assignment.parent.mkdir(parents=True)
+                assignment.write_text("{}\n", encoding="utf-8")
+            removed = module._invalidate_startup_assignments(ring)
+            self.assertEqual(len(removed), 2)
+            self.assertFalse(any(path.exists() for path in removed))
+
     def test_once_invokes_guardian_and_cleans_pid_file(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             ring = Path(temp)

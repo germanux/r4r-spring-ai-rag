@@ -22,6 +22,6 @@ Render backend-provided structured citations without parsing model-authored text
 
 ## Completion
 
-Gate `0`, Codex `ACCEPT`, controller commit:
+Gate `0`, controller validation and global acceptance:
 
 `feat(rag-ui): render structured citations`

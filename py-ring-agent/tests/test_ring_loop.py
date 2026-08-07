@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 
@@ -26,13 +27,13 @@ def _configure_task_plans(
     config = {"agents": {}}
     for worker, (plan_name, task_id, scope) in plans.items():
         config["agents"][worker] = {
-            "agentId": "r4r-pc" if worker == "PC" else "r4r-laptop",
+            "agentId": "r4r-pc" if worker == "PC" else "r4r-lp",
             "branch": (
                 "agent/pc-qwen3-worker"
                 if worker == "PC"
                 else "agent/laptop-qwen3-worker"
             ),
-            "model": "qwen3-pc:latest" if worker == "PC" else "qwen3-lp:latest",
+            "model": "gpt-5.6-terra",
             "plan": plan_name,
         }
         plan_path = ring / plan_name
@@ -49,6 +50,17 @@ def _configure_task_plans(
     config_path = ring / "config" / "r4r-agents.json"
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(json.dumps(config), encoding="utf-8")
+    subprocess.run(["git", "init", "-q"], cwd=ring, check=True)
+    subprocess.run(
+        ["git", "config", "user.name", "R4R Test"],
+        cwd=ring,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "r4r-test@example.invalid"],
+        cwd=ring,
+        check=True,
+    )
 
 
 class RingLoopTest(unittest.TestCase):
@@ -63,25 +75,23 @@ class RingLoopTest(unittest.TestCase):
             self.assertIn("--model", command)
             self.assertEqual(
                 command[command.index("--model") + 1],
-                "openai/gpt-5.3-codex",
+                "openai/gpt-5.6-luna",
             )
             self.assertIn("--variant", command)
-            self.assertEqual(command[command.index("--variant") + 1], "medium")
+            self.assertEqual(command[command.index("--variant") + 1], "low")
             self.assertEqual(command[command.index("--dir") + 1], str(paths.ring))
             prompt = command[-1]
             self.assertIn(str(run_dir), prompt)
             self.assertIn(str(run_dir / "output"), prompt)
             self.assertIn("RUN_ID: run-1", prompt)
             self.assertIn("Write these six staged files", prompt)
-            self.assertIn("Do not write `runtime/control/**`", prompt)
+            self.assertIn("`runtime/control/**`", prompt)
             self.assertIn(str(paths.ring), prompt)
             self.assertNotIn(str(paths.pc), prompt)
             self.assertNotIn(str(paths.lp), prompt)
-            self.assertIn("never delete, unlink, remove, rename or move", prompt)
-            self.assertIn("may additionally make bounded, non-destructive edits", prompt)
-            self.assertIn("`docs/agent-coordination/`", prompt)
-            self.assertIn("SURGICAL is temporarily disabled", prompt)
-            self.assertNotIn("HOLD | REVIEW | STOP", prompt)
+            self.assertIn("global-progress.json", prompt)
+            self.assertIn("ESCALATE", prompt)
+            self.assertIn("Never assign overlapping", prompt)
 
     def test_directive_validation_accepts_current_advisory_json(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -93,9 +103,15 @@ class RingLoopTest(unittest.TestCase):
                 json.dumps(
                     {
                         "schema_version": 1,
+                        "assignment_id": "run-1:PC:task-06",
                         "target": "PC",
                         "task_id": "task-06",
+                        "action": "CONTINUE",
                         "generated_at": datetime.now(timezone.utc).isoformat(),
+                        "expires_at": (
+                            datetime.now(timezone.utc)
+                            + __import__("datetime").timedelta(minutes=10)
+                        ).isoformat(),
                         "priority": "advisory",
                         "next_action": "Run the real CLI smoke.",
                     }
@@ -218,13 +234,13 @@ class RingLoopTest(unittest.TestCase):
             self.assertTrue(
                 (
                     ring
-                    / ".ring-agent/evidence/task-pc/pc-qwen3-worker-attempt-01.md"
+                    / ".ring-agent/evidence/task-pc/r4r-pc-attempt-01.md"
                 ).is_file()
             )
             self.assertTrue(
                 (
                     ring
-                    / ".ring-agent/evidence/task-lp/laptop-qwen3-worker-attempt-01.md"
+                    / ".ring-agent/evidence/task-lp/r4r-lp-attempt-01.md"
                 ).is_file()
             )
             coordination = ring / "docs" / "agent-coordination"
@@ -239,7 +255,7 @@ class RingLoopTest(unittest.TestCase):
             self.assertIn("Decision fingerprint:", decisions)
             self.assertEqual(
                 publication["coordination_commit"]["status"],
-                "not-git-worktree",
+                "committed",
             )
             ring_loop._publish_staged_outputs(paths, run_dir, run_id)
             decisions = (coordination / "DECISIONS.md").read_text(encoding="utf-8")
@@ -288,7 +304,7 @@ class RingLoopTest(unittest.TestCase):
             )
             for worker in ("PC", "LP"):
                 directive_path = (
-                    ring / "runtime" / "control" / worker / "ring-qwen3-directive.json"
+                    ring / "runtime" / "control" / worker / "assignment.json"
                 )
                 directive = json.loads(directive_path.read_text(encoding="utf-8"))
                 self.assertEqual(directive["target"], worker)
@@ -297,9 +313,10 @@ class RingLoopTest(unittest.TestCase):
                 self.assertTrue(directive["next_action"])
                 self.assertTrue(directive["evidence_paths"])
                 self.assertTrue(directive["write_scope"])
-                self.assertTrue(directive["assigned_agent"].endswith("qwen3-worker"))
+                self.assertIn(directive["assigned_agent"], {"r4r-pc", "r4r-lp"})
                 self.assertTrue(directive["branch"].startswith("agent/"))
-                self.assertTrue(directive["model"].startswith("qwen3-"))
+                self.assertEqual(directive["model"], "gpt-5.6-terra")
+                self.assertTrue(directive["assignment_id"])
                 self.assertTrue(directive["evidence_path"].startswith(
                     f".ring-agent/evidence/task-{worker.lower()}/"
                 ))

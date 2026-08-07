@@ -1,129 +1,108 @@
-# R4R four-role engineering hierarchy
+# R4R OpenCode engineering system
 
-## Roles, experience calibration and queues
+## Logical agents
 
-The years below are an operational calibration for autonomy and risk, not a factual
-claim about a model's biography. There are three implementation levels and one
-coordination role:
+R4R has three persistent logical agents:
 
-- **RING / technical lead — 10-year calibration, no coding.** Ring decomposes work,
-  classifies risk, assigns one owner, checks dependencies and decides whether evidence
-  is sufficient. It writes only staged coordination outputs. Ring never edits product,
-  test, script, controller, configuration or policy code.
-- **SURGICAL — temporarily disabled.** Its branch and profiles are retained for a
-  later redesign, but Ring must not dispatch it and PC/LP closure must not wait for
-  `ACCEPT` or `REVISE` from it.
-- **PC / developer — 2-year calibration, level 2.** PC performs bounded medium-risk
-  implementation within the active backend or frontend phase. It does not make
-  repository-wide architecture, lifecycle or Git-synchronization decisions.
-- **LP / junior developer — 6-month calibration, level 1.** LP receives small,
-  prescriptive work packages with exact files, one observable behavior and one gate.
-  It never invents architecture, widens scope or resolves cross-component ambiguity.
+- **RING** coordinates only. It uses `openai/gpt-5.6-luna`, reads bounded evidence,
+  generates assignments and never implements code.
+- **PC** is a fullstack worker. It uses `openai/gpt-5.6-terra` and executes exactly
+  one Ring-generated assignment at a time.
+- **LP** is a fullstack worker with the same capabilities and model as PC. Its separate
+  worktree, progress, memory, runtime and Git identity remain isolated.
 
-The canonical classification is `.opencode/task-plan.hierarchy.json`. The active
-legacy backend/frontend plans remain execution-state authorities until phase-aware
-migration is implemented.
+A fourth OpenCode profile, **ESCALATION**, is invoked only when Ring marks a decision
+`ESCALATE`. It uses `openai/gpt-5.6-sol`, is read-only outside staged Ring output,
+and must return a complete replacement decision. It is not a persistent worker or an
+independent task queue.
 
-The canonical runtime/model configuration is `config/r4r-agents.json`. Machine-local
-endpoints belong in `.env.r4r.local`, never in the application `.env`.
+The only task source is `.opencode/task-plan.json`. Ring generates current assignments
+under `runtime/control/PC/assignment.json` and
+`runtime/control/LP/assignment.json`. Legacy backend/frontend/hierarchy plans are
+historical and must not be used by runtime code.
 
-## Subtask size, timebox and commits
+The only runtime/model configuration is `config/r4r-agents.json`. Machine-local
+credentials belong outside the repository or in ignored local environment files.
 
-These rules apply to all implementation work. Ring creates and routes work packages;
-it does not implement them.
+## Assignment and concurrency rules
 
-- A level-1 LP package targets 15–35 minutes, one or two closely related files and one
-  exact assertion or visible behavior.
-- A level-2 PC package targets 30–60 minutes, one component or layer and one exact gate.
-- A former level-3 package must be decomposed into disjoint PC/LP work or left pending
-  for explicit human reassignment while SURGICAL is disabled.
-- The hard OpenCode session ceiling is 90 minutes (`5400` seconds). Reaching the
-  ceiling stops the session; it does not authorize a broader scope or an unreviewed
-  commit.
-- Every subtask has one objective, explicit dependencies, one canonical `allowed_paths`
-  write scope, one exact gate and one controller-owned closing commit. A green exact
-  gate and clean scope are sufficient for the controller to close the task.
-- Split work again when one task mixes independent concerns such as entrypoint,
-  lifecycle, exception classification, subprocess proof, DOM behavior, accessibility
-  or final integration validation.
-- Before an expensive gate, the deterministic gate must reject whitespace errors with
-  `git diff --check`; do not spend another full Maven or Angular cycle on a patch that
-  cannot be committed.
-- After a subtask is accepted and committed, advance immediately to the next pending
-  subtask. Do not reopen accepted work without a current regression.
+- PC and LP are fullstack peers; task domain does not determine ownership.
+- Ring assigns by current evidence, dependencies, capacity and disjoint write scopes.
+- Each worker may have at most one active assignment.
+- A worker never scans the plan for the next pending task. It remains quiescent without
+  a fresh `START`, `CONTINUE` or `RETRY_AUTHORIZED` assignment.
+- Ring must never publish overlapping `allowed_paths` to PC and LP.
+- The task's `allowed_paths` is the only write scope. Do not create a second scope
+  field that can drift.
+- Each worker has separate progress, memory, control, run and evidence paths.
+- Runtime, progress, memory and `.opencode/current/**` are generated local state and
+  remain ignored.
 
-## Ring coordination-only authority
+## OpenCode-only execution
 
-- Ring may read repository and runtime evidence required to classify work.
-- Ring may write only the exact staged outputs under the supplied `OUTPUT_DIR`.
-- Ring never edits Java, Angular, tests, scripts, controller code, configuration,
-  documentation, task plans, agent profiles or `AGENTS.md`.
-- Ring never deletes, moves, renames or truncates repository content.
-- Ring never writes Git history, launches workers or applies a SURGICAL patch.
-- When Ring identifies a code or policy correction, it creates a bounded level-1 or
-  level-2 work package and routes it to LP or PC. It never routes to SURGICAL while the
-  temporary disablement is active.
+All model sessions run through OpenCode. Production scripts and Python packages must
+not invoke or import the Codex CLI/controller. The historical implementation is stored
+under `docs/archive/py-codex-agent/` for reference only and is not importable at
+runtime.
 
-## Concurrency
+OpenCode sessions never write Git history. The deterministic `r4r_worker` controller
+inside `py-ring-agent` owns validation, checkpointing and final commits. Ring and the
+Sol escalation never commit or launch workers.
 
-- Never run two workers for the same queue.
-- Every task's `allowed_paths` entry is its canonical `write_scope`; do not create a
-  second scope field that can drift from controller enforcement.
-- Before publishing directives, Ring validates active task IDs against the configured
-  plans and rejects simultaneous dispatch only when PC and LP write scopes overlap.
-- Peer-owned product paths are tolerated as concurrent background changes but are not
-  writable by the PC or LP peer agent.
-- Each worker has separate progress, memory, control and run directories.
-- Worker progress, memory, `.opencode/current/` and Ring's live `.ring-agent/*.json`
-  or summary files are machine-local, regenerated state and must remain ignored.
-- OpenCode/local-model sessions never write Git history.
-- The deterministic Python controller may create a task-scoped checkpoint and the
-  closing commit immediately after the exact gate is green and scope is clean.
-- A checkpoint preserves useful compilable work but does not mark the task accepted.
-- Do not run `git add`, `git commit`, `git reset`, `git checkout`, `git merge` or
-  `git push` from a model/tool session; only the controller owns automated commits.
+The session limits are:
 
-## Code intelligence
+- 64 KiB maximum context delta;
+- warning at 80,000 tokens;
+- stop at 120,000 tokens or 30 steps;
+- 90-minute wall-clock ceiling;
+- one deterministic recovery grant per blocked task.
 
-- `npm run repos:sync` materializes repositories declared in
-  `knowledge/code-repositories.md` under the ignored `.r4r/` directory.
-- `npm run code:index` indexes the application and enabled references with CodeGraph
-  and Code-Graph-RAG.
-- CodeGraph/Code-Graph-RAG are retrieval tools. Agents must not invoke destructive
-  graph wipe/index tools or their file-writing tools; indexing is performed by npm.
-- Reference repositories are read-only evidence, never product-edit targets.
+## Worker protocol
 
-## Attempt order
+For every assignment:
 
-1. Run the selected queue's exact gate.
-2. Classify the first current failure and retain the full evidence.
-3. Use focused CodeGraph/Code-Graph-RAG retrieval when useful.
-4. Follow the bounded Ring work package; return unresolved ambiguity to Ring instead
-   of widening scope.
-5. Edit one coherent batch inside the current worker's allowed paths.
-6. Re-run the exact gate. When green, let the controller write worker memory, close
-   the task and advance the queue without a SURGICAL handoff.
-7. Stop on scope/Git violations and bounded-session watchdog triggers; retry only with
-   a changed plan or new evidence.
+1. Validate the fresh assignment, exact task ID and exact write scope.
+2. Read `AGENTS.md`, the canonical plan entry, task command and worker memory.
+3. Run the exact gate before editing.
+4. Classify the first current failure and retain full diagnostics.
+5. Use focused CodeGraph or Code-Graph-RAG retrieval when it materially helps.
+6. Edit one coherent batch inside the assigned `allowed_paths`.
+7. Re-run the exact gate.
+8. Let the deterministic controller checkpoint or commit only when scope and gate are
+   clean.
+9. Stop after that assignment. Ring decides what comes next.
+
+A `CONTINUE` assignment never unlocks a `BLOCKED` task.
+`RETRY_AUTHORIZED` permits one additional attempt only when its unconsumed
+authorization ID, expiry, task and scope all match. A second failed recovery returns to
+`HOLD`.
+
+## Git and evidence
+
+- Do not run `git add`, `git commit`, `git reset`, `git checkout`, `git merge`
+  or `git push` from a model session.
+- The controller rejects out-of-scope product changes and non-fast-forward history.
+- Peer commits may advance the shared integration history only when their paths are
+  outside the current assignment.
+- Before an expensive gate, reject staged and unstaged whitespace errors.
+- Every semantic Ring decision writes one durable summary under
+  `.ring-agent/evidence/<task-id>/` with one writer and one exclusive evidence path.
+- Polling timestamps, regenerated runtime paths and unchanged evidence never justify a
+  coordination commit.
+- Binary bundles, full logs, PID files and locks remain in ignored runtime storage.
 
 ## Product boundaries
 
-- Backend tasks use Spring AI abstractions; no handwritten Ollama HTTP client.
-- Frontend tests and Playwright must not require a live LLM.
-- Flyway owns the backend schema.
-- A PC or LP task completes when its exact gate is green, its diff is scope-clean and
-  the deterministic controller records the result and closing commit.
-- Never recursively search generated or runtime-heavy directories:
+- Backend work uses Java 21, Spring Boot and Spring AI abstractions; never add a
+  handwritten Ollama HTTP client.
+- Flyway owns the application schema.
+- Frontend uses Angular 17 strict mode.
+- Unit and Playwright tests must not require a live LLM.
+- PostgreSQL runs in Docker for project gates.
+- Reference repositories and code graphs are read-only evidence, never edit targets.
+- Never recursively search generated or heavy paths:
   `frontend/node_modules/**`, `frontend/dist/**`, `frontend/.angular/**`,
-  `node_modules/**`, `runtime/**` and `.r4r/**`.
-- `runtime/` is ephemeral working state and is globally ignored. Inspect only the
-  exact task/run needed.
-- Ring publishes one durable Markdown summary per task, agent/model and attempt under
-  `.ring-agent/evidence/<task-id>/`. Each file has one writer, and its task-derived
-  `write_scope` is recorded in the summary and worker directive. The directive also
-  records `assigned_agent`, `model`, `branch` and the exclusive `evidence_path`.
-- A new evidence attempt and coordination commit require a semantic transition in
-  task, action, scope, gate, diagnosis or next action. Polling timestamps, run IDs and
-  regenerated runtime paths never justify a Git commit.
-- Binary bundles, patches, PID/lock files and bulk text logs remain only in ignored
-  runtime storage; they are never copied into `.ring-agent/evidence/`.
+  `node_modules/**`, `target/**`, `runtime/**`, `.r4r/**` and `.git/**`.
+
+A task is accepted only when its exact deterministic gate is green, its assigned scope
+is clean and the controller records the result.

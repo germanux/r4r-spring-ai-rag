@@ -26,6 +26,6 @@ Do not weaken existing service tests and do not require a live backend or LLM.
 
 ## Completion
 
-Gate `0`, Codex `ACCEPT`, controller commit:
+Gate `0`, controller validation and global acceptance:
 
 `test(rag-ui): verify DOM interaction states`

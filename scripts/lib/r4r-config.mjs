@@ -7,7 +7,6 @@ export function repositoryRoot(importMetaUrl = import.meta.url) {
   const here = path.dirname(fileURLToPath(importMetaUrl));
   return path.resolve(here, "../..");
 }
-
 export function parseEnvFile(file) {
   if (!fs.existsSync(file)) return {};
   const result = {};

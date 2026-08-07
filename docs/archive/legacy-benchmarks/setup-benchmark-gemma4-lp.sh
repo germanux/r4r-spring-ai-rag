@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Archived direct-Ollama benchmark; not part of the OpenCode runtime.
 set -Eeuo pipefail
 
 PROGRAM="$(basename "$0")"

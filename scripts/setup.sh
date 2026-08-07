@@ -8,17 +8,15 @@ RUNTIME_ENV_HELPER="$ROOT/scripts/r4r-runtime-env.sh"
 TOOLS_ONLY=false
 SKIP_DB=false
 SKIP_VERIFY=false
-WITH_CLAUDE=false
 
 usage() {
   cat <<'EOF'
 Usage: ./scripts/setup.sh [options]
 
 Options:
-  --tools-only   Install/verify CLIs and the Python controller only.
+  --tools-only   Install/verify OpenCode, CodeGraph and the Python controller.
   --skip-db      Do not start the PostgreSQL application container.
   --skip-verify  Do not run the unit verification pass.
-  --with-claude  Optionally install/verify Claude Code (not required).
   -h, --help     Show this help.
 EOF
 }
@@ -28,7 +26,6 @@ while (($#)); do
     --tools-only) TOOLS_ONLY=true; SKIP_DB=true; SKIP_VERIFY=true; shift ;;
     --skip-db) SKIP_DB=true; shift ;;
     --skip-verify) SKIP_VERIFY=true; shift ;;
-    --with-claude) WITH_CLAUDE=true; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown setup option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -63,8 +60,6 @@ apt_install_missing() {
   command -v git >/dev/null 2>&1 || packages+=(git)
   command -v mvn >/dev/null 2>&1 || packages+=(maven)
   command -v python3 >/dev/null 2>&1 || packages+=(python3)
-  python3 -c 'import venv' >/dev/null 2>&1 || packages+=(python3-venv)
-  python3 -m pip --version >/dev/null 2>&1 || packages+=(python3-pip)
   command -v node >/dev/null 2>&1 || packages+=(nodejs)
   command -v npm >/dev/null 2>&1 || packages+=(npm)
   local javac_version=""
@@ -119,67 +114,18 @@ ensure_opencode_capabilities() {
   "$binary" run --help 2>&1 | grep -q -- "--auto" || { echo "$binary lacks --auto" >&2; exit 2; }
 }
 
-ensure_codex_capabilities() {
-  local binary="${R4R_CODEX_BIN:-codex}" package="${R4R_CODEX_NPM_PACKAGE:-@openai/codex}"
-  if ! "$binary" exec --help 2>&1 | grep -q -- "--output-schema"; then
-    echo "Updating $binary because --output-schema is missing..."
-    npm install -g "$package" || "${SUDO[@]}" npm install -g "$package"
-  fi
-  "$binary" exec --help 2>&1 | grep -q -- "--output-schema" || { echo "$binary lacks --output-schema" >&2; exit 2; }
-  "$binary" exec --help 2>&1 | grep -q -- "--sandbox" || { echo "$binary lacks --sandbox" >&2; exit 2; }
-}
-
-ensure_claude_capabilities() {
-  local binary="${R4R_CLAUDE_BIN:-claude}"
-  local package="${R4R_CLAUDE_NPM_PACKAGE:-@anthropic-ai/claude-code}"
-
-  if ! command -v "$binary" >/dev/null 2>&1; then
-    echo "Installing Claude Code from npm package $package..."
-    npm install -g "$package" || "${SUDO[@]}" npm install -g "$package"
-    hash -r
-  fi
-  command -v "$binary" >/dev/null 2>&1 || {
-    echo "Failed to install Claude Code executable: $binary" >&2
+ensure_opencode_models() {
+  local binary="${R4R_OPENCODE_BIN:-opencode}" available model
+  available="$($binary models 2>/dev/null)" || {
+    echo "OpenCode cannot read its authenticated model catalog." >&2
     exit 2
   }
-
-  local selected_path version help missing=() flag
-  selected_path="$(command -v "$binary")"
-  version="$($binary --version 2>&1 || true)"
-  [[ -n "$version" ]] || {
-    echo "Claude Code executable cannot report its version: $selected_path" >&2
-    exit 2
-  }
-
-  # Claude Code marks several options as print-mode-only. Some releases accept those
-  # options but omit them from the top-level `claude --help` text. Inspect both help
-  # surfaces and treat missing documentation as a warning, not as proof that the
-  # parser lacks the option. The surgical launcher is the authoritative runtime check.
-  help="$({ "$binary" --help 2>&1 || true; "$binary" -p --help 2>&1 || true; } | sed -E $'s/\x1B\[[0-9;?]*[ -\/]*[@-~]//g')"
-  for flag in --output-format --max-turns --permission-mode --append-system-prompt-file; do
-    grep -Fq -- "$flag" <<<"$help" || missing+=("$flag")
-  done
-
-  printf 'Claude Code: %s (%s)\n' "$selected_path" "$version"
-  if (( ${#missing[@]} > 0 )); then
-    printf 'Warning: Claude Code help does not advertise print-mode option(s): %s\n' "${missing[*]}" >&2
-    echo "The installed binary is retained; hidden help entries are not a capability failure." >&2
-    echo "The first surgical run will fail closed if its parser truly rejects an option." >&2
-    if [[ "${R4R_CLAUDE_STRICT_HELP:-0}" == 1 ]]; then
-      echo "R4R_CLAUDE_STRICT_HELP=1: refusing the incomplete help surface." >&2
+  for model in openai/gpt-5.6-luna openai/gpt-5.6-terra openai/gpt-5.6-sol; do
+    grep -Fq -- "$model" <<<"$available" || {
+      echo "Required OpenCode model is unavailable: $model" >&2
       exit 2
-    fi
-  fi
-
-  # Multiple installations are a common cause of apparently stale help/version output.
-  # Report them, but do not delete or replace an operator-managed installation.
-  local paths
-  paths="$(type -a -p "$binary" 2>/dev/null | awk '!seen[$0]++')"
-  if [[ "$(wc -l <<<"$paths" | tr -d ' ')" -gt 1 ]]; then
-    echo "Warning: multiple Claude Code executables are visible in PATH:" >&2
-    sed 's/^/  - /' <<<"$paths" >&2
-    echo "Selected executable: $selected_path" >&2
-  fi
+    }
+  done
 }
 
 ensure_codegraph_capabilities() {
@@ -281,13 +227,9 @@ if getent group docker >/dev/null 2>&1 && ! id -nG "$USER" | tr ' ' '\n' | grep 
 fi
 
 install_npm_cli "${R4R_OPENCODE_BIN:-opencode}" "${R4R_OPENCODE_NPM_PACKAGE:-opencode-ai}"
-install_npm_cli "${R4R_CODEX_BIN:-codex}" "${R4R_CODEX_NPM_PACKAGE:-@openai/codex}"
 install_npm_cli codegraph "${R4R_CODEGRAPH_NPM_PACKAGE:-@colbymchenry/codegraph}"
 ensure_opencode_capabilities
-ensure_codex_capabilities
-if "$WITH_CLAUDE"; then
-  ensure_claude_capabilities
-fi
+ensure_opencode_models
 ensure_codegraph_capabilities
 
 if [[ -r "$RUNTIME_ENV_HELPER" ]]; then
@@ -298,16 +240,14 @@ fi
 ensure_local_env_var R4R_NODE_BIN "$(command -v node)"
 ensure_local_env_var R4R_NPM_BIN "$(command -v npm)"
 ensure_local_env_var R4R_OPENCODE_BIN "$(command -v "${R4R_OPENCODE_BIN:-opencode}")"
-ensure_local_env_var R4R_CODEX_BIN "$(command -v "${R4R_CODEX_BIN:-codex}")"
 set -a
 # shellcheck disable=SC1091
 source "$ROOT/.env.r4r.local"
 set +a
 
 mkdir -p docker-postgres/data/app docker-postgres/backups runtime/runs runtime/locks
-python3 -m venv py-codex-agent/.venv
-py-codex-agent/.venv/bin/python -m pip install --upgrade pip
-py-codex-agent/.venv/bin/python -m pip install -e py-codex-agent
+PYTHONPATH="$ROOT/py-ring-agent/src" python3 -c \
+  'import r4r_ring_agent.ring_loop, r4r_worker.cli'
 
 if [[ "$TOOLS_ONLY" == false ]]; then
   if [[ -d .codegraph ]]; then
@@ -338,12 +278,5 @@ printf 'LP Git author: %s <%s>\n' \
   "${R4R_LP_GIT_AUTHOR_EMAIL:-germanux@gmail.com}"
 echo "PostgreSQL runs only in Docker."
 echo "If Docker group membership was added, log out and back in to avoid sudo fallback."
-if ! "${R4R_CODEX_BIN:-codex}" login status >/dev/null 2>&1; then
-  echo "Codex CLI is installed but may not be authenticated. Run: codex login"
-fi
-if "$WITH_CLAUDE" && ! "${R4R_CLAUDE_BIN:-claude}" auth status >/dev/null 2>&1; then
-  echo "Claude Code was requested but is not authenticated. Run: claude"
-fi
-echo "Claude Code is optional; the supported surgical path uses two local OpenCode agents."
-echo "Next: ./scripts/verify.sh all && ./scripts/run-codex-agent.sh"
-echo "Audit: ./scripts/run-opencode-dual-surgical-review.sh --repo . --branch "$(git branch --show-current 2>/dev/null || echo r4r-chatgpt)" --mode review"
+echo "OpenCode models: Luna for Ring, Terra for PC/LP, Sol for escalations."
+echo "Next: ./scripts/verify.sh all && ./scripts/run-ring-system.sh start"

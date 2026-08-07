@@ -62,5 +62,4 @@ r4r_runtime_bootstrap() {
   r4r_resolve_cli_variable R4R_NODE_BIN node || true
   r4r_resolve_cli_variable R4R_NPM_BIN npm || true
   r4r_resolve_cli_variable R4R_OPENCODE_BIN opencode || true
-  r4r_resolve_cli_variable R4R_CODEX_BIN codex || true
 }

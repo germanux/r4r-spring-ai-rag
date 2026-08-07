@@ -931,56 +931,13 @@ merge_worker() {
 
 prepare_worker_python_runtime() {
   local worker="$1" worktree="$2"
-  local package_root src_root venv python purelib pth tmp
-
-  package_root="$worktree/py-codex-agent"
-  src_root="$package_root/src"
-  venv="$package_root/.venv"
-  python="$venv/bin/python"
-
-  [[ -f "$src_root/r4r_codex_agent/cli.py" ]] \
-    || die "$worker controller source is missing: $src_root/r4r_codex_agent/cli.py"
-
-  if "$DRY_RUN"; then
-    if [[ -x "$python" ]] \
-        && "$python" -c 'import r4r_codex_agent.cli' >/dev/null 2>&1; then
-      log "$worker: Python controller runtime is already importable"
-    else
-      log "$worker: Python controller runtime would be repaired under $venv"
-    fi
-    return 0
-  fi
-
-  if [[ ! -x "$python" ]]; then
-    log "$worker: creating isolated Python runtime at $venv"
-    python3 -m venv "$venv" \
-      || die "$worker could not create $venv; install python3-venv"
-  fi
-
-  if "$python" -c 'import r4r_codex_agent.cli' >/dev/null 2>&1; then
-    log "$worker: Python controller runtime is healthy"
-    return 0
-  fi
-
-  # The controller has no third-party runtime dependencies. Bind the worktree source
-  # directly through a .pth file instead of invoking pip/build isolation or requiring
-  # network access. Rewriting it on every repair also removes stale paths after moves.
-  purelib="$($python - <<'PYRUNTIME'
-import sysconfig
-print(sysconfig.get_paths()["purelib"])
-PYRUNTIME
-  )" || die "$worker could not resolve virtualenv site-packages"
-  [[ -n "$purelib" ]] || die "$worker virtualenv returned an empty site-packages path"
-  mkdir -p "$purelib"
-  pth="$purelib/r4r_codex_agent_worktree.pth"
-  tmp="$pth.tmp.$$"
-  printf '%s\n' "$src_root" >"$tmp"
-  chmod 0644 "$tmp"
-  mv -f "$tmp" "$pth"
-
-  "$python" -c 'import r4r_codex_agent.cli' >/dev/null 2>&1 \
-    || die "$worker controller remains unimportable after repairing $pth"
-  log "$worker: repaired Python controller runtime using $pth"
+  local src_root="$worktree/py-ring-agent/src"
+  [[ -f "$src_root/r4r_worker/cli.py" ]] \
+    || die "$worker controller source is missing: $src_root/r4r_worker/cli.py"
+  PYTHONPATH="$src_root${PYTHONPATH:+:$PYTHONPATH}" \
+    python3 -c 'import r4r_worker.cli' >/dev/null 2>&1 \
+    || die "$worker OpenCode controller is not importable"
+  log "$worker: OpenCode controller runtime is healthy"
 }
 
 launch_wrapper() {
@@ -988,11 +945,10 @@ launch_wrapper() {
   local heartbeat_path heartbeat_pid heartbeat_age rows controllers wrappers required resolved
 
   require_quiescent "$worker" "$worktree"
-  for required in node opencode codex; do
+  for required in node opencode; do
     case "$required" in
       node) resolved="${R4R_NODE_BIN:-node}" ;;
       opencode) resolved="${R4R_OPENCODE_BIN:-opencode}" ;;
-      codex) resolved="${R4R_CODEX_BIN:-codex}" ;;
     esac
     if [[ "$resolved" == */* ]]; then
       [[ -x "$resolved" ]] || die "$worker runtime CLI is not executable: $required=$resolved"
@@ -1199,9 +1155,7 @@ log "Preservation backups: $BACKUP_ROOT"
 
 "$MERGE_ONLY" && { log "merge-only completed with dirty state preserved"; exit 0; }
 
-# A branch merge may update py-codex-agent while each ignored .venv remains absent,
-# stale or never installed. Validate and repair both runtimes before starting either
-# wrapper, so a later LP failure cannot leave only PC running.
+# Validate both OpenCode controller imports before starting either wrapper.
 prepare_worker_python_runtime PC "$PC_WORKTREE"
 prepare_worker_python_runtime LP "$LP_WORKTREE"
 

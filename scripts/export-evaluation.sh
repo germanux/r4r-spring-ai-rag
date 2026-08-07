@@ -302,16 +302,16 @@ PYMETA
   # Safe fallback for repositories that predate resolve-r4r-config.mjs.
   if [[ "$worker" == "PC" ]]; then
     printf '%s\n' \
-      $'plan\t.opencode/task-plan.backend.json' \
-      $'progress\t.opencode/progress.backend.json' \
-      $'memory\t.opencode/memory.backend.md' \
+      $'plan\t.opencode/task-plan.json' \
+      $'progress\t.opencode/progress.pc.json' \
+      $'memory\t.opencode/memory.pc.md' \
       $'controlDir\truntime/control/PC' \
       >> "$output_file"
   else
     printf '%s\n' \
-      $'plan\t.opencode/task-plan.frontend.json' \
-      $'progress\t.opencode/progress.frontend.json' \
-      $'memory\t.opencode/memory.frontend.md' \
+      $'plan\t.opencode/task-plan.json' \
+      $'progress\t.opencode/progress.lp.json' \
+      $'memory\t.opencode/memory.lp.md' \
       $'controlDir\truntime/control/LP' \
       >> "$output_file"
   fi
@@ -497,7 +497,7 @@ export_one() {
 
   local tree
   for tree in \
-    config scripts py-codex-agent .opencode src knowledge docs frontend e2e
+    config scripts py-ring-agent .opencode src knowledge docs frontend e2e
   do
     [[ -e "$ROOT/$tree" ]] || continue
     copy_filtered "$ROOT/$tree" "$stage_dir/repository/$tree"

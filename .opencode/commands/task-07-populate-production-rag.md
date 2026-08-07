@@ -147,5 +147,5 @@ Do not pipe or rewrite that command.
 ## Completion
 
 Completion requires the production database to be populated, the second run to be
-idempotent, the sanitized evidence document to be committed, Codex `ACCEPT`, and no
+idempotent, the sanitized evidence document to be committed, global acceptance, and no
 push.

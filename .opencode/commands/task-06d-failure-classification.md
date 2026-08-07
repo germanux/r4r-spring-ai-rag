@@ -29,6 +29,6 @@ Create or complete:
 
 ## Completion
 
-Gate `0`, Codex `ACCEPT`, controller commit:
+Gate `0`, controller validation and global acceptance:
 
 `fix(ingestion): classify infrastructure failures`

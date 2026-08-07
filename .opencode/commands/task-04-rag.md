@@ -69,5 +69,5 @@ Run exactly:
 
 `./scripts/task-gate.sh task-04-rag`
 
-Completion requires gate green and Codex review `ACCEPT`. Report changed paths, exact
+Completion requires gate green and controller validation and global acceptance. Report changed paths, exact
 Surefire/Failsafe totals, exit code and the first unproven condition.

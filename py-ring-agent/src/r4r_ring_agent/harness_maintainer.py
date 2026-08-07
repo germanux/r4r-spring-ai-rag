@@ -39,7 +39,6 @@ MAX_LOG_FILES = 8
 MAX_EVIDENCE_CHARS = 48_000
 ALLOWED_GLOBS = (
     "py-ring-agent/**",
-    "py-codex-agent/**/*.py",
     "scripts/**/*.sh",
 )
 TEST_COMMANDS = (
@@ -151,7 +150,6 @@ def _inline_config(worktree: Path) -> str:
                     "edit": {
                         "*": "deny",
                         "py-ring-agent/**": "allow",
-                        "py-codex-agent/**/*.py": "allow",
                         "scripts/**/*.sh": "allow",
                     },
                     "webfetch": "deny",

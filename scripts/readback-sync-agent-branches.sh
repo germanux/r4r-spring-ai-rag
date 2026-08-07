@@ -27,7 +27,6 @@ PC_WORKTREE_HINT="${R4R_PC_WORKTREE:-$DEVELOPMENT_ROOT/r4r-pc-worker.git}"
 LP_WORKTREE_HINT="${R4R_LP_WORKTREE:-$DEVELOPMENT_ROOT/r4r-lp-worker.git}"
 HUB_BRANCH="${R4R_INTEGRATION_BRANCH:-agent/integration}"
 SURGICAL_BRANCH="${R4R_SURGICAL_BRANCH:-agent/opencode-dual-surgical}"
-SURGICAL_SYNC_ENABLED="${R4R_SURGICAL_SYNC_ENABLED:-false}"
 REMOTE="${R4R_SYNC_REMOTE:-origin}"
 PUSH_POLICY="strict"
 FETCH=true
@@ -83,8 +82,7 @@ Default: complete automatic hot-sync pass
   - never copies or commits runtime, progress, memory or .opencode/current;
   - durable task evidence remains in .ring-agent/evidence;
   - defers only when Git rejects a merge or another Git operation is pending.
-  - excludes agent/opencode-dual-surgical from collection and propagation while
-    R4R_SURGICAL_SYNC_ENABLED is not true.
+  - permanently excludes the retired agent/opencode-dual-surgical branch.
 
 Options:
   --hub BRANCH             Hub branch (default: agent/integration).
@@ -184,7 +182,7 @@ sanitize() { printf '%s' "$1" | tr -cs 'A-Za-z0-9._-' '_'; }
 branch_is_excluded() {
   local branch="$1" pattern
   [[ "$branch" == "$HUB_BRANCH" ]] && return 0
-  if [[ "$SURGICAL_SYNC_ENABLED" != true && "$branch" == "$SURGICAL_BRANCH" ]]; then
+  if [[ "$branch" == "$SURGICAL_BRANCH" ]]; then
     return 0
   fi
   for pattern in "${EXCLUDES[@]}"; do
@@ -415,7 +413,7 @@ for entry in Path('/proc').iterdir():
             module = args[args.index('-m') + 1]
         except IndexError:
             module = ''
-        if module == 'r4r_codex_agent.cli':
+        if module == 'r4r_worker.cli':
             repo = value_after(args, '--repo')
             if repo == pc:
                 roles.add('PC')
@@ -689,7 +687,7 @@ log "repository:             $REPOSITORY"
 log "Git common dir:         $COMMON_DIR"
 log "integration worktree:   $INTEGRATION_WORKTREE"
 log "hub branch:             $HUB_BRANCH"
-log "surgical branch sync:   $SURGICAL_SYNC_ENABLED"
+log "retired branch excluded: $SURGICAL_BRANCH"
 log "subscribed worktrees:   ${SUBSCRIBED[*]:-(none)}"
 log "source sequence:        ${SOURCES[*]:-(none)}"
 log "propagation targets:    ${TARGETS[*]:-(none)}"

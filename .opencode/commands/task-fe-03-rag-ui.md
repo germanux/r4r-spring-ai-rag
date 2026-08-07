@@ -29,6 +29,6 @@ accessibility.
 
 ## Completion
 
-Gate `0`, Codex `ACCEPT`, controller commit:
+Gate `0`, controller validation and global acceptance:
 
 `chore(rag-ui): checkpoint compilable RAG page baseline`

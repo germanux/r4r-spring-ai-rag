@@ -133,10 +133,10 @@ A concise sanitized excerpt or hash is sufficient.
 Run exactly the controller-supplied clean gate. It requires
 `RagProductionSmokeTest` to exist and pass.
 
-Codex must also inspect the current packaged-runtime evidence before `ACCEPT`; a test
+Ring must also inspect the current packaged-runtime evidence before `ACCEPT`; a test
 context alone cannot satisfy the production launch rows.
 
 ## Completion
 
 Completion requires all ten acceptance rows, exact gate exit code `0`, a stopped smoke
-process, Codex `ACCEPT`, automatic local commit and no push.
+process, global acceptance, automatic local commit and no push.

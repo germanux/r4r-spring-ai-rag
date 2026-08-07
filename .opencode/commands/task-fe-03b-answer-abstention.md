@@ -24,6 +24,6 @@ Render the typed RAG response with deterministic success and abstention behavior
 
 ## Completion
 
-Gate `0`, Codex `ACCEPT`, controller commit:
+Gate `0`, controller validation and global acceptance:
 
 `feat(rag-ui): render answer and abstention states`

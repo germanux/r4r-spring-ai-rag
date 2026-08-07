@@ -11,8 +11,16 @@ import re
 import shutil
 import subprocess
 import time
+from types import SimpleNamespace
 from typing import Any, Callable, Sequence
 
+from .assignment import (
+    global_progress_path,
+    load_global_progress,
+    migrate_legacy_acceptances,
+    parse_utc_timestamp,
+    validate_assignment,
+)
 from .operator_control import OperatorCommand, RingCommandFile
 from .ring_process import run_streamed
 from .worktrees import WorktreePaths, require_git_worktree
@@ -25,9 +33,15 @@ from .worktrees import WorktreePaths, require_git_worktree
 RING_AGENT = os.environ.get("R4R_RING_AGENT", "r4r-ring")
 RING_MODEL = os.environ.get(
     "R4R_RING_MODEL",
-    "openai/gpt-5.3-codex",
+    "openai/gpt-5.6-luna",
 )
-RING_VARIANT = os.environ.get("R4R_RING_VARIANT", "medium")
+RING_VARIANT = os.environ.get("R4R_RING_VARIANT", "low")
+ESCALATION_AGENT = os.environ.get("R4R_ESCALATION_AGENT", "r4r-escalation")
+ESCALATION_MODEL = os.environ.get(
+    "R4R_ESCALATION_MODEL",
+    "openai/gpt-5.6-sol",
+)
+ESCALATION_VARIANT = os.environ.get("R4R_ESCALATION_VARIANT", "high")
 REVIEW_INTERVAL_SECONDS = int(
     os.environ.get("R4R_RING_REVIEW_INTERVAL_SECONDS", "763")
 )
@@ -173,13 +187,19 @@ def _copy_snapshot_file(source: Path | None, destination: Path) -> str | None:
 
 
 def _worker_progress_path(worker: str, repo: Path) -> Path:
-    suffix = "backend" if worker == "PC" else "frontend"
-    return repo / ".opencode" / f"progress.{suffix}.json"
+    current = repo / ".opencode" / f"progress.{worker.lower()}.json"
+    if current.is_file():
+        return current
+    legacy = "progress.backend.json" if worker == "PC" else "progress.frontend.json"
+    return repo / ".opencode" / legacy
 
 
 def _worker_memory_path(worker: str, repo: Path) -> Path:
-    suffix = "backend" if worker == "PC" else "frontend"
-    return repo / ".opencode" / f"memory.{suffix}.md"
+    current = repo / ".opencode" / f"memory.{worker.lower()}.md"
+    if current.is_file():
+        return current
+    legacy = "memory.backend.md" if worker == "PC" else "memory.frontend.md"
+    return repo / ".opencode" / legacy
 
 
 def _request_directory(ring: Path) -> Path:
@@ -249,21 +269,21 @@ def _write_worker_runtime_evidence(
             _worker_memory_path(worker, worker_repo),
             snapshot_dir / "memory.md",
         ),
-        "codex_extra_instructions": _copy_snapshot_file(
+        "escalation_extra_instructions": _copy_snapshot_file(
             worker_repo
             / "runtime"
             / "control"
             / worker
-            / "codex-qwen3-extra-instructions.md",
-            snapshot_dir / "codex-qwen3-extra-instructions.md",
+            / "ring-extra-instructions.md",
+            snapshot_dir / "ring-extra-instructions.md",
         ),
-        "ring_directive": _copy_snapshot_file(
+        "ring_assignment": _copy_snapshot_file(
             ring_repo
             / "runtime"
             / "control"
             / worker
-            / "ring-qwen3-directive.json",
-            snapshot_dir / "previous-ring-qwen3-directive.json",
+            / "assignment.json",
+            snapshot_dir / "previous-assignment.json",
         ),
     }
 
@@ -271,8 +291,8 @@ def _write_worker_runtime_evidence(
         sources["latest_run"] = str(latest_run)
         selected_patterns = {
             "controller_state": "state.json",
-            "codex_review": "codex-review.json",
-            "codex_plan": "codex-plan.json",
+            "escalation_review": "escalation-review.json",
+            "escalation_plan": "escalation-plan.json",
             "local_understanding": "local-understanding.md",
             "pre_edit_understanding": "pre-edit-understanding.md",
             "codegraph_reconnaissance": "codegraph-reconnaissance.md",
@@ -313,6 +333,10 @@ def _write_evidence(paths: WorktreePaths, run_dir: Path) -> None:
     _write_repo_evidence("LP", paths.lp, run_dir)
     _write_worker_runtime_evidence("PC", paths.pc, paths.ring, run_dir)
     _write_worker_runtime_evidence("LP", paths.lp, paths.ring, run_dir)
+    _copy_snapshot_file(
+        global_progress_path(paths.ring),
+        run_dir / "global-progress.json",
+    )
     (run_dir / "worktrees.json").write_text(
         json.dumps(
             {
@@ -328,22 +352,18 @@ def _write_evidence(paths: WorktreePaths, run_dir: Path) -> None:
 
 
 def _directive_path(ring: Path, worker: str) -> Path:
-    return ring / "runtime" / "control" / worker / "ring-qwen3-directive.json"
+    return ring / "runtime" / "control" / worker / "assignment.json"
 
 
 def _parse_timestamp(value: Any) -> datetime | None:
-    if not isinstance(value, str) or not value.strip():
-        return None
-    try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        return None
-    return parsed.astimezone(timezone.utc)
+    return parse_utc_timestamp(value)
 
 
-def _validate_directive(path: Path, worker: str) -> dict[str, Any]:
+def _validate_directive(
+    path: Path,
+    worker: str,
+    ring: Path | None = None,
+) -> dict[str, Any]:
     result: dict[str, Any] = {
         "worker": worker,
         "path": str(path),
@@ -360,32 +380,48 @@ def _validate_directive(path: Path, worker: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         result["reason"] = "root-not-object"
         return result
-    if value.get("schema_version") != 1:
-        result["reason"] = "schema-version"
-        return result
-    if str(value.get("target", "")).upper() != worker:
-        result["reason"] = "target-mismatch"
-        return result
-    if not str(value.get("task_id", "")).strip():
-        result["reason"] = "missing-task-id"
-        return result
-    if str(value.get("priority", "")).lower() != "advisory":
-        result["reason"] = "priority-must-be-advisory"
-        return result
-    if not str(value.get("next_action", "")).strip():
-        result["reason"] = "missing-next-action"
-        return result
-    generated_at = _parse_timestamp(value.get("generated_at"))
-    if generated_at is None:
-        result["reason"] = "invalid-generated-at"
-        return result
-    age = (datetime.now(timezone.utc) - generated_at).total_seconds()
-    if age > DIRECTIVE_MAX_AGE_SECONDS:
-        result["reason"] = f"stale:{int(age)}s"
-        return result
-    if age < -300:
-        result["reason"] = "generated-in-future"
-        return result
+    if ring is not None:
+        try:
+            plan = json.loads(
+                (ring / ".opencode" / "task-plan.json").read_text(encoding="utf-8")
+            )
+            tasks = {
+                item["id"]: SimpleNamespace(
+                    allowed_paths=tuple(item["allowed_paths"]),
+                    depends_on=tuple(item.get("depends_on", [])),
+                )
+                for item in plan["tasks"]
+            }
+            accepted = tuple(
+                load_global_progress(global_progress_path(ring))["accepted"]
+            )
+            value = validate_assignment(
+                value,
+                worker=worker,
+                tasks=tasks,
+                accepted_task_ids=accepted,
+                max_age_seconds=DIRECTIVE_MAX_AGE_SECONDS,
+                require_active=False,
+            )
+        except (KeyError, OSError, TypeError, ValueError) as exception:
+            result["reason"] = str(exception)
+            return result
+    else:
+        if value.get("schema_version") != 1:
+            result["reason"] = "schema-version"
+            return result
+        if str(value.get("target", "")).upper() != worker:
+            result["reason"] = "target-mismatch"
+            return result
+        if str(value.get("action", "")).upper() not in VALID_RING_ACTIONS:
+            result["reason"] = "invalid-action"
+            return result
+        if not str(value.get("assignment_id", "")).strip():
+            result["reason"] = "missing-assignment-id"
+            return result
+        if _parse_timestamp(value.get("generated_at")) is None:
+            result["reason"] = "invalid-generated-at"
+            return result
     result.update(
         {
             "valid": True,
@@ -399,7 +435,7 @@ def _validate_directive(path: Path, worker: str) -> dict[str, Any]:
 
 def _validate_directives(ring: Path, run_dir: Path) -> None:
     results = [
-        _validate_directive(_directive_path(ring, worker), worker)
+        _validate_directive(_directive_path(ring, worker), worker, ring)
         for worker in ("PC", "LP")
     ]
     (run_dir / "ring-directive-validation.json").write_text(
@@ -422,7 +458,7 @@ STAGED_OUTPUT_NAMES = (
     "state.json",
     "code-pc-review.md",
     "code-lp-review.md",
-    "backend-frontend-handoff.md",
+    "fullstack-handoff.md",
     "worker-understanding.md",
     "global-summary.md",
 )
@@ -434,6 +470,7 @@ VALID_RING_ACTIONS = {
     "STOP",
     "NO_ACTION",
 }
+VALID_RING_DRAFT_ACTIONS = VALID_RING_ACTIONS | {"ESCALATE"}
 VALID_OVERALL_STATUSES = {"READY", "BLOCKED", "NO_ACTION"}
 ACTIVE_DISPATCH_ACTIONS = {"START", "CONTINUE", "RETRY_AUTHORIZED"}
 
@@ -521,7 +558,7 @@ def _decision_ledger_entry(
     fingerprint: str,
 ) -> str:
     lines = [
-        f"## Cycle `{run_id}` Ã¢ÂÂ {state['overall_status']}",
+        f"## Cycle `{run_id}` — {state['overall_status']}",
         "",
         f"- Decision fingerprint: `{fingerprint}`",
         "",
@@ -623,6 +660,10 @@ def _commit_coordination_files_locked(
             "git",
             "-c",
             "commit.gpgSign=false",
+            "-c",
+            f"user.name={os.environ.get('R4R_RING_GIT_AUTHOR_NAME', 'GermanGPT Ring Agent')}",
+            "-c",
+            f"user.email={os.environ.get('R4R_RING_GIT_AUTHOR_EMAIL', 'germanux@gmail.com')}",
             "commit",
             "--only",
             "-m",
@@ -669,8 +710,13 @@ def _path_within(root: Path, candidate: Path) -> bool:
     return True
 
 
-def _non_empty_strings(value: Any, field: str) -> list[str]:
-    if not isinstance(value, list) or not value:
+def _non_empty_strings(
+    value: Any,
+    field: str,
+    *,
+    non_empty: bool = True,
+) -> list[str]:
+    if not isinstance(value, list) or (non_empty and not value):
         raise ValueError(f"{field} must be a non-empty list")
     result: list[str] = []
     for item in value:
@@ -727,6 +773,8 @@ def _load_task_assignments(
     if not isinstance(agents, dict):
         raise ValueError("config/r4r-agents.json agents must be an object")
 
+    global_progress = load_global_progress(global_progress_path(ring))
+    globally_accepted = set(global_progress["accepted"])
     assignments: dict[str, dict[str, Any]] = {}
     for worker in ("PC", "LP"):
         agent = agents.get(worker)
@@ -790,10 +838,28 @@ def _load_task_assignments(
             )
             for pattern in write_scope:
                 _scope_anchor(pattern)
+            if decision["action"] in ACTIVE_DISPATCH_ACTIONS:
+                if task_id in globally_accepted:
+                    raise ValueError(
+                        f"state.json assigns globally accepted task {task_id} to {worker}"
+                    )
+                dependencies = _non_empty_strings(
+                    task.get("depends_on", []),
+                    f"{plan_name} task {task_id}.depends_on",
+                    non_empty=False,
+                )
+                missing_dependencies = sorted(
+                    set(dependencies).difference(globally_accepted)
+                )
+                if missing_dependencies:
+                    raise ValueError(
+                        f"state.json assigns task {task_id} with unmet dependencies: "
+                        f"{missing_dependencies}"
+                    )
 
         assignments[worker] = {
             "agent_id": str(agent.get("agentId", worker.lower())).strip(),
-            "assigned_agent": branch.removeprefix("agent/"),
+            "assigned_agent": str(agent.get("agentId", worker.lower())).strip(),
             "branch": branch,
             "model": str(agent.get("model", "unknown-model")).strip(),
             "task_id": task_id,
@@ -804,6 +870,13 @@ def _load_task_assignments(
     active_workers = [
         worker for worker in ("PC", "LP") if assignments[worker]["active"]
     ]
+    if len(active_workers) == 2:
+        left_task = assignments[active_workers[0]]["task_id"]
+        right_task = assignments[active_workers[1]]["task_id"]
+        if left_task == right_task:
+            raise ValueError(
+                f"duplicate active assignment for canonical task {left_task}"
+            )
     for index, left_worker in enumerate(active_workers):
         for right_worker in active_workers[index + 1 :]:
             left = assignments[left_worker]
@@ -1043,7 +1116,6 @@ def _authorize_bounded_whitespace_recovery(
     """
     authorized: list[str] = []
     repositories = {"PC": paths.pc, "LP": paths.lp}
-    progress_names = {"PC": "progress.backend.json", "LP": "progress.frontend.json"}
     diagnostic_pattern = re.compile(r"^(.+?):\d+: (.+)$", re.MULTILINE)
 
     for worker in ("PC", "LP"):
@@ -1051,7 +1123,7 @@ def _authorize_bounded_whitespace_recovery(
         task_id = str(decision.get("task_id") or "")
         if not task_id:
             continue
-        progress_path = repositories[worker] / ".opencode" / progress_names[worker]
+        progress_path = _worker_progress_path(worker, repositories[worker])
         try:
             progress = json.loads(progress_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -1208,8 +1280,8 @@ def _publish_staged_outputs(
         "state.json": paths.ring / ".ring-agent" / "state.json",
         "code-pc-review.md": paths.ring / ".ring-agent" / "code-pc-review.md",
         "code-lp-review.md": paths.ring / ".ring-agent" / "code-lp-review.md",
-        "backend-frontend-handoff.md": (
-            paths.ring / ".ring-agent" / "backend-frontend-handoff.md"
+        "fullstack-handoff.md": (
+            paths.ring / ".ring-agent" / "fullstack-handoff.md"
         ),
         "global-summary.md": paths.ring / ".ring-agent" / "global-summary.md",
         "worker-understanding.md": (
@@ -1232,7 +1304,7 @@ def _publish_staged_outputs(
     versioned_destinations = {
         "code-pc-review.md": coordination_dir / "PC-WORKER.md",
         "code-lp-review.md": coordination_dir / "LAPTOP-WORKER.md",
-        "backend-frontend-handoff.md": coordination_dir / "RING-HANDOFF.md",
+        "fullstack-handoff.md": coordination_dir / "RING-HANDOFF.md",
         "worker-understanding.md": coordination_dir / "WORKER-UNDERSTANDING.md",
         "global-summary.md": coordination_dir / "CURRENT-STATE.md",
     }
@@ -1280,33 +1352,34 @@ def _publish_staged_outputs(
         for worker in workers_to_publish:
             decision = normalized_state["decisions"][worker]
             directive = {
-            "schema_version": 1,
-            "target": worker,
-            "task_id": decision["task_id"] or "NO_ACTIVE_TASK",
-            "assigned_agent": decision["assigned_agent"],
-            "model": decision["model"],
-            "branch": decision["branch"],
-            "write_scope": decision["write_scope"],
-            "evidence_path": decision["evidence_path"],
-            "generated_at": generated_at.isoformat(),
-            "expires_at": expires_at.isoformat(),
-            "priority": "advisory",
-            "action": decision["action"],
-            "authorization_id": (
-                f"{run_id}:{worker}:{decision['task_id']}"
-                if decision["action"] == "RETRY_AUTHORIZED"
-                else None
-            ),
-            "recovery_policy_version": (
-                decision.get("recovery_policy_version")
-                if decision["action"] == "RETRY_AUTHORIZED"
-                else None
-            ),
-            "summary": decision["reason"],
-            "next_action": decision["next_action"],
-            "evidence_paths": decision["evidence_paths"],
-            "constraints": decision["acceptance_gates"],
-            "avoid_repeating": decision["avoid_repeating"],
+                "schema_version": 1,
+                "assignment_id": f"{run_id}:{worker}:{decision['task_id']}",
+                "target": worker,
+                "task_id": decision["task_id"] or "NO_ACTIVE_TASK",
+                "assigned_agent": decision["assigned_agent"],
+                "model": decision["model"],
+                "branch": decision["branch"],
+                "write_scope": decision["write_scope"],
+                "evidence_path": decision["evidence_path"],
+                "generated_at": generated_at.isoformat(),
+                "expires_at": expires_at.isoformat(),
+                "priority": "advisory",
+                "action": decision["action"],
+                "authorization_id": (
+                    f"{run_id}:{worker}:{decision['task_id']}"
+                    if decision["action"] == "RETRY_AUTHORIZED"
+                    else None
+                ),
+                "recovery_policy_version": (
+                    decision.get("recovery_policy_version")
+                    if decision["action"] == "RETRY_AUTHORIZED"
+                    else None
+                ),
+                "summary": decision["reason"],
+                "next_action": decision["next_action"],
+                "evidence_paths": decision["evidence_paths"],
+                "constraints": decision["acceptance_gates"],
+                "avoid_repeating": decision["avoid_repeating"],
             }
             destination = _directive_path(paths.ring, worker)
             _atomic_write_text(
@@ -1332,7 +1405,7 @@ def _publish_staged_outputs(
 
 def _prompt(paths: WorktreePaths, run_dir: Path, run_id: str) -> str:
     output_dir = run_dir / "output"
-    return f"""You are The Ring, the cross-stack commander for R4R.
+    return f"""You are The Ring, the fullstack task coordinator for R4R.
 This is a fresh OpenCode session. Do not resume another transcript.
 
 The deterministic supervisor has prepared the primary evidence and repository context:
@@ -1342,29 +1415,27 @@ The deterministic supervisor has prepared the primary evidence and repository co
 - RING_WORKTREE: {paths.ring}
 
 Read the bounded evidence below RUN_DIR first. Do not read `opencode.console.log` and
-do not perform unbounded searches. You may then read and modify any file inside the
-current RING_WORKTREE when a current evidence-backed correction is necessary. Never
-read or edit the live PC or LP worktrees directly.
+do not perform unbounded searches. Read `.opencode/task-plan.json` as the only task
+authority and `global-progress.json` as the only accepted-task/dependency ledger.
+Never read or edit the live PC or LP worktrees directly.
 
 Repository preservation rules:
-- never delete, unlink, remove, rename or move an existing file or directory;
-- never truncate an existing file to empty or replace useful content with a placeholder;
-- read before editing and preserve unrelated content;
-- create new files only in an appropriate existing directory;
-- keep the repository root limited to canonical project entry files;
+- write only the six required staged files below OUTPUT_DIR;
+- never edit product, tests, controller, configuration, policy or task-plan files;
 - never edit secrets, credentials, private keys, tokens, `.env` files or PID/lock files;
-- never write Git history, install packages or run shell commands.
+- never write Git history, install packages, launch workers or run shell commands.
 
 Review the Ring, PC and LP commit/status/diff evidence and both worker-runtime
 subdirectories. Prefer the newest authoritative evidence inside RUN_DIR: progress,
-worker memory, checkpoint, Codex plan/review, correction packet, local understanding,
-CodeGraph report, gate summary and prior Ring directive.
+worker memory, checkpoint, escalation plan/review, correction packet, local
+understanding, CodeGraph report, gate summary and prior Ring assignment.
 
-Identify the first current defect for PC and LP. Prefer correction before new
-implementation. Do not claim a test passed, a task completed or a worker started
-unless direct evidence proves it. SURGICAL is temporarily disabled: never dispatch
-`agent/opencode-dual-surgical`, request its review, or hold PC/LP because an
-`ACCEPT/REVISE` decision is absent. Continue disjoint PC/LP work normally.
+PC and LP are equivalent fullstack workers. Generate at most one current assignment
+for each worker. Respect dependencies, current durable progress and exact task gates.
+Never assign overlapping `allowed_paths`. Prefer correction before new implementation.
+Do not claim a test passed, a task completed or a worker started unless direct evidence
+proves it. If a decision is ambiguous, cross-cutting or high risk, use `ESCALATE` for
+that worker; the deterministic supervisor will ask Sol for a complete replacement set.
 
 `CONTINUE` never unlocks a BLOCKED task. Use `RETRY_AUTHORIZED` only when current
 evidence proves a bounded deterministic repair exists and the task has not already
@@ -1376,16 +1447,14 @@ Write these six staged files below OUTPUT_DIR on every successful cycle:
 - {output_dir}/state.json
 - {output_dir}/code-pc-review.md
 - {output_dir}/code-lp-review.md
-- {output_dir}/backend-frontend-handoff.md
+- {output_dir}/fullstack-handoff.md
 - {output_dir}/worker-understanding.md
 - {output_dir}/global-summary.md
 
-You may additionally make bounded, non-destructive edits inside RING_WORKTREE. Document
-those edits and their evidence in the staged summaries. The Python supervisor validates
-the staged files, publishes current snapshots plus an append-only decision ledger below
-`docs/agent-coordination/`, commits only those coordination documents, and then creates
-the PC/LP advisory directive JSON files. Do not write `runtime/control/**` yourself
-during the staged review.
+The Python supervisor validates the staged files, publishes current snapshots plus an
+append-only decision ledger below `docs/agent-coordination/`, commits only those
+coordination documents, and creates the PC/LP assignment JSON files. Do not write
+`runtime/control/**` yourself during the staged review.
 
 state.json must be valid JSON with this exact structure:
 {{
@@ -1394,7 +1463,7 @@ state.json must be valid JSON with this exact structure:
   "overall_status": "READY | BLOCKED | NO_ACTION",
   "decisions": {{
     "PC": {{
-      "action": "START | CONTINUE | RETRY_AUTHORIZED | HOLD | STOP | NO_ACTION",
+      "action": "START | CONTINUE | RETRY_AUTHORIZED | HOLD | STOP | NO_ACTION | ESCALATE",
       "task_id": "exact active task id or null",
       "reason": "non-empty evidence-grounded diagnosis",
       "next_action": "one focused action for one worker pass",
@@ -1407,7 +1476,7 @@ state.json must be valid JSON with this exact structure:
       "avoid_repeating": "the last failed or wasteful approach to avoid"
     }},
     "LP": {{
-      "action": "START | CONTINUE | RETRY_AUTHORIZED | HOLD | STOP | NO_ACTION",
+      "action": "START | CONTINUE | RETRY_AUTHORIZED | HOLD | STOP | NO_ACTION | ESCALATE",
       "task_id": "exact active task id or null",
       "reason": "non-empty evidence-grounded diagnosis",
       "next_action": "one focused action for one worker pass",
@@ -1424,14 +1493,13 @@ state.json must be valid JSON with this exact structure:
   "evidence_limitations": ["zero or more explicit limitations"]
 }}
 
-The exact task specification, deterministic gate and current Codex correction packet
+The exact task specification, deterministic gate and current Ring/Sol correction packet
 remain authoritative for PC and LP. Do not ask workers to bypass a gate, change task
-scope, write Git history or repeat an already failed approach.
-Use only task IDs declared in the configured PC/LP plans. Their `allowed_paths` lists
-are the canonical write scopes; the supervisor rejects active scopes that overlap.
+scope, write Git history or repeat an already failed approach. Use only task IDs from
+`.opencode/task-plan.json`. Each task's `allowed_paths` list is its canonical write
+scope; the supervisor rejects active scopes that overlap.
 
-Finish after the six staged files and any explicitly justified, non-destructive Ring
-worktree edits have been written.
+Finish after the six staged files have been written.
 """
 
 
@@ -1458,6 +1526,97 @@ def _command(
     )
 
 
+def _draft_escalations(output_dir: Path) -> tuple[str, ...]:
+    """Return workers for which Luna explicitly requested Sol review."""
+    state_path = output_dir / "state.json"
+    try:
+        value = json.loads(state_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ()
+    decisions = value.get("decisions") if isinstance(value, dict) else None
+    if not isinstance(decisions, dict):
+        return ()
+    return tuple(
+        worker
+        for worker in ("PC", "LP")
+        if isinstance(decisions.get(worker), dict)
+        and str(decisions[worker].get("action", "")).upper() == "ESCALATE"
+    )
+
+
+def _stage_luna_draft(run_dir: Path) -> Path:
+    output_dir = run_dir / "output"
+    draft_dir = run_dir / "luna-draft"
+    if draft_dir.exists():
+        raise ValueError(f"Luna draft destination already exists: {draft_dir}")
+    output_dir.rename(draft_dir)
+    output_dir.mkdir(parents=True)
+    return draft_dir
+
+
+def _escalation_prompt(
+    paths: WorktreePaths,
+    run_dir: Path,
+    run_id: str,
+    workers: Sequence[str],
+    draft_dir: Path,
+) -> str:
+    output_dir = run_dir / "output"
+    worker_list = ", ".join(workers)
+    return f"""You are the on-demand R4R Sol escalation reviewer.
+This is a fresh OpenCode session. Do not resume another transcript.
+
+Luna requested escalation for: {worker_list}.
+- RUN_ID: {run_id}
+- RUN_DIR: {run_dir}
+- LUNA_DRAFT: {draft_dir}
+- OUTPUT_DIR: {output_dir}
+- RING_WORKTREE: {paths.ring}
+
+Read the bounded evidence in RUN_DIR, the complete Luna draft and
+`.opencode/task-plan.json`. PC and LP are equivalent fullstack workers. Resolve the
+explicitly escalated decision, verify dependencies and disjoint `allowed_paths`, then
+write a complete replacement set of these six files:
+- {output_dir}/state.json
+- {output_dir}/code-pc-review.md
+- {output_dir}/code-lp-review.md
+- {output_dir}/fullstack-handoff.md
+- {output_dir}/worker-understanding.md
+- {output_dir}/global-summary.md
+
+Use the exact state.json structure from the Luna draft, but every final action must be
+one of START, CONTINUE, RETRY_AUTHORIZED, HOLD, STOP or NO_ACTION. `ESCALATE` is not a
+valid final action. Use only task IDs in the canonical plan and existing evidence paths
+inside RUN_DIR. Never edit product, tests, controller, configuration, policy, task-plan,
+Git history or `runtime/control/**`; write only the six files below OUTPUT_DIR.
+"""
+
+
+def _escalation_command(
+    paths: WorktreePaths,
+    run_dir: Path,
+    run_id: str,
+    workers: Sequence[str],
+    draft_dir: Path,
+) -> tuple[str, ...]:
+    return (
+        OPENCODE_BIN,
+        "run",
+        "--dir",
+        str(paths.ring),
+        "--agent",
+        ESCALATION_AGENT,
+        "--model",
+        ESCALATION_MODEL,
+        "--variant",
+        ESCALATION_VARIANT,
+        "--format",
+        "json",
+        "--auto",
+        _escalation_prompt(paths, run_dir, run_id, workers, draft_dir),
+    )
+
+
 def run_ring_loop(
     paths: WorktreePaths,
     *,
@@ -1475,6 +1634,21 @@ def run_ring_loop(
         require_git_worktree(paths.ring, "RING"),
         require_git_worktree(paths.pc, "PC"),
         require_git_worktree(paths.lp, "LP"),
+    )
+    canonical_plan = json.loads(
+        (paths.ring / ".opencode" / "task-plan.json").read_text(encoding="utf-8")
+    )
+    migrate_legacy_acceptances(
+        global_progress_path(paths.ring),
+        plan_task_ids=tuple(item["id"] for item in canonical_plan["tasks"]),
+        worker_progress={
+            "PC": _worker_progress_path("PC", paths.pc),
+            "LP": _worker_progress_path("LP", paths.lp),
+        },
+        worker_heads={
+            "PC": _git(paths.pc, ["rev-parse", "HEAD"]).strip(),
+            "LP": _git(paths.lp, ["rev-parse", "HEAD"]).strip(),
+        },
     )
     startup_sync = _integration_sync(paths.ring, "startup")
     if startup_sync["status"] == "failed":
@@ -1567,13 +1741,53 @@ def run_ring_loop(
                 active_command = request
                 return request.command
 
-            result = run_streamed(
+            luna_result = run_streamed(
                 _command(paths, run_dir, run_id),
                 paths.ring,
                 run_dir / "opencode.console.log",
                 timeout_seconds=SESSION_TIMEOUT_SECONDS,
                 stop_poll=stop_poll,
             )
+            result = luna_result
+            escalation: dict[str, Any] = {
+                "requested": False,
+                "workers": [],
+                "agent": ESCALATION_AGENT,
+                "model": ESCALATION_MODEL,
+                "variant": ESCALATION_VARIANT,
+            }
+            if luna_result.exit_code == 0 and not luna_result.stop_reason:
+                escalated_workers = _draft_escalations(run_dir / "output")
+                if escalated_workers:
+                    escalation["requested"] = True
+                    escalation["workers"] = list(escalated_workers)
+                    try:
+                        draft_dir = _stage_luna_draft(run_dir)
+                    except (OSError, ValueError) as exception:
+                        escalation["error"] = str(exception)
+                        result = luna_result
+                    else:
+                        result = run_streamed(
+                            _escalation_command(
+                                paths,
+                                run_dir,
+                                run_id,
+                                escalated_workers,
+                                draft_dir,
+                            ),
+                            paths.ring,
+                            run_dir / "escalation.console.log",
+                            timeout_seconds=SESSION_TIMEOUT_SECONDS,
+                            stop_poll=stop_poll,
+                        )
+                        escalation.update(
+                            {
+                                "exit_code": result.exit_code,
+                                "duration_seconds": result.duration_seconds,
+                                "stop_reason": result.stop_reason,
+                                "draft_dir": str(draft_dir),
+                            }
+                        )
             publication = (
                 _publish_staged_outputs(paths, run_dir, run_id)
                 if result.exit_code == 0 and not result.stop_reason
@@ -1608,11 +1822,13 @@ def run_ring_loop(
                         "exit_code": result.exit_code,
                         "effective_exit_code": effective_exit_code,
                         "duration_seconds": result.duration_seconds,
+                        "luna_duration_seconds": luna_result.duration_seconds,
                         "publication": publication,
                         "stop_reason": result.stop_reason,
                         "agent": RING_AGENT,
                         "model": RING_MODEL,
                         "variant": RING_VARIANT,
+                        "escalation": escalation,
                         "review_interval_seconds": REVIEW_INTERVAL_SECONDS,
                         "event_min_interval_seconds": EVENT_MIN_INTERVAL_SECONDS,
                         "consumed_worker_requests": consumed_requests,

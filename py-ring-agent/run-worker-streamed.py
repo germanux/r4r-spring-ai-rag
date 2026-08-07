@@ -23,7 +23,7 @@ LP_WORKTREE = Path(
     os.environ.get("R4R_LP_WORKTREE", str(DEVELOPMENT_ROOT / "r4r-lp-worker.git"))
 ).expanduser()
 DESTINATION = "PC"  # PC or LP
-RUNNER = ("./scripts/run-codex-agent.sh", "--destination")
+RUNNER = ("bash", "./scripts/run-opencode-worker.sh", "--destination")
 SESSION_TIMEOUT_SECONDS = None  # The inner harness owns its session TTL.
 
 HERE = Path(__file__).resolve().parent

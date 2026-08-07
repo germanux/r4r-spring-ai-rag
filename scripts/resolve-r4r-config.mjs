@@ -18,7 +18,12 @@ if (!["PC", "LP"].includes(destination)) throw new Error("Use --destination PC o
 const canonical = loadAgentConfig(root);
 const profile = canonical.agents[destination];
 const env = mergedEnvironment(root);
-const endpoint = normalizeV1Endpoint(env[profile.endpointEnv] ?? profile.defaultEndpoint, profile.endpointEnv);
+const endpoint = profile.endpointEnv && profile.defaultEndpoint
+  ? normalizeV1Endpoint(
+      env[profile.endpointEnv] ?? profile.defaultEndpoint,
+      profile.endpointEnv,
+    )
+  : "";
 const cgr = canonical.codeIntelligence.codeGraphRag;
 const cgrEndpoint = normalizeV1Endpoint(env[cgr.endpointEnv] ?? cgr.defaultEndpoint, cgr.endpointEnv);
 const cgrModel = env[cgr.modelEnv] ?? cgr.defaultModel;
@@ -27,24 +32,19 @@ const source = path.join(root, "opencode.jsonc");
 const resolved = JSON.parse(fs.readFileSync(source, "utf8"));
 resolved.default_agent = profile.agentId;
 resolved.provider ??= {};
-resolved.provider[profile.provider] ??= {
-  npm: "@ai-sdk/openai-compatible",
-  name: profile.provider,
-  options: {},
-  models: {},
-};
+resolved.provider[profile.provider] ??= { options: {}, models: {} };
 const provider = resolved.provider[profile.provider];
-provider.options ??= {};
-provider.options.baseURL = endpoint;
-provider.options.timeout = canonical.defaults.requestTimeoutSeconds * 1000;
-provider.options.chunkTimeout = canonical.defaults.chunkTimeoutSeconds * 1000;
-provider.models = {
-  [profile.model]: {
-    name: profile.modelLabel,
-    temperature: true,
-    limit: { context: profile.contextTokens, output: profile.outputTokens },
-  },
-};
+if (!provider.models?.[profile.model]) {
+  throw new Error(
+    `opencode.jsonc does not declare ${profile.provider}/${profile.model}`,
+  );
+}
+if (endpoint) {
+  provider.options ??= {};
+  provider.options.baseURL = endpoint;
+  provider.options.timeout = canonical.defaults.requestTimeoutSeconds * 1000;
+  provider.options.chunkTimeout = canonical.defaults.chunkTimeoutSeconds * 1000;
+}
 for (const [name, item] of Object.entries(resolved.mcp ?? {})) {
   if (item && typeof item === "object") item.enabled = profile.mcp.includes(name);
 }
@@ -75,7 +75,9 @@ const metadata = {
   worker: profile.worker,
   plan: profile.plan,
   progress: profile.progress,
+  legacyProgress: profile.legacyProgress ?? "",
   memory: profile.memory,
+  legacyMemory: profile.legacyMemory ?? "",
   controlDir: profile.controlDir,
   peerPaths: profile.peerPaths,
   allowedPaths: profile.allowedPaths,
@@ -86,11 +88,13 @@ const metadata = {
     autoCommit: canonical.defaults.autoCommit,
     bootstrapCommit: canonical.defaults.bootstrapCommit,
     checkpointOnGreen: canonical.defaults.checkpointOnGreen,
-    requireSurgicalReview: canonical.defaults.requireSurgicalReview ?? false,
     maxSessionSeconds: profile.runtime?.maxSessionSeconds ?? canonical.defaults.maxSessionSeconds,
     idleSeconds: profile.runtime?.idleSeconds ?? canonical.defaults.idleSeconds,
     maxSessionSteps: profile.runtime?.maxSessionSteps ?? canonical.defaults.maxSessionSteps,
     repeatEventBudget: profile.runtime?.repeatEventBudget ?? canonical.defaults.repeatEventBudget,
+    contextDeltaBytes: canonical.defaults.contextDeltaBytes,
+    contextWarningTokens: canonical.defaults.contextWarningTokens,
+    contextStopTokens: canonical.defaults.contextStopTokens,
   },
   opencodeConfig: path.relative(root, configPath),
 };

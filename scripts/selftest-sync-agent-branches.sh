@@ -44,17 +44,16 @@ for branch in "${!WORKTREES[@]}"; do
 done
 
 run_sync() {
-  local output="$1" surgical_enabled="$2"
+  local output="$1"
   R4R_REPOSITORY="$INTEGRATION" \
   R4R_DEVELOPMENT_ROOT="$TEST_ROOT" \
   R4R_INTEGRATION_WORKTREE="$INTEGRATION" \
   R4R_RING_WORKTREE="${WORKTREES[agent/ring-agent-worker]}" \
   R4R_PC_WORKTREE="${WORKTREES[agent/pc-qwen3-worker]}" \
   R4R_LP_WORKTREE="${WORKTREES[agent/laptop-qwen3-worker]}" \
-  R4R_BRANCH_SYNC_RUNTIME_ROOT="$TEST_ROOT/runtime-$surgical_enabled" \
-  R4R_BRANCH_SYNC_LOCK="$TEST_ROOT/sync-$surgical_enabled.lock" \
-  R4R_GIT_LOCK="$TEST_ROOT/git-$surgical_enabled.lock" \
-  R4R_SURGICAL_SYNC_ENABLED="$surgical_enabled" \
+  R4R_BRANCH_SYNC_RUNTIME_ROOT="$TEST_ROOT/runtime" \
+  R4R_BRANCH_SYNC_LOCK="$TEST_ROOT/sync.lock" \
+  R4R_GIT_LOCK="$TEST_ROOT/git.lock" \
     "$SYNC" \
       --no-fetch \
       --no-push \
@@ -68,7 +67,7 @@ run_sync() {
 }
 
 disabled_log="$TEST_ROOT/disabled.log"
-run_sync "$disabled_log" false
+run_sync "$disabled_log"
 disabled_sources="$(grep -F 'source sequence:' "$disabled_log")"
 disabled_targets="$(grep -F 'propagation targets:' "$disabled_log")"
 for expected in \
@@ -88,9 +87,4 @@ done
 [[ "$disabled_sources" != *agent/opencode-dual-surgical* ]]
 [[ "$disabled_targets" != *agent/opencode-dual-surgical* ]]
 
-enabled_log="$TEST_ROOT/enabled.log"
-run_sync "$enabled_log" true
-grep -F 'source sequence:' "$enabled_log" | grep -Fq agent/opencode-dual-surgical
-grep -F 'propagation targets:' "$enabled_log" | grep -Fq agent/opencode-dual-surgical
-
-printf 'OK: PC/LP hot-sync remains active and SURGICAL is excluded by default\n'
+printf 'OK: PC/LP hot-sync remains active and the retired SURGICAL branch is excluded\n'

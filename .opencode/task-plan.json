@@ -1,5 +1,17 @@
 {
   "schema_version": 1,
+  "plan_kind": "canonical-fullstack",
+  "assignment_policy": {
+    "mode": "ring-generated",
+    "workers": [
+      "PC",
+      "LP"
+    ],
+    "workers_are_fullstack": true,
+    "max_active_tasks_per_worker": 1,
+    "overlapping_write_scopes": "forbidden",
+    "directive_path": "runtime/control/<WORKER>/assignment.json"
+  },
   "tasks": [
     {
       "id": "task-01-base",
@@ -10,7 +22,7 @@
         "src/**",
         "knowledge/**",
         "docker-postgres/**",
-        "docs/**",
+        "docs/backend/**",
         ".env.example",
         ".gitignore",
         "codegraph.json"
@@ -19,7 +31,10 @@
         "./scripts/task-gate.sh",
         "task-01-base"
       ],
-      "commit_message": "chore(task-01): establish green R4R baseline"
+      "commit_message": "chore(task-01): establish green R4R baseline",
+      "domain": "backend",
+      "assignment": "RING_GENERATED",
+      "depends_on": []
     },
     {
       "id": "task-02-ingestion",
@@ -30,13 +45,18 @@
         "src/main/**",
         "src/test/**",
         "knowledge/**",
-        "docs/**"
+        "docs/backend/**"
       ],
       "gate": [
         "./scripts/task-gate.sh",
         "task-02-ingestion"
       ],
-      "commit_message": "feat(task-02): add deterministic knowledge ingestion"
+      "commit_message": "feat(task-02): add deterministic knowledge ingestion",
+      "domain": "backend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-01-base"
+      ]
     },
     {
       "id": "task-03-pgvector",
@@ -47,13 +67,18 @@
         "src/main/**",
         "src/test/**",
         "knowledge/**",
-        "docs/**"
+        "docs/backend/**"
       ],
       "gate": [
         "./scripts/task-gate.sh",
         "task-03-pgvector"
       ],
-      "commit_message": "feat(task-03): add Spring AI pgvector retrieval"
+      "commit_message": "feat(task-03): add Spring AI pgvector retrieval",
+      "domain": "backend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-02-ingestion"
+      ]
     },
     {
       "id": "task-04-rag",
@@ -64,17 +89,412 @@
         "src/main/**",
         "src/test/**",
         "knowledge/**",
-        "docs/**"
+        "docs/backend/**"
       ],
       "gate": [
         "./scripts/task-gate.sh",
         "task-04-rag"
       ],
-      "commit_message": "feat(task-04): add minimal cited RAG service"
+      "commit_message": "feat(task-04): add minimal cited RAG service",
+      "domain": "backend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-03-pgvector"
+      ]
+    },
+    {
+      "id": "task-05-rag-api",
+      "command": ".opencode/commands/task-05-rag-api.md",
+      "objective": "Expose the cited RAG service through a stable JSON HTTP API for Angular.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-05-rag-api"
+      ],
+      "commit_message": "feat(task-05): expose cited RAG HTTP API",
+      "domain": "backend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-04-rag"
+      ]
+    },
+    {
+      "id": "task-06-production-ingestion-cli",
+      "command": ".opencode/commands/task-06-production-ingestion-cli.md",
+      "objective": "Stabilize and commit the current compilable production-ingestion CLI baseline.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**",
+        ".env.example"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-06-production-ingestion-cli"
+      ],
+      "commit_message": "chore(ingestion): checkpoint compilable CLI baseline",
+      "domain": "backend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-05-rag-api"
+      ]
+    },
+    {
+      "id": "task-06b-cli-contract",
+      "command": ".opencode/commands/task-06b-cli-contract.md",
+      "objective": "Finalize the CLI result and orchestration contract.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**",
+        ".env.example"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-06b-cli-contract"
+      ],
+      "commit_message": "feat(ingestion): finalize CLI result contract",
+      "domain": "backend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-06-production-ingestion-cli"
+      ]
+    },
+    {
+      "id": "task-06c-spring-lifecycle",
+      "command": ".opencode/commands/task-06c-spring-lifecycle.md",
+      "objective": "Prove deterministic non-web Spring lifecycle and no startup ingestion side effect.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**",
+        ".env.example"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-06c-spring-lifecycle"
+      ],
+      "commit_message": "fix(ingestion): enforce non-web Spring lifecycle",
+      "domain": "backend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-06b-cli-contract"
+      ]
+    },
+    {
+      "id": "task-06d-failure-classification",
+      "command": ".opencode/commands/task-06d-failure-classification.md",
+      "objective": "Classify configuration, infrastructure and ingestion failures by concrete cause.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**",
+        ".env.example"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-06d-failure-classification"
+      ],
+      "commit_message": "fix(ingestion): classify infrastructure failures",
+      "domain": "backend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-06c-spring-lifecycle"
+      ]
+    },
+    {
+      "id": "task-06e-child-process",
+      "command": ".opencode/commands/task-06e-child-process.md",
+      "objective": "Execute and verify the real production CLI as a bounded child JVM.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**",
+        ".env.example"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-06e-child-process"
+      ],
+      "commit_message": "test(ingestion): verify production CLI process",
+      "domain": "backend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-06d-failure-classification"
+      ]
+    },
+    {
+      "id": "task-06f-ingestion-validation",
+      "command": ".opencode/commands/task-06f-ingestion-validation.md",
+      "objective": "Complete the full deterministic production-ingestion CLI validation.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**",
+        ".env.example"
+      ],
+      "gate": [
+        "./scripts/task-gate.sh",
+        "task-06f-ingestion-validation"
+      ],
+      "commit_message": "test(ingestion): complete production CLI validation",
+      "domain": "backend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-06e-child-process"
+      ]
+    },
+    {
+      "id": "task-07-populate-production-rag",
+      "command": ".opencode/commands/task-07-populate-production-rag.md",
+      "objective": "Populate the persistent PC pgvector database and prove idempotent ingestion.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**"
+      ],
+      "gate": [
+        "bash",
+        "-lc",
+        "rm -rf target && ./scripts/task-gate.sh all && set -a && source ./.env && set +a && mvn -q -DskipTests spring-boot:run -Dspring-boot.run.main-class=com.riansares.r4r.ingestion.KnowledgeIngestionCli && rows=$(docker exec \"${POSTGRES_APP_CONTAINER:-r4r-postgres-app}\" psql -U \"${POSTGRES_APP_USER:-r4r}\" -d \"${POSTGRES_APP_DB:-r4r_rag}\" -Atqc 'SELECT count(*) FROM vector_store') && test \"$rows\" -gt 0"
+      ],
+      "commit_message": "feat(task-07): populate and verify production RAG corpus",
+      "domain": "backend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-06f-ingestion-validation"
+      ]
+    },
+    {
+      "id": "task-08-rag-semantic-evaluation",
+      "command": ".opencode/commands/task-08-rag-semantic-evaluation.md",
+      "objective": "Add grounded retrieval, citation and abstention evaluation for the populated RAG.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**"
+      ],
+      "gate": [
+        "bash",
+        "-lc",
+        "rm -rf target && ./scripts/task-gate.sh all && mvn -Dtest=RagSemanticEvaluationTest -DfailIfNoTests=true test"
+      ],
+      "commit_message": "test(task-08): add semantic RAG evaluation",
+      "domain": "backend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-07-populate-production-rag"
+      ]
+    },
+    {
+      "id": "task-09-production-smoke",
+      "command": ".opencode/commands/task-09-production-smoke.md",
+      "objective": "Validate the packaged production RAG through real HTTP smoke acceptance.",
+      "allowed_paths": [
+        "pom.xml",
+        "src/main/**",
+        "src/test/**",
+        "docs/backend/**"
+      ],
+      "gate": [
+        "bash",
+        "-lc",
+        "rm -rf target && ./scripts/task-gate.sh all && mvn -Dtest=RagProductionSmokeTest -DfailIfNoTests=true test"
+      ],
+      "commit_message": "test(task-09): verify packaged production RAG",
+      "domain": "backend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-08-rag-semantic-evaluation"
+      ]
+    },
+    {
+      "id": "task-fe-01-angular17-bootstrap",
+      "command": ".opencode/commands/task-fe-01-angular17-bootstrap.md",
+      "objective": "Create a strict Angular 17 standalone application under frontend/.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-01-angular17-bootstrap"
+      ],
+      "commit_message": "feat(frontend-01): bootstrap Angular 17 client",
+      "domain": "frontend",
+      "assignment": "RING_GENERATED",
+      "depends_on": []
+    },
+    {
+      "id": "task-fe-02-rag-client",
+      "command": ".opencode/commands/task-fe-02-rag-client.md",
+      "objective": "Implement typed Angular HTTP access to the backend cited RAG API.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-02-rag-client"
+      ],
+      "commit_message": "feat(frontend-02): add typed RAG API client",
+      "domain": "frontend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-fe-01-angular17-bootstrap",
+        "task-05-rag-api"
+      ]
+    },
+    {
+      "id": "task-fe-03-rag-ui",
+      "command": ".opencode/commands/task-fe-03-rag-ui.md",
+      "objective": "Stabilize and commit the current compilable Angular RAG page baseline.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-03-rag-ui"
+      ],
+      "commit_message": "chore(rag-ui): checkpoint compilable RAG page baseline",
+      "domain": "frontend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-fe-02-rag-client"
+      ]
+    },
+    {
+      "id": "task-fe-03b-answer-abstention",
+      "command": ".opencode/commands/task-fe-03b-answer-abstention.md",
+      "objective": "Render deterministic answer, abstention and error states.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-03b-answer-abstention"
+      ],
+      "commit_message": "feat(rag-ui): render answer and abstention states",
+      "domain": "frontend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-fe-03-rag-ui"
+      ]
+    },
+    {
+      "id": "task-fe-03c-citations",
+      "command": ".opencode/commands/task-fe-03c-citations.md",
+      "objective": "Render ordered structured citations without parsing model text.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-03c-citations"
+      ],
+      "commit_message": "feat(rag-ui): render structured citations",
+      "domain": "frontend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-fe-03b-answer-abstention"
+      ]
+    },
+    {
+      "id": "task-fe-03d-dom-state-tests",
+      "command": ".opencode/commands/task-fe-03d-dom-state-tests.md",
+      "objective": "Prove loading, disabled, error, answer and reset behavior through the DOM.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-03d-dom-state-tests"
+      ],
+      "commit_message": "test(rag-ui): verify DOM interaction states",
+      "domain": "frontend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-fe-03c-citations"
+      ]
+    },
+    {
+      "id": "task-fe-03e-security-accessibility",
+      "command": ".opencode/commands/task-fe-03e-security-accessibility.md",
+      "objective": "Prove safe escaping and accessible rendered semantics.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-03e-security-accessibility"
+      ],
+      "commit_message": "test(rag-ui): verify safe accessible rendering",
+      "domain": "frontend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-fe-03d-dom-state-tests"
+      ]
+    },
+    {
+      "id": "task-fe-03f-final-validation",
+      "command": ".opencode/commands/task-fe-03f-final-validation.md",
+      "objective": "Complete the Angular RAG page build and deterministic unit validation.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-03f-final-validation"
+      ],
+      "commit_message": "test(rag-ui): complete RAG page validation",
+      "domain": "frontend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-fe-03e-security-accessibility"
+      ]
+    },
+    {
+      "id": "task-fe-04-playwright",
+      "command": ".opencode/commands/task-fe-04-playwright.md",
+      "objective": "Verify the Angular RAG flow with deterministic Playwright tests.",
+      "allowed_paths": [
+        "frontend/**",
+        "docs/frontend/**"
+      ],
+      "gate": [
+        "./scripts/frontend-task-gate.sh",
+        "task-fe-04-playwright"
+      ],
+      "commit_message": "test(frontend-04): add Playwright RAG coverage",
+      "domain": "frontend",
+      "assignment": "RING_GENERATED",
+      "depends_on": [
+        "task-fe-03f-final-validation"
+      ]
     }
   ],
   "final_gate": [
-    "./scripts/task-gate.sh",
-    "all"
+    "bash",
+    "-lc",
+    "./scripts/task-gate.sh all && ./scripts/frontend-task-gate.sh all"
   ]
 }

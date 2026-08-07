@@ -25,6 +25,6 @@ current failure.
 
 ## Completion
 
-Gate `0`, Codex `ACCEPT`, controller commit:
+Gate `0`, controller validation and global acceptance:
 
 `test(rag-ui): complete RAG page validation`

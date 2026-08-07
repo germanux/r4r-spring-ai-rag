@@ -4,63 +4,6 @@
   "share": "disabled",
   "snapshot": true,
   "provider": {
-    "ollama-pc": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Ollama PC - R4R",
-      "options": {
-        "baseURL": "http://127.0.0.1:11434/v1",
-        "timeout": 14400000,
-        "chunkTimeout": 600000
-      },
-      "models": {
-        "qwen3-coder-next-80b-t025-168k-8k-pc-pc": {
-          "name": "qwen3-coder-next-80b-t025-168k-8k-pc-pc",
-          "limit": {
-            "context": 172032,
-            "output": 8192
-          }
-        },
-        "qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest": {
-          "name": "qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest",
-          "limit": {
-            "context": 172032,
-            "output": 8192
-          }
-        },
-        "qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest": {
-          "name": "qwen3-coder-next-80b-t033-128k-8k-pc-pc:latest",
-          "limit": {
-            "context": 131072,
-            "output": 8192
-          }
-        }
-      }
-    },
-    "ollama-laptop": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Ollama Laptop - R4R",
-      "options": {
-        "baseURL": "http://192.168.1.9:11434/v1",
-        "timeout": 14400000,
-        "chunkTimeout": 600000
-      },
-      "models": {
-        "qwen3-30b-coder-28k-6k-t33": {
-          "name": "qwen3-30b-coder-28k-6k-t33",
-          "limit": {
-            "context": 28672,
-            "output": 6144
-          }
-        },
-        "qwen3-30b-coder-28k-6k-t33:latest": {
-          "name": "qwen3-30b-coder-28k-6k-t33:latest",
-          "limit": {
-            "context": 28672,
-            "output": 6144
-          }
-        }
-      }
-    },
     "openai": {
       "options": {
         "reasoningEffort": "medium",
@@ -72,53 +15,10 @@
         "store": false
       },
       "models": {
-        "gpt-5.2": {
-          "name": "GPT 5.2 (OAuth)",
+        "gpt-5.6-luna": {
+          "name": "GPT-5.6 Luna",
           "limit": {
-            "context": 272000,
-            "output": 128000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "variants": {
-            "none": {
-              "reasoningEffort": "none",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "low": {
-              "reasoningEffort": "low",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "medium": {
-              "reasoningEffort": "medium",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "high": {
-              "reasoningEffort": "high",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "medium"
-            },
-            "xhigh": {
-              "reasoningEffort": "xhigh",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "medium"
-            }
-          }
-        },
-        "gpt-5.2-codex": {
-          "name": "GPT 5.2 Codex (OAuth)",
-          "limit": {
-            "context": 272000,
+            "context": 1050000,
             "output": 128000
           },
           "modalities": {
@@ -150,13 +50,18 @@
               "reasoningEffort": "xhigh",
               "reasoningSummary": "detailed",
               "textVerbosity": "medium"
+            },
+            "max": {
+              "reasoningEffort": "max",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
             }
           }
         },
-        "gpt-5.1-codex-max": {
-          "name": "GPT 5.1 Codex Max (OAuth)",
+        "gpt-5.6-terra": {
+          "name": "GPT-5.6 Terra",
           "limit": {
-            "context": 272000,
+            "context": 1050000,
             "output": 128000
           },
           "modalities": {
@@ -171,12 +76,12 @@
           "variants": {
             "low": {
               "reasoningEffort": "low",
-              "reasoningSummary": "detailed",
+              "reasoningSummary": "auto",
               "textVerbosity": "medium"
             },
             "medium": {
               "reasoningEffort": "medium",
-              "reasoningSummary": "detailed",
+              "reasoningSummary": "auto",
               "textVerbosity": "medium"
             },
             "high": {
@@ -188,13 +93,18 @@
               "reasoningEffort": "xhigh",
               "reasoningSummary": "detailed",
               "textVerbosity": "medium"
+            },
+            "max": {
+              "reasoningEffort": "max",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
             }
           }
         },
-        "gpt-5.1-codex": {
-          "name": "GPT 5.1 Codex (OAuth)",
+        "gpt-5.6-sol": {
+          "name": "GPT-5.6 Sol",
           "limit": {
-            "context": 272000,
+            "context": 1050000,
             "output": 128000
           },
           "modalities": {
@@ -221,72 +131,16 @@
               "reasoningEffort": "high",
               "reasoningSummary": "detailed",
               "textVerbosity": "medium"
-            }
-          }
-        },
-        "gpt-5.1-codex-mini": {
-          "name": "GPT 5.1 Codex Mini (OAuth)",
-          "limit": {
-            "context": 272000,
-            "output": 128000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "variants": {
-            "medium": {
-              "reasoningEffort": "medium",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
             },
-            "high": {
-              "reasoningEffort": "high",
+            "xhigh": {
+              "reasoningEffort": "xhigh",
               "reasoningSummary": "detailed",
               "textVerbosity": "medium"
-            }
-          }
-        },
-        "gpt-5.1": {
-          "name": "GPT 5.1 (OAuth)",
-          "limit": {
-            "context": 272000,
-            "output": 128000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "variants": {
-            "none": {
-              "reasoningEffort": "none",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
             },
-            "low": {
-              "reasoningEffort": "low",
-              "reasoningSummary": "auto",
-              "textVerbosity": "low"
-            },
-            "medium": {
-              "reasoningEffort": "medium",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "high": {
-              "reasoningEffort": "high",
+            "max": {
+              "reasoningEffort": "max",
               "reasoningSummary": "detailed",
-              "textVerbosity": "high"
+              "textVerbosity": "medium"
             }
           }
         }
@@ -356,8 +210,6 @@
     ]
   },
   "enabled_providers": [
-    "ollama-pc",
-    "ollama-laptop",
     "openai"
   ],
   "disabled_providers": [],

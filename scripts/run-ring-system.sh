@@ -60,7 +60,7 @@ ring_agent_requested() {
   return 0
 }
 
-load_openai_credentials() {
+prepare_opencode_models() {
   if [[ -z "${OPENAI_API_KEY:-}" && -r "$OPENAI_ENV_FILE" ]]; then
     set -a
     # shellcheck disable=SC1090
@@ -68,10 +68,24 @@ load_openai_credentials() {
     set +a
   fi
 
-  if [[ -z "${OPENAI_API_KEY:-}" ]]; then
-    echo "ERROR: OPENAI_API_KEY is not loaded and was not found in $OPENAI_ENV_FILE" >&2
+  local binary="${R4R_OPENCODE_BIN:-opencode}" available model
+  command -v "$binary" >/dev/null 2>&1 || {
+    echo "ERROR: OpenCode is not available: $binary" >&2
     exit 2
-  fi
+  }
+  available="$($binary models 2>/dev/null)" || {
+    echo "ERROR: OpenCode cannot read its authenticated model catalog" >&2
+    exit 2
+  }
+  for model in \
+    openai/gpt-5.6-luna \
+    openai/gpt-5.6-terra \
+    openai/gpt-5.6-sol; do
+    grep -Fq -- "$model" <<<"$available" || {
+      echo "ERROR: OpenCode model is unavailable: $model" >&2
+      exit 2
+    }
+  done
 }
 
 archive_current_logs() {
@@ -110,7 +124,7 @@ case "$ACTION" in
       exit 1
     fi
     if ring_agent_requested "$@"; then
-      load_openai_credentials
+      prepare_opencode_models
     fi
     rm -f "$PID_FILE" "$RING_AGENT_PID_FILE"
     archive_current_logs
@@ -196,7 +210,7 @@ case "$ACTION" in
     ;;
   foreground)
     if ring_agent_requested "$@"; then
-      load_openai_credentials
+      prepare_opencode_models
     fi
     exec python3 -u "$PYTHON" --ring "$RING_ROOT" --guardian "$GUARDIAN" "$@"
     ;;

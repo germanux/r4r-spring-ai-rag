@@ -6,8 +6,8 @@ mkdir -p runtime/supervisor
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 pc_log="runtime/supervisor/${stamp}-PC.log"
 lp_log="runtime/supervisor/${stamp}-LP.log"
-./scripts/run-codex-agent.sh --destination PC > >(tee "$pc_log") 2>&1 & pc_pid=$!
-./scripts/run-codex-agent.sh --destination LP > >(tee "$lp_log") 2>&1 & lp_pid=$!
+bash ./scripts/run-opencode-worker.sh --destination PC > >(tee "$pc_log") 2>&1 & pc_pid=$!
+bash ./scripts/run-opencode-worker.sh --destination LP > >(tee "$lp_log") 2>&1 & lp_pid=$!
 printf 'PC pid=%s log=%s
 LP pid=%s log=%s
 ' "$pc_pid" "$pc_log" "$lp_pid" "$lp_log"

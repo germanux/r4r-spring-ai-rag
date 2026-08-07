@@ -377,10 +377,9 @@ def _selected_snapshot_files(repo: Path, label: str) -> list[Path]:
     candidates: set[Path] = set()
     exact = [
         "AGENTS.md",
-        ".opencode/task-plan.backend.json",
-        ".opencode/task-plan.frontend.json",
-        ".opencode/progress.backend.json",
-        ".opencode/progress.frontend.json",
+        ".opencode/task-plan.json",
+        ".opencode/progress.pc.json",
+        ".opencode/progress.lp.json",
         ".ring-agent/state.json",
         ".ring-agent/code-pc-review.md",
         ".ring-agent/code-lp-review.md",

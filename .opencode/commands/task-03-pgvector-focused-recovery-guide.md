@@ -1,6 +1,6 @@
 # Task 03 focused recovery
 
-When the gate is red, use the controller-generated diagnostic bundle. Codex receives
+When the gate is red, use the controller-generated diagnostic bundle. Ring receives
 the complete log; OpenCode receives the classification, source list and bounded tail.
 
 Repair order:

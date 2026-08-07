@@ -1,4 +1,8 @@
-# R4R full-stack hierarchy and detailed task queues
+# Archived R4R hierarchy and split task queues
+
+> Historical only. Runtime now uses `.opencode/task-plan.json`, Ring-generated
+> assignments, and equivalent PC/LP full-stack workers. None of the split queues or
+> SURGICAL ownership rules below are active.
 
 > Temporary operational override: SURGICAL dispatch and mandatory review are disabled.
 > Its branch and profiles remain for a later redesign. PC and LP continue on their
