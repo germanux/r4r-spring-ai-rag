@@ -139,11 +139,17 @@ runtime logs remain the detailed source evidence. Each directive names the assig
 agent, model, branch, write scope and exclusive evidence path. Ring is the sole writer
 of each attempt file.
 
-The default review interval is one hour and can be changed with:
+Ring reviews and guardian dispatch polling use separate intervals. The guardian checks
+for newly published assignments every 15 seconds; Ring keeps its slower cognitive
+review cadence. A silent OpenCode child is terminated after five minutes so one stuck
+provider request cannot hold the complete system for the 90-minute session ceiling.
+
+The defaults can be changed with:
 
 ```bash
-export R4R_RING_REVIEW_INTERVAL_SECONDS=3600
+export R4R_RING_REVIEW_INTERVAL_SECONDS=763
 export R4R_RING_DIRECTIVE_MAX_AGE_SECONDS=10800
+export R4R_RING_FIRST_OUTPUT_TIMEOUT_SECONDS=300
 ```
 
 ## Event-triggered worker reviews

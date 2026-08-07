@@ -190,6 +190,7 @@ def run_streamed(
     log_path: Path,
     *,
     timeout_seconds: int | None = None,
+    first_output_timeout_seconds: int | None = None,
     stop_poll: Callable[[], str] | None = None,
     env: Mapping[str, str] | None = None,
 ) -> StreamedResult:
@@ -201,6 +202,8 @@ def run_streamed(
     """
     if not command:
         raise ValueError("command cannot be empty")
+    if first_output_timeout_seconds is not None and first_output_timeout_seconds < 1:
+        raise ValueError("first_output_timeout_seconds must be positive")
     cwd = cwd.resolve()
     log_path = log_path.resolve()
     log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -221,6 +224,7 @@ def run_streamed(
     assert process.stdout is not None
 
     reader_error: list[BaseException] = []
+    output_seen = threading.Event()
     with log_path.open("ab", buffering=0) as log_handle:
         last_fsync = time.monotonic()
 
@@ -231,6 +235,7 @@ def run_streamed(
                     chunk = os.read(process.stdout.fileno(), 65536)
                     if not chunk:
                         break
+                    output_seen.set()
                     log_handle.write(chunk)
                     console = getattr(sys.stdout, "buffer", None)
                     if console is not None:
@@ -265,6 +270,26 @@ def run_streamed(
                     stop_reason = "timeout"
                     terminate_process_tree(process)
                     break
+                if (
+                    first_output_timeout_seconds is not None
+                    and not output_seen.is_set()
+                    and time.monotonic() - started >= first_output_timeout_seconds
+                ):
+                    stop_reason = "first_output_timeout"
+                    message = (
+                        "[r4r-process] child produced no output for "
+                        f"{first_output_timeout_seconds}s; terminating it\n"
+                    ).encode("utf-8")
+                    log_handle.write(message)
+                    console = getattr(sys.stdout, "buffer", None)
+                    if console is not None:
+                        console.write(message)
+                        console.flush()
+                    else:
+                        sys.stdout.write(message.decode("utf-8"))
+                        sys.stdout.flush()
+                    terminate_process_tree(process)
+                    break
                 time.sleep(POLL_INTERVAL_SECONDS)
         except KeyboardInterrupt:
             stop_reason = "keyboard_interrupt"
@@ -276,7 +301,7 @@ def run_streamed(
     if reader_error:
         raise RuntimeError("console streaming failed") from reader_error[0]
     finished = time.monotonic()
-    if stop_reason == "timeout":
+    if stop_reason in {"timeout", "first_output_timeout"}:
         exit_code = 124
     elif stop_reason:
         exit_code = 130

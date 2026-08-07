@@ -17,17 +17,16 @@ import subprocess
 import sys
 import time
 
-DEFAULT_INTERVAL_SECONDS = 763
+DEFAULT_INTERVAL_SECONDS = 15
 
 
-def _invalidate_startup_assignments(ring: Path) -> tuple[Path, ...]:
-    removed: list[Path] = []
+def _preserved_startup_assignments(ring: Path) -> tuple[Path, ...]:
+    preserved: list[Path] = []
     for worker in ("PC", "LP"):
         path = ring / "runtime" / "control" / worker / "assignment.json"
         if path.exists():
-            path.unlink()
-            removed.append(path)
-    return tuple(removed)
+            preserved.append(path)
+    return tuple(preserved)
 
 
 def parse_args() -> argparse.Namespace:
@@ -300,10 +299,16 @@ def main() -> int:
     try:
         if args.once:
             return guardian_iteration()
-        # A supervisor restart is a new orchestration epoch. Remove only the
-        # ephemeral worker assignments so the guardian cannot replay an
-        # unexpired directive before Luna has reviewed current evidence.
-        _invalidate_startup_assignments(ring)
+        # Preserve assignments across supervisor restarts. The guardian validates
+        # expiry, task state, accepted dependencies and recovery grants before it
+        # dispatches a worker, so deleting a still-valid directive only creates an
+        # avoidable all-workers-idle failure when Ring itself is unavailable.
+        preserved = _preserved_startup_assignments(ring)
+        if preserved:
+            print(
+                f"[r4r-system] preserving {len(preserved)} startup assignment(s); "
+                "the guardian will revalidate them before dispatch"
+            )
         print(
             f"[r4r-system] checking Ring assignments for PC and LP every "
             f"{args.interval}s"

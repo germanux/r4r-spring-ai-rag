@@ -48,6 +48,9 @@ REVIEW_INTERVAL_SECONDS = int(
 SESSION_TIMEOUT_SECONDS = int(
     os.environ.get("R4R_RING_SESSION_TIMEOUT_SECONDS", str(90 * 60))
 )
+FIRST_OUTPUT_TIMEOUT_SECONDS = int(
+    os.environ.get("R4R_RING_FIRST_OUTPUT_TIMEOUT_SECONDS", "300")
+)
 RUN_IMMEDIATELY = os.environ.get("R4R_RING_RUN_IMMEDIATELY", "true").lower() == "true"
 OPENCODE_BIN = os.environ.get("R4R_OPENCODE_BIN", "opencode")
 DIRECTIVE_MAX_AGE_SECONDS = int(
@@ -1627,6 +1630,8 @@ def run_ring_loop(
         raise ValueError("R4R_RING_REVIEW_INTERVAL_SECONDS must be positive")
     if SESSION_TIMEOUT_SECONDS < 1:
         raise ValueError("R4R_RING_SESSION_TIMEOUT_SECONDS must be positive")
+    if FIRST_OUTPUT_TIMEOUT_SECONDS < 1:
+        raise ValueError("R4R_RING_FIRST_OUTPUT_TIMEOUT_SECONDS must be positive")
     if EVENT_MIN_INTERVAL_SECONDS < 1:
         raise ValueError("R4R_RING_EVENT_MIN_INTERVAL_SECONDS must be positive")
 
@@ -1746,6 +1751,7 @@ def run_ring_loop(
                 paths.ring,
                 run_dir / "opencode.console.log",
                 timeout_seconds=SESSION_TIMEOUT_SECONDS,
+                first_output_timeout_seconds=FIRST_OUTPUT_TIMEOUT_SECONDS,
                 stop_poll=stop_poll,
             )
             result = luna_result
@@ -1778,6 +1784,7 @@ def run_ring_loop(
                             paths.ring,
                             run_dir / "escalation.console.log",
                             timeout_seconds=SESSION_TIMEOUT_SECONDS,
+                            first_output_timeout_seconds=FIRST_OUTPUT_TIMEOUT_SECONDS,
                             stop_poll=stop_poll,
                         )
                         escalation.update(
@@ -1858,10 +1865,13 @@ def run_ring_loop(
                     control.complete(active_command, "running", "Ring session restarted with fresh context")
                     next_run = time.monotonic()
                     continue
-            elif result.stop_reason == "timeout":
+            elif result.stop_reason in {"timeout", "first_output_timeout"}:
                 control.set_state(
                     "running",
-                    f"Ring session reached {SESSION_TIMEOUT_SECONDS}s; next session will be fresh",
+                    (
+                        f"Ring session stopped by {result.stop_reason}; "
+                        "next session will be fresh"
+                    ),
                 )
             elif not publication.get("published", False):
                 control.set_state(

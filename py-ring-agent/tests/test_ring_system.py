@@ -14,7 +14,7 @@ SCRIPT = Path(__file__).resolve().parents[1] / "run-ring-system.py"
 
 
 class RingSystemTests(unittest.TestCase):
-    def test_startup_invalidates_previous_worker_assignments(self) -> None:
+    def test_startup_preserves_previous_worker_assignments(self) -> None:
         spec = importlib.util.spec_from_file_location("run_ring_system", SCRIPT)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -28,9 +28,18 @@ class RingSystemTests(unittest.TestCase):
                 )
                 assignment.parent.mkdir(parents=True)
                 assignment.write_text("{}\n", encoding="utf-8")
-            removed = module._invalidate_startup_assignments(ring)
-            self.assertEqual(len(removed), 2)
-            self.assertFalse(any(path.exists() for path in removed))
+            preserved = module._preserved_startup_assignments(ring)
+            self.assertEqual(len(preserved), 2)
+            self.assertTrue(all(path.exists() for path in preserved))
+
+    def test_guardian_polling_is_independent_from_ring_review_interval(self) -> None:
+        spec = importlib.util.spec_from_file_location("run_ring_system", SCRIPT)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        self.assertEqual(module.DEFAULT_INTERVAL_SECONDS, 15)
 
     def test_once_invokes_guardian_and_cleans_pid_file(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

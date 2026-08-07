@@ -88,6 +88,49 @@ class RingProcessTest(unittest.TestCase):
             ring_process.SIGINT_GRACE_SECONDS = original_sigint
             ring_process.SIGTERM_GRACE_SECONDS = original_sigterm
 
+    def test_silent_child_is_stopped_by_first_output_timeout(self) -> None:
+        original_sigint = ring_process.SIGINT_GRACE_SECONDS
+        original_sigterm = ring_process.SIGTERM_GRACE_SECONDS
+        ring_process.SIGINT_GRACE_SECONDS = 0.1
+        ring_process.SIGTERM_GRACE_SECONDS = 0.1
+        try:
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                result = run_streamed(
+                    ("python3", "-c", "import time; time.sleep(300)"),
+                    root,
+                    root / "console.log",
+                    first_output_timeout_seconds=1,
+                )
+
+                self.assertEqual(result.exit_code, 124)
+                self.assertEqual(result.stop_reason, "first_output_timeout")
+                self.assertIn(
+                    "child produced no output for 1s",
+                    result.log_path.read_text(encoding="utf-8"),
+                )
+        finally:
+            ring_process.SIGINT_GRACE_SECONDS = original_sigint
+            ring_process.SIGTERM_GRACE_SECONDS = original_sigterm
+
+    def test_first_output_disarms_startup_watchdog(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            result = run_streamed(
+                (
+                    "python3",
+                    "-c",
+                    "import time; print('started', flush=True); time.sleep(1.2)",
+                ),
+                root,
+                root / "console.log",
+                first_output_timeout_seconds=1,
+            )
+
+            self.assertEqual(result.exit_code, 0)
+            self.assertEqual(result.stop_reason, "")
+            self.assertIn("started", result.log_path.read_text(encoding="utf-8"))
+
 
 
 if __name__ == "__main__":
