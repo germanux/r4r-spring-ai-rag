@@ -373,6 +373,52 @@ class RunnerTest(unittest.TestCase):
             directive.write_text(json.dumps(value), encoding="utf-8")
             self.assertIn("priority is not advisory", runner._current_ring_directive(task))
 
+    def test_ring_directive_does_not_repeat_consumed_recovery_action(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directive = Path(directory) / "assignment.json"
+            runner = object.__new__(AutomaticRunner)
+            runner.worker_id = "LP"
+            runner.ring_directive_path = directive
+            runner.ring_directive_max_age_seconds = 10800
+            runner.progress = {
+                "schema_version": 1,
+                "tasks": [
+                    {
+                        "id": "task-fe-03d",
+                        "status": "IN_PROGRESS",
+                        "recovery_authorization_consumed": "grant-18",
+                    }
+                ],
+            }
+            task = Task(
+                "task-fe-03d",
+                "task.md",
+                "repair DOM tests",
+                ("frontend/**",),
+                ("true",),
+                "commit",
+            )
+            directive.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "target": "LP",
+                        "task_id": task.id,
+                        "generated_at": datetime.now(timezone.utc).isoformat(),
+                        "priority": "advisory",
+                        "action": "RETRY_AUTHORIZED",
+                        "authorization_id": "grant-18",
+                        "next_action": "Remove trailing whitespace.",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            current = runner._current_ring_directive(task)
+
+            self.assertIn("already consumed", current)
+            self.assertNotIn("Remove trailing whitespace", current)
+
     def test_extracts_actual_codegraph_tool_calls_from_nested_jsonl(self):
         stdout = "\n".join([
             json.dumps({
@@ -1038,6 +1084,7 @@ class RunnerTest(unittest.TestCase):
             self.assertEqual(0, result)
             runner._consume_retry_authorization.assert_called_once()
             runner._repair_trailing_whitespace.assert_called_once_with(task)
+            self.assertEqual(2, runner._run_gate.call_count)
             self.assertEqual(
                 3,
                 task_progress(runner.progress, task.id)["attempts_total"],
@@ -1092,6 +1139,126 @@ class RunnerTest(unittest.TestCase):
             value["authorization_id"] = "third-grant"
             directive.write_text(json.dumps(value), encoding="utf-8")
             self.assertIsNone(runner._consume_retry_authorization(task, progress_item))
+
+    def test_resumed_recovery_reuses_attempt_and_initial_gate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            task = Task(
+                "task-fe-03d",
+                "task.md",
+                "repair DOM tests",
+                ("frontend/**",),
+                ("true",),
+                "commit",
+            )
+            runner = object.__new__(AutomaticRunner)
+            runner.repo = repo
+            runner.run_dir = repo / "runtime" / "runs" / "LP" / "current"
+            runner.run_dir.mkdir(parents=True)
+            runner.memory_context = {}
+            runner.progress = {
+                "schema_version": 1,
+                "active_task": task.id,
+                "tasks": [
+                    {
+                        "id": task.id,
+                        "status": "IN_PROGRESS",
+                        "attempts_total": 18,
+                    }
+                ],
+            }
+            runner.max_attempts = 6
+            runner.require_codegraph = False
+            runner.codegraph_policy = "off"
+            runner.compact_local_worker = True
+            runner._manual_commit_paths = MagicMock(return_value=())
+            runner._write_progress = MagicMock()
+            runner._write_memory = MagicMock()
+            green = CommandResult(("true",), 0, "", "")
+            runner._run_gate = MagicMock(return_value=green)
+            runner._resume_action_from_escalation_extra = MagicMock(
+                return_value=None
+            )
+            runner._consume_retry_authorization = MagicMock(return_value=None)
+            runner._resume_consumed_retry_authorization = MagicMock(
+                return_value="grant-18"
+            )
+            runner._repair_trailing_whitespace = MagicMock()
+            runner._record_gate_diagnostics = MagicMock(
+                return_value=GateDiagnostics(
+                    classification="green",
+                    summary="gate is green",
+                    fingerprint="green",
+                    source_paths=(),
+                    related_paths=(),
+                    log_path="log",
+                    summary_path="summary",
+                    manifest_path="manifest",
+                    bundle_path="bundle",
+                )
+            )
+            runner._checkpoint_green = MagicMock(return_value="head")
+            runner._notify = MagicMock()
+            runner._write_compact_local_understanding = MagicMock()
+            runner._request_ring_review = MagicMock()
+            runner._write_escalation_extra_instructions = MagicMock()
+            runner._finalize_accepted_task = MagicMock(return_value=0)
+
+            result = runner._execute_task(task)
+
+            self.assertEqual(0, result)
+            self.assertEqual(1, runner._run_gate.call_count)
+            runner._repair_trailing_whitespace.assert_not_called()
+            self.assertEqual(
+                18,
+                task_progress(runner.progress, task.id)["attempts_total"],
+            )
+
+    def test_interrupted_consumed_recovery_can_resume_same_attempt_once(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directive = Path(directory) / "assignment.json"
+            runner = object.__new__(AutomaticRunner)
+            runner.worker_id = "LP"
+            runner.ring_directive_path = directive
+            runner._write_progress = MagicMock()
+            task = Task(
+                "task-fe-03d",
+                "task.md",
+                "repair DOM tests",
+                ("frontend/**",),
+                ("true",),
+                "commit",
+            )
+            progress_item = {
+                "status": "IN_PROGRESS",
+                "attempts_total": 18,
+                "recovery_authorization_consumed": "grant-18",
+                "recovery_grants_total": 1,
+            }
+            directive.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "target": "LP",
+                        "task_id": task.id,
+                        "action": "RETRY_AUTHORIZED",
+                        "authorization_id": "grant-18",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            resumed = runner._resume_consumed_retry_authorization(
+                task, progress_item
+            )
+
+            self.assertEqual("grant-18", resumed)
+            self.assertEqual(1, progress_item["recovery_resume_count"])
+            self.assertEqual(18, progress_item["attempts_total"])
+            self.assertIsNone(
+                runner._resume_consumed_retry_authorization(task, progress_item)
+            )
+            runner._write_progress.assert_called_once_with(task.id)
 
     def test_failed_integration_sync_does_not_accept_task(self):
         task = Task(

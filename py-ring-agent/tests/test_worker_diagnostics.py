@@ -84,6 +84,36 @@ class DiagnosticsTest(unittest.TestCase):
             self.assertEqual("frontend-compilation", diagnostics.classification)
             self.assertIn("frontend/src/app/app.component.ts", diagnostics.source_paths)
 
+    def test_extracts_angular_cli_path_relative_to_frontend_working_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            source = repo / "frontend/src/app/features/rag/rag-page.component.spec.ts"
+            source.parent.mkdir(parents=True)
+            source.write_text("describe('RAG page', () => {});\n", encoding="utf-8")
+            evidence = repo / "runtime/evidence"
+            diagnostics = build_gate_diagnostics(
+                repo,
+                evidence,
+                ("npm", "test"),
+                1,
+                "",
+                (
+                    "Error: src/app/features/rag/rag-page.component.spec.ts:371:2 "
+                    "- error TS1128: Declaration or statement expected.\n"
+                ),
+            )
+
+            self.assertEqual("frontend-compilation", diagnostics.classification)
+            self.assertEqual(
+                ("frontend/src/app/features/rag/rag-page.component.spec.ts",),
+                diagnostics.source_paths,
+            )
+            with ZipFile(repo / diagnostics.bundle_path) as archive:
+                self.assertIn(
+                    "files/frontend/src/app/features/rag/rag-page.component.spec.ts",
+                    archive.namelist(),
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

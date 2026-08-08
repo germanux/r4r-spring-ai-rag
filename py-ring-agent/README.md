@@ -127,9 +127,12 @@ runtime/control/LP/ring-qwen3-directive.json
 
 The worker controller accepts a directive only when its schema, target, active task,
 timestamp and `priority=advisory` are valid. It injects the accepted directive into
-Qwen3 pre-edit, edit and assimilation prompts and into the next Codex plan/review
-context. The exact task, deterministic gate and current Codex correction packet
-always override The-Ring.
+the worker edit prompt and into the next Ring review context. Pre-edit understanding
+is generated deterministically from the exact gate diagnostics, so a redundant
+read-only model call cannot stall the repair path. Post-edit understanding reuses the
+editing session plus controller-verified gate evidence for the same reason. The exact
+task, deterministic gate and current OpenCode correction packet always override
+The-Ring.
 
 Before Ring publishes those directives, it resolves each active `task_id` against the
 worker's configured task plan. The task's existing `allowed_paths` list is the
@@ -151,6 +154,8 @@ may refresh only the same expired assignment for the same unfinished task and sc
 or issue one non-replayable recovery authorization when every current defect is
 trailing whitespace inside a blocked task's canonical scope. It never selects a new
 task, resets attempt history, bypasses dependencies or publishes overlapping scopes.
+If the authorized attempt is interrupted by a controller restart, the same attempt
+number may resume once; this does not create or consume a second recovery grant.
 
 The defaults can be changed with:
 

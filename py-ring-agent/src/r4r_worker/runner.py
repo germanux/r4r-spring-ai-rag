@@ -1124,7 +1124,9 @@ class AutomaticRunner:
         progress_item["attempts_total"] = attempts_total
         self._write_progress(task.id)
         attempt_ceiling = self.max_attempts
+        first_attempt = attempts_total + 1
         authorization_id = self._consume_retry_authorization(task, progress_item)
+        resumed_authorization_id: str | None = None
         if authorization_id is not None:
             attempt_ceiling = attempts_total + 1
             print(
@@ -1140,7 +1142,25 @@ class AutomaticRunner:
                 initial_gate = self._run_gate(
                     "operator-repair-gate", task.gate, task_root, stream=True
                 )
-        elif self.max_attempts > 0 and attempts_total >= self.max_attempts:
+        else:
+            resumed_authorization_id = self._resume_consumed_retry_authorization(
+                task, progress_item
+            )
+        if resumed_authorization_id is not None:
+            # Resume the same durable attempt number. This is not another recovery
+            # grant and therefore must not increase attempts_total.
+            first_attempt = max(attempts_total, 1)
+            attempt_ceiling = first_attempt
+            print(
+                f"[r4r] RETRY_RESUMED task={task.id} "
+                f"authorization_id={resumed_authorization_id} "
+                f"attempt={first_attempt}"
+            )
+        elif (
+            authorization_id is None
+            and self.max_attempts > 0
+            and attempts_total >= self.max_attempts
+        ):
             self._mark_blocked(task)
             self._request_ring_review(
                 task,
@@ -1154,7 +1174,7 @@ class AutomaticRunner:
                 {"task": task.id, "attempts": attempts_total, "limit": self.max_attempts},
             )
 
-        attempt = attempts_total + 1
+        attempt = first_attempt
         transient_failures = 0
         no_progress_cycles = 0
 
@@ -1170,16 +1190,28 @@ class AutomaticRunner:
                 "Review the exact gate evidence and make one coherent, task-scoped repair."
             )
             self._write_memory()
+            # The process has already run the exact initial gate. Reuse that result
+            # for its first attempt even when durable attempt numbering is greater
+            # than one; otherwise every restart and recovery runs the same expensive
+            # gate twice before any edit can occur.
             current_gate = (
                 initial_gate
-                if attempt == 1
+                if attempt == first_attempt
                 else self._run_gate("pre-edit-gate", task.gate, attempt_dir)
             )
             changed_this_attempt = False
             diagnostics = self._record_gate_diagnostics(current_gate, attempt_dir)
-            codegraph_report = "CodeGraph reconnaissance skipped for a green gate." if current_gate.exit_code == 0 else "CodeGraph reconnaissance is disabled."
+            codegraph_report = (
+                "CodeGraph reconnaissance skipped for a green gate."
+                if current_gate.exit_code == 0
+                else "CodeGraph reconnaissance is disabled."
+            )
+            codegraph_focus_paths = tuple(
+                path for path in diagnostics.source_paths if path.endswith(".java")
+            )
             if (
                 current_gate.exit_code != 0
+                and codegraph_focus_paths
                 and self.require_codegraph
                 and self.codegraph_policy != "off"
                 and not getattr(self, "compact_local_worker", False)
@@ -1189,7 +1221,7 @@ class AutomaticRunner:
                         task,
                         current_gate,
                         attempt_dir,
-                        diagnostics.source_paths,
+                        codegraph_focus_paths,
                     )
                 except RuntimeError as exception:
                     if self.codegraph_policy == "required":
@@ -1205,6 +1237,11 @@ class AutomaticRunner:
                     codegraph_report = self._write_advisory_codegraph_failure(
                         attempt_dir, str(exception)
                     )
+            elif current_gate.exit_code != 0 and not codegraph_focus_paths:
+                codegraph_report = self._write_codegraph_skipped(
+                    attempt_dir,
+                    "No Java source path was implicated by the current gate evidence.",
+                )
 
             if current_gate.exit_code != 0:
                 self._run_pre_edit_understanding(
@@ -1369,7 +1406,13 @@ class AutomaticRunner:
                 ):
                     next_action = self._no_progress_action(next_action)
 
-            gate = self._run_gate("task-gate", task.gate, attempt_dir, stream=True)
+            # A green current gate with no edit is already authoritative. Avoid a
+            # second identical gate invocation during restart/recovery finalization.
+            gate = (
+                current_gate
+                if current_gate.exit_code == 0 and edit_result is None
+                else self._run_gate("task-gate", task.gate, attempt_dir, stream=True)
+            )
             self.memory_context["gate_name"] = "task-gate"
             self.memory_context["gate_exit"] = gate.exit_code
             if gate.exit_code == 0:
@@ -1405,68 +1448,15 @@ class AutomaticRunner:
                 )
                 self._write_memory()
 
-            # The compact laptop worker avoids a second model call. OpenCode escalation reviews
-            # the exact diff and gate evidence directly. The PC worker keeps the
-            # assimilation pass as additional evidence.
-            if getattr(self, "compact_local_worker", False):
-                self._write_compact_local_understanding(
-                    attempt_dir,
-                    edit_result.stdout if edit_result is not None else "",
-                    task,
-                    gate,
-                )
-            else:
-                assimilation_before_head = git_head(self.repo)
-                assimilation_before_fingerprint = self._worktree_fingerprint()
-                assimilation = self._run_logged(
-                    "opencode-assimilation",
-                    (
-                        self.opencode_bin,
-                        "run",
-                        "--dir",
-                        str(self.repo),
-                        "--agent",
-                        self.opencode_agent,
-                        "--format",
-                        "json",
-                        "--auto",
-                        self._opencode_assimilation_prompt(
-                            task,
-                            gate,
-                            codegraph_report,
-                        ),
-                    ),
-                    attempt_dir,
-                    stream=True,
-                )
-                if assimilation.exit_code != 0:
-                    self._write_failed_local_understanding(attempt_dir, assimilation)
-                else:
-                    try:
-                        self._accept_safe_external_head_change(
-                            assimilation_before_head,
-                            "OpenCode assimilation",
-                        )
-                    except RuntimeError as exception:
-                        return self._finish(
-                            "OPENCODE_ASSIMILATION_GIT_WRITE_VIOLATION",
-                            69,
-                            {
-                                "task": task.id,
-                                "attempt": attempt,
-                                "error": str(exception),
-                            },
-                        )
-                    if (
-                        self._worktree_fingerprint()
-                        != assimilation_before_fingerprint
-                    ):
-                        return self._finish(
-                            "OPENCODE_ASSIMILATION_FILE_WRITE_VIOLATION",
-                            65,
-                            {"task": task.id, "attempt": attempt},
-                        )
-                    self._write_local_understanding(attempt_dir, assimilation.stdout)
+            # Reuse the editing session's own explanation plus controller-verified
+            # gate evidence. A second read-only model call adds cost and can stall an
+            # otherwise completed attempt without improving the repair authority.
+            self._write_compact_local_understanding(
+                attempt_dir,
+                edit_result.stdout if edit_result is not None else "",
+                task,
+                gate,
+            )
 
             self.memory_context["escalation_decision"] = None
             if gate.exit_code != 0:
@@ -1619,106 +1609,39 @@ class AutomaticRunner:
         print(f"[r4r] CodeGraph advisory unavailable: {error}", file=sys.stderr)
         return report
 
-    def _pre_edit_understanding_prompt(
-        self,
-        task: Task,
-        gate: CommandResult,
-        diagnostics: GateDiagnostics,
-        codegraph_report: str,
-    ) -> str:
-        source_list = "\n".join(
-            f"- {path}" for path in diagnostics.source_paths
-        ) or "- none"
-        ring_directive = self._current_ring_directive(task)
-        return f"""This is a read-only pre-edit understanding pass for {task.id}.
-Do not edit files, do not run Git write commands and do not run Maven.
-
-CURRENT THE-RING ADVISORY DIRECTIVE:
-{ring_directive}
-
-Read only AGENTS.md, .opencode/commands/task.md, the selected task file, the
-current diagnostic summary and the focused CodeGraph report. Do not read the full
-Maven log; OpenCode escalation will process that complete evidence.
-
-Task objective: {task.objective}
-Gate exit: {gate.exit_code}
-Diagnostic classification: {diagnostics.classification}
-Diagnostic summary: {diagnostics.summary}
-Implicated source paths:
-{source_list}
-
-Focused CodeGraph report:
-{codegraph_report}
-
-Return only concise Markdown with exactly these headings:
-# Pre-edit understanding report
-## Objective
-## Current blocker
-## Files I expect OpenCode escalation to inspect
-## Minimal repair boundary
-## What I must not change
-## Question for OpenCode escalation
-
-Do not propose code yet. Do not claim that an infrastructure outage is a Java bug.
-"""
-
     def _run_pre_edit_understanding(
         self,
         task: Task,
         gate: CommandResult,
         attempt_dir: Path,
         diagnostics: GateDiagnostics,
-        codegraph_report: str,
+        _codegraph_report: str,
     ) -> None:
-        if getattr(self, "compact_local_worker", False):
-            evidence = attempt_dir / "evidence"
-            evidence.mkdir(parents=True, exist_ok=True)
-            (evidence / "pre-edit-understanding.md").write_text(
-                "# Pre-edit understanding report\n\n"
-                "Skipped for the compact laptop worker. OpenCode escalation planning and the "
-                "deterministic gate remain authoritative.\n",
-                encoding="utf-8",
-            )
-            return
-        before_head = git_head(self.repo)
-        before_fingerprint = self._worktree_fingerprint()
-        result = self._run_logged(
-            "opencode-pre-edit-understanding",
-            (
-                self.opencode_bin,
-                "run",
-                "--dir",
-                str(self.repo),
-                "--agent",
-                self.opencode_agent,
-                "--format",
-                "json",
-                "--auto",
-                self._pre_edit_understanding_prompt(
-                    task, gate, diagnostics, codegraph_report
-                ),
-            ),
-            attempt_dir,
-            stream=True,
-        )
         evidence = attempt_dir / "evidence"
         evidence.mkdir(parents=True, exist_ok=True)
-        if result.exit_code != 0:
-            report = (
-                "# Pre-edit understanding report\n\n"
-                "The local worker failed to produce a read-only summary. OpenCode escalation must "
-                "use the deterministic diagnostic bundle directly.\n"
-            )
-        else:
-            self._accept_safe_external_head_change(
-                before_head, "pre-edit understanding"
-            )
-            if self._worktree_fingerprint() != before_fingerprint:
-                raise RuntimeError("Pre-edit understanding modified repository files")
-            report = extract_opencode_text(result.stdout).strip() or (
-                "# Pre-edit understanding report\n\n"
-                "No model-authored summary was produced.\n"
-            )
+        implicated = (
+            "\n".join(f"- `{path}`" for path in diagnostics.source_paths)
+            or "- none extracted; use the diagnostic bundle and gate tails"
+        )
+        allowed = "\n".join(f"- `{path}`" for path in task.allowed_paths)
+        report = (
+            "# Pre-edit understanding report\n\n"
+            "## Objective\n\n"
+            f"{task.objective}\n\n"
+            "## Current blocker\n\n"
+            f"{diagnostics.summary} Classification: `{diagnostics.classification}`; "
+            f"gate exit: `{gate.exit_code}`.\n\n"
+            "## Files I expect OpenCode escalation to inspect\n\n"
+            f"{implicated}\n\n"
+            "## Minimal repair boundary\n\n"
+            f"{allowed}\n\n"
+            "## What I must not change\n\n"
+            "Do not change controller state, task definitions, Git history, or files "
+            "outside the canonical task scope.\n\n"
+            "## Question for OpenCode escalation\n\n"
+            "Resolve the first compiler or test error in the current diagnostic evidence "
+            "and verify the exact task gate.\n"
+        )
         (evidence / "pre-edit-understanding.md").write_text(
             report.rstrip() + "\n", encoding="utf-8"
         )
@@ -1830,6 +1753,20 @@ Do not propose code yet. Do not claim that an infrastructure outage is a Java bu
                 f"Ignored The-Ring directive for task {directive_task or 'unknown'}; "
                 f"active task is {task.id}."
             )
+        if str(value.get("action", "")).upper() == "RETRY_AUTHORIZED":
+            authorization_id = str(value.get("authorization_id", "")).strip()
+            progress = getattr(self, "progress", None)
+            if authorization_id and isinstance(progress, dict):
+                progress_item = task_progress(progress, task.id)
+                if (
+                    progress_item.get("recovery_authorization_consumed")
+                    == authorization_id
+                ):
+                    return (
+                        "The Ring recovery authorization was already consumed. Ignore "
+                        "its repair action and follow the newest deterministic gate "
+                        "diagnostics."
+                    )
         if str(value.get("priority", "")).lower() != "advisory":
             return "Ignored The-Ring directive because priority is not advisory."
         generated_at = self._ring_timestamp(value.get("generated_at"))
@@ -2595,6 +2532,44 @@ next instruction packet.
         progress_item["recovery_repair_policy_version"] = policy_version
         self._write_progress(task.id)
         return authorization_id
+
+    def _resume_consumed_retry_authorization(
+        self,
+        task: Task,
+        progress_item: dict[str, Any],
+    ) -> str | None:
+        """Resume one interrupted recovery attempt without granting another one."""
+        if progress_item.get("status") != "IN_PROGRESS":
+            return None
+        if int(progress_item.get("recovery_resume_count") or 0) >= 1:
+            return None
+        consumed_id = str(
+            progress_item.get("recovery_authorization_consumed") or ""
+        ).strip()
+        if not consumed_id:
+            return None
+        path = getattr(self, "ring_directive_path", None)
+        if path is None or not Path(path).is_file():
+            return None
+        try:
+            value = json.loads(Path(path).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        if value.get("schema_version") != 1:
+            return None
+        if str(value.get("target") or "").upper() != self.worker_id:
+            return None
+        if str(value.get("task_id") or "") != task.id:
+            return None
+        if str(value.get("action") or "").upper() != "RETRY_AUTHORIZED":
+            return None
+        if str(value.get("authorization_id") or "").strip() != consumed_id:
+            return None
+
+        progress_item["recovery_resume_count"] = 1
+        progress_item["recovery_resumed_at"] = datetime.now(timezone.utc).isoformat()
+        self._write_progress(task.id)
+        return consumed_id
 
     def _repair_trailing_whitespace(self, task: Task) -> list[str]:
         """Apply the narrow deterministic repair allowed by recovery policy."""

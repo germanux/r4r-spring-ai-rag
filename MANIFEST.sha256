@@ -1,9 +1,11 @@
 3e55fc7fd8001c999cc88ae9ff857d7ff63ca670f56111a9cc908c0c4184c057  ./LEEME_REPARACION.txt
 5f8087b2b316a8a3b1ed9e7c3837e81dcbf9f7128856c0a6f1c802e9d4154715  ./README.md
-a21c3fd1b07fea63a7c26e479e0582ba72aec56fcc6de26e7b835696f51f7b70  ./py-ring-agent/README.md
+c243d8a80aed59824103e9273487ee3ebfc46fc806f4b6d0bbb555c960596303  ./py-ring-agent/README.md
 e4aecab98456c9949a805ee06a8a41f56ca15966f043f148125fb75f5c6c26ea  ./py-ring-agent/src/r4r_ring_agent/ring_loop.py
-aa29c9fccd31283e58417216a2b17574f2fb298544d296722256e2dcfaebbfa5  ./py-ring-agent/src/r4r_worker/runner.py
+3d7bbdfe0cb932781fbb59178e1b2055e316d87523043ef14b41fe1d22ee69e0  ./py-ring-agent/src/r4r_worker/diagnostics.py
+ea378d13ae41d4b798b95ae9bd7fb5ec544ec325c6c6d6ed76eb37de84aaeff9  ./py-ring-agent/src/r4r_worker/runner.py
 53f2fd50a277d048687f2fb05a48cecf9babe33dac1ee92467353eb6371ed653  ./py-ring-agent/tests/test_complete_evidence_export.py
 ad424bfe4ec1923604ab29c7555eb05a9248f3e2bed870cb5dc30ae27ef5a77c  ./py-ring-agent/tests/test_ring_loop.py
-d4155e5ad35e3dc269469e49f6f3103fadd78c93d47392a595f69d533118df31  ./py-ring-agent/tests/test_worker_runner.py
+3e5966d13a768da98b08e635da2a99342069d26c419bf3defa55a3f31efa9880  ./py-ring-agent/tests/test_worker_diagnostics.py
+4e8560769cc0c25762f01bc0a59111831f74deb4fa18c0306778eca134d5a361  ./py-ring-agent/tests/test_worker_runner.py
 78f9d012d9f1e903e5c61989f8169626a006cf24ca7960da6fd4d4bce7c3fb23  ./scripts/export-r4r-complete-evidence.sh
