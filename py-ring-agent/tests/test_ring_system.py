@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+import json
+import os
 from pathlib import Path
 import importlib.util
 import signal
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -11,9 +15,27 @@ import unittest
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "run-ring-system.py"
+ROOT = Path(__file__).resolve().parents[2]
+GUARDIAN = ROOT / "scripts" / "ensure-r4r-workers.sh"
 
 
 class RingSystemTests(unittest.TestCase):
+    @staticmethod
+    def _init_worker_repo(path: Path, branch: str) -> None:
+        path.mkdir()
+        subprocess.run(
+            ["git", "init", "-q", str(path)],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["git", "-C", str(path), "symbolic-ref", "HEAD", f"refs/heads/{branch}"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
     def test_startup_preserves_previous_worker_assignments(self) -> None:
         spec = importlib.util.spec_from_file_location("run_ring_system", SCRIPT)
         self.assertIsNotNone(spec)
@@ -40,6 +62,144 @@ class RingSystemTests(unittest.TestCase):
         spec.loader.exec_module(module)
 
         self.assertEqual(module.DEFAULT_INTERVAL_SECONDS, 15)
+
+    def test_guardian_dispatches_one_interrupted_recovery_resume(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            ring = base / "ring"
+            pc = base / "pc"
+            lp = base / "lp"
+            ring.mkdir()
+            self._init_worker_repo(pc, "agent/pc-qwen3-worker")
+            self._init_worker_repo(lp, "agent/laptop-qwen3-worker")
+
+            shutil.copytree(
+                ROOT / "py-ring-agent" / "src",
+                ring / "py-ring-agent" / "src",
+            )
+            shutil.copy2(
+                ROOT / "py-ring-agent" / "run-worker-streamed.py",
+                ring / "py-ring-agent" / "run-worker-streamed.py",
+            )
+
+            task_id = "task-fe-03d-dom-state-tests"
+            task_plan = ring / ".opencode" / "task-plan.json"
+            task_plan.parent.mkdir()
+            task_plan.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "tasks": [
+                            {
+                                "id": task_id,
+                                "command": "task.md",
+                                "objective": "repair DOM tests",
+                                "allowed_paths": ["frontend/**"],
+                                "gate": ["true"],
+                                "commit_message": "test: repair DOM tests",
+                            }
+                        ],
+                        "final_gate": ["true"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ledger = ring / "runtime" / "control" / "RING" / "global-progress.json"
+            ledger.parent.mkdir(parents=True)
+            ledger.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "accepted": {},
+                        "final_gate": {
+                            "status": "PENDING",
+                            "checked_at": None,
+                            "exit_code": None,
+                        },
+                        "updated_at": None,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            authorization_id = "grant-18"
+            progress_path = lp / ".opencode" / "progress.lp.json"
+            progress_path.parent.mkdir()
+            progress = {
+                "schema_version": 1,
+                "active_task": task_id,
+                "tasks": [
+                    {
+                        "id": task_id,
+                        "status": "IN_PROGRESS",
+                        "recovery_authorization_consumed": authorization_id,
+                        "recovery_grants_total": 1,
+                        "recovery_repair_policy_version": 2,
+                    }
+                ],
+            }
+            progress_path.write_text(json.dumps(progress), encoding="utf-8")
+
+            now = datetime.now(timezone.utc)
+            assignment = ring / "runtime" / "control" / "LP" / "assignment.json"
+            assignment.parent.mkdir(parents=True)
+            assignment.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "assignment_id": "run-1:LP:task-fe-03d:recovery",
+                        "target": "LP",
+                        "task_id": task_id,
+                        "priority": "advisory",
+                        "action": "RETRY_AUTHORIZED",
+                        "authorization_id": authorization_id,
+                        "recovery_policy_version": 2,
+                        "write_scope": ["frontend/**"],
+                        "generated_at": now.isoformat(),
+                        "expires_at": (now + timedelta(minutes=10)).isoformat(),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            command = [
+                str(GUARDIAN),
+                "--once",
+                "--check-only",
+                "--worker",
+                "LP",
+                "--ring",
+                str(ring),
+                "--pc",
+                str(pc),
+                "--lp",
+                str(lp),
+            ]
+            environment = {**os.environ, "R4R_WORKER_HEARTBEAT_MAX_AGE": "1"}
+            resumable = subprocess.run(
+                command,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(1, resumable.returncode, resumable.stdout)
+            self.assertIn("LP: inactive", resumable.stdout)
+            self.assertNotIn("deliberately quiescent", resumable.stdout)
+
+            progress["tasks"][0]["recovery_resume_count"] = 1
+            progress_path.write_text(json.dumps(progress), encoding="utf-8")
+            exhausted = subprocess.run(
+                command,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(0, exhausted.returncode, exhausted.stdout)
+            self.assertIn("deliberately quiescent", exhausted.stdout)
 
     def test_once_invokes_guardian_and_cleans_pid_file(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

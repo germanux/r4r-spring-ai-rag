@@ -320,17 +320,30 @@ if action == "RETRY_AUTHORIZED":
     policy_version = int(directive.get("recovery_policy_version") or 1)
     grants_total = int(item.get("recovery_grants_total") or 0)
     consumed_version = int(item.get("recovery_repair_policy_version") or 0)
+    consumed_id = str(item.get("recovery_authorization_consumed") or "")
+    resume_count = int(item.get("recovery_resume_count") or 0)
     legacy_v1_upgrade = (
         grants_total == 1
-        and bool(item.get("recovery_authorization_consumed"))
+        and bool(consumed_id)
         and policy_version == 2
         and consumed_version < policy_version
     )
-    valid = (
+    fresh_authorization = (
         bool(authorization_id)
-        and item.get("recovery_authorization_consumed") != authorization_id
+        and consumed_id != authorization_id
         and (grants_total < 1 or legacy_v1_upgrade)
     )
+    # The worker persists grant consumption before editing. If the wrapper is then
+    # interrupted, AutomaticRunner permits exactly one resume of that same durable
+    # attempt. The guardian must apply the identical boundary or it will reject the
+    # only assignment capable of reaching the controller's recovery path.
+    interrupted_resume = (
+        bool(authorization_id)
+        and consumed_id == authorization_id
+        and item.get("status") == "IN_PROGRESS"
+        and resume_count < 1
+    )
+    valid = fresh_authorization or interrupted_resume
 raise SystemExit(0 if valid else 1)
 PY
 }

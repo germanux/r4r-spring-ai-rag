@@ -1448,11 +1448,27 @@ def _dispatch_recovery_assignments(
             if raw_directive is None:
                 worker_result["reason"] = "no previous Ring assignment to refresh"
                 continue
+            raw_action = str(raw_directive.get("action") or "").upper()
+            raw_authorization_id = str(
+                raw_directive.get("authorization_id") or ""
+            ).strip()
+            consumed_authorization_id = str(
+                item.get("recovery_authorization_consumed") or ""
+            ).strip()
+            interrupted_recovery = (
+                item.get("status") == "IN_PROGRESS"
+                and raw_action == "RETRY_AUTHORIZED"
+                and bool(raw_authorization_id)
+                and raw_authorization_id == consumed_authorization_id
+                and int(item.get("recovery_resume_count") or 0) < 1
+            )
             if (
                 str(raw_directive.get("target") or "").upper() != worker
                 or str(raw_directive.get("task_id") or "") != task_id
-                or str(raw_directive.get("action") or "").upper()
-                not in {"START", "CONTINUE"}
+                or (
+                    raw_action not in {"START", "CONTINUE"}
+                    and not interrupted_recovery
+                )
                 or not isinstance(raw_directive.get("write_scope"), list)
                 or len(raw_directive["write_scope"]) != len(write_scope)
                 or set(raw_directive["write_scope"]) != set(write_scope)
@@ -1461,6 +1477,11 @@ def _dispatch_recovery_assignments(
                     "previous assignment does not exactly match active task and scope"
                 )
                 continue
+            action = (
+                "RETRY_AUTHORIZED"
+                if interrupted_recovery
+                else ("START" if item.get("status") == "PENDING" else "CONTINUE")
+            )
             candidate = {
                 "worker": worker,
                 "task_id": task_id,
@@ -1468,21 +1489,34 @@ def _dispatch_recovery_assignments(
                 "evidence_path": str(
                     run_dir / f"{worker.lower()}-runtime" / "progress.json"
                 ),
-                "action": (
-                    "START" if item.get("status") == "PENDING" else "CONTINUE"
+                "action": action,
+                "authorization_id": (
+                    raw_authorization_id if interrupted_recovery else None
                 ),
                 "reason": (
-                    "The previous Ring assignment expired while the same task "
+                    "The previous Ring recovery assignment expired after its "
+                    "authorization was consumed, while the same interrupted attempt "
+                    "remains eligible for its single resume."
+                    if interrupted_recovery
+                    else "The previous Ring assignment expired while the same task "
                     "remained unfinished with an unchanged canonical scope."
                 ),
                 "next_action": (
-                    "Resume the same assigned task from current evidence and run "
+                    "Resume the same interrupted recovery attempt and run its exact gate."
+                    if interrupted_recovery
+                    else "Resume the same assigned task from current evidence and run "
                     "its exact gate."
                 ),
                 "avoid_repeating": (
-                    "Do not select a different task or expand the canonical scope."
+                    "Do not issue a new recovery authorization or increment the attempt."
+                    if interrupted_recovery
+                    else "Do not select a different task or expand the canonical scope."
                 ),
-                "recovery_policy_version": None,
+                "recovery_policy_version": (
+                    int(item.get("recovery_repair_policy_version") or 1)
+                    if interrupted_recovery
+                    else None
+                ),
             }
         else:
             worker_result["reason"] = f"task status is {item.get('status')!r}"
@@ -1518,11 +1552,11 @@ def _dispatch_recovery_assignments(
             result["workers"][worker]["reason"] = "worker config unavailable"
             continue
         generated_at = datetime.now(timezone.utc)
-        authorization_id = (
-            f"{run_id}:{worker}:{candidate['task_id']}:deterministic-recovery"
-            if candidate["action"] == "RETRY_AUTHORIZED"
-            else None
-        )
+        authorization_id = candidate.get("authorization_id")
+        if candidate["action"] == "RETRY_AUTHORIZED" and not authorization_id:
+            authorization_id = (
+                f"{run_id}:{worker}:{candidate['task_id']}:deterministic-recovery"
+            )
         directive = {
             "schema_version": 1,
             "assignment_id": (

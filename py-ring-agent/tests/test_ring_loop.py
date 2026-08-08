@@ -355,6 +355,60 @@ class RingLoopTest(unittest.TestCase):
             self.assertEqual("task-pc", refreshed["task_id"])
             self.assertEqual(["src/**"], refreshed["write_scope"])
 
+            authorization_id = "consumed-recovery-18"
+            progress.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "active_task": "task-pc",
+                        "tasks": [
+                            {
+                                "id": "task-pc",
+                                "status": "IN_PROGRESS",
+                                "attempts_total": 18,
+                                "recovery_authorization_consumed": authorization_id,
+                                "recovery_grants_total": 1,
+                                "recovery_repair_policy_version": 2,
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            assignment.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "assignment_id": "expired-recovery",
+                        "target": "PC",
+                        "task_id": "task-pc",
+                        "priority": "advisory",
+                        "action": "RETRY_AUTHORIZED",
+                        "authorization_id": authorization_id,
+                        "recovery_policy_version": 2,
+                        "write_scope": ["src/**"],
+                        "generated_at": old.isoformat(),
+                        "expires_at": (old + timedelta(hours=1)).isoformat(),
+                    }
+                ),
+                encoding="utf-8",
+            )
+            resumed_run = ring / "runtime" / "ring-agent" / "ring" / "run-3"
+            resumed_run.mkdir(parents=True)
+
+            resumed = ring_loop._dispatch_recovery_assignments(
+                WorktreePaths(ring, pc, lp), resumed_run, "run-3"
+            )
+
+            self.assertEqual(["PC"], resumed["published"])
+            refreshed_recovery = json.loads(assignment.read_text(encoding="utf-8"))
+            self.assertEqual("RETRY_AUTHORIZED", refreshed_recovery["action"])
+            self.assertEqual(
+                authorization_id,
+                refreshed_recovery["authorization_id"],
+            )
+            self.assertEqual(2, refreshed_recovery["recovery_policy_version"])
+
     def test_command_uses_frontier_override_and_ring_worktree(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
