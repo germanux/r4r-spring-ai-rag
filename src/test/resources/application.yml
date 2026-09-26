@@ -1,15 +1,32 @@
 spring:
+  config:
+    # Carga el .env del proyecto también al ejecutar tests.
+    import: optional:file:./.env[.properties]
+
   autoconfigure:
     exclude:
       - org.springframework.boot.actuate.autoconfigure.metrics.JdbcMetricsAutoConfiguration
+
   datasource:
-    url: jdbc:postgresql://localhost:55432/r4r_rag
-    username: r4r
-    password: r4r_local
+    # Todos los tests que necesiten PostgreSQL usan la BBDD de test, nunca la real.
+    url: ${RAG_TEST_DB_URL}
+    username: ${RAG_TEST_DB_USER}
+    password: ${RAG_TEST_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
-    initialize: false
+
   flyway:
     enabled: true
+
+  ai:
+    vectorstore:
+      pgvector:
+        initialize-schema: false
+        dimensions: 768
+        distance-type: COSINE_DISTANCE
+        index-type: HNSW
+        schema-name: public
+        table-name: vector_store
+        schema-validation: true
 
 r4r:
   catalog-on-startup: false
