@@ -1,0 +1,38 @@
+services:
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: r4r-postgres
+    env_file:
+      - ./r4r.env
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+      - ./backup:/backup
+    restart: unless-stopped
+    mem_limit: 1536m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U r4r -d r4r_rag"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - r4r-network
+
+  api:
+    image: r4r-api:0.3.0
+    container_name: r4r-api
+    env_file:
+      - ./r4r.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "18080:8080"
+    restart: unless-stopped
+    mem_limit: 1024m
+    networks:
+      - r4r-network
+
+networks:
+  r4r-network:
+    driver: bridge
