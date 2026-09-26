@@ -24,11 +24,16 @@ class CitedRagServiceTest {
     private ChatModel chatModel;
     private CitedRagService service;
 
+    private static final int TEST_TOP_K = 3;
+    private static final double TEST_MIN_SCORE = 0.42;
+
     @BeforeEach
     void setUp() {
         knowledgeStore = mock(PgVectorKnowledgeStore.class);
         chatModel = mock(ChatModel.class);
-        service = new CitedRagService(knowledgeStore, chatModel);
+        service = new CitedRagService(knowledgeStore, chatModel,
+                TEST_TOP_K,
+                TEST_MIN_SCORE);
     }
 
     @Test
@@ -47,7 +52,7 @@ class CitedRagServiceTest {
 
     @Test
     void returnsAbstentionWhenNoChunksRetrieved() {
-        when(knowledgeStore.search("test question", 5, 0.5))
+        when(knowledgeStore.search("test question", TEST_TOP_K,         TEST_MIN_SCORE))
                 .thenReturn(List.of());
 
         RagResult result = service.answer("test question");
@@ -56,7 +61,7 @@ class CitedRagServiceTest {
         assertThat(result.answer()).isEmpty();
         assertThat(result.citations()).isEmpty();
 
-        verify(knowledgeStore).search("test question", 5, 0.5);
+        verify(knowledgeStore).search("test question", TEST_TOP_K,  TEST_MIN_SCORE);
         verify(chatModel, never()).call(any(Prompt.class));
     }
 
@@ -73,7 +78,7 @@ class CitedRagServiceTest {
                 1,
                 "Second content");
 
-        when(knowledgeStore.search("test question", 5, 0.5))
+        when(knowledgeStore.search("test question", TEST_TOP_K,  TEST_MIN_SCORE))
                 .thenReturn(List.of(chunk1, chunk2));
 
         ChatResponse response = chatResponse("Combined answer");
@@ -84,7 +89,7 @@ class CitedRagServiceTest {
         ArgumentCaptor<Prompt> promptCaptor =
                 ArgumentCaptor.forClass(Prompt.class);
 
-        verify(knowledgeStore).search("test question", 5, 0.5);
+        verify(knowledgeStore).search("test question", TEST_TOP_K,  TEST_MIN_SCORE);
         verify(chatModel).call(promptCaptor.capture());
 
         assertThat(promptCaptor.getValue().getContents())
@@ -122,7 +127,7 @@ class CitedRagServiceTest {
                 1,
                 "Second content");
 
-        when(knowledgeStore.search("test question", 5, 0.5))
+        when(knowledgeStore.search("test question", TEST_TOP_K,  TEST_MIN_SCORE))
                 .thenReturn(List.of(chunk1, chunk2));
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(chatResponse("Answer"));
@@ -152,7 +157,7 @@ class CitedRagServiceTest {
                 0,
                 "Content");
 
-        when(knowledgeStore.search("test question", 5, 0.5))
+        when(knowledgeStore.search("test question", TEST_TOP_K,  TEST_MIN_SCORE))
                 .thenReturn(List.of(chunk));
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(chatResponse("Generated answer text"));
@@ -171,7 +176,7 @@ class CitedRagServiceTest {
                 2,
                 "Roof details");
 
-        when(knowledgeStore.search("test question", 5, 0.5))
+        when(knowledgeStore.search("test question", TEST_TOP_K,  TEST_MIN_SCORE))
                 .thenReturn(List.of(chunk));
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(chatResponse("Answer"));
@@ -195,7 +200,7 @@ class CitedRagServiceTest {
                 0,
                 "Content");
 
-        when(knowledgeStore.search("test question", 5, 0.5))
+        when(knowledgeStore.search("test question", TEST_TOP_K,  TEST_MIN_SCORE))
                 .thenReturn(List.of(chunk));
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(chatResponse("Answer"));
@@ -215,7 +220,7 @@ class CitedRagServiceTest {
                 0,
                 "Content");
 
-        when(knowledgeStore.search("test question", 5, 0.5))
+        when(knowledgeStore.search("test question", TEST_TOP_K,  TEST_MIN_SCORE))
                 .thenReturn(List.of(chunk));
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(chatResponse("Answer"));
@@ -244,7 +249,7 @@ class CitedRagServiceTest {
                 2,
                 "Content3");
 
-        when(knowledgeStore.search("test question", 5, 0.5))
+        when(knowledgeStore.search("test question", TEST_TOP_K,  TEST_MIN_SCORE))
                 .thenReturn(List.of(chunk1, chunk2, chunk3));
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(chatResponse("Answer"));

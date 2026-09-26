@@ -15,11 +15,11 @@ import java.util.Objects;
  */
 public class CitedRagService {
 
-    private static final int RETRIEVAL_TOP_K = 5;
-    private static final double MIN_SCORE = 0.5;
 
     private final PgVectorKnowledgeStore knowledgeStore;
     private final ChatModel chatModel;
+    private final int retrievalTopK;
+    private final double minScore;
 
     /**
      * Creates a new cited RAG service.
@@ -29,9 +29,13 @@ public class CitedRagService {
      */
     public CitedRagService(
             PgVectorKnowledgeStore knowledgeStore,
-            ChatModel chatModel) {
+            ChatModel chatModel,
+            int retrievalTopK,
+            double minScore) {
         this.knowledgeStore = Objects.requireNonNull(knowledgeStore, "knowledgeStore");
         this.chatModel = Objects.requireNonNull(chatModel, "chatModel");
+        this.retrievalTopK = retrievalTopK;
+        this.minScore = minScore;
     }
 
     /**
@@ -65,7 +69,10 @@ public class CitedRagService {
     }
 
     private List<MarkdownChunk> retrieveEvidence(String question) {
-        return knowledgeStore.search(question, RETRIEVAL_TOP_K, MIN_SCORE);
+        return knowledgeStore.search(
+                question,
+                retrievalTopK,
+                minScore);
     }
 
     private Prompt buildPrompt(String question, List<MarkdownChunk> chunks) {

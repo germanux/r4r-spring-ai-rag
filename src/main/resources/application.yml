@@ -32,6 +32,10 @@ spring:
         schema-validation: true
 
 r4r:
+  rag:
+    retrieval:
+      top-k: 5
+      min-score: 0.64
   catalog-on-startup: false
   knowledge:
     root: ${RAG_KNOWLEDGE_PATH}
