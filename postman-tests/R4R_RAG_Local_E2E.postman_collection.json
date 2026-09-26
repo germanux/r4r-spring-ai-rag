@@ -1,0 +1,343 @@
+{
+  "info": {
+    "_postman_id": "8cf3025a-9f7f-41af-a444-bd0a9e478f1b",
+    "name": "R4R RAG API - Local E2E",
+    "description": "Pruebas E2E para POST /api/rag/answers.\nRequiere Spring Boot + PostgreSQL/pgvector + Ollama ya arrancados.\nPostman no necesita passwords de PostgreSQL/Ollama. Solo cambia la variable de colección baseUrl si no usas localhost:8080.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - RAG positivo - orientación inicial",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/rag/answers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "rag",
+            "answers"
+          ]
+        },
+        "description": "Pregunta casi literal del corpus FAQ; debe recuperar evidencia y devolver citas.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question\": \"¿Qué información hace falta para una primera orientación?\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const j = pm.response.json();",
+              "pm.test('Contrato válido', () => {",
+              "  pm.expect(j.answer).to.be.a('string');",
+              "  pm.expect(j.abstained).to.be.a('boolean');",
+              "  pm.expect(j.citations).to.be.an('array');",
+              "});",
+              "pm.test('No se abstiene', () => pm.expect(j.abstained).to.eql(false));",
+              "pm.test('Respuesta no vacía', () => pm.expect(j.answer).not.to.eql(''));",
+              "pm.test('Hay citas', () => pm.expect(j.citations.length).to.be.above(0));",
+              "pm.test('Citas coherentes', () => {",
+              "  j.citations.forEach((c,i) => {",
+              "    pm.expect(c.label).to.eql(`[S${i+1}]`);",
+              "    pm.expect(c.source).to.be.a('string').and.not.empty;",
+              "    pm.expect(c.headingPath).to.be.an('array');",
+              "    pm.expect(c.ordinal).to.be.a('number');",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - RAG positivo - solera vs solado",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/rag/answers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "rag",
+            "answers"
+          ]
+        },
+        "description": "Pregunta semántica claramente presente en el corpus de patios y pavimentos.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question\": \"¿Cuál es la diferencia entre solera y solado?\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const j = pm.response.json();",
+              "pm.test('Contrato válido', () => {",
+              "  pm.expect(j.answer).to.be.a('string');",
+              "  pm.expect(j.abstained).to.be.a('boolean');",
+              "  pm.expect(j.citations).to.be.an('array');",
+              "});",
+              "pm.test('No se abstiene', () => pm.expect(j.abstained).to.eql(false));",
+              "pm.test('Respuesta y citas presentes', () => {",
+              "  pm.expect(j.answer).not.to.eql('');",
+              "  pm.expect(j.citations.length).to.be.above(0);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Fuera de dominio - debería abstenerse",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/rag/answers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "rag",
+            "answers"
+          ]
+        },
+        "description": "Si falla, es una señal útil para revisar threshold/calidad del retrieval.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question\": \"Explica la fotosíntesis de las plantas y la función de los cloroplastos.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const j = pm.response.json();",
+              "pm.test('Contrato válido', () => {",
+              "  pm.expect(j.answer).to.be.a('string');",
+              "  pm.expect(j.abstained).to.be.a('boolean');",
+              "  pm.expect(j.citations).to.be.an('array');",
+              "});",
+              "pm.test('Se abstiene fuera del dominio', () => pm.expect(j.abstained).to.eql(true));",
+              "pm.test('Sin citas al abstenerse', () => pm.expect(j.citations).to.be.empty);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Validación - question vacía",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/rag/answers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "rag",
+            "answers"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question\": \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Validación - question null",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/rag/answers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "rag",
+            "answers"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question\": null\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Validación - body ausente",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/rag/answers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "rag",
+            "answers"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Validación - JSON malformado",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/rag/answers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "rag",
+            "answers"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{invalid json content}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
