@@ -94,18 +94,23 @@ class CitedRagServiceTest {
 
         assertThat(promptCaptor.getValue().getContents())
                 .isEqualTo("""
-                        You are a helpful assistant. Use the following evidence to answer the question.
+                You are a helpful assistant. Use the following evidence to answer the question.
 
-                        [S1]
-                        First content
+                [S1]
+                First content
 
-                        [S2]
-                        Second content
+                [S2]
+                Second content
 
-                        Question: test question
+                Question: test question
 
-                        Answer with citations in the format [S1], [S2], etc.:
-                        """);
+                Answer using only the supplied evidence.
+                If the evidence is insufficient or unrelated to the question,
+                answer exactly:
+                __R4R_ABSTAIN__
+
+                Otherwise answer with citations in the format [S1], [S2], etc.:
+                """);
 
         assertThat(result.answer()).isEqualTo("Combined answer");
         assertThat(result.abstention()).isFalse();
@@ -264,5 +269,29 @@ class CitedRagServiceTest {
     private static ChatResponse chatResponse(String text) {
         return new ChatResponse(List.of(
                 new Generation(new AssistantMessage(text))));
+    }
+
+    @Test
+    void returnsAbstentionWhenModelSaysEvidenceIsInsufficient() {
+        MarkdownChunk chunk = new MarkdownChunk(
+                "doc.md",
+                List.of("Section"),
+                0,
+                "Irrelevant content");
+
+        when(knowledgeStore.search(
+                "test question",
+                TEST_TOP_K,
+                TEST_MIN_SCORE))
+                .thenReturn(List.of(chunk));
+
+        when(chatModel.call(any(Prompt.class)))
+                .thenReturn(chatResponse("__R4R_ABSTAIN__"));
+
+        RagResult result = service.answer("test question");
+
+        assertThat(result.abstention()).isTrue();
+        assertThat(result.answer()).isEmpty();
+        assertThat(result.citations()).isEmpty();
     }
 }

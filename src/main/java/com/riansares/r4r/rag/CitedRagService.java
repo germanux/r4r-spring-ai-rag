@@ -20,6 +20,7 @@ public class CitedRagService {
     private final ChatModel chatModel;
     private final int retrievalTopK;
     private final double minScore;
+    private static final String ABSTAIN_TOKEN = "__R4R_ABSTAIN__";
 
     /**
      * Creates a new cited RAG service.
@@ -56,7 +57,9 @@ public class CitedRagService {
         Prompt prompt = buildPrompt(question, chunks);
         ChatResponse response = chatModel.call(prompt);
         String answer = extractAnswer(response);
-
+        if (ABSTAIN_TOKEN.equals(answer.trim())) {
+            return RagResult.abstain();
+        }
         List<Citation> citations = buildCitations(chunks);
 
         return RagResult.ofAnswer(answer, citations);
@@ -88,7 +91,14 @@ public class CitedRagService {
         }
 
         promptText.append("Question: ").append(question).append("\n\n");
-        promptText.append("Answer with citations in the format [S1], [S2], etc.:\n");
+        promptText.append("""
+        Answer using only the supplied evidence.
+        If the evidence is insufficient or unrelated to the question,
+        answer exactly:
+        __R4R_ABSTAIN__
+
+        Otherwise answer with citations in the format [S1], [S2], etc.:
+        """);
 
         return new Prompt(promptText.toString());
     }
