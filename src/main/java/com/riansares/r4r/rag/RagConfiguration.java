@@ -26,20 +26,4 @@ public class RagConfiguration {
                 properties.minScore());
     }
 
-    @Bean
-    WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/api/**")
-                        .allowedOrigins(
-                                "https://athagon.tech",
-                                "http://localhost:63342",
-                                "http://127.0.0.1:63342"
-                        )
-                        .allowedMethods("GET", "POST", "OPTIONS")
-                        .allowedHeaders("Content-Type", "Accept");
-            }
-        };
-    }
 }
