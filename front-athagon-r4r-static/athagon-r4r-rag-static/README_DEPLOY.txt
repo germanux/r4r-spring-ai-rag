@@ -1,52 +1,47 @@
 R4R RAG STATIC DEMO
 ===================
 
-Deployment target
------------------
-Upload this whole `r4r-rag` directory into the web root of athagon.tech.
-The resulting URL should be:
-
+URL prevista
+------------
 https://athagon.tech/r4r-rag/
 
-Files
------
-index.html
-styles.css
-app.js
+Contenido
+---------
+r4r-rag/
+  index.html
+  styles.css
+  app.js
+  README_DEPLOY.txt
 
-API endpoint
-------------
-The default API base URL is configured at the top of app.js:
+Interfaz
+--------
+- Español.
+- Cabecera breve, centrada en IA/RAG.
+- Caja de consulta inmediatamente después.
+- Tres ejemplos que rellenan y lanzan automáticamente la consulta.
+- Respuesta, abstención y fuentes.
+- Explicación conceptual después de la demo.
+- Arquitectura y configuración técnica al final.
 
-const DEFAULT_API_BASE_URL = "https://r4r-api.athagon.tech";
+API
+---
+Por defecto la web usa:
 
-The page calls:
+https://r4r-api.athagon.tech/api/rag/answers
 
-POST https://r4r-api.athagon.tech/api/rag/answers
+El endpoint puede cambiarse desde la propia página; el valor se guarda
+solo en localStorage del navegador.
 
-You can also change the endpoint from the "Demo endpoint" section in the page.
-That override is stored only in the current browser's localStorage.
-
-Important for production
-------------------------
-If the API is hosted on a different origin/subdomain, Spring must allow CORS from:
+CORS
+----
+Si la API está en un subdominio distinto, Spring debe permitir como origen:
 
 https://athagon.tech
 
-Do not expose PostgreSQL directly to the Internet.
-Publish only the HTTPS API endpoint through your chosen reverse proxy / tunnel.
+Importante
+----------
+El meta robots está configurado como noindex,nofollow, pero esto NO es
+una medida de seguridad. La seguridad real debe aplicarse en la API /
+reverse proxy antes de abrirla públicamente.
 
-Expected API response
----------------------
-{
-  "answer": "...",
-  "abstained": false,
-  "citations": [
-    {
-      "label": "[S1]",
-      "source": "...",
-      "headingPath": ["...", "..."],
-      "ordinal": 4
-    }
-  ]
-}
+PostgreSQL no debe exponerse a Internet.

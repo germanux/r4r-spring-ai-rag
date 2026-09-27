@@ -28,16 +28,16 @@
   const citations = $("citations");
   const citationCount = $("citationCount");
 
-  const normalizeBaseUrl = (value) =>
-    (value || "").trim().replace(/\/+$/, "");
+  const normalizeBaseUrl = (value) => (value || "").trim().replace(/\/+$/, "");
 
   const storedApi = localStorage.getItem(STORAGE_KEY);
   apiBaseUrl.value = normalizeBaseUrl(storedApi || DEFAULT_API_BASE_URL);
 
   document.querySelectorAll(".sample").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       question.value = button.dataset.question || "";
       question.focus();
+      await sendQuestion();
     });
   });
 
@@ -46,7 +46,7 @@
     if (!value) return;
     localStorage.setItem(STORAGE_KEY, value);
     apiBaseUrl.value = value;
-    apiState.textContent = "endpoint saved";
+    apiState.textContent = "endpoint guardado";
   });
 
   clearButton.addEventListener("click", () => {
@@ -57,11 +57,15 @@
 
   question.addEventListener("keydown", (event) => {
     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-      sendButton.click();
+      sendQuestion();
     }
   });
 
-  sendButton.addEventListener("click", async () => {
+  sendButton.addEventListener("click", sendQuestion);
+
+  async function sendQuestion() {
+    if (sendButton.disabled) return;
+
     const text = question.value.trim();
     if (!text) {
       question.focus();
@@ -73,8 +77,8 @@
 
     setLoading(true);
     renderEmpty();
-    apiState.textContent = "requesting";
-    resultMode.textContent = "request in progress";
+    apiState.textContent = "consultando";
+    resultMode.textContent = "consulta en curso";
     httpStatus.textContent = "…";
 
     const controller = new AbortController();
@@ -100,7 +104,7 @@
       try {
         payload = await response.json();
       } catch {
-        throw new Error(`HTTP ${response.status}: response was not valid JSON.`);
+        throw new Error(`HTTP ${response.status}: la respuesta no es JSON válido.`);
       }
 
       if (!response.ok) {
@@ -109,28 +113,29 @@
 
       renderResult(payload);
       apiState.textContent = "online";
-      resultMode.textContent = "RAG response";
+      resultMode.textContent = "respuesta RAG";
     } catch (error) {
       const duration = Math.round(performance.now() - started);
       elapsed.textContent = `${duration} ms`;
       apiState.textContent = "error";
-      resultMode.textContent = "request failed";
+      resultMode.textContent = "la consulta ha fallado";
+
       renderError(
         error?.name === "AbortError"
-          ? "Request timed out after 120 seconds."
-          : `${error?.message || error}\n\nIf the API is on another hostname, check HTTPS, DNS and CORS for https://athagon.tech.`
+          ? "La consulta ha superado el tiempo máximo de 120 segundos."
+          : `${error?.message || error}\n\nSi la API está en otro dominio o subdominio, revisa HTTPS, DNS y CORS para https://athagon.tech.`
       );
     } finally {
       clearTimeout(timeout);
       setLoading(false);
     }
-  });
+  }
 
   function setLoading(loading) {
     sendButton.disabled = loading;
     sendButton.classList.toggle("is-loading", loading);
     spinner.setAttribute("aria-hidden", loading ? "false" : "true");
-    sendLabel.textContent = loading ? "Asking…" : "Ask R4R";
+    sendLabel.textContent = loading ? "Consultando…" : "Preguntar";
   }
 
   function renderEmpty() {
@@ -138,7 +143,7 @@
     resultContent.hidden = true;
     errorBox.hidden = true;
     httpStatus.textContent = "—";
-    resultMode.textContent = "waiting for a question";
+    resultMode.textContent = "esperando una pregunta";
     elapsed.textContent = "";
   }
 
@@ -158,21 +163,23 @@
     errorBox.hidden = true;
     resultContent.hidden = false;
 
-    decisionPill.textContent = abstained ? "ABSTAIN" : "ANSWER";
+    decisionPill.textContent = abstained ? "ABSTENCIÓN" : "RESPUESTA";
     decisionPill.classList.toggle("abstain", abstained);
     decisionText.textContent = abstained
-      ? "Evidence did not meet the answering criteria."
-      : "Answer generated from retrieved evidence.";
+      ? "No hay evidencia suficiente para responder con seguridad."
+      : "Respuesta generada a partir de la evidencia recuperada.";
 
-    answerText.textContent = answer || (abstained ? "No answer returned." : "Empty answer.");
+    answerText.textContent = answer || (abstained ? "El sistema se ha abstenido de responder." : "Respuesta vacía.");
 
-    citationCount.textContent = `${sourceList.length} source${sourceList.length === 1 ? "" : "s"}`;
+    citationCount.textContent = `${sourceList.length} fuente${sourceList.length === 1 ? "" : "s"}`;
     citations.replaceChildren();
 
     if (!sourceList.length) {
       const note = document.createElement("div");
       note.className = "citation";
-      note.textContent = abstained ? "No citations returned because the service abstained." : "No citations returned.";
+      note.textContent = abstained
+        ? "No se devuelven citas porque el sistema se ha abstenido."
+        : "No se han devuelto citas.";
       citations.appendChild(note);
       return;
     }
@@ -190,21 +197,20 @@
 
       const source = document.createElement("span");
       source.className = "citation-source";
-      source.textContent = citation?.source || "unknown source";
+      source.textContent = citation?.source || "fuente desconocida";
 
       top.append(label, source);
 
       const path = document.createElement("div");
       path.className = "citation-path";
       const headingPath = Array.isArray(citation?.headingPath) ? citation.headingPath : [];
-      path.textContent = headingPath.length ? headingPath.join(" › ") : "No heading path";
+      path.textContent = headingPath.length ? headingPath.join(" › ") : "Sin ruta de encabezados";
 
       const ordinal = document.createElement("div");
       ordinal.className = "citation-ordinal";
-      ordinal.textContent =
-        Number.isInteger(citation?.ordinal)
-          ? `Chunk ordinal: ${citation.ordinal}`
-          : "Chunk ordinal: —";
+      ordinal.textContent = Number.isInteger(citation?.ordinal)
+        ? `Ordinal del fragmento: ${citation.ordinal}`
+        : "Ordinal del fragmento: —";
 
       card.append(top, path, ordinal);
       citations.appendChild(card);
