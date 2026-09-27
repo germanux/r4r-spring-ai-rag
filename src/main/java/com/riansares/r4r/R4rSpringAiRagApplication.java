@@ -9,4 +9,6 @@ public class R4rSpringAiRagApplication {
     public static void main(String[] args) {
         SpringApplication.run(R4rSpringAiRagApplication.class, args);
     }
+
+
 }

@@ -1,7 +1,9 @@
 (() => {
   "use strict";
 
-  const DEFAULT_API_BASE_URL = "https://r4r-api.athagon.tech";
+  //const DEFAULT_API_BASE_URL = "https://r4r-api.athagon.tech";
+  // const DEFAULT_API_BASE_URL = "http://192.168.1.3:18080";
+  const DEFAULT_API_BASE_URL = "http://127.0.0.1:18080";
   const ENDPOINT_PATH = "/api/rag/answers";
   const STORAGE_KEY = "r4r-rag-api-base-url";
 
