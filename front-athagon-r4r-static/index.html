@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Athagon Labs · Riansares 4R cited RAG demo built with Java 21, Spring Boot, Spring AI, PostgreSQL/pgvector and Ollama.">
+  <meta name="theme-color" content="#334357">
+  <title>Athagon Labs · Riansares 4R Cited RAG</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell nav-shell">
+      <a class="brand" href="https://athagon.tech/" aria-label="Athagon Labs">
+        <span class="brand-mark">A</span>
+        <span class="brand-name">ATHAGON</span>
+        <span class="brand-labs">LABS</span>
+      </a>
+      <nav class="nav" aria-label="Page navigation">
+        <a href="#demo">Live demo</a>
+        <a href="#architecture">Architecture</a>
+        <a href="https://github.com/germanux/r4r-spring-ai-rag" target="_blank" rel="noopener">GitHub ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div class="hero-copy panel">
+          <div class="eyebrow">Applied GenAI / Retrieval-Augmented Generation</div>
+          <h1>Riansares 4R<br><span>Cited RAG Demo</span></h1>
+          <p class="hero-role">Java 21 · Spring Boot · Spring AI · PostgreSQL/pgvector · Ollama</p>
+          <p class="hero-lede">
+            A small production-shaped RAG system: a Spring API retrieves evidence from a vector store,
+            generates an answer with a local LLM, preserves source metadata and abstains when the evidence
+            is insufficient.
+          </p>
+
+          <div class="status-row">
+            <span>Top-K 5</span>
+            <span>Min score 0.64</span>
+            <span>Citations</span>
+            <span>Abstention</span>
+            <span>Docker Compose</span>
+          </div>
+
+          <div class="hero-actions">
+            <a class="btn primary" href="#demo">Try the demo</a>
+            <a class="btn" href="https://riansares4r.com/" target="_blank" rel="noopener">Riansares 4R ↗</a>
+          </div>
+        </div>
+
+        <aside class="r4r-card" aria-label="Riansares 4R project identity">
+          <div class="blueprint-grid"></div>
+          <div class="r4r-stamp">
+            <span class="stamp-kicker">RIANSARES</span>
+            <strong>4R</strong>
+            <span>RAG · RETRIEVAL · CITATIONS</span>
+          </div>
+          <div class="runtime-list">
+            <div><span>GENERATION</span><strong>Qwen3 Coder Next 80B</strong></div>
+            <div><span>EMBEDDINGS</span><strong>nomic-embed-text · 768d</strong></div>
+            <div><span>VECTOR DB</span><strong>PostgreSQL 16 + pgvector</strong></div>
+            <div><span>RUNTIME</span><strong>Synology · Docker Compose</strong></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="demo">
+      <div class="shell">
+        <div class="section-tab">LIVE RAG DEMO</div>
+
+        <div class="demo-grid">
+          <article class="query-panel panel">
+            <div class="panel-head">
+              <div>
+                <span class="mini-label">POST</span>
+                <code>/api/rag/answers</code>
+              </div>
+              <span class="api-state" id="apiState">ready</span>
+            </div>
+
+            <label for="question">Ask the Riansares 4R knowledge base</label>
+            <textarea id="question" rows="5" maxlength="700"
+              placeholder="Ej.: ¿Qué información hace falta para una primera orientación?"></textarea>
+
+            <div class="sample-row" aria-label="Example questions">
+              <button class="sample" data-question="¿Qué información hace falta para una primera orientación?">Orientación inicial</button>
+              <button class="sample" data-question="¿Cuál es la diferencia entre solera y solado?">Solera vs. solado</button>
+              <button class="sample" data-question="Explica la fotosíntesis de las plantas y la función de los cloroplastos.">Test abstención</button>
+            </div>
+
+            <div class="query-actions">
+              <button class="btn primary submit-btn" id="sendButton" type="button">
+                <span id="sendLabel">Ask R4R</span>
+                <span class="spinner" id="spinner" aria-hidden="true"></span>
+              </button>
+              <button class="btn ghost" id="clearButton" type="button">Clear</button>
+              <span class="elapsed" id="elapsed"></span>
+            </div>
+
+            <details class="endpoint-settings">
+              <summary>Demo endpoint</summary>
+              <div class="endpoint-row">
+                <input id="apiBaseUrl" type="url" spellcheck="false" aria-label="API base URL">
+                <button class="small-btn" id="saveEndpoint" type="button">Save</button>
+              </div>
+              <p>
+                Default: <code>https://r4r-api.athagon.tech</code>.
+                The browser calls <code>/api/rag/answers</code>. For a separate API subdomain,
+                the backend must allow the Athagon Labs origin.
+              </p>
+            </details>
+          </article>
+
+          <article class="response-panel panel">
+            <div class="panel-head">
+              <div>
+                <span class="mini-label response">RESULT</span>
+                <span id="resultMode">waiting for a question</span>
+              </div>
+              <span class="http-status" id="httpStatus">—</span>
+            </div>
+
+            <div id="emptyState" class="empty-state">
+              <div class="empty-icon">RAG</div>
+              <p>The answer, abstention decision and source metadata will appear here.</p>
+            </div>
+
+            <div id="resultContent" class="result-content" hidden>
+              <div class="decision-row">
+                <span class="decision-pill" id="decisionPill">ANSWER</span>
+                <span id="decisionText"></span>
+              </div>
+              <div class="answer-box">
+                <h3>Answer</h3>
+                <div id="answerText" class="answer-text"></div>
+              </div>
+              <div class="citations-block">
+                <div class="citations-head">
+                  <h3>Citations</h3>
+                  <span id="citationCount"></span>
+                </div>
+                <div id="citations" class="citations"></div>
+              </div>
+            </div>
+
+            <div id="errorBox" class="error-box" hidden></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section architecture-section" id="architecture">
+      <div class="shell">
+        <div class="section-tab">DEPLOYED ARCHITECTURE</div>
+
+        <div class="architecture panel">
+          <div class="arch-flow">
+            <div class="arch-node">
+              <span class="node-id">01</span>
+              <strong>Browser demo</strong>
+              <small>athagon.tech/r4r-rag</small>
+            </div>
+            <span class="arrow">→</span>
+            <div class="arch-node accent">
+              <span class="node-id">02</span>
+              <strong>Spring Boot API</strong>
+              <small>Java 21 · Spring AI</small>
+            </div>
+            <span class="arrow">→</span>
+            <div class="arch-node">
+              <span class="node-id">03</span>
+              <strong>pgvector</strong>
+              <small>PostgreSQL 16 · cosine search</small>
+            </div>
+            <span class="arrow return">↘</span>
+            <div class="arch-node llm">
+              <span class="node-id">04</span>
+              <strong>Ollama</strong>
+              <small>Qwen3 Coder Next 80B</small>
+            </div>
+          </div>
+
+          <div class="arch-notes">
+            <article>
+              <h3>Retrieval</h3>
+              <p>Question → embedding → pgvector similarity search → up to 5 evidence chunks above the configured minimum score.</p>
+            </article>
+            <article>
+              <h3>Grounded generation</h3>
+              <p>Retrieved chunks are labeled <code>[S1]…[S5]</code> and passed to the local model as the only permitted evidence.</p>
+            </article>
+            <article>
+              <h3>Abstention</h3>
+              <p>The service can abstain before generation when retrieval is weak, or after generation when the model marks the evidence insufficient.</p>
+            </article>
+            <article>
+              <h3>Deployment</h3>
+              <p>Spring Boot + PostgreSQL/pgvector run as Docker containers on Synology; Ollama runs on the local inference host.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="config-strip">
+          <code>RAG_GENERATION_MODEL=qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest</code>
+          <code>RAG_EMBEDDING_MODEL=nomic-embed-text</code>
+          <code>RAG_EMBEDDING_DIMENSIONS=768</code>
+          <code>r4r.rag.retrieval.min-score=0.64</code>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="shell footer-row">
+      <span>ATHAGON LABS · independent software engineering lab</span>
+      <span>Riansares 4R · cited RAG · 2026</span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
