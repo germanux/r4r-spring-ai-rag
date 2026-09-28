@@ -18,6 +18,8 @@
   const apiState = $("apiState");
   const apiBaseUrl = $("apiBaseUrl");
   const saveEndpoint = $("saveEndpoint");
+  const questionCount = $("questionCount");
+  const copyAnswerButton = $("copyAnswerButton");
 
   const emptyState = $("emptyState");
   const resultContent = $("resultContent");
@@ -35,9 +37,12 @@
   const storedApi = localStorage.getItem(STORAGE_KEY);
   apiBaseUrl.value = normalizeBaseUrl(storedApi || DEFAULT_API_BASE_URL);
 
+  updateCounter();
+
   document.querySelectorAll(".sample").forEach((button) => {
     button.addEventListener("click", async () => {
       question.value = button.dataset.question || "";
+      updateCounter();
       question.focus();
       await sendQuestion();
     });
@@ -53,9 +58,12 @@
 
   clearButton.addEventListener("click", () => {
     question.value = "";
+    updateCounter();
     renderEmpty();
     question.focus();
   });
+
+  question.addEventListener("input", updateCounter);
 
   question.addEventListener("keydown", (event) => {
     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
@@ -64,6 +72,26 @@
   });
 
   sendButton.addEventListener("click", sendQuestion);
+
+  if (copyAnswerButton) {
+    copyAnswerButton.addEventListener("click", async () => {
+      const text = answerText.textContent.trim();
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        const original = copyAnswerButton.textContent;
+        copyAnswerButton.textContent = "Copiado";
+        setTimeout(() => {
+          copyAnswerButton.textContent = original;
+        }, 1200);
+      } catch {
+        copyAnswerButton.textContent = "Error";
+        setTimeout(() => {
+          copyAnswerButton.textContent = "Copiar";
+        }, 1200);
+      }
+    });
+  }
 
   async function sendQuestion() {
     if (sendButton.disabled) return;
@@ -116,6 +144,7 @@
       renderResult(payload);
       apiState.textContent = "online";
       resultMode.textContent = "respuesta RAG";
+      resultContent.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       const duration = Math.round(performance.now() - started);
       elapsed.textContent = `${duration} ms`;
@@ -145,7 +174,7 @@
     resultContent.hidden = true;
     errorBox.hidden = true;
     httpStatus.textContent = "—";
-    resultMode.textContent = "esperando una pregunta";
+    resultMode.textContent = "esperando una consulta";
     elapsed.textContent = "";
   }
 
@@ -217,5 +246,10 @@
       card.append(top, path, ordinal);
       citations.appendChild(card);
     });
+  }
+
+  function updateCounter() {
+    if (!questionCount) return;
+    questionCount.textContent = `${question.value.length} / 700`;
   }
 })();

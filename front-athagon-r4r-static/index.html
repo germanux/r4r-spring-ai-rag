@@ -28,42 +28,62 @@
 
 <main>
   <section class="hero">
-    <div class="shell">
+    <div class="shell hero-shell">
       <div class="hero-copy panel compact-hero">
-        <div class="eyebrow">Athagon Labs · IA aplicada</div>
+        <div class="eyebrow">Athagon Labs · IA aplicada a negocio real</div>
         <h1>Riansares 4R <span>· IA con citas para reformas</span></h1>
         <p class="hero-lede">
-          Demo de una IA conectada a la base de conocimiento de <strong>Riansares 4R</strong>.
-          Sirve para responder preguntas sobre <strong>reformas, fontanería, impermeabilización,
-          mediciones, materiales y presupuestos orientativos</strong>, mostrando las fuentes usadas
-          o absteniéndose si la consulta se sale del ámbito.
+          Asistente experimental conectado a la base de conocimiento de <strong>Riansares 4R</strong>.
+          Está orientado a <strong>reformas, fontanería, impermeabilización, albañilería, materiales,
+          mediciones y presupuestos orientativos</strong>. Responde con fuentes trazables o se abstiene si
+          la consulta no encaja con la documentación disponible.
         </p>
 
         <div class="status-row" aria-label="Características principales">
           <span>RAG</span>
           <span>IA local</span>
-          <span>Citas</span>
+          <span>Citas trazables</span>
           <span>Abstención</span>
-          <span>Reformas y presupuestos</span>
+          <span>Dominio: reformas</span>
         </div>
 
-        <div class="hero-info-grid" aria-label="Resumen funcional de la demo">
-          <article>
-            <span class="hero-card-kicker">Ámbito</span>
-            <h2>Consultas de obra real</h2>
-            <p>FAQ, criterios técnicos, presupuestos, casos reales y documentación interna de Riansares 4R.</p>
-          </article>
-          <article>
-            <span class="hero-card-kicker">Qué devuelve</span>
-            <h2>Respuesta + fuentes</h2>
-            <p>El sistema recupera fragmentos, responde con evidencia y enseña citas trazables por documento y sección.</p>
-          </article>
-          <article>
-            <span class="hero-card-kicker">Límite</span>
-            <h2>No inventa fuera de tema</h2>
-            <p>Si preguntas algo ajeno a reformas o no hay base suficiente, devuelve una abstención en vez de improvisar.</p>
-          </article>
+        <div class="hero-actions">
+          <a class="btn primary" href="#demo">Probar la demo</a>
+          <a class="btn ghost" href="#arquitectura">Ver arquitectura</a>
         </div>
+      </div>
+
+      <aside class="hero-side panel">
+        <div class="side-kicker">Qué puedes preguntarle</div>
+        <ul class="hero-list">
+          <li><strong>Orientación inicial:</strong> qué información hace falta para valorar una obra.</li>
+          <li><strong>Conceptos técnicos:</strong> diferencias entre solera, solado, morteros o sistemas.</li>
+          <li><strong>Impermeabilización y reparación:</strong> humedades, cubiertas, filtraciones y acabados.</li>
+          <li><strong>Presupuestos orientativos:</strong> alcance, partidas y criterios de medición.</li>
+        </ul>
+        <div class="hero-note">
+          <strong>Importante:</strong> no es un chat genérico. La demo está pensada para preguntas relacionadas con la actividad de Riansares 4R.
+        </div>
+      </aside>
+    </div>
+
+    <div class="shell hero-cards-shell">
+      <div class="hero-info-grid" aria-label="Resumen funcional de la demo">
+        <article>
+          <span class="hero-card-kicker">Ámbito</span>
+          <h2>Consultas de obra real</h2>
+          <p>FAQ, criterios técnicos, presupuestos, casos reales y documentación de Riansares 4R.</p>
+        </article>
+        <article>
+          <span class="hero-card-kicker">Qué devuelve</span>
+          <h2>Respuesta + fuentes</h2>
+          <p>Recupera evidencia relevante, responde con apoyo documental y muestra citas por documento y sección.</p>
+        </article>
+        <article>
+          <span class="hero-card-kicker">Límite</span>
+          <h2>No inventa fuera de tema</h2>
+          <p>Si la pregunta se sale del ámbito o no hay base suficiente, responde con abstención.</p>
+        </article>
       </div>
     </div>
   </section>
@@ -81,18 +101,28 @@
             <span class="api-state" id="apiState">listo</span>
           </div>
 
-          <label for="question">Escribe una pregunta sobre reformas, obra o presupuesto</label>
+          <div class="helper-strip">
+            <div><strong>Ámbito:</strong> reformas, obra, materiales, patologías, mediciones y presupuestos.</div>
+            <div><strong>Atajo:</strong> usa <kbd>Ctrl</kbd> + <kbd>Enter</kbd> para enviar.</div>
+          </div>
+
+          <label for="question">Escribe una pregunta</label>
           <p class="query-hint">
-            Ejemplos útiles: primera orientación, diferencias entre materiales, trabajos de impermeabilización,
-            dudas de albañilería, fontanería, mediciones o presupuestos orientativos.
+            Cuanto más concreta sea la consulta, mejor: tipo de problema, contexto, ubicación, medidas,
+            material o resultado que esperas.
           </p>
 
           <textarea
             id="question"
-            rows="5"
+            rows="6"
             maxlength="700"
-            placeholder="Ej.: ¿Qué información hace falta para una primera orientación de una reforma?"
+            placeholder="Ej.: ¿Qué información hace falta para una primera orientación de una reforma en una vivienda antigua?"
           ></textarea>
+
+          <div class="query-meta">
+            <span class="input-tip">Consejo: describe el problema y el objetivo en una sola pregunta.</span>
+            <span id="questionCount" class="question-count">0 / 700</span>
+          </div>
 
           <div class="query-actions main-actions">
             <button id="sendButton" type="button" class="btn primary submit-btn">
@@ -104,19 +134,24 @@
           </div>
 
           <div class="examples-box">
-            <div class="examples-title">Prueba consultas de ejemplo</div>
-            <div class="sample-row" aria-label="Preguntas de ejemplo">
-              <button class="sample" data-question="¿Qué información hace falta para una primera orientación de una reforma?">
-                Ejemplo 1 · Primera orientación
+            <div class="examples-head">
+              <div class="examples-title">Ejemplos rápidos</div>
+              <span class="examples-subtitle">Pulsa uno y se lanzará automáticamente</span>
+            </div>
+            <div class="sample-grid" aria-label="Preguntas de ejemplo">
+              <button class="sample-card sample" data-question="¿Qué información hace falta para una primera orientación de una reforma?">
+                <span class="sample-title">Primera orientación</span>
+                <span class="sample-desc">Qué datos pedir antes de presupuestar.</span>
               </button>
-              <button class="sample" data-question="¿Cuál es la diferencia entre solera y solado?">
-                Ejemplo 2 · Solera vs. solado
+              <button class="sample-card sample" data-question="¿Cuál es la diferencia entre solera y solado?">
+                <span class="sample-title">Solera vs. solado</span>
+                <span class="sample-desc">Consulta técnica sencilla y concreta.</span>
               </button>
-              <button class="sample" data-question="Explica la fotosíntesis de las plantas y la función de los cloroplastos.">
-                Ejemplo 3 · Fuera de dominio
+              <button class="sample-card sample" data-question="Explica la fotosíntesis de las plantas y la función de los cloroplastos.">
+                <span class="sample-title">Fuera de dominio</span>
+                <span class="sample-desc">Demuestra que el sistema sabe abstenerse.</span>
               </button>
             </div>
-            <p class="example-note">Al pulsar un ejemplo, la consulta se rellena y se envía automáticamente.</p>
           </div>
 
           <details class="endpoint-settings">
@@ -127,7 +162,7 @@
             </div>
             <p>
               Por defecto: <code>https://r4r-api.athagon.tech</code>.
-              Esta opción solo sirve para cambiar el endpoint de pruebas en este navegador.
+              Este ajuste solo cambia el endpoint en este navegador.
             </p>
           </details>
         </article>
@@ -143,10 +178,16 @@
 
           <div class="empty-state" id="emptyState">
             <div class="empty-icon">RAG</div>
+            <h3>La respuesta aparecerá aquí</h3>
             <p>
-              Aquí aparecerán la respuesta, la decisión de abstención y las fuentes recuperadas
+              Verás la respuesta, si el sistema se ha abstenido y las fuentes recuperadas
               desde la documentación de Riansares 4R.
             </p>
+            <ul class="empty-list">
+              <li>Respuesta apoyada en evidencia.</li>
+              <li>Fuentes con trazabilidad.</li>
+              <li>Abstención cuando no toca responder.</li>
+            </ul>
           </div>
 
           <div id="resultContent" class="result-content" hidden>
@@ -156,7 +197,10 @@
             </div>
 
             <div class="answer-box">
-              <h3>Respuesta</h3>
+              <div class="block-head">
+                <h3>Respuesta</h3>
+                <button id="copyAnswerButton" type="button" class="text-btn">Copiar</button>
+              </div>
               <div id="answerText" class="answer-text"></div>
             </div>
 
@@ -279,12 +323,12 @@
         <article class="concept-card panel">
           <span class="concept-number">01</span>
           <h3>Consulta sobre reformas reales</h3>
-          <p>La demo no responde sobre cualquier cosa: está enfocada en documentación de Riansares 4R y consultas de obra.</p>
+          <p>No es una IA generalista: está enfocada a documentación de Riansares 4R y a consultas de obra.</p>
         </article>
         <article class="concept-card panel">
           <span class="concept-number">02</span>
           <h3>Recupera evidencia útil</h3>
-          <p>Busca fragmentos relevantes antes de responder, en lugar de generar texto sin apoyo documental.</p>
+          <p>Busca fragmentos relevantes antes de responder, en vez de generar texto sin apoyo documental.</p>
         </article>
         <article class="concept-card panel">
           <span class="concept-number">03</span>
