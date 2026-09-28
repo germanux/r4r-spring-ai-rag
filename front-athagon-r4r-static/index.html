@@ -1,296 +1,261 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Athagon Labs · Demo RAG con citas de Riansares 4R. Respuestas basadas en una base de conocimiento real, con fuentes y abstención.">
-  <meta name="robots" content="noindex,nofollow">
-  <meta name="theme-color" content="#334357">
-  <title>Athagon Labs · Riansares 4R · RAG con citas</title>
-  <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<meta content="Athagon Labs · Demo RAG con citas de Riansares 4R. Respuestas basadas en una base de conocimiento real, con fuentes y abstención." name="description"/>
+<meta content="noindex,nofollow" name="robots"/>
+<meta content="#334357" name="theme-color"/>
+<title>Athagon Labs · Riansares 4R · RAG con citas</title>
+<link href="styles.css" rel="stylesheet"/>
 </head>
 <body>
-  <header class="site-header">
-    <div class="shell nav-shell">
-      <a class="brand" href="https://athagon.tech/" aria-label="Athagon Labs">
-        <span class="brand-mark">A</span>
-        <span class="brand-name">ATHAGON</span>
-        <span class="brand-labs">LABS</span>
-      </a>
-      <nav class="nav" aria-label="Navegación principal">
-        <a href="#demo">Demo</a>
-        <a href="#como-funciona">Cómo funciona</a>
-        <a href="#arquitectura">Arquitectura</a>
-        <a href="https://github.com/germanux/r4r-spring-ai-rag" target="_blank" rel="noopener">GitHub ↗</a>
-      </nav>
-    </div>
-  </header>
+<header class="site-header">
+<div class="shell nav-shell">
+<a aria-label="Athagon Labs" class="brand" href="https://athagon.tech/">
+<span class="brand-mark">A</span>
+<span class="brand-name">ATHAGON</span>
+<span class="brand-labs">LABS</span>
+</a>
+<nav aria-label="Navegación principal" class="nav">
 
-  <main>
-    <section class="hero">
-      <div class="shell">
-        <div class="hero-copy panel compact-hero">
-          <div class="eyebrow">Athagon Labs · IA aplicada</div>
-          <h1>Riansares 4R <span>· RAG con citas</span></h1>
-          <p class="hero-lede">
+
+
+
+<a href="#demo">Demo</a><a href="#arquitectura">Arquitectura</a><a href="#como-funciona">Qué demuestra</a><a href="https://github.com/germanux/r4r-spring-ai-rag" rel="noopener" target="_blank">GitHub ↗</a></nav>
+</div>
+</header>
+<main>
+<section class="hero">
+<div class="shell">
+<div class="hero-copy panel compact-hero">
+<div class="eyebrow">Athagon Labs · IA aplicada</div>
+<h1>Riansares 4R <span>· RAG con citas</span></h1>
+<p class="hero-lede">
             Pregunta sobre una base de conocimiento real. El sistema busca evidencia, responde con fuentes
             y se abstiene cuando no tiene información suficiente.
           </p>
-          <div class="status-row" aria-label="Características principales">
-            <span>RAG</span>
-            <span>IA local</span>
-            <span>Citas</span>
-            <span>Abstención</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section demo-section" id="demo">
-      <div class="shell">
-        <div class="section-tab">PRUEBA EL RAG</div>
-
-        <div class="demo-grid">
-          <article class="query-panel panel">
-            <div class="panel-head">
-              <div>
-                <span class="mini-label">CONSULTA</span>
-                <span>Base de conocimiento Riansares 4R</span>
-              </div>
-              <span class="api-state" id="apiState">listo</span>
-            </div>
-
-            <label for="question">Escribe una pregunta</label>
-            <textarea id="question" rows="5" maxlength="700"
-              placeholder="Ej.: ¿Qué información hace falta para una primera orientación?"></textarea>
-
-            <div class="query-actions main-actions">
-              <button class="btn primary submit-btn" id="sendButton" type="button">
-                <span id="sendLabel">Preguntar</span>
-                <span class="spinner" id="spinner" aria-hidden="true"></span>
-              </button>
-              <button class="btn ghost" id="clearButton" type="button">Limpiar</button>
-              <span class="elapsed" id="elapsed"></span>
-            </div>
-
-            <div class="examples-box">
-              <div class="examples-title">Prueba un ejemplo</div>
-              <div class="sample-row" aria-label="Preguntas de ejemplo">
-                <button class="sample" data-question="¿Qué información hace falta para una primera orientación?">
+<div aria-label="Características principales" class="status-row">
+<span>RAG</span>
+<span>IA local</span>
+<span>Citas</span>
+<span>Abstención</span>
+</div>
+</div>
+</div>
+</section>
+<section class="section demo-section" id="demo">
+<div class="shell">
+<div class="section-tab">PRUEBA EL RAG</div>
+<div class="demo-grid">
+<article class="query-panel panel">
+<div class="panel-head">
+<div>
+<span class="mini-label">CONSULTA</span>
+<span>Base de conocimiento Riansares 4R</span>
+</div>
+<span class="api-state" id="apiState">listo</span>
+</div>
+<label for="question">Escribe una pregunta</label>
+<textarea id="question" maxlength="700" placeholder="Ej.: ¿Qué información hace falta para una primera orientación?" rows="5"></textarea>
+<div class="query-actions main-actions">
+<button class="btn primary submit-btn" id="sendButton" type="button">
+<span id="sendLabel">Preguntar</span>
+<span aria-hidden="true" class="spinner" id="spinner"></span>
+</button>
+<button class="btn ghost" id="clearButton" type="button">Limpiar</button>
+<span class="elapsed" id="elapsed"></span>
+</div>
+<div class="examples-box">
+<div class="examples-title">Prueba un ejemplo</div>
+<div aria-label="Preguntas de ejemplo" class="sample-row">
+<button class="sample" data-question="¿Qué información hace falta para una primera orientación?">
                   Ejemplo 1 · Orientación
                 </button>
-                <button class="sample" data-question="¿Cuál es la diferencia entre solera y solado?">
+<button class="sample" data-question="¿Cuál es la diferencia entre solera y solado?">
                   Ejemplo 2 · Solera vs. solado
                 </button>
-                <button class="sample" data-question="Explica la fotosíntesis de las plantas y la función de los cloroplastos.">
+<button class="sample" data-question="Explica la fotosíntesis de las plantas y la función de los cloroplastos.">
                   Ejemplo 3 · Abstención
                 </button>
-              </div>
-              <p class="example-note">Al pulsar un ejemplo, la consulta se envía automáticamente.</p>
-            </div>
-
-            <details class="endpoint-settings">
-              <summary>Endpoint de la demo</summary>
-              <div class="endpoint-row">
-                <input id="apiBaseUrl" type="url" spellcheck="false" aria-label="URL base de la API">
-                <button class="small-btn" id="saveEndpoint" type="button">Guardar</button>
-              </div>
-              <p>
+</div>
+<p class="example-note">Al pulsar un ejemplo, la consulta se envía automáticamente.</p>
+</div>
+<details class="endpoint-settings">
+<summary>Endpoint de la demo</summary>
+<div class="endpoint-row">
+<input aria-label="URL base de la API" id="apiBaseUrl" spellcheck="false" type="url"/>
+<button class="small-btn" id="saveEndpoint" type="button">Guardar</button>
+</div>
+<p>
                 Por defecto: <code>https://r4r-api.athagon.tech</code>.
                 Esta opción solo sirve para cambiar el endpoint de pruebas en este navegador.
               </p>
-            </details>
-          </article>
+</details>
+</article>
+<article class="response-panel panel">
+<div class="panel-head">
+<div>
+<span class="mini-label response">RESPUESTA</span>
+<span id="resultMode">esperando una pregunta</span>
+</div>
+<span class="http-status" id="httpStatus">—</span>
+</div>
+<div class="empty-state" id="emptyState">
+<div class="empty-icon">RAG</div>
+<p>Aquí aparecerán la respuesta, la decisión de abstención y las fuentes recuperadas.</p>
+</div>
+<div class="result-content" hidden="" id="resultContent">
+<div class="decision-row">
+<span class="decision-pill" id="decisionPill">RESPUESTA</span>
+<span id="decisionText"></span>
+</div>
+<div class="answer-box">
+<h3>Respuesta</h3>
+<div class="answer-text" id="answerText"></div>
+</div>
+<div class="citations-block">
+<div class="citations-head">
+<h3>Fuentes</h3>
+<span id="citationCount"></span>
+</div>
+<div class="citations" id="citations"></div>
+</div>
+</div>
+<div class="error-box" hidden="" id="errorBox"></div>
+</article>
+</div>
+</div>
+</section>
 
-          <article class="response-panel panel">
-            <div class="panel-head">
-              <div>
-                <span class="mini-label response">RESPUESTA</span>
-                <span id="resultMode">esperando una pregunta</span>
-              </div>
-              <span class="http-status" id="httpStatus">—</span>
-            </div>
-
-            <div id="emptyState" class="empty-state">
-              <div class="empty-icon">RAG</div>
-              <p>Aquí aparecerán la respuesta, la decisión de abstención y las fuentes recuperadas.</p>
-            </div>
-
-            <div id="resultContent" class="result-content" hidden>
-              <div class="decision-row">
-                <span class="decision-pill" id="decisionPill">RESPUESTA</span>
-                <span id="decisionText"></span>
-              </div>
-
-              <div class="answer-box">
-                <h3>Respuesta</h3>
-                <div id="answerText" class="answer-text"></div>
-              </div>
-
-              <div class="citations-block">
-                <div class="citations-head">
-                  <h3>Fuentes</h3>
-                  <span id="citationCount"></span>
-                </div>
-                <div id="citations" class="citations"></div>
-              </div>
-            </div>
-
-            <div id="errorBox" class="error-box" hidden></div>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section class="section concept-section" id="como-funciona">
-      <div class="shell">
-        <div class="section-tab">QUÉ DEMUESTRA</div>
-
-        <div class="concept-grid">
-          <article class="concept-card panel">
-            <span class="concept-number">01</span>
-            <h3>Recupera</h3>
-            <p>Busca fragmentos relevantes en la base de conocimiento antes de generar una respuesta.</p>
-          </article>
-
-          <article class="concept-card panel">
-            <span class="concept-number">02</span>
-            <h3>Responde con evidencia</h3>
-            <p>El modelo recibe los fragmentos recuperados y construye la respuesta apoyándose en ellos.</p>
-          </article>
-
-          <article class="concept-card panel">
-            <span class="concept-number">03</span>
-            <h3>Cita las fuentes</h3>
-            <p>La respuesta conserva referencias trazables a los documentos y fragmentos utilizados.</p>
-          </article>
-
-          <article class="concept-card panel">
-            <span class="concept-number">04</span>
-            <h3>Sabe abstenerse</h3>
-            <p>Si no encuentra evidencia suficiente o la evidencia no sirve, devuelve una abstención en lugar de inventar.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section class="section architecture-section" id="arquitectura">
-      <div class="shell">
-        <div class="section-tab">ARQUITECTURA</div>
-
-        <div class="architecture panel">
-          <div class="arch-flow">
-            <div class="arch-node">
-              <span class="node-id">01</span>
-              <strong>Web de demo</strong>
-              <small>athagon.tech/r4r-rag</small>
-            </div>
-
-            <span class="arrow">→</span>
-
-            <div class="arch-node accent">
-              <span class="node-id">02</span>
-              <strong>API RAG</strong>
-              <small>Spring Boot · Spring AI</small>
-            </div>
-
-            <span class="arrow">→</span>
-
-            <div class="arch-node">
-              <span class="node-id">03</span>
-              <strong>Base vectorial</strong>
-              <small>PostgreSQL · pgvector</small>
-            </div>
-
-            <span class="arrow">→</span>
-
-            <div class="arch-node llm">
-              <span class="node-id">04</span>
-              <strong>Ollama</strong>
-              <small>LLM local</small>
-            </div>
-          </div>
-
-          <div class="arch-notes">
-            <article>
-              <h3>Retrieval</h3>
-              <p>La pregunta se convierte en embedding y se buscan los fragmentos más próximos en pgvector.</p>
-            </article>
-
-            <article>
-              <h3>Grounding</h3>
-              <p>Los fragmentos recuperados se etiquetan y se entregan al modelo como evidencia para la respuesta.</p>
-            </article>
-
-            <article>
-              <h3>Abstención</h3>
-              <p>El sistema puede detenerse por falta de evidencia antes de generar o después, si el modelo la considera insuficiente.</p>
-            </article>
-
-            <article>
-              <h3>Despliegue</h3>
-              <p>La API y PostgreSQL se ejecutan en contenedores Docker; la inferencia pesada se realiza con Ollama.</p>
-            </article>
-          </div>
-        </div>
-
-        <div class="runtime-panel panel">
-          <div class="runtime-head">
-            <div>
-              <span class="eyebrow">Runtime actual de la demo</span>
-              <h2>Detalles técnicos</h2>
-            </div>
-            <span class="runtime-badge">2026</span>
-          </div>
-
-          <div class="runtime-grid">
-            <div>
-              <span>Modelo generativo</span>
-              <strong>Qwen3 Coder Next 80B</strong>
-            </div>
-            <div>
-              <span>Embeddings</span>
-              <strong>nomic-embed-text · 768 dimensiones</strong>
-            </div>
-            <div>
-              <span>Recuperación</span>
-              <strong>Top-K 5 · score mínimo 0.64</strong>
-            </div>
-            <div>
-              <span>Backend</span>
-              <strong>Java · Spring Boot · Spring AI</strong>
-            </div>
-            <div>
-              <span>Datos</span>
-              <strong>PostgreSQL 16 · pgvector</strong>
-            </div>
-            <div>
-              <span>Despliegue</span>
-              <strong>Docker Compose · Synology</strong>
-            </div>
-          </div>
-
-          <details class="config-details">
-            <summary>Ver configuración de runtime</summary>
-            <div class="config-strip">
-              <code>RAG_GENERATION_MODEL=qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest</code>
-              <code>RAG_EMBEDDING_MODEL=nomic-embed-text</code>
-              <code>RAG_EMBEDDING_DIMENSIONS=768</code>
-              <code>r4r.rag.retrieval.min-score=0.64</code>
-            </div>
-          </details>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="footer">
-    <div class="shell footer-row">
-      <span>ATHAGON LABS · laboratorio independiente de ingeniería de software</span>
-      <span>Riansares 4R · RAG con citas · 2026</span>
-    </div>
-  </footer>
-
-  <script src="app.js"></script>
+<section class="section architecture-section" id="arquitectura">
+<div class="shell">
+<div class="section-tab">ARQUITECTURA</div>
+<div class="architecture panel">
+<div class="arch-flow">
+<div class="arch-node">
+<span class="node-id">01</span>
+<strong>Web de demo</strong>
+<small>athagon.tech/r4r-rag</small>
+</div>
+<span class="arrow">→</span>
+<div class="arch-node accent">
+<span class="node-id">02</span>
+<strong>API RAG</strong>
+<small>Spring Boot · Spring AI</small>
+</div>
+<span class="arrow">→</span>
+<div class="arch-node">
+<span class="node-id">03</span>
+<strong>Base vectorial</strong>
+<small>PostgreSQL · pgvector</small>
+</div>
+<span class="arrow">→</span>
+<div class="arch-node llm">
+<span class="node-id">04</span>
+<strong>Ollama</strong>
+<small>LLM local</small>
+</div>
+</div>
+<div class="arch-notes">
+<article>
+<h3>Retrieval</h3>
+<p>La pregunta se convierte en embedding y se buscan los fragmentos más próximos en pgvector.</p>
+</article>
+<article>
+<h3>Grounding</h3>
+<p>Los fragmentos recuperados se etiquetan y se entregan al modelo como evidencia para la respuesta.</p>
+</article>
+<article>
+<h3>Abstención</h3>
+<p>El sistema puede detenerse por falta de evidencia antes de generar o después, si el modelo la considera insuficiente.</p>
+</article>
+<article>
+<h3>Despliegue</h3>
+<p>La API y PostgreSQL se ejecutan en contenedores Docker; la inferencia pesada se realiza con Ollama.</p>
+</article>
+</div>
+</div>
+<div class="runtime-panel panel">
+<div class="runtime-head">
+<div>
+<span class="eyebrow">Runtime actual de la demo</span>
+<h2>Detalles técnicos</h2>
+</div>
+<span class="runtime-badge">2026</span>
+</div>
+<div class="runtime-grid">
+<div>
+<span>Modelo generativo</span>
+<strong>Qwen3 Coder Next 80B</strong>
+</div>
+<div>
+<span>Embeddings</span>
+<strong>nomic-embed-text · 768 dimensiones</strong>
+</div>
+<div>
+<span>Recuperación</span>
+<strong>Top-K 5 · score mínimo 0.64</strong>
+</div>
+<div>
+<span>Backend</span>
+<strong>Java · Spring Boot · Spring AI</strong>
+</div>
+<div>
+<span>Datos</span>
+<strong>PostgreSQL 16 · pgvector</strong>
+</div>
+<div>
+<span>Despliegue</span>
+<strong>Docker Compose · Synology</strong>
+</div>
+</div>
+<details class="config-details">
+<summary>Ver configuración de runtime</summary>
+<div class="config-strip">
+<code>RAG_GENERATION_MODEL=qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest</code>
+<code>RAG_EMBEDDING_MODEL=nomic-embed-text</code>
+<code>RAG_EMBEDDING_DIMENSIONS=768</code>
+<code>r4r.rag.retrieval.min-score=0.64</code>
+</div>
+</details>
+</div>
+</div>
+</section><section class="section concept-section" id="como-funciona">
+<div class="shell">
+<div class="section-tab">QUÉ DEMUESTRA</div>
+<div class="concept-grid">
+<article class="concept-card panel">
+<span class="concept-number">01</span>
+<h3>Recupera</h3>
+<p>Busca fragmentos relevantes en la base de conocimiento antes de generar una respuesta.</p>
+</article>
+<article class="concept-card panel">
+<span class="concept-number">02</span>
+<h3>Responde con evidencia</h3>
+<p>El modelo recibe los fragmentos recuperados y construye la respuesta apoyándose en ellos.</p>
+</article>
+<article class="concept-card panel">
+<span class="concept-number">03</span>
+<h3>Cita las fuentes</h3>
+<p>La respuesta conserva referencias trazables a los documentos y fragmentos utilizados.</p>
+</article>
+<article class="concept-card panel">
+<span class="concept-number">04</span>
+<h3>Sabe abstenerse</h3>
+<p>Si no encuentra evidencia suficiente o la evidencia no sirve, devuelve una abstención en lugar de inventar.</p>
+</article>
+</div>
+</div>
+</section>
+</main>
+<footer class="footer">
+<div class="shell footer-row">
+<span>ATHAGON LABS · laboratorio independiente de ingeniería de software</span>
+<span>Riansares 4R · RAG con citas · 2026</span>
+</div>
+</footer>
+<script src="app.js"></script>
 </body>
 </html>
