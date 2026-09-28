@@ -118,8 +118,8 @@ class KnowledgeIngestionSpringLifecycleTest {
         var mockService = mock(KnowledgeIngestionService.class);
         when(mockService.ingest(any())).thenReturn(new KnowledgeIngestionResult(0, 0, 0, 0, 0, 42));
 
-        // Use SpringApplicationBuilder directly to start R4rSpringAiRagApplication with inferred web type
         var builder = new SpringApplicationBuilder(R4rSpringAiRagApplication.class)
+                .properties("server.port=0")
                 .initializers(wrapBmpr(mockService));
 
         try (var context = builder.run()) {

@@ -36,6 +36,22 @@ r4r:
     retrieval:
       top-k: 5
       min-score: 0.64
+  api-security:
+    # Protección ligera para la demo pública. No sustituye autenticación real.
+    enabled: ${RAG_API_SECURITY_ENABLED:true}
+    allowed-origins:
+      - ${RAG_API_ALLOWED_ORIGIN_PUBLIC:https://athagon.tech}
+      - ${RAG_API_ALLOWED_ORIGIN_LOCALHOST:http://localhost:63342}
+      - ${RAG_API_ALLOWED_ORIGIN_LOOPBACK:http://127.0.0.1:63342}
+    # Ejemplos válidos: 20s, 5s, 1m, 500ms.
+    min-interval: ${RAG_API_MIN_INTERVAL:20s}
+    # true = un POST sin Origin (por ejemplo curl/Postman sin cabecera Origin) recibe 403.
+    require-origin: ${RAG_API_REQUIRE_ORIGIN:true}
+    # Activar solo detrás de Cloudflare/reverse proxy de confianza; entonces se usa
+    # CF-Connecting-IP y, como fallback, X-Forwarded-For para limitar por IP real.
+    trust-proxy-headers: ${RAG_API_TRUST_PROXY_HEADERS:false}
+    # Cota de memoria para IP activas dentro de la ventana del rate limit.
+    max-tracked-ips: ${RAG_API_MAX_TRACKED_IPS:10000}
   catalog-on-startup: false
   knowledge:
     root: ${RAG_KNOWLEDGE_PATH}

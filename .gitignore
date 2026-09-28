@@ -90,3 +90,4 @@ progress.json
 /r4r-dual-agent-hotfix-v*/
 config/r4r-agents.json.**
 /docker-spring/r4r.env
+*.*.tar

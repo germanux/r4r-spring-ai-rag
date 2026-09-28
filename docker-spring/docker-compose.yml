@@ -22,7 +22,7 @@ services:
       - r4r-network
 
   api:
-    image: r4r-api:0.3.0
+    image: r4r-api:0.3.1
     container_name: r4r-api
     env_file:
       - ./r4r.env
