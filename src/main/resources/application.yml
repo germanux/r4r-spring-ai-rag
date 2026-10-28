@@ -16,6 +16,7 @@ spring:
     ollama:
       base-url: ${RAG_OLLAMA_BASE_URL}
       chat:
+        think:   false
         options:
           model: ${RAG_GENERATION_MODEL}
       embedding:
