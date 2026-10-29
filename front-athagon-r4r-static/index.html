@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Athagon Labs · R4R RAG</title>
+  <script>
+    (() => {
+      const preferred = (navigator.languages && navigator.languages[0]) || navigator.language || "en";
+      const page = /^es(?:-|$)/i.test(preferred) ? "index_es.html" : "index_en.html";
+      window.location.replace(page + window.location.search + window.location.hash);
+    })();
+  </script>
+</head>
+<body>
+  <noscript>
+    <p><a href="index_en.html">English</a> · <a href="index_es.html">Español</a></p>
+  </noscript>
+</body>
+</html>
