@@ -88,10 +88,14 @@ class RagLiveQuestionsIT {
     }
 
     private static void verifyAnswer(int number, QuestionCase testCase) throws Exception {
+        if (number > 1) {
+            Thread.sleep(21_000);
+        }
         String requestBody = JSON.writeValueAsString(new QuestionRequest(testCase.question()));
         HttpRequest request = HttpRequest.newBuilder(ENDPOINT)
                 .timeout(REQUEST_TIMEOUT)
                 .header("Content-Type", "application/json")
+                .header("Origin", "https://athagon.tech")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody, StandardCharsets.UTF_8))
                 .build();
 
