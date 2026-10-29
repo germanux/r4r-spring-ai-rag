@@ -115,6 +115,11 @@ BACKUP_DATE="$(date '+%Y%m%d-%H%M%S')"
 ssh -tt "$REMOTE" "
   set -e
 
+  export PATH=/usr/local/bin:/var/packages/ContainerManager/target/usr/bin:\$PATH
+
+  DOCKER_BIN=\$(command -v docker)
+  COMPOSE_BIN=\$(command -v docker-compose)
+
   cd '$NAS_DIR'
 
   # Comprobar que existe la configuración del NAS.
@@ -125,7 +130,7 @@ ssh -tt "$REMOTE" "
 
   # Importar la nueva imagen.
   echo '==> Importando Docker...'
-  sudo docker load -i '$STAGE/$TAR_NAME'
+  sudo "\$DOCKER_BIN" load -i '$STAGE/$TAR_NAME'
 
   # Guardar una copia de seguridad del Compose anterior.
   sudo cp -p docker-compose.yml \
@@ -154,7 +159,7 @@ ssh -tt "$REMOTE" "
   # Recrear exclusivamente Spring Boot.
   echo '==> Desplegando API...'
 
-  sudo docker-compose \
+  sudo "\$COMPOSE_BIN" \
     --env-file .env \
     -f docker-compose.yml \
     up -d --no-deps --force-recreate api
@@ -169,11 +174,11 @@ ssh -tt "$REMOTE" "
   # Estado final.
   echo
   echo '==> Estado de la API:'
-  sudo docker ps --filter name=r4r-api
+  sudo "\$DOCKER_BIN" ps --filter name=r4r-api
 
   echo
   echo '==> Últimos logs:'
-  sudo docker logs --tail 80 r4r-api
+  sudo "\$DOCKER_BIN" logs --tail 80 r4r-api
 "
 
 echo

@@ -9,6 +9,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  * Cited RAG service that retrieves evidence and generates answers with citations.
@@ -21,7 +22,8 @@ public class CitedRagService {
     private final int retrievalTopK;
     private final double minScore;
     private static final String ABSTAIN_TOKEN = "__R4R_ABSTAIN__";
-
+    private static final Pattern ONLY_CITATIONS =
+            Pattern.compile("^(?:\\[S\\d+\\][\\s,;:.]*)+$");
     /**
      * Creates a new cited RAG service.
      *
@@ -57,7 +59,11 @@ public class CitedRagService {
         Prompt prompt = buildPrompt(  question  + "\n/no_think", chunks);
         ChatResponse response = chatModel.call(prompt);
         String answer = extractAnswer(response);
-        if (ABSTAIN_TOKEN.equals(answer.trim())) {
+
+        if (answer == null
+                || answer.isBlank()
+                || ABSTAIN_TOKEN.equals(answer.trim())
+                || ONLY_CITATIONS.matcher(answer.trim()).matches()) {
             return RagResult.abstain();
         }
         List<Citation> citations = buildCitations(chunks);
@@ -81,8 +87,13 @@ public class CitedRagService {
     private Prompt buildPrompt(String question, List<MarkdownChunk> chunks) {
         StringBuilder promptText = new StringBuilder();
 
-        promptText.append("You are a helpful assistant. Use the following evidence to answer the question.\n\n");
-
+        promptText.append("""
+        You are a helpful assistant. Answer using only the provided evidence.
+        Always respond in the same language as the user's question.
+        Give a clear, concise answer in 2–3 sentences, followed by the relevant citations.
+        Never return only a citation such as [S1]; always include a meaningful explanation.
+    
+        """);
         for (int i = 0; i < chunks.size(); i++) {
             MarkdownChunk chunk = chunks.get(i);
             String label = "[S" + (i + 1) + "]";
