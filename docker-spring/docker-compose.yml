@@ -5,9 +5,10 @@ services:
     container_name: r4r-postgres
     env_file:
       - ./r4r.env
-    # Publica PostgreSQL solo en la IP LAN del Synology.
+    # Produccion: puerto estandar publicado solo en la IP LAN del Synology.
+    # Antes de cambiar el puerto actual 55434, comprobar que 5432 esta libre.
     ports:
-      - "192.168.1.203:55434:5432"
+      - "192.168.1.203:5432:5432"
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
       - ./backup:/backup
@@ -15,6 +16,29 @@ services:
     mem_limit: 1536m
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U r4r -d r4r_rag"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - r4r-network
+
+  postgres-test:
+    image: pgvector/pgvector:pg16
+    container_name: r4r-postgres-test
+    # Configuracion y credenciales diferentes de produccion.
+    # Crear r4r-test.env a partir de r4r-test.env.example.
+    env_file:
+      - ./r4r-test.env
+    # Ambos servidores escuchan en 5432 dentro del contenedor.
+    # En el NAS se publica 5433 para evitar colision con produccion.
+    ports:
+      - "192.168.1.203:5433:5432"
+    volumes:
+      - ./postgres-test-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U r4r_test -d r4r_rag_test"]
       interval: 5s
       timeout: 5s
       retries: 20

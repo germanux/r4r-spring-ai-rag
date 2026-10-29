@@ -78,18 +78,18 @@ class CitedRagServiceTest {
                 1,
                 "Second content");
 
-        when(knowledgeStore.search("test question", TEST_TOP_K,  TEST_MIN_SCORE))
+        when(knowledgeStore.search("test question" , TEST_TOP_K,  TEST_MIN_SCORE))
                 .thenReturn(List.of(chunk1, chunk2));
 
         ChatResponse response = chatResponse("Combined answer");
         when(chatModel.call(any(Prompt.class))).thenReturn(response);
 
-        RagResult result = service.answer("test question");
+        RagResult result = service.answer("test question"  );
 
         ArgumentCaptor<Prompt> promptCaptor =
                 ArgumentCaptor.forClass(Prompt.class);
 
-        verify(knowledgeStore).search("test question", TEST_TOP_K,  TEST_MIN_SCORE);
+        verify(knowledgeStore).search("test question" , TEST_TOP_K,  TEST_MIN_SCORE);
         verify(chatModel).call(promptCaptor.capture());
 
         assertThat(promptCaptor.getValue().getContents())
@@ -103,7 +103,8 @@ class CitedRagServiceTest {
                 Second content
 
                 Question: test question
-
+                /no_think
+                
                 Answer using only the supplied evidence.
                 If the evidence is insufficient or unrelated to the question,
                 answer exactly:

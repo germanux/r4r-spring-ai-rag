@@ -54,7 +54,7 @@ public class CitedRagService {
             return RagResult.abstain();
         }
 
-        Prompt prompt = buildPrompt(question, chunks);
+        Prompt prompt = buildPrompt(  question  + "\n/no_think", chunks);
         ChatResponse response = chatModel.call(prompt);
         String answer = extractAnswer(response);
         if (ABSTAIN_TOKEN.equals(answer.trim())) {
