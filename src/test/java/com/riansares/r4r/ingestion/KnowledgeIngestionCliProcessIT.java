@@ -101,8 +101,6 @@ class KnowledgeIngestionCliProcessIT {
         env.put("RAG_KNOWLEDGE_PATH", corpus.toAbsolutePath().toString());
         env.put("RAG_MAX_FILE_BYTES", "1048576");
         env.put("RAG_MAX_CHUNK_CHARS", "2000");
-        env.put("SPRING_DATASOURCE_URL", "jdbc:postgresql://192.0.2.1:5433/testdb");
-        env.put("POSTGRES_USER", "testuser");
         env.put("POSTGRES_PASSWORD", POSTGRES_PASSWORD_SENTINEL);
         env.put("RAG_OLLAMA_BASE_URL", "http://localhost:11434");
         env.put("RAG_GENERATION_MODEL", "llama2");

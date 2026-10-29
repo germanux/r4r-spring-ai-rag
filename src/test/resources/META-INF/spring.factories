@@ -1,1 +1,1 @@
-org.springframework.context.ApplicationContextInitializer=com.riansares.r4r.ingestion.TestChildApplicationContextInitializer
+org.springframework.context.ApplicationContextInitializer=com.riansares.r4r.config.TestDatabaseGuard,com.riansares.r4r.ingestion.TestChildApplicationContextInitializer

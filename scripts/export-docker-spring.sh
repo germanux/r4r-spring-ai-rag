@@ -7,7 +7,7 @@ OUT="$ROOT/docker-spring"
 
 # Nombre/tag de la imagen Docker.
 IMAGE_NAME="${IMAGE_NAME:-r4r-api}"
-IMAGE_TAG="${IMAGE_TAG:-0.3.0}"
+IMAGE_TAG="${IMAGE_TAG:-0.3.1}"
 IMAGE="$IMAGE_NAME:$IMAGE_TAG"
 
 # JAR generado por Maven.
