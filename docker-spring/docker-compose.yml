@@ -5,8 +5,8 @@ services:
     container_name: r4r-postgres
     env_file:
       - ./r4r.env
-    # Produccion: puerto estandar publicado solo en la IP LAN del Synology.
-    # Antes de cambiar el puerto actual 55434, comprobar que 5432 esta libre.
+      # Production: Standard port published only on the Synology LAN IP.
+      # Before changing the current port 55434, check that 5432 is free.
     ports:
       - "192.168.1.203:5432:5432"
     volumes:
@@ -25,12 +25,15 @@ services:
   postgres-test:
     image: pgvector/pgvector:pg16
     container_name: r4r-postgres-test
-    # Configuracion y credenciales diferentes de produccion.
-    # Crear r4r-test.env a partir de r4r-test.env.example.
+    # Reuse r4r.env, incluiding POSTGRES_PASSWORD of production.
     env_file:
-      - ./r4r-test.env
-    # Ambos servidores escuchan en 5432 dentro del contenedor.
-    # En el NAS se publica 5433 para evitar colision con produccion.
+      - ./r4r.env
+    # Only database and user are changed for tests.
+    environment:
+      POSTGRES_DB: r4r_rag_test
+      POSTGRES_USER: r4r_test
+    # Both servers listen on 5432 inside the container.
+    # 5433 is published on the NAS to avoid collision with production.
     ports:
       - "192.168.1.203:5433:5432"
     volumes:
