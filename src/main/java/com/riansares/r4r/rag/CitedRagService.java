@@ -62,7 +62,8 @@ public class CitedRagService {
 
         if (answer == null
                 || answer.isBlank()
-                || ABSTAIN_TOKEN.equals(answer.trim())
+                || answer.trim().matches("(?i)^_*R4R_ABSTAIN_*$")
+                || answer.contains(ABSTAIN_TOKEN)
                 || ONLY_CITATIONS.matcher(answer.trim()).matches()) {
             return RagResult.abstain();
         }

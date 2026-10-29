@@ -252,4 +252,30 @@
     if (!questionCount) return;
     questionCount.textContent = `${question.value.length} / 700`;
   }
+
+  async function translateToSpanish(question, sourceLang = "en") {
+    if (sourceLang === "es") return question;
+
+    const params = new URLSearchParams({
+      q: question,
+      langpair: `${sourceLang}|es`
+    });
+
+    const response = await fetch(
+        `https://api.mymemory.translated.net/get?${params}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Translation service unavailable");
+    }
+
+    const data = await response.json();
+
+    if (data.responseStatus !== 200 ||
+        !data.responseData?.translatedText) {
+      throw new Error("Translation failed");
+    }
+
+    return data.responseData.translatedText;
+  }
 })();

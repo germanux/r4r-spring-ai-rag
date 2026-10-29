@@ -89,7 +89,7 @@ class RagLiveQuestionsIT {
 
     private static void verifyAnswer(int number, QuestionCase testCase) throws Exception {
         if (number > 1) {
-            Thread.sleep(21_000);
+            Thread.sleep(31_000);
         }
         String requestBody = JSON.writeValueAsString(new QuestionRequest(testCase.question()));
         HttpRequest request = HttpRequest.newBuilder(ENDPOINT)
