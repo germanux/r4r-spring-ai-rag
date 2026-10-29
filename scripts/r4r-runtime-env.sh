@@ -15,7 +15,7 @@ r4r_source_runtime_env() {
   local root="${1:-}"
   local env_file
   [[ -n "$root" ]] || return 0
-  for env_file in "$root/.env" "$root/.env.r4r.local"; do
+  for env_file in "$root/docker-spring/.env" "$root/.env.r4r.local"; do
     if [[ -f "$env_file" ]]; then
       set -a
       # shellcheck disable=SC1090

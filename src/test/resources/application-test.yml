@@ -1,0 +1,21 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.actuate.autoconfigure.metrics.JdbcMetricsAutoConfiguration
+
+  datasource:
+    # Todos los tests que necesiten PostgreSQL usan la BBDD de test, nunca la real.
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_TEST_PORT}/${POSTGRES_TEST_DB}
+    username: ${POSTGRES_TEST_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+r4r:
+  # Mantener el comportamiento previo de los tests HTTP sin Origin.
+  api-security:
+    enabled: false
+  catalog-on-startup: false
+  knowledge:
+    root: /tmp/r4r-knowledge-test
+    max-file-bytes: 10485760
+    max-chunk-chars: 2000

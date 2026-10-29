@@ -1,9 +1,6 @@
-# PostgreSQL/pgvector
+# PostgreSQL
 
-- `postgres-app`: persistent development database on port `55432`; files live in `data/app/`.
-- `postgres-test`: disposable integration-test database on port `55433`; data lives in `tmpfs`.
-- `init/`: container bootstrap only.
-- Application schema: Flyway migrations packaged under `src/main/resources/db/migration/`.
-- Portable backups belong in `backups/` and should be produced with `pg_dump`.
-
-All variable values come from the repository-root `.env` through `scripts/db.sh`.
+La configuración vigente es `../docker-spring/docker-compose.yml` en Synology.
+Los tests Maven del PC acceden por LAN al puerto 5433; no requieren PostgreSQL local.
+Este directorio conserva únicamente archivos históricos de inicialización: no ejecutarlos
+contra las bases existentes. No mover ni borrar directorios de datos.

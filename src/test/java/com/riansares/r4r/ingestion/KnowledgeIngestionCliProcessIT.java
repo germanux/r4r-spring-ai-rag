@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class KnowledgeIngestionCliProcessIT {
 
-    private static final String RAG_DB_PASSWORD_SENTINEL = "SECRET_CREDENTIAL_SENTINEL_2026_TEST";
+    private static final String POSTGRES_PASSWORD_SENTINEL = "SECRET_CREDENTIAL_SENTINEL_2026_TEST";
     private static final String AUTO_CONFIGURATION_EXCLUSIONS = String.join(",",
             "org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration",
             "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration",
@@ -101,9 +101,9 @@ class KnowledgeIngestionCliProcessIT {
         env.put("RAG_KNOWLEDGE_PATH", corpus.toAbsolutePath().toString());
         env.put("RAG_MAX_FILE_BYTES", "1048576");
         env.put("RAG_MAX_CHUNK_CHARS", "2000");
-        env.put("RAG_DB_URL", "jdbc:postgresql://localhost:5432/testdb");
-        env.put("RAG_DB_USER", "testuser");
-        env.put("RAG_DB_PASSWORD", RAG_DB_PASSWORD_SENTINEL);
+        env.put("SPRING_DATASOURCE_URL", "jdbc:postgresql://192.0.2.1:5433/testdb");
+        env.put("POSTGRES_USER", "testuser");
+        env.put("POSTGRES_PASSWORD", POSTGRES_PASSWORD_SENTINEL);
         env.put("RAG_OLLAMA_BASE_URL", "http://localhost:11434");
         env.put("RAG_GENERATION_MODEL", "llama2");
         env.put("RAG_EMBEDDING_MODEL", "nomic-embed-text");
@@ -249,8 +249,8 @@ class KnowledgeIngestionCliProcessIT {
      * Verifies credential sentinel is not leaked in output.
      */
     private void assertNoSecretLeakage(String stdout, String stderr) {
-        assertThat(stdout).doesNotContain(RAG_DB_PASSWORD_SENTINEL);
-        assertThat(stderr).doesNotContain(RAG_DB_PASSWORD_SENTINEL);
+        assertThat(stdout).doesNotContain(POSTGRES_PASSWORD_SENTINEL);
+        assertThat(stderr).doesNotContain(POSTGRES_PASSWORD_SENTINEL);
     }
 
     @Test

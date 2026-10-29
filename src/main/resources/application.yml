@@ -1,14 +1,14 @@
 spring:
   config:
-    # Spring Boot treats the project-local .env as a Java properties file.
+    # Spring Boot treats the docker-spring/.env as a Java properties file.
     # Operating-system environment variables still override these values.
-    import: optional:file:./.env[.properties]
+    import: optional:file:./docker-spring/.env[.properties]
   application:
     name: r4r-spring-ai-rag
   datasource:
-    url: ${RAG_DB_URL}
-    username: ${RAG_DB_USER}
-    password: ${RAG_DB_PASSWORD}
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
   flyway:
     enabled: true
     locations: classpath:db/migration

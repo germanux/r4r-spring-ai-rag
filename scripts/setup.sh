@@ -6,7 +6,6 @@ cd "$ROOT"
 RUNTIME_ENV_HELPER="$ROOT/scripts/r4r-runtime-env.sh"
 
 TOOLS_ONLY=false
-SKIP_DB=false
 SKIP_VERIFY=false
 
 usage() {
@@ -15,7 +14,7 @@ Usage: ./scripts/setup.sh [options]
 
 Options:
   --tools-only   Install/verify OpenCode, CodeGraph and the Python controller.
-  --skip-db      Do not start the PostgreSQL application container.
+  --skip-db      Compatible con versiones anteriores; PostgreSQL está en Synology.
   --skip-verify  Do not run the unit verification pass.
   -h, --help     Show this help.
 EOF
@@ -23,18 +22,18 @@ EOF
 
 while (($#)); do
   case "$1" in
-    --tools-only) TOOLS_ONLY=true; SKIP_DB=true; SKIP_VERIFY=true; shift ;;
-    --skip-db) SKIP_DB=true; shift ;;
+    --tools-only) TOOLS_ONLY=true; SKIP_VERIFY=true; shift ;;
+    --skip-db) shift ;;
     --skip-verify) SKIP_VERIFY=true; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown setup option: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
 
-[[ -f .env ]] || cp .env.example .env
+[[ -f docker-spring/.env ]] || cp docker-spring/.env.example docker-spring/.env
 set -a
 # shellcheck disable=SC1091
-source .env
+source docker-spring/.env
 set +a
 
 if [[ -f .env.r4r.local ]]; then
@@ -152,39 +151,6 @@ ensure_local_env_var() {
   printf '%s=%q\n' "$key" "$default_value" >> "$local_env"
 }
 
-ensure_project_env_var() {
-  local key="$1"
-  local default_value="$2"
-  local project_env="$ROOT/.env"
-
-  touch "$project_env"
-  chmod 600 "$project_env" 2>/dev/null || true
-  if grep -Eq "^[[:space:]]*(export[[:space:]]+)?${key}=" "$project_env"; then
-    return 0
-  fi
-  printf '%s=%q\n' "$key" "$default_value" >> "$project_env"
-}
-
-ensure_database_env_defaults() {
-  # These values are local-development defaults. Existing values are never replaced.
-  ensure_project_env_var POSTGRES_IMAGE "${POSTGRES_IMAGE:-pgvector/pgvector:pg16}"
-  ensure_project_env_var POSTGRES_APP_CONTAINER "${POSTGRES_APP_CONTAINER:-r4r-postgres-app}"
-  ensure_project_env_var POSTGRES_APP_DB "${POSTGRES_APP_DB:-r4r_rag}"
-  ensure_project_env_var POSTGRES_APP_USER "${POSTGRES_APP_USER:-r4r}"
-  ensure_project_env_var POSTGRES_APP_PASSWORD "${POSTGRES_APP_PASSWORD:-r4r_local_only}"
-  ensure_project_env_var POSTGRES_APP_PORT "${POSTGRES_APP_PORT:-5432}"
-  ensure_project_env_var POSTGRES_TEST_CONTAINER "${POSTGRES_TEST_CONTAINER:-r4r-postgres-test}"
-  ensure_project_env_var POSTGRES_TEST_DB "${POSTGRES_TEST_DB:-r4r_rag_test}"
-  ensure_project_env_var POSTGRES_TEST_USER "${POSTGRES_TEST_USER:-r4r_test}"
-  ensure_project_env_var POSTGRES_TEST_PASSWORD "${POSTGRES_TEST_PASSWORD:-r4r_test_local_only}"
-  ensure_project_env_var POSTGRES_TEST_PORT "${POSTGRES_TEST_PORT:-55432}"
-
-  set -a
-  # shellcheck disable=SC1091
-  source "$ROOT/.env"
-  set +a
-}
-
 ensure_worker_git_identities() {
   ensure_local_env_var \
     R4R_PC_GIT_AUTHOR_NAME \
@@ -215,7 +181,6 @@ for command in java javac mvn docker npm node python3 git; do
   command -v "$command" >/dev/null 2>&1 || { echo "Required command unavailable: $command" >&2; exit 2; }
 done
 
-ensure_database_env_defaults
 ensure_worker_git_identities
 [[ "$(javac -version 2>&1)" == javac\ 21* ]] || { echo "Java 21 is required." >&2; exit 2; }
 if ! docker compose version >/dev/null 2>&1 && ! command -v docker-compose >/dev/null 2>&1; then
@@ -245,7 +210,7 @@ set -a
 source "$ROOT/.env.r4r.local"
 set +a
 
-mkdir -p docker-postgres/data/app docker-postgres/backups runtime/runs runtime/locks
+mkdir -p runtime/runs runtime/locks
 PYTHONPATH="$ROOT/py-ring-agent/src" python3 -c \
   'import r4r_ring_agent.ring_loop, r4r_worker.cli'
 
@@ -257,13 +222,7 @@ if [[ "$TOOLS_ONLY" == false ]]; then
   fi
 fi
 
-if [[ "$SKIP_DB" == false ]]; then
-  if [[ -f "$ROOT/docker-postgres/compose.yml" ]]; then
-    ./scripts/db.sh up
-  else
-    echo "Warning: docker-postgres/compose.yml is absent; database startup skipped." >&2
-  fi
-fi
+# PostgreSQL se administra exclusivamente en Synology; no arrancar una BD local.
 
 if [[ "$SKIP_VERIFY" == false ]]; then
   ./scripts/verify.sh unit

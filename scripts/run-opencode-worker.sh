@@ -83,7 +83,7 @@ case "$DEST" in
     ;;
 esac
 
-for env_file in .env .env.r4r.local; do
+for env_file in docker-spring/.env .env.r4r.local; do
   if [[ -f "$env_file" ]]; then
     set -a
     # shellcheck disable=SC1090

@@ -490,7 +490,7 @@ export_one() {
   local top
   for top in \
     AGENTS.md README.md LICENSE pom.xml package.json package-lock.json \
-    opencode.jsonc .gitignore .env.example
+    opencode.jsonc .gitignore docker-spring/.env.example
   do
     copy_top_file "$ROOT/$top" "$stage_dir/repository"
   done

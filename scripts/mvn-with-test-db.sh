@@ -10,8 +10,5 @@ if (( $# == 0 )); then
   exit 2
 fi
 
-"$ROOT/scripts/db.sh" test-up
-cleanup() { "$ROOT/scripts/db.sh" test-down >/dev/null 2>&1 || true; }
-trap cleanup EXIT INT TERM
-
-mvn "$@"
+# Spring importa docker-spring/.env; los tests usan exclusivamente la BD de Synology.
+exec mvn "$@"

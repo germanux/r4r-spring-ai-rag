@@ -22,7 +22,7 @@ case "$DEST" in LP|PC) ;; *) echo "ERROR: destino LP o PC" >&2; exit 2 ;; esac
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
-[[ -f .env ]] || cp .env.example .env
+[[ -f docker-spring/.env ]] || cp docker-spring/.env.example docker-spring/.env
 
 upsert() {
   local file="$1" key="$2" value="$3" tmp
@@ -36,12 +36,12 @@ upsert() {
   mv "$tmp" "$file"
 }
 
-pc_url="$(grep '^R4R_OPENCODE_PC_BASE_URL=' .env | tail -n1 | cut -d= -f2- || true)"
-lp_url="$(grep '^R4R_OPENCODE_LP_BASE_URL=' .env | tail -n1 | cut -d= -f2- || true)"
+pc_url="$(grep '^R4R_OPENCODE_PC_BASE_URL=' docker-spring/.env | tail -n1 | cut -d= -f2- || true)"
+lp_url="$(grep '^R4R_OPENCODE_LP_BASE_URL=' docker-spring/.env | tail -n1 | cut -d= -f2- || true)"
 [[ "$pc_url" =~ ^https?:// ]] || pc_url="http://127.0.0.1:11434/v1"
 [[ "$lp_url" =~ ^https?:// ]] || lp_url="http://192.168.1.9:11434/v1"
-upsert .env R4R_OPENCODE_PC_BASE_URL "${pc_url%/}"
-upsert .env R4R_OPENCODE_LP_BASE_URL "${lp_url%/}"
+upsert docker-spring/.env R4R_OPENCODE_PC_BASE_URL "${pc_url%/}"
+upsert docker-spring/.env R4R_OPENCODE_LP_BASE_URL "${lp_url%/}"
 
 if [[ "$DEST" == LP ]]; then
   agent="r4r-laptop"
@@ -50,8 +50,8 @@ else
   agent="r4r-pc"
   gallery="r4r-gallery-pc"
 fi
-upsert .env R4R_OPENCODE_AGENT "$agent"
-upsert .env R4R_GALLERY_AGENT "$gallery"
+upsert docker-spring/.env R4R_OPENCODE_AGENT "$agent"
+upsert docker-spring/.env R4R_GALLERY_AGENT "$gallery"
 
 (( QUIET )) || printf 'Destino=%s\nAgente=%s\nGalería=%s\n' \
   "$DEST" "$agent" "$gallery"

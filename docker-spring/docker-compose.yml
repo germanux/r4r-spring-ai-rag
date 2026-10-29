@@ -3,19 +3,19 @@ services:
   postgres:
     image: pgvector/pgvector:pg16
     container_name: r4r-postgres
-    env_file:
-      - ./r4r.env
-      # Production: Standard port published only on the Synology LAN IP.
-      # Before changing the current port 55434, check that 5432 is free.
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?required}
+      POSTGRES_USER: ${POSTGRES_USER:?required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
     ports:
-      - "192.168.1.203:5432:5432"
+      - "${POSTGRES_HOST}:${POSTGRES_PORT}:5432"
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
       - ./backup:/backup
     restart: unless-stopped
     mem_limit: 1536m
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U r4r -d r4r_rag"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -25,23 +25,20 @@ services:
   postgres-test:
     image: pgvector/pgvector:pg16
     container_name: r4r-postgres-test
-    # Reuse r4r.env, incluiding POSTGRES_PASSWORD of production.
-    env_file:
-      - ./r4r.env
-    # Only database and user are changed for tests.
     environment:
-      POSTGRES_DB: r4r_rag_test
-      POSTGRES_USER: r4r_test
+      POSTGRES_DB: ${POSTGRES_TEST_DB:?required}
+      POSTGRES_USER: ${POSTGRES_TEST_USER:?required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
     # Both servers listen on 5432 inside the container.
     # 5433 is published on the NAS to avoid collision with production.
     ports:
-      - "192.168.1.203:5433:5432"
+      - "${POSTGRES_HOST}:${POSTGRES_TEST_PORT}:5432"
     volumes:
       - ./postgres-test-data:/var/lib/postgresql/data
     restart: unless-stopped
     mem_limit: 768m
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U r4r_test -d r4r_rag_test"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -52,7 +49,9 @@ services:
     image: r4r-api:0.3.1
     container_name: r4r-api
     env_file:
-      - ./r4r.env
+      - ./.env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:?required}
     depends_on:
       postgres:
         condition: service_healthy
@@ -66,8 +65,8 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: r4r-cloudflared
-    env_file:
-      - ./r4r.env
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
     command: tunnel --no-autoupdate run
     restart: unless-stopped
     depends_on:
