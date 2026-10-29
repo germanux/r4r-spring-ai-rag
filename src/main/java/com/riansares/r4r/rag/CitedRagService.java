@@ -87,13 +87,7 @@ public class CitedRagService {
     private Prompt buildPrompt(String question, List<MarkdownChunk> chunks) {
         StringBuilder promptText = new StringBuilder();
 
-        promptText.append("""
-        You are a helpful assistant. Answer using only the provided evidence.
-        Always respond in the same language as the user's question.
-        Give a clear, concise answer in 2–3 sentences, followed by the relevant citations.
-        Never return only a citation such as [S1]; always include a meaningful explanation.
-    
-        """);
+        promptText.append("You are a helpful assistant. Use the following evidence to answer the question.\n\n*****\n\n");
         for (int i = 0; i < chunks.size(); i++) {
             MarkdownChunk chunk = chunks.get(i);
             String label = "[S" + (i + 1) + "]";
@@ -101,14 +95,15 @@ public class CitedRagService {
             promptText.append(chunk.content()).append("\n\n");
         }
 
-        promptText.append("Question: ").append(question).append("\n\n");
+        promptText.append("*****\nQuestion: ").append(question).append("\n\n");
         promptText.append("""
-        Answer using only the supplied evidence.
-        If the evidence is insufficient or unrelated to the question,
-        answer exactly:
+        *****
+        Answer the user's question using only the supplied evidence.
+        Respond in the same language as the question, using 2–5 clear, concise sentences.
+        Include relevant citations [S1], [S2], etc. after the explanation, never as the entire answer.
+    
+        If the evidence does not support an answer, respond with exactly:
         __R4R_ABSTAIN__
-
-        Otherwise answer with citations in the format [S1], [S2], etc.:
         """);
 
         return new Prompt(promptText.toString());
