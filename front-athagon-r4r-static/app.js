@@ -66,6 +66,8 @@
   const answerText = $("answerText");
   const citations = $("citations");
   const citationCount = $("citationCount");
+  const loadingState = $("loadingState");
+  const sourcesDetails = $("sourcesDetails");
 
   const normalizeBaseUrl = (value) => (value || "").trim().replace(/\/+$/, "");
 
@@ -143,6 +145,14 @@
 
     setLoading(true);
     renderEmpty();
+    if (loadingState) {
+      emptyState.hidden = true;
+      loadingState.hidden = false;
+      answerText.textContent = "";
+      citations.replaceChildren();
+      citationCount.textContent = "";
+      sourcesDetails.open = false;
+    }
     apiState.textContent = messages.querying;
     resultMode.textContent = messages.inProgress;
     httpStatus.textContent = "…";
@@ -190,7 +200,7 @@
       renderResult(payload);
       apiState.textContent = "online";
       resultMode.textContent = messages.result;
-      resultContent.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (isEnglish) resultContent.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       const duration = Math.round(performance.now() - started);
       elapsed.textContent = `${duration} ms`;
@@ -210,6 +220,10 @@
 
   function setLoading(loading) {
     sendButton.disabled = loading;
+    if (loadingState) {
+      clearButton.disabled = loading;
+      if (!loading) loadingState.hidden = true;
+    }
     sendButton.classList.toggle("is-loading", loading);
     spinner.setAttribute("aria-hidden", loading ? "false" : "true");
     sendLabel.textContent = loading ? messages.loading : messages.send;
@@ -219,6 +233,7 @@
     emptyState.hidden = false;
     resultContent.hidden = true;
     errorBox.hidden = true;
+    if (loadingState) loadingState.hidden = true;
     httpStatus.textContent = "—";
     resultMode.textContent = messages.waiting;
     elapsed.textContent = "";

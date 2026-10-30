@@ -8,8 +8,9 @@
   <meta name="theme-color" content="#334357"/>
   <title>Athagon Labs · Riansares 4R · RAG con citas</title>
   <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="styles-es.css"/>
 </head>
-<body>
+<body class="spanish-demo">
 <header class="site-header">
   <div class="shell nav-shell">
     <a class="brand" href="https://athagon.tech/" aria-label="Athagon Labs">
@@ -29,68 +30,18 @@
 <main>
   <section class="hero">
     <div class="shell hero-shell">
-      <div class="hero-copy panel compact-hero">
-        <div class="eyebrow">Athagon Labs · IA aplicada a negocio real</div>
-        <h1>Riansares 4R <span>· IA con citas para reformas</span></h1>
-        <p class="hero-lede">
-          Asistente experimental conectado a la base de conocimiento de <strong>Riansares 4R</strong>.
-          Está orientado a <strong>reformas, fontanería, impermeabilización, albañilería, materiales,
-          mediciones y presupuestos orientativos</strong>. Responde con fuentes trazables o se abstiene si
-          la consulta no encaja con la documentación disponible.
-        </p>
-
-        <div class="status-row" aria-label="Características principales">
-          <span>RAG</span>
-          <span>IA local</span>
-          <span>Citas trazables</span>
-          <span>Abstención</span>
-          <span>Dominio: reformas</span>
-        </div>
-
-        <div class="hero-actions">
-          <a class="btn primary" href="#demo">Probar la demo</a>
-          <a class="btn ghost" href="#arquitectura">Ver arquitectura</a>
-        </div>
-      </div>
-
-      <aside class="hero-side panel">
-        <div class="side-kicker">Qué puedes preguntarle</div>
-        <ul class="hero-list">
-          <li><strong>Orientación inicial:</strong> qué información hace falta para valorar una obra.</li>
-          <li><strong>Conceptos técnicos:</strong> diferencias entre solera, solado, morteros o sistemas.</li>
-          <li><strong>Impermeabilización y reparación:</strong> humedades, cubiertas, filtraciones y acabados.</li>
-          <li><strong>Presupuestos orientativos:</strong> alcance, partidas y criterios de medición.</li>
-        </ul>
-        <div class="hero-note">
-          <strong>Importante:</strong> no es un chat genérico. La demo está pensada para preguntas relacionadas con la actividad de Riansares 4R.
-        </div>
-      </aside>
-    </div>
-
-    <div class="shell hero-cards-shell">
-      <div class="hero-info-grid" aria-label="Resumen funcional de la demo">
-        <article>
-          <span class="hero-card-kicker">Ámbito</span>
-          <h2>Consultas de obra real</h2>
-          <p>FAQ, criterios técnicos, presupuestos, casos reales y documentación de Riansares 4R.</p>
-        </article>
-        <article>
-          <span class="hero-card-kicker">Qué devuelve</span>
-          <h2>Respuesta + fuentes</h2>
-          <p>Recupera evidencia relevante, responde con apoyo documental y muestra citas por documento y sección.</p>
-        </article>
-        <article>
-          <span class="hero-card-kicker">Límite</span>
-          <h2>No inventa fuera de tema</h2>
-          <p>Si la pregunta se sale del ámbito o no hay base suficiente, responde con abstención.</p>
-        </article>
+      <div class="hero-copy compact-hero">
+        <div class="status-row" aria-label="Características principales"><span>IA local</span><span>Citas</span><span>ES / EN</span></div>
+        <h1>RAG con respuestas <span>verificables</span></h1>
+        <p class="hero-stack">Spring Boot · Spring AI · pgvector · Ollama</p>
+        <p class="hero-lede">Respuestas basadas en documentación real, con citas y abstenciones.</p>
+        <div class="hero-actions"><a class="btn primary" href="#demo">Probar la demo <span aria-hidden="true">↓</span></a></div>
       </div>
     </div>
   </section>
 
   <section class="section demo-section" id="demo">
     <div class="shell">
-      <div class="section-tab">PRUEBA EL RAG</div>
       <div class="demo-grid">
         <article class="query-panel panel">
           <div class="panel-head">
@@ -101,17 +52,7 @@
             <span class="api-state" id="apiState">listo</span>
           </div>
 
-          <div class="helper-strip">
-            <div><strong>Ámbito:</strong> reformas, obra, materiales, patologías, mediciones y presupuestos.</div>
-            <div><strong>Atajo:</strong> usa <kbd>Ctrl</kbd> + <kbd>Enter</kbd> para enviar.</div>
-          </div>
-
-          <label for="question">Escribe una pregunta</label>
-          <p class="query-hint">
-            Cuanto más concreta sea la consulta, mejor: tipo de problema, contexto, ubicación, medidas,
-            material o resultado que esperas.
-          </p>
-
+          <label for="question" class="visually-hidden">Escribe una pregunta</label>
           <textarea
             id="question"
             rows="6"
@@ -120,7 +61,7 @@
           ></textarea>
 
           <div class="query-meta">
-            <span class="input-tip">Consejo: describe el problema y el objetivo en una sola pregunta.</span>
+            <span>Ctrl + Enter para enviar</span>
             <span id="questionCount" class="question-count">0 / 700</span>
           </div>
 
@@ -136,20 +77,16 @@
           <div class="examples-box">
             <div class="examples-head">
               <div class="examples-title">Ejemplos rápidos</div>
-              <span class="examples-subtitle">Pulsa uno y se lanzará automáticamente</span>
             </div>
             <div class="sample-grid" aria-label="Preguntas de ejemplo">
               <button class="sample-card sample" data-question="¿Qué información hace falta para una primera orientación de una reforma?">
                 <span class="sample-title">Primera orientación</span>
-                <span class="sample-desc">Qué datos pedir antes de presupuestar.</span>
               </button>
               <button class="sample-card sample" data-question="¿Cuál es la diferencia entre solera y solado?">
                 <span class="sample-title">Solera vs. solado</span>
-                <span class="sample-desc">Consulta técnica sencilla y concreta.</span>
               </button>
               <button class="sample-card sample" data-question="Explica la fotosíntesis de las plantas y la función de los cloroplastos.">
                 <span class="sample-title">Fuera de dominio</span>
-                <span class="sample-desc">Demuestra que el sistema sabe abstenerse.</span>
               </button>
             </div>
           </div>
@@ -183,11 +120,15 @@
               Verás la respuesta, si el sistema se ha abstenido y las fuentes recuperadas
               desde la documentación de Riansares 4R.
             </p>
-            <ul class="empty-list">
-              <li>Respuesta apoyada en evidencia.</li>
-              <li>Fuentes con trazabilidad.</li>
-              <li>Abstención cuando no toca responder.</li>
-            </ul>
+          </div>
+
+          <div id="loadingState" class="loading-state" role="status" aria-live="polite" hidden>
+            <span class="loading-badge">CONSULTA EN CURSO</span>
+            <div class="loading-icon" aria-hidden="true">⌕</div>
+            <h3>Preparando una respuesta con fuentes…</h3>
+            <p>Consultando documentos de Riansares 4R</p>
+            <div class="loading-track" aria-hidden="true"><span></span></div>
+            <div class="skeleton-lines" aria-hidden="true"><span></span><span></span><span></span></div>
           </div>
 
           <div id="resultContent" class="result-content" hidden>
@@ -204,13 +145,10 @@
               <div id="answerText" class="answer-text"></div>
             </div>
 
-            <div class="citations-block">
-              <div class="citations-head">
-                <h3>Fuentes</h3>
-                <span id="citationCount"></span>
-              </div>
+            <details class="citations-block" id="sourcesDetails">
+              <summary class="citations-head"><strong>Fuentes</strong><span id="citationCount"></span></summary>
               <div id="citations" class="citations"></div>
-            </div>
+            </details>
           </div>
 
           <div id="errorBox" class="error-box" hidden></div>
