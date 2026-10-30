@@ -76,6 +76,47 @@
 
   updateCounter();
 
+  const tryDemoButton = $("tryDemoButton");
+  if (tryDemoButton) {
+    tryDemoButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      question.value = "¿Qué tipo de reformas hace esta empresa? ¿Casas y oficinas?";
+      updateCounter();
+      document.getElementById("demo").scrollIntoView({ behavior: "smooth", block: "start" });
+      sendQuestion();
+    });
+  }
+
+  loadRuntimeInfo();
+
+  function shortModelName(model) {
+    const value = (model || "").toLowerCase();
+    if (value.includes("qwen2.5") || value.includes("qwen2-5") || value.includes("qwen 2.5")) return "Qwen 2.5 7B";
+    return model || "No disponible";
+  }
+
+  async function loadRuntimeInfo() {
+    if (!(document.getElementById("runtimeModel"))) return;
+    try {
+      const response = await fetch(`${normalizeBaseUrl(apiBaseUrl.value)}${ENDPOINT_PATH.replace("/answers", "/runtime")}`, { headers: { Accept: "application/json" } });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const info = await response.json();
+      $("runtimeModel").textContent = shortModelName(info.generationModel);
+      $("runtimeModelFull").textContent = info.generationModel || "No disponible";
+      $("runtimeEmbeddings").textContent = `${info.embeddingModel || "—"} · ${info.embeddingDimensions || "—"} dimensiones`;
+      $("runtimeRetrieval").textContent = `Top-K ${info.topK} · score mínimo ${info.minScore}`;
+      $("runtimeVersions").textContent = `Java ${info.javaVersion || "—"} · Spring Boot ${info.springBootVersion || "—"} · Spring AI ${info.springAiVersion || "—"}`;
+      $("runtimeDeployment").textContent = info.deployment || "No disponible";
+    } catch {
+      $("runtimeModel").textContent = "Qwen 2.5 7B";
+      $("runtimeModelFull").textContent = "No disponible";
+      $("runtimeEmbeddings").textContent = "No disponible";
+      $("runtimeRetrieval").textContent = "No disponible";
+      $("runtimeVersions").textContent = "No disponibles";
+      $("runtimeDeployment").textContent = "No disponible";
+    }
+  }
+
   document.querySelectorAll(".sample").forEach((button) => {
     button.addEventListener("click", async () => {
       if (sendButton.disabled) return;
@@ -92,6 +133,7 @@
     localStorage.setItem(STORAGE_KEY, value);
     apiBaseUrl.value = value;
     apiState.textContent = messages.saved;
+    loadRuntimeInfo();
   });
 
   clearButton.addEventListener("click", () => {
