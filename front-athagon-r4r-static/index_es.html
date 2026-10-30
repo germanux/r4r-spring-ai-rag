@@ -35,7 +35,7 @@
         <h1>RAG con respuestas <span>verificables</span></h1>
         <p class="hero-stack">Spring Boot · Spring AI · pgvector · Ollama</p>
         <p class="hero-lede">Respuestas basadas en documentación real, con citas y abstenciones.</p>
-        <div class="hero-actions"><a class="btn primary" href="#demo">Probar la demo <span aria-hidden="true">↓</span></a></div>
+        <div class="hero-actions"><a class="btn primary" href="#demo" id="tryDemoButton">Probar la demo <span aria-hidden="true">↓</span></a></div>
       </div>
     </div>
   </section>
@@ -71,12 +71,12 @@
               <span id="spinner" class="spinner" aria-hidden="true"></span>
             </button>
             <button id="clearButton" type="button" class="btn ghost">Limpiar</button>
-            <span id="elapsed" class="elapsed"></span>
+
           </div>
 
           <div class="examples-box">
             <div class="examples-head">
-              <div class="examples-title">Ejemplos rápidos</div>
+              <div class="examples-title">Más ejemplos rápidos</div>
             </div>
             <div class="sample-grid" aria-label="Preguntas de ejemplo">
               <button class="sample-card sample" data-question="¿Qué información hace falta para una primera orientación de una reforma?">
@@ -87,6 +87,9 @@
               </button>
               <button class="sample-card sample" data-question="Explica la fotosíntesis de las plantas y la función de los cloroplastos.">
                 <span class="sample-title">Fuera de dominio</span>
+              </button>
+              <button class="sample-card sample" data-question="¿Qué tipo de reformas hace esta empresa? ¿Casas y oficinas?">
+                <span class="sample-title">Tipos de reforma</span>
               </button>
             </div>
           </div>
@@ -133,6 +136,7 @@
 
           <div id="resultContent" class="result-content" hidden>
             <div class="decision-row">
+              <span id="elapsed" class="elapsed"></span>
               <span id="decisionPill" class="decision-pill">RESPUESTA</span>
               <span id="decisionText"></span>
             </div>
@@ -161,49 +165,11 @@
     <div class="shell">
       <div class="section-tab">ARQUITECTURA</div>
       <div class="architecture panel">
-        <div class="arch-flow">
-          <div class="arch-node">
-            <span class="node-id">01</span>
-            <strong>Web de demo</strong>
-            <small>athagon.tech/r4r-rag</small>
-          </div>
-          <span class="arrow">→</span>
-          <div class="arch-node accent">
-            <span class="node-id">02</span>
-            <strong>API RAG</strong>
-            <small>Spring Boot · Spring AI</small>
-          </div>
-          <span class="arrow">→</span>
-          <div class="arch-node">
-            <span class="node-id">03</span>
-            <strong>Base vectorial</strong>
-            <small>PostgreSQL · pgvector</small>
-          </div>
-          <span class="arrow">→</span>
-          <div class="arch-node llm">
-            <span class="node-id">04</span>
-            <strong>Ollama</strong>
-            <small>LLM local</small>
-          </div>
-        </div>
-
-        <div class="arch-notes">
-          <article>
-            <h3>Recuperación</h3>
-            <p>La consulta se transforma en embedding y se compara contra fragmentos sobre reformas, materiales y presupuestos.</p>
-          </article>
-          <article>
-            <h3>Grounding</h3>
-            <p>Los textos recuperados se etiquetan y se entregan al modelo como contexto verificable para responder.</p>
-          </article>
-          <article>
-            <h3>Abstención</h3>
-            <p>Si la pregunta no encaja con la documentación de Riansares 4R, el sistema devuelve abstención.</p>
-          </article>
-          <article>
-            <h3>Despliegue</h3>
-            <p>La API y PostgreSQL van en Docker; la inferencia se apoya en Ollama con modelo local conectado a la demo.</p>
-          </article>
+        <div class="arch-flow arch-steps">
+          <details class="arch-step"><summary><span class="node-id">01</span><strong>Web de demo</strong><small>athagon.tech/r4r-rag</small></summary><p>Tu pregunta entra desde la interfaz web.</p></details>
+          <details class="arch-step accent"><summary><span class="node-id">02</span><strong>API RAG</strong><small>Spring Boot · Spring AI</small></summary><p>Valida la consulta, recupera contexto y solicita una respuesta al modelo.</p></details>
+          <details class="arch-step"><summary><span class="node-id">03</span><strong>Base vectorial</strong><small>PostgreSQL · pgvector</small></summary><p>Busca fragmentos relevantes en la documentación de Riansares 4R.</p></details>
+          <details class="arch-step llm"><summary><span class="node-id">04</span><strong>Ollama</strong><small>LLM local</small></summary><p>Genera una respuesta basada en el contexto recuperado.</p></details>
         </div>
       </div>
 
@@ -216,38 +182,17 @@
           <span class="runtime-badge">2026</span>
         </div>
         <div class="runtime-grid">
-          <div>
-            <span>Modelo generativo</span>
-            <strong>Qwen3 Coder Next 80B</strong>
-          </div>
-          <div>
-            <span>Embeddings</span>
-            <strong>nomic-embed-text · 768 dimensiones</strong>
-          </div>
-          <div>
-            <span>Recuperación</span>
-            <strong>Top-K 5 · score mínimo 0.64</strong>
-          </div>
-          <div>
-            <span>Backend</span>
-            <strong>Java · Spring Boot · Spring AI</strong>
-          </div>
-          <div>
-            <span>Datos</span>
-            <strong>PostgreSQL 16 · pgvector</strong>
-          </div>
-          <div>
-            <span>Despliegue</span>
-            <strong>Docker Compose · Synology</strong>
-          </div>
+          <div><span>Backend</span><strong id="runtimeBackend">Java · Spring Boot · Spring AI</strong></div>
+          <div><span>Modelo LLM</span><strong id="runtimeModel">Cargando configuración…</strong></div>
+          <div><span>Datos</span><strong id="runtimeData">Cargando configuración…</strong></div>
         </div>
         <details class="config-details">
           <summary>Ver configuración de runtime</summary>
-          <div class="config-strip">
-            <code>RAG_GENERATION_MODEL=qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest</code>
-            <code>RAG_EMBEDDING_MODEL=nomic-embed-text</code>
-            <code>RAG_EMBEDDING_DIMENSIONS=768</code>
-            <code>r4r.rag.retrieval.min-score=0.64</code>
+          <div class="config-grid" id="runtimeConfig">
+            <div><span>Embeddings</span><strong id="runtimeEmbeddings">—</strong></div>
+            <div><span>Recuperación</span><strong id="runtimeRetrieval">—</strong></div>
+            <div><span>Versiones</span><strong id="runtimeVersions">—</strong></div>
+            <div><span>Despliegue</span><strong id="runtimeDeployment">—</strong></div>
           </div>
         </details>
       </div>
