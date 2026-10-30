@@ -48,15 +48,20 @@ public class CitedRagService {
      * @return the result with answer, abstention flag, and citations
      */
     public RagResult answer(String question) {
-        validateQuestion(question);
+        return answer(question, null, null);
+    }
 
-        List<MarkdownChunk> chunks = retrieveEvidence(question);
+    public RagResult answer(String question, String retrievalQuestion, String responseLanguage) {
+        validateQuestion(question);
+        String searchQuestion = retrievalQuestion == null || retrievalQuestion.isBlank()
+                ? question : retrievalQuestion;
+        List<MarkdownChunk> chunks = retrieveEvidence(searchQuestion);
 
         if (chunks.isEmpty()) {
             return RagResult.abstain();
         }
 
-        Prompt prompt = buildPrompt(  question  + "\n/no_think", chunks);
+        Prompt prompt = buildPrompt(question + "\n/no_think", chunks, responseLanguage);
         ChatResponse response = chatModel.call(prompt);
         String answer = extractAnswer(response);
 
@@ -85,7 +90,7 @@ public class CitedRagService {
                 minScore);
     }
 
-    private Prompt buildPrompt(String question, List<MarkdownChunk> chunks) {
+    private Prompt buildPrompt(String question, List<MarkdownChunk> chunks, String responseLanguage) {
         StringBuilder promptText = new StringBuilder();
 
         promptText.append("You are a helpful assistant. Use the following evidence to answer the question.\n\n*****\n\n");
@@ -97,6 +102,11 @@ public class CitedRagService {
         }
 
         promptText.append("*****\nQuestion: ").append(question).append("\n\n");
+        if ("en".equalsIgnoreCase(responseLanguage)) {
+            promptText.append("Respond in English.\n");
+        } else if ("es".equalsIgnoreCase(responseLanguage)) {
+            promptText.append("Respond in Spanish.\n");
+        }
         promptText.append("""
         *****
         Answer the user's question using only the supplied evidence.

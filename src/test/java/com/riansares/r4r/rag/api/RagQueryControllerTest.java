@@ -87,6 +87,22 @@ class RagQueryControllerTest {
     }
 
     @Test
+    void acceptsEnglishRequestWithoutChangingCitationMetadata() throws Exception {
+        when(citedRagService.answer("How much?", "¿Cuánto cuesta?", "en"))
+                .thenReturn(new com.riansares.r4r.rag.RagResult("It depends. [S1]", false,
+                        List.of(new com.riansares.r4r.rag.Citation("[S1]", "baño.md", List.of("Reformas"), 1))));
+        mockMvc.perform(post("/api/rag/answers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new RagQueryRequest("How much?", "¿Cuánto cuesta?", "en"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.answer", is("It depends. [S1]")))
+                .andExpect(jsonPath("$.abstained", is(false)))
+                .andExpect(jsonPath("$.citations[0].source", is("baño.md")))
+                .andExpect(jsonPath("$.citations[0].headingPath[0]", is("Reformas")))
+                .andExpect(jsonPath("$.citations[0].ordinal", is(1)));
+    }
+
+    @Test
     void returns400WhenQuestionIsNull() throws Exception {
         RagQueryRequest request = new RagQueryRequest(null);
 

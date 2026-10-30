@@ -25,7 +25,16 @@ public class RagQueryController {
             return ResponseEntity.badRequest().build();
         }
 
-        com.riansares.r4r.rag.RagResult result = citedRagService.answer(request.question());
+        if (request.responseLanguage() != null && !request.responseLanguage().isBlank()
+                && !request.responseLanguage().equalsIgnoreCase("en")
+                && !request.responseLanguage().equalsIgnoreCase("es")) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        com.riansares.r4r.rag.RagResult result = request.retrievalQuestion() == null
+                && request.responseLanguage() == null
+                ? citedRagService.answer(request.question())
+                : citedRagService.answer(request.question(), request.retrievalQuestion(), request.responseLanguage());
 
         List<RagQueryResponse.Citation> citations = convertCitations(result.citations());
 

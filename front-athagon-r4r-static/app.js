@@ -7,6 +7,41 @@
   const ENDPOINT_PATH = "/api/rag/answers";
   const STORAGE_KEY = "r4r-rag-api-base-url";
 
+  const isEnglish = document.documentElement.lang.toLowerCase().startsWith("en");
+  const messages = isEnglish ? {
+    saved: "endpoint saved", copied: "Copied", copy: "Copy", querying: "querying",
+    inProgress: "query in progress", result: "RAG response", failed: "the query failed",
+    loading: "Querying…", send: "Ask", waiting: "waiting for a query",
+    abstention: "ABSTENTION", answer: "ANSWER",
+    noEvidence: "There is not enough evidence to answer reliably.",
+    evidence: "Answer generated from retrieved evidence.",
+    abstained: "The system abstained from answering.", emptyAnswer: "Empty answer.",
+    noCitationsAbstained: "No citations are returned because the system abstained.",
+    noCitations: "No citations were returned.", unknownSource: "unknown source",
+    noHeading: "No heading path", ordinal: "Chunk ordinal",
+    timeout: "The query exceeded the 120 second time limit.",
+    invalidJson: (status) => `HTTP ${status}: the response is not valid JSON.`,
+    httpError: (status) => `Request failed (HTTP ${status}).`,
+    cors: "If the API is on a different domain or subdomain, check HTTPS, DNS and CORS for https://athagon.tech.",
+    sources: (count) => `${count} source${count === 1 ? "" : "s"}`
+  } : {
+    saved: "endpoint guardado", copied: "Copiado", copy: "Copiar", querying: "consultando",
+    inProgress: "consulta en curso", result: "respuesta RAG", failed: "la consulta ha fallado",
+    loading: "Consultando…", send: "Preguntar", waiting: "esperando una consulta",
+    abstention: "ABSTENCIÓN", answer: "RESPUESTA",
+    noEvidence: "No hay evidencia suficiente para responder con seguridad.",
+    evidence: "Respuesta generada a partir de la evidencia recuperada.",
+    abstained: "El sistema se ha abstenido de responder.", emptyAnswer: "Respuesta vacía.",
+    noCitationsAbstained: "No se devuelven citas porque el sistema se ha abstenido.",
+    noCitations: "No se han devuelto citas.", unknownSource: "fuente desconocida",
+    noHeading: "Sin ruta de encabezados", ordinal: "Ordinal del fragmento",
+    timeout: "La consulta ha superado el tiempo máximo de 120 segundos.",
+    invalidJson: (status) => `HTTP ${status}: la respuesta no es JSON válido.`,
+    httpError: (status) => `HTTP ${status}`,
+    cors: "Si la API está en otro dominio o subdominio, revisa HTTPS, DNS y CORS para https://athagon.tech.",
+    sources: (count) => `${count} fuente${count === 1 ? "" : "s"}`
+  };
+
   const $ = (id) => document.getElementById(id);
 
   const question = $("question");
@@ -41,6 +76,7 @@
 
   document.querySelectorAll(".sample").forEach((button) => {
     button.addEventListener("click", async () => {
+      if (sendButton.disabled) return;
       question.value = button.dataset.question || "";
       updateCounter();
       question.focus();
@@ -53,7 +89,7 @@
     if (!value) return;
     localStorage.setItem(STORAGE_KEY, value);
     apiBaseUrl.value = value;
-    apiState.textContent = "endpoint guardado";
+    apiState.textContent = messages.saved;
   });
 
   clearButton.addEventListener("click", () => {
@@ -80,14 +116,14 @@
       try {
         await navigator.clipboard.writeText(text);
         const original = copyAnswerButton.textContent;
-        copyAnswerButton.textContent = "Copiado";
+        copyAnswerButton.textContent = messages.copied;
         setTimeout(() => {
           copyAnswerButton.textContent = original;
         }, 1200);
       } catch {
         copyAnswerButton.textContent = "Error";
         setTimeout(() => {
-          copyAnswerButton.textContent = "Copiar";
+          copyAnswerButton.textContent = messages.copy;
         }, 1200);
       }
     });
@@ -107,8 +143,8 @@
 
     setLoading(true);
     renderEmpty();
-    apiState.textContent = "consultando";
-    resultMode.textContent = "consulta en curso";
+    apiState.textContent = messages.querying;
+    resultMode.textContent = messages.inProgress;
     httpStatus.textContent = "…";
 
     const controller = new AbortController();
@@ -116,13 +152,23 @@
     const started = performance.now();
 
     try {
+      let requestBody = { question: text };
+      if (isEnglish) {
+        let retrievalQuestion = text;
+        try {
+          retrievalQuestion = (await translateToSpanish(text, "en", controller.signal)).trim() || text;
+        } catch (error) {
+          if (error?.name === "AbortError") throw error;
+        }
+        requestBody = { question: text, retrievalQuestion, responseLanguage: "en" };
+      }
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json"
         },
-        body: JSON.stringify({ question: text }),
+        body: JSON.stringify(requestBody),
         signal: controller.signal
       });
 
@@ -134,27 +180,27 @@
       try {
         payload = await response.json();
       } catch {
-        throw new Error(`HTTP ${response.status}: la respuesta no es JSON válido.`);
+        throw new Error(messages.invalidJson(response.status));
       }
 
       if (!response.ok) {
-        throw new Error(payload?.message || payload?.error || `HTTP ${response.status}`);
+        throw new Error(isEnglish ? messages.httpError(response.status) : (payload?.message || payload?.error || messages.httpError(response.status)));
       }
 
       renderResult(payload);
       apiState.textContent = "online";
-      resultMode.textContent = "respuesta RAG";
+      resultMode.textContent = messages.result;
       resultContent.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       const duration = Math.round(performance.now() - started);
       elapsed.textContent = `${duration} ms`;
       apiState.textContent = "error";
-      resultMode.textContent = "la consulta ha fallado";
+      resultMode.textContent = messages.failed;
 
       renderError(
         error?.name === "AbortError"
-          ? "La consulta ha superado el tiempo máximo de 120 segundos."
-          : `${error?.message || error}\n\nSi la API está en otro dominio o subdominio, revisa HTTPS, DNS y CORS para https://athagon.tech.`
+          ? messages.timeout
+          : `${error?.message || error}\n\n${messages.cors}`
       );
     } finally {
       clearTimeout(timeout);
@@ -166,7 +212,7 @@
     sendButton.disabled = loading;
     sendButton.classList.toggle("is-loading", loading);
     spinner.setAttribute("aria-hidden", loading ? "false" : "true");
-    sendLabel.textContent = loading ? "Consultando…" : "Preguntar";
+    sendLabel.textContent = loading ? messages.loading : messages.send;
   }
 
   function renderEmpty() {
@@ -174,7 +220,7 @@
     resultContent.hidden = true;
     errorBox.hidden = true;
     httpStatus.textContent = "—";
-    resultMode.textContent = "esperando una consulta";
+    resultMode.textContent = messages.waiting;
     elapsed.textContent = "";
   }
 
@@ -194,23 +240,23 @@
     errorBox.hidden = true;
     resultContent.hidden = false;
 
-    decisionPill.textContent = abstained ? "ABSTENCIÓN" : "RESPUESTA";
+    decisionPill.textContent = abstained ? messages.abstention : messages.answer;
     decisionPill.classList.toggle("abstain", abstained);
     decisionText.textContent = abstained
-      ? "No hay evidencia suficiente para responder con seguridad."
-      : "Respuesta generada a partir de la evidencia recuperada.";
+      ? messages.noEvidence
+      : messages.evidence;
 
-    answerText.textContent = answer || (abstained ? "El sistema se ha abstenido de responder." : "Respuesta vacía.");
+    answerText.textContent = answer || (abstained ? messages.abstained : messages.emptyAnswer);
 
-    citationCount.textContent = `${sourceList.length} fuente${sourceList.length === 1 ? "" : "s"}`;
+    citationCount.textContent = messages.sources(sourceList.length);
     citations.replaceChildren();
 
     if (!sourceList.length) {
       const note = document.createElement("div");
       note.className = "citation";
       note.textContent = abstained
-        ? "No se devuelven citas porque el sistema se ha abstenido."
-        : "No se han devuelto citas.";
+        ? messages.noCitationsAbstained
+        : messages.noCitations;
       citations.appendChild(note);
       return;
     }
@@ -228,20 +274,20 @@
 
       const source = document.createElement("span");
       source.className = "citation-source";
-      source.textContent = citation?.source || "fuente desconocida";
+      source.textContent = citation?.source || messages.unknownSource;
 
       top.append(label, source);
 
       const path = document.createElement("div");
       path.className = "citation-path";
       const headingPath = Array.isArray(citation?.headingPath) ? citation.headingPath : [];
-      path.textContent = headingPath.length ? headingPath.join(" › ") : "Sin ruta de encabezados";
+      path.textContent = headingPath.length ? headingPath.join(" › ") : messages.noHeading;
 
       const ordinal = document.createElement("div");
       ordinal.className = "citation-ordinal";
       ordinal.textContent = Number.isInteger(citation?.ordinal)
-        ? `Ordinal del fragmento: ${citation.ordinal}`
-        : "Ordinal del fragmento: —";
+        ? `${messages.ordinal}: ${citation.ordinal}`
+        : `${messages.ordinal}: —`;
 
       card.append(top, path, ordinal);
       citations.appendChild(card);
@@ -253,7 +299,7 @@
     questionCount.textContent = `${question.value.length} / 700`;
   }
 
-  async function translateToSpanish(question, sourceLang = "en") {
+  async function translateToSpanish(question, sourceLang = "en", signal) {
     if (sourceLang === "es") return question;
 
     const params = new URLSearchParams({
@@ -262,7 +308,8 @@
     });
 
     const response = await fetch(
-        `https://api.mymemory.translated.net/get?${params}`
+        `https://api.mymemory.translated.net/get?${params}`,
+        { signal }
     );
 
     if (!response.ok) {

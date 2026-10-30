@@ -116,6 +116,43 @@ class CitedRagServiceTest {
         assertThat(result.citations()).isEmpty();
     }
 
+    @Test
+    void englishAnswerUsesSpanishRetrievalAndOriginalQuestionInPrompt() {
+        var chunk = new MarkdownChunk("fuente.md", List.of("Baño"), 2, "Reforma del baño");
+        when(knowledgeStore.search("¿Cuánto cuesta reformar el baño?", TEST_TOP_K, TEST_MIN_SCORE))
+                .thenReturn(List.of(chunk));
+        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("The renovation depends on the work. [S1]"));
+
+        var result = service.answer("How much does a bathroom renovation cost?",
+                "¿Cuánto cuesta reformar el baño?", "en");
+        var prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(knowledgeStore).search("¿Cuánto cuesta reformar el baño?", TEST_TOP_K, TEST_MIN_SCORE);
+        verify(chatModel).call(prompt.capture());
+        assertThat(prompt.getValue().getContents()).contains("How much does a bathroom renovation cost?", "Reforma del baño", "Respond in English.");
+        assertThat(prompt.getValue().getContents()).doesNotContain("¿Cuánto cuesta reformar el baño?");
+        assertThat(result.citations()).containsExactly(new Citation("[S1]", "fuente.md", List.of("Baño"), 2));
+    }
+
+    @Test
+    void englishRetrievalFallsBackToOriginalAndAbstainsWithoutEvidence() {
+        when(knowledgeStore.search("Question", TEST_TOP_K, TEST_MIN_SCORE)).thenReturn(List.of());
+        var result = service.answer("Question", " ", "en");
+        assertThat(result.abstention()).isTrue();
+        assertThat(result.citations()).isEmpty();
+        verify(chatModel, never()).call(any(Prompt.class));
+    }
+
+    @Test
+    void spanishRequestUsesOriginalQuestionAndSpanishPrompt() {
+        var chunk = new MarkdownChunk("doc.md", List.of(), 0, "Contenido");
+        when(knowledgeStore.search("Pregunta", TEST_TOP_K, TEST_MIN_SCORE)).thenReturn(List.of(chunk));
+        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Respuesta [S1]"));
+        service.answer("Pregunta", null, "es");
+        var prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(prompt.capture());
+        assertThat(prompt.getValue().getContents()).contains("Question: Pregunta", "Respond in Spanish.");
+    }
+
     private static ChatResponse chatResponse(String text) {
         return new ChatResponse(List.of(new Generation(new AssistantMessage(text))));
     }
