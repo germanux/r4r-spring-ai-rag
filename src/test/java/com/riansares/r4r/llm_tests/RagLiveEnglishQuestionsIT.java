@@ -1,4 +1,4 @@
-package com.riansares.r4r.rag;
+package com.riansares.r4r.llm_tests;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
