@@ -89,6 +89,14 @@
 
   loadRuntimeInfo();
 
+  function formatBytes(bytes) {
+    if (!bytes) return "0 B";
+    const units = ["B", "GB", "TB"];
+    let value = bytes, index = 0;
+    while (value >= 1024 && index < units.length - 1) { value /= 1024; index++; }
+    return `${value.toFixed(index ? 1 : 0)} ${units[index]}`;
+  }
+
   function shortModelName(model) {
     const value = (model || "").toLowerCase();
     if (value.includes("qwen2.5") || value.includes("qwen2-5") || value.includes("qwen 2.5")) return "Qwen 2.5 7B";
@@ -107,6 +115,10 @@
       $("runtimeRetrieval").textContent = `Top-K ${info.topK} · score mínimo ${info.minScore}`;
       $("runtimeVersions").textContent = `Java ${info.javaVersion || "—"} · Spring Boot ${info.springBootVersion || "—"} · Spring AI ${info.springAiVersion || "—"}`;
       $("runtimeDeployment").textContent = info.deployment || "No disponible";
+      const loaded = Array.isArray(info.loadedModels) ? info.loadedModels : [];
+      $("runtimeOllama").textContent = loaded.length
+        ? loaded.map((model) => `${model.name} (${model.parameterSize}; ${formatBytes(model.sizeBytes)} en memoria; ${formatBytes(model.vramBytes)} VRAM)`).join(" · ")
+        : "Sin modelos cargados o información no disponible";
     } catch {
       $("runtimeModel").textContent = "Qwen 2.5 7B";
       $("runtimeModelFull").textContent = "No disponible";
@@ -114,6 +126,7 @@
       $("runtimeRetrieval").textContent = "No disponible";
       $("runtimeVersions").textContent = "No disponibles";
       $("runtimeDeployment").textContent = "No disponible";
+      $("runtimeOllama").textContent = "Información no disponible";
     }
   }
 
