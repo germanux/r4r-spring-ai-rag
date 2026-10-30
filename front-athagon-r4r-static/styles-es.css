@@ -82,3 +82,4 @@
 .spanish-demo .elapsed { margin-left:auto; padding:5px 9px; border-radius:8px; background:#edf3f8; color:#586d84; font-size:.78rem; }
 @media(max-width:760px){.spanish-demo .arch-steps,.spanish-demo .config-grid{grid-template-columns:1fr}.spanish-demo .elapsed{margin-left:0}}
 .spanish-demo .runtime-host-info small { display:block; margin-top:7px; color:#718198; font-size:.78rem; line-height:1.4; }
+.spanish-demo .host-hardware { display:block; margin-top:7px; color:#718198; font-size:.78rem; line-height:1.4; }

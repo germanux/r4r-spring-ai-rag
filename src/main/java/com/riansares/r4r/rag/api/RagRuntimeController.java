@@ -57,7 +57,8 @@ public class RagRuntimeController {
         return new RuntimeInfo(generationModel, embeddingModel, embeddingDimensions,
                 retrieval.topK(), retrieval.minScore(), System.getProperty("java.version"),
                 SpringBootVersion.getVersion(), versionOf(ChatModel.class), databaseName,
-                "Docker Compose", loadedModels(), preloader.model(), modelStatus());
+                "Docker Compose", loadedModels(), preloader.model(), modelStatus(),
+                InferenceHost.identify(ollamaBaseUrl, generationModel));
     }
 
     private String modelStatus() {
@@ -116,7 +117,7 @@ public class RagRuntimeController {
 
     public record RuntimeInfo(String generationModel, String embeddingModel, String embeddingDimensions,
                               int topK, double minScore, String javaVersion, String springBootVersion,
-                              String springAiVersion, String database, String deployment, List<LoadedModel> loadedModels, String configuredModel, String modelStatus) { }
+                              String springAiVersion, String database, String deployment, List<LoadedModel> loadedModels, String configuredModel, String modelStatus, InferenceHost.Details inferenceHost) { }
 
     public record LoadedModel(String name, String parameterSize, long sizeBytes, long vramBytes) { }
 }

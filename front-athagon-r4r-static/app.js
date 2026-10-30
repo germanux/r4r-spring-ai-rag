@@ -119,7 +119,11 @@
       $("runtimeModel").textContent = info.configuredModel || info.generationModel || "No disponible";
       $("runtimeModelStatus").textContent = info.modelStatus || "Ollama no disponible";
       pollRuntimeWhileLoading(info.modelStatus);
-      $("runtimeModelFull").textContent = info.generationModel || "No disponible";
+      $("runtimeModelFull").textContent = info.generationModel || (isEnglish ? "Unavailable" : "No disponible");
+      const host = info.inferenceHost || {};
+      const hostNames = isEnglish ? { laptop: "ASUS laptop", desktop: "Main PC", unknown: "Unknown host" } : { laptop: "Portátil ASUS", desktop: "PC principal", unknown: "Equipo no identificado" };
+      $("runtimeHost").textContent = (hostNames[host.type] || hostNames.unknown) + (host.hostname ? ` (${host.hostname})` : "");
+      $("runtimeHardware").textContent = [host.gpu, host.ram && `RAM ${host.ram}`, host.cpu].filter(Boolean).join(" · ");
       $("runtimeEmbeddings").textContent = `${info.embeddingModel || "—"} · ${info.embeddingDimensions || "—"} dimensiones`;
       $("runtimeRetrieval").textContent = `Top-K ${info.topK} · score mínimo ${info.minScore}`;
       $("runtimeVersions").textContent = `Java ${info.javaVersion || "—"} · Spring Boot ${info.springBootVersion || "—"} · Spring AI ${info.springAiVersion || "—"}`;
@@ -131,7 +135,9 @@
     } catch {
       $("runtimeModel").textContent = "No disponible";
       $("runtimeModelStatus").textContent = "Ollama no disponible";
-      $("runtimeModelFull").textContent = "No disponible";
+      $("runtimeModelFull").textContent = isEnglish ? "Unavailable" : "No disponible";
+      $("runtimeHost").textContent = isEnglish ? "Unknown host" : "Equipo no identificado";
+      $("runtimeHardware").textContent = "";
       $("runtimeEmbeddings").textContent = "No disponible";
       $("runtimeRetrieval").textContent = "No disponible";
       $("runtimeVersions").textContent = "No disponibles";

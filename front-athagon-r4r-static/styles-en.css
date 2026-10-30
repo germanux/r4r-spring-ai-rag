@@ -66,3 +66,4 @@
 @keyframes en-appear { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
 @media(prefers-reduced-motion:reduce){.english-demo .loading-track span,.english-demo .skeleton-lines span,.english-demo .result-content,.english-demo .error-box{animation:none!important}}
 @media(max-width:760px){.english-demo .nav-shell{align-items:center}.english-demo .hero{padding-top:20px}.english-demo .query-panel,.english-demo .response-panel{min-height:0;padding:18px}.english-demo .panel-head,.english-demo .query-meta{flex-direction:row;align-items:center}.english-demo .sample-grid,.english-demo .arch-steps,.english-demo .config-grid{grid-template-columns:1fr}.english-demo .loading-state{min-height:280px}.english-demo .elapsed{margin-left:0}}
+.english-demo .host-hardware { display:block; margin-top:7px; color:#718198; font-size:.78rem; line-height:1.4; }
