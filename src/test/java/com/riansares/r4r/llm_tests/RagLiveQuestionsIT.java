@@ -53,7 +53,7 @@ class RagLiveQuestionsIT {
             Pattern.compile("^(?:\\[S\\d+\\][\\s,;:.]*)+$");
     private static final Pattern CITATION_REFERENCE = Pattern.compile("\\[S\\d+\\]");
 
-    public static final long SLEEP_WAIT = 22_000;
+    public static final long SLEEP_WAIT = 15_000;
     // 12 preguntas del dominio R4R y 3 preguntas ajenas para verificar abstención.
     private static final List<QuestionCase> CASES = List.of(
             new QuestionCase("Primera orientación", "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?", true),

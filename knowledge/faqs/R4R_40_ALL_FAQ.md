@@ -21,7 +21,7 @@ Las respuestas combinan el corpus canónico con información pública consultada
 
 ### FAQ-001 — ¿Qué información hace falta para una primera orientación?
 
-Ubicación, fotografías, medidas aproximadas, uso del espacio, problema, resultado esperado y plazo. La orientación inicial no sustituye visita ni medición.
+Para una primera orientación al solicitar un presupuesto, facilita ubicación, fotografías, medidas aproximadas, uso del espacio, problema, resultado esperado y plazo. La orientación inicial no sustituye visita ni medición.
 
 **Base:** BASE-CANONICA
 

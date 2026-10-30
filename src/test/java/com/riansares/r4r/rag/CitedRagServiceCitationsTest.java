@@ -39,7 +39,7 @@ class CitedRagServiceCitationsTest {
         MarkdownChunk chunk2 = new MarkdownChunk("doc2.md", List.of("Other"), 1, "Second content");
         when(knowledgeStore.search("test question", TEST_TOP_K, TEST_MIN_SCORE))
                 .thenReturn(List.of(chunk1, chunk2));
-        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Answer"));
+        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Answer [S1][S2]"));
 
         RagResult result = service.answer("test question");
 
@@ -59,7 +59,7 @@ class CitedRagServiceCitationsTest {
         MarkdownChunk chunk = new MarkdownChunk("guide.md", List.of("Building", "Roof"), 2, "Roof details");
         when(knowledgeStore.search("test question", TEST_TOP_K, TEST_MIN_SCORE))
                 .thenReturn(List.of(chunk));
-        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Answer"));
+        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Answer [S1]"));
 
         RagResult result = service.answer("test question");
 
@@ -76,7 +76,7 @@ class CitedRagServiceCitationsTest {
         MarkdownChunk chunk = new MarkdownChunk("doc.md", List.of("Section"), 0, "Content");
         when(knowledgeStore.search("test question", TEST_TOP_K, TEST_MIN_SCORE))
                 .thenReturn(List.of(chunk));
-        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Answer"));
+        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Answer [S1]"));
 
         RagResult result = service.answer("test question");
 
@@ -89,7 +89,7 @@ class CitedRagServiceCitationsTest {
         MarkdownChunk chunk = new MarkdownChunk("doc.md", List.of("Section"), 0, "Content");
         when(knowledgeStore.search("test question", TEST_TOP_K, TEST_MIN_SCORE))
                 .thenReturn(List.of(chunk));
-        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Answer"));
+        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Answer [S1]"));
 
         RagResult result = service.answer("test question");
 
@@ -104,12 +104,26 @@ class CitedRagServiceCitationsTest {
         MarkdownChunk chunk3 = new MarkdownChunk("doc3.md", List.of("C"), 2, "Content3");
         when(knowledgeStore.search("test question", TEST_TOP_K, TEST_MIN_SCORE))
                 .thenReturn(List.of(chunk1, chunk2, chunk3));
-        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Answer"));
+        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Answer [S1][S2][S3]"));
 
         RagResult result = service.answer("test question");
 
         assertThat(result.citations()).extracting(Citation::label)
                 .containsExactly("[S1]", "[S2]", "[S3]");
+    }
+
+    @Test
+    void returnsOnlyReferencedSourcesAndPreservesTheirOriginalLabels() {
+        when(knowledgeStore.search("test question", TEST_TOP_K, TEST_MIN_SCORE)).thenReturn(List.of(
+                new MarkdownChunk("a.md", List.of(), 0, "A"),
+                new MarkdownChunk("b.md", List.of(), 1, "B"),
+                new MarkdownChunk("c.md", List.of(), 2, "C")));
+        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Answer [S3, S1] and [S3]."));
+        RagResult result = service.answer("test question");
+        assertThat(result.answer()).isEqualTo("Answer [S3][S1] and [S3].");
+        assertThat(result.citations()).extracting(Citation::label).containsExactly("[S1]", "[S3]");
+        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Answer without references."));
+        assertThat(service.answer("test question").citations()).isEmpty();
     }
 
     private static ChatResponse chatResponse(String text) {

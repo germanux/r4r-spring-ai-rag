@@ -35,8 +35,8 @@ spring:
 r4r:
   rag:
     retrieval:
-      top-k: 5
-      min-score: 0.64
+      top-k: 3
+      min-score: 0.63
   api-security:
     # Protección ligera para la demo pública. No sustituye autenticación real.
     enabled: ${RAG_API_SECURITY_ENABLED:true}

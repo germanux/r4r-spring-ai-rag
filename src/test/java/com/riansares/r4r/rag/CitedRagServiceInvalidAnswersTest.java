@@ -142,6 +142,19 @@ class CitedRagServiceInvalidAnswersTest {
         }
     }
 
+    @Test
+    void recognizesModelAbstentionTokensInBothLanguages() {
+        for (String language : List.of("es", "en")) {
+            for (String answer : List.of("__R4R_ABSTAIN__", "__R4R_ABSTINERSE__", "__R4R_ABSTINENT__")) {
+                when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse(answer));
+                RagResult result = service.answer("test question", null, language);
+                assertThat(result.abstention()).as("%s: %s", language, answer).isTrue();
+                assertThat(result.answer()).isEmpty();
+                assertThat(result.citations()).isEmpty();
+            }
+        }
+    }
+
     private static ChatResponse chatResponse(String text) {
         return new ChatResponse(List.of(new Generation(new AssistantMessage(text))));
     }

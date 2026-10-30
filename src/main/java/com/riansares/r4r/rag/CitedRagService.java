@@ -22,7 +22,7 @@ public class CitedRagService {
     private final ChatModel chatModel;
     private final int retrievalTopK;
     private final double minScore;
-    private static final String ABSTAIN_TOKEN = "__R4R_ABSTAIN__";
+    private static final Pattern ABSTAIN_TOKEN = Pattern.compile("(?i)(?<![a-z0-9_])_*R4R_ABST(?:AIN|INERSE|INENT)_*(?![a-z0-9_])");
     private static final Pattern ONLY_CITATIONS =
             Pattern.compile("^(?:\\[S\\d+\\][\\s,;:.]*)+$");
     private static final Pattern REFERENCE_GROUP = Pattern.compile("\\[(S\\d+(?:\\s*,\\s*S\\d+)*)\\]");
@@ -94,8 +94,7 @@ public class CitedRagService {
 
         if (answer == null
                 || answer.isBlank()
-                || answer.trim().matches("(?i)^_*R4R_ABSTAIN_*$")
-                || answer.contains(ABSTAIN_TOKEN)
+                || ABSTAIN_TOKEN.matcher(answer).find()
                 || isNaturalAbstention(answer)) {
             return RagResult.abstain();
         }
@@ -103,7 +102,7 @@ public class CitedRagService {
         if (answer == null || answer.isBlank() || ONLY_CITATIONS.matcher(answer.trim()).matches()) {
             return RagResult.abstain();
         }
-        List<Citation> citations = buildCitations(chunks);
+        List<Citation> citations = buildCitations(chunks, answer);
 
         return RagResult.ofAnswer(answer, citations);
     }
@@ -179,9 +178,10 @@ public class CitedRagService {
         }
         promptText.append("""
         *****
-        Answer the user's question using only the supplied evidence.
-        Use 2–5 clear, concise sentences.
-        Include relevant citations [S1], [S2], etc. after the explanation, never as the entire answer.
+        Answer the question directly using only facts supported by the supplied evidence.
+        Use 1–3 concise sentences when sufficient. Do not invent facts, repeat yourself, or add tangential information.
+        Cite supporting sources using [S1], [S2], etc. only where relevant; do not cite unused sources.
+        Citations must not be the entire answer.
     
         If the evidence does not support an answer, respond with exactly:
         __R4R_ABSTAIN__
@@ -197,12 +197,14 @@ public class CitedRagService {
         return response.getResult().getOutput().getText();
     }
 
-    private List<Citation> buildCitations(List<MarkdownChunk> chunks) {
+    private List<Citation> buildCitations(List<MarkdownChunk> chunks, String answer) {
         List<Citation> citations = new ArrayList<>(chunks.size());
         for (int i = 0; i < chunks.size(); i++) {
             MarkdownChunk chunk = chunks.get(i);
             String label = "[S" + (i + 1) + "]";
-            citations.add(Citation.fromMarkdownChunk(label, chunk));
+            if (answer.contains(label)) {
+                citations.add(Citation.fromMarkdownChunk(label, chunk));
+            }
         }
         return List.copyOf(citations);
     }

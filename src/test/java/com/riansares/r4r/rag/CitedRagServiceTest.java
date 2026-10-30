@@ -69,7 +69,7 @@ class CitedRagServiceTest {
 
         when(knowledgeStore.search("test question", TEST_TOP_K, TEST_MIN_SCORE))
                 .thenReturn(List.of(chunk1, chunk2));
-        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Combined answer"));
+        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Combined answer [S1][S2]"));
 
         RagResult result = service.answer("test question");
 
@@ -80,8 +80,8 @@ class CitedRagServiceTest {
         assertThat(promptCaptor.getValue().getContents())
                 .containsSubsequence("[S1]\nFirst content", "[S2]\nSecond content", "Question: test question")
                 .contains("/no_think")
-                .contains("__R4R_ABSTAIN__");
-        assertThat(result.answer()).isEqualTo("Combined answer");
+                .contains("__R4R_ABSTAIN__", "1–3 concise sentences", "only facts supported");
+        assertThat(result.answer()).isEqualTo("Combined answer [S1][S2]");
         assertThat(result.abstention()).isFalse();
         assertThat(result.citations()).extracting(Citation::label)
                 .containsExactly("[S1]", "[S2]");
