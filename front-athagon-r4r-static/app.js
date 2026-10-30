@@ -80,7 +80,9 @@
   if (tryDemoButton) {
     tryDemoButton.addEventListener("click", (event) => {
       event.preventDefault();
-      question.value = "¿Qué tipo de reformas hace esta empresa? ¿Casas y oficinas?";
+      question.value = isEnglish
+        ? "What kinds of renovation work does this company do? Does it work on houses and offices?"
+        : "¿Qué tipo de reformas hace esta empresa? ¿Casas y oficinas?";
       updateCounter();
       document.getElementById("demo").scrollIntoView({ behavior: "smooth", block: "start" });
       sendQuestion();

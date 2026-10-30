@@ -8,8 +8,9 @@
   <meta name="theme-color" content="#334357"/>
   <title>Athagon Labs · Riansares 4R · RAG with citations</title>
   <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="styles-en.css"/>
 </head>
-<body>
+<body class="english-demo">
 <header class="site-header">
   <div class="shell nav-shell">
     <a class="brand" href="https://athagon.tech/" aria-label="Athagon Labs">
@@ -27,70 +28,16 @@
 </header>
 
 <main>
-  <section class="hero">
-    <div class="shell hero-shell">
-      <div class="hero-copy panel compact-hero">
-        <div class="eyebrow">Athagon Labs · Applied AI for real-world business</div>
-        <h1>Riansares 4R <span>· Evidence-backed AI for renovations</span></h1>
-        <p class="hero-lede">
-          An experimental assistant connected to the <strong>Riansares 4R</strong> knowledge base.
-          It focuses on <strong>renovations, plumbing, waterproofing, masonry, materials,
-          measurements and preliminary cost estimates</strong>. It provides traceable sources or abstains
-          when the available documentation does not support an answer.
-        </p>
-
-        <div class="status-row" aria-label="Key features">
-          <span>RAG</span>
-          <span>Local AI</span>
-          <span>Traceable citations</span>
-          <span>Abstention</span>
-          <span>Domain: renovations</span>
-        </div>
-
-        <div class="hero-actions">
-          <a class="btn primary" href="#demo">Try the demo</a>
-          <a class="btn ghost" href="#arquitectura">View architecture</a>
-        </div>
-      </div>
-
-      <aside class="hero-side panel">
-        <div class="side-kicker">What you can ask</div>
-        <ul class="hero-list">
-          <li><strong>Initial assessment:</strong> what information is needed to evaluate a renovation project.</li>
-          <li><strong>Technical concepts:</strong> differences between concrete subfloors, floor finishes, mortars and construction systems.</li>
-          <li><strong>Waterproofing and repairs:</strong> damp, roofs, leaks and finishes.</li>
-          <li><strong>Preliminary estimates:</strong> scope, line items and measurement criteria.</li>
-        </ul>
-        <div class="hero-note">
-          <strong>Important:</strong> this is not a general-purpose chatbot. The demo is designed for questions related to Riansares 4R's work.
-        </div>
-      </aside>
-    </div>
-
-    <div class="shell hero-cards-shell">
-      <div class="hero-info-grid" aria-label="Demo overview">
-        <article>
-          <span class="hero-card-kicker">Scope</span>
-          <h2>Real-world construction questions</h2>
-          <p>FAQs, technical criteria, estimates, real cases and Riansares 4R documentation.</p>
-        </article>
-        <article>
-          <span class="hero-card-kicker">Output</span>
-          <h2>Answer + sources</h2>
-          <p>Retrieves relevant evidence, generates a document-grounded answer and cites the source documents and sections.</p>
-        </article>
-        <article>
-          <span class="hero-card-kicker">Limitation</span>
-          <h2>No unsupported answers</h2>
-          <p>If a question is out of scope or lacks sufficient supporting evidence, the assistant abstains.</p>
-        </article>
-      </div>
-    </div>
-  </section>
+  <section class="hero"><div class="shell hero-shell"><div class="hero-copy compact-hero">
+    <div class="status-row" aria-label="Key features"><span>Local AI</span><span>Citations</span><span>ES / EN</span></div>
+    <h1>RAG with <span>verifiable answers</span></h1>
+    <p class="hero-stack">Spring Boot · Spring AI · pgvector · Ollama</p>
+    <p class="hero-lede">Answers based on real documentation, with citations and abstentions.</p>
+    <div class="hero-actions"><a class="btn primary" href="#demo" id="tryDemoButton">Try the demo <span aria-hidden="true">↓</span></a></div>
+  </div></div></section>
 
   <section class="section demo-section" id="demo">
     <div class="shell">
-      <div class="section-tab">TRY THE RAG</div>
       <div class="demo-grid">
         <article class="query-panel panel">
           <div class="panel-head">
@@ -101,17 +48,7 @@
             <span class="api-state" id="apiState">ready</span>
           </div>
 
-          <div class="helper-strip">
-            <div><strong>Scope:</strong> renovations, construction, materials, building defects, measurements and estimates.</div>
-            <div><strong>Shortcut:</strong> press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to submit.</div>
-          </div>
-
-          <label for="question">Enter your question</label>
-          <p class="query-hint">
-            The more specific your question, the better: describe the problem, context, location, dimensions,
-            materials or desired outcome.
-          </p>
-
+          <label for="question" class="visually-hidden">Enter a question</label>
           <textarea
             id="question"
             rows="6"
@@ -120,7 +57,7 @@
           ></textarea>
 
           <div class="query-meta">
-            <span class="input-tip">Tip: describe the problem and your goal in a single question.</span>
+            <span>Ctrl + Enter to submit</span>
             <span id="questionCount" class="question-count">0 / 700</span>
           </div>
 
@@ -130,26 +67,21 @@
               <span id="spinner" class="spinner" aria-hidden="true"></span>
             </button>
             <button id="clearButton" type="button" class="btn ghost">Clear</button>
-            <span id="elapsed" class="elapsed"></span>
           </div>
 
           <div class="examples-box">
             <div class="examples-head">
-              <div class="examples-title">Quick examples</div>
-              <span class="examples-subtitle">Select one to submit it automatically</span>
+              <div class="examples-title">More quick examples</div>
             </div>
             <div class="sample-grid" aria-label="Example questions">
               <button class="sample-card sample" data-question="What information is needed for an initial assessment of a renovation?">
                 <span class="sample-title">Initial assessment</span>
-                <span class="sample-desc">What to ask before preparing an estimate.</span>
               </button>
               <button class="sample-card sample" data-question="What is the difference between a concrete subfloor (solera) and floor tiling (solado)?">
                 <span class="sample-title">Subfloor vs. flooring</span>
-                <span class="sample-desc">A simple, specific technical question.</span>
               </button>
               <button class="sample-card sample" data-question="Explain photosynthesis in plants and the role of chloroplasts.">
                 <span class="sample-title">Out of scope</span>
-                <span class="sample-desc">Shows that the system knows when to abstain.</span>
               </button>
             </div>
           </div>
@@ -176,22 +108,16 @@
             <span class="http-status" id="httpStatus">—</span>
           </div>
 
-          <div class="empty-state" id="emptyState">
-            <div class="empty-icon">RAG</div>
-            <h3>Your answer will appear here</h3>
-            <p>
-              You will see the answer, whether the system abstained, and the sources retrieved
-              from the Riansares 4R documentation.
-            </p>
-            <ul class="empty-list">
-              <li>Evidence-backed answers.</li>
-              <li>Traceable sources.</li>
-              <li>Abstention when there is not enough evidence.</li>
-            </ul>
+          <div class="empty-state" id="emptyState"><div class="empty-icon">RAG</div><h3>Your answer will appear here</h3><p>Answers, abstentions and sources from Riansares 4R documentation.</p></div>
+          <div id="loadingState" class="loading-state" role="status" aria-live="polite" hidden>
+            <span class="loading-badge">QUERY IN PROGRESS</span><div class="loading-icon" aria-hidden="true">⌕</div>
+            <h3>Preparing an answer with sources…</h3><p>Searching Riansares 4R documents</p>
+            <div class="loading-track" aria-hidden="true"><span></span></div><div class="skeleton-lines" aria-hidden="true"><span></span><span></span><span></span></div>
           </div>
 
           <div id="resultContent" class="result-content" hidden>
             <div class="decision-row">
+              <span id="elapsed" class="elapsed"></span>
               <span id="decisionPill" class="decision-pill">ANSWER</span>
               <span id="decisionText"></span>
             </div>
@@ -223,49 +149,11 @@
     <div class="shell">
       <div class="section-tab">ARCHITECTURE</div>
       <div class="architecture panel">
-        <div class="arch-flow">
-          <div class="arch-node">
-            <span class="node-id">01</span>
-            <strong>Demo website</strong>
-            <small>athagon.tech/r4r-rag</small>
-          </div>
-          <span class="arrow">→</span>
-          <div class="arch-node accent">
-            <span class="node-id">02</span>
-            <strong>RAG API</strong>
-            <small>Spring Boot · Spring AI</small>
-          </div>
-          <span class="arrow">→</span>
-          <div class="arch-node">
-            <span class="node-id">03</span>
-            <strong>Vector database</strong>
-            <small>PostgreSQL · pgvector</small>
-          </div>
-          <span class="arrow">→</span>
-          <div class="arch-node llm">
-            <span class="node-id">04</span>
-            <strong>Ollama</strong>
-            <small>Local LLM</small>
-          </div>
-        </div>
-
-        <div class="arch-notes">
-          <article>
-            <h3>Retrieval</h3>
-            <p>The question is converted into an embedding and compared with document chunks about renovations, materials and estimates.</p>
-          </article>
-          <article>
-            <h3>Grounding</h3>
-            <p>Retrieved passages are labeled and supplied to the model as verifiable context for its answer.</p>
-          </article>
-          <article>
-            <h3>Abstention</h3>
-            <p>If the question cannot be answered from the Riansares 4R documentation, the system abstains.</p>
-          </article>
-          <article>
-            <h3>Deployment</h3>
-            <p>The API and PostgreSQL run in Docker; local model inference runs through Ollama and is connected to the demo.</p>
-          </article>
+        <div class="arch-flow arch-steps">
+          <details class="arch-step"><summary><span class="node-id">01</span><strong>Demo website</strong><small>athagon.tech/r4r-rag</small></summary><p>Your question starts in the web interface.</p></details>
+          <details class="arch-step accent"><summary><span class="node-id">02</span><strong>RAG API</strong><small>Spring Boot · Spring AI</small></summary><p>Validates the query, retrieves context and requests an answer from the model.</p></details>
+          <details class="arch-step"><summary><span class="node-id">03</span><strong>Vector database</strong><small>PostgreSQL · pgvector</small></summary><p>Searches relevant passages in Riansares 4R documentation.</p></details>
+          <details class="arch-step llm"><summary><span class="node-id">04</span><strong>Ollama</strong><small>Local LLM</small></summary><p>Generates an answer grounded in the retrieved context.</p></details>
         </div>
       </div>
 
@@ -278,38 +166,19 @@
           <span class="runtime-badge">2026</span>
         </div>
         <div class="runtime-grid">
-          <div>
-            <span>Generative model</span>
-            <strong>Qwen3 Coder Next 80B</strong>
-          </div>
-          <div>
-            <span>Embeddings</span>
-            <strong>nomic-embed-text · 768 dimensions</strong>
-          </div>
-          <div>
-            <span>Retrieval</span>
-            <strong>Top-K 5 · minimum score 0.64</strong>
-          </div>
-          <div>
-            <span>Backend</span>
-            <strong>Java · Spring Boot · Spring AI</strong>
-          </div>
-          <div>
-            <span>Data</span>
-            <strong>PostgreSQL 16 · pgvector</strong>
-          </div>
-          <div>
-            <span>Deployment</span>
-            <strong>Docker Compose · Synology</strong>
-          </div>
+          <div><span>Backend</span><strong>Java</strong></div>
+          <div><span>Configured model</span><strong id="runtimeModel">Loading configuration…</strong><small id="runtimeModelStatus" class="model-state">Loading model</small></div>
+          <div><span>Data</span><strong>PostgreSQL · pgvector</strong></div>
         </div>
         <details class="config-details">
           <summary>View runtime configuration</summary>
-          <div class="config-strip">
-            <code>RAG_GENERATION_MODEL=qwen3-coder-next-80b-t025-168k-8k-pc-pc:latest</code>
-            <code>RAG_EMBEDDING_MODEL=nomic-embed-text</code>
-            <code>RAG_EMBEDDING_DIMENSIONS=768</code>
-            <code>r4r.rag.retrieval.min-score=0.64</code>
+          <div class="config-grid" id="runtimeConfig">
+            <div><span>Generative model</span><strong id="runtimeModelFull">—</strong></div>
+            <div><span>Embeddings</span><strong id="runtimeEmbeddings">—</strong></div>
+            <div><span>Retrieval</span><strong id="runtimeRetrieval">—</strong></div>
+            <div><span>Versions</span><strong id="runtimeVersions">—</strong></div>
+            <div><span>Deployment</span><strong id="runtimeDeployment">—</strong></div>
+            <div class="runtime-host-info"><span>Loaded models and memory (Ollama)</span><strong id="runtimeOllama">Checking Ollama…</strong><small>Memory values describe model usage. Ollama does not report CPU, total RAM or GPU model.</small></div>
           </div>
         </details>
       </div>
