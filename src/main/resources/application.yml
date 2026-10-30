@@ -35,6 +35,11 @@ spring:
 
 r4r:
   rag:
+    generation:
+      pc-base-url: ${RAG_PC_OLLAMA_BASE_URL:${RAG_OLLAMA_BASE_URL}}
+      pc-model: ${RAG_PC_GENERATION_MODEL:${RAG_GENERATION_MODEL}}
+      connect-timeout: 2s
+      probe-timeout: 2s
     retrieval:
       top-k: 3
       min-score: 0.63

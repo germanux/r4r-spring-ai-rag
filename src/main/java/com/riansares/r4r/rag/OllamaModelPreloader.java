@@ -18,18 +18,16 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Component
 public class OllamaModelPreloader {
-    private final String baseUrl;
-    private final String model;
+    private final GenerationRouter router;
+    private volatile String model;
     private final ObjectMapper mapper;
     private final HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
     private final AtomicBoolean started = new AtomicBoolean();
     private final AtomicReference<String> state = new AtomicReference<>("Cargando modelo");
 
-    public OllamaModelPreloader(@Value("${spring.ai.ollama.base-url:}") String baseUrl,
-                                @Value("${spring.ai.ollama.chat.options.model:}") String model,
-                                ObjectMapper mapper) {
-        this.baseUrl = baseUrl;
-        this.model = model;
+    public OllamaModelPreloader(GenerationRouter router, ObjectMapper mapper) {
+        this.router = router;
+        this.model = router.preferred().model();
         this.mapper = mapper;
     }
 
@@ -38,6 +36,9 @@ public class OllamaModelPreloader {
         if (!started.compareAndSet(false, true)) return;
         CompletableFuture.runAsync(() -> {
             try {
+                GenerationRouter.Provider provider = router.preferredAvailable();
+                model = provider.model();
+                String baseUrl = provider.baseUrl();
                 state.set("Cargando modelo");
                 String payload = mapper.writeValueAsString(Map.of("model", model, "prompt", "", "stream", false, "keep_alive", "3h"));
                 HttpRequest request = HttpRequest.newBuilder(URI.create(baseUrl.replaceAll("/+$", "") + "/api/generate"))

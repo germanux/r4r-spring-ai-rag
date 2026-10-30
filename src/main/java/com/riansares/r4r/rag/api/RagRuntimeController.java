@@ -2,6 +2,7 @@ package com.riansares.r4r.rag.api;
 
 import com.riansares.r4r.config.RagRetrievalProperties;
 import com.riansares.r4r.rag.OllamaModelPreloader;
+import com.riansares.r4r.rag.GenerationRouter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +32,7 @@ public class RagRuntimeController {
     private final String ollamaBaseUrl;
     private final ObjectMapper objectMapper;
     private final OllamaModelPreloader preloader;
+    private final GenerationRouter router;
     private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(1)).build();
 
     public RagRuntimeController(
@@ -41,7 +43,7 @@ public class RagRuntimeController {
             @Value("${spring.datasource.url:}") String datasourceUrl,
             @Value("${spring.ai.ollama.base-url:}") String ollamaBaseUrl,
             ObjectMapper objectMapper,
-            OllamaModelPreloader preloader) {
+            OllamaModelPreloader preloader, GenerationRouter router) {
         this.retrieval = retrieval;
         this.generationModel = generationModel;
         this.embeddingModel = embeddingModel;
@@ -50,18 +52,23 @@ public class RagRuntimeController {
         this.ollamaBaseUrl = ollamaBaseUrl;
         this.objectMapper = objectMapper;
         this.preloader = preloader;
+        this.router = router;
     }
 
     @GetMapping("/runtime")
     public RuntimeInfo runtime() {
-        return new RuntimeInfo(generationModel, embeddingModel, embeddingDimensions,
+        GenerationRouter.Provider last = router.lastUsed();
+        GenerationRouter.Provider selected = last == null ? router.preferred() : last;
+        return new RuntimeInfo(selected.model(), embeddingModel, embeddingDimensions,
                 retrieval.topK(), retrieval.minScore(), System.getProperty("java.version"),
                 SpringBootVersion.getVersion(), versionOf(ChatModel.class), databaseName,
-                "Docker Compose", loadedModels(), preloader.model(), modelStatus(),
-                InferenceHost.identify(ollamaBaseUrl, generationModel));
+                "Docker Compose", loadedModels(selected.baseUrl()), selected.model(), modelStatus(selected),
+                InferenceHost.identify(selected.baseUrl(), selected.model()), providerInfo(router.preferred()),
+                last == null ? null : providerInfo(last));
     }
 
-    private String modelStatus() {
+    private String modelStatus(GenerationRouter.Provider selected) {
+        String ollamaBaseUrl = selected.baseUrl();
         if (ollamaBaseUrl == null || ollamaBaseUrl.isBlank()) return "Ollama no disponible";
         try {
             HttpRequest request = HttpRequest.newBuilder(URI.create(ollamaBaseUrl.replaceAll("/+$", "") + "/api/tags"))
@@ -71,13 +78,13 @@ public class RagRuntimeController {
             JsonNode models = objectMapper.readTree(response.body()).path("models");
             boolean exists = false;
             for (JsonNode model : models) {
-                if (preloader.model().equals(model.path("name").asText()) || preloader.model().equals(model.path("model").asText())) {
+                if (selected.model().equals(model.path("name").asText()) || selected.model().equals(model.path("model").asText())) {
                     exists = true;
                     break;
                 }
             }
             if (!exists) return "Ollama no disponible";
-            boolean loaded = loadedModels().stream().anyMatch(model -> preloader.model().equals(model.name()));
+            boolean loaded = loadedModels(ollamaBaseUrl).stream().anyMatch(model -> selected.model().equals(model.name()));
             preloader.updateLoadedState(loaded);
             return loaded ? "Modelo cargado" : preloader.state().equals("Cargando modelo") ? "Cargando modelo" : "Modelo descargado de memoria";
         } catch (Exception ignored) {
@@ -85,7 +92,7 @@ public class RagRuntimeController {
         }
     }
 
-    private List<LoadedModel> loadedModels() {
+    private List<LoadedModel> loadedModels(String ollamaBaseUrl) {
         if (ollamaBaseUrl == null || ollamaBaseUrl.isBlank()) return List.of();
         try {
             HttpRequest request = HttpRequest.newBuilder(URI.create(ollamaBaseUrl.replaceAll("/+$", "") + "/api/ps"))
@@ -115,9 +122,14 @@ public class RagRuntimeController {
         return slash >= 0 && slash + 1 < url.length() ? url.substring(slash + 1) : "PostgreSQL · pgvector";
     }
 
+    private ProviderInfo providerInfo(GenerationRouter.Provider provider) {
+        return new ProviderInfo(provider.name(), provider.model(), InferenceHost.identify(provider.baseUrl(), provider.model()));
+    }
+    public record ProviderInfo(String name, String model, InferenceHost.Details inferenceHost) { }
+
     public record RuntimeInfo(String generationModel, String embeddingModel, String embeddingDimensions,
                               int topK, double minScore, String javaVersion, String springBootVersion,
-                              String springAiVersion, String database, String deployment, List<LoadedModel> loadedModels, String configuredModel, String modelStatus, InferenceHost.Details inferenceHost) { }
+                              String springAiVersion, String database, String deployment, List<LoadedModel> loadedModels, String configuredModel, String modelStatus, InferenceHost.Details inferenceHost, ProviderInfo preferredProvider, ProviderInfo lastUsedProvider) { }
 
     public record LoadedModel(String name, String parameterSize, long sizeBytes, long vramBytes) { }
 }
