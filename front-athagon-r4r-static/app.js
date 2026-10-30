@@ -88,6 +88,11 @@
   }
 
   loadRuntimeInfo();
+  let runtimePoll;
+  function pollRuntimeWhileLoading(status) {
+    clearTimeout(runtimePoll);
+    if (status === "Cargando modelo") runtimePoll = setTimeout(async () => { await loadRuntimeInfo(); }, 5000);
+  }
 
   function formatBytes(bytes) {
     if (!bytes) return "0 B";
@@ -109,7 +114,9 @@
       const response = await fetch(`${normalizeBaseUrl(apiBaseUrl.value)}${ENDPOINT_PATH.replace("/answers", "/runtime")}`, { headers: { Accept: "application/json" } });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const info = await response.json();
-      $("runtimeModel").textContent = shortModelName(info.generationModel);
+      $("runtimeModel").textContent = info.configuredModel || info.generationModel || "No disponible";
+      $("runtimeModelStatus").textContent = info.modelStatus || "Ollama no disponible";
+      pollRuntimeWhileLoading(info.modelStatus);
       $("runtimeModelFull").textContent = info.generationModel || "No disponible";
       $("runtimeEmbeddings").textContent = `${info.embeddingModel || "—"} · ${info.embeddingDimensions || "—"} dimensiones`;
       $("runtimeRetrieval").textContent = `Top-K ${info.topK} · score mínimo ${info.minScore}`;
@@ -120,7 +127,8 @@
         ? loaded.map((model) => `${model.name} (${model.parameterSize}; ${formatBytes(model.sizeBytes)} en memoria; ${formatBytes(model.vramBytes)} VRAM)`).join(" · ")
         : "Sin modelos cargados o información no disponible";
     } catch {
-      $("runtimeModel").textContent = "Qwen 2.5 7B";
+      $("runtimeModel").textContent = "No disponible";
+      $("runtimeModelStatus").textContent = "Ollama no disponible";
       $("runtimeModelFull").textContent = "No disponible";
       $("runtimeEmbeddings").textContent = "No disponible";
       $("runtimeRetrieval").textContent = "No disponible";

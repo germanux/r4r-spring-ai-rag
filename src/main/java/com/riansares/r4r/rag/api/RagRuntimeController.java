@@ -1,6 +1,7 @@
 package com.riansares.r4r.rag.api;
 
 import com.riansares.r4r.config.RagRetrievalProperties;
+import com.riansares.r4r.rag.OllamaModelPreloader;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,7 @@ public class RagRuntimeController {
     private final String databaseName;
     private final String ollamaBaseUrl;
     private final ObjectMapper objectMapper;
+    private final OllamaModelPreloader preloader;
     private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(1)).build();
 
     public RagRuntimeController(
@@ -38,7 +40,8 @@ public class RagRuntimeController {
             @Value("${spring.ai.vectorstore.pgvector.dimensions:No disponible}") String embeddingDimensions,
             @Value("${spring.datasource.url:}") String datasourceUrl,
             @Value("${spring.ai.ollama.base-url:}") String ollamaBaseUrl,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            OllamaModelPreloader preloader) {
         this.retrieval = retrieval;
         this.generationModel = generationModel;
         this.embeddingModel = embeddingModel;
@@ -46,6 +49,7 @@ public class RagRuntimeController {
         this.databaseName = databaseName(datasourceUrl);
         this.ollamaBaseUrl = ollamaBaseUrl;
         this.objectMapper = objectMapper;
+        this.preloader = preloader;
     }
 
     @GetMapping("/runtime")
@@ -53,7 +57,31 @@ public class RagRuntimeController {
         return new RuntimeInfo(generationModel, embeddingModel, embeddingDimensions,
                 retrieval.topK(), retrieval.minScore(), System.getProperty("java.version"),
                 SpringBootVersion.getVersion(), versionOf(ChatModel.class), databaseName,
-                "Docker Compose", loadedModels());
+                "Docker Compose", loadedModels(), preloader.model(), modelStatus());
+    }
+
+    private String modelStatus() {
+        if (ollamaBaseUrl == null || ollamaBaseUrl.isBlank()) return "Ollama no disponible";
+        try {
+            HttpRequest request = HttpRequest.newBuilder(URI.create(ollamaBaseUrl.replaceAll("/+$", "") + "/api/tags"))
+                    .timeout(Duration.ofSeconds(2)).GET().build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) return "Ollama no disponible";
+            JsonNode models = objectMapper.readTree(response.body()).path("models");
+            boolean exists = false;
+            for (JsonNode model : models) {
+                if (preloader.model().equals(model.path("name").asText()) || preloader.model().equals(model.path("model").asText())) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) return "Ollama no disponible";
+            boolean loaded = loadedModels().stream().anyMatch(model -> preloader.model().equals(model.name()));
+            preloader.updateLoadedState(loaded);
+            return loaded ? "Modelo cargado" : preloader.state().equals("Cargando modelo") ? "Cargando modelo" : "Modelo descargado de memoria";
+        } catch (Exception ignored) {
+            return "Ollama no disponible";
+        }
     }
 
     private List<LoadedModel> loadedModels() {
@@ -88,7 +116,7 @@ public class RagRuntimeController {
 
     public record RuntimeInfo(String generationModel, String embeddingModel, String embeddingDimensions,
                               int topK, double minScore, String javaVersion, String springBootVersion,
-                              String springAiVersion, String database, String deployment, List<LoadedModel> loadedModels) { }
+                              String springAiVersion, String database, String deployment, List<LoadedModel> loadedModels, String configuredModel, String modelStatus) { }
 
     public record LoadedModel(String name, String parameterSize, long sizeBytes, long vramBytes) { }
 }
