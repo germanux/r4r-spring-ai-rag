@@ -114,6 +114,34 @@ class CitedRagServiceInvalidAnswersTest {
         }
     }
 
+    @Test
+    void recognizesMultiSentenceAbstentionsWithoutDiscardingUsefulAnswers() {
+        when(knowledgeStore.search("test question", TEST_TOP_K, TEST_MIN_SCORE)).thenReturn(List.of(
+                new MarkdownChunk("a.md", List.of(), 0, "A"),
+                new MarkdownChunk("b.md", List.of(), 0, "B")));
+        for (String answer : List.of(
+                "The provided evidence does not include specific information about what data the client should provide to request a budget. Therefore, I cannot determine from this context what details are required from the client for requesting a quote. [S1] and [S2] do not address the exact requirements needed from clients at the time of requesting a budget.",
+                "The available evidence [S1] does not specify the cost. I cannot determine the price from this context. [S2]",
+                "La evidencia disponible [S1] no incluye los datos solicitados. Por tanto, no puedo determinar la respuesta. [S2]",
+                "No hay información suficiente para responder. Las fuentes no indican los requisitos. [S1]")) {
+            when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse(answer));
+            RagResult result = service.answer("test question");
+            assertThat(result.abstention()).as(answer).isTrue();
+            assertThat(result.answer()).isEmpty();
+            assertThat(result.citations()).isEmpty();
+        }
+        for (String answer : List.of(
+                "The evidence does not specify the cost. The slab requires a compacted base. [S1]",
+                "The evidence does not specify the cost, but the slab requires a compacted base. [S1]",
+                "La evidencia no indica el precio. La solera necesita una base compactada. [S1]",
+                "No hay información suficiente sobre el precio, pero se requiere una base compactada. [S1]")) {
+            when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse(answer));
+            RagResult result = service.answer("test question");
+            assertThat(result.abstention()).as(answer).isFalse();
+            assertThat(result.answer()).isEqualTo(answer);
+        }
+    }
+
     private static ChatResponse chatResponse(String text) {
         return new ChatResponse(List.of(new Generation(new AssistantMessage(text))));
     }

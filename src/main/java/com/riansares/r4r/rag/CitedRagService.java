@@ -37,6 +37,20 @@ public class CitedRagService {
                     + "(?:the )?(?:provided|available|supplied) (?:information|evidence|context) "
                     + "(?:is insufficient|is not sufficient|does not (?:provide enough information|allow me to answer))(?: [^.!?]*)?))"
                     + "[.!]?$" );
+    // Each sentence must describe the absence of evidence or inability to answer.
+    private static final Pattern ABSTENTION_SENTENCE = Pattern.compile(
+            "(?iu)^(?:(?:therefore|thus|therefore,|thus,|por tanto,?|por ello,?|en consecuencia,?)\\s+)?(?:"
+                    + "(?:the )?(?:provided |available |supplied )?(?:evidence|information|context|sources?) "
+                    + "(?:does not|do not|doesn't|don't) (?:include|contain|provide|address|specify|state|say)\\b[^.!?]*|"
+                    + "(?:and |y )?(?:do not|does not|don't|doesn't) (?:address|contain|provide|specify)\\b[^.!?]*|"
+                    + "(?:i cannot|i can't|i am unable to|i'm unable to) (?:determine|answer|say|tell|identify)\\b[^.!?]*|"
+                    + "(?:la |el |las |los )?(?:evidencia|información|contexto|fuentes?|documentos?) "
+                    + "(?:disponible |proporcionad[oa]s? |aportad[oa]s? |consultad[oa]s? )?"
+                    + "no (?:incluye[n]?|contiene[n]?|proporciona[n]?|aborda[n]?|especifica[n]?|indica[n]?)\\b[^.!?]*|"
+                    + "(?:y )?no (?:abordan|contienen|proporcionan|especifican|indican)\\b[^.!?]*|"
+                    + "(?:no (?:puedo|es posible|se puede)|soy incapaz de) (?:determinar|responder|saber|identificar|indicar)\\b[^.!?]*"
+                    + ")[.!?]?$" );
+    private static final Pattern CONTRAST = Pattern.compile("(?iu)\\b(?:but|however|nevertheless|pero|aunque|sin embargo|no obstante)\\b");
     /**
      * Creates a new cited RAG service.
      *
@@ -82,7 +96,7 @@ public class CitedRagService {
                 || answer.isBlank()
                 || answer.trim().matches("(?i)^_*R4R_ABSTAIN_*$")
                 || answer.contains(ABSTAIN_TOKEN)
-                || NATURAL_ABSTENTION.matcher(REFERENCE_GROUP.matcher(answer).replaceAll("").trim()).matches()) {
+                || isNaturalAbstention(answer)) {
             return RagResult.abstain();
         }
         answer = normalizeReferences(answer, chunks.size());
@@ -92,6 +106,21 @@ public class CitedRagService {
         List<Citation> citations = buildCitations(chunks);
 
         return RagResult.ofAnswer(answer, citations);
+    }
+
+    private boolean isNaturalAbstention(String answer) {
+        String text = REFERENCE_GROUP.matcher(answer).replaceAll("").replaceAll("\\s+", " ").trim();
+        if (text.isEmpty() || CONTRAST.matcher(text).find()) {
+            return false;
+        }
+        for (String sentence : text.split("(?<=[.!?])\\s+")) {
+            String trimmed = sentence.trim();
+            if (!NATURAL_ABSTENTION.matcher(trimmed).matches()
+                    && !ABSTENTION_SENTENCE.matcher(trimmed).matches()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String normalizeReferences(String answer, int sourceCount) {
