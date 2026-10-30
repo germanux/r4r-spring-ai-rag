@@ -106,11 +106,13 @@ public class CitedRagService {
             promptText.append("Respond in English.\n");
         } else if ("es".equalsIgnoreCase(responseLanguage)) {
             promptText.append("Respond in Spanish.\n");
+        } else {
+            promptText.append("Respond in the same language as the question.\n");
         }
         promptText.append("""
         *****
         Answer the user's question using only the supplied evidence.
-        Respond in the same language as the question, using 2–5 clear, concise sentences.
+        Use 2–5 clear, concise sentences.
         Include relevant citations [S1], [S2], etc. after the explanation, never as the entire answer.
     
         If the evidence does not support an answer, respond with exactly:

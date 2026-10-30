@@ -21,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import static com.riansares.r4r.llm_tests.RagLiveQuestionsIT.SLEEP_WAIT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -55,8 +56,8 @@ class RagLiveEnglishQuestionsIT {
 
     // 12 preguntas del dominio R4R y 3 preguntas ajenas para verificar abstención.
     private static final List<QuestionCase> CASES = List.of(
-            new QuestionCase("Initial guidance", "What information is needed for initial renovation advice?", "¿Qué información hace falta para una primera orientación de una reforma?", true),
-            new QuestionCase("Concrete slab versus flooring", "What is the difference between a concrete slab and flooring?", "¿Qué diferencia hay entre solera y solado?", true),
+            new QuestionCase("Initial guidance", "Which details should I provide to get preliminary advice about my renovation?", "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?", true),
+            new QuestionCase("Concrete slab versus flooring", "In construction, how does the concrete base differ from the finished flooring?", "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?", true),
             new QuestionCase("Access and cost", "Why does access affect the price of a concrete slab?", "¿Por qué el acceso cambia el precio de una solera?", true),
             new QuestionCase("Old house", "What is the approximate cost of a complete renovation of an old house?", "¿Cuánto orienta una reforma integral de una casa antigua?", true),
             new QuestionCase("Estimate", "What information should a customer provide to request an estimate?", "¿Qué datos debe aportar el cliente para solicitar un presupuesto?", true),
@@ -67,7 +68,7 @@ class RagLiveEnglishQuestionsIT {
             new QuestionCase("Damp", "What causes of damp can occur in an old home?", "¿Qué causas de humedad pueden aparecer en una vivienda antigua?", true),
             new QuestionCase("Bathroom", "What information is needed to estimate a bathroom renovation?", "¿Qué datos hacen falta para orientar una reforma de baño?", true),
             new QuestionCase("Timelines", "Why is it important to know the expected timeline before preparing a renovation estimate?", "¿Por qué es importante conocer el plazo previsto antes de presupuestar una reforma?", true),
-            new QuestionCase("Out of domain: photosynthesis", "How does photosynthesis work in plants?", "¿Cómo funciona la fotosíntesis de las plantas?", false),
+            new QuestionCase("Out of domain: photosynthesis", "How do plants make their food through photosynthesis?", "¿De qué manera producen alimento las plantas mediante la fotosíntesis?", false),
             new QuestionCase("Out of domain: astronomy", "What is the mass of Jupiter in kilograms?", "¿Cuál es la masa de Júpiter en kilogramos?", false),
             new QuestionCase("Out of domain: literature", "Who wrote the novel One Hundred Years of Solitude?", "¿Quién escribió la novela Cien años de soledad?", false)
     );
@@ -89,7 +90,7 @@ class RagLiveEnglishQuestionsIT {
 
     private static void verifyAnswer(int number, QuestionCase testCase) throws Exception {
         if (number > 1) {
-            Thread.sleep(31_000);
+            Thread.sleep(SLEEP_WAIT);
         }
         String requestBody = JSON.writeValueAsString(new QuestionRequest(testCase.question(), testCase.retrievalQuestion(), "en"));
         HttpRequest request = HttpRequest.newBuilder(ENDPOINT)

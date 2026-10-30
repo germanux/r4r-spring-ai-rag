@@ -53,10 +53,11 @@ class RagLiveQuestionsIT {
             Pattern.compile("^(?:\\[S\\d+\\][\\s,;:.]*)+$");
     private static final Pattern CITATION_REFERENCE = Pattern.compile("\\[S\\d+\\]");
 
+    public static final long SLEEP_WAIT = 22_000;
     // 12 preguntas del dominio R4R y 3 preguntas ajenas para verificar abstención.
     private static final List<QuestionCase> CASES = List.of(
-            new QuestionCase("Primera orientación", "¿Qué información hace falta para una primera orientación de una reforma?", true),
-            new QuestionCase("Solera frente a solado", "¿Qué diferencia hay entre solera y solado?", true),
+            new QuestionCase("Primera orientación", "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?", true),
+            new QuestionCase("Solera frente a solado", "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?", true),
             new QuestionCase("Precio por acceso", "¿Por qué el acceso cambia el precio de una solera?", true),
             new QuestionCase("Casa antigua", "¿Cuánto orienta una reforma integral de una casa antigua?", true),
             new QuestionCase("Presupuesto", "¿Qué datos debe aportar el cliente para solicitar un presupuesto?", true),
@@ -67,7 +68,7 @@ class RagLiveQuestionsIT {
             new QuestionCase("Humedades", "¿Qué causas de humedad pueden aparecer en una vivienda antigua?", true),
             new QuestionCase("Baño", "¿Qué datos hacen falta para orientar una reforma de baño?", true),
             new QuestionCase("Plazos", "¿Por qué es importante conocer el plazo previsto antes de presupuestar una reforma?", true),
-            new QuestionCase("Fuera de dominio: fotosíntesis", "¿Cómo funciona la fotosíntesis de las plantas?", false),
+            new QuestionCase("Fuera de dominio: fotosíntesis", "¿De qué manera producen alimento las plantas mediante la fotosíntesis?", false),
             new QuestionCase("Fuera de dominio: astronomía", "¿Cuál es la masa de Júpiter en kilogramos?", false),
             new QuestionCase("Fuera de dominio: literatura", "¿Quién escribió la novela Cien años de soledad?", false)
     );
@@ -89,7 +90,7 @@ class RagLiveQuestionsIT {
 
     private static void verifyAnswer(int number, QuestionCase testCase) throws Exception {
         if (number > 1) {
-            Thread.sleep(31_000);
+            Thread.sleep(SLEEP_WAIT);
         }
         String requestBody = JSON.writeValueAsString(new QuestionRequest(testCase.question()));
         HttpRequest request = HttpRequest.newBuilder(ENDPOINT)

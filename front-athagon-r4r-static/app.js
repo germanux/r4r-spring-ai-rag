@@ -152,7 +152,7 @@
     const started = performance.now();
 
     try {
-      let requestBody = { question: text };
+      let requestBody = { question: text, responseLanguage: "es" };
       if (isEnglish) {
         let retrievalQuestion = text;
         try {
