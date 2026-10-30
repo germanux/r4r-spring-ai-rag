@@ -21,7 +21,8 @@ public class GenerationRouter implements ChatModel {
     private final Target preferred;
     private final Target fallback;
     // Runtime summary only; individual calls always keep their provider in a local variable.
-    private final AtomicReference<Provider> lastUsed = new AtomicReference<>();
+    public record Execution(Provider provider, boolean failed) { }
+    private final AtomicReference<Execution> execution = new AtomicReference<>(new Execution(null, false));
 
     public GenerationRouter(Target preferred, Target fallback) {
         this.preferred = preferred;
@@ -29,7 +30,8 @@ public class GenerationRouter implements ChatModel {
     }
 
     public Provider preferred() { return preferred.provider(); }
-    public Provider lastUsed() { return lastUsed.get(); }
+    public Provider lastUsed() { return execution.get().provider(); }
+    public Execution execution() { return execution.get(); }
     public Provider preferredAvailable() {
         for (Target target : List.of(preferred, fallback)) {
             try { if (target.available().getAsBoolean()) return target.provider(); }
@@ -46,7 +48,7 @@ public class GenerationRouter implements ChatModel {
             try {
                 if (!target.available().getAsBoolean()) continue;
                 ChatResponse response = target.model().call(prompt);
-                lastUsed.set(provider);
+                execution.set(new Execution(provider, false));
                 log.info("Generation {} completed by provider={} model={}", requestId, provider.name(), provider.model());
                 return response;
             } catch (RuntimeException ex) {
@@ -54,6 +56,7 @@ public class GenerationRouter implements ChatModel {
                         provider.name(), provider.model(), ex.getClass().getSimpleName());
             }
         }
+        execution.set(new Execution(null, true));
         throw unavailable();
     }
 

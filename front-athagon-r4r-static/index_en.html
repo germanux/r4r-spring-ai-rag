@@ -130,13 +130,10 @@
               <div id="answerText" class="answer-text"></div>
             </div>
 
-            <div class="citations-block">
-              <div class="citations-head">
-                <h3>Sources</h3>
-                <span id="citationCount"></span>
-              </div>
+            <details class="citations-block" id="sourcesDetails">
+              <summary class="citations-head"><strong>Sources</strong><span id="citationCount"></span></summary>
               <div id="citations" class="citations"></div>
-            </div>
+            </details>
           </div>
 
           <div id="errorBox" class="error-box" hidden></div>
@@ -167,14 +164,15 @@
         </div>
         <div class="runtime-grid">
           <div><span>Backend</span><strong>Java</strong></div>
-          <div><span>Configured model</span><strong id="runtimeModel">Loading configuration…</strong><small id="runtimeModelStatus" class="model-state">Loading model</small></div>
+          <div><span>Configured model</span><strong id="runtimeModel">Loading configuration…</strong></div>
           <div><span>Data</span><strong>PostgreSQL · pgvector</strong></div>
         </div>
+        <p class="runtime-last-used"><strong>Last generation:</strong> <span id="runtimeUsed">No generation yet</span><br/><small>Model status: <span id="runtimeModelStatus" class="model-state">Checking…</span></small></p>
         <details class="config-details">
           <summary>View runtime configuration</summary>
           <div class="config-grid" id="runtimeConfig">
             <div><span>Inference host</span><strong id="runtimeHost">Identifying…</strong><small id="runtimeHardware" class="host-hardware"></small></div>
-            <div><span>Generative model</span><strong id="runtimeModelFull">—</strong></div>
+            <div><span>Configured preferred model</span><strong id="runtimeModelFull">—</strong></div>
             <div><span>Embeddings</span><strong id="runtimeEmbeddings">—</strong></div>
             <div><span>Retrieval</span><strong id="runtimeRetrieval">—</strong></div>
             <div><span>Versions</span><strong id="runtimeVersions">—</strong></div>

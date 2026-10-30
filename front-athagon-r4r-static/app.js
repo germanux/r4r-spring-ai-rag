@@ -89,8 +89,9 @@
     });
   }
 
-  loadRuntimeInfo();
   let runtimePoll;
+  let runtimeRequest = 0;
+  loadRuntimeInfo();
   function pollRuntimeWhileLoading(status) {
     clearTimeout(runtimePoll);
     if (status === "Cargando modelo") runtimePoll = setTimeout(async () => { await loadRuntimeInfo(); }, 5000);
@@ -112,27 +113,39 @@
 
   async function loadRuntimeInfo() {
     if (!(document.getElementById("runtimeModel"))) return;
+    const requestId = ++runtimeRequest;
+    clearTimeout(runtimePoll);
     try {
-      const response = await fetch(`${normalizeBaseUrl(apiBaseUrl.value)}${ENDPOINT_PATH.replace("/answers", "/runtime")}`, { headers: { Accept: "application/json" } });
+      const response = await fetch(`${normalizeBaseUrl(apiBaseUrl.value)}${ENDPOINT_PATH.replace("/answers", "/runtime")}`, { cache: "no-store", headers: { Accept: "application/json" } });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const info = await response.json();
+      if (requestId !== runtimeRequest) return;
+      const unavailable = isEnglish ? "Unavailable" : "No disponible";
+      const failed = info.generationState === "failed";
+      const used = info.lastUsedProvider;
+      $("runtimeUsed").textContent = failed ? (isEnglish ? "Generation failed — no provider" : "Generación fallida — sin proveedor")
+        : used ? `${used.model} · ${used.inferenceHost?.hostname || (isEnglish ? "Unknown host" : "Equipo no identificado")}`
+        : (isEnglish ? "No generation yet" : "Todavía no se ha generado una respuesta");
       $("runtimeModel").textContent = info.configuredModel || info.generationModel || "No disponible";
-      $("runtimeModelStatus").textContent = info.modelStatus || "Ollama no disponible";
+      const states = { "Cargando modelo": "Loading model", "Modelo cargado": "Model loaded", "Modelo descargado de memoria": "Model unloaded from memory", "Ollama no disponible": "Provider unavailable" };
+      $("runtimeModelStatus").textContent = isEnglish ? (states[info.modelStatus] || "Provider unavailable") : (info.modelStatus || "Proveedor no disponible");
       pollRuntimeWhileLoading(info.modelStatus);
-      $("runtimeModelFull").textContent = info.generationModel || (isEnglish ? "Unavailable" : "No disponible");
-      const host = info.inferenceHost || {};
+      $("runtimeModelFull").textContent = info.preferredProvider?.model || info.configuredModel || unavailable;
+      const host = (failed ? null : used?.inferenceHost || info.inferenceHost) || {};
       const hostNames = isEnglish ? { laptop: "ASUS laptop", desktop: "Main PC", unknown: "Unknown host" } : { laptop: "Portátil ASUS", desktop: "PC principal", unknown: "Equipo no identificado" };
       $("runtimeHost").textContent = (hostNames[host.type] || hostNames.unknown) + (host.hostname ? ` (${host.hostname})` : "");
       $("runtimeHardware").textContent = [host.gpu, host.ram && `RAM ${host.ram}`, host.cpu].filter(Boolean).join(" · ");
-      $("runtimeEmbeddings").textContent = `${info.embeddingModel || "—"} · ${info.embeddingDimensions || "—"} dimensiones`;
-      $("runtimeRetrieval").textContent = `Top-K ${info.topK} · score mínimo ${info.minScore}`;
+      $("runtimeEmbeddings").textContent = `${info.embeddingModel || "—"} · ${info.embeddingDimensions || "—"} ${isEnglish ? "dimensions" : "dimensiones"}`;
+      $("runtimeRetrieval").textContent = `Top-K ${info.topK} · ${isEnglish ? "minimum score" : "score mínimo"} ${info.minScore}`;
       $("runtimeVersions").textContent = `Java ${info.javaVersion || "—"} · Spring Boot ${info.springBootVersion || "—"} · Spring AI ${info.springAiVersion || "—"}`;
       $("runtimeDeployment").textContent = info.deployment || "No disponible";
       const loaded = Array.isArray(info.loadedModels) ? info.loadedModels : [];
       $("runtimeOllama").textContent = loaded.length
-        ? loaded.map((model) => `${model.name} (${model.parameterSize}; ${formatBytes(model.sizeBytes)} en memoria; ${formatBytes(model.vramBytes)} VRAM)`).join(" · ")
-        : "Sin modelos cargados o información no disponible";
+        ? loaded.map((model) => `${model.name} (${model.parameterSize}; ${formatBytes(model.sizeBytes)} ${isEnglish ? "in memory" : "en memoria"}; ${formatBytes(model.vramBytes)} VRAM)`).join(" · ")
+        : (isEnglish ? "No loaded models or information unavailable" : "Sin modelos cargados o información no disponible");
     } catch {
+      if (requestId !== runtimeRequest) return;
+      $("runtimeUsed").textContent = isEnglish ? "Information unavailable" : "Información no disponible";
       $("runtimeModel").textContent = "No disponible";
       $("runtimeModelStatus").textContent = "Ollama no disponible";
       $("runtimeModelFull").textContent = isEnglish ? "Unavailable" : "No disponible";
@@ -214,6 +227,8 @@
     const baseUrl = normalizeBaseUrl(apiBaseUrl.value || DEFAULT_API_BASE_URL);
     const url = `${baseUrl}${ENDPOINT_PATH}`;
 
+    clearTimeout(runtimePoll);
+    ++runtimeRequest;
     setLoading(true);
     renderEmpty();
     if (loadingState) {
@@ -286,6 +301,7 @@
     } finally {
       clearTimeout(timeout);
       setLoading(false);
+      await loadRuntimeInfo();
     }
   }
 

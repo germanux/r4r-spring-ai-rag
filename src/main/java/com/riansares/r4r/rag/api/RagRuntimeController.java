@@ -6,6 +6,7 @@ import com.riansares.r4r.rag.GenerationRouter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootVersion;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,8 +34,9 @@ public class RagRuntimeController {
     private final ObjectMapper objectMapper;
     private final OllamaModelPreloader preloader;
     private final GenerationRouter router;
-    private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(1)).build();
+    private final HttpClient httpClient;
 
+    @Autowired
     public RagRuntimeController(
             RagRetrievalProperties retrieval,
             @Value("${spring.ai.ollama.chat.options.model:No disponible}") String generationModel,
@@ -44,6 +46,14 @@ public class RagRuntimeController {
             @Value("${spring.ai.ollama.base-url:}") String ollamaBaseUrl,
             ObjectMapper objectMapper,
             OllamaModelPreloader preloader, GenerationRouter router) {
+        this(retrieval, generationModel, embeddingModel, embeddingDimensions, datasourceUrl, ollamaBaseUrl,
+                objectMapper, preloader, router, HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(1)).build());
+    }
+
+    RagRuntimeController(RagRetrievalProperties retrieval, String generationModel, String embeddingModel,
+                         String embeddingDimensions, String datasourceUrl, String ollamaBaseUrl,
+                         ObjectMapper objectMapper, OllamaModelPreloader preloader, GenerationRouter router, HttpClient httpClient) {
+        this.httpClient = httpClient;
         this.retrieval = retrieval;
         this.generationModel = generationModel;
         this.embeddingModel = embeddingModel;
@@ -57,48 +67,31 @@ public class RagRuntimeController {
 
     @GetMapping("/runtime")
     public RuntimeInfo runtime() {
-        GenerationRouter.Provider last = router.lastUsed();
+        GenerationRouter.Execution execution = router.execution();
+        GenerationRouter.Provider last = execution.provider();
         GenerationRouter.Provider selected = last == null ? router.preferred() : last;
-        return new RuntimeInfo(selected.model(), embeddingModel, embeddingDimensions,
+        MemoryState memory = execution.failed() ? new MemoryState(false, List.of()) : loadedModels(selected.baseUrl());
+        boolean loaded = memory.models().stream().anyMatch(m -> canonical(selected.model()).equals(canonical(m.name())));
+        String status = !memory.available() ? "Ollama no disponible" : loaded ? "Modelo cargado"
+                : last == null && "Cargando modelo".equals(preloader.state()) ? "Cargando modelo" : "Modelo descargado de memoria";
+        return new RuntimeInfo(execution.failed() ? null : selected.model(), embeddingModel, embeddingDimensions,
                 retrieval.topK(), retrieval.minScore(), System.getProperty("java.version"),
                 SpringBootVersion.getVersion(), versionOf(ChatModel.class), databaseName,
-                "Docker Compose", loadedModels(selected.baseUrl()), selected.model(), modelStatus(selected),
-                InferenceHost.identify(selected.baseUrl(), selected.model()), providerInfo(router.preferred()),
-                last == null ? null : providerInfo(last));
+                "Docker Compose", memory.models(), router.preferred().model(), status,
+                execution.failed() ? null : InferenceHost.identify(selected.baseUrl(), selected.model()), providerInfo(router.preferred()),
+                last == null ? null : providerInfo(last), execution.failed() ? "failed" : last == null ? "idle" : "success");
     }
 
-    private String modelStatus(GenerationRouter.Provider selected) {
-        String ollamaBaseUrl = selected.baseUrl();
-        if (ollamaBaseUrl == null || ollamaBaseUrl.isBlank()) return "Ollama no disponible";
-        try {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(ollamaBaseUrl.replaceAll("/+$", "") + "/api/tags"))
-                    .timeout(Duration.ofSeconds(2)).GET().build();
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) return "Ollama no disponible";
-            JsonNode models = objectMapper.readTree(response.body()).path("models");
-            boolean exists = false;
-            for (JsonNode model : models) {
-                if (selected.model().equals(model.path("name").asText()) || selected.model().equals(model.path("model").asText())) {
-                    exists = true;
-                    break;
-                }
-            }
-            if (!exists) return "Ollama no disponible";
-            boolean loaded = loadedModels(ollamaBaseUrl).stream().anyMatch(model -> selected.model().equals(model.name()));
-            preloader.updateLoadedState(loaded);
-            return loaded ? "Modelo cargado" : preloader.state().equals("Cargando modelo") ? "Cargando modelo" : "Modelo descargado de memoria";
-        } catch (Exception ignored) {
-            return "Ollama no disponible";
-        }
-    }
+    private static String canonical(String name) { return name.contains(":") ? name : name + ":latest"; }
+    private record MemoryState(boolean available, List<LoadedModel> models) { }
 
-    private List<LoadedModel> loadedModels(String ollamaBaseUrl) {
-        if (ollamaBaseUrl == null || ollamaBaseUrl.isBlank()) return List.of();
+    private MemoryState loadedModels(String ollamaBaseUrl) {
+        if (ollamaBaseUrl == null || ollamaBaseUrl.isBlank()) return new MemoryState(false, List.of());
         try {
             HttpRequest request = HttpRequest.newBuilder(URI.create(ollamaBaseUrl.replaceAll("/+$", "") + "/api/ps"))
                     .timeout(Duration.ofSeconds(2)).GET().build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) return List.of();
+            if (response.statusCode() != 200) return new MemoryState(false, List.of());
             JsonNode models = objectMapper.readTree(response.body()).path("models");
             List<LoadedModel> result = new ArrayList<>();
             for (JsonNode model : models) {
@@ -106,9 +99,9 @@ public class RagRuntimeController {
                         model.path("details").path("parameter_size").asText("unknown"),
                         model.path("size").asLong(0), model.path("size_vram").asLong(0)));
             }
-            return List.copyOf(result);
+            return new MemoryState(true, List.copyOf(result));
         } catch (Exception ignored) {
-            return List.of();
+            return new MemoryState(false, List.of());
         }
     }
 
@@ -129,7 +122,7 @@ public class RagRuntimeController {
 
     public record RuntimeInfo(String generationModel, String embeddingModel, String embeddingDimensions,
                               int topK, double minScore, String javaVersion, String springBootVersion,
-                              String springAiVersion, String database, String deployment, List<LoadedModel> loadedModels, String configuredModel, String modelStatus, InferenceHost.Details inferenceHost, ProviderInfo preferredProvider, ProviderInfo lastUsedProvider) { }
+                              String springAiVersion, String database, String deployment, List<LoadedModel> loadedModels, String configuredModel, String modelStatus, InferenceHost.Details inferenceHost, ProviderInfo preferredProvider, ProviderInfo lastUsedProvider, String generationState) { }
 
     public record LoadedModel(String name, String parameterSize, long sizeBytes, long vramBytes) { }
 }
