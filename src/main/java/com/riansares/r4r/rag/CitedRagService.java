@@ -9,6 +9,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -24,6 +25,18 @@ public class CitedRagService {
     private static final String ABSTAIN_TOKEN = "__R4R_ABSTAIN__";
     private static final Pattern ONLY_CITATIONS =
             Pattern.compile("^(?:\\[S\\d+\\][\\s,;:.]*)+$");
+    private static final Pattern REFERENCE_GROUP = Pattern.compile("\\[(S\\d+(?:\\s*,\\s*S\\d+)*)\\]");
+    private static final Pattern NATURAL_ABSTENTION = Pattern.compile(
+            "(?iu)^(?:(?:lo siento[,;:]?\\s*)?(?:no (?:dispongo de|tengo|hay|se proporciona|se dispone de) "
+                    + "(?:la |una )?(?:suficiente )?(?:información|evidencia|datos)(?: suficiente(?:s)?)?"
+                    + "(?: (?:en|para|sobre|en los) [^.!?]*)?|"
+                    + "(?:la |el )?(?:información|evidencia|contexto) (?:disponible|proporcionad[oa]|suministrad[oa]) "
+                    + "(?:no (?:es|contiene) suficiente|no permite responder)(?: [^.!?]*)?|"
+                    + "(?:i(?:'m| am) sorry[,;:]?\\s*)?(?:i (?:do not|don't) have|there (?:is not|isn't)) "
+                    + "(?:enough|sufficient) (?:information|evidence|data)(?: [^.!?]*)?|"
+                    + "(?:the )?(?:provided|available|supplied) (?:information|evidence|context) "
+                    + "(?:is insufficient|is not sufficient|does not (?:provide enough information|allow me to answer))(?: [^.!?]*)?))"
+                    + "[.!]?$" );
     /**
      * Creates a new cited RAG service.
      *
@@ -69,12 +82,38 @@ public class CitedRagService {
                 || answer.isBlank()
                 || answer.trim().matches("(?i)^_*R4R_ABSTAIN_*$")
                 || answer.contains(ABSTAIN_TOKEN)
-                || ONLY_CITATIONS.matcher(answer.trim()).matches()) {
+                || NATURAL_ABSTENTION.matcher(REFERENCE_GROUP.matcher(answer).replaceAll("").trim()).matches()) {
+            return RagResult.abstain();
+        }
+        answer = normalizeReferences(answer, chunks.size());
+        if (answer == null || answer.isBlank() || ONLY_CITATIONS.matcher(answer.trim()).matches()) {
             return RagResult.abstain();
         }
         List<Citation> citations = buildCitations(chunks);
 
         return RagResult.ofAnswer(answer, citations);
+    }
+
+    private String normalizeReferences(String answer, int sourceCount) {
+        Matcher groups = REFERENCE_GROUP.matcher(answer);
+        StringBuffer normalized = new StringBuffer();
+        while (groups.find()) {
+            StringBuilder replacement = new StringBuilder();
+            for (String reference : groups.group(1).split("\\s*,\\s*")) {
+                try {
+                    int index = Integer.parseInt(reference.substring(1));
+                    if (index < 1 || index > sourceCount || !reference.equals("S" + index)) {
+                        return null;
+                    }
+                } catch (NumberFormatException ex) {
+                    return null;
+                }
+                replacement.append('[').append(reference).append(']');
+            }
+            groups.appendReplacement(normalized, Matcher.quoteReplacement(replacement.toString()));
+        }
+        groups.appendTail(normalized);
+        return normalized.toString();
     }
 
     private void validateQuestion(String question) {

@@ -72,6 +72,48 @@ class CitedRagServiceInvalidAnswersTest {
         assertThat(result.citations()).extracting(Citation::label).containsExactly("[S1]");
     }
 
+    @Test
+    void normalizesAndValidatesReferences() {
+        when(knowledgeStore.search("test question", TEST_TOP_K, TEST_MIN_SCORE)).thenReturn(List.of(
+                new MarkdownChunk("a.md", List.of(), 0, "A"),
+                new MarkdownChunk("b.md", List.of(), 0, "B")));
+        for (String answer : List.of("Evidence [S1][S2].", "Evidence [S1, S2].", "Evidence [S1,S2].")) {
+            when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse(answer));
+            RagResult result = service.answer("test question");
+            assertThat(result.abstention()).isFalse();
+            assertThat(result.answer()).isEqualTo("Evidence [S1][S2].");
+        }
+        for (String answer : List.of("Evidence [S3].", "Evidence [S1, S3].", "Evidence [S0].", "Evidence [S999999999999999999999].", "[S1, S2]")) {
+            when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse(answer));
+            RagResult result = service.answer("test question");
+            assertThat(result.abstention()).as(answer).isTrue();
+            assertThat(result.answer()).isEmpty();
+            assertThat(result.citations()).isEmpty();
+        }
+    }
+
+    @Test
+    void recognizesUnambiguousNaturalLanguageAbstentionsWithoutRejectingWarnings() {
+        for (String answer : List.of("No hay información suficiente para responder.",
+                "No dispongo de información suficiente sobre el tema. [S1]",
+                "La evidencia disponible no permite responder.",
+                "I don't have enough information to answer.",
+                "There is not enough evidence to answer. [S1]",
+                "The provided information is insufficient.")) {
+            when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse(answer));
+            RagResult result = service.answer("test question");
+            assertThat(result.abstention()).as(answer).isTrue();
+            assertThat(result.answer()).isEmpty();
+            assertThat(result.citations()).isEmpty();
+        }
+        for (String answer : List.of("La solera es una base. No hay información suficiente sobre el precio. [S1]",
+                "The slab forms a base. There is not enough information about its cost. [S1]",
+                "There is enough information to identify the slab. [S1]")) {
+            when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse(answer));
+            assertThat(service.answer("test question").abstention()).as(answer).isFalse();
+        }
+    }
+
     private static ChatResponse chatResponse(String text) {
         return new ChatResponse(List.of(new Generation(new AssistantMessage(text))));
     }

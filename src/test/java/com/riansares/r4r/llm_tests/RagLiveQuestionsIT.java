@@ -92,7 +92,7 @@ class RagLiveQuestionsIT {
         if (number > 1) {
             Thread.sleep(SLEEP_WAIT);
         }
-        String requestBody = JSON.writeValueAsString(new QuestionRequest(testCase.question()));
+        String requestBody = JSON.writeValueAsString(new QuestionRequest(testCase.question(), "es"));
         HttpRequest request = HttpRequest.newBuilder(ENDPOINT)
                 .timeout(REQUEST_TIMEOUT)
                 .header("Content-Type", "application/json")
@@ -154,5 +154,5 @@ class RagLiveQuestionsIT {
     }
 
     private record QuestionCase(String name, String question, boolean expectsEvidence) { }
-    private record QuestionRequest(String question) { }
+    private record QuestionRequest(String question, String responseLanguage) { }
 }
