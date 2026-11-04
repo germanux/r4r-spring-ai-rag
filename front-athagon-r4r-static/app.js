@@ -1,9 +1,24 @@
 (() => {
   "use strict";
 
-  //const DEFAULT_API_BASE_URL = "https://r4r-api.athagon.tech";
-   const DEFAULT_API_BASE_URL = "http://192.168.1.203:18080";
-  //const DEFAULT_API_BASE_URL = "http://127.0.0.1:8080";
+  const DEFAULT_API_BASE_URL = "https://r4r-api.athagon.tech";
+  const ENDPOINTS = [
+    ["production", DEFAULT_API_BASE_URL, "Producción", "Production"],
+    ["synology", "http://192.168.1.203:18080", "Synology", "Synology"],
+    ["local", "http://127.0.0.1:8080", "Local", "Local"],
+    ["custom", "", "Personalizado", "Custom"]
+  ];
+  const LANGUAGE_KEY = "r4r-rag-language";
+  const QUESTION_KEY = "r4r-rag-last-question";
+  const readPreference = (key) => { try { return localStorage.getItem(key); } catch { return null; } };
+  const writePreference = (key, value) => { try { localStorage.setItem(key, value); } catch { /* Storage may be disabled. */ } };
+  const pageLanguage = document.documentElement.lang.toLowerCase().startsWith("en") ? "en" : "es";
+  const preferredLanguage = readPreference(LANGUAGE_KEY);
+  if (["es", "en"].includes(preferredLanguage) && preferredLanguage !== pageLanguage) {
+    window.location.replace(`index_${preferredLanguage}.html${window.location.search}${window.location.hash}`);
+    return;
+  }
+  writePreference(LANGUAGE_KEY, pageLanguage);
   const ENDPOINT_PATH = "/api/rag/answers";
   const STORAGE_KEY = "r4r-rag-api-base-url";
 
@@ -71,8 +86,54 @@
 
   const normalizeBaseUrl = (value) => (value || "").trim().replace(/\/+$/, "");
 
-  const storedApi = localStorage.getItem(STORAGE_KEY);
-  apiBaseUrl.value = normalizeBaseUrl(storedApi || DEFAULT_API_BASE_URL);
+  function validBaseUrl(value) {
+    const normalized = normalizeBaseUrl(value);
+    try {
+      const url = new URL(normalized);
+      return /^https?:\/\//i.test(normalized) && ["http:", "https:"].includes(url.protocol)
+        && url.hostname && !url.username && !url.password && !url.search && !url.hash ? normalized : null;
+    } catch { return null; }
+  }
+
+  const endpointPreset = $("endpointPreset");
+  const languageSelect = $("languageSelect");
+  for (const [id, , es, en] of ENDPOINTS) {
+    const option = document.createElement("option");
+    option.value = id;
+    option.textContent = isEnglish ? en : es;
+    endpointPreset.appendChild(option);
+  }
+  function syncPreset() {
+    endpointPreset.value = ENDPOINTS.find(([, url]) => url && url === normalizeBaseUrl(apiBaseUrl.value))?.[0] || "custom";
+  }
+  function persistEndpoint() {
+    const value = validBaseUrl(apiBaseUrl.value);
+    apiBaseUrl.setCustomValidity(value ? "" : (isEnglish ? "Enter a valid HTTP/HTTPS API URL." : "Introduce una URL HTTP/HTTPS válida para la API."));
+    if (!value) { apiBaseUrl.reportValidity(); return null; }
+    writePreference(STORAGE_KEY, value);
+    apiBaseUrl.value = value;
+    syncPreset();
+    return value;
+  }
+  apiBaseUrl.value = validBaseUrl(readPreference(STORAGE_KEY)) || DEFAULT_API_BASE_URL;
+  syncPreset();
+  question.value = readPreference(QUESTION_KEY) || "";
+  languageSelect.value = pageLanguage;
+  languageSelect.addEventListener("change", () => {
+    if (!["es", "en"].includes(languageSelect.value)) return;
+    writePreference(LANGUAGE_KEY, languageSelect.value);
+    window.location.assign(`index_${languageSelect.value}.html${window.location.search}${window.location.hash}`);
+  });
+  endpointPreset.addEventListener("change", () => {
+    const preset = ENDPOINTS.find(([id]) => id === endpointPreset.value);
+    if (!preset) return;
+    if (!preset[1]) { apiBaseUrl.focus(); return; }
+    apiBaseUrl.value = preset[1];
+    persistEndpoint();
+    loadRuntimeInfo();
+  });
+  apiBaseUrl.addEventListener("input", () => { apiBaseUrl.setCustomValidity(""); syncPreset(); });
+  apiBaseUrl.addEventListener("change", () => { if (persistEndpoint()) loadRuntimeInfo(); });
 
   updateCounter();
 
@@ -113,10 +174,12 @@
 
   async function loadRuntimeInfo() {
     if (!(document.getElementById("runtimeModel"))) return;
+    const baseUrl = validBaseUrl(apiBaseUrl.value);
+    if (!baseUrl) return;
     const requestId = ++runtimeRequest;
     clearTimeout(runtimePoll);
     try {
-      const response = await fetch(`${normalizeBaseUrl(apiBaseUrl.value)}${ENDPOINT_PATH.replace("/answers", "/runtime")}`, { cache: "no-store", headers: { Accept: "application/json" } });
+      const response = await fetch(`${baseUrl}${ENDPOINT_PATH.replace("/answers", "/runtime")}`, { cache: "no-store", headers: { Accept: "application/json" } });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const info = await response.json();
       if (requestId !== runtimeRequest) return;
@@ -170,10 +233,7 @@
   });
 
   saveEndpoint.addEventListener("click", () => {
-    const value = normalizeBaseUrl(apiBaseUrl.value);
-    if (!value) return;
-    localStorage.setItem(STORAGE_KEY, value);
-    apiBaseUrl.value = value;
+    if (!persistEndpoint()) return;
     apiState.textContent = messages.saved;
     loadRuntimeInfo();
   });
@@ -224,7 +284,9 @@
       return;
     }
 
-    const baseUrl = normalizeBaseUrl(apiBaseUrl.value || DEFAULT_API_BASE_URL);
+    const baseUrl = persistEndpoint();
+    if (!baseUrl) return;
+    writePreference(QUESTION_KEY, text);
     const url = `${baseUrl}${ENDPOINT_PATH}`;
 
     clearTimeout(runtimePoll);

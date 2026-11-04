@@ -18,6 +18,7 @@
       <span class="brand-name">ATHAGON</span>
       <span class="brand-labs">LABS</span>
     </a>
+    <select id="languageSelect" aria-label="Idioma"><option value="es">Español</option><option value="en">English</option></select>
     <nav class="nav" aria-label="Navegación principal">
       <a href="#demo">Demo</a>
       <a href="#arquitectura">Arquitectura</a>
@@ -94,6 +95,7 @@
           <details class="endpoint-settings">
             <summary>Endpoint de la demo</summary>
             <div class="endpoint-row">
+              <select id="endpointPreset" aria-label="Endpoint de la API"></select>
               <input id="apiBaseUrl" type="url" aria-label="URL base de la API" spellcheck="false"/>
               <button id="saveEndpoint" type="button" class="small-btn">Guardar</button>
             </div>
