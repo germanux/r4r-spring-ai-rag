@@ -10,12 +10,17 @@ Contenido
 r4r-rag/
   index.html
   styles.css
-  app.js
+  styles-es.css
+  styles-en.css
+  js/
+    app.js
+    i18n.js
+    app.test.cjs
   README_DEPLOY.txt
 
 Interfaz
 --------
-- Español.
+- Español e inglés en una única página, sin recarga al cambiar de idioma.
 - Cabecera breve, centrada en IA/RAG.
 - Caja de consulta inmediatamente después.
 - Tres ejemplos que rellenan y lanzan automáticamente la consulta.
@@ -30,7 +35,11 @@ Por defecto la web usa:
 https://r4r-api.athagon.tech/api/rag/answers
 
 El endpoint puede cambiarse desde la propia página; el valor se guarda
-solo en localStorage del navegador.
+solo en localStorage del navegador, junto con el idioma y la última pregunta enviada.
+Los CSS existentes se conservan temporalmente sin cambios.
+
+Pruebas simuladas (sin API ni LLM reales):
+node front-athagon-r4r-static/js/app.test.cjs
 
 CORS
 ----
