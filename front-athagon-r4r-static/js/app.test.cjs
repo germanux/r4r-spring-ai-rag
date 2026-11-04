@@ -87,7 +87,7 @@ function openPage(lang = 'es', storage = new Map(), options = {}) {
       if (options.runtimeFails) throw Error('Runtime unavailable');
       if (options.runtimeHttpStatus) return { ok: false, status: options.runtimeHttpStatus, json: async () => { throw SyntaxError('Not JSON'); } };
       const after = runtimeCalls > 1;
-      return { ok: true, json: async () => ({ configuredModel: 'qwen3:8b', preferredProvider: { model: 'qwen3:8b' },
+      return { ok: true, json: async () => (options.runtime || { configuredModel: 'qwen3:8b', preferredProvider: { model: 'qwen3:8b' },
         generationState: after && options.failed ? 'failed' : after ? 'success' : 'idle',
         lastUsedProvider: after && !options.failed ? { model: 'qwen2.5:7b', inferenceHost: host } : null,
         modelStatus: options.loadingModel ? 'Cargando modelo' : after && options.failed ? 'Ollama no disponible' : 'Modelo cargado',
@@ -130,9 +130,9 @@ for (const lang of ['es', 'en']) {
     await tick();
     assert.equal(p.document.documentElement.lang, lang);
     assert.equal(p.node('languageSelect').value, lang);
-    assert.match(p.document.title, lang === 'es' ? /con citas/ : /with citations/);
+    assert.match(p.document.title, lang === 'es' ? /IA autoalojada/ : /Self-Hosted AI/);
     const description = p.document.querySelectorAll('meta').find(n => n.getAttribute('name') === 'description');
-    assert.match(description.getAttribute('content'), lang === 'es' ? /reformas/ : /renovations/);
+    assert.match(description.getAttribute('content'), /Spring AI/);
     assert.match(p.node('question').getAttribute('placeholder'), lang === 'es' ? /Qué información/ : /What information/);
     assert.equal(p.node('languageSelect').getAttribute('aria-label'), lang === 'es' ? 'Idioma' : 'Language');
     assert.equal(p.node('endpointPreset').children.length, 4);
@@ -408,3 +408,61 @@ for (const lang of ['es', 'en']) {
     assert.ok(!p.node('runtimeUsed').textContent.includes('403'));
   });
 }
+
+for (const lang of ['es', 'en']) {
+  test(`${lang}: title, static topology and runtime distinguish configuration from observations`, async () => {
+    const p = openPage(lang, new Map(), { runtime: {
+      configuredModel: 'qwen3:8b', preferredProvider: { name: 'PC', model: 'qwen3:8b', inferenceHost: { type: 'desktop', hostname: 'PC-GIGA-ZORUX' } },
+      lastUsedProvider: { name: 'ASUS', model: 'qwen2.5:7b', inferenceHost: host }, generationState: 'success',
+      modelStatus: 'Modelo cargado', loadedModels: [], topK: 3, minScore: .63
+    } });
+    await tick();
+    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'IA autoalojada · RAG con respuestas verificables' : 'Self-Hosted AI · Verifiable RAG');
+    assert.equal(p.document.querySelectorAll('.arch-step').length, 4);
+    assert.equal(p.document.querySelectorAll('.inference-host').length, 2);
+    assert.equal(p.document.querySelectorAll('.primary-host')[0].textContent.includes('NVIDIA GeForce RTX 4060'), true);
+    assert.equal(p.node('runtimeModel').textContent, 'qwen3:8b');
+    assert.equal(p.node('runtimePreferred').textContent, 'PC-GIGA-ZORUX');
+    assert.match(p.node('runtimeUsed').textContent, /qwen2.5:7b.*PC-ASUS-ZORIN/);
+    assert.match(p.node('runtimeHost').textContent, /PC-ASUS-ZORIN/);
+    assert.equal(p.node('runtimeFailover').textContent, p.t('fallbackObserved'));
+    assert.equal(p.node('runtimeMemoryScope').textContent, p.t('memoryLastUsed'));
+    p.changeLanguage(lang === 'es' ? 'en' : 'es');
+    assert.equal(p.node('runtimeFailover').textContent, p.t('fallbackObserved'));
+    assert.equal(p.node('runtimeMemoryScope').textContent, p.t('memoryLastUsed'));
+    assert.match(p.node('runtimeUsed').textContent, /qwen2.5:7b.*PC-ASUS-ZORIN/);
+  });
+  test(`${lang}: bytes become GiB; unavailable values are not presented as zero`, async () => {
+    for (const [bytes, expected] of [[1024 ** 3, '1.00 GiB'], [4 * 1024 ** 3, '4.00 GiB'], [5295200000, '4.93 GiB'], [0, '0.00 GiB'], [null, null], [undefined, null], [-1, null], ['4294967296', null], [NaN, null], [Infinity, null]]) {
+      const p = openPage(lang, new Map(), { runtime: {
+        loadedModels: [{ name: 'test-model', parameterSize: '8B', sizeBytes: bytes, vramBytes: bytes }],
+        generationState: 'idle', modelStatus: 'Modelo cargado'
+      } });
+      await tick();
+      assert.ok(p.node('runtimeOllama').textContent.includes(expected || p.t('unavailable')));
+      assert.doesNotMatch(p.node('runtimeOllama').textContent, /TB|NaN|Infinity/);
+      if (expected === null) assert.doesNotMatch(p.node('runtimeOllama').textContent, /0.00 GiB/);
+    }
+  });
+}
+
+test('runtime never invents failover, a last-used host or a configured model from incomplete data', async () => {
+  for (const [runtime, status] of [
+    [{ generationState: 'idle', preferredProvider: { name: 'PC', model: 'preferred' } }, 'noGeneration'],
+    [{ generationState: 'failed', lastUsedProvider: { name: 'stale', model: 'stale', inferenceHost: host } }, 'generationFailed'],
+    [{ generationState: 'success', lastUsedProvider: { model: 'used' }, preferredProvider: { model: 'different' } }, 'fallbackUnknown'],
+    [{ generationState: 'success', lastUsedProvider: { name: 'PC', model: 'same' }, preferredProvider: { name: 'PC', model: 'same' } }, 'preferredObserved'],
+    [{ generationState: 'success', lastUsedProvider: { model: 'same', inferenceHost: { hostname: 'backup' } }, preferredProvider: { model: 'same', inferenceHost: { hostname: 'main' } } }, 'fallbackObserved']
+  ]) {
+    const p = openPage('en', new Map(), { runtime });
+    await tick();
+    assert.equal(p.node('runtimeFailover').textContent, p.t(status));
+    if (!runtime.lastUsedProvider?.inferenceHost?.hostname || runtime.generationState === 'failed') {
+      assert.equal(p.node('runtimeHost').textContent, p.t('unknownHost'));
+    }
+    if (runtime.generationState === 'failed') {
+      assert.equal(p.node('runtimeUsed').textContent, p.t('generationFailed'));
+      assert.equal(p.node('runtimeHardware').textContent, '');
+    }
+  }
+});

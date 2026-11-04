@@ -85,4 +85,24 @@ class RagRuntimeControllerTest {
         assertThat(info.inferenceHost()).isNull();
         verifyNoInteractions(http);
     }
+
+    @Test void preservesOllamaByteValuesWithoutConvertingOrEstimating() throws Exception {
+        router.call(new Prompt("fallback"));
+        memory("{\"models\":[{\"name\":\"qwen2.5:7b\",\"size\":5295200000,\"size_vram\":4294967296}]}");
+        var model = controller.runtime().loadedModels().getFirst();
+        assertThat(model.sizeBytes()).isEqualTo(5295200000L);
+        assertThat(model.vramBytes()).isEqualTo(4294967296L);
+    }
+
+    @Test void distinguishesMissingOrInvalidTelemetryFromObservedZero() throws Exception {
+        router.call(new Prompt("fallback"));
+        memory("{\"models\":[{\"name\":\"missing\"},{\"name\":\"invalid\",\"size\":-1,\"size_vram\":\"unknown\"},{\"name\":\"zero\",\"size\":0,\"size_vram\":0}]}");
+        var models = controller.runtime().loadedModels();
+        assertThat(models.get(0).sizeBytes()).isNull();
+        assertThat(models.get(0).vramBytes()).isNull();
+        assertThat(models.get(1).sizeBytes()).isNull();
+        assertThat(models.get(1).vramBytes()).isNull();
+        assertThat(models.get(2).sizeBytes()).isZero();
+        assertThat(models.get(2).vramBytes()).isZero();
+    }
 }

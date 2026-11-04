@@ -1054,3 +1054,34 @@ kbd {
   .endpoint-row { grid-template-columns:minmax(0, 1fr); }
   .brand { gap:6px; letter-spacing:.08em; }
 }
+
+/* Static topology; runtime observations are presented separately. */
+.architecture-route { gap:24px; }
+.architecture-route > .arch-step { position:relative; }
+.architecture-route > .arch-step:not(:last-child)::after {
+  content:"→";
+  position:absolute;
+  right:-22px;
+  top:42px;
+  color:var(--steel-dark);
+  font-size:1.25rem;
+}
+.architecture-route > .llm { border:2px solid var(--steel-dark); }
+.architecture-caption { color:var(--text); font-size:.85rem; line-height:1.5; margin:16px 0; }
+.inference-hosts { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; }
+.inference-host { min-width:0; padding:16px; border:1px solid var(--line-soft); border-left:4px solid var(--steel-dark); border-radius:12px; background:var(--paper); }
+.backup-host { border-left-style:dashed; }
+.inference-host small { color:var(--steel-dark); font-weight:700; }
+.inference-host h3 { margin:8px 0; font-size:1rem; }
+.inference-host p { margin:0; color:var(--text); font-size:.9rem; overflow-wrap:anywhere; }
+.runtime-observed { padding:18px; margin-bottom:14px; border:1px solid var(--line-soft); border-left:5px solid var(--steel-dark); border-radius:12px; background:var(--panel-2); }
+.runtime-observed .eyebrow { display:block; margin-bottom:8px; }
+#runtimeUsed { display:block; font-size:clamp(1.05rem, 2vw, 1.4rem); overflow-wrap:anywhere; }
+#runtimeFailover { margin:10px 0 0; font-size:.9rem; color:var(--text); }
+@media (max-width:1080px) {
+  .architecture-route { grid-template-columns:minmax(0, 1fr); }
+  .architecture-route > .arch-step:not(:last-child)::after { content:"↓"; top:auto; bottom:-24px; right:50%; }
+}
+@media (max-width:760px) {
+  .inference-hosts { grid-template-columns:minmax(0, 1fr); }
+}

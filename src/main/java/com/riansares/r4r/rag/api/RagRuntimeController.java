@@ -97,12 +97,18 @@ public class RagRuntimeController {
             for (JsonNode model : models) {
                 result.add(new LoadedModel(model.path("name").asText("unknown"),
                         model.path("details").path("parameter_size").asText("unknown"),
-                        model.path("size").asLong(0), model.path("size_vram").asLong(0)));
+                        reportedBytes(model.path("size")), reportedBytes(model.path("size_vram"))));
             }
             return new MemoryState(true, List.copyOf(result));
         } catch (Exception ignored) {
             return new MemoryState(false, List.of());
         }
+    }
+
+    // Missing or invalid telemetry must not be presented as an observed zero.
+    private static Long reportedBytes(JsonNode value) {
+        return value.isIntegralNumber() && value.canConvertToLong() && value.longValue() >= 0
+                ? value.longValue() : null;
     }
 
     private static String versionOf(Class<?> type) {
@@ -124,5 +130,5 @@ public class RagRuntimeController {
                               int topK, double minScore, String javaVersion, String springBootVersion,
                               String springAiVersion, String database, String deployment, List<LoadedModel> loadedModels, String configuredModel, String modelStatus, InferenceHost.Details inferenceHost, ProviderInfo preferredProvider, ProviderInfo lastUsedProvider, String generationState) { }
 
-    public record LoadedModel(String name, String parameterSize, long sizeBytes, long vramBytes) { }
+    public record LoadedModel(String name, String parameterSize, Long sizeBytes, Long vramBytes) { }
 }

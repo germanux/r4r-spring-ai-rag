@@ -153,11 +153,12 @@
   }
 
   function formatBytes(bytes) {
-    if (!bytes) return "0 B";
-    const units = ["B", "GB", "TB"];
-    let value = bytes, index = 0;
-    while (value >= 1024 && index < units.length - 1) { value /= 1024; index++; }
-    return `${value.toFixed(index ? 1 : 0)} ${units[index]}`;
+    if (!Number.isSafeInteger(bytes) || bytes < 0) return t("unavailable");
+    return `${(bytes / (1024 ** 3)).toFixed(2)} GiB`;
+  }
+
+  function providerIdentity(provider) {
+    return provider?.inferenceHost?.hostname || provider?.name || null;
   }
 
   async function loadRuntimeInfo() {
@@ -191,30 +192,42 @@
   function renderRuntimeInfo(info) {
     const unavailable = t("unavailable");
     const failed = info.generationState === "failed";
-    const used = info.lastUsedProvider;
+    const used = failed ? null : info.lastUsedProvider;
+    const preferred = info.preferredProvider;
+    const sameProvider = used?.inferenceHost?.hostname && preferred?.inferenceHost?.hostname
+      ? used.inferenceHost.hostname === preferred.inferenceHost.hostname
+      : used?.name && preferred?.name ? used.name === preferred.name : null;
+    $("runtimeFailover").textContent = failed ? t("generationFailed") : !used ? t("noGeneration")
+      : sameProvider === null ? t("fallbackUnknown") : t(sameProvider ? "preferredObserved" : "fallbackObserved");
+    $("runtimePreferred").textContent = providerIdentity(preferred) || t("unknownHost");
+    $("runtimeMemoryScope").textContent = failed ? t("informationUnavailable") : used ? t("memoryLastUsed")
+      : info.generationState === "idle" && preferred ? t("memoryPreferred") : t("memoryUnknown");
     $("runtimeUsed").textContent = failed ? t("generationFailed")
-      : used ? `${used.model} · ${used.inferenceHost?.hostname || t("unknownHost")}`
+      : used ? `${used.model || unavailable} · ${used.inferenceHost?.hostname || t("unknownHost")}`
       : t("noGeneration");
-    $("runtimeModel").textContent = info.configuredModel || info.generationModel || t("unavailable");
+    $("runtimeModel").textContent = info.configuredModel || preferred?.model || t("unavailable");
     const states = t("modelStates");
-    $("runtimeModelStatus").textContent = states[info.modelStatus] || t("providerUnavailable");
+    $("runtimeModelStatus").textContent = states[info.modelStatus] || t("informationUnavailable");
     $("runtimeModelFull").textContent = info.preferredProvider?.model || info.configuredModel || unavailable;
-    const host = (failed ? null : used?.inferenceHost || info.inferenceHost) || {};
+    const host = used?.inferenceHost || {};
     const hostNames = t("hostNames");
     $("runtimeHost").textContent = (hostNames[host.type] || hostNames.unknown) + (host.hostname ? ` (${host.hostname})` : "");
-    $("runtimeHardware").textContent = [host.gpu, host.ram && `RAM ${host.ram}`, host.cpu].filter(Boolean).join(" · ");
+    $("runtimeHardware").textContent = [host.gpu?.replace(/\bNVIDIA RTX 4060\b/g, "NVIDIA GeForce RTX 4060"), host.ram && `RAM ${host.ram}`, host.cpu].filter(Boolean).join(" · ");
     $("runtimeEmbeddings").textContent = `${info.embeddingModel || "—"} · ${info.embeddingDimensions || "—"} ${t("dimensions")}`;
     $("runtimeRetrieval").textContent = `Top-K ${info.topK} · ${t("minimumScore")} ${info.minScore}`;
     $("runtimeVersions").textContent = `Java ${info.javaVersion || "—"} · Spring Boot ${info.springBootVersion || "—"} · Spring AI ${info.springAiVersion || "—"}`;
     $("runtimeDeployment").textContent = info.deployment || t("unavailable");
     const loaded = Array.isArray(info.loadedModels) ? info.loadedModels : [];
     $("runtimeOllama").textContent = loaded.length
-      ? loaded.map((model) => `${model.name} (${model.parameterSize}; ${formatBytes(model.sizeBytes)} ${t("inMemory")}; ${formatBytes(model.vramBytes)} VRAM)`).join(" · ")
+      ? loaded.map((model) => `${model.name} (${model.parameterSize && model.parameterSize !== "unknown" ? model.parameterSize : unavailable}; ${formatBytes(model.sizeBytes)} ${t("inMemory")}; ${formatBytes(model.vramBytes)} VRAM)`).join(" · ")
       : t("noModels");
   }
   function renderRuntimeUnavailable() {
     for (const id of ["runtimeModel", "runtimeModelFull", "runtimeEmbeddings", "runtimeRetrieval", "runtimeVersions", "runtimeDeployment"]) $(id).textContent = t("unavailable");
     $("runtimeUsed").textContent = errorMessage(runtimeError);
+    $("runtimeFailover").textContent = t("informationUnavailable");
+    $("runtimePreferred").textContent = t("informationUnavailable");
+    $("runtimeMemoryScope").textContent = t("informationUnavailable");
     $("runtimeModelStatus").textContent = t("informationUnavailable");
     $("runtimeHost").textContent = t("unknownHost");
     $("runtimeHardware").textContent = "";
