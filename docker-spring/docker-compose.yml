@@ -45,6 +45,43 @@ services:
     networks:
       - r4r-network
 
+  ollama-embeddings:
+    image: ollama/ollama:latest
+    container_name: r4r-ollama-embeddings
+    restart: unless-stopped
+    mem_limit: 1536m
+    environment:
+      OLLAMA_HOST: "0.0.0.0:11434"
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_KEEP_ALIVE: "5m"
+    volumes:
+      - ./ollama-embeddings-data:/root/.ollama
+    # Launch Ollama, wait for it, then pull the embedding model on first start.
+    # The bind mount preserves the model across container recreations.
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        ollama serve &
+        ollama_pid=$$!
+        trap 'kill "$$ollama_pid" 2>/dev/null || true; wait "$$ollama_pid" 2>/dev/null || true' TERM INT
+        until ollama list >/dev/null 2>&1; do
+          if ! kill -0 "$$ollama_pid" 2>/dev/null; then exit 1; fi
+          sleep 2
+        done
+        if ! ollama show nomic-embed-text >/dev/null 2>&1; then
+          ollama pull nomic-embed-text
+        fi
+        wait "$$ollama_pid"
+    healthcheck:
+      test: ["CMD", "ollama", "show", "nomic-embed-text"]
+      interval: 30s
+      timeout: 15s
+      retries: 15
+      start_period: 5m
+    networks:
+      - r4r-network
+
   api:
     image: r4r-api:0.3.2
     container_name: r4r-api
