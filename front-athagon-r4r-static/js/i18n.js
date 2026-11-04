@@ -106,7 +106,7 @@ const R4RI18n = (() => {
       "ready": "listo",
       "online": "conectado",
       "error": "error",
-      "networkError": "No se pudo conectar con la API.",
+      "networkError": "No se pudo obtener una respuesta de la API: fallo de conexión o bloqueo del navegador.",
       "translationError": "Servicio de traducción no disponible.",
       "hostNames": {
         "laptop": "Portátil ASUS",
@@ -224,7 +224,7 @@ const R4RI18n = (() => {
       "ready": "ready",
       "online": "online",
       "error": "error",
-      "networkError": "Could not connect to the API.",
+      "networkError": "No API response could be read: connection failure or browser blocking.",
       "translationError": "Translation service unavailable.",
       "hostNames": {
         "laptop": "ASUS laptop",
@@ -253,7 +253,8 @@ const R4RI18n = (() => {
     timeout: "The query exceeded the 120 second time limit.",
     invalidJson: (status) => `HTTP ${status}: the response is not valid JSON.`,
     httpError: (status) => `Request failed (HTTP ${status}).`,
-    cors: "If the API is on a different domain or subdomain, check HTTPS, DNS and CORS for https://athagon.tech.",
+    forbidden: "HTTP 403: access denied by the server. Check the allowed origin and API access rules.",
+    cors: "Check connectivity, DNS, mixed HTTP/HTTPS content and whether the API permits this page’s origin through CORS.",
     sources: (count) => `${count} source${count === 1 ? "" : "s"}`
   });
   Object.assign(dictionary.es, {
@@ -270,7 +271,8 @@ const R4RI18n = (() => {
     timeout: "La consulta ha superado el tiempo máximo de 120 segundos.",
     invalidJson: (status) => `HTTP ${status}: la respuesta no es JSON válido.`,
     httpError: (status) => `HTTP ${status}`,
-    cors: "Si la API está en otro dominio o subdominio, revisa HTTPS, DNS y CORS para https://athagon.tech.",
+    forbidden: "HTTP 403: el servidor ha denegado el acceso. Revisa el origen permitido y las reglas de acceso de la API.",
+    cors: "Revisa la conectividad, DNS, contenido mixto HTTP/HTTPS y que la API permita el origen de esta página mediante CORS.",
     sources: (count) => `${count} fuente${count === 1 ? "" : "s"}`
   });
   let language = "en";

@@ -95,7 +95,7 @@
   let lastPayload = null;
   let lastError = null;
   let runtimeInfo = null;
-  let runtimeFailed = false;
+  let runtimeError = null;
   let phase = "idle";
   let apiStatus = "ready";
   let copyStatus = "copy";
@@ -114,7 +114,7 @@
     if (phase === "success" && lastPayload) renderResult(lastPayload);
     if (phase === "error" && lastError) renderError(errorMessage(lastError));
     if (runtimeInfo) renderRuntimeInfo(runtimeInfo);
-    else if (runtimeFailed) renderRuntimeUnavailable();
+    else if (runtimeError) renderRuntimeUnavailable();
     if (apiBaseUrl.validationMessage) apiBaseUrl.setCustomValidity(t("invalidUrl"));
   }
   changeLanguage(initialLanguage);
@@ -168,17 +168,22 @@
     clearTimeout(runtimePoll);
     try {
       const response = await fetch(`${baseUrl}${ENDPOINT_PATH.replace("/answers", "/runtime")}`, { cache: "no-store", headers: { Accept: "application/json" } });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const info = await response.json();
+      if (!response.ok) throw { kind: "http", status: response.status };
+      let info;
+      try {
+        info = await response.json();
+      } catch {
+        throw { kind: "json", status: response.status };
+      }
       if (requestId !== runtimeRequest) return;
       runtimeInfo = info;
-      runtimeFailed = false;
+      runtimeError = null;
       renderRuntimeInfo(info);
       pollRuntimeWhileLoading(info.modelStatus);
-    } catch {
+    } catch (error) {
       if (requestId !== runtimeRequest) return;
       runtimeInfo = null;
-      runtimeFailed = true;
+      runtimeError = error;
       renderRuntimeUnavailable();
     }
   }
@@ -209,17 +214,21 @@
   }
   function renderRuntimeUnavailable() {
     for (const id of ["runtimeModel", "runtimeModelFull", "runtimeEmbeddings", "runtimeRetrieval", "runtimeVersions", "runtimeDeployment"]) $(id).textContent = t("unavailable");
-    $("runtimeUsed").textContent = t("informationUnavailable");
-    $("runtimeModelStatus").textContent = t("providerUnavailable");
+    $("runtimeUsed").textContent = errorMessage(runtimeError);
+    $("runtimeModelStatus").textContent = t("informationUnavailable");
     $("runtimeHost").textContent = t("unknownHost");
     $("runtimeHardware").textContent = "";
     $("runtimeOllama").textContent = t("informationUnavailable");
   }
   function errorMessage(error) {
-    const message = error.kind === "timeout" ? t("timeout")
-      : error.kind === "http" ? t("httpError", error.status)
-      : error.kind === "json" ? t("invalidJson", error.status) : t("networkError");
-    return `${message}${error.detail ? `\n${error.detail}` : ""}\n\n${t("cors")}`;
+    if (error?.kind === "timeout") return t("timeout");
+    if (error?.kind === "http") {
+      const message = error.status === 403 ? t("forbidden") : t("httpError", error.status);
+      return `${message}${error.detail ? `\n${error.detail}` : ""}`;
+    }
+    if (error?.kind === "json") return t("invalidJson", error.status);
+    // Fetch cannot distinguish a network failure from a browser-blocked CORS response.
+    return `${t("networkError")}\n\n${t("cors")}`;
   }
 
   document.querySelectorAll(".sample").forEach((button) => {
@@ -350,7 +359,7 @@
       try {
         payload = await response.json();
       } catch {
-        throw { kind: "json", status: response.status };
+        if (response.ok) throw { kind: "json", status: response.status };
       }
 
       if (!response.ok) {

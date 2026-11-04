@@ -85,6 +85,7 @@ function openPage(lang = 'es', storage = new Map(), options = {}) {
       }
       runtimeCalls++;
       if (options.runtimeFails) throw Error('Runtime unavailable');
+      if (options.runtimeHttpStatus) return { ok: false, status: options.runtimeHttpStatus, json: async () => { throw SyntaxError('Not JSON'); } };
       const after = runtimeCalls > 1;
       return { ok: true, json: async () => ({ configuredModel: 'qwen3:8b', preferredProvider: { model: 'qwen3:8b' },
         generationState: after && options.failed ? 'failed' : after ? 'success' : 'idle',
@@ -292,10 +293,10 @@ test('switching language during an in-flight request retains query language and 
 test('runtime errors, polling and clipboard failure are localized without additional language requests', async () => {
   const p = openPage('es', new Map(), { runtimeFails: true, copyFailed: true });
   await tick();
-  assert.equal(p.node('runtimeUsed').textContent, 'Información no disponible');
+  assert.ok(p.node('runtimeUsed').textContent.includes(p.t('networkError')));
   p.changeLanguage('en');
-  assert.equal(p.node('runtimeUsed').textContent, 'Information unavailable');
-  assert.equal(p.node('runtimeModelStatus').textContent, 'Provider unavailable');
+  assert.ok(p.node('runtimeUsed').textContent.includes(p.t('networkError')));
+  assert.equal(p.node('runtimeModelStatus').textContent, p.t('informationUnavailable'));
   p.node('question').value = 'Query';
   await p.node('sendButton').handlers.click();
   await p.node('copyAnswerButton').handlers.click();
@@ -373,3 +374,37 @@ test('both languages keep the single shared stylesheet after language changes', 
     assert.equal(fs.existsSync(path.join(root, obsolete)), false);
   }
 });
+
+for (const lang of ['es', 'en']) {
+  for (const json of [true, false]) {
+    test(`${lang}: HTTP 403 ${json ? 'JSON' : 'plain text'} is not a connection or JSON error`, async () => {
+      const p = openPage(lang, new Map(), {
+        runtimeHttpStatus: 403,
+        answer: async () => ({ ok: false, status: 403, json: async () => {
+          if (!json) throw SyntaxError('Invalid CORS request');
+          return { error: 'origin_not_allowed', message: 'Origin rejected' };
+        } })
+      });
+      await tick();
+      assert.equal(p.node('runtimeUsed').textContent, p.t('forbidden'));
+      p.node('question').value = 'Question';
+      await p.node('sendButton').handlers.click();
+      assert.equal(p.node('httpStatus').textContent, '403');
+      assert.ok(p.node('errorBox').textContent.startsWith(p.t('forbidden')));
+      assert.ok(!p.node('errorBox').textContent.includes(p.t('networkError')));
+      assert.ok(!p.node('errorBox').textContent.includes(p.t('invalidJson', 403)));
+      p.changeLanguage(lang === 'es' ? 'en' : 'es');
+      assert.equal(p.node('runtimeUsed').textContent, p.t('forbidden'));
+      assert.ok(p.node('errorBox').textContent.startsWith(p.t('forbidden')));
+    });
+  }
+  test(`${lang}: unreadable response or browser CORS rejection does not claim an HTTP 403`, async () => {
+    const p = openPage(lang, new Map(), { networkFails: true, runtimeFails: true });
+    p.node('question').value = 'Question';
+    await p.node('sendButton').handlers.click();
+    assert.ok(p.node('errorBox').textContent.includes(p.t('networkError')));
+    assert.ok(p.node('errorBox').textContent.includes(p.t('cors')));
+    assert.ok(!p.node('errorBox').textContent.includes('403'));
+    assert.ok(!p.node('runtimeUsed').textContent.includes('403'));
+  });
+}
