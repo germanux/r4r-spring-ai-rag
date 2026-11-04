@@ -297,9 +297,7 @@ const R4RI18n = (() => {
         if (key) child.textContent = child.textContent.replace(/\S[\s\S]*\S|\S/, t(key));
       });
     });
-    // Retain the existing language-specific presentation until the CSS refactor.
     document.body.className = language === "es" ? "spanish-demo" : "english-demo";
-    document.getElementById("languageStyles").setAttribute("href", `styles-${language}.css`);
   }
   return { t, setLanguage };
 })();

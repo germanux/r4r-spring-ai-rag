@@ -9,9 +9,8 @@ Contenido
 ---------
 r4r-rag/
   index.html
-  styles.css
-  styles-es.css
-  styles-en.css
+  styles/
+    styles.css
   js/
     app.js
     i18n.js
@@ -36,7 +35,7 @@ https://r4r-api.athagon.tech/api/rag/answers
 
 El endpoint puede cambiarse desde la propia página; el valor se guarda
 solo en localStorage del navegador, junto con el idioma y la última pregunta enviada.
-Los CSS existentes se conservan temporalmente sin cambios.
+Los estilos compartidos de ambos idiomas están en styles/styles.css.
 
 Pruebas simuladas (sin API ni LLM reales):
 node front-athagon-r4r-static/js/app.test.cjs

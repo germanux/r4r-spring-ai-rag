@@ -357,3 +357,19 @@ test('single entry point has valid assets, anchors, unique IDs and no legacy fil
   }
   assert.doesNotMatch(scripts, /location\.(?:assign|replace|reload)/);
 });
+
+test('both languages keep the single shared stylesheet after language changes', () => {
+  for (const language of ['es', 'en']) {
+    const p = openPage(language);
+    for (const next of ['es', 'en']) {
+      p.changeLanguage(next);
+      const sheets = p.document.querySelectorAll('link').filter(n => n.getAttribute('rel') === 'stylesheet');
+      assert.equal(sheets.length, 1);
+      assert.equal(sheets[0].getAttribute('href'), 'styles/styles.css');
+      assert.ok(fs.existsSync(path.join(root, sheets[0].getAttribute('href'))));
+    }
+  }
+  for (const obsolete of ['styles.css', 'styles-es.css', 'styles-en.css']) {
+    assert.equal(fs.existsSync(path.join(root, obsolete)), false);
+  }
+});
