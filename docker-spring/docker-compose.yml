@@ -48,6 +48,8 @@ services:
   ollama-embeddings:
     image: ollama/ollama:latest
     container_name: r4r-ollama-embeddings
+    ports:
+      - "192.168.1.203:11434:11434"
     restart: unless-stopped
     mem_limit: 1536m
     environment:

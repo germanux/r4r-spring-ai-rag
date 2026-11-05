@@ -159,10 +159,10 @@ ssh -tt "$REMOTE" "
   # Recrear exclusivamente Spring Boot.
   echo '==> Desplegando API...'
 
-  sudo "\$COMPOSE_BIN" \
-    --env-file .env \
-    -f docker-compose.yml \
-    up -d --no-deps --force-recreate api
+sudo "$COMPOSE_BIN" \
+  --env-file .env \
+  -f docker-compose.yml \
+  up -d
 
   # Conservar la imagen TAR en el directorio R4R.
   sudo mv '$STAGE/$TAR_NAME' '$NAS_DIR/$TAR_NAME'
