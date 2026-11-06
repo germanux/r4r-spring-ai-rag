@@ -64,7 +64,7 @@ function openPage(lang = 'es', storage = new Map(), options = {}) {
   const document = makeDocument();
   const requests = [], navigations = [], clipboard = [], timers = new Map();
   let runtimeCalls = 0, nextTimer = 0;
-  const context = { document, URL, URLSearchParams, AbortController, performance,
+  const context = { document, URL, URLSearchParams, AbortController, TextEncoder, performance,
     navigator: { language: lang, clipboard: { writeText: async text => { if (options.copyFailed) throw Error('Clipboard denied'); clipboard.push(text); } } },
     window: { addEventListener(event, handler) { this.handlers[event] = handler; }, handlers: {}, location: { hash: options.hash || '', assign: url => navigations.push(url), replace: url => navigations.push(url) } },
     localStorage: { getItem: key => { if (options.storageFails) throw Error('Storage disabled'); return storage.get(key) ?? null; },
@@ -73,6 +73,10 @@ function openPage(lang = 'es', storage = new Map(), options = {}) {
     clearTimeout: id => timers.delete(id),
     fetch: async (url, init = {}) => {
       requests.push({ url, init });
+      if (url.startsWith('https://api.mymemory.translated.net/get?')) {
+        if (options.translation) return options.translation(url, init);
+        return { ok: true, json: async () => ({ responseStatus: 200, responseData: { translatedText: '¿Qué reformas?' } }) };
+      }
       if (url.endsWith('/answers')) {
         if (options.answer) return options.answer(url, init);
         if (options.networkFails) throw Error('Failed to fetch');
@@ -120,7 +124,7 @@ for (const lang of ['es', 'en']) {
       const body = JSON.parse(page.requests.find(r => r.url.endsWith('/answers')).init.body);
       assert.equal(body.question, 'Question');
       assert.equal(body.responseLanguage, lang);
-      if (lang === 'en') assert.equal(body.retrievalQuestion, undefined);
+      assert.equal(body.retrievalQuestion, lang === 'en' ? '¿Qué reformas?' : undefined);
       page.changeLanguage(lang === 'en' ? 'es' : 'en');
       assert.match(page.node('runtimeUsed').textContent, failed ? /failed|fallida/ : /qwen2.5:7b.*PC-ASUS-ZORIN/);
     });
@@ -331,16 +335,101 @@ test('abstention, empty answers and citation fallback labels translate while sou
   }
 });
 
-test('English query uses backend-local normalization without contacting external translation services', async () => {
+test('English preserves the original question and uses MyMemory Spanish only for retrieval', async () => {
   const p = openPage('en');
   p.node('question').value = 'Original question';
   await p.node('sendButton').handlers.click();
   const body = JSON.parse(p.requests.find(r => r.url.endsWith('/answers')).init.body);
-  assert.equal(body.retrievalQuestion, undefined);
-  assert.equal(body.question, 'Original question');
-  assert.equal(body.responseLanguage, 'en');
-  assert.ok(p.requests.every(r => r.url.startsWith('https://r4r-api.athagon.tech/')));
+  assert.deepEqual(body, { question: 'Original question', retrievalQuestion: '¿Qué reformas?', responseLanguage: 'en' });
+  const translation = p.requests.find(r => r.url.includes('mymemory'));
+  assert.equal(new URL(translation.url).searchParams.get('q'), body.question);
+  assert.equal(new URL(translation.url).searchParams.get('langpair'), 'en|es');
+  assert.equal(p.requests.filter(r => r.url.includes('mymemory')).length, 1);
   assert.equal(p.node('answerText').textContent, 'Answer [S1]');
+  assert.equal(p.node('question').value, 'Original question');
+  assert.equal(p.storage.get('r4r.lastQuestion'), 'Original question');
+  assert.ok(p.node('citations').textContent.includes('manual.pdf'));
+});
+
+test('Spanish does not contact a translator', async () => {
+  const p = openPage('es');
+  p.node('question').value = '¿Qué reformas?';
+  await p.node('sendButton').handlers.click();
+  assert.ok(p.requests.every(r => !r.url.includes('mymemory')));
+  assert.deepEqual(JSON.parse(p.requests.find(r => r.url.endsWith('/answers')).init.body),
+    { question: '¿Qué reformas?', responseLanguage: 'es' });
+});
+
+for (const failure of ['network', 'http', 'status', 'quota', 'json', 'empty', 'missing', 'unchanged', 'unchangedWhitespace', 'tooLong']) {
+  test(`MyMemory ${failure}: omit retrievalQuestion to activate backend fallback, no retry`, async () => {
+    const p = openPage('en', new Map(), { translation: async () => {
+      if (failure === 'network') throw TypeError('Failed to fetch');
+      return { ok: failure !== 'http', json: async () => {
+        if (failure === 'json') throw SyntaxError('Bad JSON');
+        return { responseStatus: failure === 'status' ? 429 : 200, quotaFinished: failure === 'quota',
+          responseData: failure === 'missing' ? null : { translatedText:
+            failure === 'empty' ? ' ' : failure === 'unchanged' ? 'ORIGINAL QUESTION' : failure === 'unchangedWhitespace' ? '  ORIGINAL   QUESTION  ' : failure === 'tooLong' ? 'x'.repeat(2001) : '¿Qué reformas?' } };
+      } };
+    } });
+    p.node('question').value = 'Original question';
+    await p.node('sendButton').handlers.click();
+    assert.deepEqual(JSON.parse(p.requests.find(r => r.url.endsWith('/answers')).init.body),
+      { question: 'Original question', responseLanguage: 'en' });
+    assert.equal(p.requests.filter(r => r.url.includes('mymemory')).length, 1);
+    assert.equal(p.node('answerText').textContent, 'Answer [S1]');
+    assert.equal(p.node('sendButton').disabled, false);
+  });
+}
+
+test('MyMemory failure followed by backend fallback failure displays an HTTP error, not abstention', async () => {
+  const p = openPage('en', new Map(), { failed: true, translation: async () => { throw TypeError('Unavailable'); } });
+  p.node('question').value = 'Original question';
+  await p.node('sendButton').handlers.click();
+  assert.deepEqual(JSON.parse(p.requests.find(r => r.url.endsWith('/answers')).init.body),
+    { question: 'Original question', responseLanguage: 'en' });
+  assert.equal(p.storage.get('r4r.lastQuestion'), 'Original question');
+  assert.equal(p.node('question').value, 'Original question');
+  assert.equal(p.node('httpStatus').textContent, '503');
+  assert.ok(p.node('errorBox').textContent.includes(p.t('httpError', 503)));
+  assert.equal(p.node('resultContent').hidden, true);
+  assert.equal(p.node('sendButton').disabled, false);
+});
+
+test('MyMemory timeout after 5 seconds activates fallback and blocks duplicate submissions', async () => {
+  const p = openPage('en', new Map(), { translation: (url, init) => new Promise((resolve, reject) => {
+    init.signal.addEventListener('abort', () => reject({ name: 'AbortError' }));
+  }) });
+  p.node('question').value = 'Original question';
+  const sending = p.node('sendButton').handlers.click();
+  await p.node('sendButton').handlers.click();
+  assert.equal(p.requests.filter(r => r.url.includes('mymemory')).length, 1);
+  [...p.timers.values()].find(t => t.delay === 5000).fn();
+  await sending;
+  assert.equal(JSON.parse(p.requests.find(r => r.url.endsWith('/answers')).init.body).retrievalQuestion, undefined);
+  assert.equal(p.node('sendButton').disabled, false);
+  assert.ok([...p.timers.values()].every(t => t.delay !== 5000 && t.delay !== 120000));
+});
+
+test('Overall timeout cancels translation and does not submit a RAG request', async () => {
+  const p = openPage('en', new Map(), { translation: (url, init) => new Promise((resolve, reject) => {
+    init.signal.addEventListener('abort', () => reject({ name: 'AbortError' }));
+  }) });
+  p.node('question').value = 'Original question';
+  const sending = p.node('sendButton').handlers.click();
+  [...p.timers.values()].find(t => t.delay === 120000).fn();
+  await sending;
+  assert.ok(!p.requests.some(r => r.url.endsWith('/answers')));
+  assert.ok(p.node('errorBox').textContent.includes(p.t('timeout')));
+});
+
+test('Questions over the 500 UTF-8 byte MyMemory limit go intact to the local fallback', async () => {
+  const p = openPage('en');
+  const text = 'é'.repeat(251);
+  p.node('question').value = text;
+  await p.node('sendButton').handlers.click();
+  assert.ok(!p.requests.some(r => r.url.includes('mymemory')));
+  assert.deepEqual(JSON.parse(p.requests.find(r => r.url.endsWith('/answers')).init.body),
+    { question: text, responseLanguage: 'en' });
 });
 
 test('single entry point has valid assets, anchors, unique IDs and no legacy file references', () => {

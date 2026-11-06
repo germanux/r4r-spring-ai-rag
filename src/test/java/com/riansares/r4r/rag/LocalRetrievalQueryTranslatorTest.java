@@ -33,5 +33,38 @@ class LocalRetrievalQueryTranslatorTest {
                     .isInstanceOf(ResponseStatusException.class);
         }
     }
+    @Test void refusesNullOrMissingGeneration() {
+        var model = mock(ChatModel.class);
+        when(model.call(any(Prompt.class))).thenReturn(null, new ChatResponse(List.of()));
+        var translator = new LocalRetrievalQueryTranslator(model);
+        assertThatThrownBy(() -> translator.translate("Question")).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> translator.translate("Question")).isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test void propagatesProviderTimeoutWithoutClaimingNoEvidence() {
+        var model = mock(ChatModel.class);
+        var timeout = new org.springframework.web.client.ResourceAccessException("read timeout",
+                new java.net.SocketTimeoutException("timed out"));
+        when(model.call(any(Prompt.class))).thenThrow(timeout);
+        assertThatThrownBy(() -> new LocalRetrievalQueryTranslator(model).translate("Question"))
+                .isSameAs(timeout);
+        verify(model, times(1)).call(any(Prompt.class));
+    }
+
+    @Test void translationUsesExistingLaptopFallbackWhenPreferredProviderTimesOut() {
+        var pc = mock(ChatModel.class);
+        var laptop = mock(ChatModel.class);
+        when(pc.call(any(Prompt.class))).thenThrow(new org.springframework.web.client.ResourceAccessException(
+                "read timeout", new java.net.SocketTimeoutException("timed out")));
+        when(laptop.call(any(Prompt.class))).thenReturn(response("¿Qué reformas?"));
+        var router = new GenerationRouter(
+                new GenerationRouter.Target(new GenerationRouter.Provider("PC", "http://pc", "preferred"), pc, () -> true),
+                new GenerationRouter.Target(new GenerationRouter.Provider("Laptop", "http://laptop", "fallback"), laptop, () -> true));
+        assertThat(new LocalRetrievalQueryTranslator(router).translate("What renovations?"))
+                .isEqualTo("¿Qué reformas?");
+        verify(pc, times(1)).call(any(Prompt.class));
+        verify(laptop, times(1)).call(any(Prompt.class));
+    }
+
     private static ChatResponse response(String text) { return new ChatResponse(List.of(new Generation(new AssistantMessage(text)))); }
 }

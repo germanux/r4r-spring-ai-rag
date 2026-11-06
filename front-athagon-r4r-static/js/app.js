@@ -375,6 +375,14 @@
 
     try {
       const requestBody = { question: text, responseLanguage: requestLanguage };
+      if (requestLanguage === "en") {
+        try {
+          requestBody.retrievalQuestion = await translateToSpanish(text, controller.signal);
+        } catch (error) {
+          // An absent translation activates the backend's local fallback. Never send raw English.
+          if (controller.signal.aborted) throw error;
+        }
+      }
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -520,4 +528,32 @@
     questionCount.textContent = `${question.value.length} / 700`;
   }
 
+  async function translateToSpanish(text, signal) {
+    // MyMemory's anonymous GET API accepts at most 500 UTF-8 bytes per segment.
+    // Longer questions use the existing local fallback, without truncation or extra calls.
+    if (new TextEncoder().encode(text).length > 500) throw new Error(t("translationError"));
+    const translationController = new AbortController();
+    const abort = () => translationController.abort();
+    signal.addEventListener("abort", abort, { once: true });
+    if (signal.aborted) abort();
+    const timeout = setTimeout(abort, 5000);
+    try {
+      const params = new URLSearchParams({ q: text, langpair: "en|es" });
+      const response = await fetch(`https://api.mymemory.translated.net/get?${params}`, {
+        signal: translationController.signal
+      });
+      if (!response.ok) throw new Error(t("translationError"));
+      const data = await response.json();
+      const translated = data.responseData?.translatedText?.trim();
+      if (Number(data.responseStatus) !== 200 || data.quotaFinished || !translated
+          || translated.length > 2000
+          || translated.replace(/\s+/g, " ").toLowerCase() === text.trim().replace(/\s+/g, " ").toLowerCase()) {
+        throw new Error(t("translationError"));
+      }
+      return translated;
+    } finally {
+      clearTimeout(timeout);
+      signal.removeEventListener("abort", abort);
+    }
+  }
 })();

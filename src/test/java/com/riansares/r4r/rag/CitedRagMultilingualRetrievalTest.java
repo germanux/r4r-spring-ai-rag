@@ -76,6 +76,10 @@ class CitedRagMultilingualRetrievalTest {
         when(generation.call(any(Prompt.class))).thenReturn(response("It renovates homes [S1]."));
         assertThat(service.answer(EN, ES, "en").abstention()).isFalse();
         verifyNoInteractions(translation);
+        assertThat(embedded.getLast()).isEqualTo(ES); // Only Spanish is embedded, never a concatenation.
+        var prompt = org.mockito.ArgumentCaptor.forClass(Prompt.class);
+        verify(generation).call(prompt.capture());
+        assertThat(prompt.getValue().getContents()).contains(EN, "Respond in English.");
     }
 
     @Test
