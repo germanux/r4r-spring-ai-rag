@@ -119,7 +119,8 @@
   }
   apiBaseUrl.value = validBaseUrl(readPreference("apiBaseUrl")) || DEFAULT_API_BASE_URL;
   syncPreset();
-  question.value = readPreference("lastQuestion") || "";
+  const savedQuestion = readPreference("lastQuestion");
+  question.value = savedQuestion || "";
   let lastPayload = null;
   let lastError = null;
   let runtimeInfo = null;
@@ -146,6 +147,7 @@
     if (apiBaseUrl.validationMessage) apiBaseUrl.setCustomValidity(t("invalidUrl"));
   }
   changeLanguage(initialLanguage);
+  if (savedQuestion === null) question.value = t("demoQuestion");
   languageSelect.addEventListener("change", () => {
     if (["es", "en"].includes(languageSelect.value)) changeLanguage(languageSelect.value);
   });

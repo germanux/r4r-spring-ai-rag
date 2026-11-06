@@ -916,7 +916,7 @@ kbd {
 .examples-box { margin-top:16px; padding:12px 0 0; border:0; border-top:1px solid #dbe3ea; border-radius:0; background:none; }
 .examples-head { margin-bottom:8px; }
 .examples-title { font-size:.9rem; }
-.sample-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
+.sample-grid { grid-template-columns:repeat(4, minmax(0, 1fr)); gap:8px; }
 .sample-card { padding:11px 8px; text-align:center; border-color:#d3dfe9; border-radius:12px; background:#f7fafc; }
 .sample-title { margin:0; font-size:.8rem; }
 .endpoint-settings { margin-top:14px; padding-top:10px; }
@@ -1142,3 +1142,7 @@ kbd {
 .arch-step small { overflow-wrap:anywhere; }
 .arch-step.accent summary::after, .arch-step.llm summary::after { color:inherit; }
 .footer { margin-top:18px; }
+
+@media (min-width:761px) and (max-width:1080px) {
+  .sample-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}

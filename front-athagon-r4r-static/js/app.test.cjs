@@ -137,7 +137,7 @@ for (const lang of ['es', 'en']) {
     assert.match(p.document.title, lang === 'es' ? /IA autoalojada/ : /Self-Hosted AI/);
     const description = p.document.querySelectorAll('meta').find(n => n.getAttribute('name') === 'description');
     assert.match(description.getAttribute('content'), /Spring AI/);
-    assert.match(p.node('question').getAttribute('placeholder'), lang === 'es' ? /Qué información/ : /What information/);
+    assert.equal(p.node('question').getAttribute('placeholder'), p.t('demoQuestion'));
     assert.equal(p.node('languageSelect').getAttribute('aria-label'), lang === 'es' ? 'Idioma' : 'Language');
     assert.equal(p.node('endpointPreset').children.length, 4);
     assert.equal(p.node('apiBaseUrl').value, 'https://r4r-api.athagon.tech');
@@ -187,6 +187,8 @@ for (const lang of ['es', 'en']) {
   });
   test(`${lang}: restores last submitted question, retains answer, sources and endpoint on language change`, async () => {
     const p = openPage(lang);
+    assert.equal(p.node('question').value, p.t('demoQuestion'));
+    assert.equal(p.requests.some(r => r.url.endsWith('/answers')), false);
     p.node('question').value = 'Last question';
     await p.node('sendButton').handlers.click();
     assert.equal(p.storage.get('r4r.lastQuestion'), 'Last question');
@@ -214,6 +216,8 @@ for (const lang of ['es', 'en']) {
   });
   test(`${lang}: quick examples, demo action, keyboard submission and clipboard`, async () => {
     const p = openPage(lang);
+    assert.equal(p.document.querySelectorAll('.sample').length, 4);
+    assert.equal(p.document.querySelectorAll('.sample')[0].dataset.question, p.t('page.renovation_question'));
     for (const button of p.document.querySelectorAll('.sample')) {
       await button.handlers.click();
       assert.equal(p.node('question').value, button.dataset.question);
@@ -258,7 +262,7 @@ test('navigator fallback, invalid saved values, unavailable storage and legacy p
   for (const options of [{ storageFails: true }, { writeFails: true }]) {
     const page = openPage('en', new Map(), options);
     assert.equal(page.node('apiBaseUrl').value, 'https://r4r-api.athagon.tech');
-    assert.equal(page.node('question').value, '');
+    assert.equal(page.node('question').value, page.t('demoQuestion'));
     page.node('question').value = 'Query without storage';
     await page.node('sendButton').handlers.click();
     assert.equal(page.node('answerText').textContent, 'Answer [S1]');
