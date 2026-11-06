@@ -300,3 +300,32 @@ centrado en terminología de infraestructura.
   sin convertirse en nombres visibles ni alterar las decisiones del backend.
 - Mantener intacto el comportamiento funcional es parte de la mejora de UX; una
   simplificación de textos no autoriza a cambiar el sistema que esos textos describen.
+
+### Actualización de comunicación: textos de landing indicados por el usuario
+
+- Aplicar los textos suministrados fielmente en ES/EN, sin improvisar alternativas,
+  rediseñar ni modificar el funcionamiento del RAG para acomodarlo al mensaje.
+- Visitantes no técnicos primero; detalles de ingeniería después. Cabecera centrada
+  en formular una pregunta, comprobar la respuesta y consultar sus fuentes. Tecnologías
+  visibles en una línea discreta y detalles reales disponibles más abajo.
+- Titulares actualizados: «Haz una pregunta a nuestra IA con RAG» / «Ask our
+  RAG-powered AI a question», «¿QUÉ TIENE DE ESPECIAL?» / «WHAT'S SPECIAL ABOUT IT?»,
+  «CÓMO FUNCIONA» / «HOW IT WORKS» y «DETALLES TÉCNICOS» / «TECHNICAL DETAILS».
+  Estas indicaciones sustituyen los titulares anteriores, sin borrar su memoria.
+- Mantener ejemplos rápidos, funcionalidades, responsive, accesibilidad y desplegables.
+  Cambiar las etiquetas no autoriza a cambiar RAG, traducción, proveedores o API.
+- Verificar en código el failover antes de describirlo. Si una afirmación no está
+  implementada, avisar y omitirla; no cambiar la lógica ni publicar información falsa.
+- Comprobación en este encargo: `GenerationRouter` y `RagConfiguration` configuran
+  PC → portátil, con error controlado si ambos fallan. Luna y Codex pertenecen a los
+  agentes de desarrollo de `config/r4r-agents.json`; no hay tercer respaldo RAG con
+  Codex Luna. Verificar de nuevo el código si se cambia esa arquitectura en el futuro.
+- La tarjeta «IA en nuestros servidores» conserva solo la primera frase verificable
+  del texto solicitado, omitiendo la afirmación de respaldo Codex Luna no implementado.
+  La línea tecnológica incluye OpenAI Codex y el nivel técnico aclara su papel real.
+- Generación y embeddings locales no significan que todos los servicios sean offline.
+  Explicar MyMemory discretamente en detalles técnicos, no como característica principal.
+- Mostrar solo tecnologías, modelos, CPU, RAM, GPU y sistemas operativos verificados;
+  no inferir una distribución Linux por un identificador interno de equipo.
+- Ejecutar las suites existentes, incluidas RAG, backend y frontend, e informar de
+  omisiones y causas. Reutilizar cobertura existente antes de crear nuevos tests.

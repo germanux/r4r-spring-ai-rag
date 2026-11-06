@@ -20,8 +20,8 @@
     <select id="languageSelect" aria-label="Idioma" data-i18n-aria-label="page.language"><option value="es">Español</option><option value="en">English</option></select>
     <nav class="nav" aria-label="Navegación principal" data-i18n-aria-label="page.main_navigation">
       <a href="#demo">Demo</a>
-      <a href="#como-funciona" data-i18n="page.what_it_demonstrates_nav">Qué demuestra</a>
-      <a href="#arquitectura" data-i18n="page.architecture_nav">Arquitectura</a>
+      <a href="#como-funciona" data-i18n="page.what_it_demonstrates_nav">Qué tiene de especial</a>
+      <a href="#arquitectura" data-i18n="page.architecture_nav">Cómo funciona</a>
       <a href="https://github.com/germanux/r4r-spring-ai-rag" target="_blank" rel="noopener">GitHub ↗</a>
     </nav>
   </div>
@@ -31,10 +31,10 @@
   <section class="hero">
     <div class="shell hero-shell">
       <div class="hero-copy compact-hero">
-        <div class="status-row" aria-label="Características principales" data-i18n-aria-label="page.key_features"><span data-i18n="page.local_ai">IA en equipos propios</span><span data-i18n="page.citations">RAG con fuentes</span><span>NVIDIA GeForce RTX 4060</span><span>ES / EN</span></div>
-        <h1 data-i18n="page.hero_title">Respuestas basadas en documentos</h1>
-        <p class="hero-stack">Java · Spring Boot · Spring AI · pgvector · Ollama</p>
-        <p class="hero-lede" data-i18n="page.hero_subtitle">Pregunta sobre Riansares 4R y consulta las fuentes de la respuesta. IA ejecutada en equipos propios, con respaldo automático.</p>
+        <div class="status-row" aria-label="Características principales" data-i18n-aria-label="page.key_features"><span data-i18n="page.local_ai">IA en nuestros equipos</span><span data-i18n="page.citations">RAG con fuentes</span><span data-i18n="page.backup_tag">Respaldo automático</span><span>ES / EN</span></div>
+        <h1 data-i18n="page.hero_title">Haz una pregunta a nuestra IA con RAG</h1>
+        <p class="hero-lede" data-i18n="page.hero_subtitle">Comprueba la respuesta y descubre de dónde sale la información. Nuestra IA consulta documentos de Riansares 4R para ayudarte y mostrarte las fuentes utilizadas.</p>
+        <p class="hero-stack">Java · Spring Boot · Spring AI · pgvector · Ollama · OpenAI Codex</p>
         <div class="hero-actions"><a class="btn primary" href="#demo" id="tryDemoButton" data-i18n-text-0="page.try_the_demo">Probar la demo <span aria-hidden="true">↓</span></a></div>
       </div>
     </div>
@@ -46,7 +46,7 @@
         <article class="query-panel panel">
           <div class="panel-head">
             <div>
-              <span class="mini-label" data-i18n="page.question">CONSULTA</span>
+              <span class="mini-label" data-i18n="page.question">TU PREGUNTA</span>
               <span data-i18n="page.riansares_4r_knowledge_base">Base de conocimiento de Riansares 4R</span>
             </div>
             <span class="api-state" id="apiState" data-i18n="page.ready">listo</span>
@@ -67,7 +67,7 @@
 
           <div class="query-actions main-actions">
             <button id="sendButton" type="button" class="btn primary submit-btn">
-              <span id="sendLabel" data-i18n="page.ask">Preguntar</span>
+              <span id="sendLabel" data-i18n="page.ask">Obtener respuesta</span>
               <span id="spinner" class="spinner" aria-hidden="true"></span>
             </button>
             <button id="clearButton" type="button" class="btn ghost" data-i18n="page.clear">Limpiar</button>
@@ -108,7 +108,7 @@
         <article class="response-panel panel">
           <div class="panel-head">
             <div>
-              <span class="mini-label response" data-i18n="page.response">RESPUESTA</span>
+              <span class="mini-label response" data-i18n="page.response">RESPUESTA DE LA IA</span>
               <span id="resultMode" data-i18n="page.waiting_for_a_question">esperando una consulta</span>
             </div>
             <span class="http-status" id="httpStatus">—</span>
@@ -116,8 +116,8 @@
 
           <div class="empty-state" id="emptyState">
             <div class="empty-icon">RAG</div>
-            <h3 data-i18n="page.your_answer_will_appear_here">La respuesta aparecerá aquí</h3>
-            <p data-i18n="page.answers_abstentions_and_sources_from_riansares_4r_documentation">Haz una pregunta sobre Riansares 4R. Aquí verás la respuesta y las fuentes que puedes consultar.</p>
+            <h3 data-i18n="page.your_answer_will_appear_here">Aquí aparecerá tu respuesta</h3>
+            <p data-i18n="page.answers_abstentions_and_sources_from_riansares_4r_documentation">Haz una pregunta sobre Riansares 4R. Podrás leer la respuesta y consultar las fuentes que la respaldan.</p>
           </div>
 
           <div id="loadingState" class="loading-state" role="status" aria-live="polite" hidden>
@@ -132,20 +132,20 @@
           <div id="resultContent" class="result-content" hidden>
             <div class="decision-row">
               <span id="elapsed" class="elapsed"></span>
-              <span id="decisionPill" class="decision-pill" data-i18n="answer">RESPUESTA</span>
+              <span id="decisionPill" class="decision-pill" data-i18n="answer">RESPUESTA DE LA IA</span>
               <span id="decisionText"></span>
             </div>
 
             <div class="answer-box">
               <div class="block-head">
-                <h3 data-i18n="page.answer">Respuesta</h3>
+                <h3 data-i18n="page.answer">RESPUESTA DE LA IA</h3>
                 <button id="copyAnswerButton" type="button" class="text-btn" data-i18n="page.copy">Copiar</button>
               </div>
               <div id="answerText" class="answer-text"></div>
             </div>
 
             <details class="citations-block" id="sourcesDetails">
-              <summary class="citations-head"><strong data-i18n="page.sources">Fuentes</strong><span id="citationCount"></span></summary>
+              <summary class="citations-head"><strong data-i18n="page.sources">Consultar fuentes</strong><span id="citationCount"></span></summary>
               <div id="citations" class="citations"></div>
             </details>
           </div>
@@ -158,63 +158,61 @@
 
   <section class="section concept-section" id="como-funciona">
     <div class="shell">
-      <h2 class="section-heading"><button id="conceptToggle" class="section-toggle" type="button" aria-expanded="true" aria-controls="conceptContent"><span data-i18n="page.what_it_demonstrates">QUÉ DEMUESTRA</span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
+      <h2 class="section-heading"><button id="conceptToggle" class="section-toggle" type="button" aria-expanded="true" aria-controls="conceptContent"><span data-i18n="page.what_it_demonstrates">¿QUÉ TIENE DE ESPECIAL?</span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
       <div id="conceptContent">
       <div class="concept-grid">
         <article class="concept-card panel">
           <span class="concept-number">01</span>
-          <h3 data-i18n="page.self_hosted_title">IA en equipos propios</h3>
-          <p data-i18n="page.self_hosted_description">Los modelos generan las respuestas en nuestros equipos, sin depender de un proveedor externo de inferencia para las generaciones locales.</p>
+          <h3 data-i18n="page.cites_its_sources">Respuestas que puedes comprobar</h3>
+          <p data-i18n="page.answers_include_traceable_references_to_retrieved_documents_sections_and_passages">Nuestra IA consulta documentos reales para responderte y te muestra las fuentes. Así puedes comprobar por ti mismo lo que dice.</p>
         </article>
         <article class="concept-card panel">
           <span class="concept-number">02</span>
-          <h3 data-i18n="page.automatic_failover_title">Respaldo automático</h3>
-          <p data-i18n="page.automatic_failover_description">Si falla el PC de sobremesa, el sistema intenta responder desde el portátil de respaldo.</p>
+          <h3 data-i18n="page.self_hosted_title">IA en nuestros servidores</h3>
+          <p data-i18n="page.self_hosted_description">Nuestros modelos LLM funcionan en equipos propios.</p>
         </article>
         <article class="concept-card panel">
           <span class="concept-number">03</span>
-          <h3 data-i18n="page.cites_its_sources">Fuentes que puedes consultar</h3>
-          <p data-i18n="page.answers_include_traceable_references_to_retrieved_documents_sections_and_passages">Busca información en los documentos y cita las fuentes utilizadas para que puedas comprobar la respuesta.</p>
+          <h3 data-i18n="page.automatic_failover_title">Tenemos un plan B</h3>
+          <p data-i18n="page.automatic_failover_description">Si el equipo principal falla, el sistema intenta continuar desde otro equipo o mediante el respaldo disponible.</p>
         </article>
         <article class="concept-card panel">
           <span class="concept-number">04</span>
-          <h3 data-i18n="page.abstains_outside_its_domain">Reconoce sus límites</h3>
-          <p data-i18n="page.when_a_question_falls_outside_the_available_knowledge_it_abstains_instead_of_pretending_to">Si no encuentra información suficiente en los documentos consultados, lo indica en lugar de inventar una respuesta.</p>
+          <h3 data-i18n="page.abstains_outside_its_domain">Sabe decir «no lo sé»</h3>
+          <p data-i18n="page.when_a_question_falls_outside_the_available_knowledge_it_abstains_instead_of_pretending_to">Si no encuentra información suficiente, te lo dice. Porque una IA fiable también debe reconocer sus límites.</p>
         </article>
       </div>
-      <p class="translation-note" data-i18n="page.public_frontend_scope">La web es pública. Las consultas en inglés se envían a MyMemory para traducirlas al español y buscar documentos. Si falla, se usa traducción local; la respuesta conserva el idioma solicitado.</p>
+
       </div>
     </div>
   </section>
 
   <section class="section architecture-section" id="arquitectura">
     <div class="shell">
-      <h2 class="section-heading"><button id="architectureToggle" class="section-toggle" type="button" aria-expanded="false" aria-controls="architectureContent"><span data-i18n="page.architecture">ARQUITECTURA</span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
+      <h2 class="section-heading"><button id="architectureToggle" class="section-toggle" type="button" aria-expanded="false" aria-controls="architectureContent"><span data-i18n="page.architecture">CÓMO FUNCIONA</span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
       <div class="architecture panel" id="architectureContent" hidden>
         <div class="arch-flow arch-steps architecture-route" aria-label="Flujo de una consulta: interfaz web, Spring Boot y Spring AI, recuperación vectorial e inferencia local." data-i18n-aria-label="page.architecture_flow">
-          <details class="arch-step"><summary><span class="node-id">01</span><strong data-i18n="page.demo_website">Tu pregunta</strong><small data-i18n="page.web_interface">Interfaz web</small></summary><p data-i18n="page.your_question_starts_in_the_web_interface">Tu pregunta entra desde la interfaz web.</p></details>
-          <details class="arch-step accent"><summary><span class="node-id">02</span><strong data-i18n="page.rag_api">Organiza la respuesta</strong><small>Spring Boot · Spring AI</small></summary><p data-i18n="page.validates_the_query_retrieves_context_and_requests_an_answer_from_the_model">Valida la consulta, recupera contexto y solicita una respuesta al modelo.</p></details>
-          <details class="arch-step"><summary><span class="node-id">03</span><strong data-i18n="page.vector_database">Búsqueda documental</strong><small>NAS Synology · pgvector</small></summary><p data-i18n="page.searches_relevant_passages_in_riansares_4r_documentation">Ollama en NAS Synology convierte documentos y preguntas en embeddings con nomic-embed-text (768 dimensiones). PostgreSQL y pgvector recuperan los fragmentos relevantes.</p></details>
-          <details class="arch-step llm"><summary><span class="node-id">04</span><strong data-i18n="page.generation_role">Generación local</strong><small data-i18n="page.generation_servers">Ollama · PC y respaldo</small></summary><p data-i18n="page.generates_an_answer_grounded_in_the_retrieved_context">Ollama permite ejecutar modelos de lenguaje en equipos locales. Spring AI solicita una respuesta basada en los documentos al PC de sobremesa; si falla, intenta utilizar el portátil de respaldo.</p></details>
+          <details class="arch-step"><summary><span class="node-id">01</span><strong data-i18n="page.demo_website">Haces una pregunta</strong><small data-i18n="page.web_interface">Interfaz web</small></summary><p data-i18n="page.your_question_starts_in_the_web_interface">Escribes tu consulta en la web.</p></details>
+          <details class="arch-step accent"><summary><span class="node-id">02</span><strong data-i18n="page.rag_api">El sistema la procesa</strong><small>Spring Boot · Spring AI</small></summary><p data-i18n="page.validates_the_query_retrieves_context_and_requests_an_answer_from_the_model">Prepara la consulta y coordina los componentes.</p></details>
+          <details class="arch-step"><summary><span class="node-id">03</span><strong data-i18n="page.vector_database">Busca información</strong><small>NAS Synology · pgvector</small></summary><p data-i18n="page.searches_relevant_passages_in_riansares_4r_documentation">Localiza los documentos y fragmentos más relevantes.</p></details>
+          <details class="arch-step llm"><summary><span class="node-id">04</span><strong data-i18n="page.generation_role">Genera una respuesta</strong><small data-i18n="page.generation_servers">Ollama · PC y respaldo</small></summary><p data-i18n="page.generates_an_answer_grounded_in_the_retrieved_context">La IA responde utilizando la información encontrada y muestra sus fuentes.</p></details>
         </div>
-        <p class="architecture-caption" data-i18n="page.topology_note">Arquitectura de referencia: el NAS busca información; el PC y su respaldo generan las respuestas. No es un indicador de disponibilidad en tiempo real.</p>
+        <p class="architecture-caption" data-i18n="page.topology_note">Detrás de esta demo trabajan varios equipos con funciones diferentes: unos buscan la información y otros generan las respuestas.</p>
         <div class="inference-hosts">
           <article class="inference-host primary-host">
             <small data-i18n="page.preferred_connection">Ollama → generación preferente · qwen3:8b</small>
             <h3 data-i18n="page.primary_pc">PC de sobremesa</h3>
-            <p class="host-platform">Linux · NVIDIA GeForce RTX 4060</p>
-            <p data-i18n="page.primary_gpu">La RTX 4060 acelera la generación de respuestas.</p>
+            <p data-i18n="page.primary_gpu">Generación principal. Linux · NVIDIA GeForce RTX 4060.</p>
           </article>
           <article class="inference-host backup-host">
             <small data-i18n="page.fallback_connection">Ollama → respaldo automático · qwen2.5:7b</small>
             <h3 data-i18n="page.backup_laptop">Portátil ASUS</h3>
-            <p class="host-platform">Linux · NVIDIA GeForce GTX 1050</p>
-            <p data-i18n="page.backup_gpu">La GTX 1050 es la tarjeta gráfica del portátil de respaldo.</p>
+            <p data-i18n="page.backup_gpu">Generación de respaldo. Linux · NVIDIA GeForce GTX 1050.</p>
           </article>
           <article class="inference-host embedding-host">
             <small>Ollama · nomic-embed-text</small>
             <h3>NAS Synology</h3>
-            <p data-i18n="page.document_search">Búsqueda documental</p>
+            <p data-i18n="page.document_search">Almacenamiento, embeddings y búsqueda documental.</p>
           </article>
         </div>
       </div>
@@ -225,8 +223,9 @@
   <section class="section technical-section" id="runtime">
     <div class="shell">
       <div class="runtime-disclosure">
-        <h2 class="section-heading"><button id="runtimeToggle" class="section-toggle" type="button" aria-expanded="false" aria-controls="runtimeContent"><span data-i18n="page.technical_details">Detalles técnicos</span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
+        <h2 class="section-heading"><button id="runtimeToggle" class="section-toggle" type="button" aria-expanded="false" aria-controls="runtimeContent"><span data-i18n="page.technical_details">DETALLES TÉCNICOS</span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
         <div id="runtimeContent" class="runtime-panel panel" hidden>
+        <p class="architecture-caption" data-i18n="page.technical_intro">Esta demo combina inteligencia artificial generativa, recuperación de información documental y una arquitectura distribuida entre varios equipos. Aquí puedes explorar cómo está construida y qué tecnologías utiliza.</p>
         <div class="runtime-observed" aria-live="polite">
           <span class="eyebrow" data-i18n="page.observed_generation">Última respuesta · modelo utilizado</span>
           <strong id="runtimeUsed" data-i18n="page.no_generation_yet">Todavía no se ha generado una respuesta</strong>
@@ -239,7 +238,18 @@
           <div><dt data-i18n="page.configured_preferred">Proveedor preferente configurado</dt><dd><span id="runtimeModel">—</span> · <span id="runtimePreferred">—</span></dd></div>
           <div><dt data-i18n="page.embedding_role">Búsqueda documental · NAS Synology (configuración)</dt><dd id="runtimeEmbeddingModel">—</dd></div>
         </dl>
+      <p class="translation-note" data-i18n="page.public_frontend_scope">La web es pública. Las consultas en inglés se envían a MyMemory para traducirlas al español y buscar documentos. Si falla, se usa traducción local; la respuesta conserva el idioma solicitado.</p>
           <div class="config-grid" id="runtimeConfig">
+            <div><span>Backend</span><strong>Java · Spring Boot · Spring AI</strong></div>
+            <div><span>Frontend</span><strong>JavaScript · HTML · CSS</strong></div>
+            <div><span data-i18n="page.os">Sistema operativo</span><strong>Linux</strong></div>
+            <div><span data-i18n="page.database_search">Base de datos y búsqueda</span><strong>PostgreSQL · pgvector · embeddings</strong></div>
+            <div><span data-i18n="page.containers">Contenedores</span><strong>Docker · Docker Compose</strong></div>
+            <div><span data-i18n="page.local_models">Modelos locales · configuración de referencia</span><strong data-i18n="page.local_models_details">Ollama · PC: qwen3:8b · portátil: qwen2.5:7b · embeddings: nomic-embed-text:latest (768 dimensiones).</strong></div>
+            <div><span data-i18n="page.backup_details">Respaldo de generación</span><strong data-i18n="page.backup_implementation">PC de sobremesa → Portátil ASUS. Si ambos fallan, la API devuelve un error controlado. No hay respaldo de generación con Codex Luna implementado.</strong></div>
+            <div><span data-i18n="page.development_agents">Agentes de desarrollo</span><strong data-i18n="page.development_agents_details">OpenCode · GPT-5.6 Luna (coordinación) · GPT-5.3 Codex (trabajo de desarrollo). No intervienen en las respuestas de esta demo.</strong></div>
+            <div><span data-i18n="page.hardware_desktop">PC de sobremesa · hardware configurado</span><strong>NVIDIA GeForce RTX 4060 · 8 GB VRAM · Intel i9-14900KF · 64 GB DDR5 RAM</strong></div>
+            <div><span data-i18n="page.hardware_laptop">Portátil ASUS · hardware configurado</span><strong>NVIDIA GeForce GTX 1050 · 4 GB VRAM · Intel i7-7700HQ · 32 GB RAM</strong></div>
             <div><span data-i18n="page.used_host_hardware">Hardware configurado del equipo utilizado</span><strong id="runtimeHardware">—</strong></div>
             <div><span data-i18n="page.last_generation_host">Equipo de la última generación</span><strong id="runtimeHost">—</strong></div>
             <div><span data-i18n="page.current_memory">Estado de memoria informado por el backend</span><strong id="runtimeModelStatus">—</strong><small id="runtimeMemoryScope" class="host-hardware"></small></div>
@@ -265,7 +275,7 @@
   </div>
 </footer>
 
-<script src="js/i18n.js?v=7bd3daa9e396"></script>
+<script src="js/i18n.js?v=8be4663ce921"></script>
 <script src="js/app.js?v=ec9ad1acfe7d"></script>
 </body>
 </html>

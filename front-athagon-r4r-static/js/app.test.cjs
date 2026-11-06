@@ -291,7 +291,7 @@ test('switching language during an in-flight request retains query language and 
   await pending;
   assert.equal(p.node('answerText').textContent, 'English answer');
   assert.equal(p.node('resultMode').textContent, p.t('result'));
-  assert.equal(p.node('sendLabel').textContent, 'Preguntar');
+  assert.equal(p.node('sendLabel').textContent, 'Obtener respuesta');
 });
 
 test('runtime errors, polling and clipboard failure are localized without additional language requests', async () => {
@@ -509,7 +509,7 @@ for (const lang of ['es', 'en']) {
       modelStatus: 'Modelo cargado', loadedModels: [], topK: 3, minScore: .63
     } });
     await tick();
-    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Respuestas basadas en documentos' : 'Answers grounded in documents');
+    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Haz una pregunta a nuestra IA con RAG' : 'Ask our RAG-powered AI a question');
     assert.equal(p.document.querySelectorAll('.arch-step').length, 4);
     assert.equal(p.document.querySelectorAll('.inference-host').length, 3);
     assert.equal(p.document.querySelectorAll('.primary-host')[0].textContent.includes('NVIDIA GeForce RTX 4060'), true);
