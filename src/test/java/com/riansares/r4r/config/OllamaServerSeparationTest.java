@@ -44,6 +44,7 @@ class OllamaServerSeparationTest {
                     "spring.ai.ollama.base-url=http://127.0.0.1:1")
                     .run(context -> {
                         assertThat(context).hasNotFailed().hasSingleBean(EmbeddingModel.class).hasSingleBean(ChatModel.class);
+                        assertThat((List<?>) context.getBean("generationTargets")).hasSize(2);
                         var model = context.getBean(EmbeddingModel.class);
                         assertThat(model.embed("Documento para ingesta")).hasSize(768);
                         assertThat(model.embed("Consulta para recuperar documentos")).hasSize(768);
@@ -69,6 +70,17 @@ class OllamaServerSeparationTest {
     void disabledEmbeddingRetainsDeterministicTestConfiguration() {
         runner().withPropertyValues("spring.ai.model.embedding=none")
                 .run(context -> assertThat(context).hasNotFailed().doesNotHaveBean(EmbeddingModel.class));
+    }
+
+    @Test void enabledRemoteAddsOnlyThirdGenerationTarget() {
+        runner().withPropertyValues("r4r.rag.openai.enabled=true", "OPENAI_API_KEY=TEST_ONLY", "r4r.rag.openai.model=gpt-6-luna")
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    var targets=(List<GenerationRouter.Target>)context.getBean("generationTargets");
+                    assertThat(targets).hasSize(3);
+                    assertThat(targets.get(2).provider().model()).isEqualTo("gpt-6-luna");
+                    assertThat(targets.get(2).provider().name()).isEqualTo("OpenAI");
+                });
     }
 
     private ApplicationContextRunner runner() {

@@ -29,6 +29,7 @@ class RagQueryControllerTest {
     @MockBean
     private CitedRagService citedRagService;
 
+    @MockBean private com.riansares.r4r.rag.GenerationRouter router;
     private ObjectMapper objectMapper;
 
     @BeforeEach
@@ -137,4 +138,14 @@ class RagQueryControllerTest {
                 .content(malformedJson))
                 .andExpect(status().isBadRequest());
     }
+    @Test void returnsRequestProviderWithoutChangingAnswerAndCitations() throws Exception {
+        when(citedRagService.answer("question")).thenReturn(com.riansares.r4r.rag.RagResult.ofAnswer("Answer [S1]", List.of()));
+        when(router.requestExecution()).thenReturn(new com.riansares.r4r.rag.GenerationRouter.Execution(
+                new com.riansares.r4r.rag.GenerationRouter.Provider("OpenAI","https://api.openai.com/v1","gpt-6-luna"),false));
+        mockMvc.perform(post("/api/rag/answers").contentType(MediaType.APPLICATION_JSON).content("{\"question\":\"question\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.provider.name").value("OpenAI"))
+                .andExpect(jsonPath("$.provider.model").value("gpt-6-luna"))
+                .andExpect(jsonPath("$.provider.inferenceHost.type").value("cloud"));
+    }
+
 }

@@ -517,7 +517,7 @@ for (const lang of ['es', 'en']) {
     await tick();
     assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Pregunta a nuestra IA con RAG' : 'Ask our RAG-powered AI a question');
     assert.equal(p.document.querySelectorAll('.arch-step').length, 4);
-    assert.equal(p.document.querySelectorAll('.inference-host').length, 3);
+    assert.equal(p.document.querySelectorAll('.inference-host').length, 4);
     assert.equal(p.document.querySelectorAll('.primary-host')[0].textContent.includes('NVIDIA GeForce RTX 4060'), true);
     assert.equal(p.node('runtimeModel'), null);
     assert.equal(p.node('runtimePreferred').textContent, `Ollama · ${p.t('hostNames').desktop}`);
@@ -532,7 +532,7 @@ for (const lang of ['es', 'en']) {
     assert.equal(desktop.node('runtimeUsedHardware').textContent, 'PC · Intel Core i9 · 64 GB RAM');
     assert.equal(desktop.node('runtimeVersions').textContent, 'Java 22 · Spring Boot 3.4.5 · Spring AI 1.0.0');
     assert.equal(desktop.document.querySelectorAll('.runtime-summary')[0].children.length, 2);
-    assert.equal(desktop.document.querySelectorAll('.config-grid')[0].children.length, 12);
+    assert.equal(desktop.document.querySelectorAll('.config-grid')[0].children.length, 13);
     assert.equal(desktop.node('runtimeUsedModel').textContent, 'qwen3:8b');
     assert.equal(desktop.node('runtimeEmbeddings').textContent, `768 ${desktop.t('dimensions')}`);
     for (const id of ['runtimeHardware', 'runtimeHost', 'runtimeDeployment']) assert.equal(desktop.node(id), null);
@@ -699,3 +699,15 @@ for (const lang of ['es', 'en']) {
     assert.equal(p.node('runtimeModel'), null);
   });
 }
+
+for (const language of ['es', 'en']) test(`${language}: remote model never displays local hardware`, async () => {
+ const p = openPage(language, new Map(), { runtime: { generationState: 'success',
+  lastUsedProvider: { name: 'OpenAI', model: 'gpt-6-luna', inferenceHost: { type: 'cloud' } },
+  remoteFallback: { enabled: false, model: 'gpt-6-luna' }, loadedModels: [] } });
+ await tick();
+ assert.equal(p.node('runtimeUsed').textContent, `GPT-6 Luna · ${p.t('cloud')}`);
+ assert.equal(p.node('runtimeUsedHardware').hidden,true);
+
+ assert.equal(p.node('runtimeOllama').textContent,p.t('remoteNoMemory'));
+ assert.ok(p.node('runtimeRemote').textContent.includes(p.t('remoteDisabled')));
+});

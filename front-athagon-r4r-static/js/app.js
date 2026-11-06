@@ -244,8 +244,9 @@
 
   function renderRuntimeInfo(info) {
     const unavailable = t("unavailable");
-    const failed = info.generationState === "failed";
-    const used = failed ? null : info.lastUsedProvider;
+    const failed = !lastPayload?.provider && info.generationState === "failed";
+    const used = failed ? null : lastPayload && Object.hasOwn(lastPayload, "provider") ? lastPayload.provider : info.lastUsedProvider;
+    const remote = used?.name === "OpenAI" || used?.inferenceHost?.type === "cloud";
     const preferred = info.preferredProvider;
     const sameProvider = used?.inferenceHost?.hostname && preferred?.inferenceHost?.hostname
       ? used.inferenceHost.hostname === preferred.inferenceHost.hostname
@@ -257,10 +258,13 @@
     $("runtimeMemoryScope").textContent = failed ? t("informationUnavailable") : used ? t("memoryLastUsed")
       : info.generationState === "idle" && preferred ? t("memoryPreferred") : t("memoryUnknown");
     $("runtimeUsed").textContent = failed ? t("generationFailed")
+      : remote ? `${used.model === "gpt-6-luna" ? "GPT-6 Luna" : used.model} · ${t("cloud")}`
       : used ? modelSummary(used, info.loadedModels)
       : t(info.generationState === "idle" ? "noGeneration" : "informationUnavailable");
     $("runtimeUsedHardware").textContent = used ? hardwareSummary(used) : "";
-    $("runtimeUsedHardware").hidden = !used;
+    $("runtimeUsedHardware").hidden = !used || remote;
+    if ($("runtimeHardwareNote")) $("runtimeHardwareNote").hidden = !used || remote;
+    $("runtimeRemote").textContent = info.remoteFallback ? `${info.remoteFallback.model} · ${t(info.remoteFallback.enabled ? "remoteEnabled" : "remoteDisabled")}` : unavailable;
     $("runtimeUsedModel").textContent = used?.model || unavailable;
     const states = t("modelStates");
     $("runtimeModelStatus").textContent = !failed && states[info.modelStatus] || t("informationUnavailable");
@@ -269,7 +273,9 @@
     $("runtimeRetrieval").textContent = `Top-K ${info.topK} · ${t("minimumScore")} ${info.minScore}`;
     $("runtimeVersions").textContent = `Java ${info.javaVersion || "—"} · Spring Boot ${info.springBootVersion || "—"} · Spring AI ${info.springAiVersion || "—"}`;
     const loaded = Array.isArray(info.loadedModels) ? info.loadedModels : [];
-    $("runtimeOllama").textContent = loaded.length
+    $("runtimeMemoryScope").hidden = remote;
+    $("runtimeModelStatus").hidden = remote;
+    $("runtimeOllama").textContent = remote ? t("remoteNoMemory") : loaded.length
       ? loaded.map((model) => `${model.name} (${model.parameterSize && model.parameterSize !== "unknown" ? model.parameterSize : unavailable}; ${formatBytes(model.sizeBytes)} ${t("inMemory")}; ${formatBytes(model.vramBytes)} VRAM)`).join(" · ")
       : t("noModels");
   }
@@ -277,6 +283,8 @@
     for (const id of ["runtimeEmbeddingModel", "runtimeEmbeddings", "runtimeRetrieval", "runtimeVersions"]) $(id).textContent = t("unavailable");
     $("runtimeUsedHardware").textContent = "";
     $("runtimeUsedHardware").hidden = true;
+    if ($("runtimeHardwareNote")) $("runtimeHardwareNote").hidden = true;
+    $("runtimeRemote").textContent = t("unavailable");
     $("runtimeUsedModel").textContent = t("unavailable");
     $("runtimeUsed").textContent = errorMessage(runtimeError);
     $("runtimeFailover").textContent = t("informationUnavailable");

@@ -177,7 +177,7 @@
         <article class="concept-card panel">
           <span class="concept-number">03</span>
           <h3 data-i18n="page.automatic_failover_title">Tenemos un plan B</h3>
-          <p data-i18n="page.automatic_failover_description">Si el equipo principal falla, el sistema intenta continuar desde otro equipo o mediante el respaldo disponible.</p>
+          <p data-i18n="page.automatic_failover_description">Si fallan técnicamente el PC y el portátil, se intenta OpenAI como último respaldo, solo si está habilitado.</p>
         </article>
         <article class="concept-card panel">
           <span class="concept-number">04</span>
@@ -218,6 +218,7 @@
             <p data-i18n="page.document_search">Almacenamiento, embeddings y búsqueda documental.</p>
           </article>
         </div>
+        <article class="inference-host remote-host architecture-caption"><h3>OpenAI · GPT-6 Luna</h3><p data-i18n="page.remote_topology">Tercer intento, solo tras fallos técnicos locales y si está habilitado.</p></article>
       </div>
 
     </div>
@@ -233,7 +234,6 @@
           <span class="eyebrow" data-i18n="page.observed_generation">ÚLTIMA RESPUESTA · MODELO Y EQUIPO</span>
           <strong id="runtimeUsed" data-i18n="page.no_generation_yet">Todavía no se ha generado una respuesta</strong>
           <p id="runtimeUsedHardware"></p>
-          <small class="host-hardware" data-i18n="page.configured_hardware_note">Hardware configurado, no medición en tiempo real.</small>
           <p id="runtimeFailover"></p>
         </div>
         <p class="architecture-caption" data-i18n="page.generation_note">Información de la API. La disponibilidad puede variar.</p>
@@ -254,7 +254,8 @@
 PC: qwen3:8b
 Portátil ASUS: qwen2.5:7b
 Embeddings:</span> <span id="runtimeEmbeddingModel">—</span> · <span id="runtimeEmbeddings">—</span></strong></div>
-            <div><span data-i18n="page.backup_details">Respaldo de generación</span><strong data-i18n="page.backup_implementation">PC → portátil ASUS. Si ambos fallan, error controlado.</strong></div>
+            <div><span data-i18n="page.remote_fallback">Respaldo remoto configurado</span><strong id="runtimeRemote">—</strong></div>
+            <div><span data-i18n="page.backup_details">Respaldo de generación</span><strong data-i18n="page.backup_implementation">PC → portátil ASUS → OpenAI, si está habilitado. Si todos fallan, error controlado.</strong></div>
             <div><span data-i18n="page.development_agents">Agentes de desarrollo</span><strong data-i18n="page.development_agents_details">OpenCode · GPT-5.6 Luna (coordinación) · GPT-5.3 Codex (trabajo de desarrollo). No intervienen en las respuestas de esta demo.</strong></div>
             <div><span data-i18n="page.hardware_desktop">PC de sobremesa · hardware configurado</span><strong>NVIDIA GeForce RTX 4060 · 8 GB VRAM · Intel i9-14900KF · 64 GB DDR5 RAM</strong></div>
             <div><span data-i18n="page.hardware_laptop">Portátil ASUS · hardware configurado</span><strong>NVIDIA GeForce GTX 1050 · 4 GB VRAM · Intel i7-7700HQ · 32 GB RAM</strong></div>
@@ -277,7 +278,7 @@ Embeddings:</span> <span id="runtimeEmbeddingModel">—</span> · <span id="runt
   </div>
 </footer>
 
-<script src="js/i18n.js?v=220581d1c5e0"></script>
-<script src="js/app.js?v=515a08b3bb96"></script>
+<script src="js/i18n.js?v=eaa941aca0cb"></script>
+<script src="js/app.js?v=1e21c11a882f"></script>
 </body>
 </html>

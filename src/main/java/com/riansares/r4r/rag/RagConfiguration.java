@@ -27,14 +27,27 @@ public class RagConfiguration {
             @Value("${r4r.rag.generation.pc-base-url}") String pcUrl,
             @Value("${r4r.rag.generation.pc-model}") String pcModel,
             @Value("${r4r.rag.generation.connect-timeout:2s}") Duration connectTimeout,
-            @Value("${r4r.rag.generation.probe-timeout:2s}") Duration probeTimeout) {
-        return List.of(target("PC principal", pcUrl, pcModel, properties.getOptions(), connectTimeout, probeTimeout),
-                target("Portátil ASUS", fallbackUrl, fallbackModel, properties.getOptions(), connectTimeout, probeTimeout));
+            @Value("${r4r.rag.generation.probe-timeout:2s}") Duration probeTimeout,
+            @Value("${r4r.rag.openai.enabled:false}") boolean remoteEnabled,
+            @Value("${r4r.rag.openai.model:gpt-6-luna}") String remoteModel,
+            @Value("${OPENAI_API_KEY:}") String apiKey) {
+        var targets = new java.util.ArrayList<>(List.of(target("PC principal", pcUrl, pcModel, properties.getOptions(), connectTimeout, probeTimeout),
+                target("Portátil ASUS", fallbackUrl, fallbackModel, properties.getOptions(), connectTimeout, probeTimeout)));
+        if (remoteEnabled) {
+            if (apiKey.isBlank()) throw new IllegalStateException("OPENAI_API_KEY required when remote generation is enabled");
+            SimpleClientHttpRequestFactory http = new SimpleClientHttpRequestFactory();
+            http.setConnectTimeout(Duration.ofSeconds(3));
+            http.setReadTimeout(Duration.ofSeconds(45));
+            var remote = new OpenAiResponsesModel(RestClient.builder().baseUrl("https://api.openai.com/v1")
+                    .requestFactory(http).build(), apiKey, remoteModel);
+            targets.add(new GenerationRouter.Target(new GenerationRouter.Provider("OpenAI", "https://api.openai.com/v1", remoteModel), remote, () -> true));
+        }
+        return List.copyOf(targets);
     }
 
     @Bean
     GenerationRouter generationRouter(@Qualifier("generationTargets") List<GenerationRouter.Target> targets) {
-        return new GenerationRouter(targets.get(0), targets.get(1));
+        return new GenerationRouter(targets);
     }
 
     @Bean

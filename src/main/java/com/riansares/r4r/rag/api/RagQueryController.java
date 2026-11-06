@@ -14,6 +14,8 @@ import java.util.List;
 public class RagQueryController {
 
     private final CitedRagService citedRagService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.springframework.beans.factory.ObjectProvider<com.riansares.r4r.rag.GenerationRouter> routers;
 
     public RagQueryController(CitedRagService citedRagService) {
         this.citedRagService = citedRagService;
@@ -31,6 +33,9 @@ public class RagQueryController {
             return ResponseEntity.badRequest().build();
         }
 
+        var router = routers == null ? null : routers.getIfAvailable();
+        if (router != null) router.clearRequestExecution();
+        try {
         com.riansares.r4r.rag.RagResult result = request.retrievalQuestion() == null
                 && request.responseLanguage() == null
                 ? citedRagService.answer(request.question())
@@ -41,10 +46,12 @@ public class RagQueryController {
         RagQueryResponse response = new RagQueryResponse(
                 result.answer(),
                 result.abstention(),
-                citations
+                citations, router == null || router.requestExecution() == null || router.requestExecution().provider() == null ? null
+                        : new RagQueryResponse.Provider(router.requestExecution().provider().name(), router.requestExecution().provider().model(), "OpenAI".equals(router.requestExecution().provider().name()) ? new InferenceHost.Details("cloud", null, null, null, null) : InferenceHost.identify(router.requestExecution().provider().baseUrl(), router.requestExecution().provider().model()))
         );
 
         return ResponseEntity.ok(response);
+        } finally { if (router != null) router.clearRequestExecution(); }
     }
 
     private List<RagQueryResponse.Citation> convertCitations(java.util.List<com.riansares.r4r.rag.Citation> citations) {

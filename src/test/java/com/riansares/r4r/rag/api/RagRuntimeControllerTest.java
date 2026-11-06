@@ -105,4 +105,16 @@ class RagRuntimeControllerTest {
         assertThat(models.get(2).sizeBytes()).isZero();
         assertThat(models.get(2).vramBytes()).isZero();
     }
+    @Test void cloudNeverProbesOllamaOrReportsLocalHardware() {
+        var remote = new GenerationRouter.Target(new GenerationRouter.Provider("OpenAI","https://api.openai.com/v1","gpt-6-luna"), mock(ChatModel.class),()->true);
+        var cloudRouter=new GenerationRouter(java.util.List.of(remote));
+        cloudRouter.call(new Prompt("question"));
+        var cloud=new RagRuntimeController(new RagRetrievalProperties(3,.63),"qwen3:8b","nomic-embed-text", "768","jdbc:postgresql://db/rag","http://local",new ObjectMapper(),mock(OllamaModelPreloader.class),cloudRouter,http);
+        var info=cloud.runtime();
+        assertThat(info.lastUsedProvider().name()).isEqualTo("OpenAI");
+        assertThat(info.lastUsedProvider().inferenceHost().type()).isEqualTo("cloud");
+        assertThat(info.inferenceHost().cpu()).isNull();assertThat(info.loadedModels()).isEmpty();
+        verifyNoInteractions(http);
+    }
+
 }

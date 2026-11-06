@@ -35,6 +35,10 @@ public class RagRuntimeController {
     private final OllamaModelPreloader preloader;
     private final GenerationRouter router;
     private final HttpClient httpClient;
+    @Value("${r4r.rag.openai.enabled:false}") private boolean remoteEnabled;
+    @Value("${r4r.rag.openai.model:gpt-6-luna}") private String remoteModel = "gpt-6-luna";
+    public record RemoteFallback(boolean enabled, String model) { }
+
 
     @Autowired
     public RagRuntimeController(
@@ -70,16 +74,17 @@ public class RagRuntimeController {
         GenerationRouter.Execution execution = router.execution();
         GenerationRouter.Provider last = execution.provider();
         GenerationRouter.Provider selected = last == null ? router.preferred() : last;
-        MemoryState memory = execution.failed() ? new MemoryState(false, List.of()) : loadedModels(selected.baseUrl());
+        boolean remote = "OpenAI".equals(selected.name());
+        MemoryState memory = execution.failed() || remote ? new MemoryState(false, List.of()) : loadedModels(selected.baseUrl());
         boolean loaded = memory.models().stream().anyMatch(m -> canonical(selected.model()).equals(canonical(m.name())));
-        String status = !memory.available() ? "Ollama no disponible" : loaded ? "Modelo cargado"
+        String status = remote ? "No aplica (OpenAI)" : !memory.available() ? "Ollama no disponible" : loaded ? "Modelo cargado"
                 : last == null && "Cargando modelo".equals(preloader.state()) ? "Cargando modelo" : "Modelo descargado de memoria";
         return new RuntimeInfo(execution.failed() ? null : selected.model(), embeddingModel, embeddingDimensions,
                 retrieval.topK(), retrieval.minScore(), System.getProperty("java.version"),
                 SpringBootVersion.getVersion(), versionOf(ChatModel.class), databaseName,
                 "Docker Compose", memory.models(), router.preferred().model(), status,
-                execution.failed() ? null : InferenceHost.identify(selected.baseUrl(), selected.model()), providerInfo(router.preferred()),
-                last == null ? null : providerInfo(last), execution.failed() ? "failed" : last == null ? "idle" : "success");
+                execution.failed() ? null : remote ? new InferenceHost.Details("cloud", null, null, null, null) : InferenceHost.identify(selected.baseUrl(), selected.model()), providerInfo(router.preferred()),
+                last == null ? null : providerInfo(last), execution.failed() ? "failed" : last == null ? "idle" : "success", new RemoteFallback(remoteEnabled, remoteModel));
     }
 
     private static String canonical(String name) { return name.contains(":") ? name : name + ":latest"; }
@@ -122,13 +127,13 @@ public class RagRuntimeController {
     }
 
     private ProviderInfo providerInfo(GenerationRouter.Provider provider) {
-        return new ProviderInfo(provider.name(), provider.model(), InferenceHost.identify(provider.baseUrl(), provider.model()));
+        return new ProviderInfo(provider.name(), provider.model(), "OpenAI".equals(provider.name()) ? new InferenceHost.Details("cloud", null, null, null, null) : InferenceHost.identify(provider.baseUrl(), provider.model()));
     }
     public record ProviderInfo(String name, String model, InferenceHost.Details inferenceHost) { }
 
     public record RuntimeInfo(String generationModel, String embeddingModel, String embeddingDimensions,
                               int topK, double minScore, String javaVersion, String springBootVersion,
-                              String springAiVersion, String database, String deployment, List<LoadedModel> loadedModels, String configuredModel, String modelStatus, InferenceHost.Details inferenceHost, ProviderInfo preferredProvider, ProviderInfo lastUsedProvider, String generationState) { }
+                              String springAiVersion, String database, String deployment, List<LoadedModel> loadedModels, String configuredModel, String modelStatus, InferenceHost.Details inferenceHost, ProviderInfo preferredProvider, ProviderInfo lastUsedProvider, String generationState, RemoteFallback remoteFallback) { }
 
     public record LoadedModel(String name, String parameterSize, Long sizeBytes, Long vramBytes) { }
 }

@@ -19,21 +19,29 @@ public class GenerationRouter implements ChatModel {
     public record Provider(String name, String baseUrl, String model) { }
     public record Target(Provider provider, ChatModel model, BooleanSupplier available) { }
     private final Target preferred;
-    private final Target fallback;
+    private final List<Target> targets;
+    private final ThreadLocal<Execution> requestExecution = new ThreadLocal<>();
     // Runtime summary only; individual calls always keep their provider in a local variable.
     public record Execution(Provider provider, boolean failed) { }
     private final AtomicReference<Execution> execution = new AtomicReference<>(new Execution(null, false));
 
     public GenerationRouter(Target preferred, Target fallback) {
-        this.preferred = preferred;
-        this.fallback = fallback;
+        this(List.of(preferred, fallback));
     }
+
+    public GenerationRouter(List<Target> targets) {
+        this.targets = List.copyOf(targets);
+        this.preferred = targets.getFirst();
+    }
+    public void clearRequestExecution() { requestExecution.remove(); }
+    public Execution requestExecution() { return requestExecution.get(); }
 
     public Provider preferred() { return preferred.provider(); }
     public Provider lastUsed() { return execution.get().provider(); }
     public Execution execution() { return execution.get(); }
     public Provider preferredAvailable() {
-        for (Target target : List.of(preferred, fallback)) {
+        for (Target target : targets) {
+            if ("OpenAI".equals(target.provider().name())) continue; // Never preload remote models.
             try { if (target.available().getAsBoolean()) return target.provider(); }
             catch (RuntimeException ignored) { }
         }
@@ -42,13 +50,15 @@ public class GenerationRouter implements ChatModel {
 
     @Override
     public ChatResponse call(Prompt prompt) {
+        clearRequestExecution();
         String requestId = UUID.randomUUID().toString();
-        for (Target target : List.of(preferred, fallback)) {
+        for (Target target : targets) {
             Provider provider = target.provider();
             try {
                 if (!target.available().getAsBoolean()) continue;
                 ChatResponse response = target.model().call(prompt);
                 execution.set(new Execution(provider, false));
+                requestExecution.set(new Execution(provider, false));
                 log.info("Generation {} completed by provider={} model={}", requestId, provider.name(), provider.model());
                 return response;
             } catch (RuntimeException ex) {
@@ -57,6 +67,7 @@ public class GenerationRouter implements ChatModel {
             }
         }
         execution.set(new Execution(null, true));
+        requestExecution.set(new Execution(null, true));
         throw unavailable();
     }
 
