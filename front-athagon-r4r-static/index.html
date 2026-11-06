@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex,nofollow"/>
   <meta name="theme-color" content="#334357"/>
   <title data-i18n="page.athagon_labs_riansares_4r_rag_with_citations">Athagon Labs · IA autoalojada · RAG con respuestas verificables</title>
-  <link rel="stylesheet" href="styles/styles.css"/>
+  <link rel="stylesheet" href="styles/styles.css?v=c1b3db209509"/>
 </head>
 <body class="spanish-demo">
 <header class="site-header">
@@ -162,8 +162,8 @@
 
   <section class="section architecture-section" id="arquitectura">
     <div class="shell">
-      <div class="section-tab" data-i18n="page.architecture">ARQUITECTURA</div>
-      <div class="architecture panel">
+      <h2 class="section-heading"><button id="architectureToggle" class="section-toggle" type="button" aria-expanded="false" aria-controls="architectureContent"><span data-i18n="page.architecture">ARQUITECTURA</span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
+      <div class="architecture panel" id="architectureContent" hidden>
         <div class="arch-flow arch-steps architecture-route" aria-label="Flujo de una consulta: interfaz web, Spring Boot y Spring AI, recuperación vectorial e inferencia local." data-i18n-aria-label="page.architecture_flow">
           <details class="arch-step"><summary><span class="node-id">01</span><strong data-i18n="page.demo_website">Web de demo</strong><small>athagon.tech/r4r-rag</small></summary><p data-i18n="page.your_question_starts_in_the_web_interface">Tu pregunta entra desde la interfaz web.</p></details>
           <details class="arch-step accent"><summary><span class="node-id">02</span><strong data-i18n="page.rag_api">API RAG</strong><small>Spring Boot · Spring AI</small></summary><p data-i18n="page.validates_the_query_retrieves_context_and_requests_an_answer_from_the_model">Valida la consulta, recupera contexto y solicita una respuesta al modelo.</p></details>
@@ -185,14 +185,9 @@
         </div>
       </div>
 
-      <div class="runtime-panel panel">
-        <div class="runtime-head">
-          <div>
-            <span class="eyebrow" data-i18n="page.current_demo_runtime">Runtime actual de la demo</span>
-            <h2 data-i18n="page.technical_details">Detalles técnicos</h2>
-          </div>
-          <span class="runtime-badge">2026</span>
-        </div>
+      <div class="runtime-disclosure" id="runtime">
+        <h2 class="section-heading"><button id="runtimeToggle" class="section-toggle" type="button" aria-expanded="false" aria-controls="runtimeContent"><span><span class="eyebrow" data-i18n="page.current_demo_runtime">Runtime actual de la demo</span><span data-i18n="page.technical_details">Detalles técnicos</span></span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
+        <div id="runtimeContent" class="runtime-panel panel" hidden>
         <div class="runtime-observed" aria-live="polite">
           <span class="eyebrow" data-i18n="page.observed_generation">Última generación · datos del backend</span>
           <strong id="runtimeUsed" data-i18n="page.no_generation_yet">Todavía no se ha generado una respuesta</strong>
@@ -216,13 +211,15 @@
             <div class="runtime-host-info"><span data-i18n="page.memory_details">Memoria informada por Ollama · GiB</span><strong id="runtimeOllama" data-i18n="page.checking_ollama">Consultando Ollama…</strong><small data-i18n="page.memory_values_describe_model_usage_ollama_does_not_report_cpu_total_ram_or_gpu_model">La memoria del modelo la informa Ollama. GPU, CPU y RAM del equipo son datos de configuración del backend, no mediciones en tiempo real de Ollama.</small></div>
           </div>
         </details>
+        </div>
       </div>
     </div>
   </section>
 
   <section class="section concept-section" id="como-funciona">
     <div class="shell">
-      <div class="section-tab" data-i18n="page.what_it_demonstrates">QUÉ DEMUESTRA</div>
+      <h2 class="section-heading"><button id="conceptToggle" class="section-toggle" type="button" aria-expanded="false" aria-controls="conceptContent"><span data-i18n="page.what_it_demonstrates">QUÉ DEMUESTRA</span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
+      <div id="conceptContent" hidden>
       <div class="concept-grid">
         <article class="concept-card panel">
           <span class="concept-number">01</span>
@@ -246,6 +243,7 @@
         </article>
       </div>
       <p class="hero-lede" data-i18n="page.public_frontend_scope">La web es pública y las consultas en inglés pueden utilizar un servicio externo de traducción. La IA local describe dónde se generan las respuestas.</p>
+      </div>
     </div>
   </section>
 </main>
@@ -257,7 +255,7 @@
   </div>
 </footer>
 
-<script src="js/i18n.js"></script>
-<script src="js/app.js"></script>
+<script src="js/i18n.js?v=7061c599ec6d"></script>
+<script src="js/app.js?v=486f768445e4"></script>
 </body>
 </html>

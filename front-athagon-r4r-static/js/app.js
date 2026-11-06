@@ -32,6 +32,34 @@
 
   const $ = (id) => document.getElementById(id);
 
+  const disclosures = [
+    { button: $("architectureToggle"), panel: $("architectureContent"), anchor: "arquitectura" },
+    { button: $("runtimeToggle"), panel: $("runtimeContent"), anchor: "runtime" },
+    { button: $("conceptToggle"), panel: $("conceptContent"), anchor: "como-funciona" }
+  ];
+  function setExpanded(disclosure, expanded) {
+    disclosure.panel.hidden = !expanded;
+    disclosure.button.setAttribute("aria-expanded", String(expanded));
+  }
+  for (const disclosure of disclosures) {
+    disclosure.button.addEventListener("click", () => setExpanded(disclosure, disclosure.panel.hidden));
+  }
+  function revealSection(hash) {
+    if (!hash || !hash.startsWith("#")) return;
+    let id;
+    try { id = decodeURIComponent(hash.slice(1)); } catch { return; }
+    const target = $(id);
+    for (const disclosure of disclosures) {
+      if (id === disclosure.anchor || (target && disclosure.panel.contains(target))) setExpanded(disclosure, true);
+    }
+  }
+  document.querySelectorAll("a").forEach(link => {
+    const href = link.getAttribute("href");
+    if (href?.startsWith("#")) link.addEventListener("click", () => revealSection(href));
+  });
+  window.addEventListener("hashchange", () => revealSection(window.location.hash));
+  revealSection(window.location.hash);
+
   const question = $("question");
   const sendButton = $("sendButton");
   const sendLabel = $("sendLabel");

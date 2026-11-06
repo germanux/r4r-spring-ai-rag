@@ -19,6 +19,7 @@ class Node {
   get textContent() { return this.nodeType === 3 ? this._text : this.childNodes.map(n => n.textContent).join(''); }
   set textContent(value) { if (this.nodeType === 3) this._text = String(value); else this.replaceChildren(new Node('', String(value))); }
   get children() { return this.childNodes.filter(n => n.nodeType === 1); }
+  contains(node) { return this === node || this.children.some(child => child.contains(node)); }
   get dataset() { return { question: this.getAttribute('data-question') }; }
   setAttribute(key, value) { this.attributes[key] = String(value); if (key === 'value') this.value = value; if (key === 'hidden') this.hidden = true; }
   getAttribute(key) { return this.attributes[key] ?? null; }
@@ -65,7 +66,7 @@ function openPage(lang = 'es', storage = new Map(), options = {}) {
   let runtimeCalls = 0, nextTimer = 0;
   const context = { document, URL, URLSearchParams, AbortController, performance,
     navigator: { language: lang, clipboard: { writeText: async text => { if (options.copyFailed) throw Error('Clipboard denied'); clipboard.push(text); } } },
-    window: { location: { assign: url => navigations.push(url), replace: url => navigations.push(url) } },
+    window: { addEventListener(event, handler) { this.handlers[event] = handler; }, handlers: {}, location: { hash: options.hash || '', assign: url => navigations.push(url), replace: url => navigations.push(url) } },
     localStorage: { getItem: key => { if (options.storageFails) throw Error('Storage disabled'); return storage.get(key) ?? null; },
       setItem: (key, value) => { if (options.storageFails || options.writeFails) throw Error('Quota exceeded'); storage.set(key, value); } },
     setTimeout: (fn, delay) => { const id = ++nextTimer; timers.set(id, { fn, delay }); return id; },
@@ -98,7 +99,7 @@ function openPage(lang = 'es', storage = new Map(), options = {}) {
   const node = id => document.getElementById(id);
   const changeLanguage = value => { node('languageSelect').value = value; node('languageSelect').handlers.change(); };
   return { document, node, storage, requests, navigations, clipboard, timers, changeLanguage,
-    runtimeCalls: () => runtimeCalls, t: (...args) => vm.runInContext(`R4RI18n.t(...${JSON.stringify(args)})`, context) };
+    window: context.window, runtimeCalls: () => runtimeCalls, t: (...args) => vm.runInContext(`R4RI18n.t(...${JSON.stringify(args)})`, context) };
 }
 
 for (const lang of ['es', 'en']) {
@@ -346,7 +347,7 @@ test('single entry point has valid assets, anchors, unique IDs and no legacy fil
   assert.equal(ids.filter(id => id === 'languageSelect').length, 1);
   for (const [, asset] of html.matchAll(/(?:src|href)="([^"#]+)"/g)) {
     if (/^https?:/.test(asset)) continue;
-    assert.ok(fs.existsSync(path.join(root, asset)), `Missing asset: ${asset}`);
+    assert.ok(fs.existsSync(path.join(root, asset.split("?")[0])), `Missing asset: ${asset}`);
   }
   for (const [, anchor] of html.matchAll(/href="#([^"]+)"/g)) assert.ok(ids.includes(anchor));
   assert.ok(html.indexOf('js/i18n.js') < html.indexOf('js/app.js'));
@@ -366,8 +367,8 @@ test('both languages keep the single shared stylesheet after language changes', 
       p.changeLanguage(next);
       const sheets = p.document.querySelectorAll('link').filter(n => n.getAttribute('rel') === 'stylesheet');
       assert.equal(sheets.length, 1);
-      assert.equal(sheets[0].getAttribute('href'), 'styles/styles.css');
-      assert.ok(fs.existsSync(path.join(root, sheets[0].getAttribute('href'))));
+      assert.match(sheets[0].getAttribute('href'), /^styles\/styles\.css\?v=[a-f0-9]+$/);
+      assert.ok(fs.existsSync(path.join(root, sheets[0].getAttribute('href').split('?')[0])));
     }
   }
   for (const obsolete of ['styles.css', 'styles-es.css', 'styles-en.css']) {
@@ -466,3 +467,79 @@ test('runtime never invents failover, a last-used host or a configured model fro
     }
   }
 });
+
+for (const lang of ['es', 'en']) {
+  test(`${lang}: independent disclosures start closed and stay synchronized with aria-expanded`, () => {
+    const p = openPage(lang);
+    const before = p.requests.length;
+    for (const [buttonId, panelId] of [['architectureToggle', 'architectureContent'], ['runtimeToggle', 'runtimeContent'], ['conceptToggle', 'conceptContent']]) {
+      const button = p.node(buttonId), panel = p.node(panelId);
+      assert.equal(button.tagName, 'button'); // Native Enter/Space activation; exercised in browser QA.
+      assert.equal(button.getAttribute('type'), 'button');
+      assert.equal(button.getAttribute('aria-controls'), panelId);
+      assert.equal(panel.hidden, true);
+      assert.equal(button.getAttribute('aria-expanded'), 'false');
+      button.handlers.click();
+      assert.equal(panel.hidden, false);
+      assert.equal(button.getAttribute('aria-expanded'), 'true');
+      p.changeLanguage(lang === 'es' ? 'en' : 'es');
+      assert.equal(panel.hidden, false);
+      assert.equal(button.getAttribute('aria-expanded'), 'true');
+      button.handlers.click();
+      assert.equal(panel.hidden, true);
+      assert.equal(button.getAttribute('aria-expanded'), 'false');
+    }
+    assert.equal(p.requests.length, before);
+  });
+  test(`${lang}: navigation opens architecture without preventing the original anchor behavior`, () => {
+    const p = openPage(lang);
+    const link = p.document.querySelectorAll('a').find(n => n.getAttribute('href') === '#arquitectura');
+    link.handlers.click();
+    assert.equal(link.getAttribute('href'), '#arquitectura');
+    assert.equal(p.node('architectureContent').hidden, false);
+    assert.equal(p.node('runtimeContent').hidden, true);
+    p.node('architectureToggle').handlers.click();
+    link.handlers.click();
+    assert.equal(p.node('architectureToggle').getAttribute('aria-expanded'), 'true');
+    p.window.location.hash = '#runtime';
+    p.window.handlers.hashchange();
+    assert.equal(p.node('runtimeToggle').getAttribute('aria-expanded'), 'true');
+  });
+}
+
+test('initial deep links open only their corresponding disclosure', () => {
+  for (const hash of ['#arquitectura', '#architectureContent', '#runtime', '#runtimeHost']) {
+    const p = openPage('en', new Map(), { hash });
+    const architecture = hash === '#arquitectura' || hash === '#architectureContent';
+    assert.equal(p.node('architectureContent').hidden, !architecture);
+    assert.equal(p.node('runtimeContent').hidden, architecture);
+  }
+  assert.doesNotThrow(() => openPage('en', new Map(), { hash: '#%ZZ' }));
+});
+
+test('script URLs change with their content so browsers cannot reuse outdated disclosure handlers', () => {
+  const { createHash } = require('node:crypto');
+  for (const name of ['app.js', 'i18n.js']) {
+    const digest = createHash('sha256').update(fs.readFileSync(path.join(__dirname, name))).digest('hex').slice(0, 12);
+    assert.ok(html.includes(`src="js/${name}?v=${digest}"`));
+  }
+});
+
+for (const lang of ['es', 'en']) {
+  test(`${lang}: what it demonstrates opens from menu and direct links without affecting other panels`, () => {
+    const p = openPage(lang);
+    const link = p.document.querySelectorAll('a').find(n => n.getAttribute('href') === '#como-funciona');
+    link.handlers.click();
+    assert.equal(p.node('conceptContent').hidden, false);
+    assert.equal(p.node('conceptToggle').getAttribute('aria-expanded'), 'true');
+    assert.equal(p.node('architectureContent').hidden, true);
+    assert.equal(p.node('runtimeContent').hidden, true);
+    p.node('conceptToggle').handlers.click();
+    assert.equal(p.node('conceptContent').hidden, true);
+    for (const hash of ['#como-funciona', '#conceptContent']) {
+      const direct = openPage(lang, new Map(), { hash });
+      assert.equal(direct.node('conceptContent').hidden, false);
+      assert.equal(direct.node('conceptToggle').getAttribute('aria-expanded'), 'true');
+    }
+  });
+}

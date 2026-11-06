@@ -1085,3 +1085,35 @@ kbd {
 @media (max-width:760px) {
   .inference-hosts { grid-template-columns:minmax(0, 1fr); }
 }
+
+/* Accessible section disclosures: native buttons support Enter and Space. */
+.section-heading { margin:0 0 18px; font-size:1.2rem; }
+.section-toggle {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  width:100%;
+  min-height:52px;
+  padding:14px 18px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--panel-2);
+  color:var(--steel-deep);
+  font:inherit;
+  font-weight:900;
+  text-align:left;
+  cursor:pointer;
+  appearance:none;
+  box-shadow:var(--shadow-soft);
+}
+.section-toggle:hover { background:#dbe8f3; border-color:var(--steel-dark); }
+.section-toggle:focus-visible { outline:3px solid var(--steel-dark); outline-offset:3px; }
+.section-toggle .eyebrow { display:block; margin-bottom:5px; }
+.section-chevron { flex-shrink:0; font-size:1.4rem; line-height:1; }
+.section-toggle[aria-expanded="true"] .section-chevron { transform:rotate(180deg); }
+#runtimeContent, #architectureContent { scroll-margin-top:180px; }
+#runtime { scroll-margin-top:180px; }
+.runtime-disclosure { margin-top:18px; }
+.runtime-disclosure > .section-heading { margin-bottom:18px; }
+#arquitectura, #como-funciona { scroll-margin-top:180px; }
