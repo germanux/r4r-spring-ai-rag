@@ -329,3 +329,9 @@ centrado en terminología de infraestructura.
   no inferir una distribución Linux por un identificador interno de equipo.
 - Ejecutar las suites existentes, incluidas RAG, backend y frontend, e informar de
   omisiones y causas. Reutilizar cobertura existente antes de crear nuevos tests.
+
+### Actualización del estado inicial de los desplegables
+
+- Por indicación posterior del usuario, «¿Qué tiene de especial?» también debe
+  aparecer plegada por defecto, en ES y EN. Esta regla sustituye la decisión anterior
+  de mostrar sus tarjetas abiertas. Mantener apertura por botón, teclado y navegación.

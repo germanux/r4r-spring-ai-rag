@@ -561,7 +561,7 @@ test('runtime never invents failover, a last-used host or a configured model fro
 });
 
 for (const lang of ['es', 'en']) {
-  test(`${lang}: benefits start visible, technical disclosures closed, and controls retain aria-expanded`, () => {
+  test(`${lang}: all sections start closed and controls retain aria-expanded`, () => {
     const p = openPage(lang);
     const before = p.requests.length;
     for (const [buttonId, panelId] of [['architectureToggle', 'architectureContent'], ['runtimeToggle', 'runtimeContent'], ['conceptToggle', 'conceptContent']]) {
@@ -569,11 +569,6 @@ for (const lang of ['es', 'en']) {
       assert.equal(button.tagName, 'button'); // Native Enter/Space activation; exercised in browser QA.
       assert.equal(button.getAttribute('type'), 'button');
       assert.equal(button.getAttribute('aria-controls'), panelId);
-      if (panelId === 'conceptContent') {
-        assert.equal(panel.hidden, false);
-        assert.equal(button.getAttribute('aria-expanded'), 'true');
-        button.handlers.click();
-      }
       assert.equal(panel.hidden, true);
       assert.equal(button.getAttribute('aria-expanded'), 'false');
       button.handlers.click();
