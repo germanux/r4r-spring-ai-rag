@@ -22,6 +22,8 @@ public class CitedRagService {
     private final ChatModel chatModel;
     private final int retrievalTopK;
     private final double minScore;
+    private final LocalRetrievalQueryTranslator translator;
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CitedRagService.class);
     private static final Pattern ABSTAIN_TOKEN = Pattern.compile("(?i)(?<![a-z0-9_])_*R4R_ABST(?:AIN|INERSE|INENT)_*(?![a-z0-9_])");
     private static final Pattern ONLY_CITATIONS =
             Pattern.compile("^(?:\\[S\\d+\\][\\s,;:.]*)+$");
@@ -62,6 +64,12 @@ public class CitedRagService {
             ChatModel chatModel,
             int retrievalTopK,
             double minScore) {
+        this(knowledgeStore, chatModel, retrievalTopK, minScore, null);
+    }
+
+    public CitedRagService(PgVectorKnowledgeStore knowledgeStore, ChatModel chatModel,
+                          int retrievalTopK, double minScore, LocalRetrievalQueryTranslator translator) {
+        this.translator = translator;
         this.knowledgeStore = Objects.requireNonNull(knowledgeStore, "knowledgeStore");
         this.chatModel = Objects.requireNonNull(chatModel, "chatModel");
         this.retrievalTopK = retrievalTopK;
@@ -79,32 +87,53 @@ public class CitedRagService {
     }
 
     public RagResult answer(String question, String retrievalQuestion, String responseLanguage) {
+        long started = System.nanoTime();
         validateQuestion(question);
         String searchQuestion = retrievalQuestion == null || retrievalQuestion.isBlank()
                 ? question : retrievalQuestion;
+        if ((retrievalQuestion == null || retrievalQuestion.isBlank())
+                && "en".equalsIgnoreCase(responseLanguage) && translator != null) {
+            searchQuestion = translator.translate(question);
+        }
+        long normalized = System.nanoTime();
         List<MarkdownChunk> chunks = retrieveEvidence(searchQuestion);
+        long retrieved = System.nanoTime();
 
         if (chunks.isEmpty()) {
+            trace("no_evidence", 0, started, normalized, retrieved, retrieved, retrieved);
             return RagResult.abstain();
         }
 
         Prompt prompt = buildPrompt(question + "\n/no_think", chunks, responseLanguage);
+        long contextBuilt = System.nanoTime();
         ChatResponse response = chatModel.call(prompt);
+        long generated = System.nanoTime();
         String answer = extractAnswer(response);
 
         if (answer == null
                 || answer.isBlank()
                 || ABSTAIN_TOKEN.matcher(answer).find()
                 || isNaturalAbstention(answer)) {
+            trace("model_abstention", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
             return RagResult.abstain();
         }
         answer = normalizeReferences(answer, chunks.size());
         if (answer == null || answer.isBlank() || ONLY_CITATIONS.matcher(answer.trim()).matches()) {
+            trace("invalid_answer", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
             return RagResult.abstain();
         }
         List<Citation> citations = buildCitations(chunks, answer);
 
+        trace("answered", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
         return RagResult.ofAnswer(answer, citations);
+    }
+
+    private void trace(String result, int chunks, long started, long normalized,
+                       long retrieved, long contextBuilt, long generated) {
+        log.info("RAG result={} retrieved={} topK={} minScore={} normalizationMs={} retrievalIncludingEmbeddingMs={} contextMs={} generationMs={} validationMs={}",
+                result, chunks, retrievalTopK, minScore, (normalized-started)/1_000_000.0,
+                (retrieved-normalized)/1_000_000.0, (contextBuilt-retrieved)/1_000_000.0,
+                (generated-contextBuilt)/1_000_000.0, (System.nanoTime()-generated)/1_000_000.0);
     }
 
     private boolean isNaturalAbstention(String answer) {

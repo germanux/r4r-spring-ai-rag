@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import java.time.Duration;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,15 +21,27 @@ import org.springframework.context.annotation.Configuration;
 public class RagConfiguration {
 
     @Bean
-    GenerationRouter generationRouter(OllamaChatProperties properties,
+    List<GenerationRouter.Target> generationTargets(OllamaChatProperties properties,
             @Value("${r4r.rag.generation.fallback-base-url}") String fallbackUrl,
             @Value("${r4r.rag.generation.fallback-model}") String fallbackModel,
             @Value("${r4r.rag.generation.pc-base-url}") String pcUrl,
             @Value("${r4r.rag.generation.pc-model}") String pcModel,
             @Value("${r4r.rag.generation.connect-timeout:2s}") Duration connectTimeout,
             @Value("${r4r.rag.generation.probe-timeout:2s}") Duration probeTimeout) {
-        return new GenerationRouter(target("PC principal", pcUrl, pcModel, properties.getOptions(), connectTimeout, probeTimeout),
+        return List.of(target("PC principal", pcUrl, pcModel, properties.getOptions(), connectTimeout, probeTimeout),
                 target("Portátil ASUS", fallbackUrl, fallbackModel, properties.getOptions(), connectTimeout, probeTimeout));
+    }
+
+    @Bean
+    GenerationRouter generationRouter(@Qualifier("generationTargets") List<GenerationRouter.Target> targets) {
+        return new GenerationRouter(targets.get(0), targets.get(1));
+    }
+
+    @Bean
+    LocalRetrievalQueryTranslator retrievalQueryTranslator(
+            @Qualifier("generationTargets") List<GenerationRouter.Target> targets) {
+        // Share the same clients and fallback policy, but not last-answer runtime state.
+        return new LocalRetrievalQueryTranslator(new GenerationRouter(targets.get(0), targets.get(1)));
     }
 
     private GenerationRouter.Target target(String name, String url, String model, OllamaOptions defaults,
@@ -56,12 +70,13 @@ public class RagConfiguration {
     CitedRagService citedRagService(
             PgVectorKnowledgeStore knowledgeStore,
             GenerationRouter chatModel,
-            RagRetrievalProperties properties) {
+            RagRetrievalProperties properties,
+            LocalRetrievalQueryTranslator translator) {
 
         return new CitedRagService(
                 knowledgeStore,
                 chatModel,
                 properties.topK(),
-                properties.minScore());
+                properties.minScore(), translator);
     }
 }

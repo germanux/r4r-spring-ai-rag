@@ -56,7 +56,7 @@ class RagLiveEnglishQuestionsIT {
 
     // 12 preguntas del dominio R4R y 3 preguntas ajenas para verificar abstención.
     private static final List<QuestionCase> CASES = List.of(
-            new QuestionCase("Initial guidance", "Which details should I provide to get preliminary advice about my renovation?", "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?", true),
+            new QuestionCase("Company services ES/EN regression", "What kinds of renovation work does this company do? Does it work on houses and offices?", "¿Qué tipos de reformas realiza esta empresa? ¿Trabaja en viviendas y oficinas?", true),
             new QuestionCase("Concrete slab versus flooring", "In construction, how does the concrete base differ from the finished flooring?", "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?", true),
             new QuestionCase("Access and cost", "Why does access affect the price of a concrete slab?", "¿Por qué el acceso cambia el precio de una solera?", true),
             new QuestionCase("Old house", "What is the approximate cost of a complete renovation of an old house?", "¿Cuánto orienta una reforma integral de una casa antigua?", true),
@@ -92,7 +92,8 @@ class RagLiveEnglishQuestionsIT {
         if (number > 1) {
             Thread.sleep(SLEEP_WAIT);
         }
-        String requestBody = JSON.writeValueAsString(new QuestionRequest(testCase.question(), testCase.retrievalQuestion(), "en"));
+        // Exercise backend-local normalization, not a pretranslated test query.
+        String requestBody = JSON.writeValueAsString(new QuestionRequest(testCase.question(), null, "en"));
         HttpRequest request = HttpRequest.newBuilder(ENDPOINT)
                 .timeout(REQUEST_TIMEOUT)
                 .header("Content-Type", "application/json")

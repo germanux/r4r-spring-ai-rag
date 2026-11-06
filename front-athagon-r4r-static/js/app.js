@@ -374,16 +374,7 @@
     const started = performance.now();
 
     try {
-      let requestBody = { question: text, responseLanguage: "es" };
-      if (requestLanguage === "en") {
-        let retrievalQuestion = text;
-        try {
-          retrievalQuestion = (await translateToSpanish(text, "en", controller.signal)).trim() || text;
-        } catch (error) {
-          if (error?.name === "AbortError") throw error;
-        }
-        requestBody = { question: text, retrievalQuestion, responseLanguage: "en" };
-      }
+      const requestBody = { question: text, responseLanguage: requestLanguage };
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -529,30 +520,4 @@
     questionCount.textContent = `${question.value.length} / 700`;
   }
 
-  async function translateToSpanish(question, sourceLang = "en", signal) {
-    if (sourceLang === "es") return question;
-
-    const params = new URLSearchParams({
-      q: question,
-      langpair: `${sourceLang}|es`
-    });
-
-    const response = await fetch(
-        `https://api.mymemory.translated.net/get?${params}`,
-        { signal }
-    );
-
-    if (!response.ok) {
-      throw new Error(t("translationError"));
-    }
-
-    const data = await response.json();
-
-    if (data.responseStatus !== 200 ||
-        !data.responseData?.translatedText) {
-      throw new Error(t("translationError"));
-    }
-
-    return data.responseData.translatedText;
-  }
 })();

@@ -73,7 +73,6 @@ function openPage(lang = 'es', storage = new Map(), options = {}) {
     clearTimeout: id => timers.delete(id),
     fetch: async (url, init = {}) => {
       requests.push({ url, init });
-      if (url.includes('mymemory')) { if (options.translationFails) throw Error('Translation unavailable'); return { ok: true, json: async () => ({ responseStatus: 200, responseData: { translatedText: 'Pregunta traducida' } }) }; }
       if (url.endsWith('/answers')) {
         if (options.answer) return options.answer(url, init);
         if (options.networkFails) throw Error('Failed to fetch');
@@ -121,7 +120,7 @@ for (const lang of ['es', 'en']) {
       const body = JSON.parse(page.requests.find(r => r.url.endsWith('/answers')).init.body);
       assert.equal(body.question, 'Question');
       assert.equal(body.responseLanguage, lang);
-      if (lang === 'en') assert.equal(body.retrievalQuestion, 'Pregunta traducida');
+      if (lang === 'en') assert.equal(body.retrievalQuestion, undefined);
       page.changeLanguage(lang === 'en' ? 'es' : 'en');
       assert.match(page.node('runtimeUsed').textContent, failed ? /failed|fallida/ : /qwen2.5:7b.*PC-ASUS-ZORIN/);
     });
@@ -332,12 +331,15 @@ test('abstention, empty answers and citation fallback labels translate while sou
   }
 });
 
-test('English query still works when the external translation service fails', async () => {
-  const p = openPage('en', new Map(), { translationFails: true });
+test('English query uses backend-local normalization without contacting external translation services', async () => {
+  const p = openPage('en');
   p.node('question').value = 'Original question';
   await p.node('sendButton').handlers.click();
   const body = JSON.parse(p.requests.find(r => r.url.endsWith('/answers')).init.body);
-  assert.equal(body.retrievalQuestion, 'Original question');
+  assert.equal(body.retrievalQuestion, undefined);
+  assert.equal(body.question, 'Original question');
+  assert.equal(body.responseLanguage, 'en');
+  assert.ok(p.requests.every(r => r.url.startsWith('https://r4r-api.athagon.tech/')));
   assert.equal(p.node('answerText').textContent, 'Answer [S1]');
 });
 

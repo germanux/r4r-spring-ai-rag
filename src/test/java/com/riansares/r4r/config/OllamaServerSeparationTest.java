@@ -48,6 +48,8 @@ class OllamaServerSeparationTest {
                         assertThat(model.embed("Documento para ingesta")).hasSize(768);
                         assertThat(model.embed("Consulta para recuperar documentos")).hasSize(768);
                         var router = context.getBean(GenerationRouter.class);
+                        context.getBean(com.riansares.r4r.rag.LocalRetrievalQueryTranslator.class).translate("What renovations?");
+                        assertThat(router.lastUsed()).isNull(); // Translation is not a final answer in runtime.
                         assertThat(router.call(new Prompt("Consulta")).getResult().getOutput().getText()).isEqualTo("pc answer");
                         assertThat(router.lastUsed().baseUrl()).isEqualTo(url(pc));
                         pc.stop(0);
