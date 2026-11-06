@@ -93,14 +93,30 @@ grep -Fq "image: $IMAGE" "$COMPOSE" || {
 echo
 echo "==> 3. Preparando transferencia al Synology..."
 
+# Reutilizar una única sesión SSH para mktemp, scp y despliegue.
+# El socket es privado de esta ejecución y se cierra al salir.
+SSH_CONTROL_DIR="$(mktemp -d)"
+SSH_CONTROL_PATH="$SSH_CONTROL_DIR/master"
+SSH_OPTIONS=(
+  -o ControlMaster=auto
+  -o ControlPersist=10m
+  -o "ControlPath=$SSH_CONTROL_PATH"
+)
+
+cleanup_ssh() {
+  ssh -o BatchMode=yes -S "$SSH_CONTROL_PATH" -O exit "$REMOTE" >/dev/null 2>&1 || true
+  rmdir "$SSH_CONTROL_DIR" 2>/dev/null || true
+}
+trap cleanup_ssh EXIT
+
 # Directorio temporal único dentro del home del usuario NAS.
-STAGE="$(ssh "$REMOTE" \
+STAGE="$(ssh "${SSH_OPTIONS[@]}" "$REMOTE" \
   'mktemp -d "$HOME/.r4r-deploy.XXXXXXXX"')"
 
 echo "Destino: $REMOTE"
 echo "Temporal: $STAGE"
 
-scp -O "$TAR" "$COMPOSE" "$REMOTE:$STAGE/"
+scp -O "${SSH_OPTIONS[@]}" "$TAR" "$COMPOSE" "$REMOTE:$STAGE/"
 
 # ============================================================
 # 5. IMPORTAR Y DESPLEGAR POR SSH
@@ -112,7 +128,7 @@ echo "==> 4. Importando imagen y actualizando Spring..."
 BACKUP_DATE="$(date '+%Y%m%d-%H%M%S')"
 
 # -tt permite introducir la contraseña de sudo.
-ssh -tt "$REMOTE" "
+ssh "${SSH_OPTIONS[@]}" -tt "$REMOTE" "
   set -e
 
   export PATH=/usr/local/bin:/var/packages/ContainerManager/target/usr/bin:\$PATH
