@@ -15,18 +15,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties(RagRetrievalProperties.class)
+@EnableConfigurationProperties({RagRetrievalProperties.class, OllamaChatProperties.class})
 public class RagConfiguration {
 
     @Bean
     GenerationRouter generationRouter(OllamaChatProperties properties,
-            @Value("${spring.ai.ollama.base-url}") String fallbackUrl,
+            @Value("${r4r.rag.generation.fallback-base-url}") String fallbackUrl,
+            @Value("${r4r.rag.generation.fallback-model}") String fallbackModel,
             @Value("${r4r.rag.generation.pc-base-url}") String pcUrl,
             @Value("${r4r.rag.generation.pc-model}") String pcModel,
             @Value("${r4r.rag.generation.connect-timeout:2s}") Duration connectTimeout,
             @Value("${r4r.rag.generation.probe-timeout:2s}") Duration probeTimeout) {
         return new GenerationRouter(target("PC principal", pcUrl, pcModel, properties.getOptions(), connectTimeout, probeTimeout),
-                target("Portátil ASUS", fallbackUrl, properties.getOptions().getModel(), properties.getOptions(), connectTimeout, probeTimeout));
+                target("Portátil ASUS", fallbackUrl, fallbackModel, properties.getOptions(), connectTimeout, probeTimeout));
     }
 
     private GenerationRouter.Target target(String name, String url, String model, OllamaOptions defaults,

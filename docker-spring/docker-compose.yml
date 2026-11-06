@@ -71,12 +71,12 @@ services:
           if ! kill -0 "$$ollama_pid" 2>/dev/null; then exit 1; fi
           sleep 2
         done
-        if ! ollama show nomic-embed-text >/dev/null 2>&1; then
-          ollama pull nomic-embed-text
+        if ! ollama show nomic-embed-text:latest >/dev/null 2>&1; then
+          ollama pull nomic-embed-text:latest
         fi
         wait "$$ollama_pid"
     healthcheck:
-      test: ["CMD", "ollama", "show", "nomic-embed-text"]
+      test: ["CMD", "ollama", "show", "nomic-embed-text:latest"]
       interval: 30s
       timeout: 15s
       retries: 15
@@ -90,9 +90,13 @@ services:
     env_file:
       - ./.env
     environment:
+      # Container DNS only; the PC uses the LAN URL from .env.example.
+      RAG_EMBEDDING_BASE_URL: http://ollama-embeddings:11434
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:?required}
     depends_on:
       postgres:
+        condition: service_healthy
+      ollama-embeddings:
         condition: service_healthy
     ports:
       - "18080:8080"

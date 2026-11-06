@@ -43,7 +43,7 @@ public class RagRuntimeController {
             @Value("${spring.ai.ollama.embedding.options.model:No disponible}") String embeddingModel,
             @Value("${spring.ai.vectorstore.pgvector.dimensions:No disponible}") String embeddingDimensions,
             @Value("${spring.datasource.url:}") String datasourceUrl,
-            @Value("${spring.ai.ollama.base-url:}") String ollamaBaseUrl,
+            @Value("${r4r.rag.generation.fallback-base-url:}") String ollamaBaseUrl,
             ObjectMapper objectMapper,
             OllamaModelPreloader preloader, GenerationRouter router) {
         this(retrieval, generationModel, embeddingModel, embeddingDimensions, datasourceUrl, ollamaBaseUrl,
