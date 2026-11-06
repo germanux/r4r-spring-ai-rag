@@ -137,7 +137,7 @@ for (const lang of ['es', 'en']) {
     assert.match(p.document.title, lang === 'es' ? /IA autoalojada/ : /Self-Hosted AI/);
     const description = p.document.querySelectorAll('meta').find(n => n.getAttribute('name') === 'description');
     assert.match(description.getAttribute('content'), /Spring AI/);
-    assert.equal(p.node('question').getAttribute('placeholder'), p.t('demoQuestion'));
+    assert.equal(p.node('question').getAttribute('placeholder'), p.t('page.e_g_what_information_is_needed_for_an_initial_assessment_of_a_renovation_in_an_older_house'));
     assert.equal(p.node('languageSelect').getAttribute('aria-label'), lang === 'es' ? 'Idioma' : 'Language');
     assert.equal(p.node('endpointPreset').children.length, 4);
     assert.equal(p.node('apiBaseUrl').value, 'https://r4r-api.athagon.tech');
@@ -228,6 +228,8 @@ for (const lang of ['es', 'en']) {
     assert.equal(p.node('question').value, sample.dataset.question);
     await p.node('tryDemoButton').handlers.click({ preventDefault() {} });
     assert.equal(p.node('question').value, p.t('demoQuestion'));
+    const demoRequest = p.requests.filter(r => r.url.endsWith('/answers')).at(-1);
+    assert.equal(JSON.parse(demoRequest.init.body).question, p.t('demoQuestion'));
     p.node('question').value = 'Keyboard query';
     await p.node('question').handlers.keydown({ ctrlKey: true, key: 'Enter' });
     assert.equal(p.storage.get('r4r.lastQuestion'), 'Keyboard query');
