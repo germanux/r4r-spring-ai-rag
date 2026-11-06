@@ -242,11 +242,22 @@
     }
   }
 
+  function renderLocalFallback(remote) {
+    document.querySelectorAll("[data-local-provider]").forEach(card => {
+      card.classList.toggle("is-unavailable", remote);
+      card.setAttribute("data-unavailable", String(remote));
+    });
+    document.querySelectorAll(".local-provider-status").forEach(label => { label.hidden = !remote; });
+    $("localFallbackStatus").textContent = remote ? t("localFallbackStatus") : "";
+    $("localFallbackStatus").hidden = !remote;
+  }
+
   function renderRuntimeInfo(info) {
     const unavailable = t("unavailable");
     const failed = !lastPayload?.provider && info.generationState === "failed";
     const used = failed ? null : lastPayload && Object.hasOwn(lastPayload, "provider") ? lastPayload.provider : info.lastUsedProvider;
     const remote = used?.name === "OpenAI" || used?.inferenceHost?.type === "cloud";
+    renderLocalFallback(remote);
     const preferred = info.preferredProvider;
     const sameProvider = used?.inferenceHost?.hostname && preferred?.inferenceHost?.hostname
       ? used.inferenceHost.hostname === preferred.inferenceHost.hostname
@@ -280,6 +291,7 @@
       : t("noModels");
   }
   function renderRuntimeUnavailable() {
+    renderLocalFallback(false);
     for (const id of ["runtimeEmbeddingModel", "runtimeEmbeddings", "runtimeRetrieval", "runtimeVersions"]) $(id).textContent = t("unavailable");
     $("runtimeUsedHardware").textContent = "";
     $("runtimeUsedHardware").hidden = true;

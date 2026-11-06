@@ -532,7 +532,7 @@ for (const lang of ['es', 'en']) {
     assert.equal(desktop.node('runtimeUsedHardware').textContent, 'PC · Intel Core i9 · 64 GB RAM');
     assert.equal(desktop.node('runtimeVersions').textContent, 'Java 22 · Spring Boot 3.4.5 · Spring AI 1.0.0');
     assert.equal(desktop.document.querySelectorAll('.runtime-summary')[0].children.length, 2);
-    assert.equal(desktop.document.querySelectorAll('.config-grid')[0].children.length, 13);
+    assert.equal(desktop.document.querySelectorAll('.config-grid')[0].children.length, 11);
     assert.equal(desktop.node('runtimeUsedModel').textContent, 'qwen3:8b');
     assert.equal(desktop.node('runtimeEmbeddings').textContent, `768 ${desktop.t('dimensions')}`);
     for (const id of ['runtimeHardware', 'runtimeHost', 'runtimeDeployment']) assert.equal(desktop.node(id), null);
@@ -701,13 +701,27 @@ for (const lang of ['es', 'en']) {
 }
 
 for (const language of ['es', 'en']) test(`${language}: remote model never displays local hardware`, async () => {
- const p = openPage(language, new Map(), { runtime: { generationState: 'success',
+ const runtime = { generationState: 'success',
   lastUsedProvider: { name: 'OpenAI', model: 'gpt-6-luna', inferenceHost: { type: 'cloud' } },
-  remoteFallback: { enabled: false, model: 'gpt-6-luna' }, loadedModels: [] } });
+  remoteFallback: { enabled: false, model: 'gpt-6-luna' }, loadedModels: [] };
+ const p = openPage(language, new Map(), { runtime });
  await tick();
  assert.equal(p.node('runtimeUsed').textContent, `GPT-6 Luna · ${p.t('cloud')}`);
  assert.equal(p.node('runtimeUsedHardware').hidden,true);
+ for (const card of p.document.querySelectorAll('[data-local-provider]')) assert.equal(card.getAttribute('data-unavailable'),'true');
+ assert.equal(p.node('localFallbackStatus').hidden,false);
+ assert.ok(!html.includes('page.development_agents_details'));
+ assert.ok(html.includes('Linux · Docker · Docker Compose'));
 
  assert.equal(p.node('runtimeOllama').textContent,p.t('remoteNoMemory'));
  assert.ok(p.node('runtimeRemote').textContent.includes(p.t('remoteDisabled')));
+ p.changeLanguage(language === 'es' ? 'en' : 'es');
+ assert.equal(p.node('localFallbackStatus').textContent, p.t('localFallbackStatus'));
+ runtime.lastUsedProvider = { name: 'PC principal', model: 'qwen3:8b', inferenceHost: { type: 'desktop' } };
+ p.node('apiBaseUrl').handlers.change();
+ await tick();
+ assert.equal(p.node('localFallbackStatus').hidden, true);
+ for (const card of p.document.querySelectorAll('[data-local-provider]')) assert.equal(card.getAttribute('data-unavailable'), 'false');
+ for (const label of p.document.querySelectorAll('.local-provider-status')) assert.equal(label.hidden, true);
+
 });

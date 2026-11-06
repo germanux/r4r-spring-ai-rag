@@ -335,3 +335,19 @@ centrado en terminología de infraestructura.
 - Por indicación posterior del usuario, «¿Qué tiene de especial?» también debe
   aparecer plegada por defecto, en ES y EN. Esta regla sustituye la decisión anterior
   de mostrar sus tarjetas abiertas. Mantener apertura por botón, teclado y navegación.
+
+### Respaldo RAG remoto autorizado: GPT-6 Luna
+
+- El usuario autoriza un tercer proveedor de generación, distinto de los agentes de
+  desarrollo: PC/Ollama → portátil/Ollama → OpenAI Responses API `gpt-6-luna`.
+- Solo tras fallos técnicos de ambos locales, nunca por lentitud, abstención o calidad.
+  Reutilizar el Prompt RAG y sus protecciones; no cambiar embeddings ni recuperación.
+- Configurar modelo con `RAG_OPENAI_MODEL`; `RAG_OPENAI_ENABLED=false` por defecto.
+  Mantener la clave existente fuera de Git, logs y frontend. Activación y despliegue
+  quedan sujetos a validación manual, sin acciones automáticas al pasar los tests.
+- La precarga y la traducción auxiliar no usan OpenAI. Evitar retries remotos y
+  registrar consumo sin contenido ni credenciales. Identificar proveedor por petición.
+- En la UI, GPT-6 Luna aparece como OpenAI en nube, sin atribuirle hardware local.
+  Esta autorización sustituye la anterior ausencia de respaldo remoto; no convierte
+  a GPT-5.6 Luna, coordinador de desarrollo, en proveedor de respuestas RAG.
+- Configuración, límites y resultados: `docs/operations/openai-fallback.md`.

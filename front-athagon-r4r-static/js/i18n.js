@@ -160,8 +160,6 @@ const R4RI18n = (() => {
       "page.containers": "Contenedores",
       "page.backup_details": "Respaldo de generación",
       "page.backup_implementation": "PC → portátil ASUS → OpenAI, si está habilitado. Si todos fallan, error controlado.",
-      "page.development_agents": "Agentes de desarrollo",
-      "page.development_agents_details": "OpenCode · GPT-5.6 Luna (coordinación) · GPT-5.3 Codex (trabajo de desarrollo). No intervienen en las respuestas de esta demo.",
       "page.local_models": "Modelos locales · configuración de referencia",
       "page.local_models_details": "Ollama\nPC: qwen3:8b\nPortátil ASUS: qwen2.5:7b\nEmbeddings:",
       "page.hardware_desktop": "PC de sobremesa · hardware configurado",
@@ -177,6 +175,9 @@ const R4RI18n = (() => {
       "remoteEnabled": "habilitado",
       "remoteDisabled": "deshabilitado",
       "page.remote_topology": "Tercer intento, solo tras fallos técnicos locales y si está habilitado.",
+      "page.platform_containers": "Sistema y contenedores",
+      "localUnavailable": "Modelo local no disponible en la última respuesta",
+      "localFallbackStatus": "La prioridad sigue siendo usar modelos locales. No estuvieron disponibles para la última respuesta; se utilizó OpenAI.",
       "page.embedding_dimensions": "Dimensiones de embeddings"
     },
     "en": {
@@ -337,8 +338,6 @@ const R4RI18n = (() => {
       "page.containers": "Containers",
       "page.backup_details": "Generation backup",
       "page.backup_implementation": "PC → Laptop ASUS → OpenAI, when enabled. If all fail, a controlled error is returned.",
-      "page.development_agents": "Development agents",
-      "page.development_agents_details": "OpenCode · GPT-5.6 Luna (coordination) · GPT-5.3 Codex (development work). They do not generate this demo’s answers.",
       "page.local_models": "Local models · reference configuration",
       "page.local_models_details": "Ollama\nPC: qwen3:8b\nLaptop ASUS: qwen2.5:7b\nEmbeddings:",
       "page.hardware_desktop": "PC-Desktop · configured hardware",
@@ -354,6 +353,9 @@ const R4RI18n = (() => {
       "remoteEnabled": "enabled",
       "remoteDisabled": "disabled",
       "page.remote_topology": "Third attempt, only after technical failures of both local providers and when enabled.",
+      "page.platform_containers": "System and containers",
+      "localUnavailable": "Local model unavailable for the last answer",
+      "localFallbackStatus": "Local models remain the preferred option. They were unavailable for the last answer, so OpenAI was used.",
       "page.embedding_dimensions": "Embedding dimensions"
     }
   };

@@ -1152,3 +1152,8 @@ kbd {
 
 /* Keep the local model roles legible within their existing card. */
 [data-i18n="page.local_models_details"] { white-space:pre-line; }
+
+/* Unavailable for the reported generation; keep the local architecture readable. */
+[data-local-provider].is-unavailable { background:var(--panel-2); border-style:dashed; }
+[data-local-provider].is-unavailable h3, [data-local-provider].is-unavailable strong { color:var(--text); }
+.local-provider-status { margin:0 0 8px; font-size:.8rem; font-weight:700; color:var(--text); }

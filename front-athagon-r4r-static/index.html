@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex,nofollow"/>
   <meta name="theme-color" content="#334357"/>
   <title data-i18n="page.athagon_labs_riansares_4r_rag_with_citations">Athagon Labs · IA autoalojada · RAG con respuestas verificables</title>
-  <link rel="stylesheet" href="styles/styles.css?v=392c87aff8e4"/>
+  <link rel="stylesheet" href="styles/styles.css?v=ae154ba33f9d"/>
 </head>
 <body class="spanish-demo">
 <header class="site-header">
@@ -201,15 +201,18 @@
           <details class="arch-step llm"><summary><span class="node-id">04</span><strong data-i18n="page.generation_role">Genera una respuesta</strong><small data-i18n="page.generation_servers">Ollama · PC y respaldo</small></summary><p data-i18n="page.generates_an_answer_grounded_in_the_retrieved_context">La IA responde utilizando la información encontrada y muestra sus fuentes.</p></details>
         </div>
         <p class="architecture-caption" data-i18n="page.topology_note">Detrás de esta demo trabajan varios equipos con funciones diferentes: unos buscan la información y otros generan las respuestas.</p>
+        <p id="localFallbackStatus" class="architecture-caption" role="status" hidden></p>
         <div class="inference-hosts">
-          <article class="inference-host primary-host">
+          <article class="inference-host primary-host" data-local-provider="true">
             <small data-i18n="page.preferred_connection">Ollama → generación preferente · qwen3:8b</small>
             <h3 data-i18n="page.primary_pc">PC de sobremesa</h3>
+            <p class="local-provider-status" data-i18n="localUnavailable" hidden>Modelo local no disponible en la última respuesta</p>
             <p data-i18n="page.primary_gpu">Generación principal. Linux · NVIDIA GeForce RTX 4060.</p>
           </article>
-          <article class="inference-host backup-host">
+          <article class="inference-host backup-host" data-local-provider="true">
             <small data-i18n="page.fallback_connection">Ollama → respaldo automático · qwen2.5:7b</small>
             <h3 data-i18n="page.backup_laptop">Portátil ASUS</h3>
+            <p class="local-provider-status" data-i18n="localUnavailable" hidden>Modelo local no disponible en la última respuesta</p>
             <p data-i18n="page.backup_gpu">Generación de respaldo. Linux · NVIDIA GeForce GTX 1050.</p>
           </article>
           <article class="inference-host embedding-host">
@@ -247,18 +250,16 @@
           <div class="config-grid" id="runtimeConfig">
             <div><span>Backend</span><strong id="runtimeVersions">Java · Spring Boot · Spring AI</strong></div>
             <div><span>Frontend</span><strong>JavaScript · HTML · CSS</strong></div>
-            <div><span data-i18n="page.os">Sistema operativo</span><strong>Linux</strong></div>
             <div><span data-i18n="page.database_search">Base de datos y búsqueda</span><strong data-i18n="page.database_search_details">NAS Synology · PostgreSQL · pgvector · embeddings</strong></div>
-            <div><span data-i18n="page.containers">Contenedores</span><strong>Docker · Docker Compose</strong></div>
+            <div><span data-i18n="page.platform_containers">Sistema y contenedores</span><strong>Linux · Docker · Docker Compose</strong></div>
             <div><span data-i18n="page.local_models">Modelos locales · configuración de referencia</span><strong><span data-i18n="page.local_models_details">Ollama
 PC: qwen3:8b
 Portátil ASUS: qwen2.5:7b
 Embeddings:</span> <span id="runtimeEmbeddingModel">—</span> · <span id="runtimeEmbeddings">—</span></strong></div>
             <div><span data-i18n="page.remote_fallback">Respaldo remoto configurado</span><strong id="runtimeRemote">—</strong></div>
             <div><span data-i18n="page.backup_details">Respaldo de generación</span><strong data-i18n="page.backup_implementation">PC → portátil ASUS → OpenAI, si está habilitado. Si todos fallan, error controlado.</strong></div>
-            <div><span data-i18n="page.development_agents">Agentes de desarrollo</span><strong data-i18n="page.development_agents_details">OpenCode · GPT-5.6 Luna (coordinación) · GPT-5.3 Codex (trabajo de desarrollo). No intervienen en las respuestas de esta demo.</strong></div>
-            <div><span data-i18n="page.hardware_desktop">PC de sobremesa · hardware configurado</span><strong>NVIDIA GeForce RTX 4060 · 8 GB VRAM · Intel i9-14900KF · 64 GB DDR5 RAM</strong></div>
-            <div><span data-i18n="page.hardware_laptop">Portátil ASUS · hardware configurado</span><strong>NVIDIA GeForce GTX 1050 · 4 GB VRAM · Intel i7-7700HQ · 32 GB RAM</strong></div>
+            <div data-local-provider="true"><p class="local-provider-status" data-i18n="localUnavailable" hidden>Modelo local no disponible en la última respuesta</p><span data-i18n="page.hardware_desktop">PC de sobremesa · hardware configurado</span><strong>NVIDIA GeForce RTX 4060 · 8 GB VRAM · Intel i9-14900KF · 64 GB DDR5 RAM</strong></div>
+            <div data-local-provider="true"><p class="local-provider-status" data-i18n="localUnavailable" hidden>Modelo local no disponible en la última respuesta</p><span data-i18n="page.hardware_laptop">Portátil ASUS · hardware configurado</span><strong>NVIDIA GeForce GTX 1050 · 4 GB VRAM · Intel i7-7700HQ · 32 GB RAM</strong></div>
             <div><span data-i18n="page.retrieval">Recuperación</span><strong id="runtimeRetrieval">—</strong></div>
             <div class="runtime-host-info"><span data-i18n="page.memory_details">Estado y memoria de Ollama</span><strong id="runtimeModelStatus">—</strong><small id="runtimeMemoryScope" class="host-hardware"></small><strong id="runtimeOllama" data-i18n="page.checking_ollama">Consultando Ollama…</strong></div>
           </div>
@@ -278,7 +279,7 @@ Embeddings:</span> <span id="runtimeEmbeddingModel">—</span> · <span id="runt
   </div>
 </footer>
 
-<script src="js/i18n.js?v=eaa941aca0cb"></script>
-<script src="js/app.js?v=1e21c11a882f"></script>
+<script src="js/i18n.js?v=64f5391264a2"></script>
+<script src="js/app.js?v=bf402619af48"></script>
 </body>
 </html>
