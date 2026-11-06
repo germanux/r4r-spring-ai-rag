@@ -186,7 +186,7 @@
   }
 
   function providerIdentity(provider) {
-    return provider?.inferenceHost?.hostname || provider?.name || null;
+    return t("hostNames")[provider?.inferenceHost?.type] || t("unknownHost");
   }
 
   async function loadRuntimeInfo() {
@@ -232,16 +232,15 @@
     $("runtimeMemoryScope").textContent = failed ? t("informationUnavailable") : used ? t("memoryLastUsed")
       : info.generationState === "idle" && preferred ? t("memoryPreferred") : t("memoryUnknown");
     $("runtimeUsed").textContent = failed ? t("generationFailed")
-      : used ? `${used.model || unavailable} · ${used.inferenceHost?.hostname || t("unknownHost")}`
+      : used ? `${used.model || unavailable} · ${providerIdentity(used)}`
       : t(info.generationState === "idle" ? "noGeneration" : "informationUnavailable");
     $("runtimeModel").textContent = info.configuredModel || preferred?.model || t("unavailable");
     const states = t("modelStates");
     $("runtimeModelStatus").textContent = !failed && states[info.modelStatus] || t("informationUnavailable");
     $("runtimeEmbeddingModel").textContent = info.embeddingModel || unavailable;
     const host = used?.inferenceHost || {};
-    const hostNames = t("hostNames");
-    $("runtimeHost").textContent = (hostNames[host.type] || hostNames.unknown) + (host.hostname ? ` (${host.hostname})` : "");
-    $("runtimeHardware").textContent = [host.gpu?.replace(/\bNVIDIA RTX 4060\b/g, "NVIDIA GeForce RTX 4060"), host.ram && `RAM ${host.ram}`, host.cpu].filter(Boolean).join(" · ");
+    $("runtimeHost").textContent = providerIdentity(used);
+    $("runtimeHardware").textContent = [host.gpu?.replace(/\bNVIDIA (RTX 4060|GTX 1050)\b/g, "NVIDIA GeForce $1"), host.ram && `RAM ${host.ram}`, host.cpu].filter(Boolean).join(" · ");
     $("runtimeEmbeddings").textContent = `${info.embeddingDimensions || "—"} ${t("dimensions")}`;
     $("runtimeRetrieval").textContent = `Top-K ${info.topK} · ${t("minimumScore")} ${info.minScore}`;
     $("runtimeVersions").textContent = `Java ${info.javaVersion || "—"} · Spring Boot ${info.springBootVersion || "—"} · Spring AI ${info.springAiVersion || "—"}`;

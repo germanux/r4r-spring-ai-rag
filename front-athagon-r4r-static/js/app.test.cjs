@@ -115,10 +115,10 @@ for (const lang of ['es', 'en']) {
       assert.equal(page.runtimeCalls(), 2);
       assert.equal(page.node('runtimeModel').textContent, 'qwen3:8b');
       if (failed) {
-        assert.match(page.node('runtimeUsed').textContent, /failed|fallida/);
+        assert.equal(page.node('runtimeUsed').textContent, page.t('generationFailed'));
         assert.equal(page.node('runtimeHardware').textContent, '');
       } else {
-        assert.match(page.node('runtimeUsed').textContent, /qwen2.5:7b.*PC-ASUS-ZORIN/);
+        assert.equal(page.node('runtimeUsed').textContent, `qwen2.5:7b · ${page.t('hostNames').laptop}`);
         assert.match(page.node('runtimeHardware').textContent, /GTX 1050/);
       }
       const body = JSON.parse(page.requests.find(r => r.url.endsWith('/answers')).init.body);
@@ -126,7 +126,7 @@ for (const lang of ['es', 'en']) {
       assert.equal(body.responseLanguage, lang);
       assert.equal(body.retrievalQuestion, lang === 'en' ? '¿Qué reformas?' : undefined);
       page.changeLanguage(lang === 'en' ? 'es' : 'en');
-      assert.match(page.node('runtimeUsed').textContent, failed ? /failed|fallida/ : /qwen2.5:7b.*PC-ASUS-ZORIN/);
+      assert.equal(page.node('runtimeUsed').textContent, failed ? page.t('generationFailed') : `qwen2.5:7b · ${page.t('hostNames').laptop}`);
     });
   }
   test(`${lang}: startup, metadata, accessibility and language switch without reload or requests`, async () => {
@@ -509,20 +509,21 @@ for (const lang of ['es', 'en']) {
       modelStatus: 'Modelo cargado', loadedModels: [], topK: 3, minScore: .63
     } });
     await tick();
-    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'IA autoalojada · RAG con respuestas verificables' : 'Self-Hosted AI · Verifiable RAG');
+    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Respuestas basadas en documentos' : 'Answers grounded in documents');
     assert.equal(p.document.querySelectorAll('.arch-step').length, 4);
-    assert.equal(p.document.querySelectorAll('.inference-host').length, 2);
+    assert.equal(p.document.querySelectorAll('.inference-host').length, 3);
     assert.equal(p.document.querySelectorAll('.primary-host')[0].textContent.includes('NVIDIA GeForce RTX 4060'), true);
     assert.equal(p.node('runtimeModel').textContent, 'qwen3:8b');
-    assert.equal(p.node('runtimePreferred').textContent, 'PC-GIGA-ZORUX');
-    assert.match(p.node('runtimeUsed').textContent, /qwen2.5:7b.*PC-ASUS-ZORIN/);
-    assert.match(p.node('runtimeHost').textContent, /PC-ASUS-ZORIN/);
+    assert.equal(p.node('runtimePreferred').textContent, p.t('hostNames').desktop);
+    assert.equal(p.node('runtimeUsed').textContent, `qwen2.5:7b · ${p.t('hostNames').laptop}`);
+    assert.equal(p.node('runtimeHost').textContent, p.t('hostNames').laptop);
+    assert.doesNotMatch(p.document.body.textContent, /PC-GIGA-ZORUX|PC-ASUS-ZORIN/);
     assert.equal(p.node('runtimeFailover').textContent, p.t('fallbackObserved'));
     assert.equal(p.node('runtimeMemoryScope').textContent, p.t('memoryLastUsed'));
     p.changeLanguage(lang === 'es' ? 'en' : 'es');
     assert.equal(p.node('runtimeFailover').textContent, p.t('fallbackObserved'));
     assert.equal(p.node('runtimeMemoryScope').textContent, p.t('memoryLastUsed'));
-    assert.match(p.node('runtimeUsed').textContent, /qwen2.5:7b.*PC-ASUS-ZORIN/);
+    assert.equal(p.node('runtimeUsed').textContent, `qwen2.5:7b · ${p.t('hostNames').laptop}`);
   });
   test(`${lang}: bytes become GiB; unavailable values are not presented as zero`, async () => {
     for (const [bytes, expected] of [[1024 ** 3, '1.00 GiB'], [4 * 1024 ** 3, '4.00 GiB'], [5295200000, '4.93 GiB'], [0, '0.00 GiB'], [null, null], [undefined, null], [-1, null], ['4294967296', null], [NaN, null], [Infinity, null]]) {
@@ -560,7 +561,7 @@ test('runtime never invents failover, a last-used host or a configured model fro
 });
 
 for (const lang of ['es', 'en']) {
-  test(`${lang}: independent disclosures start closed and stay synchronized with aria-expanded`, () => {
+  test(`${lang}: benefits start visible, technical disclosures closed, and controls retain aria-expanded`, () => {
     const p = openPage(lang);
     const before = p.requests.length;
     for (const [buttonId, panelId] of [['architectureToggle', 'architectureContent'], ['runtimeToggle', 'runtimeContent'], ['conceptToggle', 'conceptContent']]) {
@@ -568,6 +569,11 @@ for (const lang of ['es', 'en']) {
       assert.equal(button.tagName, 'button'); // Native Enter/Space activation; exercised in browser QA.
       assert.equal(button.getAttribute('type'), 'button');
       assert.equal(button.getAttribute('aria-controls'), panelId);
+      if (panelId === 'conceptContent') {
+        assert.equal(panel.hidden, false);
+        assert.equal(button.getAttribute('aria-expanded'), 'true');
+        button.handlers.click();
+      }
       assert.equal(panel.hidden, true);
       assert.equal(button.getAttribute('aria-expanded'), 'false');
       button.handlers.click();
@@ -646,6 +652,10 @@ for (const lang of ['es', 'en']) {
     assert.equal(p.document.querySelectorAll('.config-details')[0].open, false);
     assert.equal(p.node('runtimeModelFull'), null);
     const role = p.document.querySelectorAll('.runtime-summary')[0];
+    assert.ok(p.document.querySelectorAll('.config-details')[0].contains(role));
+    assert.ok(html.indexOf('id="demo"') < html.indexOf('id="como-funciona"'));
+    assert.ok(html.indexOf('id="como-funciona"') < html.indexOf('id="arquitectura"'));
+    assert.ok(html.indexOf('id="arquitectura"') < html.indexOf('id="runtime"'));
     assert.ok(role.textContent.includes('Synology'));
     assert.ok(!role.textContent.includes('GiB'));
     assert.ok(!role.textContent.includes('VRAM'));

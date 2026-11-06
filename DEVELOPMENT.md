@@ -246,3 +246,57 @@ asistente; no autorizan cambios funcionales.
   Consultar `docs/validation/r4r-mymemory-restoration.md` para las pruebas reales y
   fallos pendientes de esta sesión; no dar esos fallos por corregidos ni extrapolar
   resultados anteriores a un despliegue nuevo.
+
+## Directrices de UX y presentación
+
+Sección añadida por el encargo posterior de UX. La memoria anterior se conserva
+intacta; estas instrucciones nuevas no se atribuyen retrospectivamente a lo recordado.
+En presentación, las actualizaciones de este encargo prevalecen sobre decisiones
+anteriores incompatibles, como mantener «Qué demuestra» cerrado o usar un titular
+centrado en terminología de infraestructura.
+
+### Instrucciones explícitas del usuario
+
+- Priorizar visitantes no técnicos: deben entender qué hace la aplicación, cómo
+  funciona a grandes rasgos y qué ventajas ofrece. Desarrolladores y reclutadores
+  técnicos deben poder explorar arquitectura, tecnologías, modelos y hardware.
+- Mostrar desde el primer vistazo que existe ingeniería real, con detalle progresivo.
+  Evitar tanto infantilizar la interfaz como convertirla en diagnóstico de servidores.
+- Orden de contenido: presentación → demo interactiva → qué demuestra → arquitectura
+  → detalles técnicos. Mantener la demo como elemento principal y dar mayor visibilidad
+  a las capacidades. Mejorar jerarquía sin rediseñar la identidad ni dejar huecos excesivos.
+- No mostrar nombres internos de máquinas como `PC-GIGA-ZORUX` o `PC-ASUS-ZORIN`.
+  Usar «PC de sobremesa / PC-Desktop», «Portátil ASUS / Laptop ASUS» y «NAS Synology».
+- Mostrar equipos y hardware cuando aporten valor. NVIDIA GeForce RTX 4060 acelera
+  la generación; NVIDIA GeForce GTX 1050 pertenece al portátil de respaldo. CPU,
+  RAM y memoria gráfica corresponden al nivel técnico.
+- Se puede indicar Linux. Si se precisa el sistema, distinguir Zorin OS de Ubuntu:
+  «Linux (Zorin OS, basado en Ubuntu)» no equivale a Ubuntu puro instalado.
+- Utilizar expresiones comprensibles: IA en equipos propios, respuestas basadas en
+  documentos, fuentes consultables, respaldo automático y reconocimiento de falta
+  de información. No explicar lo evidente ni sobrecargar la interfaz.
+- Conservar Java, Spring Boot, Spring AI, Ollama, pgvector, RAG y modelos en el nivel
+  adecuado. «Búsqueda inteligente en documentos» en la vista general; embeddings,
+  nomic-embed-text y dimensiones en la técnica. No repetir el modelo activo por toda
+  la página ni confundir configuración con disponibilidad comprobada.
+- Mantener la explicación pequeña de traducción sin protagonismo, avisos destacados
+  ni nuevas secciones sobre MyMemory o sus mecanismos internos.
+- Conservar ES/EN, responsive, accesibilidad y navegación por teclado. Los detalles
+  técnicos siguen disponibles mediante desplegables; los estados deben entenderse.
+- No modificar RAG, traducción, proveedores ni API por un cambio de presentación.
+  Ejecutar los tests existentes afectados sin ampliar innecesariamente la batería.
+- Añadir estas reglas separadamente a la memoria existente y entregar cambios,
+  archivos y pruebas. No hacer commit ni push sin autorización.
+
+### Decisiones de presentación aplicadas en este encargo
+
+- Titular centrado en respuestas basadas en documentos; tecnologías y NVIDIA siguen
+  visibles como señales de valor técnico, con menos peso que el propósito de la demo.
+- «Qué demuestra» aparece abierto tras la demo, conservando su control accesible
+  de apertura/cierre. Arquitectura y detalles técnicos permanecen cerrados inicialmente.
+- El runtime muestra el último modelo informado con un nombre descriptivo del equipo;
+  configuración preferente, embeddings, hardware y métricas quedan en el desplegable
+  avanzado. Los identificadores internos solo sirven para comparar proveedores,
+  sin convertirse en nombres visibles ni alterar las decisiones del backend.
+- Mantener intacto el comportamiento funcional es parte de la mejora de UX; una
+  simplificación de textos no autoriza a cambiar el sistema que esos textos describen.
