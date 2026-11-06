@@ -196,8 +196,26 @@
     return match ? `Qwen${match[1]} ${match[2]}B` : model || t("unavailable");
   }
 
+  function modelSummary(provider, loadedModels) {
+    const canonical = name => name?.includes(":") ? name : `${name}:latest`;
+    const loaded = Array.isArray(loadedModels) ? loadedModels.find(m => canonical(m.name) === canonical(provider.model)) : null;
+    const size = /^(\d+(?:\.\d+)?)\s*([BM])$/i.exec(loaded?.parameterSize || "");
+    if (!size) return readableModel(provider.model);
+    const millions = Number(size[1]) * (size[2].toUpperCase() === "B" ? 1000 : 1);
+    const number = isEnglish ? String(millions / 1000) : String(millions).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return `${readableModel(provider.model)} · ${number} ${t("parameters")}`;
+  }
+
+  function hardwareSummary(provider) {
+    const host = provider.inferenceHost || {};
+    const cpu = host.cpu?.replace(/Intel\s+(?:Core\s+)?(i[3579])\b.*$/i, "Intel Core $1");
+    const ram = /([\d.]+)\s*GB/i.exec(host.ram || "");
+    const parts = [host.type === "desktop" ? "PC" : providerIdentity(provider), cpu, ram ? `${ram[1]} GB RAM` : host.ram];
+    return cpu || host.ram ? parts.filter(Boolean).join(" · ") : `${parts[0]} · ${t("unknownHardware")}`;
+  }
+
   async function loadRuntimeInfo() {
-    if (!(document.getElementById("runtimeModel"))) return;
+    if (!(document.getElementById("runtimeUsedModel"))) return;
     const baseUrl = validBaseUrl(apiBaseUrl.value);
     if (!baseUrl) return;
     const requestId = ++runtimeRequest;
@@ -235,14 +253,15 @@
     $("runtimeFailover").textContent = failed ? t("generationFailed") : !used ? t("noGeneration")
       : sameProvider === null ? t("fallbackUnknown") : t(sameProvider ? "preferredObserved" : "fallbackObserved");
     $("runtimeFailover").hidden = !used || sameProvider !== false;
-    $("runtimePreferred").textContent = providerIdentity(preferred) || t("unknownHost");
+    $("runtimePreferred").textContent = `Ollama · ${providerIdentity(preferred)}`;
     $("runtimeMemoryScope").textContent = failed ? t("informationUnavailable") : used ? t("memoryLastUsed")
       : info.generationState === "idle" && preferred ? t("memoryPreferred") : t("memoryUnknown");
     $("runtimeUsed").textContent = failed ? t("generationFailed")
-      : used ? `${readableModel(used.model)} · ${used.inferenceHost?.type === "desktop" ? t("mainPc") : providerIdentity(used)}`
+      : used ? modelSummary(used, info.loadedModels)
       : t(info.generationState === "idle" ? "noGeneration" : "informationUnavailable");
+    $("runtimeUsedHardware").textContent = used ? hardwareSummary(used) : "";
+    $("runtimeUsedHardware").hidden = !used;
     $("runtimeUsedModel").textContent = used?.model || unavailable;
-    $("runtimeModel").textContent = info.configuredModel || preferred?.model || t("unavailable");
     const states = t("modelStates");
     $("runtimeModelStatus").textContent = !failed && states[info.modelStatus] || t("informationUnavailable");
     $("runtimeEmbeddingModel").textContent = info.embeddingModel || unavailable;
@@ -255,7 +274,9 @@
       : t("noModels");
   }
   function renderRuntimeUnavailable() {
-    for (const id of ["runtimeModel", "runtimeEmbeddingModel", "runtimeEmbeddings", "runtimeRetrieval", "runtimeVersions"]) $(id).textContent = t("unavailable");
+    for (const id of ["runtimeEmbeddingModel", "runtimeEmbeddings", "runtimeRetrieval", "runtimeVersions"]) $(id).textContent = t("unavailable");
+    $("runtimeUsedHardware").textContent = "";
+    $("runtimeUsedHardware").hidden = true;
     $("runtimeUsedModel").textContent = t("unavailable");
     $("runtimeUsed").textContent = errorMessage(runtimeError);
     $("runtimeFailover").textContent = t("informationUnavailable");

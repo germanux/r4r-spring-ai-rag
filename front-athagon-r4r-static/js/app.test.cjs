@@ -113,12 +113,12 @@ for (const lang of ['es', 'en']) {
       page.node('question').value = 'Question';
       await page.node('sendButton').handlers.click();
       assert.equal(page.runtimeCalls(), 2);
-      assert.equal(page.node('runtimeModel').textContent, 'qwen3:8b');
+      assert.equal(page.node('runtimeModel'), null);
       if (failed) {
         assert.equal(page.node('runtimeUsed').textContent, page.t('generationFailed'));
         assert.equal(page.node('runtimeHardware'), null);
       } else {
-        assert.equal(page.node('runtimeUsed').textContent, `Qwen2.5 7B · ${page.t('hostNames').laptop}`);
+        assert.equal(page.node('runtimeUsed').textContent, 'Qwen2.5 7B');
         assert.equal(page.node('runtimeUsedModel').textContent, 'qwen2.5:7b');
       }
       const body = JSON.parse(page.requests.find(r => r.url.endsWith('/answers')).init.body);
@@ -126,7 +126,7 @@ for (const lang of ['es', 'en']) {
       assert.equal(body.responseLanguage, lang);
       assert.equal(body.retrievalQuestion, lang === 'en' ? '¿Qué reformas?' : undefined);
       page.changeLanguage(lang === 'en' ? 'es' : 'en');
-      assert.equal(page.node('runtimeUsed').textContent, failed ? page.t('generationFailed') : `Qwen2.5 7B · ${page.t('hostNames').laptop}`);
+      assert.equal(page.node('runtimeUsed').textContent, failed ? page.t('generationFailed') : 'Qwen2.5 7B');
     });
   }
   test(`${lang}: startup, metadata, accessibility and language switch without reload or requests`, async () => {
@@ -512,26 +512,33 @@ for (const lang of ['es', 'en']) {
     const p = openPage(lang, new Map(), { runtime: {
       configuredModel: 'qwen3:8b', preferredProvider: { name: 'PC', model: 'qwen3:8b', inferenceHost: { type: 'desktop', hostname: 'PC-GIGA-ZORUX' } },
       lastUsedProvider: { name: 'ASUS', model: 'qwen2.5:7b', inferenceHost: host }, generationState: 'success',
-      modelStatus: 'Modelo cargado', loadedModels: [], topK: 3, minScore: .63
+      modelStatus: 'Modelo cargado', loadedModels: [{ name: 'qwen2.5:7b', parameterSize: '7.6B' }], topK: 3, minScore: .63
     } });
     await tick();
     assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Pregunta a nuestra IA con RAG' : 'Ask our RAG-powered AI a question');
     assert.equal(p.document.querySelectorAll('.arch-step').length, 4);
     assert.equal(p.document.querySelectorAll('.inference-host').length, 3);
     assert.equal(p.document.querySelectorAll('.primary-host')[0].textContent.includes('NVIDIA GeForce RTX 4060'), true);
-    assert.equal(p.node('runtimeModel').textContent, 'qwen3:8b');
-    assert.equal(p.node('runtimePreferred').textContent, p.t('hostNames').desktop);
+    assert.equal(p.node('runtimeModel'), null);
+    assert.equal(p.node('runtimePreferred').textContent, `Ollama · ${p.t('hostNames').desktop}`);
     const desktop = openPage(lang, new Map(), { runtime: {
       generationState: 'success', embeddingDimensions: 768,
-      lastUsedProvider: { model: 'qwen3:8b', inferenceHost: { type: 'desktop' } }
+      lastUsedProvider: { model: 'qwen3:8b', inferenceHost: { type: 'desktop', cpu: 'Intel i9-14900KF', ram: '64 GB DDR5' } },
+      javaVersion: '22', springBootVersion: '3.4.5', springAiVersion: '1.0.0',
+      loadedModels: [{ name: 'qwen3:8b', parameterSize: '8B' }]
     } });
     await tick();
-    assert.equal(desktop.node('runtimeUsed').textContent, `Qwen3 8B · ${desktop.t('mainPc')}`);
+    assert.equal(desktop.node('runtimeUsed').textContent, lang === 'es' ? 'Qwen3 8B · 8.000 millones de parámetros' : 'Qwen3 8B · 8 billion parameters');
+    assert.equal(desktop.node('runtimeUsedHardware').textContent, 'PC · Intel Core i9 · 64 GB RAM');
+    assert.equal(desktop.node('runtimeVersions').textContent, 'Java 22 · Spring Boot 3.4.5 · Spring AI 1.0.0');
+    assert.equal(desktop.document.querySelectorAll('.runtime-summary')[0].children.length, 2);
+    assert.equal(desktop.document.querySelectorAll('.config-grid')[0].children.length, 12);
     assert.equal(desktop.node('runtimeUsedModel').textContent, 'qwen3:8b');
     assert.equal(desktop.node('runtimeEmbeddings').textContent, `768 ${desktop.t('dimensions')}`);
     for (const id of ['runtimeHardware', 'runtimeHost', 'runtimeDeployment']) assert.equal(desktop.node(id), null);
 
-    assert.equal(p.node('runtimeUsed').textContent, `Qwen2.5 7B · ${p.t('hostNames').laptop}`);
+    assert.equal(p.node('runtimeUsed').textContent, `Qwen2.5 7B · ${p.document.documentElement.lang === 'es' ? '7.600' : '7.6'} ${p.t('parameters')}`);
+    assert.equal(p.node('runtimeUsedHardware').textContent, `${p.t('hostNames').laptop} · Intel Core i7 · 32 GB RAM`);
     assert.equal(p.node('runtimeHost'), null);
     assert.equal(p.node('runtimeUsedModel').textContent, 'qwen2.5:7b');
     assert.doesNotMatch(p.document.body.textContent, /PC-GIGA-ZORUX|PC-ASUS-ZORIN/);
@@ -540,7 +547,7 @@ for (const lang of ['es', 'en']) {
     p.changeLanguage(lang === 'es' ? 'en' : 'es');
     assert.equal(p.node('runtimeFailover').textContent, p.t('fallbackObserved'));
     assert.equal(p.node('runtimeMemoryScope').textContent, p.t('memoryLastUsed'));
-    assert.equal(p.node('runtimeUsed').textContent, `Qwen2.5 7B · ${p.t('hostNames').laptop}`);
+    assert.equal(p.node('runtimeUsed').textContent, `Qwen2.5 7B · ${p.document.documentElement.lang === 'es' ? '7.600' : '7.6'} ${p.t('parameters')}`);
   });
   test(`${lang}: bytes become GiB; unavailable values are not presented as zero`, async () => {
     for (const [bytes, expected] of [[1024 ** 3, '1.00 GiB'], [4 * 1024 ** 3, '4.00 GiB'], [5295200000, '4.93 GiB'], [0, '0.00 GiB'], [null, null], [undefined, null], [-1, null], ['4294967296', null], [NaN, null], [Infinity, null]]) {
@@ -668,13 +675,13 @@ for (const lang of ['es', 'en']) {
     assert.ok(html.indexOf('id="demo"') < html.indexOf('id="como-funciona"'));
     assert.ok(html.indexOf('id="como-funciona"') < html.indexOf('id="arquitectura"'));
     assert.ok(html.indexOf('id="arquitectura"') < html.indexOf('id="runtime"'));
-    assert.ok(role.textContent.includes('Synology'));
+    assert.ok(p.document.querySelectorAll('.config-grid')[0].textContent.includes('Synology'));
     assert.ok(!role.textContent.includes('GiB'));
     assert.ok(!role.textContent.includes('VRAM'));
     p.node('question').value = 'Question';
     await p.node('sendButton').handlers.click();
     assert.match(p.node('runtimeUsed').textContent, /Qwen2.5 7B/);
-    assert.equal(p.node('runtimeModel').textContent, 'qwen3:8b');
+    assert.equal(p.node('runtimeModel'), null);
     p.changeLanguage(lang === 'es' ? 'en' : 'es');
     assert.match(p.node('runtimeUsed').textContent, /Qwen2.5 7B/);
     assert.equal(p.document.querySelectorAll('.config-details')[0].open, false);
@@ -689,6 +696,6 @@ for (const lang of ['es', 'en']) {
     assert.equal(p.node('runtimeFailover').hidden, true);
     assert.equal(p.node('runtimeModelStatus').textContent, p.t('informationUnavailable'));
     assert.equal(p.node('runtimeEmbeddingModel').textContent, 'nomic-embed-text:latest');
-    assert.equal(p.node('runtimeModel').textContent, 'qwen3:8b');
+    assert.equal(p.node('runtimeModel'), null);
   });
 }
