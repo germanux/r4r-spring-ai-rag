@@ -1,134 +1,248 @@
-# Criterios de desarrollo de R4R/RAG
+# R4R — memoria y criterios de desarrollo
 
-Memoria de decisiones duraderas recibidas durante el desarrollo. Distingue instrucciones explícitas del usuario de interpretaciones del asistente. No sustituye a `AGENTS.md` ni acredita el estado desplegado.
+Memoria de trabajo, no certificación del despliegue ni sustituto de `AGENTS.md`.
+Se conservan decisiones útiles a futuro y se excluyen resultados, PIDs, tiempos y
+estados transitorios: esos datos pertenecen a los informes de validación.
 
-## Arquitectura y tecnologías
+**Procedencia:** «Instrucciones explícitas» recoge lo recibido del usuario durante
+esta conversación o de `AGENTS.md`, identificado cuando corresponda. «Memoria previa»
+conserva criterios del documento anterior sin atribuirlos de nuevo al usuario como
+si se hubieran formulado en esta sesión. «Interpretaciones» son conclusiones del
+asistente; no autorizan cambios funcionales.
 
-### Instrucciones explícitas
-
-- Backend con Java 21, Spring Boot y Spring AI. Reutilizar las abstracciones de Spring AI para integrar los modelos; no añadir un cliente HTTP Ollama escrito a mano.
-- Flyway es responsable del esquema de la aplicación.
-- PostgreSQL con pgvector es el almacén vectorial. Los gates del proyecto utilizan PostgreSQL en Docker.
-- La aplicación Angular utiliza Angular 17 en modo estricto. La demo web estática reutiliza HTML, CSS y JavaScript sin dependencias adicionales.
-- Respetar la estructura existente y priorizar cambios pequeños y enfocados. Evitar frameworks, dependencias y refactorizaciones ajenas al objetivo.
-
-## Separación de responsabilidades del RAG
+## Alcance, autorización y forma de trabajar
 
 ### Instrucciones explícitas
 
-- Mantener separados recuperación de contexto, generación y presentación.
-- `retrievalQuestion` sirve para la búsqueda vectorial; `question` conserva la pregunta original que recibe el LLM.
-- En el failover, recuperar el contexto y construir el prompt una sola vez, reutilizándolos para el proveedor alternativo.
-- La generación debe responder directamente con hechos respaldados por los fragmentos recuperados. Evitar invenciones, repeticiones, información tangencial y citas innecesarias.
-- No forzar una respuesta cuando la evidencia sea insuficiente.
-- No cambiar retrieval, embeddings, prompts, ingesta o índices como efecto secundario de cambios de infraestructura de generación, runtime o interfaz.
-- Si una mejora exige completar documentación y reingestarla, comunicar esa necesidad; no modificar un test para hacerlo pasar.
+- Revisar primero el estado Git, incluidos los cambios staged, y el último cambio
+  del usuario. Preservar el trabajo existente y limitar las escrituras al encargo.
+- Hacer modificaciones pequeñas y enfocadas. No aprovechar una corrección para
+  refactorizar extensamente o modificar otros apartados.
+- No eliminar funcionalidades sin autorización expresa. No sustituir servicios
+  externos por modelos locales, ni al contrario, sin consultar.
+- No cambiar arquitectura, proveedores, contratos API ni configuración operativa
+  fuera del alcance aprobado. Antes de una decisión con un compromiso funcional,
+  de coste, rendimiento o dependencia significativo, detenerse y preguntar.
+- Si aparecen problemas adicionales, informar y proponer soluciones; no ampliar
+  unilateralmente el alcance ni ocultar el fallo para cerrar la tarea.
+- Respetar las exclusiones de cada tarea: frontend, CSS, backend, RAG o Docker.
+  Las restricciones de una fase no deben confundirse con el objetivo de otra.
+- No desplegar automáticamente. Terminar la tarea autorizada y esperar validación
+  manual antes de continuar con cambios que requieran aprobación.
+- Mantener este archivo como memoria de desarrollo; no crear otro Markdown paralelo.
 
-## Idiomas
-
-### Instrucciones explícitas
-
-- La interfaz envía explícitamente `responseLanguage`: `es` o `en`.
-- El idioma solicitado determina el idioma de respuesta sin instrucciones contradictorias en el prompt. Cuando no se proporciona, conservar compatibilidad con el comportamiento anterior.
-- La traducción al español se utiliza exclusivamente para recuperar contexto de consultas inglesas; la generación recibe la pregunta original.
-- No traducir posteriormente las respuestas generadas ni los metadatos de las citas.
-- Los componentes compartidos de interfaz deben respetar ambos idiomas y evitar regresiones en una versión al modificar la otra.
-
-## Evidencia, citas y abstenciones
-
-### Instrucciones explícitas
-
-- Normalizar referencias agrupadas al formato individual: `[S1, S2]` pasa a `[S1][S2]`.
-- Validar que cada identificador citado exista entre las fuentes recuperadas.
-- Devolver únicamente las fuentes referenciadas en la respuesta, conservando sus etiquetas y metadatos.
-- Mantener `__R4R_ABSTAIN__` como mecanismo principal de abstención y reconocer variantes inequívocas emitidas por el modelo.
-- Detectar también abstenciones inequívocas en lenguaje natural, en español e inglés, incluidas varias frases con referencias intercaladas.
-- Una respuesta útil con advertencias o información insuficiente sobre un detalle no debe convertirse automáticamente en abstención.
-- Una abstención devuelve `abstained: true`, `answer: ""` y `citations: []`.
-- No añadir llamadas al LLM para clasificar abstenciones.
-- Preservar el contrato público de respuesta RAG al modificar la gestión interna de proveedores.
-
-## Configuración y credenciales
+## Arquitectura, configuración y seguridad
 
 ### Instrucciones explícitas
 
-- Reutilizar el `.env` existente y conservar las variables actuales. Evitar variables duplicadas para el mismo concepto.
-- Verificar cómo se propagan las variables a Spring Boot y Docker antes de añadir configuración alternativa.
-- Resolver modelos y endpoints desde la configuración; no fijarlos en la lógica de generación o precarga.
-- Las credenciales pertenecen fuera del repositorio o a archivos locales ignorados.
-- El runtime público expone únicamente información seleccionada: modelos, versiones, parámetros y datos de equipo autorizados. No publicar credenciales ni IP privadas.
+- Según `AGENTS.md`: backend Java 21, Spring Boot y abstracciones de Spring AI;
+  no escribir un cliente HTTP Ollama propio. Flyway es responsable del esquema.
+- PostgreSQL/pgvector almacena los vectores. Los gates usan PostgreSQL en Docker.
+  Angular utiliza Angular 17 estricto; distinguirlo de la demo estática.
+- No añadir frameworks ni dependencias a la demo para resolver estos encargos.
+- Separar URL y modelo de embeddings de los de generación. Revisar la
+  autoconfiguración Spring AI para que una URL global no controle ambos clientes.
+- Embeddings confirmados: Synology, `nomic-embed-text:latest`, 768 dimensiones;
+  desde el PC, `http://192.168.1.203:11434`; desde Docker en Synology,
+  `http://ollama-embeddings:11434`. Aplicarlos a ingesta y consultas.
+- Generación configurada por el usuario: PC-GIGA-ZORUX, `qwen3:8b`, conservando el
+  fallback existente al portátil. Confirmar la configuración realmente desplegada;
+  estos datos de referencia no acreditan por sí mismos disponibilidad.
+- Preferir propiedades y variables de entorno independientes. Actualizar ejemplos
+  y Compose cuando forme parte del encargo, sin sobrescribir el `.env` activo.
+- No borrar ni alterar modelos Ollama o su configuración. Conservar `gpt-oss:120b`
+  y `gpt-oss-120b-16k:latest` en el PC para experimentos independientes; no añadirlos
+  al flujo normal RAG sin autorización.
+- No eliminar datos ni reindexar producción automáticamente. No cambiar el modelo
+  de embeddings o reindexar producción sin justificarlo y solicitar autorización.
+- Corregir CORS solo para orígenes legítimos de desarrollo y producción. Incluir
+  `http://localhost:8000`, `http://127.0.0.1:8000`, los JetBrains aún utilizados y
+  `https://athagon.tech`; verificar GET, POST, OPTIONS y cabeceras de preflight.
+- No abrir CORS indiscriminadamente con `*` ni desactivar Spring Security para
+  resolverlo. Comprobar si Security se utiliza realmente antes de atribuirle el fallo.
+- Distinguir CORS, conectividad, URL incorrecta y contenido mixto. Un HTTP 403
+  comprobado debe distinguirse de un fallo de conexión en la interfaz.
 
-## Generación, precarga y failover
+### Memoria previa conservada
 
-### Instrucciones explícitas
+- Reutilizar configuración y variables existentes, evitando duplicados para un
+  mismo concepto. Comprobar su propagación a Spring Boot y Docker.
+- Resolver modelos/endpoints desde configuración, no fijarlos en la lógica.
+- Credenciales fuera del repositorio o en archivos locales ignorados.
+- El runtime público expone información seleccionada, no credenciales ni IP privadas.
 
-- Mantener un enrutador de generación sencillo basado en Spring AI, separado del proveedor de embeddings.
-- Utilizar el proveedor preferente y pasar al respaldo si el primero es inaccesible o no dispone del modelo configurado.
-- Recuperar automáticamente la preferencia cuando el proveedor vuelva a estar disponible, sin reiniciar Spring.
-- Una abstención válida no activa fallback. Si ambos proveedores fallan, devolver un error controlado.
-- Usar timeouts de conexión cortos y configurables. Una generación lenta no equivale a una caída.
-- Precargar el modelo configurado de forma asíncrona al completar el arranque, usando el mecanismo oficial sin generar texto ni descargar modelos.
-- La precarga no debe bloquear el arranque ni impedir el funcionamiento si Ollama está temporalmente inaccesible. Evitar ejecuciones duplicadas y seleccionar el proveedor preferente disponible.
-- Respetar la permanencia por inactividad y evitar que Spring AI la sobrescriba con un valor incompatible.
-- No crear tareas de calentamiento periódicas ni llamadas de refresco destinadas a impedir la descarga del modelo.
-- Las consultas de estado pueden repetirse moderadamente mientras carga; deben ser de solo lectura y no generar inferencias ni recargar modelos.
-
-## Trazabilidad y runtime
-
-### Instrucciones explícitas
-
-- Registrar el proveedor y modelo que realmente generaron cada respuesta. No usar una variable global compartida para atribuir respuestas individuales.
-- Mantener separados el proveedor preferente y el último utilizado.
-- Distinguir modelo configurado, modelo utilizado, modelos cargados en memoria y proveedor no disponible.
-- Consultar modelos cargados y uso de memoria en el Ollama que respondió, evitando comprobaciones de disponibilidad redundantes.
-- La ausencia de un modelo en `/api/ps` no implica por sí sola que Ollama o el modelo estén indisponibles.
-- Identificar el equipo a partir del endpoint real; usar deducciones por modelo solo como alternativa cuando no exista identificación directa.
-- Para proveedores externos, mostrar proveedor y modelo sin atribuir hardware local.
-- Si falla la generación, no atribuir una respuesta inexistente a un proveedor anterior.
-- Actualizar los detalles técnicos de la interfaz al finalizar cada petición, sin exigir recargar la página.
-
-### Interpretación del asistente
-
-- Las especificaciones conocidas del equipo y la memoria de un modelo cargado son datos distintos; deben presentarse sin confundir capacidad total con consumo.
-- La información de runtime debe proceder de configuración o evidencia disponible, sin inventar versiones ni estados.
-
-## Interfaz y experiencia de uso
+## Traducción, recuperación y respuesta
 
 ### Instrucciones explícitas
 
-- Mantener la identidad visual de Athagon Labs y un diseño responsive para escritorio y móvil.
-- Priorizar contenido y claridad para personas con poco tiempo; reducir explicaciones redundantes y espacios innecesarios.
-- Al iniciar una nueva consulta, retirar inmediatamente la respuesta y las fuentes anteriores y mostrar un estado de carga claro.
-- El progreso indeterminado no debe mostrar porcentajes ficticios ni simular avances mediante temporizadores.
-- Diferenciar visualmente respuesta, abstención y error.
-- Mantener las fuentes accesibles con toda su información, utilizando desplegables para reducir saturación visual.
-- Mostrar tiempos medidos de las peticiones cuando se informe de latencia.
+- **MyMemory desde JavaScript es la vía principal** para traducir preguntas inglesas
+  al español antes de recuperar documentos. No sustituirlo por inferencia local.
+- Un segundo traductor externo solo puede integrarse tras presentar limitaciones
+  y obtener aprobación: debe ser gratuito, suficientemente fiable, compatible con
+  CORS y sin exposición de credenciales. No introducir servicios externos de pago.
+- Si falla MyMemory y no hay segundo proveedor aprobado, utilizar directamente el
+  fallback local existente. Aplicar timeouts razonables y evitar reintentos innecesarios.
+- Conservar `question` original, usar `retrievalQuestion` exclusivamente para
+  recuperar y mantener `responseLanguage` para la respuesta final. No concatenar
+  indiscriminadamente la pregunta original y la traducción en una única búsqueda.
+- Si falla la traducción externa, no enviar el original inglés como una traducción
+  válida: eso impediría activar el fallback del backend.
+- No ejecutar traducción local adicional cuando ya se proporciona una traducción válida.
+- Investigar la etapa exacta donde se pierden evidencias: candidatos antes/después
+  de filtros, fragmentos, scores, Top-K, score mínimo, idioma y validación posterior.
+  No asumir que el generador es la causa de una abstención.
+- Comparar consultas semánticamente equivalentes ES/EN sobre el mismo corpus.
+- No bajar arbitrariamente umbrales ni eliminar protecciones contra alucinaciones
+  para lograr respuestas. Mantener la abstención cuando falte evidencia suficiente.
+- Mantener el idioma solicitado en la respuesta. Los cambios de UI, runtime o
+  infraestructura no autorizan modificar embeddings, recuperación, generación o failover.
 
-## Pruebas y verificación
+### Memoria previa conservada
+
+- Recuperar contexto y construir el prompt una sola vez para reutilizarlos en el
+  proveedor de respaldo; una abstención válida no activa failover.
+- Normalizar `[S1, S2]` a `[S1][S2]`, validar identificadores y devolver únicamente
+  las fuentes referenciadas, conservando etiquetas y metadatos.
+- Mantener el token de abstención y reconocer variantes inequívocas y abstenciones
+  naturales ES/EN sin convertir automáticamente una respuesta útil con advertencias
+  en abstención. No añadir una inferencia para clasificar abstenciones.
+- Contrato de abstención: `abstained: true`, `answer: ""`, `citations: []`.
+  Preservar el contrato público y no retraducir respuestas o metadatos de citas.
+
+## Demo estática, idiomas y preferencias
 
 ### Instrucciones explícitas
 
-- Los tests unitarios y Playwright no deben requerir un LLM real.
-- Probar el failover con proveedores simulados: disponibilidad, caída, recuperación y fallo de ambos.
-- Cubrir citas válidas e inválidas, abstenciones ES/EN y respuestas útiles que contienen advertencias.
-- Las preguntas de evaluación deben comprobar distintas formas de expresar el mismo objetivo, evitando copiar los ejemplos de interfaz.
-- En los tests ingleses, la pregunta de recuperación en español debe ser semánticamente equivalente y natural.
-- No modificar comprobaciones, variables habilitadoras o límites de frecuencia para hacer pasar tests live.
-- Durante este trabajo, los tests live, ingestas y despliegues han quedado a cargo del usuario. No ejecutarlos sin autorización expresa.
-- Ejecutar las verificaciones autorizadas e informar de qué se comprobó realmente, incluyendo fallos y limitaciones.
+- Estructura: `front-athagon-r4r-static/index.html`, `js/app.js`, `js/i18n.js`,
+  `js/app.test.cjs` y `styles/styles.css`. Mantener un único HTML y JavaScript compartido.
+- Diccionario ES/EN, `t(key)` y atributos `data-i18n` y equivalentes para textos,
+  placeholders y accesibilidad. Traducir también errores, estados y runtime.
+- Un solo `languageSelect` en el encabezado, arriba a la derecha. Cambiar idioma
+  sin recargar ni perder pregunta, respuesta, fuentes o endpoint. Actualizar `lang`,
+  título y descripción; mantener equivalencias naturales ES/EN.
+- `localStorage`: `r4r.language`, `r4r.apiBaseUrl`, `r4r.lastQuestion`.
+  Restaurar idioma guardado; si falta, `navigator.language`: español para `es`,
+  inglés para el resto. Restaurar la última pregunta sin enviarla automáticamente;
+  guardarla al enviarla. Si el almacenamiento falla, usar valores predeterminados.
+- Endpoint predeterminado: `https://r4r-api.athagon.tech`. Presets: producción,
+  Synology (`http://192.168.1.203:18080`), local (`http://127.0.0.1:8080`) y personalizado.
+  Mantener URL editable y selector dentro de «Endpoint de la demo».
+- Guardar automáticamente presets; validar y guardar personalizados con su botón.
+  Admitir HTTP/HTTPS válidos y evitar duplicar configuración entre HTML y JavaScript.
+- No introducir fallback automático entre endpoints o entre HTTP y HTTPS: la
+  selección debe ser explícita y conservarse como preferencia.
+- Arquitectura, runtime/detalles técnicos y «Qué demuestra» plegados inicialmente.
+  Controles identificables, chevrón, hover/focus, teclado y `aria-expanded` coherente;
+  los enlaces de navegación deben abrir una sección cerrada a la que apunten.
+- Conservar funciones existentes: consultas RAG, ejemplos rápidos, copia de
+  respuestas, fuentes, preferencias y actualización del runtime.
+- Mantener diseño ATHAGON LABS, colores y tipografía. Verificar escritorio, tablet
+  y móvil, sin desbordamientos, solapamientos ni saltos al alternar idiomas.
 
-### Interpretación del asistente
+### Memoria previa conservada
 
-- Las restricciones sobre compilar o ejecutar pruebas dependen del encargo vigente; no convertir una restricción puntual en una prohibición permanente.
-- Un test simulado no acredita disponibilidad real de Ollama, comportamiento desplegado ni calidad de recuperación con el índice de producción.
+- Retirar respuesta y fuentes anteriores al iniciar otra consulta; mostrar carga
+  clara sin porcentajes ficticios ni progreso simulado por temporizadores.
+- Diferenciar respuesta, abstención y error. Mantener información de las fuentes
+  accesible mediante desplegables y mostrar tiempos medidos.
 
-## Trabajo en el repositorio
+## Claridad técnica y runtime
 
 ### Instrucciones explícitas
 
-- Preservar los cambios existentes y limitar las escrituras al alcance autorizado.
-- Cumplir el protocolo de asignaciones, gates y evidencias definido en `AGENTS.md` cuando se trabaje dentro del sistema de agentes del repositorio.
-- El controlador determinista es responsable de checkpoints y commits; las sesiones de modelo no escriben historial Git.
-- Tratar los repositorios de referencia y grafos como evidencia de solo lectura.
-- No realizar búsquedas recursivas en dependencias, builds, runtime o historial Git; consultar la lista concreta de exclusiones en `AGENTS.md`.
-- Mantener logs completos, binarios y estado generado en almacenamiento local ignorado.
+- La página debe ser comprensible para reclutadores y visitantes no técnicos,
+  además de desarrolladores y arquitectos. Integrar mejoras sin añadir secciones innecesarias.
+- Mantener los títulos acordados: «IA autoalojada · RAG con respuestas verificables»
+  y «Self-Hosted AI · Verifiable RAG». Mostrar Java, Spring Boot, Spring AI,
+  pgvector y Ollama; explicar inferencia local, evidencia, citas y respaldo automático.
+- Usar **NVIDIA GeForce RTX 4060** y explicar que es la tarjeta gráfica del equipo
+  principal utilizada para acelerar la IA. No limitarse a «RTX 4060».
+- Explicar Ollama como software para ejecutar modelos de lenguaje en equipos locales.
+  Self-Hosted AI significa modelos en ordenadores propios, sin depender de un proveedor
+  externo de inferencia para las generaciones locales. Automatic failover significa
+  intentar usar el respaldo si falla el equipo principal, no garantizar su disponibilidad.
+- No afirmar que los datos nunca salen a Internet ni que todo funciona sin nube.
+  El frontend es público y las consultas inglesas se envían al traductor externo.
+- Dos niveles: explicación principal sencilla y detalles técnicos desplegables.
+  Evitar tarjetas/datos redundantes; conservar versiones, hardware y parámetros donde aporten valor.
+- Reflejar el flujo web → Spring Boot/Spring AI → recuperación vectorial → inferencia,
+  distinguiendo Ollama de embeddings en Synology del de generación PC/portátil.
+- Distinguir proveedor configurado, modelo de la última respuesta y disponibilidad
+  realmente comprobada. No presentar configuración estática como métricas en tiempo real.
+- Mostrar el modelo realmente utilizado; indicar failover solo si lo informa el
+  backend. No inventar estados dinámicos, métricas, versiones o datos de memoria.
+- Interpretar los valores de Ollama `/api/ps` como bytes y convertir correctamente
+  a GiB; no estimar métricas ausentes ni confundir consumo con capacidad del equipo.
+
+### Memoria previa conservada
+
+- Consultar memoria del Ollama que respondió; la ausencia en `/api/ps` no demuestra
+  que un proveedor o modelo sea inaccesible. Identificar equipo por endpoint real.
+- No atribuir una generación fallida al proveedor de una respuesta anterior.
+- Actualizar runtime al terminar la petición sin exigir recarga de página.
+- Volver al proveedor preferente al recuperarse. Si ambos fallan, devolver error
+  controlado. Una inferencia lenta no equivale automáticamente a caída.
+- Precarga asíncrona del modelo configurado, sin generar texto, descargar modelos,
+  bloquear arranque o añadir calentamientos periódicos. Estado y sondeos son de
+  solo lectura; no deben generar inferencias ni forzar modelos a permanecer cargados.
+
+## Pruebas, evidencias y comunicación de resultados
+
+### Instrucciones explícitas
+
+- Compilar o devolver HTTP 200 no acredita un RAG correcto. Comprobar respuesta,
+  abstención, idioma, fuentes, citas y evidencia recuperada.
+- En validaciones integrales autorizadas, ejecutar unitarios Java, integraciones
+  disponibles, tests Maven relevantes y JavaScript. Cubrir controladores, servicios,
+  traducción/fallback, errores, timeouts, vacíos, embeddings, recuperación y pgvector.
+- Probar MyMemory correcto y fallido, campos enviados, español sin traducción
+  innecesaria, inglés con recuperación española y respuesta en el idioma solicitado.
+- Probar casos normales, fuera de dominio, sin evidencia, citas, fallo de conexión,
+  proveedor principal y respaldo. Verificar la UI y consola además de la API.
+- Distinguir **PASSED / FAILED / SKIPPED / NOT RUN**, con causa exacta si falta
+  infraestructura. No presentar mocks como integración satisfactoria con servicios reales.
+- Registrar latencias ES/EN por etapa cuando sea posible: traducción, embeddings,
+  recuperación, contexto y generación. No introducir optimizaciones especulativas.
+- No modificar expectativas o protecciones para ocultar fallos.
+- Según `AGENTS.md`, unitarios y Playwright no deben depender de un LLM real.
+  Separar las pruebas con servicios reales y ejecutarlas solo dentro de la autorización.
+- Conservar tests nuevos junto a la suite. Si ya están integrados, no duplicarlos
+  ni inventar otros por la instrucción de conservarlos. No desperdiciar pruebas
+  temporales que aporten cobertura ausente.
+- Entregar archivos modificados/creados, resultados reales, fallos pendientes y
+  comandos de comprobación; distinguir código validado de despliegue comprobado.
+
+## Git, agentes y preferencias de entrega
+
+### Instrucciones explícitas
+
+- No hacer commit, push ni despliegue sin autorización. `AGENTS.md` prohíbe a las
+  sesiones de modelo `git add`, `commit`, `reset`, `checkout`, `merge` y `push`;
+  el controlador determinista gestiona checkpoints e historial.
+- En trabajo coordinado por OpenCode, cumplir asignación fresca, alcance
+  `allowed_paths`, gate y evidencias de `AGENTS.md`. No duplicar aquí los detalles
+  de perfiles/modelos o la configuración de `config/r4r-agents.json`.
+- Tratar referencias y grafos como solo lectura. No buscar recursivamente en rutas
+  pesadas/generadas indicadas en `AGENTS.md`; logs, binarios y estado generado
+  permanecen en almacenamiento local ignorado.
+- Proporcionar siempre mensaje de commit propuesto **en inglés, de dos o tres líneas**,
+  preferentemente separadas por puntos y con prefijo convencional como `fix(rag):`
+  o `feat(ui):`. Proponer texto no autoriza ejecutar el commit.
+
+## Interpretaciones del asistente y límites de esta memoria
+
+- La conversación se mantiene en español; lo interpreto como idioma preferido para
+  la comunicación, salvo la preferencia explícita de mensajes de commit en inglés.
+- Una restricción puntual no se convierte en prohibición permanente: por ejemplo,
+  la fase sin CSS precedió a una tarea CSS autorizada. La antigua indicación de dejar
+  los tests live al usuario no prevalece sobre su autorización posterior para ejecutarlos.
+- Las decisiones concretas de implementación, como un timeout o una invalidación de
+  caché, no son preferencias expresas del usuario si este no fijó esos valores.
+- Chromium headless no abre una ventana visible. Emular móvil no equivale a usar
+  un dispositivo físico; declarar qué navegador y método se utilizaron.
+- Una medición aislada no es una media ni un benchmark. Una configuración de referencia
+  o un test simulado tampoco acredita el funcionamiento desplegado.
+- Los informes de validación contienen hechos de una ejecución, no reglas permanentes.
+  Consultar `docs/validation/r4r-mymemory-restoration.md` para las pruebas reales y
+  fallos pendientes de esta sesión; no dar esos fallos por corregidos ni extrapolar
+  resultados anteriores a un despliegue nuevo.
