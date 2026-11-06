@@ -130,7 +130,7 @@ ssh -tt "$REMOTE" "
 
   # Importar la nueva imagen.
   echo '==> Importando Docker...'
-  sudo "\$DOCKER_BIN" load -i '$STAGE/$TAR_NAME'
+  sudo \"\$DOCKER_BIN\" load -i '$STAGE/$TAR_NAME'
 
   # Guardar una copia de seguridad del Compose anterior.
   sudo cp -p docker-compose.yml \
@@ -139,10 +139,10 @@ ssh -tt "$REMOTE" "
   # Actualizar Compose.
   sudo cp '$STAGE/docker-compose.yml' docker-compose.yml
 
-  # Validar antes de recrear la API.
+  # Validar antes de desplegar el proyecto.
   echo '==> Validando Compose...'
 
-  if ! sudo docker-compose \
+  if ! sudo \"\$COMPOSE_BIN\" \
     --env-file .env \
     -f docker-compose.yml \
     config --quiet; then
@@ -156,16 +156,40 @@ ssh -tt "$REMOTE" "
     exit 1
   fi
 
-  # Recrear exclusivamente Spring Boot.
-  echo '==> Desplegando API...'
+  # Crear servicios nuevos y actualizar solo los que hayan cambiado.
+  echo '==> Desplegando proyecto R4R...'
 
-sudo "$COMPOSE_BIN" \
-  --env-file .env \
-  -f docker-compose.yml \
-  up -d
+  sudo \"\$COMPOSE_BIN\" \
+    --env-file .env \
+    -f docker-compose.yml \
+    up -d
 
   # Conservar la imagen TAR en el directorio R4R.
   sudo mv '$STAGE/$TAR_NAME' '$NAS_DIR/$TAR_NAME'
+
+  # Archivar historicos; conservar el Compose, el TAR actual y .env activos.
+  # Solo se ejecuta despues de un despliegue correcto.
+  echo '==> Archivando historicos de Compose e imagenes TAR...'
+  sudo mkdir -p backup/old-docker-compose-yml backup/old-r4r-api-tar
+
+  for old_compose in docker-compose.yml.bak.*; do
+    test -f \"\$old_compose\" || continue
+    if test -e \"backup/old-docker-compose-yml/\$old_compose\"; then
+      echo \"Se conserva en raiz (ya existe archivado): \$old_compose\"
+    else
+      sudo mv \"\$old_compose\" backup/old-docker-compose-yml/
+    fi
+  done
+
+  for old_tar in r4r-api-*.tar; do
+    test -f \"\$old_tar\" || continue
+    test \"\$old_tar\" = '$TAR_NAME' && continue
+    if test -e \"backup/old-r4r-api-tar/\$old_tar\"; then
+      echo \"Se conserva en raiz (ya existe archivado): \$old_tar\"
+    else
+      sudo mv \"\$old_tar\" backup/old-r4r-api-tar/
+    fi
+  done
 
   # Limpiar únicamente los archivos temporales de este despliegue.
   rm '$STAGE/docker-compose.yml'
@@ -173,15 +197,16 @@ sudo "$COMPOSE_BIN" \
 
   # Estado final.
   echo
-  echo '==> Estado de la API:'
-  sudo "\$DOCKER_BIN" ps --filter name=r4r-api
+  echo '==> Estado de los contenedores R4R:'
+  sudo \"\$COMPOSE_BIN\" --env-file .env -f docker-compose.yml ps
 
   echo
   echo '==> Últimos logs:'
-  sudo "\$DOCKER_BIN" logs --tail 80 r4r-api
+  sudo \"\$DOCKER_BIN\" logs --tail 80 r4r-api
 "
 
 echo
 echo "=========================================="
 echo " Despliegue finalizado: $IMAGE"
 echo "=========================================="
+
