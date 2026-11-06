@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex,nofollow"/>
   <meta name="theme-color" content="#334357"/>
   <title data-i18n="page.athagon_labs_riansares_4r_rag_with_citations">Athagon Labs · IA autoalojada · RAG con respuestas verificables</title>
-  <link rel="stylesheet" href="styles/styles.css?v=c1b3db209509"/>
+  <link rel="stylesheet" href="styles/styles.css?v=788f9422efc9"/>
 </head>
 <body class="spanish-demo">
 <header class="site-header">
@@ -167,18 +167,18 @@
         <div class="arch-flow arch-steps architecture-route" aria-label="Flujo de una consulta: interfaz web, Spring Boot y Spring AI, recuperación vectorial e inferencia local." data-i18n-aria-label="page.architecture_flow">
           <details class="arch-step"><summary><span class="node-id">01</span><strong data-i18n="page.demo_website">Web de demo</strong><small>athagon.tech/r4r-rag</small></summary><p data-i18n="page.your_question_starts_in_the_web_interface">Tu pregunta entra desde la interfaz web.</p></details>
           <details class="arch-step accent"><summary><span class="node-id">02</span><strong data-i18n="page.rag_api">API RAG</strong><small>Spring Boot · Spring AI</small></summary><p data-i18n="page.validates_the_query_retrieves_context_and_requests_an_answer_from_the_model">Valida la consulta, recupera contexto y solicita una respuesta al modelo.</p></details>
-          <details class="arch-step"><summary><span class="node-id">03</span><strong data-i18n="page.vector_database">Base vectorial</strong><small>PostgreSQL · pgvector</small></summary><p data-i18n="page.searches_relevant_passages_in_riansares_4r_documentation">Los embeddings convierten el texto en representaciones numéricas. PostgreSQL y pgvector permiten buscar los fragmentos más relacionados con la pregunta.</p></details>
-          <details class="arch-step llm"><summary><span class="node-id">04</span><strong>Ollama</strong><small data-i18n="page.local_llm">LLM local</small></summary><p data-i18n="page.generates_an_answer_grounded_in_the_retrieved_context">Ollama ejecuta los modelos de lenguaje en los equipos locales. El modelo genera una respuesta a partir de los fragmentos recuperados.</p></details>
+          <details class="arch-step"><summary><span class="node-id">03</span><strong data-i18n="page.vector_database">Embeddings y recuperación</strong><small>Ollama · Synology · nomic-embed-text</small></summary><p data-i18n="page.searches_relevant_passages_in_riansares_4r_documentation">Ollama en Synology calcula los embeddings con nomic-embed-text para ingesta y consultas. PostgreSQL y pgvector buscan los documentos relevantes.</p></details>
+          <details class="arch-step llm"><summary><span class="node-id">04</span><strong data-i18n="page.generation_role">Generación local</strong><small data-i18n="page.generation_servers">Ollama · PC y respaldo</small></summary><p data-i18n="page.generates_an_answer_grounded_in_the_retrieved_context">Spring AI solicita la respuesta al PC principal con qwen3:8b. Si falla, el router intenta generar en el portátil con qwen2.5:7b.</p></details>
         </div>
-        <p class="architecture-caption" data-i18n="page.topology_note">Topología configurada de generación con Ollama. Este diagrama no indica disponibilidad en tiempo real.</p>
+        <p class="architecture-caption" data-i18n="page.topology_note">Configuración de referencia del proyecto: Synology calcula embeddings; el PC y su respaldo generan respuestas. El runtime muestra el proveedor informado por la API, sin indicar disponibilidad en tiempo real.</p>
         <div class="inference-hosts">
           <article class="inference-host primary-host">
-            <small data-i18n="page.preferred_connection">Ollama → generación preferente</small>
+            <small data-i18n="page.preferred_connection">Ollama → generación preferente · qwen3:8b</small>
             <h3 data-i18n="page.primary_pc">PC principal</h3>
             <p data-i18n="page.primary_gpu">NVIDIA GeForce RTX 4060 · aceleración de IA</p>
           </article>
           <article class="inference-host backup-host">
-            <small data-i18n="page.fallback_connection">Ollama → respaldo automático (fallback)</small>
+            <small data-i18n="page.fallback_connection">Ollama → respaldo automático · qwen2.5:7b</small>
             <h3 data-i18n="page.backup_laptop">Portátil de respaldo</h3>
             <p data-i18n="page.backup_gpu">NVIDIA GTX 1050 · equipo de respaldo</p>
           </article>
@@ -186,25 +186,25 @@
       </div>
 
       <div class="runtime-disclosure" id="runtime">
-        <h2 class="section-heading"><button id="runtimeToggle" class="section-toggle" type="button" aria-expanded="false" aria-controls="runtimeContent"><span><span class="eyebrow" data-i18n="page.current_demo_runtime">Runtime actual de la demo</span><span data-i18n="page.technical_details">Detalles técnicos</span></span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
+        <h2 class="section-heading"><button id="runtimeToggle" class="section-toggle" type="button" aria-expanded="false" aria-controls="runtimeContent"><span><span class="eyebrow" data-i18n="page.current_demo_runtime">Runtime actual de la demo</span><span data-i18n="page.technical_details">Qué utiliza la demo</span></span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
         <div id="runtimeContent" class="runtime-panel panel" hidden>
         <div class="runtime-observed" aria-live="polite">
-          <span class="eyebrow" data-i18n="page.observed_generation">Última generación · datos del backend</span>
+          <span class="eyebrow" data-i18n="page.observed_generation">Modelo de la última respuesta informada</span>
           <strong id="runtimeUsed" data-i18n="page.no_generation_yet">Todavía no se ha generado una respuesta</strong>
           <p id="runtimeFailover"></p>
         </div>
-        <div class="runtime-grid">
-          <div><span data-i18n="page.last_generation_host">Equipo de la última generación</span><strong id="runtimeHost" data-i18n="page.identifying">Identificando…</strong></div>
-          <div><span data-i18n="page.current_memory">Estado de memoria actual</span><strong id="runtimeModelStatus" class="model-state" data-i18n="page.checking">Consultando…</strong><small id="runtimeMemoryScope" class="host-hardware"></small></div>
-          <div><span data-i18n="page.configured_preferred">Configurado · proveedor preferente</span><strong id="runtimeModel" data-i18n="page.loading_configuration">Cargando configuración…</strong><small id="runtimePreferred" class="host-hardware"></small></div>
-        </div>
-        <p class="architecture-caption" data-i18n="page.generation_note">El último proveedor utilizado no indica su disponibilidad actual. Los detalles de hardware son datos configurados.</p>
+        <dl class="runtime-summary">
+          <div><dt data-i18n="page.configured_preferred">Generación configurada</dt><dd><span id="runtimeModel">—</span> · <span id="runtimePreferred">—</span></dd></div>
+          <div><dt data-i18n="page.embedding_role">Embeddings · Ollama en Synology (configuración del proyecto)</dt><dd id="runtimeEmbeddingModel">—</dd></div>
+        </dl>
+        <p class="architecture-caption" data-i18n="page.generation_note">La última respuesta y la configuración no garantizan disponibilidad actual. El estado de memoria informado por el backend está en los detalles avanzados.</p>
         <details class="config-details">
-          <summary data-i18n="page.view_runtime_configuration">Ver configuración de runtime</summary>
+          <summary data-i18n="page.view_runtime_configuration">Detalles técnicos avanzados</summary>
           <div class="config-grid" id="runtimeConfig">
             <div><span data-i18n="page.used_host_hardware">Hardware configurado del equipo utilizado</span><strong id="runtimeHardware">—</strong></div>
-            <div><span data-i18n="page.configured_preferred_model">Modelo preferente configurado</span><strong id="runtimeModelFull">—</strong></div>
-            <div><span>Embeddings</span><strong id="runtimeEmbeddings">—</strong><small class="host-hardware" data-i18n="page.embedding_description">Los embeddings representan el texto mediante números para buscar fragmentos con significado similar.</small></div>
+            <div><span data-i18n="page.last_generation_host">Equipo de la última generación</span><strong id="runtimeHost">—</strong></div>
+            <div><span data-i18n="page.current_memory">Estado de memoria informado por el backend</span><strong id="runtimeModelStatus">—</strong><small id="runtimeMemoryScope" class="host-hardware"></small></div>
+            <div><span data-i18n="page.embedding_dimensions">Dimensiones de embeddings</span><strong id="runtimeEmbeddings">—</strong><small class="host-hardware" data-i18n="page.embedding_description">Los embeddings representan el texto mediante números para buscar fragmentos con significado similar.</small></div>
             <div><span data-i18n="page.retrieval">Recuperación</span><strong id="runtimeRetrieval">—</strong></div>
             <div><span data-i18n="page.versions">Versiones</span><strong id="runtimeVersions">—</strong></div>
             <div><span data-i18n="page.deployment">Despliegue</span><strong id="runtimeDeployment">—</strong></div>
@@ -255,7 +255,7 @@
   </div>
 </footer>
 
-<script src="js/i18n.js?v=7061c599ec6d"></script>
-<script src="js/app.js?v=486f768445e4"></script>
+<script src="js/i18n.js?v=89e6a0ffb05f"></script>
+<script src="js/app.js?v=c22fd3583172"></script>
 </body>
 </html>

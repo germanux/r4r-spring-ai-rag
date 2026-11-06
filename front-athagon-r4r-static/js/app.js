@@ -227,21 +227,22 @@
       : used?.name && preferred?.name ? used.name === preferred.name : null;
     $("runtimeFailover").textContent = failed ? t("generationFailed") : !used ? t("noGeneration")
       : sameProvider === null ? t("fallbackUnknown") : t(sameProvider ? "preferredObserved" : "fallbackObserved");
+    $("runtimeFailover").hidden = !used || sameProvider !== false;
     $("runtimePreferred").textContent = providerIdentity(preferred) || t("unknownHost");
     $("runtimeMemoryScope").textContent = failed ? t("informationUnavailable") : used ? t("memoryLastUsed")
       : info.generationState === "idle" && preferred ? t("memoryPreferred") : t("memoryUnknown");
     $("runtimeUsed").textContent = failed ? t("generationFailed")
       : used ? `${used.model || unavailable} · ${used.inferenceHost?.hostname || t("unknownHost")}`
-      : t("noGeneration");
+      : t(info.generationState === "idle" ? "noGeneration" : "informationUnavailable");
     $("runtimeModel").textContent = info.configuredModel || preferred?.model || t("unavailable");
     const states = t("modelStates");
-    $("runtimeModelStatus").textContent = states[info.modelStatus] || t("informationUnavailable");
-    $("runtimeModelFull").textContent = info.preferredProvider?.model || info.configuredModel || unavailable;
+    $("runtimeModelStatus").textContent = !failed && states[info.modelStatus] || t("informationUnavailable");
+    $("runtimeEmbeddingModel").textContent = info.embeddingModel || unavailable;
     const host = used?.inferenceHost || {};
     const hostNames = t("hostNames");
     $("runtimeHost").textContent = (hostNames[host.type] || hostNames.unknown) + (host.hostname ? ` (${host.hostname})` : "");
     $("runtimeHardware").textContent = [host.gpu?.replace(/\bNVIDIA RTX 4060\b/g, "NVIDIA GeForce RTX 4060"), host.ram && `RAM ${host.ram}`, host.cpu].filter(Boolean).join(" · ");
-    $("runtimeEmbeddings").textContent = `${info.embeddingModel || "—"} · ${info.embeddingDimensions || "—"} ${t("dimensions")}`;
+    $("runtimeEmbeddings").textContent = `${info.embeddingDimensions || "—"} ${t("dimensions")}`;
     $("runtimeRetrieval").textContent = `Top-K ${info.topK} · ${t("minimumScore")} ${info.minScore}`;
     $("runtimeVersions").textContent = `Java ${info.javaVersion || "—"} · Spring Boot ${info.springBootVersion || "—"} · Spring AI ${info.springAiVersion || "—"}`;
     $("runtimeDeployment").textContent = info.deployment || t("unavailable");
@@ -251,9 +252,10 @@
       : t("noModels");
   }
   function renderRuntimeUnavailable() {
-    for (const id of ["runtimeModel", "runtimeModelFull", "runtimeEmbeddings", "runtimeRetrieval", "runtimeVersions", "runtimeDeployment"]) $(id).textContent = t("unavailable");
+    for (const id of ["runtimeModel", "runtimeEmbeddingModel", "runtimeEmbeddings", "runtimeRetrieval", "runtimeVersions", "runtimeDeployment"]) $(id).textContent = t("unavailable");
     $("runtimeUsed").textContent = errorMessage(runtimeError);
     $("runtimeFailover").textContent = t("informationUnavailable");
+    $("runtimeFailover").hidden = true;
     $("runtimePreferred").textContent = t("informationUnavailable");
     $("runtimeMemoryScope").textContent = t("informationUnavailable");
     $("runtimeModelStatus").textContent = t("informationUnavailable");

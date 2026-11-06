@@ -1117,3 +1117,12 @@ kbd {
 .runtime-disclosure { margin-top:18px; }
 .runtime-disclosure > .section-heading { margin-bottom:18px; }
 #arquitectura, #como-funciona { scroll-margin-top:180px; }
+
+/* Runtime overview: one observed answer and two configured roles. */
+.runtime-summary { margin:0; }
+.runtime-summary > div { display:grid; grid-template-columns:minmax(180px, 1fr) minmax(0, 2fr); gap:8px 18px; padding:12px 0; border-bottom:1px solid var(--line-soft); }
+.runtime-summary dt { color:var(--text); font-size:.9rem; }
+.runtime-summary dd { margin:0; font-weight:700; overflow-wrap:anywhere; }
+@media (max-width:760px) {
+  .runtime-summary > div { grid-template-columns:minmax(0, 1fr); }
+}

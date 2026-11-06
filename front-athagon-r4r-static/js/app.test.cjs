@@ -543,3 +543,39 @@ for (const lang of ['es', 'en']) {
     }
   });
 }
+
+for (const lang of ['es', 'en']) {
+  test(`${lang}: concise overview separates reported answer from configuration and hides advanced metrics`, async () => {
+    const p = openPage(lang);
+    await tick();
+    assert.equal(p.node('runtimeUsed').textContent, p.t('noGeneration'));
+    assert.equal(p.node('runtimeFailover').hidden, true);
+    assert.equal(p.document.querySelectorAll('.runtime-grid').length, 0);
+    assert.equal(p.document.querySelectorAll('.runtime-summary').length, 1);
+    assert.equal(p.document.querySelectorAll('.config-details')[0].open, false);
+    assert.equal(p.node('runtimeModelFull'), null);
+    const role = p.document.querySelectorAll('.runtime-summary')[0];
+    assert.ok(role.textContent.includes('Synology'));
+    assert.ok(!role.textContent.includes('GiB'));
+    assert.ok(!role.textContent.includes('VRAM'));
+    p.node('question').value = 'Question';
+    await p.node('sendButton').handlers.click();
+    assert.match(p.node('runtimeUsed').textContent, /qwen2.5:7b/);
+    assert.equal(p.node('runtimeModel').textContent, 'qwen3:8b');
+    p.changeLanguage(lang === 'es' ? 'en' : 'es');
+    assert.match(p.node('runtimeUsed').textContent, /qwen2.5:7b/);
+    assert.equal(p.document.querySelectorAll('.config-details')[0].open, false);
+  });
+  test(`${lang}: failed generation never claims memory or provider availability`, async () => {
+    const p = openPage(lang, new Map(), { runtime: {
+      generationState: 'failed', configuredModel: 'qwen3:8b', embeddingModel: 'nomic-embed-text:latest',
+      modelStatus: 'Modelo cargado', lastUsedProvider: { model: 'stale' }, loadedModels: []
+    } });
+    await tick();
+    assert.equal(p.node('runtimeUsed').textContent, p.t('generationFailed'));
+    assert.equal(p.node('runtimeFailover').hidden, true);
+    assert.equal(p.node('runtimeModelStatus').textContent, p.t('informationUnavailable'));
+    assert.equal(p.node('runtimeEmbeddingModel').textContent, 'nomic-embed-text:latest');
+    assert.equal(p.node('runtimeModel').textContent, 'qwen3:8b');
+  });
+}
