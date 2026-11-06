@@ -8,9 +8,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 /** Translates search text locally; it neither answers the question nor changes the answer language. */
 public final class LocalRetrievalQueryTranslator {
+    private static final Pattern THINK_TAG = Pattern.compile("(?i)<\\s*/?\\s*think\\b[^>]*>");
     private final ChatModel model;
 
     public LocalRetrievalQueryTranslator(ChatModel model) {
@@ -30,8 +33,12 @@ public final class LocalRetrievalQueryTranslator {
                 new UserMessage(question + "\n/no_think"))));
         String translated = response == null || response.getResult() == null || response.getResult().getOutput() == null ? null
                 : response.getResult().getOutput().getText();
-        if (translated == null || translated.isBlank() || translated.length() > 2000
-                || translated.contains("[S") || translated.contains("R4R_ABSTAIN")) {
+        if (translated == null || translated.isBlank() || translated.length() > 2000) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Local retrieval translation failed");
+        }
+        String uppercase = translated.toUpperCase(Locale.ROOT);
+        if (uppercase.contains("[S") || uppercase.contains("R4R_ABSTAIN")
+                || THINK_TAG.matcher(translated).find()) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Local retrieval translation failed");
         }
         return translated.strip();

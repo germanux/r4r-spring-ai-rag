@@ -24,7 +24,9 @@ class LocalRetrievalQueryTranslatorTest {
     }
 
     @Test void refusesEmptyOrAnswerLikeTranslationWithoutChangingTheQuerySilently() {
-        for (String output : List.of("", " ", "__R4R_ABSTAIN__", "An answer [S1]", "x".repeat(2001))) {
+        for (String output : List.of("", " ", "__R4R_ABSTAIN__", "__r4r_abstain__",
+                "An answer [S1]", "An answer [s1]", "<think>Answer first</think> ¿Qué reformas?",
+                "x".repeat(2001))) {
             var model = mock(ChatModel.class);
             when(model.call(any(Prompt.class))).thenReturn(response(output));
             assertThatThrownBy(() -> new LocalRetrievalQueryTranslator(model).translate("Question"))

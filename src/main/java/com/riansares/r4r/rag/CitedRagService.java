@@ -93,10 +93,21 @@ public class CitedRagService {
                 ? question : retrievalQuestion;
         if ((retrievalQuestion == null || retrievalQuestion.isBlank())
                 && "en".equalsIgnoreCase(responseLanguage) && translator != null) {
-            searchQuestion = translator.translate(question);
+            try {
+                searchQuestion = translator.translate(question);
+            } catch (RuntimeException ex) {
+                traceFailure("normalization", started, ex);
+                throw ex;
+            }
         }
         long normalized = System.nanoTime();
-        List<MarkdownChunk> chunks = retrieveEvidence(searchQuestion);
+        List<MarkdownChunk> chunks;
+        try {
+            chunks = retrieveEvidence(searchQuestion);
+        } catch (RuntimeException ex) {
+            traceFailure("retrieval", started, ex);
+            throw ex;
+        }
         long retrieved = System.nanoTime();
 
         if (chunks.isEmpty()) {
@@ -106,7 +117,13 @@ public class CitedRagService {
 
         Prompt prompt = buildPrompt(question + "\n/no_think", chunks, responseLanguage);
         long contextBuilt = System.nanoTime();
-        ChatResponse response = chatModel.call(prompt);
+        ChatResponse response;
+        try {
+            response = chatModel.call(prompt);
+        } catch (RuntimeException ex) {
+            traceFailure("generation", started, ex);
+            throw ex;
+        }
         long generated = System.nanoTime();
         String answer = extractAnswer(response);
 
@@ -134,6 +151,12 @@ public class CitedRagService {
                 result, chunks, retrievalTopK, minScore, (normalized-started)/1_000_000.0,
                 (retrieved-normalized)/1_000_000.0, (contextBuilt-retrieved)/1_000_000.0,
                 (generated-contextBuilt)/1_000_000.0, (System.nanoTime()-generated)/1_000_000.0);
+    }
+
+    private void traceFailure(String stage, long started, RuntimeException ex) {
+        // Keep operational diagnostics without logging user questions or retrieved documents.
+        log.warn("RAG result=error stage={} errorType={} elapsedMs={}",
+                stage, ex.getClass().getSimpleName(), (System.nanoTime()-started)/1_000_000.0);
     }
 
     private boolean isNaturalAbstention(String answer) {

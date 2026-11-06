@@ -143,6 +143,29 @@ class CitedRagServiceTest {
     }
 
     @Test
+    void retrievalFailurePropagatesInsteadOfBeingReportedAsNoEvidence() {
+        when(knowledgeStore.search("test question", TEST_TOP_K, TEST_MIN_SCORE))
+                .thenThrow(new IllegalStateException("embedding service offline"));
+
+        assertThatThrownBy(() -> service.answer("test question"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("embedding service offline");
+        verifyNoInteractions(chatModel);
+    }
+
+    @Test
+    void generationFailurePropagatesInsteadOfBeingReportedAsAbstention() {
+        when(knowledgeStore.search("test question", TEST_TOP_K, TEST_MIN_SCORE))
+                .thenReturn(List.of(new MarkdownChunk("doc.md", List.of(), 0, "Relevant")));
+        when(chatModel.call(any(Prompt.class)))
+                .thenThrow(new IllegalStateException("inference unavailable"));
+
+        assertThatThrownBy(() -> service.answer("test question"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("inference unavailable");
+    }
+
+    @Test
     void spanishRequestUsesOriginalQuestionAndSpanishPrompt() {
         var chunk = new MarkdownChunk("doc.md", List.of(), 0, "Contenido");
         when(knowledgeStore.search("Pregunta", TEST_TOP_K, TEST_MIN_SCORE)).thenReturn(List.of(chunk));

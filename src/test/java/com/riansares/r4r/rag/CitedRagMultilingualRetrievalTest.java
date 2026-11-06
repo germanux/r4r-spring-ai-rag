@@ -96,6 +96,20 @@ class CitedRagMultilingualRetrievalTest {
         verifyNoInteractions(generation);
     }
 
+    @Test
+    void unavailableTranslationProviderIsAnErrorNotAnEvidenceAbstention() {
+        var service = service();
+        when(translation.call(any(Prompt.class))).thenThrow(new ResponseStatusException(
+                org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE, "inference unavailable"));
+        int before = embedded.size();
+
+        assertThatThrownBy(() -> service.answer(EN, null, "en"))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        ex -> assertThat(ex.getStatusCode().value()).isEqualTo(503));
+        assertThat(embedded).hasSize(before);
+        verifyNoInteractions(generation);
+    }
+
     private static ChatResponse response(String text) {
         return new ChatResponse(List.of(new Generation(new AssistantMessage(text))));
     }
