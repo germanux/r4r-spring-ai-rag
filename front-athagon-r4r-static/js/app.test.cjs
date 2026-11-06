@@ -509,7 +509,7 @@ for (const lang of ['es', 'en']) {
       modelStatus: 'Modelo cargado', loadedModels: [], topK: 3, minScore: .63
     } });
     await tick();
-    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Haz una pregunta a nuestra IA con RAG' : 'Ask our RAG-powered AI a question');
+    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Pregunta a nuestra IA con RAG' : 'Ask our RAG-powered AI a question');
     assert.equal(p.document.querySelectorAll('.arch-step').length, 4);
     assert.equal(p.document.querySelectorAll('.inference-host').length, 3);
     assert.equal(p.document.querySelectorAll('.primary-host')[0].textContent.includes('NVIDIA GeForce RTX 4060'), true);

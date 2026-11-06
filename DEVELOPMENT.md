@@ -308,7 +308,7 @@ centrado en terminología de infraestructura.
 - Visitantes no técnicos primero; detalles de ingeniería después. Cabecera centrada
   en formular una pregunta, comprobar la respuesta y consultar sus fuentes. Tecnologías
   visibles en una línea discreta y detalles reales disponibles más abajo.
-- Titulares actualizados: «Haz una pregunta a nuestra IA con RAG» / «Ask our
+- Titulares actualizados: «Pregunta a nuestra IA con RAG» / «Ask our
   RAG-powered AI a question», «¿QUÉ TIENE DE ESPECIAL?» / «WHAT'S SPECIAL ABOUT IT?»,
   «CÓMO FUNCIONA» / «HOW IT WORKS» y «DETALLES TÉCNICOS» / «TECHNICAL DETAILS».
   Estas indicaciones sustituyen los titulares anteriores, sin borrar su memoria.
