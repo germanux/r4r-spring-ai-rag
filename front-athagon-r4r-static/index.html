@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex,nofollow"/>
   <meta name="theme-color" content="#334357"/>
   <title data-i18n="page.athagon_labs_riansares_4r_rag_with_citations">Athagon Labs · IA autoalojada · RAG con respuestas verificables</title>
-  <link rel="stylesheet" href="styles/styles.css?v=c5795e29d32f"/>
+  <link rel="stylesheet" href="styles/styles.css?v=cb6e98b84c3d"/>
 </head>
 <body class="spanish-demo">
 <header class="site-header">
@@ -167,12 +167,12 @@
         <article class="concept-card panel">
           <span class="concept-number">01</span>
           <h3 data-i18n="page.cites_its_sources">Respuestas que puedes comprobar</h3>
-          <p data-i18n="page.answers_include_traceable_references_to_retrieved_documents_sections_and_passages">Nuestra IA consulta documentos reales para responderte y te muestra las fuentes. Así puedes comprobar por ti mismo lo que dice.</p>
+          <p data-i18n="page.answers_include_traceable_references_to_retrieved_documents_sections_and_passages">Nuestra IA usa documentos reales y muestra las fuentes para que puedas comprobar cada respuesta.</p>
         </article>
         <article class="concept-card panel">
           <span class="concept-number">02</span>
           <h3 data-i18n="page.self_hosted_title">IA en nuestros servidores</h3>
-          <p data-i18n="page.self_hosted_description">Nuestros modelos LLM funcionan en equipos propios.</p>
+          <p data-i18n="page.self_hosted_description">Nuestros equipos ejecutan los modelos de IA que buscan información y generan las respuestas localmente.</p>
         </article>
         <article class="concept-card panel">
           <span class="concept-number">03</span>
@@ -230,14 +230,15 @@
         <div id="runtimeContent" class="runtime-panel panel" hidden>
         <p class="architecture-caption" data-i18n="page.technical_intro">Esta demo combina inteligencia artificial generativa, recuperación de información documental y una arquitectura distribuida entre varios equipos. Aquí puedes explorar cómo está construida y qué tecnologías utiliza.</p>
         <div class="runtime-observed" aria-live="polite">
-          <span class="eyebrow" data-i18n="page.observed_generation">Última respuesta · modelo utilizado</span>
+          <span class="eyebrow" data-i18n="page.observed_generation">MODELO DE LA ÚLTIMA RESPUESTA</span>
           <strong id="runtimeUsed" data-i18n="page.no_generation_yet">Todavía no se ha generado una respuesta</strong>
           <p id="runtimeFailover"></p>
         </div>
-        <p class="architecture-caption" data-i18n="page.generation_note">Esta es la información comunicada por la API. La configuración y la última respuesta no garantizan disponibilidad actual.</p>
+        <p class="architecture-caption" data-i18n="page.generation_note">Información de la API. La disponibilidad puede variar.</p>
         <details class="config-details">
           <summary data-i18n="page.view_runtime_configuration">Configuración, hardware y métricas</summary>
         <dl class="runtime-summary">
+          <div><dt data-i18n="page.used_model_identifier">Identificador del modelo de la última respuesta</dt><dd id="runtimeUsedModel">—</dd></div>
           <div><dt data-i18n="page.configured_preferred">Proveedor preferente configurado</dt><dd><span id="runtimeModel">—</span> · <span id="runtimePreferred">—</span></dd></div>
           <div><dt data-i18n="page.embedding_role">Búsqueda documental · NAS Synology (configuración)</dt><dd id="runtimeEmbeddingModel">—</dd></div>
         </dl>
@@ -248,18 +249,14 @@
             <div><span data-i18n="page.os">Sistema operativo</span><strong>Linux</strong></div>
             <div><span data-i18n="page.database_search">Base de datos y búsqueda</span><strong>PostgreSQL · pgvector · embeddings</strong></div>
             <div><span data-i18n="page.containers">Contenedores</span><strong>Docker · Docker Compose</strong></div>
-            <div><span data-i18n="page.local_models">Modelos locales · configuración de referencia</span><strong data-i18n="page.local_models_details">Ollama · PC: qwen3:8b · portátil: qwen2.5:7b · embeddings: nomic-embed-text:latest (768 dimensiones).</strong></div>
+            <div><span data-i18n="page.local_models">Modelos locales · configuración de referencia</span><strong><span data-i18n="page.local_models_details">Ollama · PC: qwen3:8b · portátil: qwen2.5:7b · embeddings: nomic-embed-text:latest</span> · <span id="runtimeEmbeddings">—</span></strong></div>
             <div><span data-i18n="page.backup_details">Respaldo de generación</span><strong data-i18n="page.backup_implementation">PC de sobremesa → Portátil ASUS. Si ambos fallan, la API devuelve un error controlado. No hay respaldo de generación con Codex Luna implementado.</strong></div>
             <div><span data-i18n="page.development_agents">Agentes de desarrollo</span><strong data-i18n="page.development_agents_details">OpenCode · GPT-5.6 Luna (coordinación) · GPT-5.3 Codex (trabajo de desarrollo). No intervienen en las respuestas de esta demo.</strong></div>
             <div><span data-i18n="page.hardware_desktop">PC de sobremesa · hardware configurado</span><strong>NVIDIA GeForce RTX 4060 · 8 GB VRAM · Intel i9-14900KF · 64 GB DDR5 RAM</strong></div>
             <div><span data-i18n="page.hardware_laptop">Portátil ASUS · hardware configurado</span><strong>NVIDIA GeForce GTX 1050 · 4 GB VRAM · Intel i7-7700HQ · 32 GB RAM</strong></div>
-            <div><span data-i18n="page.used_host_hardware">Hardware configurado del equipo utilizado</span><strong id="runtimeHardware">—</strong></div>
-            <div><span data-i18n="page.last_generation_host">Equipo de la última generación</span><strong id="runtimeHost">—</strong></div>
             <div><span data-i18n="page.current_memory">Estado de memoria informado por el backend</span><strong id="runtimeModelStatus">—</strong><small id="runtimeMemoryScope" class="host-hardware"></small></div>
-            <div><span data-i18n="page.embedding_dimensions">Dimensiones de embeddings</span><strong id="runtimeEmbeddings">—</strong><small class="host-hardware" data-i18n="page.embedding_description">Los embeddings representan el texto mediante números para buscar fragmentos con significado similar.</small></div>
             <div><span data-i18n="page.retrieval">Recuperación</span><strong id="runtimeRetrieval">—</strong></div>
             <div><span data-i18n="page.versions">Versiones</span><strong id="runtimeVersions">—</strong></div>
-            <div><span data-i18n="page.deployment">Despliegue</span><strong id="runtimeDeployment">—</strong></div>
             <div class="runtime-host-info"><span data-i18n="page.memory_details">Memoria informada por Ollama · GiB</span><strong id="runtimeOllama" data-i18n="page.checking_ollama">Consultando Ollama…</strong><small data-i18n="page.memory_values_describe_model_usage_ollama_does_not_report_cpu_total_ram_or_gpu_model">La memoria del modelo la informa Ollama. GPU, CPU y RAM del equipo son datos de configuración del backend, no mediciones en tiempo real de Ollama.</small></div>
           </div>
         </details>
@@ -278,7 +275,7 @@
   </div>
 </footer>
 
-<script src="js/i18n.js?v=bc9e3be9294d"></script>
-<script src="js/app.js?v=eaf90277d964"></script>
+<script src="js/i18n.js?v=aea8746cdafa"></script>
+<script src="js/app.js?v=b2cfa32aa7ad"></script>
 </body>
 </html>

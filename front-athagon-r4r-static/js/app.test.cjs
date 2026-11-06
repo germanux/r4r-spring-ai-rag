@@ -116,17 +116,17 @@ for (const lang of ['es', 'en']) {
       assert.equal(page.node('runtimeModel').textContent, 'qwen3:8b');
       if (failed) {
         assert.equal(page.node('runtimeUsed').textContent, page.t('generationFailed'));
-        assert.equal(page.node('runtimeHardware').textContent, '');
+        assert.equal(page.node('runtimeHardware'), null);
       } else {
-        assert.equal(page.node('runtimeUsed').textContent, `qwen2.5:7b · ${page.t('hostNames').laptop}`);
-        assert.match(page.node('runtimeHardware').textContent, /GTX 1050/);
+        assert.equal(page.node('runtimeUsed').textContent, `Qwen2.5 7B · ${page.t('hostNames').laptop}`);
+        assert.equal(page.node('runtimeUsedModel').textContent, 'qwen2.5:7b');
       }
       const body = JSON.parse(page.requests.find(r => r.url.endsWith('/answers')).init.body);
       assert.equal(body.question, 'Question');
       assert.equal(body.responseLanguage, lang);
       assert.equal(body.retrievalQuestion, lang === 'en' ? '¿Qué reformas?' : undefined);
       page.changeLanguage(lang === 'en' ? 'es' : 'en');
-      assert.equal(page.node('runtimeUsed').textContent, failed ? page.t('generationFailed') : `qwen2.5:7b · ${page.t('hostNames').laptop}`);
+      assert.equal(page.node('runtimeUsed').textContent, failed ? page.t('generationFailed') : `Qwen2.5 7B · ${page.t('hostNames').laptop}`);
     });
   }
   test(`${lang}: startup, metadata, accessibility and language switch without reload or requests`, async () => {
@@ -521,15 +521,26 @@ for (const lang of ['es', 'en']) {
     assert.equal(p.document.querySelectorAll('.primary-host')[0].textContent.includes('NVIDIA GeForce RTX 4060'), true);
     assert.equal(p.node('runtimeModel').textContent, 'qwen3:8b');
     assert.equal(p.node('runtimePreferred').textContent, p.t('hostNames').desktop);
-    assert.equal(p.node('runtimeUsed').textContent, `qwen2.5:7b · ${p.t('hostNames').laptop}`);
-    assert.equal(p.node('runtimeHost').textContent, p.t('hostNames').laptop);
+    const desktop = openPage(lang, new Map(), { runtime: {
+      generationState: 'success', embeddingDimensions: 768,
+      lastUsedProvider: { model: 'qwen3:8b', inferenceHost: { type: 'desktop' } }
+    } });
+    await tick();
+    assert.equal(desktop.node('runtimeUsed').textContent, `Qwen3 8B · ${desktop.t('mainPc')}`);
+    assert.equal(desktop.node('runtimeUsedModel').textContent, 'qwen3:8b');
+    assert.equal(desktop.node('runtimeEmbeddings').textContent, `768 ${desktop.t('dimensions')}`);
+    for (const id of ['runtimeHardware', 'runtimeHost', 'runtimeDeployment']) assert.equal(desktop.node(id), null);
+
+    assert.equal(p.node('runtimeUsed').textContent, `Qwen2.5 7B · ${p.t('hostNames').laptop}`);
+    assert.equal(p.node('runtimeHost'), null);
+    assert.equal(p.node('runtimeUsedModel').textContent, 'qwen2.5:7b');
     assert.doesNotMatch(p.document.body.textContent, /PC-GIGA-ZORUX|PC-ASUS-ZORIN/);
     assert.equal(p.node('runtimeFailover').textContent, p.t('fallbackObserved'));
     assert.equal(p.node('runtimeMemoryScope').textContent, p.t('memoryLastUsed'));
     p.changeLanguage(lang === 'es' ? 'en' : 'es');
     assert.equal(p.node('runtimeFailover').textContent, p.t('fallbackObserved'));
     assert.equal(p.node('runtimeMemoryScope').textContent, p.t('memoryLastUsed'));
-    assert.equal(p.node('runtimeUsed').textContent, `qwen2.5:7b · ${p.t('hostNames').laptop}`);
+    assert.equal(p.node('runtimeUsed').textContent, `Qwen2.5 7B · ${p.t('hostNames').laptop}`);
   });
   test(`${lang}: bytes become GiB; unavailable values are not presented as zero`, async () => {
     for (const [bytes, expected] of [[1024 ** 3, '1.00 GiB'], [4 * 1024 ** 3, '4.00 GiB'], [5295200000, '4.93 GiB'], [0, '0.00 GiB'], [null, null], [undefined, null], [-1, null], ['4294967296', null], [NaN, null], [Infinity, null]]) {
@@ -557,11 +568,11 @@ test('runtime never invents failover, a last-used host or a configured model fro
     await tick();
     assert.equal(p.node('runtimeFailover').textContent, p.t(status));
     if (!runtime.lastUsedProvider?.inferenceHost?.hostname || runtime.generationState === 'failed') {
-      assert.equal(p.node('runtimeHost').textContent, p.t('unknownHost'));
+      assert.equal(p.node('runtimeHost'), null);
     }
     if (runtime.generationState === 'failed') {
       assert.equal(p.node('runtimeUsed').textContent, p.t('generationFailed'));
-      assert.equal(p.node('runtimeHardware').textContent, '');
+      assert.equal(p.node('runtimeHardware'), null);
     }
   }
 });
@@ -606,7 +617,7 @@ for (const lang of ['es', 'en']) {
 }
 
 test('initial deep links open only their corresponding disclosure', () => {
-  for (const hash of ['#arquitectura', '#architectureContent', '#runtime', '#runtimeHost']) {
+  for (const hash of ['#arquitectura', '#architectureContent', '#runtime', '#runtimeUsedModel']) {
     const p = openPage('en', new Map(), { hash });
     const architecture = hash === '#arquitectura' || hash === '#architectureContent';
     assert.equal(p.node('architectureContent').hidden, !architecture);
@@ -662,10 +673,10 @@ for (const lang of ['es', 'en']) {
     assert.ok(!role.textContent.includes('VRAM'));
     p.node('question').value = 'Question';
     await p.node('sendButton').handlers.click();
-    assert.match(p.node('runtimeUsed').textContent, /qwen2.5:7b/);
+    assert.match(p.node('runtimeUsed').textContent, /Qwen2.5 7B/);
     assert.equal(p.node('runtimeModel').textContent, 'qwen3:8b');
     p.changeLanguage(lang === 'es' ? 'en' : 'es');
-    assert.match(p.node('runtimeUsed').textContent, /qwen2.5:7b/);
+    assert.match(p.node('runtimeUsed').textContent, /Qwen2.5 7B/);
     assert.equal(p.document.querySelectorAll('.config-details')[0].open, false);
   });
   test(`${lang}: failed generation never claims memory or provider availability`, async () => {
