@@ -59,7 +59,7 @@ public class RagRuntimeController {
         boolean remote = "OpenAI".equals(selected.name());
         var states = preloader.modelStates();
         var memory = execution.failed() || remote ? new OllamaModelPreloader.MemoryState(false, List.of()) : preloader.memoryFor(selected);
-        var localState = states.stream().filter(m -> m.model().equals(selected.model())).findFirst().orElse(null);
+        var localState = preloader.statusFor(selected);
         boolean loaded = memory.models().stream().anyMatch(m -> canonical(selected.model()).equals(canonical(m.name())));
         String status = remote ? "No aplica (OpenAI)" : localState == null
                 ? !memory.available() ? "Ollama no disponible" : loaded ? "Modelo cargado" : "Modelo descargado de memoria"

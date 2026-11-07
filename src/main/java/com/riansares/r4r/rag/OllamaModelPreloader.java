@@ -29,14 +29,20 @@ import java.util.concurrent.Executors;
 /** Bounded, independent local-only warmups. Runtime observations never trigger inference. */
 @Component
 public class OllamaModelPreloader implements AutoCloseable {
-    public record ModelStatus(String id, String model, String state, Instant checkedAt, String error, boolean refreshing) { }
+    public record ModelStatus(String id, String model, String state, Instant checkedAt, String error, boolean refreshing,
+                              Instant warmupCompletedAt, boolean memoryObserved) {
+        public ModelStatus(String id, String model, String state, Instant checkedAt, String error, boolean refreshing) {
+            this(id, model, state, checkedAt, error, refreshing, null, false);
+        }
+    }
     public record WarmupResult(List<String> accepted, List<String> skipped, long retryAfterSeconds) { }
     public record LoadedModel(String name, String parameterSize, Long sizeBytes, Long vramBytes) { }
     public record MemoryState(boolean available, List<LoadedModel> models) { }
     record Target(String id, GenerationRouter.Provider provider, OllamaApi api, Runnable warmup) { }
     private static final class Job {
         final Target target;
-        boolean running, warming;
+        boolean running, warming, pendingWarmup;
+        Instant warmupCompletedAt;
         long nextAttempt, nextObservation;
         ModelStatus status;
         MemoryState memory = new MemoryState(false, List.of());
@@ -46,6 +52,7 @@ public class OllamaModelPreloader implements AutoCloseable {
         }
     }
     @Value("${r4r.rag.warmup.on-startup:true}") private boolean onStartup = true;
+    private final java.util.concurrent.atomic.AtomicBoolean closed = new java.util.concurrent.atomic.AtomicBoolean();
     private final List<Job> jobs;
     private final Duration minInterval;
     private final ObjectMapper mapper;
@@ -116,18 +123,21 @@ public class OllamaModelPreloader implements AutoCloseable {
         long retry = 0;
         for (Job job : jobs) synchronized (job) {
             long now = System.nanoTime();
-            if (job.running || now < job.nextAttempt) {
+            if (closed.get() || job.warming || job.pendingWarmup || now < job.nextAttempt) {
                 skipped.add(job.target.id());
                 retry = Math.max(retry, Math.max(1, (job.nextAttempt - now + 999_999_999L) / 1_000_000_000L));
                 continue;
             }
-            job.running = true;
-            job.warming = true;
             job.nextAttempt = now + minInterval.toNanos();
-            job.status = status(job, "loading", null);
             accepted.add(job.target.id());
             retry = Math.max(retry, Math.max(1, (minInterval.toMillis() + 999) / 1000));
-            executor.execute(() -> run(job, true));
+            if (job.running) job.pendingWarmup = true; // Reserve exactly one warmup behind the observation.
+            else {
+                job.running = true;
+                job.warming = true;
+                job.status = status(job, "loading", null);
+                executor.execute(() -> run(job, true));
+            }
         }
         return new WarmupResult(List.copyOf(accepted), List.copyOf(skipped), retry);
     }
@@ -136,31 +146,56 @@ public class OllamaModelPreloader implements AutoCloseable {
     public List<ModelStatus> modelStates() {
         List<ModelStatus> states = new ArrayList<>();
         for (Job job : jobs) synchronized (job) {
-            if (!job.running && System.nanoTime() >= job.nextObservation) {
+            if (!closed.get() && !job.running && System.nanoTime() >= job.nextObservation) {
                 job.running = true;
                 job.warming = false;
                 executor.execute(() -> run(job, false));
             }
             var current = job.status;
-            states.add(new ModelStatus(current.id(), current.model(), current.state(), current.checkedAt(), current.error(), job.running && !job.warming));
+            states.add(new ModelStatus(current.id(), current.model(), current.state(), current.checkedAt(), current.error(), job.running && !job.warming, job.warmupCompletedAt, job.memory.available()));
         }
         return List.copyOf(states);
     }
 
     private void run(Job job, boolean warmup) {
+        while (true) {
+            observeOrWarm(job, warmup);
+            synchronized (job) {
+                if (job.pendingWarmup && !closed.get()) {
+                    job.pendingWarmup = false;
+                    job.warming = true;
+                    job.status = status(job, "loading", null);
+                    warmup = true; // Same worker; no additional queued tasks or HTTP waits.
+                } else {
+                    job.running = false;
+                    job.warming = false;
+                    job.pendingWarmup = false;
+                    job.nextObservation = System.nanoTime() + Duration.ofSeconds(10).toNanos();
+                    return;
+                }
+            }
+        }
+    }
+
+    private void observeOrWarm(Job job, boolean warmup) {
         try {
             boolean installed = job.target.api().listModels().models().stream()
                     .anyMatch(m -> canonical(m.name()).equals(canonical(job.target.provider().model())));
             if (!installed) {
-                synchronized (job) { job.memory = new MemoryState(true, List.of()); job.status = status(job, "unreachable", "model_missing"); }
+                synchronized (job) { job.memory = new MemoryState(false, List.of()); job.status = status(job, "unreachable", "model_missing"); }
                 return; // Never pull a missing model automatically.
             }
-            if (warmup) job.target.warmup().run();
             MemoryState memory = loadedModels(job.target.provider().baseUrl());
-            boolean loaded = memory.models().stream().anyMatch(m -> canonical(m.name()).equals(canonical(job.target.provider().model())));
+            boolean loaded = containsModel(memory, job.target.provider().model());
+            if (warmup && !loaded && !closed.get()) {
+                job.target.warmup().run();
+                synchronized (job) { job.warmupCompletedAt = Instant.now(); }
+                memory = loadedModels(job.target.provider().baseUrl());
+                loaded = containsModel(memory, job.target.provider().model());
+            }
             synchronized (job) {
                 job.memory = memory;
-                job.status = status(job, memory.available() ? loaded ? "loaded" : "unloaded" : warmup ? "loaded" : "available", null);
+                job.status = status(job, memory.available() ? loaded ? "loaded" : "unloaded" : "available", null);
             }
         } catch (Exception ex) {
             boolean timeout = false;
@@ -171,18 +206,29 @@ public class OllamaModelPreloader implements AutoCloseable {
                 job.memory = new MemoryState(false, List.of());
                 job.status = status(job, "unreachable", timeout ? "timeout" : "provider_unavailable");
             }
-        } finally {
-            synchronized (job) { job.running = false; job.nextObservation = System.nanoTime() + Duration.ofSeconds(10).toNanos(); }
         }
+    }
+    private static boolean containsModel(MemoryState memory, String model) {
+        return memory.models().stream().anyMatch(m -> canonical(m.name()).equals(canonical(model)));
     }
 
     private static ModelStatus status(Job job, String state, String error) {
-        return new ModelStatus(job.target.id(), job.target.provider().model(), state, Instant.now(), error, false);
+        return new ModelStatus(job.target.id(), job.target.provider().model(), state, Instant.now(), error, false, job.warmupCompletedAt, job.memory.available());
     }
     private static String canonical(String name) { return name.contains(":") ? name : name + ":latest"; }
 
+    private boolean matches(Job job, GenerationRouter.Provider provider) {
+        var configured = job.target.provider();
+        return configured.name().equals(provider.name())
+                && configured.baseUrl().replaceAll("/+$", "").equals(provider.baseUrl().replaceAll("/+$", ""))
+                && canonical(configured.model()).equals(canonical(provider.model()));
+    }
+    public ModelStatus statusFor(GenerationRouter.Provider provider) {
+        for (Job job : jobs) if (matches(job, provider)) synchronized (job) { return job.status; }
+        return null;
+    }
     public MemoryState memoryFor(GenerationRouter.Provider provider) {
-        for (Job job : jobs) if (job.target.provider().baseUrl().equals(provider.baseUrl()) && job.target.provider().model().equals(provider.model())) synchronized (job) { return job.memory; }
+        for (Job job : jobs) if (matches(job, provider)) synchronized (job) { return job.memory; }
         return new MemoryState(false, List.of());
     }
 
@@ -194,7 +240,9 @@ public class OllamaModelPreloader implements AutoCloseable {
             var response = http.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) return new MemoryState(false, List.of());
             List<LoadedModel> result = new ArrayList<>();
-            for (var model : mapper.readTree(response.body()).path("models")) {
+            var models = mapper.readTree(response.body()).path("models");
+            if (!models.isArray()) return new MemoryState(false, List.of());
+            for (var model : models) {
                 result.add(new LoadedModel(model.path("name").asText("unknown"),
                         model.path("details").path("parameter_size").asText("unknown"),
                         reportedBytes(model.path("size")), reportedBytes(model.path("size_vram"))));
@@ -206,5 +254,9 @@ public class OllamaModelPreloader implements AutoCloseable {
         return value.isIntegralNumber() && value.canConvertToLong() && value.longValue() >= 0 ? value.longValue() : null;
     }
 
-    @Override @PreDestroy public void close() { executor.shutdownNow(); }
+    @Override @PreDestroy public void close() {
+        closed.set(true);
+        for (Job job : jobs) synchronized (job) { job.pendingWarmup = false; }
+        executor.shutdownNow();
+    }
 }

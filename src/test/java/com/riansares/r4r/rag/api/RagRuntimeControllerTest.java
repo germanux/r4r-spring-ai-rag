@@ -124,6 +124,21 @@ class RagRuntimeControllerTest {
         verify(preloader, never()).memoryFor(any());
     }
 
+    @Test void selectedProviderStatusIsNotInferredFromFirstMatchingModelName() throws Exception {
+        var sameRouter = new GenerationRouter(
+                new GenerationRouter.Target(new GenerationRouter.Provider("PC", "http://192.168.1.207:11434", "shared:latest"), mock(ChatModel.class), () -> false),
+                new GenerationRouter.Target(new GenerationRouter.Provider("ASUS", "http://192.168.1.209:11434", "shared:latest"), mock(ChatModel.class), () -> true));
+        sameRouter.call(new Prompt("fallback"));
+        memory("{\"models\":[]}");
+        var pcStatus = new OllamaModelPreloader.ModelStatus("desktop", "shared:latest", "loaded", null, null, false);
+        var laptopStatus = new OllamaModelPreloader.ModelStatus("laptop", "shared:latest", "unreachable", null, null, false);
+        when(preloader.modelStates()).thenReturn(java.util.List.of(pcStatus, laptopStatus));
+        when(preloader.statusFor(argThat(p -> p.name().equals("ASUS")))).thenReturn(laptopStatus);
+        var sameController = new RagRuntimeController(new RagRetrievalProperties(3, .63), "nomic-embed-text", "768", "", preloader, sameRouter);
+        assertThat(sameController.runtime().modelStatus()).isEqualTo("Ollama no disponible");
+        verify(preloader).statusFor(argThat(p -> p.name().equals("ASUS")));
+    }
+
     @Test void warmupIsAsyncAcceptedAndContainsNoPrivateAddresses() throws Exception {
         when(preloader.requestWarmup()).thenReturn(new OllamaModelPreloader.WarmupResult(
                 java.util.List.of("desktop", "laptop", "embeddings"), java.util.List.of(), 0));

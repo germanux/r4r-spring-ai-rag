@@ -134,6 +134,63 @@ class OllamaModelPreloaderTest {
         }
     }
 
+    @Test void runtimeFirstPreservesOnePendingWarmupAcrossConcurrentTabs() throws Exception {
+        try (var pc = new Server("qwen3:8b"); var laptop = new Server("qwen2.5:7b"); var embedding = new Server("nomic-embed-text:latest");
+             var preloader = preloader(pc, laptop, embedding, Duration.ofSeconds(2), Duration.ofMinutes(1))) {
+            pc.observing = new CountDownLatch(1);
+            pc.releaseObservation = new CountDownLatch(1);
+            preloader.modelStates();
+            assertThat(pc.observing.await(1, TimeUnit.SECONDS)).isTrue();
+            var accepted = preloader.requestWarmup();
+            assertThat(accepted.accepted()).contains("desktop");
+            try (var tabs = Executors.newFixedThreadPool(8)) {
+                var tasks = java.util.stream.IntStream.range(0, 20)
+                        .<java.util.concurrent.Callable<OllamaModelPreloader.WarmupResult>>mapToObj(i -> preloader::requestWarmup).toList();
+                for (var result : tabs.invokeAll(tasks)) assertThat(result.get().accepted()).doesNotContain("desktop");
+            }
+            pc.releaseObservation.countDown();
+            await(() -> state(preloader, "desktop").equals("loaded"));
+            assertThat(pc.posts).hasSize(1);
+        }
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = {false, true})
+    void completedWarmupRequiresPsEvidenceBeforeReportingLoaded(boolean psAvailable) throws Exception {
+        try (var pc = new Server("qwen3:8b"); var laptop = new Server("qwen2.5:7b"); var embedding = new Server("nomic-embed-text:latest");
+             var preloader = preloader(pc, laptop, embedding, Duration.ofSeconds(1), Duration.ofMinutes(1))) {
+            pc.loaded = true;
+            embedding.psStatus = psAvailable ? 200 : 503;
+            embedding.psBody = "{\"models\":[]}";
+            preloader.requestWarmup();
+            await(() -> state(preloader, "desktop").equals("loaded") && state(preloader, "embeddings").equals(psAvailable ? "unloaded" : "available"));
+            assertThat(pc.posts).isEmpty();
+            var status = preloader.statusFor(provider("Embeddings", embedding));
+            assertThat(status.warmupCompletedAt()).isNotNull();
+            assertThat(status.memoryObserved()).isEqualTo(psAvailable);
+            assertThat(preloader.statusFor(provider("PC", pc)).warmupCompletedAt()).isNull();
+            assertThat(preloader.statusFor(provider("PC", pc)).memoryObserved()).isTrue();
+        }
+    }
+
+    @Test void sameModelOnDifferentHostsKeepsIndependentIdentityAndRecovery() throws Exception {
+        try (var pc = new Server("shared:latest"); var laptop = new Server("shared:latest"); var embedding = new Server("nomic-embed-text:latest");
+             var preloader = preloader(pc, laptop, embedding, Duration.ofSeconds(1), Duration.ofMillis(100))) {
+            pc.loaded = true;
+            laptop.tagsStatus = 503;
+            preloader.requestWarmup();
+            await(() -> state(preloader, "desktop").equals("loaded") && state(preloader, "laptop").equals("unreachable"));
+            assertThat(preloader.statusFor(provider("PC", pc)).id()).isEqualTo("desktop");
+            assertThat(preloader.statusFor(provider("ASUS", laptop)).state()).isEqualTo("unreachable");
+            laptop.tagsStatus = 200;
+            Thread.sleep(110);
+            preloader.requestWarmup();
+            await(() -> state(preloader, "laptop").equals("loaded"));
+            assertThat(laptop.posts).hasSize(1);
+            assertThat(pc.posts).isEmpty();
+        }
+    }
+
     private OllamaModelPreloader preloader(Server pc, Server laptop, Server embedding, Duration timeout, Duration cooldown) {
         ChatModel remote = mock(ChatModel.class);
         var router = new GenerationRouter(List.of(
@@ -167,8 +224,9 @@ class OllamaModelPreloaderTest {
         final String model;
         final List<String> posts = new CopyOnWriteArrayList<>();
         volatile boolean loaded, installed = true;
-        volatile int psStatus = 200;
+        volatile int psStatus = 200, tagsStatus = 200;
         volatile String psBody;
+        volatile CountDownLatch observing = new CountDownLatch(0), releaseObservation = new CountDownLatch(0);
         Server(String model) throws Exception { this(model, new CountDownLatch(0), new CountDownLatch(0)); }
         Server(String model, CountDownLatch entered, CountDownLatch release) throws Exception {
             this.model = model;
@@ -179,7 +237,12 @@ class OllamaModelPreloaderTest {
                     String path = exchange.getRequestURI().getPath();
                     Object payload;
                     int status = 200;
-                    if (path.equals("/api/tags")) payload = Map.of("models", installed ? List.of(Map.of("name", model)) : List.of());
+                    if (path.equals("/api/tags")) {
+                        status = tagsStatus;
+                        observing.countDown();
+                        releaseObservation.await(3, TimeUnit.SECONDS);
+                        payload = Map.of("models", installed ? List.of(Map.of("name", model)) : List.of());
+                    }
                     else if (path.equals("/api/ps")) {
                         status = psStatus;
                         payload = psBody == null ? Map.of("models", loaded ? List.of(Map.of("name", model, "size", 5295200000L, "size_vram", 4294967296L)) : List.of()) : mapper.readTree(psBody);

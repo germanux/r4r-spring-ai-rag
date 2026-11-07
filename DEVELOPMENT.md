@@ -438,3 +438,54 @@ Archivos de esta auditoría (todos existentes, sin archivos nuevos):
   `git add` por la prohibición expresa de AGENTS.md para sesiones de modelo.
   No se eludió el rechazo ni se modificó AGENTS.md. Se solicitó una excepción
   explícita para preparar/crear únicamente este commit; pendiente de respuesta.
+
+## Tarea 2 — robustez de precarga y estados (2026-11-07)
+
+- Se ha leído íntegramente esta memoria y revisado el cambio de seguridad SSE
+  `70979c7`. Se conserva el cambio previo sin commitear de DEVELOPMENT.md.
+- Encargo: no perder warmup cuando runtime observa, no duplicar cargas ni colas,
+  conservar cooldown/timeouts, identificar por proveedor y modelo y distinguir
+  disponibilidad de memoria observada. Verificar embeddings en el Ollama existente,
+  sin descargas, cambios de proveedor o pgvector. No hacer commit, push o despliegue.
+- La denegación previa del commit quedó resuelta por el usuario: solicita únicamente
+  mensajes de commit en texto y realiza él los commits; no se pide otra excepción.
+
+### Decisiones y resultados de la tarea 2
+
+- Coordinación backend: un único flag de warmup pendiente por Job cuando existe
+  observación activa. Se reserva cooldown al aceptar y se continúa en el mismo
+  worker, sin bloquear HTTP, nuevas colas ni reintentos periódicos. Mientras se
+  ejecuta warmup se rechazan duplicados. Se conservan los tres workers y timeouts.
+- Se observa /api/ps antes de cargar para omitir modelos ya residentes. Después
+  del warmup se vuelve a observar: loaded solo se asigna con presencia comprobada
+  del modelo. available indica modelo instalado sin memoria verificable; unloaded
+  requiere /api/ps válido sin el modelo; unknown aún no comprobado, loading tarea
+  de preparación activa, unreachable fallo de acceso/modelo ausente.
+- El JSON conserva sus campos y añade warmupCompletedAt y memoryObserved. Un éxito
+  de precarga queda registrado aunque /api/ps falle o no muestre el modelo, pero
+  no se convierte en loaded. Telemetría malformada no equivale a lista vacía.
+- Runtime identifica por nombre del proveedor, endpoint interno normalizado y
+  modelo canónico. Las direcciones solo se usan dentro del backend y no se añaden
+  a respuestas públicas. PC y portátil con igual modelo conservan estados propios.
+- PASSED: mvn verify, 179 unitarios y 28 integraciones. Incluye runtime antes de
+  warmup, warmup antes de runtime, veinte solicitudes concurrentes, cargado sin
+  nueva carga, descargado, inaccesible, modelos homónimos y recuperación posterior
+  de proveedor simulado con HTTP 503. Las regresiones SSE/seguridad siguen verdes.
+- PASSED: 81/81 tests existentes del frontend, sin cambios en su código.
+- PASSED real: entrada vacía /api/embed en el Ollama Synology existente mediante
+  comprobación directa y OllamaEmbeddingWarmupLiveIT con Spring AI. Modelo
+  nomic-embed-text:latest, respuesta embeddings:[], /api/ps lo confirma cargado.
+  Ya estaba cargado antes: NO EJECUTADA la transición desde frío; no se desalojó
+  un modelo en uso para forzarla. No se descargaron modelos ni se tocó pgvector.
+- SKIPPED por defecto: cuatro suites live opt-in (tres anteriores y la nueva).
+  La nueva se ejecutó explícitamente con RAG_WARMUP_LIVE_TEST=true; las de
+  generación no se activaron. No se invocó OpenAI real.
+- Comandos: mvn verify; node front-athagon-r4r-static/js/app.test.cjs;
+  RAG_WARMUP_LIVE_TEST=true mvn -Dtest=NoUnitTests
+  -Dsurefire.failIfNoSpecifiedTests=false -Dit.test=OllamaEmbeddingWarmupLiveIT verify.
+- Revisados git diff/status y whitespace. Sin git add, commit, push ni despliegue.
+
+Archivos: DEVELOPMENT.md, docs/operations/model-warmup.md, OllamaModelPreloader.java,
+RagRuntimeController.java y sus dos tests existentes. Nuevo archivo junto a la suite:
+src/test/java/com/riansares/r4r/rag/OllamaEmbeddingWarmupLiveIT.java (opt-in).
+Se conserva íntegro el contenido previo de memoria y el commit SSE del usuario.

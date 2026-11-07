@@ -18,21 +18,27 @@ Synology. Un equipo desconectado no bloquea los otros trabajos ni la API.
 `200` si todos estaban ejecutándose o dentro de su intervalo mínimo. Responde con
 `accepted`, `skipped`, `retryAfterSeconds` y `Retry-After`. Ambos mecanismos de
 precarga (arranque y HTTP) comparten las mismas exclusiones por modelo y proceso.
-No hay colas de trabajos duplicados ni reintentos automáticos.
+No hay colas de trabajos duplicados ni reintentos automáticos. Si una observación
+está en curso, se reserva como máximo una precarga pendiente por modelo y se ejecuta
+al terminar, en el mismo worker. El cooldown se reserva al aceptar la petición.
+Antes de cargar se consulta /api/ps: un modelo ya residente no recibe otra carga.
 
 El POST respeta los orígenes permitidos, pero no consume la cuota de consultas RAG.
 El control de concurrencia y frecuencia lo aplica el servicio de precarga.
 
 `GET /api/rag/runtime` conserva sus campos y añade `models`, con identificadores
 públicos `desktop`, `laptop`, `embeddings`, modelo, estado, `checkedAt`, código de
-error saneado y `refreshing`. Nunca añade URLs privadas ni mensajes de excepciones.
+error saneado y `refreshing`. Añade `warmupCompletedAt` (última precarga completada)
+y `memoryObserved` (memoria comprobada mediante /api/ps). Una precarga completada
+no sustituye esa observación. El estado seleccionado se resuelve por identidad
+del proveedor y modelo, aunque los dos equipos usen el mismo nombre de modelo. Nunca añade URLs privadas ni mensajes de excepciones.
 
 | Estado | Significado |
 | --- | --- |
 | `unknown` | Todavía no comprobado; no implica disponibilidad. |
 | `loading` | Precarga en curso. |
 | `available` | Modelo instalado confirmado; memoria no comprobable. |
-| `loaded` | Modelo cargado observado en `/api/ps` o precarga completada sin telemetría disponible. |
+| `loaded` | Modelo cargado confirmado en `/api/ps`; una respuesta de warmup no basta. |
 | `unloaded` | Ollama responde, pero el modelo no figura en memoria. |
 | `unreachable` | No se pudo utilizar el modelo (incluye modelo no instalado); `error` distingue `timeout`, `model_missing` y `provider_unavailable`. |
 
@@ -104,7 +110,7 @@ concurrencia, repetición, cooldown, timeout, opciones y telemetría. Los tests 
 verifican contrato, CORS y la independencia de la cuota de respuestas. No son pruebas
 contra los LLM físicos ni una certificación del despliegue.
 
-## Resultado de esta implementación
+## Resultado de la implementación inicial (de8beb6)
 
 - `mvn verify`: **143 unitarios PASSED**, **23 integraciones PASSED** en la base
   dedicada `r4r_rag_test`; **3 suites live SKIPPED** por activación opt-in.
