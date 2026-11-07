@@ -74,3 +74,7 @@ test -n "$LP_LOG" || {
 printf 'Following LP console: %s\n' "$LP_LOG"
 tail -n 200 -F "$LP_LOG"
 ```
+
+## Benchmark RAG y proveedores
+
+La comparación de cinco configuraciones está [documentada aquí](docs/benchmarks/rag-providers/README.md). Está pendiente de una conexión PostgreSQL de solo lectura disponible fuera de `.env`; todavía no hay ganadora ni validación final ES/EN. La configuración operativa permanece intacta.
