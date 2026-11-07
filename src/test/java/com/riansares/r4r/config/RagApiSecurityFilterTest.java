@@ -17,7 +17,18 @@ class RagApiSecurityFilterTest {
     private static final List<String> ALLOWED_ORIGINS = List.of(
             "https://athagon.tech",
             "http://localhost:63342",
-            "http://127.0.0.1:63342");
+            "http://127.0.0.1:63342",
+            "http://192.168.1.203:8088");
+
+    @Test
+    void allowsSynologyWebStationOrigin() throws Exception {
+        RagApiSecurityFilter filter = new RagApiSecurityFilter(properties(true, false));
+
+        MockHttpServletResponse response = execute(filter, "192.168.1.20", "http://192.168.1.203:8088");
+
+        assertEquals(200, response.getStatus());
+        assertEquals("http://192.168.1.203:8088", response.getHeader("Access-Control-Allow-Origin"));
+    }
 
     @Test
     void allowsFirstRequestAndBlocksSecondRequestFromSameIpWithinWindow() throws Exception {
@@ -98,11 +109,29 @@ class RagApiSecurityFilterTest {
         assertEquals(200, execute(filter, "10.0.0.8", "http://localhost:63342").getStatus());
     }
 
+    @Test
+    void globalLimitCannotBeBypassedByChangingIpAndResetsAfterOneMinute() throws Exception {
+        AtomicLong clock = new AtomicLong(1_000_000_000L);
+        RagApiSecurityProperties strict = new RagApiSecurityProperties(
+                true, ALLOWED_ORIGINS, Duration.ofSeconds(20), 2, true, true, 10_000);
+        RagApiSecurityFilter filter = new RagApiSecurityFilter(strict, clock::get);
+
+        assertEquals(200, execute(filter, "10.0.0.8", "http://localhost:63342").getStatus());
+        assertEquals(200, execute(filter, "10.0.0.9", "http://localhost:63342").getStatus());
+        MockHttpServletResponse blocked = execute(filter, "10.0.0.10", "http://localhost:63342");
+        assertEquals(429, blocked.getStatus());
+        assertTrue(blocked.getContentAsString().contains("global_rate_limited"));
+
+        clock.addAndGet(Duration.ofMinutes(1).toNanos());
+        assertEquals(200, execute(filter, "10.0.0.10", "http://localhost:63342").getStatus());
+    }
+
     private static RagApiSecurityProperties properties(boolean requireOrigin, boolean trustProxyHeaders) {
         return new RagApiSecurityProperties(
                 true,
                 ALLOWED_ORIGINS,
                 Duration.ofSeconds(20),
+                12,
                 requireOrigin,
                 trustProxyHeaders,
                 10_000);

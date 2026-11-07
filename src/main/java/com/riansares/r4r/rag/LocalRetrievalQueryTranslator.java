@@ -20,6 +20,13 @@ public final class LocalRetrievalQueryTranslator {
         this.model = model;
     }
 
+    public boolean lastTranslationUsedRemote() {
+        if (!(model instanceof GenerationRouter router)) return false;
+        GenerationRouter.Execution execution = router.requestExecution();
+        return execution != null && execution.provider() != null
+                && "OpenAI".equals(execution.provider().name());
+    }
+
     public String translate(String question) {
         var response = model.call(new Prompt(List.of(
                 new SystemMessage("""

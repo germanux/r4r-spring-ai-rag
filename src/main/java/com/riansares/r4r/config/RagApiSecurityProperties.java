@@ -10,6 +10,7 @@ public record RagApiSecurityProperties(
         boolean enabled,
         List<String> allowedOrigins,
         Duration minInterval,
+        int maxGlobalRequestsPerMinute,
         boolean requireOrigin,
         boolean trustProxyHeaders,
         int maxTrackedIps) {
@@ -17,6 +18,7 @@ public record RagApiSecurityProperties(
     public RagApiSecurityProperties {
         allowedOrigins = allowedOrigins == null ? List.of() : List.copyOf(allowedOrigins);
         minInterval = minInterval == null || minInterval.isNegative() ? Duration.ZERO : minInterval;
+        maxGlobalRequestsPerMinute = maxGlobalRequestsPerMinute <= 0 ? 12 : maxGlobalRequestsPerMinute;
         maxTrackedIps = maxTrackedIps <= 0 ? 10_000 : maxTrackedIps;
     }
 }

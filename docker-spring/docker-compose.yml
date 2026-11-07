@@ -56,7 +56,8 @@ services:
       OLLAMA_HOST: "0.0.0.0:11434"
       OLLAMA_NUM_PARALLEL: "1"
       OLLAMA_MAX_LOADED_MODELS: "1"
-      OLLAMA_KEEP_ALIVE: "5m"
+      # Keep the embedding model in RAM once loaded; the NAS has spare memory.
+      OLLAMA_KEEP_ALIVE: "-1"
     volumes:
       - ./ollama-embeddings-data:/root/.ollama
     # Launch Ollama, wait for it, then pull the embedding model on first start.

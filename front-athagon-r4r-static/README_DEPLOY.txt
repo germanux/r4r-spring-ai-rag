@@ -22,7 +22,7 @@ Interfaz
 - Español e inglés en una única página, sin recarga al cambiar de idioma.
 - Cabecera breve, centrada en IA/RAG.
 - Caja de consulta inmediatamente después.
-- Tres ejemplos que rellenan y lanzan automáticamente la consulta.
+- Cuatro ejemplos que rellenan y lanzan automáticamente la consulta.
 - Respuesta, abstención y fuentes.
 - Explicación conceptual después de la demo.
 - Arquitectura y configuración técnica al final.

@@ -50,10 +50,20 @@ public class GenerationRouter implements ChatModel {
 
     @Override
     public ChatResponse call(Prompt prompt) {
+        return route(prompt, false);
+    }
+
+    /** Avoid retrying known-failed local hosts after remote translation in the same request. */
+    public ChatResponse callRemoteOnly(Prompt prompt) {
+        return route(prompt, true);
+    }
+
+    private ChatResponse route(Prompt prompt, boolean remoteOnly) {
         clearRequestExecution();
         String requestId = UUID.randomUUID().toString();
         for (Target target : targets) {
             Provider provider = target.provider();
+            if (remoteOnly && !"OpenAI".equals(provider.name())) continue;
             try {
                 if (!target.available().getAsBoolean()) continue;
                 ChatResponse response = target.model().call(prompt);

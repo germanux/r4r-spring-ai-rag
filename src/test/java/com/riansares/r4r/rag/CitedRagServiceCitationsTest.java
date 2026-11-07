@@ -123,7 +123,9 @@ class CitedRagServiceCitationsTest {
         assertThat(result.answer()).isEqualTo("Answer [S3][S1] and [S3].");
         assertThat(result.citations()).extracting(Citation::label).containsExactly("[S1]", "[S3]");
         when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Answer without references."));
-        assertThat(service.answer("test question").citations()).isEmpty();
+        RagResult withoutCitations = service.answer("test question");
+        assertThat(withoutCitations.abstention()).isTrue();
+        assertThat(withoutCitations.citations()).isEmpty();
     }
 
     private static ChatResponse chatResponse(String text) {

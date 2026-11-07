@@ -91,10 +91,12 @@ public class CitedRagService {
         validateQuestion(question);
         String searchQuestion = retrievalQuestion == null || retrievalQuestion.isBlank()
                 ? question : retrievalQuestion;
+        boolean translatedRemotely = false;
         if ((retrievalQuestion == null || retrievalQuestion.isBlank())
                 && "en".equalsIgnoreCase(responseLanguage) && translator != null) {
             try {
                 searchQuestion = translator.translate(question);
+                translatedRemotely = translator.lastTranslationUsedRemote();
             } catch (RuntimeException ex) {
                 traceFailure("normalization", started, ex);
                 throw ex;
@@ -119,7 +121,8 @@ public class CitedRagService {
         long contextBuilt = System.nanoTime();
         ChatResponse response;
         try {
-            response = chatModel.call(prompt);
+            response = translatedRemotely && chatModel instanceof GenerationRouter router
+                    ? router.callRemoteOnly(prompt) : chatModel.call(prompt);
         } catch (RuntimeException ex) {
             traceFailure("generation", started, ex);
             throw ex;
@@ -140,6 +143,11 @@ public class CitedRagService {
             return RagResult.abstain();
         }
         List<Citation> citations = buildCitations(chunks, answer);
+        if (citations.isEmpty()) {
+            // A factual answer with no traceable evidence is not a verifiable RAG answer.
+            trace("missing_citations", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
+            return RagResult.abstain();
+        }
 
         trace("answered", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
         return RagResult.ofAnswer(answer, citations);
@@ -232,7 +240,8 @@ public class CitedRagService {
         *****
         Answer the question directly using only facts supported by the supplied evidence.
         Use 1–3 concise sentences when sufficient. Do not invent facts, repeat yourself, or add tangential information.
-        Cite supporting sources using [S1], [S2], etc. only where relevant; do not cite unused sources.
+        Every factual answer must include at least one supporting [S1], [S2], etc. citation.
+        Cite only relevant sources; do not cite unused sources.
         Citations must not be the entire answer.
     
         If the evidence does not support an answer, respond with exactly:

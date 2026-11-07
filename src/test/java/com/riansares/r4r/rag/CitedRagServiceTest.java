@@ -93,11 +93,11 @@ class CitedRagServiceTest {
         when(knowledgeStore.search("test question", TEST_TOP_K, TEST_MIN_SCORE))
                 .thenReturn(List.of(chunk));
         when(chatModel.call(any(Prompt.class)))
-                .thenReturn(chatResponse("Generated answer text"));
+                .thenReturn(chatResponse("Generated answer text [S1]"));
 
         RagResult result = service.answer("test question");
 
-        assertThat(result.answer()).isEqualTo("Generated answer text");
+        assertThat(result.answer()).isEqualTo("Generated answer text [S1]");
         assertThat(result.abstention()).isFalse();
     }
 

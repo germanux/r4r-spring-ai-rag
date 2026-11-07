@@ -6,6 +6,8 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.client.RestClient;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
@@ -14,17 +16,35 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class OpenAiResponsesModel implements ChatModel {
     private final RestClient client;
     private final String key, model;
+    private final int maxCallsPerDay;
     private final Semaphore inFlight = new Semaphore(1);
+    // One call at a time: guarded by inFlight, reset on UTC date rollover.
+    private LocalDate callDay = LocalDate.now(ZoneOffset.UTC);
+    private int callsOnDay;
     public record Usage(long inputTokens, long outputTokens) { }
     private final AtomicReference<Usage> usage = new AtomicReference<>();
     public OpenAiResponsesModel(RestClient client, String key, String model) {
+        this(client, key, model, 20);
+    }
+    public OpenAiResponsesModel(RestClient client, String key, String model, int maxCallsPerDay) {
+        if (maxCallsPerDay < 1) throw new IllegalArgumentException("OpenAI daily call limit must be positive");
         this.client = client; this.key = key == null ? null : key.strip().replaceAll("^[\"']|[\"']$", ""); this.model = model;
+        this.maxCallsPerDay = maxCallsPerDay;
     }
     public Usage lastUsage() { return usage.get(); }
     @Override public ChatResponse call(Prompt prompt) {
         if (key == null || key.isBlank() || !inFlight.tryAcquire()) throw failure();
         try {
             if (prompt.getContents().length() > 32000) throw failure();
+            LocalDate today = LocalDate.now(ZoneOffset.UTC);
+            if (!today.equals(callDay)) { callDay = today; callsOnDay = 0; }
+            if (callsOnDay >= maxCallsPerDay) {
+                org.slf4j.LoggerFactory.getLogger(OpenAiResponsesModel.class)
+                        .warn("Remote generation stopped: daily API call limit reached");
+                throw failure();
+            }
+            // Count attempts, including unsuccessful HTTP responses, to bound spending.
+            callsOnDay++;
             var messages = prompt.getInstructions().stream().map(m -> Map.of(
                     "role", m.getMessageType().getValue(), "content", m.getText())).toList();
             JsonNode response = client.post().uri("/responses")

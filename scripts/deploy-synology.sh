@@ -180,6 +180,13 @@ ssh "${SSH_OPTIONS[@]}" -tt "$REMOTE" "
     -f docker-compose.yml \
     up -d
 
+  # La etiqueta Maven se reutiliza (0.3.2); garantizar que la API toma la
+  # imagen recién importada, sin recrear PostgreSQL ni Ollama.
+  sudo \"\$COMPOSE_BIN\" \
+    --env-file .env \
+    -f docker-compose.yml \
+    up -d --no-deps --force-recreate api
+
   # Conservar la imagen TAR en el directorio R4R.
   sudo mv '$STAGE/$TAR_NAME' '$NAS_DIR/$TAR_NAME'
 

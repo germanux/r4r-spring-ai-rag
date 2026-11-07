@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongSupplier;
 
 final class RagApiSecurityFilter extends OncePerRequestFilter {
@@ -24,6 +25,8 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
     private final Set<String> allowedOrigins;
     private final ConcurrentHashMap<String, Long> lastAcceptedRequestNanos = new ConcurrentHashMap<>();
     private final AtomicLong acceptedRequests = new AtomicLong();
+    private record GlobalWindow(long startedNanos, int accepted) { }
+    private final AtomicReference<GlobalWindow> globalWindow = new AtomicReference<>();
     private final LongSupplier nanoTime;
 
     RagApiSecurityFilter(RagApiSecurityProperties properties) {
@@ -114,10 +117,33 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
                 return;
             }
 
-            acceptedRequests.incrementAndGet();
         }
 
+        if (!acceptGlobalRequest(now)) {
+            response.setHeader("Retry-After", "60");
+            writeJsonError(response, HttpStatus.TOO_MANY_REQUESTS.value(),
+                    "global_rate_limited", "La demo ha alcanzado temporalmente su límite global de consultas.");
+            return;
+        }
+
+        if (intervalNanos > 0) acceptedRequests.incrementAndGet();
+
         filterChain.doFilter(request, response);
+    }
+
+    private boolean acceptGlobalRequest(long now) {
+        long windowNanos = Duration.ofMinutes(1).toNanos();
+        while (true) {
+            GlobalWindow previous = globalWindow.get();
+            GlobalWindow next;
+            if (previous == null || now - previous.startedNanos() >= windowNanos || now < previous.startedNanos()) {
+                next = new GlobalWindow(now, 1);
+            } else {
+                if (previous.accepted() >= properties.maxGlobalRequestsPerMinute()) return false;
+                next = new GlobalWindow(previous.startedNanos(), previous.accepted() + 1);
+            }
+            if (globalWindow.compareAndSet(previous, next)) return true;
+        }
     }
 
     private boolean originAllowed(HttpServletRequest request, HttpServletResponse response) throws IOException {
