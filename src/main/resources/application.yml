@@ -61,6 +61,8 @@ r4r:
       - ${RAG_API_ALLOWED_ORIGIN_LOOPBACK:http://127.0.0.1:63342}
       - ${RAG_API_ALLOWED_ORIGIN_PYTHON_LOCALHOST:http://localhost:8000}
       - ${RAG_API_ALLOWED_ORIGIN_PYTHON_LOOPBACK:http://127.0.0.1:8000}
+      - ${RAG_API_ALLOWED_ORIGIN_SYNOX_NAS:http://192.168.1.203}
+      - ${RAG_API_ALLOWED_ORIGIN_SYNOX_NAS_S:https://192.168.1.203}
     # Ejemplos válidos: 20s, 5s, 1m, 500ms.
     min-interval: ${RAG_API_MIN_INTERVAL:20s}
     # true = un POST sin Origin (por ejemplo curl/Postman sin cabecera Origin) recibe 403.
