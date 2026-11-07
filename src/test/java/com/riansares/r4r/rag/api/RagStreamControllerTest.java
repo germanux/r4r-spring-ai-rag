@@ -124,9 +124,91 @@ class RagStreamControllerTest {
             verifyNoInteractions(store, pc, laptop);
         }
     }
+    @Test void saturationRejectsFifthStreamWithoutStartingAnotherQuery() throws Exception {
+        evidence();
+        var entered = new CountDownLatch(4);
+        when(pc.call(any(Prompt.class))).thenAnswer(invocation -> {
+            entered.countDown();
+            try { new CountDownLatch(1).await(); }
+            catch (InterruptedException ex) { Thread.currentThread().interrupt(); throw new IllegalStateException(ex); }
+            return null;
+        });
+        var emitter = mock(SseEmitter.class);
+        try (var controller = new RagStreamController(service, router, Duration.ofSeconds(5)) {
+            @Override protected SseEmitter createEmitter() { return emitter; }
+        }) {
+            for (int i = 0; i < 4; i++) assertThat(controller.stream(new RagQueryRequest("Pregunta")).getStatusCode().value()).isEqualTo(200);
+            assertThat(entered.await(2, TimeUnit.SECONDS)).isTrue();
+            var rejected = controller.stream(new RagQueryRequest("Quinta"));
+            assertThat(rejected.getStatusCode().value()).isEqualTo(503);
+            assertThat(rejected.getHeaders().getFirst("Retry-After")).isEqualTo("5");
+            assertThat(controller.activeSessions()).isEqualTo(4);
+            verify(pc, times(4)).call(any(Prompt.class));
+            controller.close();
+            awaitNoWorkers(controller);
+            assertThat(controller.scheduledTasks()).isZero();
+        }
+    }
+
+    @Test void blockedHeartbeatCannotBlockDeadlineOrAllowMoreUnownedStreams() throws Exception {
+        evidence();
+        var entered = new CountDownLatch(1);
+        var interrupted = new CountDownLatch(1);
+        var blockedWriter = new CountDownLatch(1);
+        var releaseWriter = new CountDownLatch(1);
+        when(pc.call(any(Prompt.class))).thenAnswer(invocation -> {
+            entered.countDown();
+            try { new CountDownLatch(1).await(); }
+            catch (InterruptedException ex) { interrupted.countDown(); Thread.currentThread().interrupt(); throw new IllegalStateException(ex); }
+            return null;
+        });
+        var emitter = mock(SseEmitter.class);
+        doAnswer(invocation -> {
+            var builder = (SseEmitter.SseEventBuilder) invocation.getArgument(0);
+            boolean heartbeat = builder.build().stream().anyMatch(item -> item.getData().toString().contains("keepalive"));
+            if (heartbeat) {
+                blockedWriter.countDown();
+                // Simulate non-interruptible socket I/O, released explicitly by the test.
+                while (releaseWriter.getCount() > 0) {
+                    try { releaseWriter.await(); } catch (InterruptedException ignored) { }
+                }
+            }
+            return null;
+        }).when(emitter).send(any(SseEmitter.SseEventBuilder.class));
+        try (var controller = new RagStreamController(service, router, Duration.ofMillis(300), Duration.ofMillis(20)) {
+            @Override protected SseEmitter createEmitter() { return emitter; }
+        }) {
+            controller.stream(new RagQueryRequest("Pregunta"));
+            assertThat(entered.await(1, TimeUnit.SECONDS)).isTrue();
+            assertThat(blockedWriter.await(1, TimeUnit.SECONDS)).isTrue();
+            assertThat(interrupted.await(1, TimeUnit.SECONDS)).as("Deadline must run even while heartbeat write blocks").isTrue();
+            // Keep ownership/admission while the physical writer is still blocked.
+            assertThat(controller.activeSessions()).isEqualTo(1);
+            releaseWriter.countDown();
+            awaitNoWorkers(controller);
+            assertThat(controller.activeSessions()).isZero();
+            assertThat(controller.scheduledTasks()).isZero();
+            verifyNoInteractions(laptop);
+        } finally { releaseWriter.countDown(); }
+    }
+
+    @Test void earlyDisconnectDuringCallbackRegistrationLeavesNoTimersOrQueries() throws Exception {
+        var emitter = mock(SseEmitter.class);
+        doAnswer(invocation -> { ((Runnable) invocation.getArgument(0)).run(); return null; }).when(emitter).onCompletion(any());
+        try (var controller = new RagStreamController(service, router, Duration.ofSeconds(2)) {
+            @Override protected SseEmitter createEmitter() { return emitter; }
+        }) {
+            controller.stream(new RagQueryRequest("Pregunta"));
+            awaitNoWorkers(controller);
+            assertThat(controller.activeSessions()).isZero();
+            assertThat(controller.scheduledTasks()).isZero();
+            verifyNoInteractions(store, pc, laptop);
+        }
+    }
+
     private void awaitNoWorkers(RagStreamController controller) throws Exception {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
-        while (controller.activeWorkers() > 0 && System.nanoTime() < deadline) Thread.sleep(10);
+        while ((controller.activeWorkers() > 0 || controller.activeSessions() > 0) && System.nanoTime() < deadline) Thread.sleep(10);
         assertThat(controller.activeWorkers()).isZero();
     }
 }

@@ -24,6 +24,7 @@ public class WebConfiguration implements WebMvcConfigurer {
                 .allowedOrigins(securityProperties.allowedOrigins().toArray(String[]::new))
                 .allowedMethods("GET", "POST", "OPTIONS")
                 .allowedHeaders("Content-Type", "Accept")
+                .exposedHeaders("Retry-After", "X-R4R-RateLimit-Min-Interval-Seconds")
                 .maxAge(3600);
     }
 

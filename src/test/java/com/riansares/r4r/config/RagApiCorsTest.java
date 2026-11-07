@@ -116,7 +116,9 @@ class RagApiCorsTest {
         mvc.perform(post("/api/rag/answers/stream").header("Origin", origin).accept(MediaType.TEXT_EVENT_STREAM))
                 .andExpect(status().isOk()).andExpect(header().string("Access-Control-Allow-Origin", origin));
         mvc.perform(post("/api/rag/answers").header("Origin", origin).contentType(MediaType.APPLICATION_JSON).content("{}"))
-                .andExpect(status().isTooManyRequests()).andExpect(jsonPath("$.error").value("rate_limited"));
+                .andExpect(status().isTooManyRequests()).andExpect(jsonPath("$.error").value("rate_limited"))
+                .andExpect(header().exists("Retry-After"))
+                .andExpect(header().string("Access-Control-Expose-Headers", org.hamcrest.Matchers.containsString("Retry-After")));
     }
 
     @Test
@@ -128,6 +130,8 @@ class RagApiCorsTest {
                         .header("Access-Control-Request-Method", "POST")
                         .header("Access-Control-Request-Headers", "x-unapproved"))
                 .andExpect(status().isForbidden());
+        mvc.perform(post("/api/rag/answers/stream"))
+                .andExpect(status().isForbidden()).andExpect(jsonPath("$.error").value("origin_required"));
         mvc.perform(post("/api/rag/warmup"))
                 .andExpect(status().isForbidden()).andExpect(jsonPath("$.error").value("origin_required"));
         mvc.perform(post("/api/rag/answers").contentType(MediaType.APPLICATION_JSON).content("{}"))

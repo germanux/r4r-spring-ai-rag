@@ -22,6 +22,9 @@ POST; se envían `question`, `retrievalQuestion` y `responseLanguage` como antes
 La traducción del backend solo se ejecuta si sigue siendo necesaria.
 
 Los POST REST y SSE comparten la protección de origen y las cuotas existentes.
+El filtro normaliza la ruta como MVC (decodificación y eliminación de parámetros
+matriz), evitando el bypass mediante aliases como `/%73tream`. CORS expone
+`Retry-After`, incluido en las respuestas 429 por IP, cuota global o capacidad.
 Se comprueban los preflight con `Content-Type`/`Accept`, producción, desarrollo y
 el origen del frontend Synology. El filtro admite dispatch asíncrono.
 
@@ -85,11 +88,20 @@ al API de embeddings y una consulta JDBC por recuperación.
 
 ## Concurrencia, cancelación y límites
 
-- Executor SSE dedicado: cuatro workers, sin cola. Saturación devuelve HTTP 503
-  antes de iniciar otro trabajo. No comparte executor con la precarga de modelos.
-- Cada sesión posee su tarea, deadline y heartbeat. La desconexión/cierre/timeout
-  cancela su `FutureTask`, interrumpe el worker y elimina la sesión y los timers.
-  Los timers cancelados se retiran de la cola del scheduler.
+- Admisión máxima de cuatro streams. Cálculo y entrega tienen executors separados
+  de cuatro hilos, sin cola de trabajos; la salida ordenada de cada sesión admite
+  hasta 64 paquetes. Saturación devuelve HTTP 503 con Retry-After antes de crear
+  otra sesión. No se comparte executor con la precarga de modelos.
+- El scheduler solo encola heartbeats y activa deadlines: nunca escribe sockets ni
+  espera el monitor de SseEmitter. El timeout cancela el cálculo inmediatamente y
+  permite hasta 100 ms para entregar ERROR antes de cancelar también la entrega.
+- Cada sesión posee sus tareas, deadline y heartbeat. Desconexión/cierre/timeout
+  cancelan sus FutureTask e interrumpen el cálculo. Los timers se retiran de la
+  cola, incluso si el cierre ocurrió durante el registro de callbacks.
+- Si una escritura bloqueante ignora la interrupción, la sesión conserva su plaza
+  de admisión hasta que su escritor termina. Así no se acumulan conexiones/tareas
+  nuevas sobre recursos físicos todavía ocupados. No se promete aborto instantáneo
+  de I/O no interrumpible; los límites de sockets/driver siguen siendo relevantes.
 - Se comprueba la cancelación entre fases, antes de generar y antes de cada nuevo
   proveedor. Una cancelación no dispara failover ni otro gasto remoto.
 - La interrupción es cooperativa: una llamada bloqueante ya enviada depende también
@@ -137,7 +149,11 @@ Ollama no entran en el contexto de recuperación observado. Consultas y precarga
 siguen compartiendo los recursos físicos de Ollama y pueden competir al cargar
 un modelo frío, pero no comparten bloqueos, tareas ni estados de petición.
 
-## Verificación de esta entrega
+## Verificación de la integración original (2ee9663)
+
+La auditoría de seguridad posterior y sus resultados se documentan en la sección
+«Auditoría de seguridad SSE» de `DEVELOPMENT.md`; la tabla siguiente conserva los
+resultados de la integración inicial.
 
 | Comprobación | Resultado |
 | --- | --- |

@@ -14,9 +14,9 @@ public final class RagProgress {
     private final long started = System.nanoTime();
     private final Consumer<Map<String, Object>> sink;
     private final AtomicBoolean cancelled = new AtomicBoolean();
-    private Double embeddingMs, retrievalIncludingEmbeddingMs, generationMs;
+    private volatile Double embeddingMs, retrievalIncludingEmbeddingMs, generationMs;
     private GenerationRouter.Provider used;
-    private Integer documentsFound;
+    private volatile Integer documentsFound;
 
     public RagProgress(Consumer<Map<String, Object>> sink) { this.sink = sink; }
     public static RagProgress silent() { return new RagProgress(event -> { }); }

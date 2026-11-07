@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.util.UrlPathHelper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -20,6 +21,8 @@ import java.util.function.LongSupplier;
 final class RagApiSecurityFilter extends OncePerRequestFilter {
 
     private static final String RAG_ANSWERS_PATH = "/api/rag/answers";
+    private static final String WARMUP_PATH = "/api/rag/warmup";
+    private static final Set<String> ANSWER_PATHS = Set.of(RAG_ANSWERS_PATH, RAG_ANSWERS_PATH + "/stream");
 
     private final RagApiSecurityProperties properties;
     private final Set<String> allowedOrigins;
@@ -53,13 +56,13 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
             return true;
         }
 
-        String requestUri = request.getRequestURI();
-        String contextPath = request.getContextPath();
-        String path = contextPath == null || contextPath.isEmpty()
-                ? requestUri
-                : requestUri.substring(contextPath.length());
+        String path = protectedPath(request);
+        return !ANSWER_PATHS.contains(path) && !WARMUP_PATH.equals(path);
+    }
 
-        return !RAG_ANSWERS_PATH.equals(path) && !(RAG_ANSWERS_PATH + "/stream").equals(path) && !"/api/rag/warmup".equals(path);
+    private static String protectedPath(HttpServletRequest request) {
+        // Match MVC's decoded, context-relative path with matrix parameters removed.
+        return UrlPathHelper.defaultInstance.getPathWithinApplication(request);
     }
 
     @Override
@@ -73,7 +76,7 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
         }
 
         // Warmup has its own per-model concurrency/cooldown, independent of answer quotas.
-        if (request.getRequestURI().endsWith("/api/rag/warmup")) {
+        if (WARMUP_PATH.equals(protectedPath(request))) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -87,6 +90,7 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
 
             if (!lastAcceptedRequestNanos.containsKey(clientIp)
                     && lastAcceptedRequestNanos.size() >= properties.maxTrackedIps()) {
+                response.setHeader("Retry-After", Long.toString(Math.max(1, (intervalNanos + 999_999_999L) / 1_000_000_000L)));
                 writeJsonError(
                         response,
                         HttpStatus.TOO_MANY_REQUESTS.value(),
@@ -180,6 +184,7 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
         // El filtro puede responder 429 antes de que Spring MVC aplique CORS.
         // Añadimos estos headers aquí para que el navegador pueda leer el 429/Retry-After.
         response.setHeader("Access-Control-Allow-Origin", origin);
+        response.setHeader("Access-Control-Expose-Headers", "Retry-After, X-R4R-RateLimit-Min-Interval-Seconds");
         response.addHeader("Vary", "Origin");
         return true;
     }

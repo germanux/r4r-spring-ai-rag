@@ -44,6 +44,21 @@ class RagStreamHttpIT {
     @MockBean PgVectorKnowledgeStore store;
     @MockBean GenerationRouter router;
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {
+            "/api/rag/answers/%73tream", "/api/rag/answers;v=1/stream", "/api/rag/%61nswers" })
+    void rejectsOriginlessAliasesResolvedByMvc(String path) throws Exception {
+        var request = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + path))
+                .timeout(Duration.ofSeconds(3)).header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString("{\"question\":\"Pregunta\"}")).build();
+        try (var client = HttpClient.newHttpClient()) {
+            var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            assertThat(response.statusCode()).as(path).isEqualTo(403);
+            assertThat(response.body()).contains("origin_required");
+            verifyNoInteractions(store);
+        }
+    }
+
     @Test void realClientDisconnectStopsOwnedWork() throws Exception {
         when(store.search(anyString(), anyInt(), anyDouble())).thenReturn(List.of(
                 new com.riansares.r4r.chunking.MarkdownChunk("doc.md", List.of(), 0, "Reformas.")));
@@ -70,7 +85,7 @@ class RagStreamHttpIT {
             assertThat(interrupted.await(3, TimeUnit.SECONDS)).as("Heartbeat detects closed socket and cancels worker").isTrue();
         }
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
-        while (streams.activeWorkers() > 0 && System.nanoTime() < deadline) Thread.sleep(10);
+        while ((streams.activeWorkers() > 0 || streams.activeSessions() > 0) && System.nanoTime() < deadline) Thread.sleep(10);
         assertThat(streams.activeSessions()).isZero();
         assertThat(streams.activeWorkers()).isZero();
     }
