@@ -1,0 +1,84 @@
+r4r-api
+date,stream,content
+2026/11/07 09:12:15,stdout,2026-11-07T08:12:15.886Z  WARN 1 --- [r4r-spring-ai-rag] [io-8080-exec-10] com.riansares.r4r.rag.CitedRagService    : RAG result=error stage=generation errorType=ResponseStatusException elapsedMs=28943.290998
+
+2026/11/07 09:12:15,stdout,2026-11-07T08:12:15.883Z  WARN 1 --- [r4r-spring-ai-rag] [io-8080-exec-10] com.riansares.r4r.rag.GenerationRouter   : Generation 2b2b5079-7f59-4b34-9c08-0870c36e2df7 failed at provider=Portátil ASUS model=qwen2.5:7b error=RestClientException
+
+2026/11/07 09:11:50,stdout,2026-11-07T08:11:50.684Z  WARN 1 --- [r4r-spring-ai-rag] [io-8080-exec-10] com.riansares.r4r.rag.GenerationRouter   : Generation 2b2b5079-7f59-4b34-9c08-0870c36e2df7 failed at provider=PC principal model=qwen3:8b error=ResourceAccessException
+
+2026/11/07 09:05:20,stdout,2026-11-07T08:05:20.412Z  INFO 1 --- [r4r-spring-ai-rag] [nio-8080-exec-7] com.riansares.r4r.rag.CitedRagService    : RAG result=answered retrieved=3 topK=3 minScore=0.63 normalizationMs=0.00342 retrievalIncludingEmbeddingMs=5149.948887 contextMs=0.189887 generationMs=4838.060088 validationMs=2.956839
+
+2026/11/07 09:05:20,stdout,2026-11-07T08:05:20.408Z  INFO 1 --- [r4r-spring-ai-rag] [nio-8080-exec-7] com.riansares.r4r.rag.GenerationRouter   : Generation e52a331a-7485-45b0-bf2d-2b68ed75bb93 completed by provider=PC principal model=qwen3:8b
+
+2026/11/07 09:03:41,stdout,2026-11-07T08:03:41.196Z  INFO 1 --- [r4r-spring-ai-rag] [nio-8080-exec-3] com.riansares.r4r.rag.CitedRagService    : RAG result=answered retrieved=3 topK=3 minScore=0.63 normalizationMs=0.022971 retrievalIncludingEmbeddingMs=5257.599623 contextMs=9.57087 generationMs=4550.914075 validationMs=4.641701
+
+2026/11/07 09:03:41,stdout,2026-11-07T08:03:41.191Z  INFO 1 --- [r4r-spring-ai-rag] [nio-8080-exec-3] com.riansares.r4r.rag.GenerationRouter   : Generation f2ecc9a0-b0ad-44ee-b2b1-7957000f1545 completed by provider=PC principal model=qwen3:8b
+
+2026/11/07 09:03:27,stdout,2026-11-07T08:03:27.583Z  INFO 1 --- [r4r-spring-ai-rag] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+
+2026/11/07 09:03:27,stdout,2026-11-07T08:03:27.580Z  INFO 1 --- [r4r-spring-ai-rag] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+
+2026/11/07 09:03:27,stdout,2026-11-07T08:03:27.578Z  INFO 1 --- [r4r-spring-ai-rag] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+
+2026/11/07 08:55:39,stdout,2026-11-07T07:55:39.664Z  INFO 1 --- [r4r-spring-ai-rag] [           main] c.r.r4r.R4rSpringAiRagApplication        : Started R4rSpringAiRagApplication in 17.282 seconds (process running for 20.092)
+
+2026/11/07 08:55:39,stdout,2026-11-07T07:55:39.625Z  INFO 1 --- [r4r-spring-ai-rag] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+
+2026/11/07 08:55:37,stdout,2026-11-07T07:55:37.577Z  INFO 1 --- [r4r-spring-ai-rag] [           main] o.s.a.v.p.PgVectorSchemaValidator        : PG VectorStore schema validation successful
+
+2026/11/07 08:55:37,stdout,2026-11-07T07:55:37.557Z  INFO 1 --- [r4r-spring-ai-rag] [           main] o.s.a.v.p.PgVectorSchemaValidator        : Validating PGVectorStore schema for table: vector_store in schema: public
+
+2026/11/07 08:55:37,stdout,2026-11-07T07:55:37.504Z  INFO 1 --- [r4r-spring-ai-rag] [           main] o.s.a.v.pgvector.PgVectorStore           : vectorTableValidationsEnabled true
+
+2026/11/07 08:55:37,stdout,2026-11-07T07:55:37.504Z  INFO 1 --- [r4r-spring-ai-rag] [           main] o.s.a.v.pgvector.PgVectorStore           : Initializing PGVectorStore schema for table: vector_store in schema: public
+
+2026/11/07 08:55:37,stdout,2026-11-07T07:55:37.494Z  INFO 1 --- [r4r-spring-ai-rag] [           main] o.s.a.v.pgvector.PgVectorStore           : Using the vector table name: vector_store. Is empty: false
+
+2026/11/07 08:55:34,stdout,2026-11-07T07:55:34.447Z  INFO 1 --- [r4r-spring-ai-rag] [           main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+
+2026/11/07 08:55:34,stdout,2026-11-07T07:55:34.438Z  INFO 1 --- [r4r-spring-ai-rag] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 3
+
+2026/11/07 08:55:34,stdout,2026-11-07T07:55:34.367Z  INFO 1 --- [r4r-spring-ai-rag] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 3 migrations (execution time 00:00.122s)
+
+2026/11/07 08:55:34,stdout,2026-11-07T07:55:34.173Z  INFO 1 --- [r4r-spring-ai-rag] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://postgres:5432/r4r_rag (PostgreSQL 16.15)
+
+2026/11/07 08:55:34,stdout,2026-11-07T07:55:34.072Z  INFO 1 --- [r4r-spring-ai-rag] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+
+2026/11/07 08:55:34,stdout,2026-11-07T07:55:34.065Z  INFO 1 --- [r4r-spring-ai-rag] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@60b5e80d
+
+2026/11/07 08:55:32,stdout,2026-11-07T07:55:32.921Z  INFO 1 --- [r4r-spring-ai-rag] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+
+2026/11/07 08:55:31,stdout,2026-11-07T07:55:31.663Z  INFO 1 --- [r4r-spring-ai-rag] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 6302 ms
+
+2026/11/07 08:55:31,stdout,2026-11-07T07:55:31.657Z  INFO 1 --- [r4r-spring-ai-rag] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+
+2026/11/07 08:55:31,stdout,2026-11-07T07:55:31.556Z  INFO 1 --- [r4r-spring-ai-rag] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.40]
+
+2026/11/07 08:55:31,stdout,2026-11-07T07:55:31.554Z  INFO 1 --- [r4r-spring-ai-rag] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+
+2026/11/07 08:55:31,stdout,2026-11-07T07:55:31.508Z  INFO 1 --- [r4r-spring-ai-rag] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+
+2026/11/07 08:55:25,stdout,"2026-11-07T07:55:25.025Z  INFO 1 --- [r4r-spring-ai-rag] [           main] c.r.r4r.R4rSpringAiRagApplication        : No active profile set, falling back to 1 default profile: \"default\"
+"
+2026/11/07 08:55:25,stdout,2026-11-07T07:55:25.001Z  INFO 1 --- [r4r-spring-ai-rag] [           main] c.r.r4r.R4rSpringAiRagApplication        : Starting R4rSpringAiRagApplication v0.3.2 using Java 21.0.12.1 with PID 1 (/app/app.jar started by root in /app)
+
+2026/11/07 08:55:24,stdout,
+
+2026/11/07 08:55:24,stdout, :: Spring Boot ::                (v3.4.5)
+
+2026/11/07 08:55:24,stdout,
+
+2026/11/07 08:55:24,stdout, =========|_|==============|___/=/_/_/_/
+
+2026/11/07 08:55:24,stdout,"  '  |____| .__|_| |_|_| |_\__, | / / / /
+"
+2026/11/07 08:55:24,stdout, \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+
+2026/11/07 08:55:24,stdout,( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+
+2026/11/07 08:55:24,stdout, /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+
+2026/11/07 08:55:24,stdout,  .   ____          _            __ _ _
+
+2026/11/07 08:55:24,stdout,
+
