@@ -1,6 +1,6 @@
 # R4R — Plan de arquitectura modular pgvector + Amazon S3 Vectors + failover
 
-Fecha de investigación: **7 de noviembre de 2026**. Actualización: fase 2 autorizada e integrada sobre **a2f39bee79a78ab9e129ec581fc9721830ec2c01**. Estado: **fase 2 implementada, validación parcial por configuración de test ausente y fallos previos del gate histórico; fases 3 y 4 NO iniciadas**. Las observaciones de fase 1 se conservan como históricas donde se indica.
+Fecha de investigación: **7 de noviembre de 2026**. Actualización: fase 2 autorizada e integrada sobre **a2f39bee79a78ab9e129ec581fc9721830ec2c01**. Estado: **fase 2 implementada, validación parcial por configuración de test ausente y fallos previos del gate histórico; fase 3 solo con esqueletos autorizados (sin implementación); fase 4 NO iniciada**. Las observaciones de fase 1 se conservan como históricas donde se indica.
 
 Convenciones de evidencia utilizadas en todo el documento:
 
@@ -284,7 +284,89 @@ El gate histórico ejecuta Python en fixtures temporales y después Maven. Los f
 
 ## 10. Fase 3: implementación de S3 Vectors
 
-**PLAN, NO EJECUTADA.** Añadir AWS SDK for Java **2.x**, BOM `software.amazon.awssdk:bom` con versión exacta fijada tras verificar compatibilidad y módulo `software.amazon.awssdk:s3vectors`. No actualizar Spring AI/Boot como parte de ello. `S3VectorsClient` existe en el [SDK Java oficial](https://docs.aws.amazon.com/java/api/latest/software/amazon/awssdk/services/s3vectors/S3VectorsClient.html); sus modelos admiten put/query/get/list/delete. **[PENDIENTE]** Resolver versión Maven concreta, dependencias transitivas y soporte del API actual con Java 21 mediante compilación futura, sin descargar nada ahora.
+### Preparación de contratos autorizada después de fase 2
+
+El usuario autorizó únicamente anticipar nombres/clases principales, sin implementar métodos y comprobando compilación, sin tests. Los cambios pendientes de fase 2 se conservan. HEAD observado al iniciar este encargo: `c81f9006ee351ab0b730ec9ce3542a5ab181c515` (avance realizado fuera de esta sesión; no se hicieron operaciones de historial).
+
+| Tipo creado | Contrato preliminar |
+| --- | --- |
+| `vector.s3vectors.S3VectorsKnowledgeStore` | Implementa el puerto existente `KnowledgeVectorStore`: index, replaceSource y search. Todos lanzan `UnsupportedOperationException`. |
+| `vector.s3vectors.S3VectorMetadataMapper` | `toMetadata(MarkdownChunk)` y `fromMetadata(Map<String,Object>)`, sin lógica. Campos previstos source/headingPath/ordinal/source_text; solo source_text no filtrable. |
+| `vector.s3vectors.S3VectorScoreMapper` | `toScore(double)` y `meetsThreshold(double,double)`, sin fórmula ni validación implementadas. |
+| `vector.config.RagVectorProperties` | Record pasivo primary/failoverEnabled/s3vectors; record anidado S3Vectors para región/bucket/index y tres timeouts. Sin binding, defaults o validación. |
+| `vector.config.S3VectorsConfiguration` | Ubicación reservada de wiring; sin anotaciones Spring ni métodos de fábrica implementados. |
+
+**Uso previsto por otro agente:** inyectar siempre `KnowledgeVectorStore` en consumidores. El puerto ya existe: no añadir otra interfaz para S3 ni cambiar el consumidor para usar la clase concreta. Al implementar fase 3, añadir SDK v2 y constructor tipado con S3VectorsClient, el EmbeddingModel existente, propiedades y mappers; la firma de construcción se aplaza hasta incorporar el SDK, evitando un cliente Object o una interfaz de transporte redundante. Mapper metadata usa tipos Java neutros, no presupone conversión AWS implementada.
+
+#### Archivos y firmas disponibles para el siguiente agente
+
+Todas las rutas siguientes son relativas a `src/main/java/com/riansares/r4r/`. **[CÓDIGO]** Se han creado y compilado estos contratos; sus responsabilidades futuras son **[DISEÑO]**, no funcionalidad implementada.
+
+| Archivo | Firmas públicas actuales | Responsabilidad futura |
+| --- | --- | --- |
+| `vector/s3vectors/S3VectorsKnowledgeStore.java` | `void index(List<MarkdownChunk> chunks)`; `void replaceSource(String source, List<MarkdownChunk> chunks)`; `List<MarkdownChunk> search(String query, int topK, double minScore)` | Adaptador del mismo puerto que PG: escritura explícita y recuperación con los contratos de identidad, contexto, orden, umbral y citas existentes. |
+| `vector/s3vectors/S3VectorMetadataMapper.java` | `Map<String,Object> toMetadata(MarkdownChunk chunk)`; `MarkdownChunk fromMetadata(Map<String,Object> metadata)` | Conversión bidireccional entre chunk y metadata neutra. La conversión adicional a valores `Document` del SDK AWS todavía no existe. |
+| `vector/s3vectors/S3VectorScoreMapper.java` | `double toScore(double cosineDistance)`; `boolean meetsThreshold(double cosineDistance, double minScore)` | Encapsular conversión y comparación estricta después de validar la semántica numérica; no hay fórmula ni comprobaciones implementadas. |
+| `vector/config/RagVectorProperties.java` | Record `RagVectorProperties(String primary, boolean failoverEnabled, S3Vectors s3vectors)` | Transportar configuración del proveedor sin credenciales. Es pasivo: no está asociado aún a Spring ni aplica defaults. |
+| `vector/config/S3VectorsConfiguration.java` | Clase vacía, sin métodos de fábrica ni anotaciones | Lugar reservado para crear condicionalmente cliente AWS/adaptador y enlazar propiedades cuando se autorice implementar fase 3. |
+
+`RagVectorProperties.S3Vectors` es un record público anidado con constructor:
+
+```java
+S3Vectors(
+    String region,
+    String bucket,
+    String index,
+    Duration connectTimeout,
+    Duration apiCallAttemptTimeout,
+    Duration apiCallTimeout
+)
+```
+
+Los records aportan únicamente constructores y accessors generados por Java. No validan nulls, nombres, duración, dimensión o región. No hay `@ConfigurationProperties`, `@EnableConfigurationProperties`, defaults ni lectura de variables de entorno asociada a ellos. `primary=pgvector` y `failoverEnabled=false` son valores previstos, no defaults ejecutados por este record.
+
+Las tres clases de `vector.s3vectors` son `final`, tienen constructor sin argumentos implícito y **todos sus métodos operativos lanzan `UnsupportedOperationException`** con mensaje de operación no implementada. No devuelven vacíos o éxitos ficticios. No existe una excepción personalizada `NotImplementedException`, ni se ha añadido una dependencia para obtenerla. La construcción sin argumentos solo permite disponer del esqueleto: no proporciona un cliente ni permite usarlo en producción.
+
+#### Dependencias y secuencia de conexión previstas, todavía no ejecutadas
+
+```text
+Consumidor RAG -> KnowledgeVectorStore
+                       |
+                       +-> PgVectorKnowledgeStore       [único bean activo]
+                       +-> S3VectorsKnowledgeStore      [esqueleto no registrado]
+
+S3VectorsConfiguration                                 [ubicación reservada]
+  -> RagVectorProperties / S3Vectors                    [contrato pasivo]
+  -> S3VectorsClient del SDK Java 2.x                   [dependencia pendiente]
+  -> EmbeddingModel de Spring AI ya existente           [reutilizar, no sustituir]
+  -> S3VectorMetadataMapper / S3VectorScoreMapper       [métodos no implementados]
+```
+
+Al implementar con autorización: fijar versión SDK y añadir construcción tipada; enlazar/validar propiedades; implementar mappers y adaptador con clientes simulados; resolver expansión de encabezados y score; finalmente conectar selección condicional sin ambigüedad con el bean PG existente. No añadir un segundo puerto de almacenamiento ni un bean S3 incondicional. El constructor definitivo del adaptador y los métodos `@Bean` **no están fijados ni presentes**; el agente deberá introducirlos al disponer de los tipos SDK reales.
+
+Metadata prevista: `source` ↔ `MarkdownChunk.source()`, `headingPath` ↔ `headingPath()`, `ordinal` ↔ `index()` y `source_text` ↔ `content()`. Solo `source_text` es no filtrable en el índice informado. El mapper no genera ni representa la key UUID; su conservación corresponde al adaptador/importación. No regenerar IDs ni embeddings al preparar la transferencia manual del corpus estático.
+
+Recursos que deberá respetar la futura implementación: `amzn-r4r-vectors` / `amzn-r4r-vector-index`, región prevista `eu-north-1`, 768 dimensiones, COSINE y SSE-S3. Son datos proporcionados por el usuario, pendientes de comprobar con autorización antes de conectar. Los esqueletos no hacen llamadas para verificarlos ni crean recursos.
+
+#### Límites y validación del entregable preliminar
+
+No se implementaron generación de embeddings, SDK/HTTP, búsqueda, indexación, borrado, serialización, umbrales, validación, recuperación ampliada de contexto, credenciales, timeouts efectivos ni selección de proveedor. No hay tareas de sincronización automática ni clases de failover de fase 4. `KnowledgeVectorStoreConfiguration` sigue registrando únicamente PG y no se ha modificado para usar estos esqueletos.
+
+La única verificación ejecutada para el código preliminar fue `mvn -o -DskipTests compile`, con resultado **BUILD SUCCESS** bajo Java 21. Compilar acredita firmas y sintaxis, no funcionamiento de S3, compatibilidad de scores, arranque con S3 ni conectividad AWS. No se ejecutaron tests en este encargo preliminar. Esta ampliación documental posterior tampoco modifica Java ni requiere repetir compilación; se comprueba el diff del documento.
+
+Estos esqueletos no son beans activos ni una implementación utilizable: no instanciarlos ni conectarlos a la configuración efectiva todavía. PostgreSQL sigue siendo el único almacén registrado. No se añade SDK/POM, sincronizador, outbox, migraciones, recursos AWS, transferencia manual ni failover. Esta autorización sustituye únicamente la prohibición previa de crear esqueletos; el desarrollo funcional de fase 3 y toda fase 4 siguen pendientes de autorización.
+
+Validación de este encargo: **PASSED**, `mvn -o -DskipTests compile` (Java 21), sin tests ni arranque Spring, sin acceso AWS ni DB. Log local `/tmp/r4r-phase3-skeleton-compile.log`. Whitespace de staged/unstaged correcto. Solo se añaden las cinco clases indicadas y se actualiza este plan; cambios de fase 2 preservados, sin operaciones Git de escritura.
+
+Mensaje de commit propuesto (solo texto):
+
+```text
+chore(vector): scaffold S3 Vectors adapter and configuration contracts.
+Keep all operations unimplemented and PostgreSQL as the active provider.
+```
+
+
+**IMPLEMENTACIÓN FUNCIONAL PENDIENTE; solo esqueletos creados por autorización posterior.** Añadir AWS SDK for Java **2.x**, BOM `software.amazon.awssdk:bom` con versión exacta fijada tras verificar compatibilidad y módulo `software.amazon.awssdk:s3vectors`. No actualizar Spring AI/Boot como parte de ello. `S3VectorsClient` existe en el [SDK Java oficial](https://docs.aws.amazon.com/java/api/latest/software/amazon/awssdk/services/s3vectors/S3VectorsClient.html); sus modelos admiten put/query/get/list/delete. **[PENDIENTE]** Resolver versión Maven concreta, dependencias transitivas y soporte del API actual con Java 21 mediante compilación futura, sin descargar nada ahora.
 
 **[DOC]** AWS enumera **Europa (Estocolmo), `eu-north-1`** como región prevista; la disponibilidad y endpoint efectivo deben revalidarse antes de conectar. Fuente de fase 1: [regiones y endpoints](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-regions-quotas.html). No prueba habilitación de cuenta, conectividad, IAM ni existencia de recursos. Revalidar antes de conectar; no crear recursos adicionales.
 
@@ -381,7 +463,7 @@ r4r:
 
 No propiedades de sincronización, edad máxima automática ni polling del corpus estático. La elegibilidad de S3 depende de la verificación manual antes de activación; si se cambia el corpus, suspender activación/lectura secundaria hasta reconciliarlo manualmente. No asumir que 24 horas invalida un corpus estático correcto.
 
-Futuro `RagVectorProperties`: validar primary `pgvector|s3vectors`, failover solo PG→S3 en primera versión, nombres/región/timeouts al necesitar AWS. Con AWS deshabilitado no crear cliente ni resolver credenciales. No introducir estas clases/configuraciones antes de fase 3.
+Futuro `RagVectorProperties`: validar primary `pgvector|s3vectors`, failover solo PG→S3 en primera versión, nombres/región/timeouts al necesitar AWS. Con AWS deshabilitado no crear cliente ni resolver credenciales. Los contratos pasivos se anticiparon por autorización posterior; no activar binding/configuración hasta implementar fase 3.
 
 Conservar `RAG_EMBEDDING_MODEL=nomic-embed-text:latest`, dimensiones 768 y `RAG_EMBEDDING_BASE_URL`; importación manual reutiliza embeddings ya almacenados. Región/nombres del cliente deben coincidir con recursos existentes comprobados posteriormente. Credenciales por cadena estándar del SDK; no duplicarlas en YAML ni agentes. No leer ni sobrescribir `.env` activo.
 
