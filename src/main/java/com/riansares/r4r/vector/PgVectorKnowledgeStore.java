@@ -118,8 +118,41 @@ public class PgVectorKnowledgeStore {
                 .build();
 
         return vectorStore.similaritySearch(request).stream()
+                .map(this::expandSectionHeading)
                 .map(this::fromDocument)
                 .toList();
+    }
+
+    /** Heading-only chunks need their own section's evidence, not an invented answer. */
+    private Document expandSectionHeading(Document document) {
+        String text = document.getText();
+        if (text == null || !text.strip().matches("#{1,6}\\s+[^\\r\\n]+")) {
+            return document;
+        }
+        Map<String, Object> metadata = document.getMetadata();
+        String source = metadataString(metadata, SOURCE_METADATA);
+        List<String> path = metadataStringList(metadata, HEADING_PATH_METADATA);
+        String encodedPath;
+        try {
+            encodedPath = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(path);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+            throw new IllegalStateException("Cannot encode section path", ex);
+        }
+        List<String> children = jdbcTemplate.queryForList("""
+                SELECT content FROM vector_store
+                WHERE id::text <> ? AND metadata->>'source' = ?
+                  AND metadata->'headingPath' @> ?::jsonb
+                  AND jsonb_array_length(metadata->'headingPath') > ?
+                ORDER BY (metadata->>'ordinal')::integer
+                LIMIT 3
+                """, String.class, document.getId(), source, encodedPath, path.size());
+        StringBuilder context = new StringBuilder(text);
+        for (String child : children) {
+            if (context.length() + child.length() + 2 > 6000) break;
+            context.append("\n\n").append(child);
+        }
+        return Document.builder().id(document.getId()).text(context.toString())
+                .metadata(metadata).score(document.getScore()).build();
     }
 
     private List<Document> prepareDocuments(

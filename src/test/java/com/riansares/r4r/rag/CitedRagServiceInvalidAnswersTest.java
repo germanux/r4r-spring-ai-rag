@@ -83,12 +83,29 @@ class CitedRagServiceInvalidAnswersTest {
             assertThat(result.abstention()).isFalse();
             assertThat(result.answer()).isEqualTo("Evidence [S1][S2].");
         }
-        for (String answer : List.of("Evidence [S3].", "Evidence [S1, S3].", "Evidence [S0].", "Evidence [S999999999999999999999].", "[S1, S2]")) {
+        for (String answer : List.of("Evidence [S3].", "Evidence [S1, S3].", "Evidence [S0].", "Evidence [S999999999999999999999].", "[S1, S2]", "Evidence [S1: FAQ-001].")) {
             when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse(answer));
             RagResult result = service.answer("test question");
             assertThat(result.abstention()).as(answer).isTrue();
             assertThat(result.answer()).isEmpty();
             assertThat(result.citations()).isEmpty();
+        }
+    }
+
+    @Test
+    void normalizesFaqReferencesOnlyWhenTheIdentifierBelongsToThatEvidence() {
+        when(knowledgeStore.search("test question", TEST_TOP_K, TEST_MIN_SCORE)).thenReturn(List.of(
+                new MarkdownChunk("faq.md", List.of("Presupuesto"), 0,
+                        "### FAQ-001 — Orientación\nFacilita ubicación y medidas.")));
+        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Facilita ubicación y medidas [S1: FAQ-001]."));
+        RagResult result = service.answer("test question");
+        assertThat(result.abstention()).isFalse();
+        assertThat(result.answer()).isEqualTo("Facilita ubicación y medidas [S1].");
+        assertThat(result.citations()).extracting(Citation::label).containsExactly("[S1]");
+        for (String answer : List.of("Facilita datos [S1: FAQ-999].", "Facilita datos [S2: FAQ-001].",
+                "Facilita datos [S01: FAQ-001].", "[S1: FAQ-001]")) {
+            when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse(answer));
+            assertThat(service.answer("test question").abstention()).as(answer).isTrue();
         }
     }
 

@@ -17,7 +17,7 @@ class LocalRetrievalQueryTranslatorTest {
         var model = mock(ChatModel.class);
         when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
             Prompt prompt = invocation.getArgument(0);
-            assertThat(prompt.getContents()).contains("Do not add facts or answer it", "houses = viviendas", "offices = oficinas", "What renovations?");
+            assertThat(prompt.getContents()).contains("Do not add facts or answer it", "houses = viviendas", "offices = oficinas", "estimate = presupuesto", "concrete slab = solera", "What renovations?");
             return response(" ¿Qué reformas? ");
         });
         assertThat(new LocalRetrievalQueryTranslator(model).translate("What renovations?")).isEqualTo("¿Qué reformas?");

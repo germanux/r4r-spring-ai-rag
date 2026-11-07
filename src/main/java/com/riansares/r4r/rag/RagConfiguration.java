@@ -20,6 +20,9 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties({RagRetrievalProperties.class, OllamaChatProperties.class})
 public class RagConfiguration {
 
+    @Value("${spring.ai.ollama.chat.think:false}")
+    private boolean think;
+
     @Bean
     List<GenerationRouter.Target> generationTargets(OllamaChatProperties properties,
             @Value("${r4r.rag.generation.fallback-base-url}") String fallbackUrl,
@@ -64,9 +67,9 @@ public class RagConfiguration {
             @Value("${r4r.rag.generation.fallback-model}") String fallbackModel,
             @Value("${r4r.rag.generation.connect-timeout:2s}") Duration connectTimeout,
             @Value("${r4r.rag.generation.probe-timeout:2s}") Duration probeTimeout,
-            @Value("${r4r.rag.generation.translation-read-timeout:12s}") Duration translationReadTimeout) {
-        // Translation is short; do not spend the answer's 120-second browser budget
-        // waiting twice for hung local models. Share remote call quota with generation.
+            @Value("${r4r.rag.generation.translation-read-timeout:30s}") Duration translationReadTimeout) {
+        // Bound each translation attempt within the 180-second stream/browser budget.
+        // Share remote call quota with generation.
         var translation = new java.util.ArrayList<>(List.of(
                 target("PC principal", pcUrl, pcModel, properties.getOptions(), connectTimeout, probeTimeout, translationReadTimeout),
                 target("Portátil ASUS", fallbackUrl, fallbackModel, properties.getOptions(), connectTimeout, probeTimeout, translationReadTimeout)));
@@ -81,7 +84,8 @@ public class RagConfiguration {
         // Slow/hung inference must eventually release the request for the next provider.
         generationHttp.setReadTimeout(readTimeout);
         OllamaApi api = OllamaApi.builder().baseUrl(url)
-                .restClientBuilder(RestClient.builder().requestFactory(generationHttp)).build();
+                .restClientBuilder(RestClient.builder().requestFactory(generationHttp)
+                        .requestInterceptor(new OllamaThinkingInterceptor(think))).build();
         SimpleClientHttpRequestFactory probeHttp = new SimpleClientHttpRequestFactory();
         probeHttp.setConnectTimeout(connectTimeout);
         probeHttp.setReadTimeout(probeTimeout);

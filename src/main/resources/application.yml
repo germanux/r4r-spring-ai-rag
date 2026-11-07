@@ -60,8 +60,9 @@ r4r:
       connect-timeout: 2s
       probe-timeout: 2s
       fallback-read-timeout: ${RAG_FALLBACK_READ_TIMEOUT:60s}
+      translation-read-timeout: ${RAG_TRANSLATION_READ_TIMEOUT:30s}
     retrieval:
-      top-k: 3
+      top-k: 5
       min-score: 0.63
   api-security:
     # Protección ligera para la demo pública. No sustituye autenticación real.
