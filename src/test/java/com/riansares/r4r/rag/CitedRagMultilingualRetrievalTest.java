@@ -1,6 +1,6 @@
 package com.riansares.r4r.rag;
 
-import com.riansares.r4r.vector.PgVectorKnowledgeStore;
+import com.riansares.r4r.vector.pgvector.PgVectorKnowledgeStore;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;

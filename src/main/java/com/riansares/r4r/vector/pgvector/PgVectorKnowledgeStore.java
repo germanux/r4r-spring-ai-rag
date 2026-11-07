@@ -1,11 +1,11 @@
-package com.riansares.r4r.vector;
+package com.riansares.r4r.vector.pgvector;
 
 import com.riansares.r4r.chunking.MarkdownChunk;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Service;
+import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.ByteBuffer;
@@ -14,8 +14,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
-@Service
-public class PgVectorKnowledgeStore {
+public class PgVectorKnowledgeStore implements KnowledgeVectorStore {
 
     static final String SOURCE_METADATA = "source";
     static final String HEADING_PATH_METADATA = "headingPath";
@@ -39,6 +38,7 @@ public class PgVectorKnowledgeStore {
      * Replaces every source represented by the supplied chunks.
      * The complete request is validated before the first database mutation.
      */
+    @Override
     @Transactional
     public void index(List<MarkdownChunk> chunks) {
         if (chunks == null) {
@@ -72,6 +72,7 @@ public class PgVectorKnowledgeStore {
     /**
      * Replaces one source explicitly. An empty list removes that source.
      */
+    @Override
     @Transactional
     public void replaceSource(
             String source,
@@ -94,6 +95,7 @@ public class PgVectorKnowledgeStore {
         replacePreparedSource(source, documents);
     }
 
+    @Override
     public List<MarkdownChunk> search(
             String query,
             int topK,

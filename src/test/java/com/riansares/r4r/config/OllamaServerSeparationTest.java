@@ -3,7 +3,7 @@ package com.riansares.r4r.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.riansares.r4r.rag.GenerationRouter;
 import com.riansares.r4r.rag.RagConfiguration;
-import com.riansares.r4r.vector.PgVectorKnowledgeStore;
+import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.model.ChatModel;
@@ -95,7 +95,7 @@ class OllamaServerSeparationTest {
                 })
                 .withConfiguration(AutoConfigurations.of(OllamaEmbeddingAutoConfiguration.class, OllamaChatAutoConfiguration.class))
                 .withUserConfiguration(OllamaEmbeddingConfiguration.class, RagConfiguration.class)
-                .withBean(PgVectorKnowledgeStore.class, () -> mock(PgVectorKnowledgeStore.class));
+                .withBean(KnowledgeVectorStore.class, () -> mock(KnowledgeVectorStore.class));
     }
 
     private HttpServer server(String name, String model, List<String> operations) throws Exception {

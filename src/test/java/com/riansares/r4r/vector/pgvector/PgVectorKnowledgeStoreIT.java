@@ -1,6 +1,9 @@
-package com.riansares.r4r.vector;
+package com.riansares.r4r.vector.pgvector;
 
 import com.riansares.r4r.chunking.MarkdownChunk;
+import com.riansares.r4r.vector.PgVectorTestConfiguration;
+import com.riansares.r4r.vector.DeterministicEmbeddingModel;
+import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.document.Document;
@@ -31,6 +34,9 @@ class PgVectorKnowledgeStoreIT {
 
     @Autowired
     private EmbeddingModel embeddingModel;
+
+    @Autowired
+    private KnowledgeVectorStore knowledgeStore;
 
     @BeforeEach
     void clearVectorStore() {
@@ -90,6 +96,7 @@ class PgVectorKnowledgeStoreIT {
 
     @Test
     void deterministicEmbeddingModelIsLocalStableAnd768Dimensional() {
+        assertThat(knowledgeStore).isSameAs(store);
         assertThat(embeddingModel)
                 .isInstanceOf(DeterministicEmbeddingModel.class);
 
@@ -126,7 +133,7 @@ class PgVectorKnowledgeStoreIT {
         // Test controlled relevant/irrelevant texts produce distinguishable vectors
         float[] relevant = model.embed(document("apple banana cherry date"));
         float[] irrelevant = model.embed(document("xyz abc def ghi"));
-        
+
         // Vectors should not be equal (cosine similarity < 1.0)
         assertThat(relevant).isNotEqualTo(irrelevant);
     }
@@ -242,7 +249,7 @@ class PgVectorKnowledgeStoreIT {
         store.index(List.of(
                 chunk("existing-a.md", 0, "Original A0"),
                 chunk("existing-b.md", 0, "Original B0")));
-        
+
         List<StoredRow> beforeState = snapshotAllRows();
 
         // Submit valid earlier source followed by later source with duplicate logical identities
@@ -257,7 +264,7 @@ class PgVectorKnowledgeStoreIT {
 
         // Compare complete pre-existing state for all involved sources
         List<StoredRow> afterState = snapshotAllRows();
-        
+
         // Verify no mutation occurred - before and after should be identical
         assertThat(afterState).isEqualTo(beforeState);
     }
@@ -311,7 +318,7 @@ class PgVectorKnowledgeStoreIT {
 
         // Verify we got results
         assertThat(strict).isNotEmpty();
-        
+
         List<String> sources = strict.stream()
                 .map(MarkdownChunk::source)
                 .toList();
@@ -330,7 +337,7 @@ class PgVectorKnowledgeStoreIT {
         List<MarkdownChunk> withNull = new ArrayList<>();
         withNull.add(chunk("valid.md", 0, "Valid"));
         withNull.add(null);
-        
+
         assertThatThrownBy(() -> store.index(withNull))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("chunk must not be null");

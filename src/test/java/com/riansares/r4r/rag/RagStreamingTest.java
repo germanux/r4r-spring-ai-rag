@@ -1,6 +1,7 @@
 package com.riansares.r4r.rag;
 
-import com.riansares.r4r.vector.PgVectorKnowledgeStore;
+import com.riansares.r4r.vector.pgvector.PgVectorKnowledgeStore;
+import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -112,7 +113,7 @@ class RagStreamingTest {
     }
 
     @Test void translationEventsOnlyWhenBackendActuallyTranslates() {
-        var store = mock(PgVectorKnowledgeStore.class);
+        var store = mock(KnowledgeVectorStore.class);
         when(store.search(anyString(), anyInt(), anyDouble())).thenReturn(List.of());
         var translator = mock(LocalRetrievalQueryTranslator.class);
         when(translator.translate("Question")).thenReturn("Pregunta");

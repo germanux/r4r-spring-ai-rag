@@ -1,7 +1,7 @@
 package com.riansares.r4r.rag;
 
 import com.riansares.r4r.chunking.MarkdownChunk;
-import com.riansares.r4r.vector.PgVectorKnowledgeStore;
+import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 public class CitedRagService {
 
 
-    private final PgVectorKnowledgeStore knowledgeStore;
+    private final KnowledgeVectorStore knowledgeStore;
     private final ChatModel chatModel;
     private final int retrievalTopK;
     private final double minScore;
@@ -61,14 +61,14 @@ public class CitedRagService {
      * @param chatModel      the chat model for answer generation
      */
     public CitedRagService(
-            PgVectorKnowledgeStore knowledgeStore,
+            KnowledgeVectorStore knowledgeStore,
             ChatModel chatModel,
             int retrievalTopK,
             double minScore) {
         this(knowledgeStore, chatModel, retrievalTopK, minScore, null);
     }
 
-    public CitedRagService(PgVectorKnowledgeStore knowledgeStore, ChatModel chatModel,
+    public CitedRagService(KnowledgeVectorStore knowledgeStore, ChatModel chatModel,
                           int retrievalTopK, double minScore, LocalRetrievalQueryTranslator translator) {
         this.translator = translator;
         this.knowledgeStore = Objects.requireNonNull(knowledgeStore, "knowledgeStore");

@@ -1,7 +1,7 @@
 package com.riansares.r4r.rag;
 
 import com.riansares.r4r.chunking.MarkdownChunk;
-import com.riansares.r4r.vector.PgVectorKnowledgeStore;
+import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -23,13 +23,13 @@ class CitedRagServiceTest {
     private static final int TEST_TOP_K = 3;
     private static final double TEST_MIN_SCORE = 0.42;
 
-    private PgVectorKnowledgeStore knowledgeStore;
+    private KnowledgeVectorStore knowledgeStore;
     private ChatModel chatModel;
     private CitedRagService service;
 
     @BeforeEach
     void setUp() {
-        knowledgeStore = mock(PgVectorKnowledgeStore.class);
+        knowledgeStore = mock(KnowledgeVectorStore.class);
         chatModel = mock(ChatModel.class);
         service = new CitedRagService(knowledgeStore, chatModel, TEST_TOP_K, TEST_MIN_SCORE);
     }

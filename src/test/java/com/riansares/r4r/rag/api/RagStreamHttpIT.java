@@ -2,7 +2,7 @@ package com.riansares.r4r.rag.api;
 
 import com.riansares.r4r.rag.GenerationRouter;
 import com.riansares.r4r.rag.RagProgress;
-import com.riansares.r4r.vector.PgVectorKnowledgeStore;
+import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import com.riansares.r4r.vector.PgVectorTestConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -41,7 +41,7 @@ import static org.mockito.Mockito.*;
 class RagStreamHttpIT {
     @LocalServerPort int port;
     @org.springframework.beans.factory.annotation.Autowired RagStreamController streams;
-    @MockBean PgVectorKnowledgeStore store;
+    @MockBean KnowledgeVectorStore store;
     @MockBean GenerationRouter router;
 
     @org.junit.jupiter.params.ParameterizedTest

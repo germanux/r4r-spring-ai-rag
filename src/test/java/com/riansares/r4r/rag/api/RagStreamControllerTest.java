@@ -1,7 +1,7 @@
 package com.riansares.r4r.rag.api;
 
 import com.riansares.r4r.rag.*;
-import com.riansares.r4r.vector.PgVectorKnowledgeStore;
+import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class RagStreamControllerTest {
-    private final PgVectorKnowledgeStore store = mock(PgVectorKnowledgeStore.class);
+    private final KnowledgeVectorStore store = mock(KnowledgeVectorStore.class);
     private final ChatModel pc = mock(ChatModel.class), laptop = mock(ChatModel.class);
     private final GenerationRouter router = new GenerationRouter(
             new GenerationRouter.Target(new GenerationRouter.Provider("PC principal", "http://private-pc", "qwen3:8b"), pc, () -> true),

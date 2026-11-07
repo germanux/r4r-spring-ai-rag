@@ -1,4 +1,4 @@
-package com.riansares.r4r.vector;
+package com.riansares.r4r.vector.pgvector;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.document.Document;

@@ -15,7 +15,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 class OpenAiFallbackTest {
     @Test void englishSearchAndAnswerUseRemoteWhenMyMemoryAndBothLocalsAreUnavailable() {
-        var store = mock(com.riansares.r4r.vector.PgVectorKnowledgeStore.class);
+        var store = mock(com.riansares.r4r.vector.port.KnowledgeVectorStore.class);
         String english = "Does Riansares 4R renovate offices?";
         String spanish = "¿Riansares 4R reforma oficinas?";
         when(store.search(eq(spanish), eq(3), eq(.63)))
@@ -103,7 +103,7 @@ class OpenAiFallbackTest {
     }
     @Test void remoteRetainsRagLanguageContextAndCitations() {
         for(String lang:List.of("es","en")) {
-            var store=mock(com.riansares.r4r.vector.PgVectorKnowledgeStore.class);
+            var store=mock(com.riansares.r4r.vector.port.KnowledgeVectorStore.class);
             when(store.search(anyString(),eq(3),eq(.63))).thenReturn(List.of(new com.riansares.r4r.chunking.MarkdownChunk("services.md",List.of("Services"),0,"Renovates offices.")));
             ChatModel remote = prompt -> {
                 assertThat(prompt.getContents()).contains("Renovates offices.","[S1]","Original question",lang.equals("es")?"Respond in Spanish.":"Respond in English.");

@@ -1,7 +1,7 @@
 package com.riansares.r4r.rag;
 
 import com.riansares.r4r.config.RagRetrievalProperties;
-import com.riansares.r4r.vector.PgVectorKnowledgeStore;
+import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.ollama.api.OllamaOptions;
@@ -103,7 +103,7 @@ public class RagConfiguration {
 
     @Bean
     CitedRagService citedRagService(
-            PgVectorKnowledgeStore knowledgeStore,
+            KnowledgeVectorStore knowledgeStore,
             GenerationRouter chatModel,
             RagRetrievalProperties properties,
             LocalRetrievalQueryTranslator translator) {

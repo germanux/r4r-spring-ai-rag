@@ -1,6 +1,6 @@
 # R4R — Plan de arquitectura modular pgvector + Amazon S3 Vectors + failover
 
-Fecha de investigación: **7 de noviembre de 2026**. Actualización: fase 2 autorizada e integrada sobre **a2f39bee79a78ab9e129ec581fc9721830ec2c01**. Estado: **fase 2 en ejecución; fases 3 y 4 NO iniciadas**. Las observaciones de fase 1 se conservan como históricas donde se indica.
+Fecha de investigación: **7 de noviembre de 2026**. Actualización: fase 2 autorizada e integrada sobre **a2f39bee79a78ab9e129ec581fc9721830ec2c01**. Estado: **fase 2 implementada, validación parcial por configuración de test ausente y fallos previos del gate histórico; fases 3 y 4 NO iniciadas**. Las observaciones de fase 1 se conservan como históricas donde se indica.
 
 Convenciones de evidencia utilizadas en todo el documento:
 
@@ -163,11 +163,11 @@ Todas las rutas Java siguientes parten de `src/main/java/com/riansares/r4r/`. **
 | `cli/CatalogConfiguration.java`, `service/KnowledgeCatalogService.java` | Beans de loader/chunker/catálogo; catálogo opcional al arranque, no indexación vectorial. |
 | `ingestion/KnowledgeIngestionService.java` | JDBC, checksum y transacción de sources/chunks; sin `VectorStore` ni llamada al almacén vectorial. |
 | `ingestion/KnowledgeIngestionOrchestration.java`, `KnowledgeIngestionCli.java`, `IngestionConfiguration.java` | Configuración, raíz canónica, resultado JSON y códigos de salida 0–5; arranca contexto Spring no web. Clasificación infra amplia para ingesta, no apta para copiar al failover vectorial. |
-| `vector/PgVectorKnowledgeStore.java` | `@Service`; `index`, `replaceSource` transaccionales; `search` mediante Spring AI y borrado por source mediante JDBC. |
+| `vector/pgvector/PgVectorKnowledgeStore.java` (movido en fase 2) | Bean explícito en configuración; `index`, `replaceSource` transaccionales; `search` mediante Spring AI y borrado por source mediante JDBC. |
 | `config/OllamaEmbeddingConfiguration.java` | Bean exclusivo `OllamaEmbeddingModel`, URL de embeddings independiente, cliente Spring AI con timeouts. |
 | `rag/ObservedEmbeddingModel.java` | Subclase del modelo Ollama; observa una llamada a Spring AI conservando tipo de bean/autoconfiguración. |
-| `rag/CitedRagService.java` | Depende directamente de `PgVectorKnowledgeStore`; búsqueda, contexto, prompt, generación y validación de abstención/citas. |
-| `rag/RagConfiguration.java`, `config/RagRetrievalProperties.java` | Inyecta clase PostgreSQL concreta, Top-K/score, router de generación y traductor. |
+| `rag/CitedRagService.java` | Tras fase 2 depende de `KnowledgeVectorStore`; búsqueda, contexto, prompt, generación y validación de abstención/citas. |
+| `rag/RagConfiguration.java`, `config/RagRetrievalProperties.java` | Tras fase 2 inyecta el puerto común, Top-K/score, router de generación y traductor. |
 | `rag/GenerationRouter.java`, `LocalRetrievalQueryTranslator.java`, `OpenAiResponsesModel.java` | Failover de **generación** existente y traducción auxiliar; fuera del cambio de proveedor vectorial. |
 | `rag/RagProgress.java` | Eventos por petición, cancelación y métricas; scope ThreadLocal solo para embeddings durante recuperación síncrona. |
 | `rag/RagResult.java`, `Citation.java` | Resultado utilizado por servicio/API; citas con label/source/headingPath/ordinal. `CitedRagResult.java` también existe pero no es el retorno del servicio actual. |
@@ -188,7 +188,7 @@ Configuración/esquema y pruebas examinadas:
 - DB: `PostgresBaselineIT`, `DatabaseEnvironmentTest`, `TestDatabaseGuard`. Guard exige URL exacta de test `jdbc:postgresql://192.168.1.203:5433/r4r_rag_test` y usuario `r4r_test`; valida antes de crear beans.
 - Live opt-in: `llm_tests/RagLiveQuestionsIT`, `RagLiveEnglishQuestionsIT`, `LunaLiveIT`, y `rag/OllamaEmbeddingWarmupLiveIT`; no ejecutados aquí.
 - Docker: `docker-spring/Dockerfile` Java 21; `docker-spring/docker-compose.yml`: PostgreSQL/pgvector 16, base de test independiente, Ollama embeddings, API y cloudflared. API depende de salud de PostgreSQL y Ollama. No se ejecutó Compose: su interpolación/importación `.env` no es necesaria para el plan.
-- Gates: `scripts/task-gate.sh`, `scripts/verify.sh`. El primero exige la ruta antigua del adaptador/test; mover paquetes exige actualizar esas referencias en fase 2. `verify.sh all` ejecuta pruebas Python del controlador y `mvn verify`, con escrituras generadas y a DB de test: no es un gate de documentación seguro para fase 1.
+- Gates: `scripts/task-gate.sh`, `scripts/verify.sh`. El primero se ha actualizado a las rutas movidas del adaptador/test; el fallo Python del baseline sigue pendiente fuera del alcance. `verify.sh all` ejecuta pruebas Python del controlador y `mvn verify`, con escrituras generadas y a DB de test: no es un gate de documentación seguro para fase 1.
 - Maven Surefire configura perfil `test` para unitarios; Failsafe **3.5.3**, `integration-test` + `verify`, ejecuta los `*IT`. Varias integraciones truncan tablas/crean triggers y Flyway: reservarlas a la base de test autorizada, jamás a producción.
 
 Documentos leídos de los directorios solicitados: `docs/rag/diagnostico-recuperacion-ingles.md`; `docs/operations/REVISION.md`, `model-warmup.md`, `ollama-server-separation.md`, `openai-fallback.md`, `rag-sse.md`; `docs/validation/r4r-mvp-task5.md`, `r4r-mymemory-restoration.md`. Los benchmarks nuevos de main son trabajo en curso, no baseline final.
@@ -272,7 +272,7 @@ Paquetes `s3vectors`, `routing` y `support` se reservan conceptualmente para fas
 
 ## 9. Fase 2: integración de main y extracción PostgreSQL
 
-**FASE 2 AUTORIZADA, en ejecución.** Integración realizada por el usuario y verificada en sección 2. No repetirla. No modificar main ni AGENTS/DEVELOPMENT.
+**FASE 2 IMPLEMENTADA; aceptación integral pendiente de IT reales y gate histórico.** Integración realizada por el usuario y verificada en sección 2. No repetirla. No modificar main ni AGENTS/DEVELOPMENT.
 
 Secuencia: revisar gate/entorno → baseline → mover adaptador sin alterar cuerpos de métodos → crear puerto/configuración → sustituir tipos de consumidor y mocks → comprobar inyección/ausencia de ambigüedad, búsqueda y transacción a través del puerto → unitarios e IT seguros → registrar resultados y detenerse.
 
@@ -286,7 +286,7 @@ El gate histórico ejecuta Python en fixtures temporales y después Maven. Los f
 
 **PLAN, NO EJECUTADA.** Añadir AWS SDK for Java **2.x**, BOM `software.amazon.awssdk:bom` con versión exacta fijada tras verificar compatibilidad y módulo `software.amazon.awssdk:s3vectors`. No actualizar Spring AI/Boot como parte de ello. `S3VectorsClient` existe en el [SDK Java oficial](https://docs.aws.amazon.com/java/api/latest/software/amazon/awssdk/services/s3vectors/S3VectorsClient.html); sus modelos admiten put/query/get/list/delete. **[PENDIENTE]** Resolver versión Maven concreta, dependencias transitivas y soporte del API actual con Java 21 mediante compilación futura, sin descargar nada ahora.
 
-**[DOC]** AWS enumera **Europa (Estocolmo), `eu-north-1`** como región prevista; la disponibilidad y endpoint efectivo deben revalidarse antes de conectar y firma SigV4 en [regiones y endpoints](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-regions-quotas.html). No prueba habilitación de cuenta, conectividad, IAM ni existencia de recursos. Revalidar antes de cualquier creación.
+**[DOC]** AWS enumera **Europa (Estocolmo), `eu-north-1`** como región prevista; la disponibilidad y endpoint efectivo deben revalidarse antes de conectar. Fuente de fase 1: [regiones y endpoints](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-regions-quotas.html). No prueba habilitación de cuenta, conectividad, IAM ni existencia de recursos. Revalidar antes de conectar; no crear recursos adicionales.
 
 **[INFORMADO POR EL USUARIO, NO INSPECCIONADO EN AWS]** Recursos ya creados: vector bucket **`amzn-r4r-vectors`**, índice **`amzn-r4r-vector-index`**, región prevista **`eu-north-1`**, 768 dimensiones, **COSINE**, metadata no filtrable **`source_text`**, cifrado **SSE-S3**. Sustituyen todos los nombres provisionales. No crear índices adicionales ni cambiar ese esquema desde el adaptador. Confirmar región/GetIndex/metadata/cifrado con permiso posterior antes de conectar/importar.
 
@@ -458,6 +458,45 @@ Tras integración, las regresiones frontend existentes pueden ejecutarse por el 
 
 Criterios de salida: fase 2, baseline final conservado + gate exacto verde + diff acotado; fase 3, adaptador simulado compatible con la configuración existente + PG por defecto funcional sin AWS; fase 4, clasificación/recuperación/errores y arranque aislado probados. **Activación real** exige además integridad/score/recall/equivalencia del snapshot medidos en AWS autorizado y aprobación operativa. Codex independiente entrega evidencia al usuario; no inventa registro de aceptación Ring.
 
+### Resultado real de fase 2 (sobre a2f39bee)
+
+**Implementación completada; aceptación integral pendiente, no se declara gate verde.** PostgreSQL continúa siendo el único almacén activo. Ninguna conexión AWS ni transferencia/exportación de corpus; no se ejecutó benchmark/LLM live ni se cambiaron prompts/configuración operativa. No se abrió conexión JDBC de producción ni se ejecutaron IT destructivas sin configuración de test válida.
+
+| Comprobación ejecutada | Resultado real |
+| --- | --- |
+| Gate baseline `bash scripts/task-gate.sh all` | **FAILED previo al refactor**: Python ejecutó 115 tests, 2 failures y 2 errors; no llegó a Maven. Faltan `scripts/export-r4r-complete-evidence.sh`, `scripts/run-ring-system.sh` y `scripts/ensure-r4r-workers.sh`. No corregidos por estar fuera del alcance. Log `/tmp/r4r-phase2-baseline.log`. |
+| Baseline producto `mvn verify`, live forzados false | **FAILED por entorno antes de editar Java**: 184 unitarios, 2 failures/15 errors. Causas de arranque: POSTGRES_HOST y demás propiedades de test sin resolver; no existe `docker-spring/.env` en este worktree ni POSTGRES_* heredadas. No llegó a IT. Log `/tmp/r4r-phase2-maven-baseline.log`. |
+| Unitarios enfocados después del refactor | **92 PASSED**, 0 fallos/errores. Incluye 4 nuevos tests de configuración/puerto/transaction manager simulado; logs `/tmp/r4r-phase2-focused.log`. Primera pasada detectó una expectativa incorrecta del test nuevo sobre el callback Spring `JdbcTemplate.afterPropertiesSet`, corregida sin alterar producto ni tests existentes. |
+| Unitarios amplios sin dependencias JDBC reales | **163 PASSED**, 0 fallos/errores; incluyen REST, SSE, RAG, traducción, citas, errores, seguridad y modelos simulados. Compilación limpia repetida para eliminar clases antiguas del paquete movido: **40 fuentes de producto y 43 fuentes test compiladas con `javac --release 21`**, 163 PASSED. Log final `/tmp/r4r-phase2-clean-unit.log`. |
+| `DatabaseEnvironmentTest` separado | **5 PASSED**, con variables de resolución conocidas y contraseña **sintética**, sin conexión JDBC. Valida guard, perfil y rechazo de overrides a producción. Log `/tmp/r4r-phase2-db-guard.log`. |
+| PostgreSQL real / rollback con trigger / SSE Tomcat IT | **NOT RUN**: TCP de test responde, pero falta configuración/contraseña local autorizada. No se inventaron credenciales ni se leyó/copió `.env` del worktree principal. Se solicitó configuración local por canal de aclaración; no se recibió como parte de «Continua». La prueba de rollback fue adaptada para inyectar el puerto, sin ejecutarla contra DB. |
+| Unitarios `KnowledgeIngestionSpringLifecycleTest` y `KnowledgeIngestionCliTest` completos | **NOT RUN en pasada final**: arrancan contextos de aplicación que requieren configuración PostgreSQL/Flyway. Conservados sin cambios. |
+| Gate histórico final completo | **No verde**: bloqueo preexistente demostrado en baseline; no se repitió la misma batería Python sin corregir sus causas. La actualización de `task-gate.sh` es solo de rutas movidas y pasa `bash -n`. |
+| Verificación estructural/diff | Cuerpos ejecutables del adaptador idénticos al HEAD final al normalizar package/interface/anotación Service/Override; consumidores productivos solo import/tipo. Esquema V1–V3, POM, YAML, prompts, corpus, benchmarks, AGENTS y DEVELOPMENT sin cambios. Whitespace y alcance revisados. |
+
+Los 92 unitarios enfocados son subconjunto de los 163; **no se suman como casos distintos**. Los 5 del guard son adicionales: **168 casos distintos PASSED en la validación final disponible**, sin afirmar que toda la suite esté verde. La prueba de proxy verifica el mismo bean por interfaz/clase y commit/rollback con gestor simulado; no reemplaza al rollback PostgreSQL real pendiente.
+
+Comando final reproducible sin credenciales reales (solo propiedades no secretas del guard):
+
+```bash
+POSTGRES_HOST=192.168.1.203 POSTGRES_TEST_PORT=5433 \
+POSTGRES_TEST_DB=r4r_rag_test POSTGRES_TEST_USER=r4r_test \
+RAG_LIVE_TEST=false RAG_LIVE_EN_TEST=false RAG_LUNA_LIVE_TEST=false \
+RAG_WARMUP_LIVE_TEST=false RAG_OPENAI_ENABLED=false \
+mvn clean '-Dtest=*,!KnowledgeIngestionSpringLifecycleTest,!KnowledgeIngestionCliTest,!DatabaseEnvironmentTest,!*IT' test
+```
+
+`DatabaseEnvironmentTest` se ejecutó aparte con los mismos valores, POSTGRES_PORT=5432/POSTGRES_DB=r4r_rag solo para comprobar resolución de configuración (no conectar), y contraseña sintética. Con credenciales de test configuradas localmente y guard intacto, pendiente ejecutar `mvn verify` con live apagados para completar IT y contextos de ingesta; después resolver los scripts del sistema histórico en otro alcance antes de exigir gate global verde.
+
+Archivos reales afectados: puerto y configuración nuevos; adaptador PG movido; `CitedRagService` y `RagConfiguration` cambian tipos; tres tests PG movidos, helpers deterministas conservados; cuatro nuevos tests en `KnowledgeVectorStoreConfigurationTest`; mocks/imports adaptados en `OllamaServerSeparationTest`, `LunaLiveIT` (solo compilada, no activada), `CitedRagMultilingualRetrievalTest`, `CitedRagServiceTest`, `CitedRagServiceCitationsTest`, `CitedRagServiceInvalidAnswersTest`, `OpenAiFallbackTest`, `RagStreamingTest`, `RagStreamControllerTest`, `RagStreamHttpIT` (no ejecutada); dos rutas del gate y este documento. Los archivos Java nuevos/movidos siguen sin staged; Git los muestra como borrado + untracked hasta prepararlos. El plan apareció posteriormente como AM (alta en índice y cambios adicionales de trabajo), una modificación externa del índice durante la ejecución; esta sesión no realizó git add ni modificó el índice. Se conserva esa preparación y no se altera HEAD.
+
+Mensaje de commit propuesto, solo texto:
+
+```text
+refactor(vector): decouple RAG retrieval behind KnowledgeVectorStore.
+Preserve pgvector behavior and document manual S3 Vectors loading.
+```
+
 ## 17. Riesgos, incompatibilidades y dependencias
 
 | Riesgo verificado o pendiente | Tratamiento propuesto |
@@ -508,7 +547,7 @@ Al cierre se registra la lista real y los resultados en sección 16. Toda operac
 
 **Resuelto para fase 2:** autorización expresa Codex independiente recibida; agente finalizado según usuario; integración manual a2f39bee comprobada; único plan local preservado. No es necesario modificar AGENTS ni utilizar Ring/controlador. Git reservado al usuario, sin excepciones de historial para Codex.
 
-**Pendiente de cierre de fase 2:** implementación/gates y resultado real en sección 16. Si falla infraestructura, separar unitarios/compilación de IT no ejecutadas; si falla gate histórico, registrar diagnóstico y no rebajar expectativas ni modificar sistema de agentes fuera de alcance.
+**Cierre de implementación de fase 2:** puerto y adaptador entregados, con resultados y limitaciones en sección 16. La aceptación integral sigue pendiente de acceso de test y de corregir fuera de este encargo los fallos históricos del gate. Si falla infraestructura, separar unitarios/compilación de IT no ejecutadas; si falla gate histórico, registrar diagnóstico y no rebajar expectativas ni modificar sistema de agentes fuera de alcance.
 
 **Antes de fase 3:** autorización nueva; versión SDK, comprobación posterior de región/cuenta/índice existente, límites reales metadata (solo source_text no filtrable), contratos de score y expansión de contexto. Recursos informados: amzn-r4r-vectors / amzn-r4r-vector-index, eu-north-1 prevista, 768/COSINE/SSE-S3; existencia/esquema no inspeccionados por Codex. Sin transferencia ni operaciones AWS en fase 2.
 
@@ -517,4 +556,3 @@ Al cierre se registra la lista real y los resultados en sección 16. Toda operac
 **Antes de fase 4/operación:** autorización nueva, corpus manual acreditado, clasificación/tiempos/errores y perfil s3-only probados. Disponibilidad backend/Nomic/generación fuera de Synology es evolución separada. Fase 2 no activa AWS ni failover vectorial.
 
 Mensaje de commit propuesto al cierre, solo texto; el usuario decide y realiza commit/push. Ninguna autorización de esta fase permite comenzar las fases 3/4.
-

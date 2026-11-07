@@ -38,8 +38,8 @@ ingestion_gate() {
 require_pgvector_artifacts() {
   require_ingestion_artifacts
   require_file src/main/resources/db/migration/V3__pgvector_store.sql
-  require_file src/main/java/com/riansares/r4r/vector/PgVectorKnowledgeStore.java
-  require_file src/test/java/com/riansares/r4r/vector/PgVectorKnowledgeStoreIT.java
+  require_file src/main/java/com/riansares/r4r/vector/pgvector/PgVectorKnowledgeStore.java
+  require_file src/test/java/com/riansares/r4r/vector/pgvector/PgVectorKnowledgeStoreIT.java
 }
 
 require_rag_artifacts() {

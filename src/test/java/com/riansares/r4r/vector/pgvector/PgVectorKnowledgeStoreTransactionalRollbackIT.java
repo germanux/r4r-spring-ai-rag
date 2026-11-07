@@ -1,6 +1,8 @@
-package com.riansares.r4r.vector;
+package com.riansares.r4r.vector.pgvector;
 
 import com.riansares.r4r.chunking.MarkdownChunk;
+import com.riansares.r4r.vector.PgVectorTestConfiguration;
+import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,13 +33,13 @@ class PgVectorKnowledgeStoreTransactionalRollbackIT {
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private PgVectorKnowledgeStore store;
+    private KnowledgeVectorStore store;
 
     @BeforeEach
     void prepareDatabase() {
         dropFailureObjects();
         jdbcTemplate.execute("TRUNCATE TABLE vector_store");
-        
+
         // Seed through the real store
         store.replaceSource("rollback-source.md", List.of(
                 new MarkdownChunk(
