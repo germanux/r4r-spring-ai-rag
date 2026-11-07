@@ -351,3 +351,90 @@ centrado en terminología de infraestructura.
   Esta autorización sustituye la anterior ausencia de respaldo remoto; no convierte
   a GPT-5.6 Luna, coordinador de desarrollo, en proveedor de respuestas RAG.
 - Configuración, límites y resultados: `docs/operations/openai-fallback.md`.
+
+## Auditoría de seguridad SSE — tarea autorizada el 2026-11-07
+
+### Contexto e instrucciones explícitas de este encargo
+
+- Leer íntegramente esta memoria y revisar Git/SSE antes de editar. Estado inicial:
+  árbol e índice limpios; último cambio `2ee9663`, integración SSE ya existente.
+- Auditar `/api/rag/answers/stream` reutilizando validación de Origin y cuotas
+  REST existentes. No duplicar mecanismos que ya protejan el endpoint.
+- Conservar el control independiente de frecuencia/concurrencia de `/warmup`,
+  Spring MVC, SseEmitter y el contrato REST. Revisar CORS/OPTIONS y ciclo de vida.
+- Cubrir orígenes permitidos/prohibidos/ausentes, cuotas por IP/globales, 403/429,
+  Retry-After, desconexión, timeout y saturación. No llamar al OpenAI real.
+- Actualizar esta sección al terminar con decisiones, pruebas y resultados.
+- El usuario autoriza expresamente un commit exclusivo de esta tarea. Esta
+  autorización concreta prevalece sobre la restricción anterior de no hacer
+  commits en la sesión; no autoriza push, despliegue ni commits futuros.
+
+### Evidencia inicial y comprobaciones pendientes
+
+- El filtro ya incluye explícitamente la ruta SSE y comparte contadores con REST.
+  Warmup valida origen y evita las cuotas de consultas por diseño.
+- Revisar equivalencia entre URI cruda del filtro y ruta resuelta por Spring MVC,
+  visibilidad CORS de Retry-After y respuestas de capacidad del rate limiter.
+- Revisar bloqueos: el scheduler SSE actual ejecuta escrituras de heartbeat y el
+  timeout espera el mismo bloqueo de escritura; un cliente lento puede retrasarlos.
+
+### Decisiones y correcciones comprobadas
+
+- No se añadió otro filtro ni otro rate limiter: SSE ya figuraba en la lista de
+  rutas protegidas y compartía contadores REST. Se amplió la cobertura existente.
+- Se reprodujo en Tomcat real un bypass: `/api/rag/answers/%73tream`,
+  `/api/rag/answers;v=1/stream` y `/api/rag/%61nswers` devolvían HTTP 200 sin Origin
+  antes del arreglo. El filtro comparaba la URI cruda, mientras MVC resolvía las
+  variantes. Se usa UrlPathHelper para comparar rutas decodificadas, relativas al
+  contexto y sin parámetros matriz; ahora los tres casos reciben 403 antes del RAG.
+- Retry-After se expone mediante CORS también cuando el filtro responde antes de
+  MVC. La respuesta 429 por capacidad de IPs también incluye Retry-After.
+- El scheduler SSE no hace escrituras de red ni espera un bloqueo del emitter.
+  Se mantienen cuatro workers de cálculo y se acota la entrega a cuatro escritores
+  y cuatro streams admitidos, con hasta 64 paquetes de salida por sesión.
+- Deadline/cancelación detienen el cálculo sin depender de que el cliente lea.
+  ERROR de timeout tiene hasta 100 ms para entregarse antes de cancelar la salida.
+  Una escritura no interrumpible sigue reteniendo su plaza hasta terminar: no
+  se admite trabajo ilimitado mientras sus recursos siguen ocupados.
+- Se corrigió la carrera de cierre durante el registro de callbacks, se retiran
+  timers cancelados y se conserva el contexto del router en el mismo worker.
+  Los campos de métricas leídos por el deadline tienen visibilidad entre hilos.
+- Warmup conserva su frecuencia/concurrencia independiente y no consume cuotas
+  de respuestas, también con una ruta codificada. No se cambió su implementación.
+- Spring MVC, SseEmitter, contratos REST/SSE, generación, failover, traducción,
+  frontend, modelos, despliegue y `.env` no se modificaron por esta auditoría.
+
+### Pruebas y resultados de esta tarea
+
+- PASSED: `mvn verify`, 174 unitarios y 28 integraciones; base dedicada de test.
+- PASSED: Origin permitido/prohibido/ausente, cuotas por IP y globales para REST
+  y SSE, cuotas compartidas entre rutas, 429/Retry-After/CORS y OPTIONS sin consumo.
+- PASSED: tres regresiones de URI contra Tomcat real, desconexión de socket real,
+  timeout, escritura de heartbeat bloqueada, quinta conexión rechazada con 503,
+  registro de callbacks ya desconectado y limpieza de workers, sesiones y timers.
+- PASSED: suite de precarga existente y compatibilidad REST original incluidas
+  en Maven; 81/81 tests existentes de la demo estática.
+- SKIPPED: tres suites live opt-in de LLM, sin activarlas en esta tarea.
+- NOT RUN: OpenAI real y despliegue/proxy de producción; no se hicieron llamadas
+  reales de pago, push ni despliegue. I/O no interrumpible conserva límites de
+  clientes/servidor y plazas acotadas; no se declara cancelación física instantánea.
+- Se revisaron diff, estado Git y errores de whitespace antes del commit solicitado.
+
+Archivos de esta auditoría (todos existentes, sin archivos nuevos):
+
+- `DEVELOPMENT.md` y `docs/operations/rag-sse.md`.
+- `src/main/java/com/riansares/r4r/config/RagApiSecurityFilter.java`.
+- `src/main/java/com/riansares/r4r/config/WebConfiguration.java`.
+- `src/main/java/com/riansares/r4r/rag/RagProgress.java`.
+- `src/main/java/com/riansares/r4r/rag/api/RagStreamController.java`.
+- `src/test/java/com/riansares/r4r/config/RagApiSecurityFilterTest.java`.
+- `src/test/java/com/riansares/r4r/config/RagApiCorsTest.java`.
+- `src/test/java/com/riansares/r4r/rag/api/RagStreamControllerTest.java`.
+- `src/test/java/com/riansares/r4r/rag/api/RagStreamHttpIT.java`.
+
+### Estado de la creación del commit
+
+- El usuario solicitó el commit local, pero la revisión automática rechazó
+  `git add` por la prohibición expresa de AGENTS.md para sesiones de modelo.
+  No se eludió el rechazo ni se modificó AGENTS.md. Se solicitó una excepción
+  explícita para preparar/crear únicamente este commit; pendiente de respuesta.
