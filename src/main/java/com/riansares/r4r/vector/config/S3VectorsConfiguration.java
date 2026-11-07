@@ -1,10 +1,49 @@
 package com.riansares.r4r.vector.config;
 
-/**
- * Reserved phase 3 wiring location, intentionally without Configuration or Bean
- * annotations. Future wiring will bind RagVectorProperties, conditionally create
- * the SDK v2 S3VectorsClient and inject the existing EmbeddingModel into the S3
- * adapter. It must leave PostgreSQL as the default and perform no AWS credential
- * resolution or requests while S3 is disabled. No wiring is implemented yet.
- */
-public final class S3VectorsConfiguration { }
+import com.riansares.r4r.vector.s3vectors.S3VectorMetadataMapper;
+import com.riansares.r4r.vector.s3vectors.S3VectorScoreMapper;
+import com.riansares.r4r.vector.s3vectors.S3VectorsKnowledgeStore;
+import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.retries.StandardRetryStrategy;
+import software.amazon.awssdk.services.s3vectors.S3VectorsClient;
+
+/** Does not select the effective store or install a failover router. */
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnProperty(prefix = "r4r.rag.vector.s3vectors", name = "enabled", havingValue = "true")
+@EnableConfigurationProperties(RagVectorProperties.class)
+public class S3VectorsConfiguration {
+
+    @Bean(name = "s3VectorsClient", destroyMethod = "close")
+    @ConditionalOnMissingBean(name = "s3VectorsClient")
+    S3VectorsClient s3VectorsClient(RagVectorProperties properties) {
+        var config = properties.s3vectors();
+        config.validate();
+        return S3VectorsClient.builder()
+                .region(Region.of(config.region()))
+                // SDK owns its standard default credentials chain and its lifecycle.
+                .httpClientBuilder(UrlConnectionHttpClient.builder()
+                        .connectionTimeout(config.connectTimeout())
+                        .socketTimeout(config.apiCallAttemptTimeout()))
+                .overrideConfiguration(c -> c.apiCallAttemptTimeout(config.apiCallAttemptTimeout())
+                        .apiCallTimeout(config.apiCallTimeout())
+                        .retryStrategy(StandardRetryStrategy.builder().maxAttempts(1).build()))
+                .build();
+    }
+
+    // Explicit qualifier required: an enabled secondary must not compete with the default PG bean.
+    @Bean(name = "s3VectorsKnowledgeVectorStore", defaultCandidate = false)
+    S3VectorsKnowledgeStore s3VectorsKnowledgeVectorStore(
+            @Qualifier("s3VectorsClient") S3VectorsClient client,
+            EmbeddingModel embeddingModel, RagVectorProperties properties) {
+        return new S3VectorsKnowledgeStore(client, embeddingModel, properties.s3vectors(),
+                new S3VectorMetadataMapper(), new S3VectorScoreMapper());
+    }
+}
