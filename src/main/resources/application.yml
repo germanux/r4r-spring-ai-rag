@@ -42,6 +42,11 @@ r4r:
       model: ${RAG_OPENAI_MODEL:gpt-6-luna}
     embedding:
       base-url: ${RAG_EMBEDDING_BASE_URL:http://192.168.1.203:11434}
+    warmup:
+      min-interval: ${RAG_WARMUP_MIN_INTERVAL:1m}
+      pc-timeout: ${RAG_WARMUP_PC_TIMEOUT:60s}
+      laptop-timeout: ${RAG_WARMUP_LAPTOP_TIMEOUT:60s}
+      embedding-timeout: ${RAG_WARMUP_EMBEDDING_TIMEOUT:30s}
     generation:
       pc-base-url: ${RAG_PC_OLLAMA_BASE_URL:http://192.168.1.207:11434}
       pc-model: ${RAG_PC_GENERATION_MODEL:qwen3:8b}
@@ -49,6 +54,7 @@ r4r:
       fallback-model: ${RAG_FALLBACK_GENERATION_MODEL:qwen2.5:7b}
       connect-timeout: 2s
       probe-timeout: 2s
+      fallback-read-timeout: ${RAG_FALLBACK_READ_TIMEOUT:60s}
     retrieval:
       top-k: 3
       min-score: 0.63

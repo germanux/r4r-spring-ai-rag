@@ -59,7 +59,7 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
                 ? requestUri
                 : requestUri.substring(contextPath.length());
 
-        return !RAG_ANSWERS_PATH.equals(path);
+        return !RAG_ANSWERS_PATH.equals(path) && !"/api/rag/warmup".equals(path);
     }
 
     @Override
@@ -69,6 +69,12 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
 
         if (!originAllowed(request, response)) {
+            return;
+        }
+
+        // Warmup has its own per-model concurrency/cooldown, independent of answer quotas.
+        if (request.getRequestURI().endsWith("/api/rag/warmup")) {
+            filterChain.doFilter(request, response);
             return;
         }
 

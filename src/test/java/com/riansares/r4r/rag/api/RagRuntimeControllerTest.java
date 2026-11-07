@@ -8,9 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.*;
@@ -18,21 +15,28 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class RagRuntimeControllerTest {
+    @org.junit.jupiter.api.BeforeEach void defaults() {
+        when(preloader.modelStates()).thenReturn(java.util.List.of());
+    }
     private final AtomicBoolean pcUp = new AtomicBoolean(false), laptopUp = new AtomicBoolean(true);
     private final GenerationRouter router = new GenerationRouter(
             new GenerationRouter.Target(new GenerationRouter.Provider("PC", "http://192.168.1.207:11434", "qwen3:8b"), mock(ChatModel.class), pcUp::get),
             new GenerationRouter.Target(new GenerationRouter.Provider("ASUS", "http://192.168.1.209:11434", "qwen2.5:7b"), mock(ChatModel.class), laptopUp::get));
-    private final HttpClient http = mock(HttpClient.class);
+    private final OllamaModelPreloader preloader = mock(OllamaModelPreloader.class);
     private final RagRuntimeController controller = new RagRuntimeController(new RagRetrievalProperties(3, .63),
-            "qwen2.5:7b", "nomic-embed-text", "768", "", "http://192.168.1.209:11434",
-            new ObjectMapper(), mock(OllamaModelPreloader.class), router, http);
+            "nomic-embed-text", "768", "", preloader, router);
 
-    @SuppressWarnings("unchecked")
     private void memory(String body) throws Exception {
-        HttpResponse<String> response = mock(HttpResponse.class);
-        when(response.statusCode()).thenReturn(200);
-        when(response.body()).thenReturn(body);
-        when(http.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(response);
+        // Byte parsing is exercised against real simulated Ollama HTTP in OllamaModelPreloaderTest.
+        var models = new java.util.ArrayList<OllamaModelPreloader.LoadedModel>();
+        for (var model : new ObjectMapper().readTree(body).path("models")) {
+            models.add(new OllamaModelPreloader.LoadedModel(model.path("name").asText(), "unknown",
+                    bytes(model.get("size")), bytes(model.get("size_vram"))));
+        }
+        when(preloader.memoryFor(any())).thenReturn(new OllamaModelPreloader.MemoryState(true, models));
+    }
+    private Long bytes(com.fasterxml.jackson.databind.JsonNode value) {
+        return value == null ? null : value.longValue();
     }
 
     @Test void queriesMemoryOnceOnActualFallbackWithoutProbingAvailabilityAgain() throws Exception {
@@ -46,7 +50,7 @@ class RagRuntimeControllerTest {
         assertThat(info.lastUsedProvider().inferenceHost().hostname()).isEqualTo("PC-ASUS-ZORIN");
         assertThat(info.modelStatus()).isEqualTo("Modelo cargado");
         assertThat(info.loadedModels()).singleElement().satisfies(m -> assertThat(m.vramBytes()).isEqualTo(50));
-        verify(http).send(argThat(r -> r.uri().toString().equals("http://192.168.1.209:11434/api/ps")), any(HttpResponse.BodyHandler.class));
+        verify(preloader).memoryFor(argThat(p -> p.baseUrl().equals("http://192.168.1.209:11434")));
     }
 
     @Test void recoverySelectsPcForNextGeneration() throws Exception {
@@ -67,7 +71,7 @@ class RagRuntimeControllerTest {
 
     @Test void providerUnavailableIsDifferentFromAnUnloadedModel() throws Exception {
         router.call(new Prompt("fallback"));
-        when(http.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenThrow(new java.io.IOException("unreachable"));
+        when(preloader.memoryFor(any())).thenReturn(new OllamaModelPreloader.MemoryState(false, java.util.List.of()));
         var info = controller.runtime();
         assertThat(info.modelStatus()).isEqualTo("Ollama no disponible");
         assertThat(info.lastUsedProvider().model()).isEqualTo("qwen2.5:7b");
@@ -83,7 +87,7 @@ class RagRuntimeControllerTest {
         assertThat(info.lastUsedProvider()).isNull();
         assertThat(info.generationModel()).isNull();
         assertThat(info.inferenceHost()).isNull();
-        verifyNoInteractions(http);
+        verify(preloader, never()).memoryFor(any());
     }
 
     @Test void preservesOllamaByteValuesWithoutConvertingOrEstimating() throws Exception {
@@ -94,9 +98,12 @@ class RagRuntimeControllerTest {
         assertThat(model.vramBytes()).isEqualTo(4294967296L);
     }
 
-    @Test void distinguishesMissingOrInvalidTelemetryFromObservedZero() throws Exception {
+    @Test void preservesMissingTelemetryAndObservedZero() throws Exception {
         router.call(new Prompt("fallback"));
-        memory("{\"models\":[{\"name\":\"missing\"},{\"name\":\"invalid\",\"size\":-1,\"size_vram\":\"unknown\"},{\"name\":\"zero\",\"size\":0,\"size_vram\":0}]}");
+        when(preloader.memoryFor(any())).thenReturn(new OllamaModelPreloader.MemoryState(true, java.util.List.of(
+                new OllamaModelPreloader.LoadedModel("missing", "unknown", null, null),
+                new OllamaModelPreloader.LoadedModel("invalid", "unknown", null, null),
+                new OllamaModelPreloader.LoadedModel("zero", "unknown", 0L, 0L))));
         var models = controller.runtime().loadedModels();
         assertThat(models.get(0).sizeBytes()).isNull();
         assertThat(models.get(0).vramBytes()).isNull();
@@ -109,12 +116,25 @@ class RagRuntimeControllerTest {
         var remote = new GenerationRouter.Target(new GenerationRouter.Provider("OpenAI","https://api.openai.com/v1","gpt-6-luna"), mock(ChatModel.class),()->true);
         var cloudRouter=new GenerationRouter(java.util.List.of(remote));
         cloudRouter.call(new Prompt("question"));
-        var cloud=new RagRuntimeController(new RagRetrievalProperties(3,.63),"qwen3:8b","nomic-embed-text", "768","jdbc:postgresql://db/rag","http://local",new ObjectMapper(),mock(OllamaModelPreloader.class),cloudRouter,http);
+        var cloud=new RagRuntimeController(new RagRetrievalProperties(3,.63),"nomic-embed-text", "768","jdbc:postgresql://db/rag",preloader,cloudRouter);
         var info=cloud.runtime();
         assertThat(info.lastUsedProvider().name()).isEqualTo("OpenAI");
         assertThat(info.lastUsedProvider().inferenceHost().type()).isEqualTo("cloud");
         assertThat(info.inferenceHost().cpu()).isNull();assertThat(info.loadedModels()).isEmpty();
-        verifyNoInteractions(http);
+        verify(preloader, never()).memoryFor(any());
     }
 
+    @Test void warmupIsAsyncAcceptedAndContainsNoPrivateAddresses() throws Exception {
+        when(preloader.requestWarmup()).thenReturn(new OllamaModelPreloader.WarmupResult(
+                java.util.List.of("desktop", "laptop", "embeddings"), java.util.List.of(), 0));
+        var mvc = org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup(controller).build();
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/rag/warmup"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isAccepted())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.accepted.length()").value(3))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("192.168"))));
+        when(preloader.requestWarmup()).thenReturn(new OllamaModelPreloader.WarmupResult(java.util.List.of(), java.util.List.of("desktop"), 60));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/rag/warmup"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Retry-After", "60"));
+    }
 }

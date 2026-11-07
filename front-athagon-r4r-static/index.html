@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex,nofollow"/>
   <meta name="theme-color" content="#334357"/>
   <title data-i18n="page.athagon_labs_riansares_4r_rag_with_citations">Athagon Labs · IA autoalojada · RAG con respuestas verificables</title>
-  <link rel="stylesheet" href="styles/styles.css?v=ae154ba33f9d"/>
+  <link rel="stylesheet" href="styles/styles.css?v=13a153844a8a"/>
 </head>
 <body class="spanish-demo">
 <header class="site-header">
@@ -203,16 +203,16 @@
         <p class="architecture-caption" data-i18n="page.topology_note">Detrás de esta demo trabajan varios equipos con funciones diferentes: unos buscan la información y otros generan las respuestas.</p>
         <p id="localFallbackStatus" class="architecture-caption" role="status" hidden></p>
         <div class="inference-hosts">
-          <article class="inference-host primary-host" data-local-provider="true">
+          <article class="inference-host primary-host" data-local-provider="desktop">
             <small data-i18n="page.preferred_connection">Ollama → generación preferente · qwen3:8b</small>
             <h3 data-i18n="page.primary_pc">PC de sobremesa</h3>
-            <p class="local-provider-status" data-i18n="localUnavailable" hidden>Modelo local no disponible en la última respuesta</p>
+            <p class="local-provider-status" hidden>Modelo local no disponible en la última respuesta</p>
             <p data-i18n="page.primary_gpu">Generación principal. Linux · NVIDIA GeForce RTX 4060.</p>
           </article>
-          <article class="inference-host backup-host" data-local-provider="true">
+          <article class="inference-host backup-host" data-local-provider="laptop">
             <small data-i18n="page.fallback_connection">Ollama → respaldo automático · qwen2.5:7b</small>
             <h3 data-i18n="page.backup_laptop">Portátil ASUS</h3>
-            <p class="local-provider-status" data-i18n="localUnavailable" hidden>Modelo local no disponible en la última respuesta</p>
+            <p class="local-provider-status" hidden>Modelo local no disponible en la última respuesta</p>
             <p data-i18n="page.backup_gpu">Generación de respaldo. Linux · NVIDIA GeForce GTX 1050.</p>
           </article>
           <article class="inference-host embedding-host">
@@ -240,6 +240,7 @@
           <p id="runtimeFailover"></p>
         </div>
         <p class="architecture-caption" data-i18n="page.generation_note">Información de la API. La disponibilidad puede variar.</p>
+        <p id="modelReadiness" class="model-readiness" role="status" aria-live="polite"></p>
         <details class="config-details">
           <summary data-i18n="page.view_runtime_configuration">Configuración, hardware y métricas</summary>
         <dl class="runtime-summary">
@@ -258,8 +259,8 @@ Portátil ASUS: qwen2.5:7b
 Embeddings:</span> <span id="runtimeEmbeddingModel">—</span> · <span id="runtimeEmbeddings">—</span></strong></div>
             <div><span data-i18n="page.remote_fallback">Respaldo remoto configurado</span><strong id="runtimeRemote">—</strong></div>
             <div><span data-i18n="page.backup_details">Respaldo de generación</span><strong data-i18n="page.backup_implementation">PC → portátil ASUS → OpenAI, si está habilitado. Si todos fallan, error controlado.</strong></div>
-            <div data-local-provider="true"><p class="local-provider-status" data-i18n="localUnavailable" hidden>Modelo local no disponible en la última respuesta</p><span data-i18n="page.hardware_desktop">PC de sobremesa · hardware configurado</span><strong>NVIDIA GeForce RTX 4060 · 8 GB VRAM · Intel i9-14900KF · 64 GB DDR5 RAM</strong></div>
-            <div data-local-provider="true"><p class="local-provider-status" data-i18n="localUnavailable" hidden>Modelo local no disponible en la última respuesta</p><span data-i18n="page.hardware_laptop">Portátil ASUS · hardware configurado</span><strong>NVIDIA GeForce GTX 1050 · 4 GB VRAM · Intel i7-7700HQ · 32 GB RAM</strong></div>
+            <div data-local-provider="desktop"><p class="local-provider-status" hidden>Modelo local no disponible en la última respuesta</p><span data-i18n="page.hardware_desktop">PC de sobremesa · hardware configurado</span><strong>NVIDIA GeForce RTX 4060 · 8 GB VRAM · Intel i9-14900KF · 64 GB DDR5 RAM</strong></div>
+            <div data-local-provider="laptop"><p class="local-provider-status" hidden>Modelo local no disponible en la última respuesta</p><span data-i18n="page.hardware_laptop">Portátil ASUS · hardware configurado</span><strong>NVIDIA GeForce GTX 1050 · 4 GB VRAM · Intel i7-7700HQ · 32 GB RAM</strong></div>
             <div><span data-i18n="page.retrieval">Recuperación</span><strong id="runtimeRetrieval">—</strong></div>
             <div class="runtime-host-info"><span data-i18n="page.memory_details">Estado y memoria de Ollama</span><strong id="runtimeModelStatus">—</strong><small id="runtimeMemoryScope" class="host-hardware"></small><strong id="runtimeOllama" data-i18n="page.checking_ollama">Consultando Ollama…</strong></div>
           </div>
@@ -279,7 +280,7 @@ Embeddings:</span> <span id="runtimeEmbeddingModel">—</span> · <span id="runt
   </div>
 </footer>
 
-<script src="js/i18n.js?v=64f5391264a2"></script>
-<script src="js/app.js?v=bf402619af48"></script>
+<script src="js/i18n.js?v=ea1e25775f4f"></script>
+<script src="js/app.js?v=f8050dbf2c54"></script>
 </body>
 </html>

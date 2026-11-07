@@ -16,6 +16,11 @@ class Node {
     this.hidden = false; this.disabled = false; this.open = false; this.validationMessage = '';
     this.classList = { toggle() {} };
   }
+  querySelector(selector) {
+    const match = n => (n.getAttribute('class') || '').split(' ').includes(selector.slice(1));
+    for (const child of this.children) { if (match(child)) return child; const found = child.querySelector(selector); if (found) return found; }
+    return null;
+  }
   get textContent() { return this.nodeType === 3 ? this._text : this.childNodes.map(n => n.textContent).join(''); }
   set textContent(value) { if (this.nodeType === 3) this._text = String(value); else this.replaceChildren(new Node('', String(value))); }
   get children() { return this.childNodes.filter(n => n.nodeType === 1); }
@@ -86,6 +91,10 @@ function openPage(lang = 'es', storage = new Map(), options = {}) {
           return options.failed ? { message: 'Backend detail' } : options.payload || { answer: 'Answer [S1]', abstained: false,
             citations: [{ label: '[S1]', source: 'manual.pdf', headingPath: ['Renovation'], ordinal: 3 }] };
         } };
+      }
+      if (url.endsWith('/warmup')) {
+        if (options.warmup) return options.warmup(url, init);
+        return { ok: true, status: 202 };
       }
       runtimeCalls++;
       if (options.runtimeFails) throw Error('Runtime unavailable');
@@ -413,7 +422,7 @@ test('MyMemory timeout after 5 seconds activates fallback and blocks duplicate s
   await sending;
   assert.equal(JSON.parse(p.requests.find(r => r.url.endsWith('/answers')).init.body).retrievalQuestion, undefined);
   assert.equal(p.node('sendButton').disabled, false);
-  assert.ok([...p.timers.values()].every(t => t.delay !== 5000 && t.delay !== 120000));
+  assert.ok([...p.timers.values()].every(t => t.delay !== 5000 && t.delay !== 180000));
 });
 
 test('Overall timeout cancels translation and does not submit a RAG request', async () => {
@@ -422,7 +431,7 @@ test('Overall timeout cancels translation and does not submit a RAG request', as
   }) });
   p.node('question').value = 'Original question';
   const sending = p.node('sendButton').handlers.click();
-  [...p.timers.values()].find(t => t.delay === 120000).fn();
+  [...p.timers.values()].find(t => t.delay === 180000).fn();
   await sending;
   assert.ok(!p.requests.some(r => r.url.endsWith('/answers')));
   assert.ok(p.node('errorBox').textContent.includes(p.t('timeout')));
@@ -724,4 +733,62 @@ for (const language of ['es', 'en']) test(`${language}: remote model never displ
  for (const card of p.document.querySelectorAll('[data-local-provider]')) assert.equal(card.getAttribute('data-unavailable'), 'false');
  for (const label of p.document.querySelectorAll('.local-provider-status')) assert.equal(label.hidden, true);
 
+});
+
+for (const lang of ['es', 'en']) test(`${lang}: page requests one optional warmup and shows independent observed model states`, async () => {
+  const runtime = { generationState: 'idle', models: [
+    { id: 'desktop', model: 'qwen3:8b', state: 'unreachable' },
+    { id: 'laptop', model: 'qwen2.5:7b', state: 'loading' },
+    { id: 'embeddings', model: 'nomic-embed-text:latest', state: 'loaded' }
+  ] };
+  const p = openPage(lang, new Map(), { runtime });
+  await tick();
+  assert.equal(p.requests.filter(r => r.url.endsWith('/warmup')).length, 1);
+  assert.equal(p.requests.find(r => r.url.endsWith('/warmup')).init.method, 'POST');
+  assert.equal(p.requests.filter(r => r.url.endsWith('/answers')).length, 0);
+  for (const model of runtime.models) assert.ok(p.node('modelReadiness').textContent.includes(p.t('localModelStates')[model.state]));
+  const cards = p.document.querySelectorAll('[data-local-provider]');
+  for (const card of cards) assert.equal(card.getAttribute('data-unavailable'), String(card.getAttribute('data-local-provider') === 'desktop'));
+  p.changeLanguage(lang === 'en' ? 'es' : 'en');
+  assert.ok(p.node('modelReadiness').textContent.includes(p.t('localModelStates').loading));
+  p.node('apiBaseUrl').handlers.change();
+  await tick();
+  assert.equal(p.requests.filter(r => r.url.endsWith('/warmup')).length, 1);
+  const poll = [...p.timers.values()].find(t => t.delay === 5000);
+  assert.ok(poll);
+  runtime.models.forEach(model => { model.state = 'loaded'; });
+  await poll.fn();
+  assert.equal(p.requests.filter(r => r.url.endsWith('/warmup')).length, 1);
+  for (const card of cards) assert.equal(card.getAttribute('data-unavailable'), 'false');
+  assert.ok(p.node('modelReadiness').textContent.includes(p.t('localModelStates').loaded));
+});
+
+test('warmup failure never blocks RAG and changing endpoint does not send old questions', async () => {
+  const p = openPage('es', new Map(), { warmup: async () => { throw Error('Warmup unavailable'); } });
+  await tick();
+  p.node('endpointPreset').value = 'local';
+  p.node('endpointPreset').handlers.change();
+  await tick();
+  assert.equal(p.requests.filter(r => r.url.endsWith('/warmup')).length, 2);
+  assert.equal(p.requests.filter(r => r.url.endsWith('/answers')).length, 0);
+  p.node('question').value = 'Consulta';
+  await p.node('sendButton').handlers.click();
+  assert.equal(p.requests.filter(r => r.url.endsWith('/answers')).length, 1);
+  assert.equal(p.node('resultContent').hidden, false);
+});
+
+test('warmup timeout is independent from the answer and has no automatic retry', async () => {
+  const p = openPage('es', new Map(), { warmup: (url, init) => new Promise((resolve, reject) => {
+    init.signal.addEventListener('abort', () => reject({ name: 'AbortError' }));
+  }) });
+  await tick();
+  const timeout = [...p.timers.values()].find(timer => timer.delay === 5000);
+  assert.ok(timeout);
+  timeout.fn();
+  await tick();
+  assert.equal(p.requests.filter(r => r.url.endsWith('/warmup')).length, 1);
+  p.node('question').value = 'Consulta';
+  await p.node('sendButton').handlers.click();
+  assert.equal(p.node('resultContent').hidden, false);
+  assert.equal(p.requests.filter(r => r.url.endsWith('/warmup')).length, 1);
 });

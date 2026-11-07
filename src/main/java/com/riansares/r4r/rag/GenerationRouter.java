@@ -36,6 +36,10 @@ public class GenerationRouter implements ChatModel {
     public void clearRequestExecution() { requestExecution.remove(); }
     public Execution requestExecution() { return requestExecution.get(); }
 
+    public List<Provider> localProviders() {
+        return targets.stream().map(Target::provider).filter(p -> !"OpenAI".equals(p.name())).toList();
+    }
+
     public Provider preferred() { return preferred.provider(); }
     public Provider lastUsed() { return execution.get().provider(); }
     public Execution execution() { return execution.get(); }

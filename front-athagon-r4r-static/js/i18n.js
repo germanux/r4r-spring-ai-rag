@@ -112,6 +112,8 @@ const R4RI18n = (() => {
         "unknown": "Equipo no identificado"
       },
       "modelStates": {
+        "Modelo disponible": "Modelo disponible",
+        "Pendiente de comprobar": "Pendiente de comprobar",
         "Cargando modelo": "Cargando modelo",
         "Modelo cargado": "Modelo cargado",
         "Modelo descargado de memoria": "Modelo descargado de memoria",
@@ -176,6 +178,8 @@ const R4RI18n = (() => {
       "remoteDisabled": "deshabilitado",
       "page.remote_topology": "Tercer intento, solo tras fallos técnicos locales y si está habilitado.",
       "page.platform_containers": "Sistema y contenedores",
+      "localModels": { "desktop": "PC principal", "laptop": "Portátil ASUS", "embeddings": "Búsqueda documental" },
+      "localModelStates": { "unknown": "Pendiente de comprobar", "available": "Disponible", "loading": "Cargando", "loaded": "Cargado", "unloaded": "Descargado de memoria", "unreachable": "No disponible" },
       "localUnavailable": "Modelo local no disponible en la última respuesta",
       "localFallbackStatus": "La prioridad sigue siendo usar modelos locales. No estuvieron disponibles para la última respuesta; se utilizó OpenAI.",
       "page.embedding_dimensions": "Dimensiones de embeddings"
@@ -290,6 +294,8 @@ const R4RI18n = (() => {
         "unknown": "Unknown host"
       },
       "modelStates": {
+        "Modelo disponible": "Model available",
+        "Pendiente de comprobar": "Not checked yet",
         "Cargando modelo": "Loading model",
         "Modelo cargado": "Model loaded",
         "Modelo descargado de memoria": "Model unloaded from memory",
@@ -354,6 +360,8 @@ const R4RI18n = (() => {
       "remoteDisabled": "disabled",
       "page.remote_topology": "Third attempt, only after technical failures of both local providers and when enabled.",
       "page.platform_containers": "System and containers",
+      "localModels": { "desktop": "Main PC", "laptop": "ASUS laptop", "embeddings": "Document search" },
+      "localModelStates": { "unknown": "Not checked yet", "available": "Available", "loading": "Loading", "loaded": "Loaded", "unloaded": "Unloaded from memory", "unreachable": "Unavailable" },
       "localUnavailable": "Local model unavailable for the last answer",
       "localFallbackStatus": "Local models remain the preferred option. They were unavailable for the last answer, so OpenAI was used.",
       "page.embedding_dimensions": "Embedding dimensions"

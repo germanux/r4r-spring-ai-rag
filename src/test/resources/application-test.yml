@@ -11,6 +11,9 @@ spring:
     driver-class-name: org.postgresql.Driver
 
 r4r:
+  rag:
+    warmup:
+      on-startup: false
   # Mantener el comportamiento previo de los tests HTTP sin Origin.
   api-security:
     enabled: false

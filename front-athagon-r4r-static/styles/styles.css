@@ -1157,3 +1157,5 @@ kbd {
 [data-local-provider].is-unavailable { background:var(--panel-2); border-style:dashed; }
 [data-local-provider].is-unavailable h3, [data-local-provider].is-unavailable strong { color:var(--text); }
 .local-provider-status { margin:0 0 8px; font-size:.8rem; font-weight:700; color:var(--text); }
+
+.model-readiness { font-size: .85rem; line-height: 1.7; overflow-wrap: anywhere; }

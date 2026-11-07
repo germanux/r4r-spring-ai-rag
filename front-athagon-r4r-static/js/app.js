@@ -156,10 +156,11 @@
     if (!preset) { apiBaseUrl.focus(); return; }
     apiBaseUrl.value = preset;
     persistEndpoint();
+    requestWarmup();
     loadRuntimeInfo();
   });
   apiBaseUrl.addEventListener("input", () => { apiBaseUrl.setCustomValidity(""); syncPreset(); });
-  apiBaseUrl.addEventListener("change", () => { if (persistEndpoint()) loadRuntimeInfo(); });
+  apiBaseUrl.addEventListener("change", () => { if (persistEndpoint()) { requestWarmup(); loadRuntimeInfo(); } });
 
   updateCounter();
 
@@ -176,10 +177,28 @@
 
   let runtimePoll;
   let runtimeRequest = 0;
+  let runtimePollBudget = 18;
+  const warmupAttempts = new Map();
+  requestWarmup();
   loadRuntimeInfo();
+  async function requestWarmup() {
+    const baseUrl = validBaseUrl(apiBaseUrl.value);
+    const now = performance.now();
+    if (!baseUrl || now - (warmupAttempts.get(baseUrl) ?? -Infinity) < 60000) return;
+    warmupAttempts.set(baseUrl, now);
+    runtimePollBudget = 18;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    try {
+      // Optional on older APIs: failures must never prevent asking a question.
+      await fetch(`${baseUrl}/api/rag/warmup`, { method: "POST", signal: controller.signal, headers: { Accept: "application/json" } });
+    } catch { /* Backend cooldown and concurrency limits are authoritative; no retry. */ }
+    finally { clearTimeout(timeout); }
+  }
   function pollRuntimeWhileLoading(status) {
     clearTimeout(runtimePoll);
-    if (status === "Cargando modelo") runtimePoll = setTimeout(async () => { await loadRuntimeInfo(); }, 5000);
+    if (status === "Cargando modelo" && phase !== "loading" && runtimePollBudget-- > 0)
+      runtimePoll = setTimeout(async () => { await loadRuntimeInfo(); }, 5000);
   }
 
   function formatBytes(bytes) {
@@ -233,7 +252,8 @@
       runtimeInfo = info;
       runtimeError = null;
       renderRuntimeInfo(info);
-      pollRuntimeWhileLoading(info.modelStatus);
+      pollRuntimeWhileLoading(info.models?.some(model => model.refreshing || ["loading", "unknown"].includes(model.state))
+        ? "Cargando modelo" : info.models?.length ? "" : info.modelStatus);
     } catch (error) {
       if (requestId !== runtimeRequest) return;
       runtimeInfo = null;
@@ -242,12 +262,26 @@
     }
   }
 
-  function renderLocalFallback(remote) {
+  function renderModelReadiness(models) {
+    const labels = t("localModels");
+    const states = t("localModelStates");
+    $("modelReadiness").textContent = Array.isArray(models) && models.length
+      ? models.map(model => `${labels[model.id] || t("unknownHost")}: ${states[model.state] || states.unknown}`).join(" · ")
+      : t("informationUnavailable");
+  }
+
+  function renderLocalFallback(remote, models = []) {
     document.querySelectorAll("[data-local-provider]").forEach(card => {
-      card.classList.toggle("is-unavailable", remote);
-      card.setAttribute("data-unavailable", String(remote));
+      const model = models.find(model => model.id === card.getAttribute("data-local-provider"));
+      const unavailable = model ? model.state === "unreachable" : remote;
+      card.classList.toggle("is-unavailable", unavailable);
+      card.setAttribute("data-unavailable", String(unavailable));
+      const label = card.querySelector(".local-provider-status");
+      if (label) {
+        label.hidden = !model && !remote;
+        label.textContent = model ? t("localModelStates")[model.state] || t("localModelStates").unknown : t("localUnavailable");
+      }
     });
-    document.querySelectorAll(".local-provider-status").forEach(label => { label.hidden = !remote; });
     $("localFallbackStatus").textContent = remote ? t("localFallbackStatus") : "";
     $("localFallbackStatus").hidden = !remote;
   }
@@ -257,7 +291,8 @@
     const failed = !lastPayload?.provider && info.generationState === "failed";
     const used = failed ? null : lastPayload && Object.hasOwn(lastPayload, "provider") ? lastPayload.provider : info.lastUsedProvider;
     const remote = used?.name === "OpenAI" || used?.inferenceHost?.type === "cloud";
-    renderLocalFallback(remote);
+    renderLocalFallback(remote, Array.isArray(info.models) ? info.models : []);
+    renderModelReadiness(info.models);
     const preferred = info.preferredProvider;
     const sameProvider = used?.inferenceHost?.hostname && preferred?.inferenceHost?.hostname
       ? used.inferenceHost.hostname === preferred.inferenceHost.hostname
@@ -292,6 +327,7 @@
   }
   function renderRuntimeUnavailable() {
     renderLocalFallback(false);
+    renderModelReadiness(null);
     for (const id of ["runtimeEmbeddingModel", "runtimeEmbeddings", "runtimeRetrieval", "runtimeVersions"]) $(id).textContent = t("unavailable");
     $("runtimeUsedHardware").textContent = "";
     $("runtimeUsedHardware").hidden = true;
@@ -331,6 +367,7 @@
     if (!persistEndpoint()) return;
     apiStatus = "saved";
     apiState.textContent = t(apiStatus);
+    requestWarmup();
     loadRuntimeInfo();
   });
 
@@ -413,7 +450,7 @@
     httpStatus.textContent = "…";
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000);
+    const timeout = setTimeout(() => controller.abort(), 180000);
     const started = performance.now();
 
     try {

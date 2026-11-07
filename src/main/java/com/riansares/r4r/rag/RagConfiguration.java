@@ -29,7 +29,7 @@ public class RagConfiguration {
             @Value("${r4r.rag.generation.connect-timeout:2s}") Duration connectTimeout,
             @Value("${r4r.rag.generation.probe-timeout:2s}") Duration probeTimeout,
             @Value("${r4r.rag.generation.pc-read-timeout:35s}") Duration pcReadTimeout,
-            @Value("${r4r.rag.generation.fallback-read-timeout:25s}") Duration fallbackReadTimeout,
+            @Value("${r4r.rag.generation.fallback-read-timeout:60s}") Duration fallbackReadTimeout,
             @Value("${r4r.rag.openai.enabled:false}") boolean remoteEnabled,
             @Value("${r4r.rag.openai.model:gpt-6-luna}") String remoteModel,
             @Value("${r4r.rag.openai.read-timeout:35s}") Duration remoteReadTimeout,
