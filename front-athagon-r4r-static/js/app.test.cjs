@@ -69,7 +69,7 @@ function openPage(lang = 'es', storage = new Map(), options = {}) {
   const document = makeDocument();
   const requests = [], navigations = [], clipboard = [], timers = new Map();
   let runtimeCalls = 0, nextTimer = 0;
-  const context = { document, URL, URLSearchParams, AbortController, TextEncoder, performance,
+  const context = { document, URL, URLSearchParams, AbortController, TextEncoder, TextDecoder, Uint8Array, performance,
     navigator: { language: lang, clipboard: { writeText: async text => { if (options.copyFailed) throw Error('Clipboard denied'); clipboard.push(text); } } },
     window: { addEventListener(event, handler) { this.handlers[event] = handler; }, handlers: {}, location: { hash: options.hash || '', assign: url => navigations.push(url), replace: url => navigations.push(url) } },
     localStorage: { getItem: key => { if (options.storageFails) throw Error('Storage disabled'); return storage.get(key) ?? null; },
@@ -81,6 +81,10 @@ function openPage(lang = 'es', storage = new Map(), options = {}) {
       if (url.startsWith('https://api.mymemory.translated.net/get?')) {
         if (options.translation) return options.translation(url, init);
         return { ok: true, json: async () => ({ responseStatus: 200, responseData: { translatedText: '¿Qué reformas?' } }) };
+      }
+      if (url.endsWith('/answers/stream')) {
+        if (options.stream) return options.stream(url, init);
+        return { ok: false, status: 404, json: async () => ({}) }; // Legacy API regression coverage.
       }
       if (url.endsWith('/answers')) {
         if (options.answer) return options.answer(url, init);
@@ -791,4 +795,116 @@ test('warmup timeout is independent from the answer and has no automatic retry',
   await p.node('sendButton').handlers.click();
   assert.equal(p.node('resultContent').hidden, false);
   assert.equal(p.requests.filter(r => r.url.endsWith('/warmup')).length, 1);
+});
+
+function sseResponse(events, { chunkSize = 11, raw = null } = {}) {
+  const text = raw ?? events.map(event => `event: ${event.stage}\r\ndata: ${JSON.stringify(event)}\r\n\r\n`).join('');
+  const bytes = new TextEncoder().encode(text);
+  return { ok: true, status: 200, headers: { get: () => 'text/event-stream;charset=UTF-8' },
+    body: new ReadableStream({ start(controller) {
+      for (let offset = 0; offset < bytes.length; offset += chunkSize) controller.enqueue(bytes.slice(offset, offset + chunkSize));
+      controller.close();
+    } }) };
+}
+const readyEvent = { stage: 'ANSWER_READY', answer: 'Reforma baños y oficinas. [S1]', abstained: false,
+  citations: [{ label: '[S1]', source: 'baño.md', headingPath: ['Reformas'], ordinal: 0 }],
+  provider: { name: 'PC principal', model: 'qwen3:8b', inferenceHost: { type: 'desktop' } },
+  metrics: { embeddingMs: 15, retrievalIncludingEmbeddingMs: 20, vectorSearchMs: null, generationMs: 30, totalMs: 60 } };
+
+for (const lang of ['es', 'en']) test(`${lang}: SSE renders live phases before answer, then keeps citations and original request fields`, async () => {
+  let channel;
+  const p = openPage(lang, new Map(), { stream: async (url, init) => {
+    assert.equal(init.headers.Accept, 'text/event-stream');
+    return { ok: true, status: 200, headers: { get: () => 'text/event-stream' },
+      body: new ReadableStream({ start(controller) { channel = controller; } }) };
+  } });
+  const sendEvent = event => channel.enqueue(new TextEncoder().encode(`event:${event.stage}\ndata:${JSON.stringify(event)}\n\n`));
+  p.node('question').value = 'Original question';
+  const sending = p.node('sendButton').handlers.click();
+  await tick();
+  sendEvent({ stage: 'REQUEST_RECEIVED', elapsedMs: 0 });
+  sendEvent({ stage: 'EMBEDDING_COMPLETED', durationMs: 15 });
+  sendEvent({ stage: 'RETRIEVAL_COMPLETED', documentsFound: 3, durationMs: 20 });
+  sendEvent({ stage: 'GENERATION_STARTED', provider: 'PC principal', model: 'qwen3:8b' });
+  await tick();
+  assert.match(p.node('ragProgress').textContent, /15 ms/);
+  assert.match(p.node('ragProgress').textContent, /3/);
+  assert.match(p.node('ragProgress').textContent, /Qwen3 8B/);
+  assert.equal(p.node('sendButton').disabled, true);
+  assert.equal(p.node('resultContent').hidden, true);
+  const before = p.requests.length;
+  p.changeLanguage(lang === 'es' ? 'en' : 'es');
+  assert.equal(p.requests.length, before);
+  assert.ok(p.node('ragProgress').textContent.includes(p.t('progressStages').REQUEST_RECEIVED));
+  sendEvent({ stage: 'GENERATION_COMPLETED', provider: 'PC principal', model: 'qwen3:8b', durationMs: 30 });
+  sendEvent(readyEvent); channel.close();
+  await sending;
+  assert.equal(p.node('answerText').textContent, readyEvent.answer);
+  assert.ok(p.node('citations').textContent.includes('baño.md'));
+  assert.equal(p.node('sendButton').disabled, false);
+  assert.equal(p.requests.filter(r => r.url.endsWith('/answers')).length, 0);
+  const body = JSON.parse(p.requests.find(r => r.url.endsWith('/answers/stream')).init.body);
+  assert.equal(body.question, 'Original question');
+  assert.equal(body.responseLanguage, lang);
+  assert.equal(body.retrievalQuestion, lang === 'en' ? '¿Qué reformas?' : undefined);
+});
+
+test('SSE accepts byte-split UTF-8, CRLF, multiline data and comments without inventing phases', async () => {
+  const raw = ': keepalive\r\n\r\nevent:ANSWER_READY\r\ndata: ' + JSON.stringify(readyEvent).replace(',"abstained"', ',\r\ndata: "abstained"') + '\r\n\r\n';
+  const p = openPage('es', new Map(), { stream: async () => sseResponse([], { raw, chunkSize: 1 }) });
+  await p.node('sendButton').handlers.click();
+  assert.equal(p.node('answerText').textContent, readyEvent.answer);
+  assert.equal(p.node('ragProgress').textContent, '');
+  assert.equal(p.requests.filter(r => r.url.endsWith('/answers')).length, 0);
+});
+
+test('SSE no-evidence answer is an abstention with no simulated generation', async () => {
+  const p = openPage('es', new Map(), { stream: async () => sseResponse([
+    { stage: 'REQUEST_RECEIVED' }, { stage: 'RETRIEVAL_COMPLETED', documentsFound: 0, durationMs: 12 },
+    { stage: 'VALIDATION_COMPLETED', message: 'abstained' }, { stage: 'ANSWER_READY', answer: '', abstained: true, citations: [], provider: null }
+  ]) });
+  await p.node('sendButton').handlers.click();
+  assert.ok(p.node('ragProgress').textContent.includes(p.t('progressNoEvidence')));
+  assert.ok(!p.node('ragProgress').textContent.includes('Generando'));
+  assert.equal(p.node('decisionPill').textContent, p.t('abstention'));
+});
+
+test('SSE reports actual PC failure and laptop failover in both languages', async () => {
+  const p = openPage('es', new Map(), { stream: async () => sseResponse([
+    { stage: 'PROVIDER_FAILED', provider: 'PC principal', model: 'qwen3:8b' },
+    { stage: 'FAILOVER_STARTED', provider: 'Portátil ASUS', model: 'qwen2.5:7b' },
+    { stage: 'GENERATION_STARTED', provider: 'Portátil ASUS', model: 'qwen2.5:7b' },
+    { ...readyEvent, provider: { model: 'qwen2.5:7b', name: 'Portátil ASUS', inferenceHost: host } }
+  ]) });
+  await p.node('sendButton').handlers.click();
+  assert.ok(p.node('ragProgress').textContent.includes('PC principal no disponible. Probando Portátil ASUS'));
+  p.changeLanguage('en');
+  assert.ok(p.node('ragProgress').textContent.includes('Main PC unavailable. Trying ASUS laptop'));
+});
+
+for (const mode of ['error', 'disconnect', 'invalid-json', 'http503']) test(`SSE ${mode} unblocks the UI and never replays a query via REST`, async () => {
+  const p = openPage('es', new Map(), { stream: async () => mode === 'http503'
+    ? { ok: false, status: 503, json: async () => ({}) }
+    : sseResponse(mode === 'error' ? [{ stage: 'ERROR', message: 'processing_failed' }] : [{ stage: 'REQUEST_RECEIVED' }],
+        mode === 'invalid-json' ? { raw: 'data: {invalid}\n\n' } : {}) });
+  await p.node('sendButton').handlers.click();
+  assert.equal(p.node('sendButton').disabled, false);
+  assert.equal(p.node('resultContent').hidden, true);
+  assert.equal(p.node('errorBox').hidden, false);
+  assert.equal(p.requests.filter(r => r.url.endsWith('/answers/stream')).length, 1);
+  assert.equal(p.requests.filter(r => r.url.endsWith('/answers')).length, 0);
+});
+
+test('SSE timeout cancels its reader and permits a later query without automatic retry', async () => {
+  const p = openPage('es', new Map(), { stream: async (url, init) => ({ ok: true, status: 200,
+    headers: { get: () => 'text/event-stream' }, body: new ReadableStream({ start(controller) {
+      init.signal.addEventListener('abort', () => controller.error({ name: 'AbortError' }));
+    } }) }) });
+  const sending = p.node('sendButton').handlers.click();
+  await tick();
+  [...p.timers.values()].find(t => t.delay === 180000).fn();
+  await sending;
+  assert.equal(p.node('sendButton').disabled, false);
+  assert.ok(p.node('errorBox').textContent.includes(p.t('timeout')));
+  assert.equal(p.requests.filter(r => r.url.endsWith('/answers/stream')).length, 1);
 });

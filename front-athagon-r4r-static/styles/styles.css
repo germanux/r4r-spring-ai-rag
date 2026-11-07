@@ -1159,3 +1159,6 @@ kbd {
 .local-provider-status { margin:0 0 8px; font-size:.8rem; font-weight:700; color:var(--text); }
 
 .model-readiness { font-size: .85rem; line-height: 1.7; overflow-wrap: anywhere; }
+
+.rag-progress { list-style: none; padding: 0; margin: 16px 0; text-align: left; font-size: .9rem; line-height: 1.6; overflow-wrap: anywhere; }
+.rag-progress li { padding: 4px 0; }

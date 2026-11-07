@@ -122,6 +122,9 @@
   const savedQuestion = readPreference("lastQuestion");
   question.value = savedQuestion || "";
   let lastPayload = null;
+  let progressRows = [];
+  let lastFailedProvider = null;
+  let activeQueryController = null;
   let lastError = null;
   let runtimeInfo = null;
   let runtimeError = null;
@@ -142,6 +145,7 @@
     resultMode.textContent = t({ idle: "waiting", loading: "inProgress", success: "result", error: "failed" }[phase]);
     if (phase === "success" && lastPayload) renderResult(lastPayload);
     if (phase === "error" && lastError) renderError(errorMessage(lastError));
+    renderProgress();
     if (runtimeInfo) renderRuntimeInfo(runtimeInfo);
     else if (runtimeError) renderRuntimeUnavailable();
     if (apiBaseUrl.validationMessage) apiBaseUrl.setCustomValidity(t("invalidUrl"));
@@ -343,6 +347,7 @@
     $("runtimeOllama").textContent = t("informationUnavailable");
   }
   function errorMessage(error) {
+    if (error?.kind === "stream") return t("streamError");
     if (error?.kind === "timeout") return t("timeout");
     if (error?.kind === "http") {
       const message = error.status === 403 ? t("forbidden") : t("httpError", error.status);
@@ -414,6 +419,90 @@
     });
   }
 
+  window.addEventListener("pagehide", () => activeQueryController?.abort());
+
+  function receiveProgress(event) {
+    if (!event || typeof event.stage !== "string") return;
+    if (event.stage === "ANSWER_READY") return;
+    const known = ["REQUEST_RECEIVED", "TRANSLATION_STARTED", "TRANSLATION_COMPLETED", "TRANSLATION_FALLBACK",
+      "EMBEDDING_STARTED", "EMBEDDING_COMPLETED", "RETRIEVAL_STARTED", "RETRIEVAL_COMPLETED", "GENERATION_STARTED",
+      "PROVIDER_FAILED", "FAILOVER_STARTED", "GENERATION_COMPLETED", "VALIDATION_COMPLETED", "ERROR"];
+    if (!known.includes(event.stage)) return;
+    if (event.stage === "PROVIDER_FAILED") lastFailedProvider = event.provider;
+    if (event.stage === "FAILOVER_STARTED") event = { ...event, previousProvider: lastFailedProvider };
+    const root = ["PROVIDER_FAILED", "FAILOVER_STARTED"].includes(event.stage) ? "GENERATION" : event.stage.replace(/_(STARTED|COMPLETED)$/, "");
+    const key = `${root}:${event.stage === "FAILOVER_STARTED" ? event.previousProvider || "" : event.provider || ""}`;
+    const row = { key, event, pending: event.stage.endsWith("_STARTED") && event.stage !== "FAILOVER_STARTED", failed: ["ERROR", "PROVIDER_FAILED", "FAILOVER_STARTED", "TRANSLATION_FALLBACK"].includes(event.stage) };
+    const index = progressRows.findIndex(row => row.key === key);
+    if (index >= 0 && event.stage === "RETRIEVAL_COMPLETED") {
+      progressRows.splice(index, 1);
+      progressRows.push(row);
+    } else if (index >= 0) progressRows[index] = row;
+    else progressRows.push(row);
+    renderProgress();
+  }
+  function renderProgress() {
+    const list = $("ragProgress");
+    if (!list) return;
+    const providerName = provider => ({ "PC principal": t("localModels").desktop, "Portátil ASUS": t("localModels").laptop, "OpenAI": "OpenAI" }[provider] || t("unknownHost"));
+    list.replaceChildren();
+    for (const row of progressRows) {
+      const event = row.event;
+      const li = document.createElement("li");
+      let message = t("progressStages")[event.stage] || "";
+      message = message.replace("{model}", event.model === "gpt-6-luna" ? "GPT-6 Luna" : event.model ? readableModel(event.model) : t("progressAI"))
+        .replace("{count}", String(event.documentsFound ?? 0)).replace("{provider}", providerName(event.provider))
+        .replace("{previous}", providerName(event.previousProvider));
+      if (event.stage === "RETRIEVAL_COMPLETED" && event.documentsFound === 0) message = t("progressNoEvidence");
+      const duration = Number.isFinite(event.durationMs) && event.durationMs >= 0 ? ` (${Math.round(event.durationMs)} ms)` : "";
+      li.textContent = `${row.failed ? "!" : row.pending ? "⟳" : "✓"} ${message}${duration}`;
+      list.appendChild(li);
+    }
+  }
+
+  async function readAnswerStream(response) {
+    if (!response.body?.getReader || !response.headers?.get("Content-Type")?.includes("text/event-stream")) throw { kind: "stream" };
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let finalAnswer = null;
+    function frame(text) {
+      if (text.length > 131072) throw { kind: "stream" };
+      const data = text.split("\n").filter(line => line.startsWith("data:")).map(line => line.slice(5).trimStart()).join("\n");
+      if (!data) return; // SSE comments/heartbeats do not represent processing stages.
+      let event;
+      try { event = JSON.parse(data); } catch { throw { kind: "stream" }; }
+      receiveProgress(event);
+      if (event.stage === "ERROR") throw event.message === "timeout" ? { kind: "timeout" } : { kind: "stream" };
+      if (event.stage === "ANSWER_READY") {
+        if (typeof event.answer !== "string" || typeof event.abstained !== "boolean" || !Array.isArray(event.citations)) throw { kind: "stream" };
+        finalAnswer = event;
+      }
+    }
+    try {
+      while (!finalAnswer) {
+        const { value, done } = await reader.read();
+        buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+        // Normalize CRLF only after a complete frame, retaining split CR/LF across chunks.
+        let match;
+        while ((match = /\r?\n\r?\n/.exec(buffer))) {
+          frame(buffer.slice(0, match.index).replace(/\r\n/g, "\n"));
+          buffer = buffer.slice(match.index + match[0].length);
+          if (finalAnswer) break;
+        }
+        if (buffer.length > 131072) throw { kind: "stream" };
+        if (done) break;
+      }
+      if (!finalAnswer) throw { kind: "stream" };
+      return finalAnswer;
+    } catch (error) {
+      throw error?.name === "AbortError" || error?.kind ? error : { kind: "stream" };
+    } finally {
+      try { await reader.cancel(); } catch { /* Connection already closed. */ }
+      reader.releaseLock();
+    }
+  }
+
   async function sendQuestion() {
     if (sendButton.disabled) return;
 
@@ -432,6 +521,9 @@
     ++runtimeRequest;
     const requestLanguage = isEnglish ? "en" : "es";
     phase = "loading";
+    progressRows = [];
+    lastFailedProvider = null;
+    renderProgress();
     lastPayload = null;
     lastError = null;
     apiStatus = "querying";
@@ -450,43 +542,48 @@
     httpStatus.textContent = "…";
 
     const controller = new AbortController();
+    activeQueryController = controller;
     const timeout = setTimeout(() => controller.abort(), 180000);
     const started = performance.now();
 
     try {
       const requestBody = { question: text, responseLanguage: requestLanguage };
       if (requestLanguage === "en") {
+        const translationStarted = performance.now();
+        receiveProgress({ stage: "TRANSLATION_STARTED" });
         try {
           requestBody.retrievalQuestion = await translateToSpanish(text, controller.signal);
+          receiveProgress({ stage: "TRANSLATION_COMPLETED", durationMs: performance.now() - translationStarted });
         } catch (error) {
           // An absent translation activates the backend's local fallback. Never send raw English.
           if (controller.signal.aborted) throw error;
+          receiveProgress({ stage: "TRANSLATION_FALLBACK" });
         }
       }
-      const response = await fetch(url, {
+      const init = {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json"
+          "Accept": "text/event-stream"
         },
         body: JSON.stringify(requestBody),
         signal: controller.signal
-      });
-
-      const duration = Math.round(performance.now() - started);
-      elapsed.textContent = `${duration} ms`;
+      };
+      let response = await fetch(`${url}/stream`, init);
+      const legacy = [404, 405, 406, 501].includes(response.status);
+      if (legacy) {
+        // Only a definitively unsupported route permits REST fallback. Never replay a started query.
+        try { await response.body?.cancel(); } catch { /* Unsupported endpoint body already closed. */ }
+        response = await fetch(url, { ...init, headers: { ...init.headers, Accept: "application/json" } });
+      }
       httpStatus.textContent = `${response.status}`;
-
       let payload;
-      try {
-        payload = await response.json();
-      } catch {
-        if (response.ok) throw { kind: "json", status: response.status };
-      }
-
-      if (!response.ok) {
-        throw { kind: "http", status: response.status, detail: payload?.message || payload?.error || "" };
-      }
+      if (!response.ok || legacy) {
+        try { payload = await response.json(); }
+        catch { if (response.ok) throw { kind: "json", status: response.status }; }
+        if (!response.ok) throw { kind: "http", status: response.status, detail: payload?.message || payload?.error || "" };
+      } else payload = await readAnswerStream(response);
+      elapsed.textContent = `${Math.round(performance.now() - started)} ms`;
 
       phase = "success";
       lastPayload = payload;
@@ -507,6 +604,7 @@
       renderError(errorMessage(lastError));
     } finally {
       clearTimeout(timeout);
+      activeQueryController = null;
       setLoading(false);
       await loadRuntimeInfo();
     }

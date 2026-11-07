@@ -27,6 +27,10 @@ public final class LocalRetrievalQueryTranslator {
                 && "OpenAI".equals(execution.provider().name());
     }
 
+    public void clearRequestExecution() {
+        if (model instanceof GenerationRouter router) router.clearRequestExecution();
+    }
+
     public String translate(String question) {
         var response = model.call(new Prompt(List.of(
                 new SystemMessage("""

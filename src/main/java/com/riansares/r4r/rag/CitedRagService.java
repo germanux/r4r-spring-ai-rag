@@ -87,6 +87,11 @@ public class CitedRagService {
     }
 
     public RagResult answer(String question, String retrievalQuestion, String responseLanguage) {
+        return answer(question, retrievalQuestion, responseLanguage, RagProgress.silent());
+    }
+
+    public RagResult answer(String question, String retrievalQuestion, String responseLanguage, RagProgress progress) {
+        progress.checkCancelled();
         long started = System.nanoTime();
         validateQuestion(question);
         String searchQuestion = retrievalQuestion == null || retrievalQuestion.isBlank()
@@ -94,26 +99,36 @@ public class CitedRagService {
         boolean translatedRemotely = false;
         if ((retrievalQuestion == null || retrievalQuestion.isBlank())
                 && "en".equalsIgnoreCase(responseLanguage) && translator != null) {
+            progress.emit("TRANSLATION_STARTED");
+            long translating = System.nanoTime();
             try {
                 searchQuestion = translator.translate(question);
                 translatedRemotely = translator.lastTranslationUsedRemote();
+                progress.emit("TRANSLATION_COMPLETED", null, null, (System.nanoTime() - translating) / 1_000_000.0, null);
             } catch (RuntimeException ex) {
                 traceFailure("normalization", started, ex);
                 throw ex;
-            }
+            } finally { translator.clearRequestExecution(); }
         }
         long normalized = System.nanoTime();
         List<MarkdownChunk> chunks;
+        progress.emit("RETRIEVAL_STARTED");
+        String finalSearchQuestion = searchQuestion;
         try {
-            chunks = retrieveEvidence(searchQuestion);
+            chunks = progress.duringRetrieval(() -> retrieveEvidence(finalSearchQuestion));
         } catch (RuntimeException ex) {
+            progress.retrievalMs((System.nanoTime() - normalized) / 1_000_000.0);
             traceFailure("retrieval", started, ex);
             throw ex;
         }
         long retrieved = System.nanoTime();
+        double retrievalMs = (retrieved - normalized) / 1_000_000.0;
+        progress.retrievalMs(retrievalMs);
+        progress.emit("RETRIEVAL_COMPLETED", null, chunks.size(), retrievalMs, chunks.isEmpty() ? "no_evidence" : null);
 
         if (chunks.isEmpty()) {
             trace("no_evidence", 0, started, normalized, retrieved, retrieved, retrieved);
+            progress.emit("VALIDATION_COMPLETED", null, chunks.size(), null, "abstained");
             return RagResult.abstain();
         }
 
@@ -121,35 +136,46 @@ public class CitedRagService {
         long contextBuilt = System.nanoTime();
         ChatResponse response;
         try {
-            response = translatedRemotely && chatModel instanceof GenerationRouter router
-                    ? router.callRemoteOnly(prompt) : chatModel.call(prompt);
+            if (chatModel instanceof GenerationRouter router) {
+                response = translatedRemotely ? router.callRemoteOnly(prompt, progress) : router.call(prompt, progress);
+            } else {
+                progress.emit("GENERATION_STARTED");
+                response = chatModel.call(prompt);
+            }
         } catch (RuntimeException ex) {
+            progress.generationMs((System.nanoTime() - contextBuilt) / 1_000_000.0);
             traceFailure("generation", started, ex);
             throw ex;
         }
         long generated = System.nanoTime();
+        progress.generationMs((generated - contextBuilt) / 1_000_000.0);
         String answer = extractAnswer(response);
+        progress.emit("GENERATION_COMPLETED", progress.usedProvider(), null, (generated - contextBuilt) / 1_000_000.0, null);
 
         if (answer == null
                 || answer.isBlank()
                 || ABSTAIN_TOKEN.matcher(answer).find()
                 || isNaturalAbstention(answer)) {
             trace("model_abstention", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
+            progress.emit("VALIDATION_COMPLETED", null, chunks.size(), null, "abstained");
             return RagResult.abstain();
         }
         answer = normalizeReferences(answer, chunks.size());
         if (answer == null || answer.isBlank() || ONLY_CITATIONS.matcher(answer.trim()).matches()) {
             trace("invalid_answer", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
+            progress.emit("VALIDATION_COMPLETED", null, chunks.size(), null, "abstained");
             return RagResult.abstain();
         }
         List<Citation> citations = buildCitations(chunks, answer);
         if (citations.isEmpty()) {
             // A factual answer with no traceable evidence is not a verifiable RAG answer.
             trace("missing_citations", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
+            progress.emit("VALIDATION_COMPLETED", null, chunks.size(), null, "abstained");
             return RagResult.abstain();
         }
 
         trace("answered", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
+        progress.emit("VALIDATION_COMPLETED", null, chunks.size(), (System.nanoTime() - generated) / 1_000_000.0, "answered");
         return RagResult.ofAnswer(answer, citations);
     }
 

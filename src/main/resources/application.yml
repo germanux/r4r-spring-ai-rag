@@ -40,8 +40,13 @@ r4r:
     openai:
       enabled: ${RAG_OPENAI_ENABLED:false}
       model: ${RAG_OPENAI_MODEL:gpt-6-luna}
+    stream:
+      timeout: ${RAG_SSE_TIMEOUT:180s}
+      heartbeat-interval: ${RAG_SSE_HEARTBEAT_INTERVAL:10s}
     embedding:
       base-url: ${RAG_EMBEDDING_BASE_URL:http://192.168.1.203:11434}
+      connect-timeout: ${RAG_EMBEDDING_CONNECT_TIMEOUT:2s}
+      read-timeout: ${RAG_EMBEDDING_READ_TIMEOUT:30s}
     warmup:
       min-interval: ${RAG_WARMUP_MIN_INTERVAL:1m}
       pc-timeout: ${RAG_WARMUP_PC_TIMEOUT:60s}

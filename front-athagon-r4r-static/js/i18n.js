@@ -3,6 +3,10 @@ const R4RI18n = (() => {
   "use strict";
   const dictionary = {
     "es": {
+      "streamError": "No se ha podido completar la consulta. Puedes intentarlo de nuevo.",
+      "progressAI": "la IA",
+      "progressNoEvidence": "No se ha encontrado información suficiente.",
+      "progressStages": {"REQUEST_RECEIVED": "Consulta recibida", "TRANSLATION_STARTED": "Preparando la pregunta…", "TRANSLATION_COMPLETED": "Pregunta preparada", "TRANSLATION_FALLBACK": "La pregunta se preparará en el servidor.", "EMBEDDING_STARTED": "Preparando la búsqueda documental…", "EMBEDDING_COMPLETED": "Embeddings calculados", "RETRIEVAL_STARTED": "Buscando información…", "RETRIEVAL_COMPLETED": "{count} documentos encontrados", "GENERATION_STARTED": "Generando respuesta con {model}…", "PROVIDER_FAILED": "{provider} no disponible.", "FAILOVER_STARTED": "{previous} no disponible. Probando {provider}…", "GENERATION_COMPLETED": "Respuesta generada con {model}", "VALIDATION_COMPLETED": "Evidencias y citas comprobadas", "ERROR": "No se ha podido completar la consulta."},
       "page.athagon_labs_riansares_4r_rag_with_citations": "Athagon Labs · IA autoalojada · RAG con respuestas verificables",
       "page.architecture": "CÓMO FUNCIONA",
       "page.architecture_nav": "Cómo funciona",
@@ -185,6 +189,10 @@ const R4RI18n = (() => {
       "page.embedding_dimensions": "Dimensiones de embeddings"
     },
     "en": {
+      "streamError": "The query could not be completed. You can try again.",
+      "progressAI": "the AI",
+      "progressNoEvidence": "Not enough supporting information was found.",
+      "progressStages": {"REQUEST_RECEIVED": "Question received", "TRANSLATION_STARTED": "Preparing the question…", "TRANSLATION_COMPLETED": "Question prepared", "TRANSLATION_FALLBACK": "The server will prepare the question.", "EMBEDDING_STARTED": "Preparing the document search…", "EMBEDDING_COMPLETED": "Embeddings calculated", "RETRIEVAL_STARTED": "Searching for information…", "RETRIEVAL_COMPLETED": "{count} documents found", "GENERATION_STARTED": "Generating an answer with {model}…", "PROVIDER_FAILED": "{provider} unavailable.", "FAILOVER_STARTED": "{previous} unavailable. Trying {provider}…", "GENERATION_COMPLETED": "Answer generated with {model}", "VALIDATION_COMPLETED": "Evidence and citations checked", "ERROR": "The query could not be completed."},
       "page.athagon_labs_riansares_4r_rag_with_citations": "Athagon Labs · Self-Hosted AI · Verifiable RAG",
       "page.architecture": "HOW IT WORKS",
       "page.architecture_nav": "How it works",

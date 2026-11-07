@@ -54,28 +54,46 @@ public class GenerationRouter implements ChatModel {
 
     @Override
     public ChatResponse call(Prompt prompt) {
-        return route(prompt, false);
+        return route(prompt, false, RagProgress.silent());
     }
 
     /** Avoid retrying known-failed local hosts after remote translation in the same request. */
     public ChatResponse callRemoteOnly(Prompt prompt) {
-        return route(prompt, true);
+        return route(prompt, true, RagProgress.silent());
     }
 
-    private ChatResponse route(Prompt prompt, boolean remoteOnly) {
+    public ChatResponse call(Prompt prompt, RagProgress progress) { return route(prompt, false, progress); }
+    public ChatResponse callRemoteOnly(Prompt prompt, RagProgress progress) { return route(prompt, true, progress); }
+
+    private ChatResponse route(Prompt prompt, boolean remoteOnly, RagProgress progress) {
         clearRequestExecution();
         String requestId = UUID.randomUUID().toString();
+        boolean failedProvider = false;
         for (Target target : targets) {
+            progress.checkCancelled();
             Provider provider = target.provider();
             if (remoteOnly && !"OpenAI".equals(provider.name())) continue;
+            if (failedProvider) progress.emit("FAILOVER_STARTED", provider, null, null, null);
             try {
-                if (!target.available().getAsBoolean()) continue;
+                if (!target.available().getAsBoolean()) {
+                    failedProvider = true;
+                    progress.emit("PROVIDER_FAILED", provider, null, null, "provider_unavailable");
+                    continue;
+                }
+                progress.checkCancelled();
+                progress.emit("GENERATION_STARTED", provider, null, null, null);
                 ChatResponse response = target.model().call(prompt);
+                progress.checkCancelled();
+                progress.usedProvider(provider);
                 execution.set(new Execution(provider, false));
                 requestExecution.set(new Execution(provider, false));
                 log.info("Generation {} completed by provider={} model={}", requestId, provider.name(), provider.model());
                 return response;
+            } catch (java.util.concurrent.CancellationException ex) { throw ex;
             } catch (RuntimeException ex) {
+                progress.checkCancelled();
+                failedProvider = true;
+                progress.emit("PROVIDER_FAILED", provider, null, null, "provider_failed");
                 log.warn("Generation {} failed at provider={} model={} error={}", requestId,
                         provider.name(), provider.model(), ex.getClass().getSimpleName());
             }

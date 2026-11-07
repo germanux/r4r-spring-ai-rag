@@ -84,6 +84,10 @@ class RagApiCorsTest {
     @ValueSource(strings = { "https://evil.example", "http://localhost:8001", "https://localhost:8000",
             "http://localhost:8000.evil.example", "https://athagon.tech.evil.example", "null" })
     void rejectsUnauthorizedOriginsForGetPostAndPreflight(String origin) throws Exception {
+        mvc.perform(post("/api/rag/answers/stream").header("Origin", origin))
+                .andExpect(status().isForbidden()).andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
+        mvc.perform(options("/api/rag/answers/stream").header("Origin", origin).header("Access-Control-Request-Method", "POST"))
+                .andExpect(status().isForbidden());
         mvc.perform(post("/api/rag/warmup").header("Origin", origin))
                 .andExpect(status().isForbidden()).andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
         mvc.perform(options("/api/rag/warmup").header("Origin", origin).header("Access-Control-Request-Method", "POST"))
@@ -101,6 +105,18 @@ class RagApiCorsTest {
                             .header("Access-Control-Request-Headers", "content-type"))
                     .andExpect(status().isForbidden()).andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"http://127.0.0.1:8000", "http://localhost:8000", "https://athagon.tech", "http://192.168.1.203"})
+    void streamPermitsCorsAndSharesQuotaWithRest(String origin) throws Exception {
+        mvc.perform(options("/api/rag/answers/stream").header("Origin", origin)
+                .header("Access-Control-Request-Method", "POST").header("Access-Control-Request-Headers", "content-type,accept"))
+                .andExpect(status().isOk()).andExpect(header().string("Access-Control-Allow-Origin", origin));
+        mvc.perform(post("/api/rag/answers/stream").header("Origin", origin).accept(MediaType.TEXT_EVENT_STREAM))
+                .andExpect(status().isOk()).andExpect(header().string("Access-Control-Allow-Origin", origin));
+        mvc.perform(post("/api/rag/answers").header("Origin", origin).contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isTooManyRequests()).andExpect(jsonPath("$.error").value("rate_limited"));
     }
 
     @Test
@@ -130,6 +146,9 @@ class RagApiCorsTest {
 
         @PostMapping("/api/rag/warmup")
         org.springframework.http.ResponseEntity<String> warmup() { return org.springframework.http.ResponseEntity.accepted().body("{}"); }
+
+        @PostMapping("/api/rag/answers/stream")
+        String stream() { return "event:REQUEST_RECEIVED\n\n"; }
 
         @PostMapping("/api/rag/answers")
         String answer() { return "{}"; }

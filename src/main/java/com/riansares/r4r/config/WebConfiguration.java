@@ -32,6 +32,7 @@ public class WebConfiguration implements WebMvcConfigurer {
         FilterRegistrationBean<RagApiSecurityFilter> registration =
                 new FilterRegistrationBean<>(new RagApiSecurityFilter(securityProperties));
         registration.addUrlPatterns("/api/rag/*");
+        registration.setAsyncSupported(true);
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 20);
         return registration;
     }

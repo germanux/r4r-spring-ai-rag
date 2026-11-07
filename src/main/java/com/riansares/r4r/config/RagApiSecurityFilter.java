@@ -59,7 +59,7 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
                 ? requestUri
                 : requestUri.substring(contextPath.length());
 
-        return !RAG_ANSWERS_PATH.equals(path) && !"/api/rag/warmup".equals(path);
+        return !RAG_ANSWERS_PATH.equals(path) && !(RAG_ANSWERS_PATH + "/stream").equals(path) && !"/api/rag/warmup".equals(path);
     }
 
     @Override

@@ -41,20 +41,21 @@ public class RagQueryController {
                 ? citedRagService.answer(request.question())
                 : citedRagService.answer(request.question(), request.retrievalQuestion(), request.responseLanguage());
 
-        List<RagQueryResponse.Citation> citations = convertCitations(result.citations());
-
-        RagQueryResponse response = new RagQueryResponse(
-                result.answer(),
-                result.abstention(),
-                citations, router == null || router.requestExecution() == null || router.requestExecution().provider() == null ? null
-                        : new RagQueryResponse.Provider(router.requestExecution().provider().name(), router.requestExecution().provider().model(), "OpenAI".equals(router.requestExecution().provider().name()) ? new InferenceHost.Details("cloud", null, null, null, null) : InferenceHost.identify(router.requestExecution().provider().baseUrl(), router.requestExecution().provider().model()))
-        );
+        RagQueryResponse response = response(result, router == null ? null : router.requestExecution());
 
         return ResponseEntity.ok(response);
         } finally { if (router != null) router.clearRequestExecution(); }
     }
 
-    private List<RagQueryResponse.Citation> convertCitations(java.util.List<com.riansares.r4r.rag.Citation> citations) {
+    static RagQueryResponse response(com.riansares.r4r.rag.RagResult result, com.riansares.r4r.rag.GenerationRouter.Execution execution) {
+        var provider = execution == null ? null : execution.provider();
+        return new RagQueryResponse(result.answer(), result.abstention(), convertCitations(result.citations()),
+                provider == null ? null : new RagQueryResponse.Provider(provider.name(), provider.model(),
+                        "OpenAI".equals(provider.name()) ? new InferenceHost.Details("cloud", null, null, null, null)
+                                : InferenceHost.identify(provider.baseUrl(), provider.model())));
+    }
+
+    private static List<RagQueryResponse.Citation> convertCitations(java.util.List<com.riansares.r4r.rag.Citation> citations) {
         return citations.stream()
                 .map(c -> new RagQueryResponse.Citation(
                         c.label(),

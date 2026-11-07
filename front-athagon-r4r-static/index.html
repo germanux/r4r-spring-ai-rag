@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex,nofollow"/>
   <meta name="theme-color" content="#334357"/>
   <title data-i18n="page.athagon_labs_riansares_4r_rag_with_citations">Athagon Labs · IA autoalojada · RAG con respuestas verificables</title>
-  <link rel="stylesheet" href="styles/styles.css?v=13a153844a8a"/>
+  <link rel="stylesheet" href="styles/styles.css?v=8283b3bb8265"/>
 </head>
 <body class="spanish-demo">
 <header class="site-header">
@@ -127,9 +127,7 @@
             <span class="loading-badge" data-i18n="page.query_in_progress">CONSULTA EN CURSO</span>
             <div class="loading-icon" aria-hidden="true">⌕</div>
             <h3 data-i18n="page.preparing_an_answer_with_sources">Preparando una respuesta con fuentes…</h3>
-            <p data-i18n="page.searching_riansares_4r_documents">Consultando documentos de Riansares 4R</p>
-            <div class="loading-track" aria-hidden="true"><span></span></div>
-            <div class="skeleton-lines" aria-hidden="true"><span></span><span></span><span></span></div>
+            <ol id="ragProgress" class="rag-progress" aria-live="polite"></ol>
           </div>
 
           <div id="resultContent" class="result-content" hidden>
@@ -280,7 +278,7 @@ Embeddings:</span> <span id="runtimeEmbeddingModel">—</span> · <span id="runt
   </div>
 </footer>
 
-<script src="js/i18n.js?v=ea1e25775f4f"></script>
-<script src="js/app.js?v=f8050dbf2c54"></script>
+<script src="js/i18n.js?v=06db2a4912cf"></script>
+<script src="js/app.js?v=0b563696f396"></script>
 </body>
 </html>
