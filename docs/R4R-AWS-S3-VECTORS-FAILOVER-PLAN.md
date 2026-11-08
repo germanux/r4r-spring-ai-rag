@@ -1,6 +1,6 @@
 # R4R — Plan de arquitectura modular pgvector + Amazon S3 Vectors + failover
 
-Fecha de investigación: **7 de noviembre de 2026**. Actualización: fase 2 autorizada e integrada sobre **a2f39bee79a78ab9e129ec581fc9721830ec2c01**. Estado: **fase 2 implementada, validación parcial por configuración de test ausente y fallos previos del gate histórico; fase 3 solo con esqueletos autorizados (sin implementación); fase 4 NO iniciada**. Las observaciones de fase 1 se conservan como históricas donde se indica.
+Fecha de investigación: **7 de noviembre de 2026**. Actualización: fase 2 autorizada e integrada sobre **a2f39bee79a78ab9e129ec581fc9721830ec2c01**. Estado: **fase 2 implementada, validación parcial por configuración de test ausente y fallos previos del gate histórico; fase 3 adaptador de lectura implementado y probado con mocks, pendiente de importación/verificación AWS; fase 4 a cargo de otro agente**. Las observaciones de fase 1 se conservan como históricas donde se indica.
 
 Convenciones de evidencia utilizadas en todo el documento:
 
@@ -268,7 +268,7 @@ Contrato suficiente sobre a2f39bee: el enriquecimiento de encabezados pertenece 
 
 Configuración mínima: un único bean `pgVectorKnowledgeStore`, declarado por `KnowledgeVectorStoreConfiguration`, con retorno concreto para conservar inyección de clase en integraciones y proxy transaccional. El adaptador deja de registrarse por `@Service`, evitando doble registro. Spring lo resuelve también por el puerto, que recibe `CitedRagService` mediante `RagConfiguration`. No crear alias/wrapper adicional, propiedades para proveedores aún no implementados, `@Primary` para esconder ambigüedad ni helpers vacíos. PG es el único proveedor y predeterminado sin configuración AWS.
 
-Paquetes `s3vectors`, `routing` y `support` se reservan conceptualmente para fases posteriores, sin crearlos ahora. El MVP futuro **no incluye sincronizador Java, jobs, outbox, tablas nuevas, detectores de cambios, tareas periódicas ni sincronización al arrancar**. El corpus estático se transfiere manualmente (sección 15).
+En fase 2 se reservaron paquetes futuros; fase 3 ya implementa `s3vectors`. `routing`/failover quedan a cargo del otro agente, sin cambios en esta sesión. El MVP futuro **no incluye sincronizador Java, jobs, outbox, tablas nuevas, detectores de cambios, tareas periódicas ni sincronización al arrancar**. El corpus estático se transfiere manualmente (sección 15).
 
 ## 9. Fase 2: integración de main y extracción PostgreSQL
 
@@ -284,119 +284,62 @@ El gate histórico ejecuta Python en fixtures temporales y después Maven. Los f
 
 ## 10. Fase 3: implementación de S3 Vectors
 
-### Preparación de contratos autorizada después de fase 2
+**FASE 3 AUTORIZADA E IMPLEMENTADA como adaptador de lectura; sin activación operativa ni llamadas reales AWS.** Inicio: rama `feature/aws-s3-failover`, HEAD `7a63df16af5ba2c8e5647e83daae13b2925896a7`, árbol limpio. La sesión Codex independiente está autorizada; el usuario conserva toda operación Git. Otro agente desarrolla failover desde otro worktree: no se implementan ni modifican `FailoverKnowledgeVectorStore`, `VectorFailureClassifier`, selección principal o trabajo ajeno.
 
-El usuario autorizó únicamente anticipar nombres/clases principales, sin implementar métodos y comprobando compilación, sin tests. Los cambios pendientes de fase 2 se conservan. HEAD observado al iniciar este encargo: `c81f9006ee351ab0b730ec9ce3542a5ab181c515` (avance realizado fuera de esta sesión; no se hicieron operaciones de historial).
+### SDK y clases disponibles
 
-| Tipo creado | Contrato preliminar |
+**[CÓDIGO]** `pom.xml` incorpora BOM `software.amazon.awssdk:bom:2.49.1`, módulo `software.amazon.awssdk:s3vectors` y transporte síncrono explícito `url-connection-client`. Se comprobó el API real del JAR instalado con `javap`: QueryVectorsRequest contiene nextToken/queryVector/returnMetadata/returnDistance; QueryVectorsResponse contiene distanceMetric/vectors/nextToken; la distancia de QueryOutputVector es Float y metadata usa AWS Document. Java 21 compila sin actualizar Spring Boot/Spring AI. Referencias oficiales: [SDK QueryVectorsRequest](https://docs.aws.amazon.com/java/api/latest/software/amazon/awssdk/services/s3vectors/model/QueryVectorsRequest.html), [API QueryVectors](https://docs.aws.amazon.com/AmazonS3/latest/API/API_S3VectorBuckets_QueryVectors.html).
+
+| Tipo bajo `com.riansares.r4r.vector` | Implementación actual |
 | --- | --- |
-| `vector.s3vectors.S3VectorsKnowledgeStore` | Implementa el puerto existente `KnowledgeVectorStore`: index, replaceSource y search. Todos lanzan `UnsupportedOperationException`. |
-| `vector.s3vectors.S3VectorMetadataMapper` | `toMetadata(MarkdownChunk)` y `fromMetadata(Map<String,Object>)`, sin lógica. Campos previstos source/headingPath/ordinal/source_text; solo source_text no filtrable. |
-| `vector.s3vectors.S3VectorScoreMapper` | `toScore(double)` y `meetsThreshold(double,double)`, sin fórmula ni validación implementadas. |
-| `vector.config.RagVectorProperties` | Record pasivo primary/failoverEnabled/s3vectors; record anidado S3Vectors para región/bucket/index y tres timeouts. Sin binding, defaults o validación. |
-| `vector.config.S3VectorsConfiguration` | Ubicación reservada de wiring; sin anotaciones Spring ni métodos de fábrica implementados. |
+| `s3vectors.S3VectorsKnowledgeStore` | Implementa KnowledgeVectorStore; constructor `(S3VectorsClient, EmbeddingModel, RagVectorProperties.S3Vectors, S3VectorMetadataMapper, S3VectorScoreMapper)`. Solo search soportado. |
+| `s3vectors.S3VectorMetadataMapper` | toMetadata(MarkdownChunk), fromMetadata(Map<String,Object>) y fromDocument(AWS Document). Validación completa sin recorte; solo source_text no filtrable. |
+| `s3vectors.S3VectorScoreMapper` | toScore(double) y meetsThreshold(double,double): score=1-distance y comparación estricta distance < 1-minScore. |
+| `config.RagVectorProperties` | @ConfigurationProperties(r4r.rag.vector); records primary/failoverEnabled/S3Vectors. Nombres de bucket/índice obligatorios cuando se habilita; sin credenciales. S3Vectors.validate() valida localmente región, nombres y duraciones. |
+| `config.S3VectorsConfiguration` | Activación condicional explícita; crea cliente y adaptador secundario sin cambiar el bean PG ni introducir router. |
 
-**Uso previsto por otro agente:** inyectar siempre `KnowledgeVectorStore` en consumidores. El puerto ya existe: no añadir otra interfaz para S3 ni cambiar el consumidor para usar la clase concreta. Al implementar fase 3, añadir SDK v2 y constructor tipado con S3VectorsClient, el EmbeddingModel existente, propiedades y mappers; la firma de construcción se aplaza hasta incorporar el SDK, evitando un cliente Object o una interfaz de transporte redundante. Mapper metadata usa tipos Java neutros, no presupone conversión AWS implementada.
+Los esqueletos anteriores fueron reemplazados por esta implementación. No se añaden otras interfaces de almacenamiento: consumidores y otro agente usan el mismo KnowledgeVectorStore existente.
 
-#### Archivos y firmas disponibles para el siguiente agente
+### Contrato para el agente de failover
 
-Todas las rutas siguientes son relativas a `src/main/java/com/riansares/r4r/`. **[CÓDIGO]** Se han creado y compilado estos contratos; sus responsabilidades futuras son **[DISEÑO]**, no funcionalidad implementada.
+- Activación: **`r4r.rag.vector.s3vectors.enabled=true`**. No se activa por `primary` ni por `failover-enabled`; esos campos se conservan para coordinación, pero esta fase no implementa selección ni conmutación.
+- Bean del adaptador: **`s3VectorsKnowledgeVectorStore`**, tipo S3VectorsKnowledgeStore/KnowledgeVectorStore, declarado con **`@Bean(defaultCandidate=false)`**. Requiere **`@Qualifier("s3VectorsKnowledgeVectorStore")`** para inyección; no compite con PG en una dependencia sin qualifier.
+- Cliente: bean **`s3VectorsClient`**, cerrado por Spring; admite sustitución por un cliente del mismo nombre para tests. Usa cadena estándar DefaultCredentialsProvider, región explícita, transporte URLConnection y un solo intento SDK (`maxAttempts=1`).
+- Inyectar el bean de EmbeddingModel ya existente, sin cambiar modelo, endpoint, prefijos ni opciones. No necesita JdbcTemplate, DataSource o clases PostgreSQL para recuperar resultados.
+- `index` y `replaceSource` lanzan siempre **UnsupportedOperationException**: S3 es solo lectura. Nunca usar este bean como destino de escrituras. PG conserva indexación/reemplazo. No se crean sincronizador, CLI Java, outbox ni tablas.
+- AWS/SdkClientException y fallos de embeddings se propagan originales; metadata/dimensiones/respuestas corruptas producen IllegalStateException; argumentos inválidos IllegalArgumentException; interrupción CancellationException. El clasificador del otro agente deberá distinguirlos y nunca convertirlos en vacío/abstención ni atribuir automáticamente un fallo de embeddings a PostgreSQL.
 
-| Archivo | Firmas públicas actuales | Responsabilidad futura |
-| --- | --- | --- |
-| `vector/s3vectors/S3VectorsKnowledgeStore.java` | `void index(List<MarkdownChunk> chunks)`; `void replaceSource(String source, List<MarkdownChunk> chunks)`; `List<MarkdownChunk> search(String query, int topK, double minScore)` | Adaptador del mismo puerto que PG: escritura explícita y recuperación con los contratos de identidad, contexto, orden, umbral y citas existentes. |
-| `vector/s3vectors/S3VectorMetadataMapper.java` | `Map<String,Object> toMetadata(MarkdownChunk chunk)`; `MarkdownChunk fromMetadata(Map<String,Object> metadata)` | Conversión bidireccional entre chunk y metadata neutra. La conversión adicional a valores `Document` del SDK AWS todavía no existe. |
-| `vector/s3vectors/S3VectorScoreMapper.java` | `double toScore(double cosineDistance)`; `boolean meetsThreshold(double cosineDistance, double minScore)` | Encapsular conversión y comparación estricta después de validar la semántica numérica; no hay fórmula ni comprobaciones implementadas. |
-| `vector/config/RagVectorProperties.java` | Record `RagVectorProperties(String primary, boolean failoverEnabled, S3Vectors s3vectors)` | Transportar configuración del proveedor sin credenciales. Es pasivo: no está asociado aún a Spring ni aplica defaults. |
-| `vector/config/S3VectorsConfiguration.java` | Clase vacía, sin métodos de fábrica ni anotaciones | Lugar reservado para crear condicionalmente cliente AWS/adaptador y enlazar propiedades cuando se autorice implementar fase 3. |
+### Búsqueda implementada
 
-`RagVectorProperties.S3Vectors` es un record público anidado con constructor:
+1. Rechaza query null/blanca, Top-K no positivo y score no finito o fuera de [0,1], como PG. Además limita Top-K a **10.000**, máximo del servicio; valores mayores fallan explícitamente antes de infraestructura.
+2. Ejecuta **una llamada `EmbeddingModel.embed(query)` por search**, sin traducir, concatenar ni recalcular vectores documentales. Valida 768 valores finitos y norma no nula para cosine. Reutiliza el vector float32 exacto en todas las páginas.
+3. QueryVectors pide distancia y metadata. Itera nextToken manteniendo vector/parámetros; comprueba métrica cosine, claves únicas/no vacías, distancia presente y metadata válida. Token repetido, resultados excediendo Top-K o paginación sin progreso acotada terminan como error. Si falla una página, no entrega resultados parciales.
+4. Convierte cosine con score=1-distance; valida distancia finita en [0,2], sin clamp/epsilon. Aplica el mismo predicado estricto que PG, **distance < 1-minScore**. Orden ascendente por distancia; sort estable conserva empates recibidos; lista final inmutable hasta Top-K. No promete mismos vecinos ANN que PostgreSQL.
+5. Un resultado remoto vacío válido o todos los candidatos válidos por debajo del mínimo devuelven vacío. Corrupción, cancelación, transporte o fallo de embeddings **no** se ocultan como falta de evidencia. Se validan también metadata/distancias de candidatos descartados.
 
-```java
-S3Vectors(
-    String region,
-    String bucket,
-    String index,
-    Duration connectTimeout,
-    Duration apiCallAttemptTimeout,
-    Duration apiCallTimeout
-)
-```
+Timeouts predeterminados: conexión 1s, intento 3s, llamada SDK 4s; validación 1ms–2m y connect <= attempt <= call. Son límites **por petición/página**, no un SLA global de búsqueda/embeddings; no se añadieron retries de aplicación. La interrupción se comprueba antes de embedding y entre páginas; I/O bloqueante depende también del timeout del cliente. El presupuesto total del router pertenece al trabajo de fase 4.
 
-Los records aportan únicamente constructores y accessors generados por Java. No validan nulls, nombres, duración, dimensión o región. No hay `@ConfigurationProperties`, `@EnableConfigurationProperties`, defaults ni lectura de variables de entorno asociada a ellos. `primary=pgvector` y `failoverEnabled=false` son valores previstos, no defaults ejecutados por este record.
+### Metadata e integridad
 
-Las tres clases de `vector.s3vectors` son `final`, tienen constructor sin argumentos implícito y **todos sus métodos operativos lanzan `UnsupportedOperationException`** con mensaje de operación no implementada. No devuelven vacíos o éxitos ficticios. No existe una excepción personalizada `NotImplementedException`, ni se ha añadido una dependencia para obtenerla. La construcción sin argumentos solo permite disponer del esqueleto: no proporciona un cliente ni permite usarlo en producción.
+`source_text` → content, `source` → source, `headingPath` lista de strings → headingPath y `ordinal` numérico entero no negativo → index. Encabezados vacíos como lista son válidos; no sustituir un campo ausente por defaults. Se preservan texto y orden de headings. Decodificación AWS usa tipos explícitos: **Document.unwrap() convierte números a String en este SDK**, por lo que se usa asNumber().bigDecimalValue() para conservar ordinal numérico y rechazar decimales/no finitos/overflow.
 
-#### Dependencias y secuencia de conexión previstas, todavía no ejecutadas
+**[DOC+CÓDIGO]** Se aplican presupuestos conservadores de JSON UTF-8: 40 KiB totales, 2 KiB filtrables excluyendo **solo source_text**, máximo 50 claves. Incluyen keys/escapado/delimitadores, por lo que pueden rechazar payloads cercanos al máximo oficial. No truncar texto ni tratar headingPath como no filtrable. [Límites oficiales](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-limitations.html) consultados: dimensión hasta 4096, Top-K hasta 10.000 y páginas hasta 100 resultados; no se usan APIs de objetos S3 ni búsqueda por escaneo.
 
-```text
-Consumidor RAG -> KnowledgeVectorStore
-                       |
-                       +-> PgVectorKnowledgeStore       [único bean activo]
-                       +-> S3VectorsKnowledgeStore      [esqueleto no registrado]
+### Encabezados: compatibilidad condicionada a la exportación manual
 
-S3VectorsConfiguration                                 [ubicación reservada]
-  -> RagVectorProperties / S3Vectors                    [contrato pasivo]
-  -> S3VectorsClient del SDK Java 2.x                   [dependencia pendiente]
-  -> EmbeddingModel de Spring AI ya existente           [reutilizar, no sustituir]
-  -> S3VectorMetadataMapper / S3VectorScoreMapper       [métodos no implementados]
-```
+**[CÓDIGO]** PG expande los chunks cuyo content.strip() coincide con `#{1,6}\s+[^\r\n]+`: consulta misma source, ID distinto, headingPath contenido mediante JSONB @>, profundidad estrictamente mayor; orden ordinal, LIMIT 3. Añade cada hijo completo con dos saltos de línea hasta límite de **6.000 unidades UTF-16 Java**, deteniéndose ante el primer hijo que excedería ese límite. No busca más hijos para sustituir el que no cabe.
 
-Al implementar con autorización: fijar versión SDK y añadir construcción tipada; enlazar/validar propiedades; implementar mappers y adaptador con clientes simulados; resolver expansión de encabezados y score; finalmente conectar selección condicional sin ambigüedad con el bean PG existente. No añadir un segundo puerto de almacenamiento ni un bean S3 incondicional. El constructor definitivo del adaptador y los métodos `@Bean` **no están fijados ni presentes**; el agente deberá introducirlos al disponer de los tipos SDK reales.
+**Solución implementada en el lector:** consumir ese contexto ya materializado en `source_text` durante la exportación manual, manteniendo vector, UUID, source/headings/ordinal del padre. Cero SQL, Get/List por fuente, embeddings extra o escaneos por consulta. Un source_text que siga siendo solo heading se rechaza salvo que metadata contenga **`r4r_context="pgvector-heading-v1"`**. Ese marcador es una certificación del exportador manual de que ejecutó el algoritmo, incluso si no hubo hijos o ninguno cupo. Es una clave filtrable adicional pequeña; no requiere modificar el esquema del índice ni declararla no filtrable.
 
-Metadata prevista: `source` ↔ `MarkdownChunk.source()`, `headingPath` ↔ `headingPath()`, `ordinal` ↔ `index()` y `source_text` ↔ `content()`. Solo `source_text` es no filtrable en el índice informado. El mapper no genera ni representa la key UUID; su conservación corresponde al adaptador/importación. No regenerar IDs ni embeddings al preparar la transferencia manual del corpus estático.
+**[PENDIENTE]** La importación debe construir y verificar ese contenido (sección 15). El lector no puede demostrar que el marcador sea correcto ni que todas las expansiones existan; no afirma paridad completa de contexto/citas hasta comparar exportación y resultados reales. No se enriqueció ni exportó ningún dato en esta sesión. Un corpus con solo content original puede funcionar para chunks completos, pero fallará explícitamente si recupera un heading sin preparación.
 
-Recursos que deberá respetar la futura implementación: `amzn-r4r-vectors` / `amzn-r4r-vector-index`, región prevista `eu-north-1`, 768 dimensiones, COSINE y SSE-S3. Son datos proporcionados por el usuario, pendientes de comprobar con autorización antes de conectar. Los esqueletos no hacen llamadas para verificarlos ni crean recursos.
+### Recursos: evidencia y discrepancia de nombres
 
-#### Límites y validación del entregable preliminar
+No hay configuración operativa versionada con nombres AWS activos. El plan anterior informa bucket **amzn-r4r-vectors** e índice **amzn-r4r-vector-index**; el encargo actual cambia el índice previsto a **amzn-r4-vector-index**. Se registra la última indicación, sin afirmar cuál existe realmente. Región prevista **eu-north-1**, 768/cosine, única clave no filtrable source_text, SSE-S3. **Bucket e índice se exigen explícitamente**, sin defaults inventados. Verificar cuenta/región/nombre/esquema/carga manual antes de habilitar operativamente. No se ha hecho ninguna petición real AWS, ni GetIndex, importación o escritura.
 
-No se implementaron generación de embeddings, SDK/HTTP, búsqueda, indexación, borrado, serialización, umbrales, validación, recuperación ampliada de contexto, credenciales, timeouts efectivos ni selección de proveedor. No hay tareas de sincronización automática ni clases de failover de fase 4. `KnowledgeVectorStoreConfiguration` sigue registrando únicamente PG y no se ha modificado para usar estos esqueletos.
+### Estado de pruebas
 
-La única verificación ejecutada para el código preliminar fue `mvn -o -DskipTests compile`, con resultado **BUILD SUCCESS** bajo Java 21. Compilar acredita firmas y sintaxis, no funcionamiento de S3, compatibilidad de scores, arranque con S3 ni conectividad AWS. No se ejecutaron tests en este encargo preliminar. Esta ampliación documental posterior tampoco modifica Java ni requiere repetir compilación; se comprueba el diff del documento.
-
-Estos esqueletos no son beans activos ni una implementación utilizable: no instanciarlos ni conectarlos a la configuración efectiva todavía. PostgreSQL sigue siendo el único almacén registrado. No se añade SDK/POM, sincronizador, outbox, migraciones, recursos AWS, transferencia manual ni failover. Esta autorización sustituye únicamente la prohibición previa de crear esqueletos; el desarrollo funcional de fase 3 y toda fase 4 siguen pendientes de autorización.
-
-Validación de este encargo: **PASSED**, `mvn -o -DskipTests compile` (Java 21), sin tests ni arranque Spring, sin acceso AWS ni DB. Log local `/tmp/r4r-phase3-skeleton-compile.log`. Whitespace de staged/unstaged correcto. Solo se añaden las cinco clases indicadas y se actualiza este plan; cambios de fase 2 preservados, sin operaciones Git de escritura.
-
-Mensaje de commit propuesto (solo texto):
-
-```text
-chore(vector): scaffold S3 Vectors adapter and configuration contracts.
-Keep all operations unimplemented and PostgreSQL as the active provider.
-```
-
-
-**IMPLEMENTACIÓN FUNCIONAL PENDIENTE; solo esqueletos creados por autorización posterior.** Añadir AWS SDK for Java **2.x**, BOM `software.amazon.awssdk:bom` con versión exacta fijada tras verificar compatibilidad y módulo `software.amazon.awssdk:s3vectors`. No actualizar Spring AI/Boot como parte de ello. `S3VectorsClient` existe en el [SDK Java oficial](https://docs.aws.amazon.com/java/api/latest/software/amazon/awssdk/services/s3vectors/S3VectorsClient.html); sus modelos admiten put/query/get/list/delete. **[PENDIENTE]** Resolver versión Maven concreta, dependencias transitivas y soporte del API actual con Java 21 mediante compilación futura, sin descargar nada ahora.
-
-**[DOC]** AWS enumera **Europa (Estocolmo), `eu-north-1`** como región prevista; la disponibilidad y endpoint efectivo deben revalidarse antes de conectar. Fuente de fase 1: [regiones y endpoints](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-regions-quotas.html). No prueba habilitación de cuenta, conectividad, IAM ni existencia de recursos. Revalidar antes de conectar; no crear recursos adicionales.
-
-**[INFORMADO POR EL USUARIO, NO INSPECCIONADO EN AWS]** Recursos ya creados: vector bucket **`amzn-r4r-vectors`**, índice **`amzn-r4r-vector-index`**, región prevista **`eu-north-1`**, 768 dimensiones, **COSINE**, metadata no filtrable **`source_text`**, cifrado **SSE-S3**. Sustituyen todos los nombres provisionales. No crear índices adicionales ni cambiar ese esquema desde el adaptador. Confirmar región/GetIndex/metadata/cifrado con permiso posterior antes de conectar/importar.
-
-Los [parámetros del índice](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-indexes.html) —dimensión, distancia y claves no filtrables— no se pueden cambiar después. El adaptador debe adaptarse al recurso existente, no exigir otro índice. No usar APIs de objetos S3, un archivo por embedding, escaneo Java de similitud, Bedrock ni otro modelo.
-
-### Adaptador y metadatos
-
-`S3VectorsKnowledgeStore` recibe `S3VectorsClient`, el **mismo bean de embeddings** y propiedades validadas. Mantener el formato de entrada a embeddings existente: ni prefijos nuevos, normalización textual diferente, truncado silencioso ni cambio de modelo/tag. Validar longitud 768, valores finitos y vector no nulo; un desajuste es configuración/datos, no “sin evidencia”.
-
-Mapa propuesto: key = UUID existente; metadata `source` string, `headingPath` lista de strings, `ordinal` número entero y **`source_text`** con el contenido original exportado. Solo `source_text` se considera no filtrable, según el índice existente; no declarar `headingPath` no filtrable ni cambiar el esquema. Validar bytes de todos los campos filtrables. Checksums/fingerprint de la exportación se conservan en evidencia manual, sin exigir nuevas claves al índice. Reconstruir exactamente `MarkdownChunk` y rechazar metadata incompleta: no fabricar citas ni interpretar corrupción como vacío.
-
-**[DOC]** [Límites oficiales](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-limitations.html): metadata total por vector 40 KB, filtrable 2 KB, hasta 50 claves y 10 claves no filtrables por índice; dimensión 1–4096. Put/Delete hasta 500 vectores por llamada, Get hasta 100, payload hasta 20 MiB. Query Top-K hasta 10.000, páginas hasta 100; List hasta 1.000 por página. Son límites actuales consultados, revalidables. **[DISEÑO]** Contar bytes UTF-8 y overhead de serialización con margen antes de enviar. No asumir que 2.000 caracteres implican 2 KB. Si un chunk excede límites: error explícito y carga no apta para habilitar lectura; no recortar citas, modificar chunking ni añadir S3 convencional automáticamente.
-
-Los métodos futuros `index/replaceSource` del adaptador deberán validar entradas, mantener identidad y gestionar eliminación de obsoletos con operaciones vectoriales explícitas. Esto **no implica sincronización desde PostgreSQL**. Su implementación final debe resolver inventario paginado y fallos parciales sin prometer transacciones; no sustituir silenciosamente contenido con embeddings regenerados durante la importación inicial. La primera carga del corpus se hace solo con AWS CLI y vectores exportados, fuera de Java.
-
-**Dependencia de contexto a resolver en fase 3:** QueryVectors no reproduce por sí sola la expansión SQL de encabezados introducida en main. Conservar texto original en `source_text`, identificar descendientes por metadata y diseñar recuperación vectorial de contexto sin volver a depender de PostgreSQL durante failover ni escanear objetos para calcular similitudes. Probar equivalencia de expansión y citas antes de activar S3; no cambiar metadata/corpus de origen para disimular la diferencia.
-
-### Búsqueda, distancia y umbral
-
-**[DOC]** [QueryVectors](https://docs.aws.amazon.com/AmazonS3/latest/API/API_S3VectorBuckets_QueryVectors.html) es búsqueda aproximada y permite Top-K, `returnDistance=true`, `returnMetadata=true` y devuelve `distanceMetric`; no es un score Spring AI. [Paginación](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-query.html): conservar parámetros al avanzar `nextToken`; escrituras posteriores no cambian esa sesión de páginas. Con el Top-K actual de 5 basta una página, pero no truncar silenciosamente valores mayores permitidos por el puerto.
-
-**[DISEÑO, equivalencia PENDIENTE]** `S3VectorScoreMapper`: para métrica cosine validada, candidato `score = 1 - distance`, no `distance`, `1/(1+d)` ni conversión normalizada a [0,1] por intuición. La comparación compatible con SQL es `distance < 1 - minScore`; por ejemplo, con 0,63 solo distancias estrictamente menores que 0,37. No añadir epsilon al filtro ni clamp del score para forzar inclusión.
-
-Validar con vectores controlados idénticos/ortogonales/opuestos, distancias 0/1/2 si corresponden a la definición efectiva del servicio, casos justo debajo/igual/encima del umbral y errores NaN/infinito/métrica incorrecta. Un test simulado comprueba nuestra transformación; solo una prueba AWS controlada posterior podrá confirmar semántica numérica real y tolerancias float32. Ordenar por distancia ascendente si el contrato remoto no garantiza orden, conservando empates recibidos; no prometer identidad de ranking ANN entre motores ni inventar desempate nuevo para PG. Evaluar recall sobre fixtures sin empates y corpus representativo autorizado. El esquema/umbral/citas se mantiene aunque ANN pueda seleccionar vecinos distintos.
-
-### Funcionamiento sin AWS
-
-AWS se crea condicionalmente solo si es proveedor primario o se habilita respaldo explícitamente. Con `primary=pgvector` y `failover-enabled=false`: **sin bean AWS, resolución de credenciales, validación de bucket vacío ni llamadas de red AWS**. Para seleccionar S3 con valores incompletos: error de configuración claro. Fase 3 permite probar el adaptador con mocks; el arranque S3-only sin DB pertenece a fase 4. No habilitar failover hasta carga manual verificada y autorización independiente.
+Las 27 pruebas enfocadas pasaron después de corregir la decodificación numérica SDK y las comprobaciones del cierre Spring de mocks. La pasada sandbox inicial falló por attach de Mockito; se repitió con permisos locales de ejecución, no con cambios de expectativas de producto. Compilación limpia y regresiones seguras: resultado final en sección 16. Las pruebas con mocks no acreditan AWS real, disponibilidad regional efectiva, corpus cargado, precisión ANN ni paridad completa de citas.
 
 ## 11. Fase 4: failover y limitaciones reales
 
@@ -442,34 +385,35 @@ Evolución posterior: backend alternativo AWS (por ejemplo contenedor/EC2/ECS u 
 
 ## 12. Configuración y variables de entorno
 
-**[IMPLEMENTACIÓN FASE 2]** No se añaden propiedades de proveedor: `KnowledgeVectorStoreConfiguration` registra únicamente PG, sin configuración AWS requerida. Se conserva `application.yml` final: Top-K 5, min-score 0,63, Nomic 768/coseno, timeouts y endpoints independientes.
+**[CÓDIGO]** PG sigue registrado por KnowledgeVectorStoreConfiguration. El adaptador secundario está deshabilitado por defecto mediante condición Spring; sin flag no se crean RagVectorProperties/S3VectorsClient/adapter, ni se resuelven credenciales, ni se hacen llamadas AWS. No se editó application.yml ni .env.
 
-**[DISEÑO FUTURO, no aplicado]** Centralizar selección al implementar fase 3/4:
+Configuración **solo para activación futura después de importar/verificar** (ejemplo, no aplicada):
 
 ```yaml
 r4r:
   rag:
     vector:
-      primary: ${RAG_VECTOR_PRIMARY:pgvector}
-      failover-enabled: ${RAG_VECTOR_FAILOVER_ENABLED:false}
       s3vectors:
-        region: ${RAG_S3_VECTOR_REGION:eu-north-1}
-        bucket: ${RAG_S3_VECTOR_BUCKET:amzn-r4r-vectors}
-        index: ${RAG_S3_VECTOR_INDEX:amzn-r4r-vector-index}
-        connect-timeout: ${RAG_S3_VECTOR_CONNECT_TIMEOUT:1s}
-        api-call-attempt-timeout: ${RAG_S3_VECTOR_ATTEMPT_TIMEOUT:3s}
-        api-call-timeout: ${RAG_S3_VECTOR_CALL_TIMEOUT:4s}
+        enabled: true
+        region: eu-north-1
+        bucket: amzn-r4r-vectors     # Evidencia previa; confirmar nombre real.
+        index: amzn-r4-vector-index # Última instrucción; discrepancia con nombre anterior pendiente.
+        connect-timeout: 1s
+        api-call-attempt-timeout: 3s
+        api-call-timeout: 4s
 ```
 
-No propiedades de sincronización, edad máxima automática ni polling del corpus estático. La elegibilidad de S3 depende de la verificación manual antes de activación; si se cambia el corpus, suspender activación/lectura secundaria hasta reconciliarlo manualmente. No asumir que 24 horas invalida un corpus estático correcto.
+Alternativa mediante variables Spring estándar: `R4R_RAG_VECTOR_S3VECTORS_ENABLED`, `R4R_RAG_VECTOR_S3VECTORS_REGION`, `R4R_RAG_VECTOR_S3VECTORS_BUCKET`, `R4R_RAG_VECTOR_S3VECTORS_INDEX`. No se introdujo alias automático `RAG_S3_VECTOR_*` en YAML: esos nombres antiguos del plan requieren traducción explícita si se desean después. No poner credenciales en propiedades; DefaultCredentialsProvider utiliza la cadena SDK estándar cuando se requiera una petición.
 
-Futuro `RagVectorProperties`: validar primary `pgvector|s3vectors`, failover solo PG→S3 en primera versión, nombres/región/timeouts al necesitar AWS. Con AWS deshabilitado no crear cliente ni resolver credenciales. Los contratos pasivos se anticiparon por autorización posterior; no activar binding/configuración hasta implementar fase 3.
+RagVectorProperties conserva primary (default pgvector) y failoverEnabled (default false), pero no selecciona ni enruta proveedores: habilitar S3 solo registra el bean secundario cualificado. No configurar S3 como destino de escritura: sus métodos de mutación no están soportados y el bean no es candidato predeterminado. El router y el arranque sin DB son trabajo del otro agente; no se cambia KnowledgeVectorStoreConfiguration ni el consumidor RAG.
 
-Conservar `RAG_EMBEDDING_MODEL=nomic-embed-text:latest`, dimensiones 768 y `RAG_EMBEDDING_BASE_URL`; importación manual reutiliza embeddings ya almacenados. Región/nombres del cliente deben coincidir con recursos existentes comprobados posteriormente. Credenciales por cadena estándar del SDK; no duplicarlas en YAML ni agentes. No leer ni sobrescribir `.env` activo.
+Defaults S3: región eu-north-1 y timeouts 1s/3s/4s; bucket/índice sin defaults. Validación local al habilitar: región conocida por el SDK, nombres 3–63 caracteres compatibles con el API, duraciones 1ms–2m y orden conexión <= intento <= llamada. La validación no demuestra existencia de recursos, métricas/dimensión del índice o permisos IAM. No se llama GetIndex al arrancar.
+
+No hay propiedades de sincronización ni detección de modificaciones del corpus. Mantener Nomic/modelo/procesamiento actuales; reutilizar embeddings documentales existentes para la carga. SSE/REST/modelos/puertos y configuración de embeddings no se han modificado.
 
 ## 13. Seguridad, IAM y gestión de credenciales
 
-**[DOC]** [IAM de S3 Vectors](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-access-management.html) y [referencia de autorización](https://docs.aws.amazon.com/service-authorization/latest/reference/list_s3vectors.html): recurso índice `arn:aws:s3vectors:eu-north-1:<ACCOUNT_ID>:bucket/amzn-r4r-vectors/index/amzn-r4r-vector-index`.
+**[DOC]** [IAM de S3 Vectors](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-access-management.html) y [referencia de autorización](https://docs.aws.amazon.com/service-authorization/latest/reference/list_s3vectors.html): recurso índice `arn:aws:s3vectors:eu-north-1:<ACCOUNT_ID>:bucket/amzn-r4r-vectors/index/<INDICE_CONFIRMADO>` (última indicación: amzn-r4-vector-index; resolver discrepancia antes de usar la política).
 
 | Identidad propuesta | Permisos mínimos para las operaciones diseñadas |
 | --- | --- |
@@ -497,11 +441,23 @@ El texto en metadata sale a AWS igual que los embeddings: requiere autorización
 
 **[DECISIÓN DEFINITIVA] SINCRONIZACIÓN MANUAL.** Corpus R4R estático, sin ingestas nuevas previstas a corto plazo. Se descartan del MVP el sincronizador Java PostgreSQL→S3, `VectorReplicationJob`, outbox, tablas de jobs, planificación periódica, detección automática de cambios y sincronización al arrancar Spring Boot. No crear migraciones ni clases para ello. La automatización solo puede reevaluarse en otro encargo futuro.
 
-### Procedimiento posterior, NO ejecutado en fase 2
+### Preparación obligatoria de source_text para el lector S3
+
+Antes del JSON de importación, dentro del mismo snapshot read-only de vector_store:
+
+1. Para chunks cuyo content.strip() NO sea solo un encabezado, source_text = content exacto.
+2. Para los que sí lo sean, ejecutar **la misma selección SQL** de expandSectionHeading (sección 10): misma fuente, otro UUID, headingPath JSONB @> del padre, array más profundo, ORDER BY ordinal y LIMIT 3. No sustituir @> por un supuesto prefijo ni cambiar el algoritmo durante la exportación.
+3. Iniciar source_text con content original y añadir `\n\n` + content de cada hijo en orden, mientras longitud acumulada + longitud hijo + 2 <= 6000 **unidades UTF-16**; al primer exceso detenerse. PostgreSQL length(text) cuenta caracteres y no reproduce automáticamente String.length de Java para caracteres fuera del BMP: la herramienta manual debe contar UTF-16 o verificar que el corpus no contiene esos caracteres. Conservar el texto completo, sin cortar hijos.
+4. En esos chunks de heading, añadir metadata filtrable `r4r_context="pgvector-heading-v1"` solo después de verificar la preparación, también si no hubo hijos o ninguno cupo. Mantener source/headingPath/ordinal originales y **key UUID y vector existentes sin cambios**. No generar un embedding del source_text ampliado.
+5. Comparar source_text con la salida PG para esos padres y comprobar presupuesto metadata total/filtrable. No cambiar la única clave no filtrable source_text ni crear otro índice. Si el usuario ya cargó content crudo, revisar y autorizar manualmente su corrección antes de servir los headings; esta sesión no actualiza esos datos.
+
+No se implementó exportador Java, script automático ni SQL de escritura. Este procedimiento está pendiente de importación/validación autorizada; no acredita que los datos AWS actuales lo cumplan.
+
+### Procedimiento posterior, NO ejecutado en fase 2 ni fase 3
 
 1. Con autorización de datos y acceso, usar **IntelliJ Database** para abrir una sesión PostgreSQL **solo lectura**, Flyway/inicialización/ingesta desactivados. Confirmar origen y seleccionar desde `vector_store` ID, content, metadata y embedding en un snapshot consistente. No exportar `knowledge_chunks` como si contuviera vectores ni consultar credenciales en consola.
 2. Exportar vectores **existentes** y metadata sin recalcular embeddings; conservar UUID exactos. Registrar número de filas, conjunto de IDs y hashes de contenido/metadata/vector de la exportación. `latest` y la dimensión no acreditan digest de todo el corpus: anotar procedencia conocida y limitaciones, sin inventarla.
-3. Preparar fuera de Git archivos JSON UTF-8 compatibles con `aws s3vectors put-vectors`: por vector `key=<UUID>`, `data={"float32":[768 valores existentes]}`, `metadata` con `source`, `headingPath`, `ordinal`, **`source_text=<content exportado>`**. Ningún embedding Nomic nuevo ni Bedrock. Validar valores finitos, dimensión, unicidad y límites de metadata/payload. Incluir por petición `vectorBucketName=amzn-r4r-vectors` e `indexName=amzn-r4r-vector-index`; adaptar sintaxis exacta al AWS CLI instalado tras revisar ayuda.
+3. Preparar fuera de Git archivos JSON UTF-8 compatibles con `aws s3vectors put-vectors`: por vector `key=<UUID>`, `data={"float32":[768 valores existentes]}`, `metadata` con `source`, `headingPath`, `ordinal`, **`source_text=<texto preparado según la expansión de encabezados anterior>`**. Ningún embedding Nomic nuevo ni Bedrock. Validar valores finitos, dimensión, unicidad y límites de metadata/payload. Incluir por petición `vectorBucketName=amzn-r4r-vectors` e índice confirmado por usuario (última indicación `amzn-r4-vector-index`; antes figuraba `amzn-r4r-vector-index`); adaptar sintaxis exacta al AWS CLI instalado tras revisar ayuda.
 4. Antes de conectar/importar, confirmar manualmente cuenta/identidad, **región prevista eu-north-1**, GetIndex 768/COSINE y metadata no filtrable source_text, cifrado SSE-S3, permisos y contenido preexistente. No crear índices adicionales. Si existe contenido ajeno o discrepancia de esquema, detenerse y decidir con el usuario; no borrarlo ni reemplazar recursos por intuición.
 5. Desde terminal IntelliJ o terminal normal, usuario ejecuta AWS CLI con JSON local (`--cli-input-json file://...`) en lotes dentro de los límites vigentes (hasta 500 vectores y 20 MiB según documentación de fase 1). No dejar archivos con corpus en el repo ni enviar datos sin permiso específico. Registrar lotes confirmados para reanudación. Timeout puede haber escrito: repetir mismas claves es idempotente, pero verificar antes de declarar éxito.
 6. List/Get paginados en S3 Vectors para comparar **conjunto de IDs**, cantidad, metadata/campos/tipos, texto completo y vectores contra el snapshot. Detectar claves sobrantes; cualquier borrado requiere aprobación y lista explícita. No basta un count o Query Top-K. En fallo parcial mantener AWS/failover deshabilitados y completar/verificar la misma carga, sin crear otro índice.
@@ -524,7 +480,7 @@ La evidencia manual de exportación/verificación se conserva por el usuario en 
 | 2, `KnowledgeVectorStoreContractTest` / `KnowledgeVectorStoreConfigurationTest` nuevos | Contrato de interfaz, único bean efectivo y PG por defecto; ninguna infraestructura AWS al deshabilitarla. |
 | 2, RAG/ingesta/API existentes | ES/EN, pregunta original vs retrieval, abstención vacía sin generación, fuentes citadas y labels exactos, errores no transformados en vacío, CLI y SQL sin cambios. |
 | 2, SSE/seguridad existentes | Eventos y cancelación, una llamada de embedding en camino PG normal, métricas honestas, Origin/cuotas compartidas, timeout y recursos acotados. |
-| 3, `S3VectorsKnowledgeStoreTest` nuevo | Cliente AWS mock: put/query/get/list/delete, IDs estables, batches/páginas, metadata/texto y validación antes de red; AWS deshabilitado no resuelve credenciales. |
+| 3, `S3VectorsKnowledgeStoreTest` | Query paginado con cliente AWS mock, embedding único, orden/umbral, errores e integridad; index/replaceSource explícitamente no soportados, sin operaciones de escritura. |
 | 3, `S3VectorScoreMapperTest` nuevo | Distancia≠score, cosine esperado, frontera estricta, float32, score negativo válido descartado por mínimo, distancia inválida/métrica incompatible como error. |
 | 3, importación manual posterior | Verificación manual de IDs/cantidad/metadata/texto/vector y carga completa antes de activar. No hay sincronizador Java ni su suite. |
 | 3, compatibilidad AWS real opt-in futura | Solo fixtures autorizados: región/SDK/GetIndex, 768/cosine, metadata no filtrable recuperable y paridad numérica. NOT RUN hasta permiso de recursos y llamadas. Un mock no acredita este criterio. |
@@ -579,6 +535,46 @@ refactor(vector): decouple RAG retrieval behind KnowledgeVectorStore.
 Preserve pgvector behavior and document manual S3 Vectors loading.
 ```
 
+### Resultado real de fase 3 — lectura S3, sin AWS live
+
+| Comprobación | Resultado |
+| --- | --- |
+| Resolución SDK y compilación | **PASSED**, BOM 2.49.1 y firmas reales verificadas. Primer intento limitado por sandbox al escribir caché Maven; descarga de dependencias públicas autorizada, sin servicio AWS. |
+| Pruebas enfocadas | **27 PASSED** en la pasada inicial ya corregida; después se añadió un caso offline de fábrica SDK, incluido en el total final. |
+| Compilación limpia final | **PASSED**, `javac --release 21`: 45 fuentes de producto y 47 fuentes test. |
+| Suites seguras finales | **185 PASSED**, 0 failures, 0 errors, 0 skipped; incluye 22 casos nuevos de fase 3 y 163 regresiones existentes. No sumar pruebas enfocadas repetidas como casos distintos. |
+| Metadata | **5 PASSED**: tipos SDK, texto exacto, source/headings/ordinal, campos ausentes/erróneos, Unicode/bytes y encabezados preparados. |
+| Scores | **3 PASSED**: 0/1/2, frontera estricta con nextUp/nextDown, NaN/infinito/rangos y mínimos inválidos. |
+| Search AWS simulado | **9 PASSED**: embedding único/paginación, orden, empates, vacíos válidos, validación de entradas/vector, infraestructura, corrupción, bucles/excesos, escrituras rechazadas e interrupción. |
+| Configuración S3 aislada | **5 PASSED**: default PG sin cliente ni resolución de credenciales, S3 secundario solo con qualifier, nombres/región/timeouts inválidos, desactivación explícita y fábrica SDK real construida offline con credenciales simuladas. Se verifican timeouts, ausencia de resolución y cierre del cliente/proveedor. |
+| Regresiones | **PASSED**: suites de RAG, citas/abstención, traducción, modelos simulados, REST, SSE y seguridad incluidas en las 185, sin cambiar sus expectativas. |
+| AWS/índice/corpus reales | **NOT RUN**, expresamente excluidos: ninguna consulta, GetIndex, importación, escritura o modificación de recursos. Paridad numérica real/ANN/contexto/citas pendiente tras carga manual y permiso específico. |
+| PostgreSQL real, contextos de ingesta y LLM live | **NOT RUN**. TestDatabaseGuard y configuración de tests no se modifican; solo valores no secretos de test para las suites MVC sin conexión JDBC. |
+| Gate global histórico | **NOT RUN en fase 3**: su baseline de fase 2 tenía cuatro fallos por scripts históricos ausentes y el gate incorpora pruebas/contextos fuera de esta validación aislada. No se corrigió ese sistema ni se rebajaron expectativas. No se afirma que el gate global sea verde. |
+
+Comando final ejecutado (sin credenciales reales; todos los IT excluidos):
+
+```bash
+POSTGRES_HOST=192.168.1.203 POSTGRES_TEST_PORT=5433 \
+POSTGRES_TEST_DB=r4r_rag_test POSTGRES_TEST_USER=r4r_test \
+RAG_LIVE_TEST=false RAG_LIVE_EN_TEST=false RAG_LUNA_LIVE_TEST=false \
+RAG_WARMUP_LIVE_TEST=false RAG_OPENAI_ENABLED=false \
+mvn -o clean '-Dtest=*,!KnowledgeIngestionSpringLifecycleTest,!KnowledgeIngestionCliTest,!DatabaseEnvironmentTest,!*IT' test
+```
+
+Log final `/tmp/r4r-phase3-unit.log`; diagnósticos de desarrollo en `/tmp/r4r-phase3-focused.log`, `/tmp/r4r-phase3-sdk-compile.log` y `/tmp/r4r-phase3-config.log`. La primera pasada con mocks falló por attach de Mockito en sandbox; la repetición autorizada permitió detectar/corregir conversión numérica SDK y expectativas de callbacks de cierre en los tests nuevos. No se alteraron expectativas de pruebas existentes para conseguir verde.
+
+Archivos entregados: las cinco clases productivas de sección 10, tests `S3VectorMetadataMapperTest`, `S3VectorScoreMapperTest`, `S3VectorsKnowledgeStoreTest` bajo `src/test/java/com/riansares/r4r/vector/s3vectors/`, `S3VectorsConfigurationTest` bajo `vector/config/` y este plan. POM añadió SDK; durante la ejecución HEAD avanzó externamente a **2837396ad42f839c56c1ed8139e663e9d15b596b** (`feat(aws-s3): sofwware amazon AWS SDK added to pom`), por lo que ese cambio ya no aparece como pendiente. Esta sesión no realizó commits, preparación de índice, merges ni operaciones de historial. Se conserva ese avance sin tocar el otro worktree.
+
+PostgreSQL sigue siendo el único proveedor registrado **por defecto**. Habilitar el flag S3 crea un segundo bean de lectura cualificado; no activa failover, no sustituye PG y nunca habilita escrituras S3. No se modificaron `KnowledgeVectorStore`, `KnowledgeVectorStoreConfiguration`, frontend, prompts, corpus, Flyway, generación, configuración de embeddings, benchmarks, AGENTS ni DEVELOPMENT.
+
+Mensaje de commit propuesto, solo texto:
+
+```text
+feat(vector): implement read-only S3 Vectors retrieval and conditional wiring.
+Validate metadata, cosine thresholds and pagination; document manual context preparation.
+```
+
 ## 17. Riesgos, incompatibilidades y dependencias
 
 | Riesgo verificado o pendiente | Tratamiento propuesto |
@@ -608,7 +604,7 @@ Alcance fase 2: este plan, puerto/configuración/adaptador, tipos de consumidor,
 | 2, producto | `src/main/java/com/riansares/r4r/vector/port/KnowledgeVectorStore.java`, `vector/config/KnowledgeVectorStoreConfiguration.java`; mover `vector/PgVectorKnowledgeStore.java` a `vector/pgvector/PgVectorKnowledgeStore.java`; `rag/CitedRagService.java`, `rag/RagConfiguration.java` solo import/tipo. |
 | 2, tests | Adaptar suites consumidoras para mock del puerto; mover IT PG y test de contexto al paquete pgvector; helpers deterministas sin mover si no hace falta. Añadir `vector/config/KnowledgeVectorStoreConfigurationTest.java` para inyección única/proxy y contrato de búsqueda. Invocar rollback a través del puerto. |
 | 2, gate y documento | `scripts/task-gate.sh` rutas del adaptador/IT movidos; este plan. Logs generados de pruebas en /tmp/target ignorados, no memorandos. |
-| 3, futuro | SDK en POM, `vector/s3vectors/S3VectorsKnowledgeStore.java`, mapper metadata/score si necesarios, configuración/propiedades condicionales y unitarios con cliente mock. **Sin** Java exportador/sincronizador/repositorios/jobs, tablas nuevas ni índices adicionales. |
+| 3, implementado | SDK BOM 2.49.1 en POM; `vector/s3vectors/S3VectorsKnowledgeStore.java`, `S3VectorMetadataMapper.java`, `S3VectorScoreMapper.java`; `vector/config/RagVectorProperties.java`, `S3VectorsConfiguration.java`; cuatro suites nuevas de pruebas aisladas. **Sin** Java exportador/sincronizador/repositorios/jobs, tablas nuevas ni índices adicionales. |
 | 4, futuro | Router de lectura y excepciones/clasificador, perfil s3-only/beans SQL condicionales y tests indicados en sección 11. No desarrollar aún. |
 
 Al cierre se registra la lista real y los resultados en sección 16. Toda operación Git (incluidos merges y commits) la realiza personalmente el usuario. Los archivos importados desde main ya forman parte del baseline, no se reimplementan.
@@ -631,7 +627,7 @@ Al cierre se registra la lista real y los resultados en sección 16. Toda operac
 
 **Cierre de implementación de fase 2:** puerto y adaptador entregados, con resultados y limitaciones en sección 16. La aceptación integral sigue pendiente de acceso de test y de corregir fuera de este encargo los fallos históricos del gate. Si falla infraestructura, separar unitarios/compilación de IT no ejecutadas; si falla gate histórico, registrar diagnóstico y no rebajar expectativas ni modificar sistema de agentes fuera de alcance.
 
-**Antes de fase 3:** autorización nueva; versión SDK, comprobación posterior de región/cuenta/índice existente, límites reales metadata (solo source_text no filtrable), contratos de score y expansión de contexto. Recursos informados: amzn-r4r-vectors / amzn-r4r-vector-index, eu-north-1 prevista, 768/COSINE/SSE-S3; existencia/esquema no inspeccionados por Codex. Sin transferencia ni operaciones AWS en fase 2.
+**Fase 3 autorizada e implementada en lectura (ver sección 10); antes de activación operativa:** versión SDK, comprobación posterior de región/cuenta/índice existente, límites reales metadata (solo source_text no filtrable), contratos de score y expansión de contexto. Recursos informados: bucket amzn-r4r-vectors; índice amzn-r4-vector-index según última instrucción, con discrepancia frente al antiguo amzn-r4r-vector-index; eu-north-1 prevista, 768/COSINE/SSE-S3. Existencia/esquema no inspeccionados por Codex. Sin transferencia ni operaciones AWS en fase 2.
 
 **Antes de importación/activación:** permiso de datos, snapshot/exportación read-only de vector_store, archivos JSON locales protegidos, importación CLI por usuario y verificación de IDs/cantidad/metadata/vectores/consultas. No regenerar embeddings. No hay sincronización automática como requisito del MVP.
 
