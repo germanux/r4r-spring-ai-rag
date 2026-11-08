@@ -65,7 +65,7 @@ public class OllamaModelPreloader implements AutoCloseable {
 
     @Autowired
     public OllamaModelPreloader(GenerationRouter router, ObjectMapper mapper, OllamaEmbeddingProperties embeddings, OllamaChatProperties chat,
-            @Value("${r4r.rag.embedding.base-url}") String embeddingUrl,
+            @Value("${r4r.rag.embedding.providers[0].base-url}") String embeddingUrl,
             @Value("${r4r.rag.warmup.min-interval:1m}") Duration minInterval,
             @Value("${r4r.rag.warmup.pc-timeout:60s}") Duration pcTimeout,
             @Value("${r4r.rag.warmup.laptop-timeout:60s}") Duration laptopTimeout,

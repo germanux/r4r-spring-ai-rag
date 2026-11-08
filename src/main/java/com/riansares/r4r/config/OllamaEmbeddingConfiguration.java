@@ -22,7 +22,7 @@ public class OllamaEmbeddingConfiguration {
             OllamaEmbeddingProperties properties,
             @Value("${r4r.rag.stream.timeout:180s}") Duration streamTimeout) {
         var router = new EmbeddingProviderRouter(failover, properties.getOptions(), streamTimeout);
-        return new ObservedEmbeddingModel(OllamaApi.builder().baseUrl(failover.baseUrl()).build(),
+        return new ObservedEmbeddingModel(OllamaApi.builder().baseUrl(failover.providers().getFirst().baseUrl()).build(),
                 properties.getOptions(), router);
     }
 }

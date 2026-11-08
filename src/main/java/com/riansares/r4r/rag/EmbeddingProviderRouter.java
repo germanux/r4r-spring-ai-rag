@@ -1,6 +1,7 @@
 package com.riansares.r4r.rag;
 
 import com.riansares.r4r.config.EmbeddingFailoverProperties;
+import com.riansares.r4r.config.EmbeddingFailoverProperties.Provider;
 import io.micrometer.observation.ObservationRegistry;
 import java.io.EOFException;
 import java.io.InterruptedIOException;
@@ -31,8 +32,7 @@ import org.springframework.web.client.RestClientResponseException;
 public final class EmbeddingProviderRouter {
     private static final Logger log = LoggerFactory.getLogger(EmbeddingProviderRouter.class);
     private static final Set<Integer> RECOVERABLE = Set.of(408, 429, 500, 502, 503, 504);
-    private record Target(String name, String url, Duration timeout) { }
-    private final List<Target> targets;
+    private final List<Provider> targets;
     private final EmbeddingFailoverProperties config;
     private final OllamaOptions options;
     private final Duration streamTimeout;
@@ -46,20 +46,22 @@ public final class EmbeddingProviderRouter {
         if (!model.startsWith("nomic-embed-text:") || config.dimensions() != 768
                 || config.expectedDigest() == null || !config.expectedDigest().matches("[a-fA-F0-9]{64}"))
             throw new EmbeddingConfigurationException("Compatible nomic model, SHA-256 digest and 768 dimensions required");
-        targets = List.of(new Target("laptop", config.baseUrl(), config.readTimeout()),
-                new Target("desktop", config.pcBaseUrl(), config.pcReadTimeout()),
-                new Target("nas", config.nasBaseUrl(), config.nasReadTimeout()));
-        for (Duration duration : List.of(config.connectTimeout(), config.readTimeout(), config.pcReadTimeout(),
-                config.nasReadTimeout(), config.probeTimeout(), config.totalTimeout(), streamTimeout)) {
+        if (config.providers() == null || config.providers().isEmpty())
+            throw new EmbeddingConfigurationException("At least one embedding provider required");
+        targets = List.copyOf(config.providers());
+        for (Duration duration : List.of(config.connectTimeout(), config.probeTimeout(), config.totalTimeout(), streamTimeout)) {
             if (duration.toMillis() < 2) throw new EmbeddingConfigurationException("Positive embedding timeouts required");
         }
         if (config.totalTimeout().compareTo(streamTimeout) > 0)
             throw new EmbeddingConfigurationException("Embedding budget must not exceed SSE timeout");
-        for (Target target : targets) {
+        for (Provider target : targets) {
+            if (target.name() == null || !target.name().matches("[a-zA-Z0-9_-]+")
+                    || target.readTimeout() == null || target.readTimeout().toMillis() < 2)
+                throw new EmbeddingConfigurationException("Provider name and positive read timeout required");
             URI uri;
-            try { uri = URI.create(target.url()); }
+            try { uri = URI.create(target.baseUrl()); }
             catch (RuntimeException invalid) { throw new EmbeddingConfigurationException("Invalid embedding endpoint"); }
-            if (!Set.of("http", "https").contains(uri.getScheme()) || uri.getHost() == null
+            if (!("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) || uri.getHost() == null
                     || uri.getUserInfo() != null || uri.getQuery() != null || uri.getFragment() != null)
                 throw new EmbeddingConfigurationException("Invalid embedding endpoint");
         }
@@ -82,7 +84,7 @@ public final class EmbeddingProviderRouter {
         RuntimeException last = null;
         for (int i = 0; i < targets.size(); i++) {
             RagProgress.checkEmbeddingCancellation();
-            Target target = targets.get(i);
+            Provider target = targets.get(i);
             long attempt = System.nanoTime();
             String outcome = "failed";
             try {
@@ -92,7 +94,7 @@ public final class EmbeddingProviderRouter {
                 if (!config.expectedDigest().equalsIgnoreCase(installed.digest()))
                     throw new EmbeddingConfigurationException("Embedding model digest mismatch");
                 RagProgress.checkEmbeddingCancellation();
-                var client = new OllamaEmbeddingModel(api(target, target.timeout(), deadline), options,
+                var client = new OllamaEmbeddingModel(api(target, target.readTimeout(), deadline), options,
                         ObservationRegistry.NOOP, ModelManagementOptions.defaults());
                 EmbeddingResponse response = client.call(request);
                 RagProgress.checkEmbeddingCancellation();
@@ -117,7 +119,7 @@ public final class EmbeddingProviderRouter {
         throw new EmbeddingUnavailableException("Embedding providers unavailable or time budget exhausted", last);
     }
 
-    private OllamaApi api(Target target, Duration readTimeout, long deadline) {
+    private OllamaApi api(Provider target, Duration readTimeout, long deadline) {
         long remaining = Math.min((deadline - System.nanoTime()) / 1_000_000,
                 RagProgress.embeddingTimeLeft(streamTimeout));
         if (remaining < 2) throw new EmbeddingUnavailableException("Embedding time budget exhausted");
@@ -125,7 +127,7 @@ public final class EmbeddingProviderRouter {
         var http = new SimpleClientHttpRequestFactory();
         http.setConnectTimeout(Duration.ofMillis(connect));
         http.setReadTimeout(Duration.ofMillis(Math.min(readTimeout.toMillis(), remaining - connect)));
-        return OllamaApi.builder().baseUrl(target.url())
+        return OllamaApi.builder().baseUrl(target.baseUrl())
                 .responseErrorHandler(new org.springframework.web.client.DefaultResponseErrorHandler())
                 .restClientBuilder(RestClient.builder().requestFactory(http)).build();
     }

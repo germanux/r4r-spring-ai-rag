@@ -118,8 +118,10 @@ Configuración nueva, sin modificar Compose ni el `.env` activo:
 | --- | --- |
 | `RAG_SSE_TIMEOUT` | `180s` |
 | `RAG_SSE_HEARTBEAT_INTERVAL` | `10s` |
-| `RAG_EMBEDDING_CONNECT_TIMEOUT` | `2s` |
-| `RAG_EMBEDDING_READ_TIMEOUT` | `30s` |
+
+Los timeouts de embeddings están ahora en la lista y propiedades de
+`r4r.rag.embedding` en `application.yml`; los alias externos anteriores se eliminaron.
+Véase [configuración del failover de embeddings](embedding-provider-failover.md).
 
 Los límites de generación y el orden PC → portátil → OpenAI continúan configurados
 como antes. Los nuevos límites del cliente de embeddings acotan su espera; no

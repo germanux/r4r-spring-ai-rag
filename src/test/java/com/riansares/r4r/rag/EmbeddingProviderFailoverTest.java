@@ -131,8 +131,8 @@ class EmbeddingProviderFailoverTest {
     }
     @Test void elapsedSseDeadlinePreventsNetworkAndScopeIsReleased() throws Exception {
         Node a=node("lp"), b=node("pc"), c=node("nas");
-        var p=new EmbeddingFailoverProperties(a.url(),b.url(),c.url(),Duration.ofMillis(5),Duration.ofMillis(10),
-                Duration.ofMillis(10),Duration.ofMillis(10),Duration.ofMillis(10),Duration.ofMillis(20),768,DIGEST);
+        var p=new EmbeddingFailoverProperties(List.of(provider("laptop",a,10),provider("desktop",b,10),provider("nas",c,10)),
+                Duration.ofMillis(5),Duration.ofMillis(10),Duration.ofMillis(20),768,DIGEST);
         var r=new EmbeddingProviderRouter(p,options,Duration.ofMillis(20));
         var progress=RagProgress.silent(); Thread.sleep(30);
         assertThatThrownBy(() -> progress.duringRetrieval(() -> r.call(request())))
@@ -163,12 +163,28 @@ class EmbeddingProviderFailoverTest {
             assertThat(messages).noneMatch(m -> m.contains("private input") || m.contains("127.0.0.1"));
         } finally { logger.detachAppender(appender); appender.stop(); }
     }
+    @Test void routingUsesConfiguredListOrderInsteadOfHardcodedTargets() throws Exception {
+        Node a=node("lp"), b=node("pc"), c=node("nas");
+        var p=new EmbeddingFailoverProperties(List.of(provider("desktop",b,1000),provider("laptop",a,100),provider("nas",c,1000)),
+                Duration.ofMillis(50),Duration.ofMillis(100),Duration.ofSeconds(2),768,DIGEST);
+        new EmbeddingProviderRouter(p,options,Duration.ofSeconds(3)).call(request());
+        assertThat(calls).containsExactly("pc /api/tags", "pc /api/embed");
+    }
+    @Test void emptyProviderListFailsBeforeNetwork() {
+        var p=new EmbeddingFailoverProperties(List.of(),Duration.ofSeconds(1),Duration.ofSeconds(1),Duration.ofSeconds(2),768,DIGEST);
+        assertThatThrownBy(() -> new EmbeddingProviderRouter(p,options,Duration.ofSeconds(3)))
+                .isInstanceOf(EmbeddingConfigurationException.class).hasMessageContaining("provider");
+        assertThat(calls).isEmpty();
+    }
     EmbeddingProviderRouter router(Node a, Node b, Node c) {
         return new EmbeddingProviderRouter(properties(a,b,c,768),options,Duration.ofSeconds(3));
     }
     EmbeddingFailoverProperties properties(Node a, Node b, Node c, int dimensions) {
-        return new EmbeddingFailoverProperties(a.url(),b.url(),c.url(),Duration.ofMillis(50),Duration.ofMillis(100),
-                Duration.ofSeconds(1),Duration.ofSeconds(1),Duration.ofMillis(100),Duration.ofSeconds(2),dimensions,DIGEST);
+        return new EmbeddingFailoverProperties(List.of(provider("laptop",a,100),provider("desktop",b,1000),provider("nas",c,1000)),
+                Duration.ofMillis(50),Duration.ofMillis(100),Duration.ofSeconds(2),dimensions,DIGEST);
+    }
+    EmbeddingFailoverProperties.Provider provider(String name, Node node, long readMs) {
+        return new EmbeddingFailoverProperties.Provider(name,node.url(),Duration.ofMillis(readMs));
     }
     EmbeddingRequest request() { return new EmbeddingRequest(List.of("private input"),null); }
     Node node(String name) throws Exception { var n=new Node(name); nodes.add(n); return n; }

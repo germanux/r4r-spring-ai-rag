@@ -1,10 +1,12 @@
 package com.riansares.r4r.config;
 
 import java.time.Duration;
+import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** Independent embedding endpoints; generation configuration is deliberately separate. */
+/** One ordered provider list, shared by embedding routing and primary-model preparation. */
 @ConfigurationProperties("r4r.rag.embedding")
-public record EmbeddingFailoverProperties(String baseUrl, String pcBaseUrl, String nasBaseUrl,
-        Duration connectTimeout, Duration readTimeout, Duration pcReadTimeout, Duration nasReadTimeout,
-        Duration probeTimeout, Duration totalTimeout, int dimensions, String expectedDigest) { }
+public record EmbeddingFailoverProperties(List<Provider> providers, Duration connectTimeout,
+        Duration probeTimeout, Duration totalTimeout, int dimensions, String expectedDigest) {
+    public record Provider(String name, String baseUrl, Duration readTimeout) { }
+}

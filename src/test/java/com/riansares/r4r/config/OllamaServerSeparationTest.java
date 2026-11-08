@@ -36,8 +36,7 @@ class OllamaServerSeparationTest {
         HttpServer pc = server("pc", "qwen3:8b", operations);
         HttpServer backup = server("backup", "qwen2.5:7b", operations);
         try {
-            runner().withPropertyValues(
-                    "r4r.rag.embedding.base-url=" + url(embedding),
+            runner().withPropertyValues(embeddingEndpoints(embedding,embedding,embedding)).withPropertyValues(
                     "r4r.rag.generation.pc-base-url=" + url(pc),
                     "r4r.rag.generation.fallback-base-url=" + url(backup),
                     // A legacy global URL must never capture either operation.
@@ -83,19 +82,22 @@ class OllamaServerSeparationTest {
                 });
     }
 
-    @Test void defaultsAndEndpointPrecedenceRemainExplicit() {
-        runner().run(context -> {
-            assertThat(context).hasNotFailed();
-            var p=context.getBean(EmbeddingFailoverProperties.class);
-            assertThat(p.baseUrl()).isEqualTo("http://192.168.1.209:11434");
-            assertThat(p.pcBaseUrl()).isEqualTo("http://192.168.1.207:11434");
-            assertThat(p.nasBaseUrl()).isEqualTo("http://192.168.1.203:11434");
-            assertThat(p.nasReadTimeout()).isEqualTo(java.time.Duration.ofSeconds(30));
-        });
-        runner().withPropertyValues("RAG_EMBEDDING_BASE_URL=http://legacy:11434").run(context ->
-                assertThat(context.getBean(EmbeddingFailoverProperties.class).baseUrl()).isEqualTo("http://legacy:11434"));
-        runner().withPropertyValues("RAG_EMBEDDING_BASE_URL=http://legacy:11434", "RAG_EMBEDDING_LP_BASE_URL=http://laptop:11434")
-                .run(context -> assertThat(context.getBean(EmbeddingFailoverProperties.class).baseUrl()).isEqualTo("http://laptop:11434"));
+    @Test void orderedDefaultsIgnoreRemovedAliases() {
+        runner().withPropertyValues("RAG_EMBEDDING_BASE_URL=http://legacy:11434",
+                "RAG_EMBEDDING_LP_BASE_URL=http://legacy-lp:11434", "RAG_EMBEDDING_PC_BASE_URL=http://legacy-pc:11434",
+                "RAG_EMBEDDING_NAS_BASE_URL=http://legacy-nas:11434", "RAG_EMBEDDING_READ_TIMEOUT=99s")
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    var p=context.getBean(EmbeddingFailoverProperties.class);
+                    assertThat(p.providers()).extracting(EmbeddingFailoverProperties.Provider::name)
+                            .containsExactly("laptop", "desktop", "nas");
+                    assertThat(p.providers()).extracting(EmbeddingFailoverProperties.Provider::baseUrl)
+                            .containsExactly("http://192.168.1.209:11434", "http://192.168.1.207:11434", "http://192.168.1.203:11434");
+                    assertThat(p.providers()).extracting(EmbeddingFailoverProperties.Provider::readTimeout)
+                            .containsExactly(java.time.Duration.ofSeconds(8), java.time.Duration.ofSeconds(8), java.time.Duration.ofSeconds(30));
+                    assertThat(p.dimensions()).isEqualTo(Integer.parseInt(context.getEnvironment()
+                            .getProperty("spring.ai.vectorstore.pgvector.dimensions")));
+                });
     }
     @Test void incompatibleDimensionsFailBeforeNetwork() {
         runner().withPropertyValues("RAG_EMBEDDING_DIMENSIONS=384")
@@ -107,8 +109,7 @@ class OllamaServerSeparationTest {
         HttpServer pc=server("embed-pc", "nomic-embed-text:latest",operations);
         HttpServer nas=server("nas", "nomic-embed-text:latest",operations);
         try {
-            runner().withPropertyValues("r4r.rag.embedding.base-url="+url(lp),
-                    "r4r.rag.embedding.pc-base-url="+url(pc), "r4r.rag.embedding.nas-base-url="+url(nas))
+            runner().withPropertyValues(embeddingEndpoints(lp,pc,nas))
                     .run(context -> {
                         assertThat(context).hasNotFailed().hasSingleBean(EmbeddingModel.class);
                         var model=context.getBean(EmbeddingModel.class);
@@ -119,6 +120,16 @@ class OllamaServerSeparationTest {
                                 .extracting(v -> v.split(" ")[0]).containsExactly("lp", "embed-pc", "nas");
                     });
         } finally { lp.stop(0); pc.stop(0); nas.stop(0); }
+    }
+
+    private String[] embeddingEndpoints(HttpServer lp, HttpServer pc, HttpServer nas) {
+        return new String[] {
+                "r4r.rag.embedding.providers[0].name=laptop", "r4r.rag.embedding.providers[0].base-url="+url(lp),
+                "r4r.rag.embedding.providers[0].read-timeout=8s",
+                "r4r.rag.embedding.providers[1].name=desktop", "r4r.rag.embedding.providers[1].base-url="+url(pc),
+                "r4r.rag.embedding.providers[1].read-timeout=8s",
+                "r4r.rag.embedding.providers[2].name=nas", "r4r.rag.embedding.providers[2].base-url="+url(nas),
+                "r4r.rag.embedding.providers[2].read-timeout=30s" };
     }
 
     private ApplicationContextRunner runner() {

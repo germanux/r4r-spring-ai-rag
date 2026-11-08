@@ -1,4 +1,4 @@
-# Embeddings Synology y generación PC/portátil
+# Servidores de embeddings y generación PC/portátil
 
 Spring AI 1.0.0 comparte normalmente `spring.ai.ollama.base-url` entre sus modelos.
 R4R crea un `OllamaEmbeddingModel` con una conexión exclusiva para embeddings.
@@ -18,7 +18,6 @@ Spring AI 1.0.0, la versión del proyecto.
 
 | Variable | Valor para ejecutar Java desde el PC |
 |---|---|
-| `RAG_EMBEDDING_BASE_URL` | `http://192.168.1.203:11434` |
 | `RAG_EMBEDDING_MODEL` | `nomic-embed-text:latest` |
 | `RAG_EMBEDDING_DIMENSIONS` | `768` |
 | `RAG_PC_OLLAMA_BASE_URL` | `http://192.168.1.207:11434` |
@@ -26,9 +25,11 @@ Spring AI 1.0.0, la versión del proyecto.
 | `RAG_FALLBACK_OLLAMA_BASE_URL` | `http://192.168.1.209:11434` |
 | `RAG_FALLBACK_GENERATION_MODEL` | `qwen2.5:7b` |
 
-Compose fija `RAG_EMBEDDING_BASE_URL=http://ollama-embeddings:11434` dentro del
-contenedor API y espera a que el servicio esté saludable. No usar ese nombre DNS
-desde Java ejecutado directamente en el PC.
+Los endpoints de embeddings se configuran en la lista ordenada de `application.yml`:
+portátil → PC → NAS. El alias `RAG_EMBEDDING_BASE_URL` ya no se utiliza.
+Véase [failover de embeddings](embedding-provider-failover.md) para endpoints,
+timeouts y overrides. Compose conserva la dependencia del servicio local, pero
+no sobrescribe la prioridad mediante una variable de entorno.
 
 `RAG_OLLAMA_BASE_URL` y `RAG_GENERATION_MODEL` ya no seleccionan ambos servicios.
 Las propiedades `spring.ai.ollama.embedding.options.model` se conservan para el
@@ -66,7 +67,6 @@ En Synology, las siguientes comprobaciones son de lectura y no despliegan:
 
 ```bash
 cd /volume1/docker/r4r
-docker compose exec -T api printenv RAG_EMBEDDING_BASE_URL
 docker compose exec -T ollama-embeddings ollama ps
 docker compose logs --since 10m api | grep 'completed by provider='
 ```
@@ -75,7 +75,7 @@ docker compose logs --since 10m api | grep 'completed by provider='
 utilizó. Las pruebas de aislamiento verifican el destino y el cuerpo HTTP de cada
 operación. Los logs del router identifican el proveedor que completó la generación.
 
-## Resultado de la validación previa al despliegue
+## Resultado histórico de la validación previa al despliegue
 
 - Synology `/api/embed`: 768 dimensiones con `nomic-embed-text:latest`.
 - Contexto Java local con el código actualizado y conexiones reales: recuperación

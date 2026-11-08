@@ -91,8 +91,6 @@ services:
     env_file:
       - ./.env
     environment:
-      # Container DNS only; the PC uses the LAN URL from .env.example.
-      RAG_EMBEDDING_BASE_URL: http://ollama-embeddings:11434
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:?required}
     depends_on:
       postgres:
