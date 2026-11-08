@@ -27,8 +27,26 @@ class S3VectorMetadataMapperTest {
         assertThat(mapper.fromDocument(document)).isEqualTo(new MarkdownChunk("a.md", List.of(), 0, "Texto."));
     }
 
+    @Test void absentHeadingPathDecodesAsEmptyForMapAndSdkDocument() {
+        var metadata = valid();
+        metadata.remove("headingPath");
+        assertThat(mapper.fromMetadata(metadata))
+                .isEqualTo(new MarkdownChunk("a.md", List.of(), 1, "Evidence."));
+        var document = Document.fromMap(Map.of("source", Document.fromString("a.md"),
+                "ordinal", Document.fromNumber(1), "source_text", Document.fromString("Evidence.")));
+        assertThat(mapper.fromDocument(document)).isEqualTo(mapper.fromMetadata(metadata));
+    }
+
+    @Test void emptyHeadingPathIsOmittedWhenEncodingAndRoundTrips() {
+        var chunk = new MarkdownChunk("a.md", List.of(), 1, "Evidence.");
+        var encoded = mapper.toMetadata(chunk);
+        assertThat(encoded).containsOnlyKeys("source", "ordinal", "source_text")
+                .doesNotContainKey("headingPath");
+        assertThat(mapper.fromMetadata(encoded)).isEqualTo(chunk);
+    }
+
     @Test void missingFieldsAndWrongTypesNeverCreateInventedMetadata() {
-        for (String key : valid().keySet()) {
+        for (String key : List.of("source", "ordinal", "source_text")) {
             var metadata = valid();
             metadata.remove(key);
             assertThatThrownBy(() -> mapper.fromMetadata(metadata)).isInstanceOf(IllegalStateException.class);
@@ -38,7 +56,7 @@ class S3VectorMetadataMapperTest {
             metadata.put("ordinal", value);
             assertThatThrownBy(() -> mapper.fromMetadata(metadata)).isInstanceOf(IllegalStateException.class);
         }
-        for (Object headings : List.of("Section", List.of(1))) {
+        for (Object headings : new Object[]{null, "Section", List.of(1)}) {
             var metadata = valid(); metadata.put("headingPath", headings);
             assertThatThrownBy(() -> mapper.fromMetadata(metadata)).isInstanceOf(IllegalStateException.class);
         }

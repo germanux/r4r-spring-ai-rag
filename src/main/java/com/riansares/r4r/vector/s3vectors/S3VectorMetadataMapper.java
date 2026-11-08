@@ -18,10 +18,11 @@ public final class S3VectorMetadataMapper {
 
     public Map<String, Object> toMetadata(MarkdownChunk chunk) {
         if (chunk == null) throw new IllegalArgumentException("chunk must not be null");
-        Map<String, Object> metadata = Map.of("source", chunk.source(), "headingPath", chunk.headingPath(),
-                "ordinal", chunk.index(), "source_text", chunk.content());
+        Map<String, Object> metadata = new LinkedHashMap<>(Map.of("source", chunk.source(),
+                "ordinal", chunk.index(), "source_text", chunk.content()));
+        if (!chunk.headingPath().isEmpty()) metadata.put("headingPath", chunk.headingPath());
         fromMetadata(metadata); // Same validation on both directions; never truncate evidence.
-        return metadata;
+        return Map.copyOf(metadata);
     }
 
     public MarkdownChunk fromMetadata(Map<String, Object> metadata) {
@@ -33,7 +34,8 @@ public final class S3VectorMetadataMapper {
         checkBudget(filterable, 2 * 1024, "filterable metadata");
         String source = requiredString(metadata, "source");
         String text = requiredString(metadata, "source_text");
-        if (!(metadata.get("headingPath") instanceof List<?> values)) throw invalid("headingPath must be a list");
+        Object headingPath = metadata.containsKey("headingPath") ? metadata.get("headingPath") : List.of();
+        if (!(headingPath instanceof List<?> values)) throw invalid("headingPath must be a list");
         List<String> headings = new ArrayList<>();
         for (Object value : values) {
             if (!(value instanceof String heading)) throw invalid("headingPath must contain strings");
