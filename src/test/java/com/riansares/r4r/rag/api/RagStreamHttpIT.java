@@ -41,6 +41,7 @@ import static org.mockito.Mockito.*;
 class RagStreamHttpIT {
     @LocalServerPort int port;
     @org.springframework.beans.factory.annotation.Autowired RagStreamController streams;
+    @org.springframework.beans.factory.annotation.Autowired com.riansares.r4r.config.RagRetrievalProperties retrieval;
     @MockBean KnowledgeVectorStore store;
     @MockBean GenerationRouter router;
 
@@ -134,7 +135,7 @@ class RagStreamHttpIT {
                         .doesNotContain("private-pc", "192.168", "event:ERROR");
             } finally { release.countDown(); }
         } finally { release.countDown(); }
-        verify(store).search("¿Reforma oficinas?", 3, .63);
+        verify(store).search("¿Reforma oficinas?", retrieval.topK(), retrieval.minScore());
         verify(router).call(any(Prompt.class), any(RagProgress.class));
     }
 }

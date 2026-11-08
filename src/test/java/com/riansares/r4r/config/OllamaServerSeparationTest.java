@@ -83,6 +83,44 @@ class OllamaServerSeparationTest {
                 });
     }
 
+    @Test void defaultsAndEndpointPrecedenceRemainExplicit() {
+        runner().run(context -> {
+            assertThat(context).hasNotFailed();
+            var p=context.getBean(EmbeddingFailoverProperties.class);
+            assertThat(p.baseUrl()).isEqualTo("http://192.168.1.209:11434");
+            assertThat(p.pcBaseUrl()).isEqualTo("http://192.168.1.207:11434");
+            assertThat(p.nasBaseUrl()).isEqualTo("http://192.168.1.203:11434");
+            assertThat(p.nasReadTimeout()).isEqualTo(java.time.Duration.ofSeconds(30));
+        });
+        runner().withPropertyValues("RAG_EMBEDDING_BASE_URL=http://legacy:11434").run(context ->
+                assertThat(context.getBean(EmbeddingFailoverProperties.class).baseUrl()).isEqualTo("http://legacy:11434"));
+        runner().withPropertyValues("RAG_EMBEDDING_BASE_URL=http://legacy:11434", "RAG_EMBEDDING_LP_BASE_URL=http://laptop:11434")
+                .run(context -> assertThat(context.getBean(EmbeddingFailoverProperties.class).baseUrl()).isEqualTo("http://laptop:11434"));
+    }
+    @Test void incompatibleDimensionsFailBeforeNetwork() {
+        runner().withPropertyValues("RAG_EMBEDDING_DIMENSIONS=384")
+                .run(context -> assertThat(context).hasFailed());
+    }
+    @Test void ingestionAndQueryShareAllThreeEmbeddingTargets() throws Exception {
+        List<String> operations=new CopyOnWriteArrayList<>();
+        HttpServer lp=server("lp", "nomic-embed-text:latest",operations);
+        HttpServer pc=server("embed-pc", "nomic-embed-text:latest",operations);
+        HttpServer nas=server("nas", "nomic-embed-text:latest",operations);
+        try {
+            runner().withPropertyValues("r4r.rag.embedding.base-url="+url(lp),
+                    "r4r.rag.embedding.pc-base-url="+url(pc), "r4r.rag.embedding.nas-base-url="+url(nas))
+                    .run(context -> {
+                        assertThat(context).hasNotFailed().hasSingleBean(EmbeddingModel.class);
+                        var model=context.getBean(EmbeddingModel.class);
+                        assertThat(model.embed(new org.springframework.ai.document.Document("Ingestion document"))).hasSize(768);
+                        lp.stop(0); assertThat(model.embed("Retrieval query")).hasSize(768);
+                        pc.stop(0); assertThat(model.embed("Next query")).hasSize(768);
+                        assertThat(operations).filteredOn(v -> v.contains("/api/embed"))
+                                .extracting(v -> v.split(" ")[0]).containsExactly("lp", "embed-pc", "nas");
+                    });
+        } finally { lp.stop(0); pc.stop(0); nas.stop(0); }
+    }
+
     private ApplicationContextRunner runner() {
         return new ApplicationContextRunner()
                 .withInitializer(context -> {
@@ -104,8 +142,8 @@ class OllamaServerSeparationTest {
             String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
             operations.add(name + " " + exchange.getRequestURI().getPath() + " " + body);
             Object payload = switch (exchange.getRequestURI().getPath()) {
-                case "/api/embed" -> Map.of("model", model, "embeddings", List.of(new float[768]));
-                case "/api/tags" -> Map.of("models", List.of(Map.of("name", model)));
+                case "/api/embed" -> Map.of("model", model, "embeddings", List.of(vector()));
+                case "/api/tags" -> Map.of("models", List.of(Map.of("name", model, "digest", "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f")));
                 case "/api/chat" -> Map.of("model", model, "message", Map.of("role", "assistant", "content", name + " answer"), "done", true);
                 default -> Map.of();
             };
@@ -118,6 +156,8 @@ class OllamaServerSeparationTest {
         server.start();
         return server;
     }
+
+    private static float[] vector() { float[] v = new float[768]; v[0] = 1; return v; }
 
     private static String url(HttpServer server) { return "http://127.0.0.1:" + server.getAddress().getPort(); }
 }

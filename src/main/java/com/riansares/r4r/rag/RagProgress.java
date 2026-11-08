@@ -72,6 +72,15 @@ public final class RagProgress {
         try { checkCancelled(); return action.get(); }
         finally { if (previous == null) EMBEDDING_SCOPE.remove(); else EMBEDDING_SCOPE.set(previous); }
     }
+    static void checkEmbeddingCancellation() {
+        RagProgress progress = EMBEDDING_SCOPE.get();
+        if (progress != null) progress.checkCancelled();
+        if (Thread.currentThread().isInterrupted()) throw new CancellationException("Embedding cancelled");
+    }
+    static long embeddingTimeLeft(java.time.Duration timeout) {
+        RagProgress progress = EMBEDDING_SCOPE.get();
+        return progress == null ? Long.MAX_VALUE : Math.max(0, timeout.toMillis() - progress.elapsedMs());
+    }
     public static <T> T observeEmbedding(String model, Supplier<T> action) {
         RagProgress progress = EMBEDDING_SCOPE.get();
         if (progress == null) return action.get(); // Ingestion, warmup and other callers are unaffected.

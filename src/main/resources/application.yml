@@ -44,9 +44,17 @@ r4r:
       timeout: ${RAG_SSE_TIMEOUT:180s}
       heartbeat-interval: ${RAG_SSE_HEARTBEAT_INTERVAL:10s}
     embedding:
-      base-url: ${RAG_EMBEDDING_BASE_URL:http://192.168.1.203:11434}
-      connect-timeout: ${RAG_EMBEDDING_CONNECT_TIMEOUT:2s}
-      read-timeout: ${RAG_EMBEDDING_READ_TIMEOUT:30s}
+      base-url: ${RAG_EMBEDDING_LP_BASE_URL:${RAG_EMBEDDING_BASE_URL:http://192.168.1.209:11434}}
+      pc-base-url: ${RAG_EMBEDDING_PC_BASE_URL:http://192.168.1.207:11434}
+      nas-base-url: ${RAG_EMBEDDING_NAS_BASE_URL:http://192.168.1.203:11434}
+      connect-timeout: ${RAG_EMBEDDING_CONNECT_TIMEOUT:1s}
+      read-timeout: ${RAG_EMBEDDING_READ_TIMEOUT:8s}
+      pc-read-timeout: ${RAG_EMBEDDING_PC_READ_TIMEOUT:${r4r.rag.embedding.read-timeout}}
+      nas-read-timeout: ${RAG_EMBEDDING_NAS_READ_TIMEOUT:${RAG_EMBEDDING_READ_TIMEOUT:30s}}
+      probe-timeout: ${RAG_EMBEDDING_PROBE_TIMEOUT:1s}
+      total-timeout: ${RAG_EMBEDDING_TOTAL_TIMEOUT:35s}
+      dimensions: ${RAG_EMBEDDING_DIMENSIONS:768}
+      expected-digest: ${RAG_EMBEDDING_EXPECTED_DIGEST:0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f}
     warmup:
       min-interval: ${RAG_WARMUP_MIN_INTERVAL:1m}
       pc-timeout: ${RAG_WARMUP_PC_TIMEOUT:60s}
