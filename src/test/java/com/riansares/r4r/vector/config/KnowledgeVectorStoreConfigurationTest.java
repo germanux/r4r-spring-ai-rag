@@ -36,7 +36,13 @@ class KnowledgeVectorStoreConfigurationTest {
 
     @Configuration(proxyBeanMethods = false)
     @EnableTransactionManagement(proxyTargetClass = true)
-    static class TransactionConfiguration { }
+    static class TransactionConfiguration {
+        @org.springframework.context.annotation.Bean
+        InjectionProbe injectionProbe(KnowledgeVectorStore port, PgVectorKnowledgeStore adapter) {
+            return new InjectionProbe(port, adapter);
+        }
+    }
+    record InjectionProbe(KnowledgeVectorStore port, PgVectorKnowledgeStore adapter) { }
 
     @Test
     void defaultConfigurationExposesOnePostgresPortWithoutAwsProperties() {
@@ -46,6 +52,8 @@ class KnowledgeVectorStoreConfigurationTest {
                     .hasSingleBean(PgVectorKnowledgeStore.class);
             KnowledgeVectorStore store = context.getBean(KnowledgeVectorStore.class);
             assertThat(store).isInstanceOf(com.riansares.r4r.vector.FailoverKnowledgeVectorStore.class);
+            assertThat(context.getBean(InjectionProbe.class).port()).isSameAs(store);
+            assertThat(context.getBean(InjectionProbe.class).adapter()).isSameAs(context.getBean(PgVectorKnowledgeStore.class));
             assertThat(AopUtils.isAopProxy(context.getBean(PgVectorKnowledgeStore.class))).isTrue();
             verify(jdbc).afterPropertiesSet();
             verifyNoMoreInteractions(jdbc);

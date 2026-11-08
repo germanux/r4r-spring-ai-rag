@@ -14,7 +14,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @Configuration(proxyBeanMethods=false)
 @EnableConfigurationProperties(RagVectorProperties.class)
 public class KnowledgeVectorStoreConfiguration {
-    @Bean(defaultCandidate=false)
+    @Bean
     @Lazy
     PgVectorKnowledgeStore pgVectorKnowledgeStore(VectorStore vectorStore,JdbcTemplate jdbcTemplate) {
         return new PgVectorKnowledgeStore(vectorStore,jdbcTemplate);

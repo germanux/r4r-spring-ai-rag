@@ -96,7 +96,9 @@ class PgVectorKnowledgeStoreIT {
 
     @Test
     void deterministicEmbeddingModelIsLocalStableAnd768Dimensional() {
-        assertThat(knowledgeStore).isSameAs(store);
+        assertThat(knowledgeStore).isInstanceOf(com.riansares.r4r.vector.FailoverKnowledgeVectorStore.class);
+        assertThat(store).isInstanceOf(PgVectorKnowledgeStore.class);
+        assertThat(knowledgeStore).isNotSameAs(store);
         assertThat(embeddingModel)
                 .isInstanceOf(DeterministicEmbeddingModel.class);
 
