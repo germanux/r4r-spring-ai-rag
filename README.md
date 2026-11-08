@@ -94,3 +94,7 @@ variables manualmente. Véase [configuración y migración manual](docs/operatio
 El [failover de lectura PostgreSQL → S3 Vectors](docs/operations/vector-store-failover.md)
 se activa explícitamente; el perfil `s3-readonly` permite recuperación sin PostgreSQL
 y bloquea escrituras sin desactivar las migraciones del arranque normal.
+
+La [integración AWS por variables de entorno](docs/operations/s3-vectors-environment.md)
+documenta la inyección exclusiva al contenedor API, las pruebas aisladas y los pasos
+manuales de IAM, índice y Synology pendientes antes de habilitar el respaldo S3.
