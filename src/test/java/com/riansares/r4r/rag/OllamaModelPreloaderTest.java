@@ -205,10 +205,17 @@ class OllamaModelPreloaderTest {
         verifyNoInteractions(remote);
         var chat = new org.springframework.ai.model.ollama.autoconfigure.OllamaChatProperties();
         chat.getOptions().setNumCtx(4096);
-        return new OllamaModelPreloader(router, mapper, properties, chat, embedding.url(), cooldown, timeout, timeout, timeout);
+        var generation=new com.riansares.r4r.config.GenerationProviderProperties(List.of(
+                new com.riansares.r4r.config.GenerationProviderProperties.Provider("desktop",pc.url(),pc.model,timeout),
+                new com.riansares.r4r.config.GenerationProviderProperties.Provider("laptop",laptop.url(),laptop.model,timeout)),
+                timeout,timeout,timeout);
+        var embeddingConfig=new com.riansares.r4r.config.EmbeddingFailoverProperties(List.of(
+                new com.riansares.r4r.config.EmbeddingFailoverProperties.Provider("embeddings",embedding.url(),timeout)),
+                timeout,timeout,timeout,768,"test-unused");
+        return new OllamaModelPreloader(mapper, properties, chat, generation,embeddingConfig,cooldown);
     }
     private static GenerationRouter.Provider provider(String name, Server server) {
-        return new GenerationRouter.Provider(name, server.url(), server.model);
+        return new GenerationRouter.Provider(name.equals("PC") ? "desktop" : name.equals("ASUS") ? "laptop" : name, server.url(), server.model);
     }
     private static String state(OllamaModelPreloader preloader, String id) {
         return preloader.modelStates().stream().filter(s -> s.id().equals(id)).findFirst().orElseThrow().state();

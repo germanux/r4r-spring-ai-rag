@@ -88,5 +88,5 @@ sobrescrituras, con prioridad sobre la base. Sustituye al antiguo `.env.example`
 Las listas `RAG_GENERATION_PROVIDERS`, `RAG_EMBEDDING_PROVIDERS` y
 `RAG_CORS_ALLOWED_ORIGINS` son las fuentes públicas de proveedores y orígenes.
 S3 Vectors y Luna conservan sus flags independientes, deshabilitados por defecto.
-Compose 2.24+ mantiene el comando habitual de arranque; no hace falta exportar
+Compose 2.20.3+ mantiene el comando habitual de arranque; no hace falta exportar
 variables manualmente. Véase [configuración y migración manual](docs/operations/public-private-configuration.md).

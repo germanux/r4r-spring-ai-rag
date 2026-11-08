@@ -37,8 +37,7 @@ class OllamaServerSeparationTest {
         HttpServer backup = server("backup", "qwen2.5:7b", operations);
         try {
             runner().withPropertyValues(embeddingEndpoints(embedding,embedding,embedding)).withPropertyValues(
-                    "r4r.rag.generation.pc-base-url=" + url(pc),
-                    "r4r.rag.generation.fallback-base-url=" + url(backup),
+                    "RAG_GENERATION_PROVIDERS="+url(pc)+"|qwen3:8b|20s,"+url(backup)+"|qwen2.5:7b|30s",
                     // A legacy global URL must never capture either operation.
                     "spring.ai.ollama.base-url=http://127.0.0.1:1")
                     .run(context -> {
@@ -90,7 +89,7 @@ class OllamaServerSeparationTest {
                     assertThat(context).hasNotFailed();
                     var p=context.getBean(EmbeddingFailoverProperties.class);
                     assertThat(p.providers()).extracting(EmbeddingFailoverProperties.Provider::name)
-                            .containsExactly("laptop", "desktop", "nas");
+                            .allMatch(name -> name.startsWith("ollama-"));
                     assertThat(p.providers()).extracting(EmbeddingFailoverProperties.Provider::baseUrl)
                             .containsExactly("http://192.168.1.209:11434", "http://192.168.1.207:11434", "http://192.168.1.203:11434");
                     assertThat(p.providers()).extracting(EmbeddingFailoverProperties.Provider::readTimeout)
@@ -120,6 +119,36 @@ class OllamaServerSeparationTest {
                                 .extracting(v -> v.split(" ")[0]).containsExactly("lp", "embed-pc", "nas");
                     });
         } finally { lp.stop(0); pc.stop(0); nas.stop(0); }
+    }
+
+    @Test void fourLocalTargetsFailOverInOrderAndLunaStaysLast() throws Exception {
+        List<String> operations=new CopyOnWriteArrayList<>();
+        HttpServer a=server("a","model-a",operations), b=server("b","model-b",operations),
+                c=server("c","model-c",operations), d=server("d","model-d",operations);
+        try {
+            runner().withBean(ObjectMapper.class, ObjectMapper::new).withUserConfiguration(com.riansares.r4r.rag.OllamaModelPreloader.class)
+                    .withPropertyValues("r4r.rag.warmup.on-startup=false", "r4r.rag.openai.enabled=true", "OPENAI_API_KEY=TEST_ONLY",
+                            "RAG_GENERATION_PROVIDERS="+url(a)+"|model-a|1s,"+url(b)+"|model-b|2s,"+url(c)+"|model-c|3s,"+url(d)+"|model-d|4s")
+                    .run(context -> {
+                        assertThat(context).hasNotFailed().hasSingleBean(com.riansares.r4r.rag.OllamaModelPreloader.class);
+                        var configured=context.getBean(GenerationProviderProperties.class).providers();
+                        assertThat(configured).extracting(GenerationProviderProperties.Provider::readTimeout)
+                                .containsExactly(java.time.Duration.ofSeconds(1),java.time.Duration.ofSeconds(2),
+                                        java.time.Duration.ofSeconds(3),java.time.Duration.ofSeconds(4));
+                        var targets=(List<GenerationRouter.Target>)context.getBean("generationTargets");
+                        assertThat(targets).hasSize(5);
+                        assertThat(targets.getLast().provider().name()).isEqualTo("OpenAI");
+                        // The preloader constructor has not contacted the NAS or any other endpoint.
+                        assertThat(operations).isEmpty();
+                        a.stop(0); b.stop(0); c.stop(0);
+                        var router=context.getBean(GenerationRouter.class);
+                        assertThat(router.call(new Prompt("Consulta")).getResult().getOutput().getText()).isEqualTo("d answer");
+                        assertThat(router.lastUsed().baseUrl()).isEqualTo(url(d));
+                        context.getBean(com.riansares.r4r.rag.LocalRetrievalQueryTranslator.class).translate("Test question");
+                        assertThat(operations).filteredOn(op -> op.contains("/api/chat")).hasSize(2)
+                                .allMatch(op -> op.startsWith("d "));
+                    });
+        } finally { a.stop(0); b.stop(0); c.stop(0); d.stop(0); }
     }
 
     private String[] embeddingEndpoints(HttpServer lp, HttpServer pc, HttpServer nas) {

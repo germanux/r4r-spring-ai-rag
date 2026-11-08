@@ -1,6 +1,8 @@
 package com.riansares.r4r.rag;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.riansares.r4r.config.GenerationProviderProperties;
+import com.riansares.r4r.config.EmbeddingFailoverProperties;
 import jakarta.annotation.PreDestroy;
 import org.springframework.ai.model.ollama.autoconfigure.OllamaEmbeddingProperties;
 import org.springframework.ai.model.ollama.autoconfigure.OllamaChatProperties;
@@ -64,13 +66,10 @@ public class OllamaModelPreloader implements AutoCloseable {
     });
 
     @Autowired
-    public OllamaModelPreloader(GenerationRouter router, ObjectMapper mapper, OllamaEmbeddingProperties embeddings, OllamaChatProperties chat,
-            @Value("${r4r.rag.embedding.providers[0].base-url}") String embeddingUrl,
-            @Value("${r4r.rag.warmup.min-interval:1m}") Duration minInterval,
-            @Value("${r4r.rag.warmup.pc-timeout:60s}") Duration pcTimeout,
-            @Value("${r4r.rag.warmup.laptop-timeout:60s}") Duration laptopTimeout,
-            @Value("${r4r.rag.warmup.embedding-timeout:30s}") Duration embeddingTimeout) {
-        this(targets(router, embeddings, chat, embeddingUrl, pcTimeout, laptopTimeout, embeddingTimeout), mapper,
+    public OllamaModelPreloader(ObjectMapper mapper, OllamaEmbeddingProperties embeddings, OllamaChatProperties chat,
+            GenerationProviderProperties generation, EmbeddingFailoverProperties embedding,
+            @Value("${r4r.rag.warmup.min-interval:1m}") Duration minInterval) {
+        this(targets(generation, embedding, embeddings, chat), mapper,
                 HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(1)).build(), minInterval);
     }
 
@@ -82,19 +81,21 @@ public class OllamaModelPreloader implements AutoCloseable {
         this.minInterval = minInterval;
     }
 
-    private static List<Target> targets(GenerationRouter router, OllamaEmbeddingProperties embeddings, OllamaChatProperties chat,
-            String embeddingUrl, Duration pcTimeout, Duration laptopTimeout, Duration embeddingTimeout) {
+    private static List<Target> targets(GenerationProviderProperties generation, EmbeddingFailoverProperties embedding,
+            OllamaEmbeddingProperties embeddings, OllamaChatProperties chat) {
         List<Target> targets = new ArrayList<>();
-        var providers = router.localProviders();
-        for (int i = 0; i < providers.size(); i++) {
-            var provider = providers.get(i);
-            var api = api(provider.baseUrl(), i == 0 ? pcTimeout : laptopTimeout);
-            targets.add(new Target(i == 0 ? "desktop" : "laptop", provider, api(provider.baseUrl(), Duration.ofSeconds(2)), () -> {
+        for (var configured : generation.providers()) {
+            var provider = new GenerationRouter.Provider(configured.name(), configured.baseUrl(), configured.model());
+            var api = api(provider.baseUrl(), configured.readTimeout());
+            targets.add(new Target(displayId(provider), provider, api(provider.baseUrl(), generation.probeTimeout()), () -> {
                 var result = api.chat(OllamaApi.ChatRequest.builder(provider.model()).messages(List.of())
                         .stream(false).keepAlive("3h").options(chat.getOptions()).build());
                 if (result == null || !Boolean.TRUE.equals(result.done())) throw new IllegalStateException("Empty warmup response");
             }));
         }
+        var preferredEmbedding=embedding.providers().getFirst();
+        String embeddingUrl=preferredEmbedding.baseUrl();
+        Duration embeddingTimeout=preferredEmbedding.readTimeout();
         var options = embeddings.getOptions();
         var api = api(embeddingUrl, embeddingTimeout);
         var provider = new GenerationRouter.Provider("Embeddings", embeddingUrl, options.getModel());
@@ -105,6 +106,15 @@ public class OllamaModelPreloader implements AutoCloseable {
             if (result == null || result.embeddings() == null) throw new IllegalStateException("Empty warmup response");
         }));
         return targets;
+    }
+
+    private static String displayId(GenerationRouter.Provider provider) {
+        // Known inventory identifies actual hosts, never the list position or model name.
+        return switch (URI.create(provider.baseUrl()).getHost()) {
+            case "192.168.1.207" -> "desktop";
+            case "192.168.1.209" -> "laptop";
+            default -> provider.name();
+        };
     }
 
     private static OllamaApi api(String url, Duration timeout) {

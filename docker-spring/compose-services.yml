@@ -3,13 +3,10 @@ services:
   postgres:
     image: pgvector/pgvector:pg16
     container_name: r4r-postgres
-    env_file: &rag-env
-      - path: ./.env.base
-      - path: ./.env
-        required: false
     environment:
       POSTGRES_DB: ${POSTGRES_DB:?required}
       POSTGRES_USER: ${POSTGRES_USER:?required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
     ports:
       - "${POSTGRES_HOST}:${POSTGRES_PORT}:5432"
     volumes:
@@ -28,10 +25,10 @@ services:
   postgres-test:
     image: pgvector/pgvector:pg16
     container_name: r4r-postgres-test
-    env_file: *rag-env
     environment:
       POSTGRES_DB: ${POSTGRES_TEST_DB:?required}
       POSTGRES_USER: ${POSTGRES_TEST_USER:?required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
     # Both servers listen on 5432 inside the container.
     # 5433 is published on the NAS to avoid collision with production.
     ports:
@@ -55,8 +52,12 @@ services:
       - "192.168.1.203:11434:11434"
     restart: unless-stopped
     mem_limit: 1536m
-    env_file:
-      - path: ./.env.base
+    environment:
+      OLLAMA_HOST: ${OLLAMA_HOST}
+      OLLAMA_NUM_PARALLEL: ${OLLAMA_NUM_PARALLEL}
+      OLLAMA_MAX_LOADED_MODELS: ${OLLAMA_MAX_LOADED_MODELS}
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE}
+      RAG_EMBEDDING_MODEL: ${RAG_EMBEDDING_MODEL}
     volumes:
       - ./ollama-embeddings-data:/root/.ollama
     # Launch Ollama, wait for it, then pull the embedding model on first start.
@@ -71,12 +72,12 @@ services:
           if ! kill -0 "$$ollama_pid" 2>/dev/null; then exit 1; fi
           sleep 2
         done
-        if ! ollama show nomic-embed-text:latest >/dev/null 2>&1; then
-          ollama pull nomic-embed-text:latest
+        if ! ollama show "$$RAG_EMBEDDING_MODEL" >/dev/null 2>&1; then
+          ollama pull "$$RAG_EMBEDDING_MODEL"
         fi
         wait "$$ollama_pid"
     healthcheck:
-      test: ["CMD", "ollama", "show", "nomic-embed-text:latest"]
+      test: ["CMD-SHELL", 'ollama show "$$RAG_EMBEDDING_MODEL"']
       interval: 30s
       timeout: 15s
       retries: 15
@@ -87,13 +88,61 @@ services:
   api:
     image: r4r-api:0.3.2
     container_name: r4r-api
-    env_file: *rag-env
     environment:
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://postgres:5432/${POSTGRES_DB:?required}}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      RAG_GENERATION_PROVIDERS: ${RAG_GENERATION_PROVIDERS}
+      RAG_GENERATION_CONNECT_TIMEOUT: ${RAG_GENERATION_CONNECT_TIMEOUT}
+      RAG_GENERATION_PROBE_TIMEOUT: ${RAG_GENERATION_PROBE_TIMEOUT}
+      RAG_TRANSLATION_READ_TIMEOUT: ${RAG_TRANSLATION_READ_TIMEOUT}
+      RAG_GENERATION_THINK: ${RAG_GENERATION_THINK}
+      RAG_EMBEDDING_PROVIDERS: ${RAG_EMBEDDING_PROVIDERS}
+      RAG_EMBEDDING_MODEL: ${RAG_EMBEDDING_MODEL}
+      RAG_EMBEDDING_DIMENSIONS: ${RAG_EMBEDDING_DIMENSIONS}
+      RAG_EMBEDDING_CONNECT_TIMEOUT: ${RAG_EMBEDDING_CONNECT_TIMEOUT}
+      RAG_EMBEDDING_PROBE_TIMEOUT: ${RAG_EMBEDDING_PROBE_TIMEOUT}
+      RAG_EMBEDDING_TOTAL_TIMEOUT: ${RAG_EMBEDDING_TOTAL_TIMEOUT}
+      RAG_EMBEDDING_EXPECTED_DIGEST: ${RAG_EMBEDDING_EXPECTED_DIGEST}
+      RAG_CORS_ALLOWED_ORIGINS: ${RAG_CORS_ALLOWED_ORIGINS}
+      RAG_API_SECURITY_ENABLED: ${RAG_API_SECURITY_ENABLED}
+      RAG_API_MIN_INTERVAL: ${RAG_API_MIN_INTERVAL}
+      RAG_API_GLOBAL_REQUESTS_PER_MINUTE: ${RAG_API_GLOBAL_REQUESTS_PER_MINUTE}
+      RAG_API_REQUIRE_ORIGIN: ${RAG_API_REQUIRE_ORIGIN}
+      RAG_API_TRUST_PROXY_HEADERS: ${RAG_API_TRUST_PROXY_HEADERS}
+      RAG_API_MAX_TRACKED_IPS: ${RAG_API_MAX_TRACKED_IPS}
+      RAG_SSE_TIMEOUT: ${RAG_SSE_TIMEOUT}
+      RAG_SSE_HEARTBEAT_INTERVAL: ${RAG_SSE_HEARTBEAT_INTERVAL}
+      RAG_WARMUP_ON_STARTUP: ${RAG_WARMUP_ON_STARTUP}
+      RAG_WARMUP_MIN_INTERVAL: ${RAG_WARMUP_MIN_INTERVAL}
+      RAG_TOP_K: ${RAG_TOP_K}
+      RAG_MIN_SCORE: ${RAG_MIN_SCORE}
+      RAG_KNOWLEDGE_PATH: ${RAG_KNOWLEDGE_PATH}
+      RAG_MAX_FILE_BYTES: ${RAG_MAX_FILE_BYTES}
+      RAG_MAX_CHUNK_CHARS: ${RAG_MAX_CHUNK_CHARS}
+      RAG_CATALOG_ON_STARTUP: ${RAG_CATALOG_ON_STARTUP}
+      RAG_OPENAI_ENABLED: ${RAG_OPENAI_ENABLED}
+      RAG_OPENAI_MODEL: ${RAG_OPENAI_MODEL}
+      RAG_OPENAI_READ_TIMEOUT: ${RAG_OPENAI_READ_TIMEOUT}
+      RAG_OPENAI_MAX_CALLS_PER_DAY: ${RAG_OPENAI_MAX_CALLS_PER_DAY}
+      RAG_VECTOR_PRIMARY: ${RAG_VECTOR_PRIMARY}
+      RAG_VECTOR_FAILOVER_ENABLED: ${RAG_VECTOR_FAILOVER_ENABLED}
+      RAG_S3_VECTORS_ENABLED: ${RAG_S3_VECTORS_ENABLED}
+      RAG_S3_VECTORS_REGION: ${RAG_S3_VECTORS_REGION}
+      RAG_S3_VECTORS_BUCKET: ${RAG_S3_VECTORS_BUCKET}
+      RAG_S3_VECTORS_INDEX: ${RAG_S3_VECTORS_INDEX}
+      RAG_S3_VECTORS_CONNECT_TIMEOUT: ${RAG_S3_VECTORS_CONNECT_TIMEOUT}
+      RAG_S3_VECTORS_ATTEMPT_TIMEOUT: ${RAG_S3_VECTORS_ATTEMPT_TIMEOUT}
+      RAG_S3_VECTORS_CALL_TIMEOUT: ${RAG_S3_VECTORS_CALL_TIMEOUT}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
     depends_on:
       postgres:
-        condition: service_healthy
-      ollama-embeddings:
         condition: service_healthy
     ports:
       - "18080:8080"
@@ -105,7 +154,8 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: r4r-cloudflared
-    env_file: *rag-env
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
     command: tunnel --no-autoupdate run
     restart: unless-stopped
     depends_on:

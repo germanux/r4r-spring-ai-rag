@@ -20,8 +20,8 @@ Spring AI 1.0.0, la versión del proyecto.
 |---|---|
 | `RAG_EMBEDDING_MODEL` | `nomic-embed-text:latest` |
 | `RAG_EMBEDDING_DIMENSIONS` | `768` |
-| `RAG_GENERATION_PROVIDERS` | `http://192.168.1.207:11434\|qwen3:8b,http://192.168.1.209:11434\|qwen2.5:7b` |
-| `RAG_EMBEDDING_PROVIDERS` | `http://192.168.1.209:11434,http://192.168.1.207:11434,http://192.168.1.203:11434` |
+| `RAG_GENERATION_PROVIDERS` | `http://192.168.1.207:11434\|qwen3:8b\|20s,http://192.168.1.209:11434\|qwen2.5:7b\|30s` |
+| `RAG_EMBEDDING_PROVIDERS` | `http://192.168.1.209:11434\|8s,http://192.168.1.207:11434\|8s,http://192.168.1.203:11434\|30s` |
 
 Los endpoints se configuran en `docker-spring/.env.base`: `RAG_EMBEDDING_PROVIDERS`
 (portátil → PC → NAS) y `RAG_GENERATION_PROVIDERS` (PC → portátil). El archivo

@@ -18,29 +18,8 @@ public final class PublicRagEnvironment implements EnvironmentPostProcessor, Ord
     }
     public static void apply(ConfigurableEnvironment env) {
         Map<String,Object> values = new LinkedHashMap<>();
-        String[] generation = list(env, "RAG_GENERATION_PROVIDERS");
-        if (generation != null) {
-            if (generation.length != 2) throw new IllegalArgumentException("Exactly two local generation providers required");
-            for (int i=0; i<2; i++) {
-                String[] pair=generation[i].split("\\|", -1);
-                if (pair.length != 2 || pair[1].isBlank()) throw new IllegalArgumentException("Generation provider requires URL|model");
-                endpoint(pair[0]);
-                String prefix="r4r.rag.generation."+(i==0 ? "pc" : "fallback");
-                values.put(prefix+"-base-url",pair[0].trim()); values.put(prefix+"-model",pair[1].trim());
-            }
-        }
-        String[] embeddings = list(env, "RAG_EMBEDDING_PROVIDERS");
-        if (embeddings != null) {
-            if (embeddings.length < 1 || embeddings.length > 3) throw new IllegalArgumentException("One to three embedding providers required");
-            String[] names={"laptop","desktop","nas"};
-            String[] timeouts={"LP","PC","NAS"};
-            for (int i=0; i<embeddings.length; i++) {
-                endpoint(embeddings[i]);
-                String prefix="r4r.rag.embedding.providers["+i+"].";
-                values.put(prefix+"name",names[i]); values.put(prefix+"base-url",embeddings[i]);
-                values.put(prefix+"read-timeout",env.getRequiredProperty("RAG_EMBEDDING_"+timeouts[i]+"_TIMEOUT"));
-            }
-        }
+        providers(env, values, "RAG_GENERATION_PROVIDERS", "generation", true);
+        providers(env, values, "RAG_EMBEDDING_PROVIDERS", "embedding", false);
         String[] origins=list(env,"RAG_CORS_ALLOWED_ORIGINS");
         if (origins != null) {
             for (String origin:origins) {
@@ -53,6 +32,28 @@ public final class PublicRagEnvironment implements EnvironmentPostProcessor, Ord
         // Explicit native Spring/test properties remain higher priority than the derived adapter.
         env.getPropertySources().remove("public-rag-lists");
         env.getPropertySources().addLast(new MapPropertySource("public-rag-lists",values));
+    }
+    private static void providers(ConfigurableEnvironment env, Map<String,Object> values,
+            String key, String type, boolean generation) {
+        String[] entries=list(env,key);
+        if (entries==null) return;
+        for (int i=0;i<entries.length;i++) {
+            String[] parts=entries[i].split("\\|",-1);
+            if (parts.length!=(generation ? 3 : 2) || generation && parts[1].isBlank())
+                throw new IllegalArgumentException(generation ? "Provider requires URL|model|timeout" : "Provider requires URL|timeout");
+            String url=endpoint(parts[0]).toString();
+            java.time.Duration timeout;
+            try { timeout=org.springframework.boot.convert.DurationStyle.detectAndParse(parts[parts.length-1].trim()); }
+            catch (RuntimeException invalid) { throw new IllegalArgumentException("Invalid provider timeout"); }
+            if (timeout.toMillis()<2) throw new IllegalArgumentException("Positive provider timeout required");
+            String prefix="r4r.rag."+type+".providers["+i+"].";
+            // Stable endpoint identity, without exposing an address or inventing a machine role.
+            String id="ollama-"+java.util.UUID.nameUUIDFromBytes(url.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            values.put(prefix+"name",id);
+            values.put(prefix+"base-url",url);
+            values.put(prefix+"read-timeout",timeout);
+            if (generation) values.put(prefix+"model",parts[1].trim());
+        }
     }
     private static String[] list(ConfigurableEnvironment env, String key) {
         String text=env.getProperty(key);

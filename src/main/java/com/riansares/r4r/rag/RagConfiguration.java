@@ -1,6 +1,7 @@
 package com.riansares.r4r.rag;
 
 import com.riansares.r4r.config.RagRetrievalProperties;
+import com.riansares.r4r.config.GenerationProviderProperties;
 import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaApi;
@@ -17,7 +18,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties({RagRetrievalProperties.class, OllamaChatProperties.class})
+@EnableConfigurationProperties({RagRetrievalProperties.class, OllamaChatProperties.class, GenerationProviderProperties.class})
 public class RagConfiguration {
 
     @Value("${spring.ai.ollama.chat.think:false}")
@@ -25,21 +26,17 @@ public class RagConfiguration {
 
     @Bean
     List<GenerationRouter.Target> generationTargets(OllamaChatProperties properties,
-            @Value("${r4r.rag.generation.fallback-base-url}") String fallbackUrl,
-            @Value("${r4r.rag.generation.fallback-model}") String fallbackModel,
-            @Value("${r4r.rag.generation.pc-base-url}") String pcUrl,
-            @Value("${r4r.rag.generation.pc-model}") String pcModel,
-            @Value("${r4r.rag.generation.connect-timeout:2s}") Duration connectTimeout,
-            @Value("${r4r.rag.generation.probe-timeout:2s}") Duration probeTimeout,
-            @Value("${r4r.rag.generation.pc-read-timeout:35s}") Duration pcReadTimeout,
-            @Value("${r4r.rag.generation.fallback-read-timeout:60s}") Duration fallbackReadTimeout,
+            GenerationProviderProperties local,
             @Value("${r4r.rag.openai.enabled:false}") boolean remoteEnabled,
             @Value("${r4r.rag.openai.model:gpt-6-luna}") String remoteModel,
             @Value("${r4r.rag.openai.read-timeout:35s}") Duration remoteReadTimeout,
             @Value("${r4r.rag.openai.max-calls-per-day:20}") int remoteDailyCallLimit,
             @Value("${OPENAI_API_KEY:}") String apiKey) {
-        var targets = new java.util.ArrayList<>(List.of(target("PC principal", pcUrl, pcModel, properties.getOptions(), connectTimeout, probeTimeout, pcReadTimeout),
-                target("Portátil ASUS", fallbackUrl, fallbackModel, properties.getOptions(), connectTimeout, probeTimeout, fallbackReadTimeout)));
+        if (local.providers()==null || local.providers().isEmpty())
+            throw new IllegalArgumentException("At least one local generation provider required");
+        var targets = new java.util.ArrayList<GenerationRouter.Target>();
+        for (var provider:local.providers()) targets.add(target(provider.name(), provider.baseUrl(), provider.model(),
+                properties.getOptions(),local.connectTimeout(),local.probeTimeout(),provider.readTimeout()));
         if (remoteEnabled) {
             if (apiKey.isBlank()) throw new IllegalStateException("OPENAI_API_KEY required when remote generation is enabled");
             SimpleClientHttpRequestFactory http = new SimpleClientHttpRequestFactory();
@@ -61,19 +58,14 @@ public class RagConfiguration {
     LocalRetrievalQueryTranslator retrievalQueryTranslator(
             @Qualifier("generationTargets") List<GenerationRouter.Target> targets,
             OllamaChatProperties properties,
-            @Value("${r4r.rag.generation.pc-base-url}") String pcUrl,
-            @Value("${r4r.rag.generation.pc-model}") String pcModel,
-            @Value("${r4r.rag.generation.fallback-base-url}") String fallbackUrl,
-            @Value("${r4r.rag.generation.fallback-model}") String fallbackModel,
-            @Value("${r4r.rag.generation.connect-timeout:2s}") Duration connectTimeout,
-            @Value("${r4r.rag.generation.probe-timeout:2s}") Duration probeTimeout,
-            @Value("${r4r.rag.generation.translation-read-timeout:30s}") Duration translationReadTimeout) {
-        // Bound each translation attempt within the 180-second stream/browser budget.
-        // Share remote call quota with generation.
-        var translation = new java.util.ArrayList<>(List.of(
-                target("PC principal", pcUrl, pcModel, properties.getOptions(), connectTimeout, probeTimeout, translationReadTimeout),
-                target("Portátil ASUS", fallbackUrl, fallbackModel, properties.getOptions(), connectTimeout, probeTimeout, translationReadTimeout)));
-        if (targets.size() > 2) translation.add(targets.get(2));
+            GenerationProviderProperties local) {
+        var translation = new java.util.ArrayList<GenerationRouter.Target>();
+        for (var provider:local.providers()) translation.add(target(provider.name(),provider.baseUrl(),provider.model(),
+                properties.getOptions(),local.connectTimeout(),local.probeTimeout(),
+                local.translationReadTimeout().compareTo(provider.readTimeout())<0
+                        ? local.translationReadTimeout() : provider.readTimeout()));
+        // Share the remote quota, independently of the number of local providers.
+        targets.stream().filter(t -> "OpenAI".equals(t.provider().name())).forEach(translation::add);
         return new LocalRetrievalQueryTranslator(new GenerationRouter(translation));
     }
 

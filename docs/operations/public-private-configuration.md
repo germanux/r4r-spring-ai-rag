@@ -1,105 +1,179 @@
 # Public defaults and private overrides
 
-`docker-spring/.env.base` is public, versioned configuration. It replaces
-`.env.example`. `docker-spring/.env` stays ignored and contains only secrets and
-intentional overrides. The real private file was not manually opened, printed or modified. During an
-additional bootstrap test, Spring unexpectedly accumulated imports and loaded it
-despite a command-line import override. This violated the intended test isolation;
-no values were printed. The corrected test uses a generated public-only YAML with
-no private import at all, and its property-source assertions verify isolation.
+`docker-spring/.env.base` is public and versioned. Optional `.env` is ignored and
+contains secrets plus intentional overrides. No private file has been read, printed,
+modified or loaded during this revision. The import-isolation failure in the prior
+revision is historical; bootstrap tests now generate YAML with no private import.
 
-## Normal operation and precedence
+## Provider lists
 
-Run Spring from the repository root as usual. Spring imports the public file,
-then the optional private file; later imports override earlier ones. OS variables
-and explicit Spring command-line properties retain their standard higher priority.
-Container execution receives the same values through Compose `env_file`; neither
-file needs to be mounted in the API image. Imports are optional for that reason.
+```dotenv
+RAG_GENERATION_PROVIDERS=http://192.168.1.207:11434|qwen3:8b|20s,http://192.168.1.209:11434|qwen2.5:7b|30s
+RAG_EMBEDDING_PROVIDERS=http://192.168.1.209:11434|8s,http://192.168.1.207:11434|8s,http://192.168.1.203:11434|30s
+RAG_EMBEDDING_MODEL=nomic-embed-text:latest
+```
 
-Use the usual `docker compose up -d` from `docker-spring` (do not execute it as part
-of this validation). Compose 2.24+ is required; the local version checked is 2.40.3.
-`docker-compose.yml` includes `compose-services.yml` with `.env.base` as public
-**interpolation** defaults. The normal project `.env`/shell can override those
-interpolation values. Service `env_file` then passes `.env.base`, followed by the
-optional `.env`, to containers. These are different mechanisms.
+Entries are tried in order. Each URL owns its model/read timeout (generation) or
+read timeout (embeddings). Both lists require at least one entry and have no fixed
+upper size. Add, remove or reorder entire entries; timeout associations do not change.
+The embedding model/digest/dimensions remain common for compatibility with the corpus.
+Every new request returns to the first provider. No downloads, reindex or live
+provider interruption is used to test this behavior.
 
-PostgreSQL's `environment` maps the test DB/user intentionally for `postgres-test`.
-Passwords are obtained from `env_file`, never interpolated into YAML. The API uses
-a container-network JDBC URL by default, but an explicit `SPRING_DATASOURCE_URL`
-override is respected. Cloudflared obtains `TUNNEL_TOKEN` via `env_file`, avoiding
-an empty `environment` entry that would mask its value. Ollama receives only the
-public file, so it is not given API or database credentials.
+`PublicRagEnvironment` only adapts compact text to typed Spring lists after imports.
+`GenerationProviderProperties` binds the local generation list, replacing PC/fallback
+properties. URL-based opaque IDs remain stable on reorder; neither names nor timeouts
+are inferred from position. Existing known host display roles use actual addresses,
+not priority. Unknown hosts receive no invented hardware identity in this adapter.
+Translation iterates the same local list with its global translation cap, and shares
+Luna's quota/client independently of the number of local providers. Warmup uses each
+entry's own timeout, never calls Luna, and retains the existing asynchronous behavior.
 
-## Compact lists
+Global connection/probe limits, embedding total budget, translation cap and SSE
+limits remain. Model and digest validation, single embedding instrumentation and
+cancellation behavior are preserved. One `RAG_CORS_ALLOWED_ORIGINS` list is shared
+by MVC and the consumption-security filter. Values may be unquoted or the compact
+lists may have matching outer quotes. Invalid entries fail without echoing content.
 
-- `RAG_GENERATION_PROVIDERS`: two ordered `URL|model` entries: PC, laptop.
-- `RAG_EMBEDDING_PROVIDERS`: one to three ordered URLs, normally laptop, PC, NAS.
-- `RAG_CORS_ALLOWED_ORIGINS`: one comma-separated explicit HTTP(S) origin list,
-  including JetBrains, Python localhost/loopback, NAS and production origins.
+## Spring and Compose precedence
 
-The public file uses unquoted values to work unchanged as both dotenv and Java
-properties. The compact-list adapter also accepts outer quotes as in the requested
-private override example. Invalid list entries fail with non-sensitive messages.
-`PublicRagEnvironment` runs after config imports; it maps compact lists to the
-existing typed embedding properties and generation consumers. It performs no I/O,
-network call, failover decision or credential handling. Native Spring overrides
-still take precedence. Changing lists does not change models or index dimensions.
+Local Spring imports `.env.base` first, optional `.env` second. Environment variables
+and explicit Spring arguments retain their usual higher priority. Neither file is
+mounted into the API container; Compose transmits the effective allowlisted values.
 
-Models, timeouts, digest, dimensions, retrieval settings, warmup/SSE/security limits,
-PostgreSQL names, knowledge paths, and independent S3/Luna flags are public defaults.
-S3 remains disabled, separate from Luna (also disabled). S3 bucket/index are blank
-until explicitly configured; enabling S3 requires valid names and least-privilege
-non-root AWS credentials. This task does not resolve AWS credentials or contact AWS.
+The normal Synology command remains `docker compose up -d` from `docker-spring`.
+Compose 2.20.3+ is required for `include` ([Docker documentation](https://docs.docker.com/compose/how-tos/multiple-compose-files/include/)); local validation uses 2.40.3. The root Compose file includes
+`compose-services.yml` with `.env.base` as interpolation defaults. The normal project
+`.env` overrides the defaults, and shell variables take precedence. Unlike the prior
+implementation, **services have no shared `env_file`**. Explicit `environment` maps
+are intentional allowlists using those effective interpolation values:
 
-## Manual private-file cleanup (performed by the owner only)
+| Service | Received values |
+| --- | --- |
+| PostgreSQL | DB, user, password only |
+| PostgreSQL test | test DB/user mapped to PostgreSQL variables, password only |
+| Spring API | public RAG/DB settings, DB password, OpenAI key, scoped AWS access/secret/session keys; no tunnel token or test DB credentials |
+| Cloudflared | tunnel token only |
+| Ollama | four `OLLAMA_*` settings and the embedding model for initialization/healthcheck; no credentials |
 
-1. Keep the existing `POSTGRES_PASSWORD`, `OPENAI_API_KEY`, `TUNNEL_TOKEN`, and any
-   required scoped AWS credentials/profile references. Never copy them into the base.
-2. Remove public values from the private file when the base default is correct.
-   Keep genuine overrides, including existing PostgreSQL username/database/path values
-   if they differ: changing these blindly will not rename an existing database/user.
-3. Replace legacy generation variables `RAG_PC_OLLAMA_BASE_URL`,
-   `RAG_PC_GENERATION_MODEL`, `RAG_FALLBACK_OLLAMA_BASE_URL`,
-   `RAG_FALLBACK_GENERATION_MODEL` with one `RAG_GENERATION_PROVIDERS` override if needed.
-4. Replace old embedding endpoint aliases (`RAG_EMBEDDING_BASE_URL`,
-   `RAG_EMBEDDING_LP_BASE_URL`, `RAG_EMBEDDING_PC_BASE_URL`,
-   `RAG_EMBEDDING_NAS_BASE_URL`) or indexed provider overrides with
-   `RAG_EMBEDDING_PROVIDERS` only when the public order/endpoints should differ.
-5. Replace all `RAG_API_ALLOWED_ORIGIN_*` variables with `RAG_CORS_ALLOWED_ORIGINS`.
-   Preserve required development/public origins; do not use a wildcard.
-6. Old `RAG_FALLBACK_READ_TIMEOUT` becomes `RAG_GENERATION_LAPTOP_TIMEOUT`;
-   old per-provider embedding read timeout aliases become
-   `RAG_EMBEDDING_LP_TIMEOUT`, `RAG_EMBEDDING_PC_TIMEOUT`, `RAG_EMBEDDING_NAS_TIMEOUT`.
-7. Native overrides such as `R4R_RAG_*` or `SPRING_*` intentionally retain Spring
-   precedence. Remove obsolete indexed/native settings if switching to compact lists.
-8. Never overwrite a private key. No automatic migration script is provided.
+An explicit `SPRING_DATASOURCE_URL` override is honored; otherwise the API uses
+`postgres:5432` on the container network. Host Java uses the LAN PostgreSQL settings.
+No AWS root credentials or AWS service call is used. Existing named-profile setups
+need separately configured SDK profile files/mounts; this change does not create
+credentials or mount host AWS files. S3 flags and Luna flags remain independent.
 
-## Safe validation
+The API depends only on healthy PostgreSQL. Ollama/NAS health is not a prerequisite
+for API startup. For `docker compose up api`, Ollama is not a transitive dependency.
+Configured local models may be unavailable on startup: asynchronous warmup records
+the failure without preventing another configured provider from handling queries.
+No real Synology deployment has been started or changed by these checks.
+
+## Exact manual cleanup of the private file
+
+Do not replace keys or alter an existing PostgreSQL user/database blindly. Only the
+owner edits the private file. The following obsolete variables can be removed after
+converting any intentional override into the new compact lists:
+
+```text
+RAG_OLLAMA_BASE_URL
+RAG_GENERATION_MODEL
+RAG_PC_OLLAMA_BASE_URL
+RAG_PC_GENERATION_MODEL
+RAG_FALLBACK_OLLAMA_BASE_URL
+RAG_FALLBACK_GENERATION_MODEL
+RAG_FALLBACK_READ_TIMEOUT
+RAG_GENERATION_PC_TIMEOUT
+RAG_GENERATION_LAPTOP_TIMEOUT
+RAG_EMBEDDING_BASE_URL
+RAG_EMBEDDING_LP_BASE_URL
+RAG_EMBEDDING_PC_BASE_URL
+RAG_EMBEDDING_NAS_BASE_URL
+RAG_EMBEDDING_READ_TIMEOUT
+RAG_EMBEDDING_PC_READ_TIMEOUT
+RAG_EMBEDDING_NAS_READ_TIMEOUT
+RAG_EMBEDDING_LP_TIMEOUT
+RAG_EMBEDDING_PC_TIMEOUT
+RAG_EMBEDDING_NAS_TIMEOUT
+RAG_WARMUP_PC_TIMEOUT
+RAG_WARMUP_LAPTOP_TIMEOUT
+RAG_WARMUP_EMBEDDING_TIMEOUT
+RAG_API_ALLOWED_ORIGIN_PUBLIC
+RAG_API_ALLOWED_ORIGIN_LOCALHOST
+RAG_API_ALLOWED_ORIGIN_LOOPBACK
+RAG_API_ALLOWED_ORIGIN_PYTHON_LOCALHOST
+RAG_API_ALLOWED_ORIGIN_PYTHON_LOOPBACK
+RAG_API_ALLOWED_ORIGIN_SYNOX_NAS
+RAG_API_ALLOWED_ORIGIN_SYNOX_NAS_S
+```
+
+Keep private `POSTGRES_PASSWORD`, `OPENAI_API_KEY`, `TUNNEL_TOKEN`, and, if S3 needs
+them, least-privilege `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, optional
+`AWS_SESSION_TOKEN`. Never use root credentials. Keep genuine overrides such as
+`RAG_GENERATION_PROVIDERS`, `RAG_EMBEDDING_PROVIDERS`, `RAG_CORS_ALLOWED_ORIGINS`,
+knowledge paths, differing DB identity, and S3/Luna activation flags when required.
+The **old compact list syntax must also be updated** to include each entry's timeout.
+Public values identical to `.env.base` can be removed from `.env`. Native indexed
+provider/old PC/fallback Spring properties are obsolete; use compact lists instead.
+Arbitrary extra private variables are no longer forwarded automatically to containers.
+
+All previously exposed operational defaults now live in `.env.base`. Constants
+that are not currently configurable remain in code: generation keep-alive 3h,
+OpenAI output cap 2048 tokens, input guard 32000 characters, and internal executor/
+telemetry bounds. They are not new environment settings and were left unchanged
+rather than extending the configuration surface during this correction.
+S3 bucket/index deliberately stay blank until the owner supplies verified resources.
+
+Private native S3/OpenAI overrides previously forwarded by shared `env_file` must
+be migrated to the canonical public names if used. Examples:
+`R4R_RAG_VECTOR_PRIMARY` → `RAG_VECTOR_PRIMARY`,
+`R4R_RAG_VECTOR_FAILOVERENABLED` → `RAG_VECTOR_FAILOVER_ENABLED`,
+`R4R_RAG_VECTOR_S3VECTORS_ENABLED` → `RAG_S3_VECTORS_ENABLED`,
+`R4R_RAG_VECTOR_S3VECTORS_REGION/BUCKET/INDEX` → `RAG_S3_VECTORS_REGION/BUCKET/INDEX`,
+`R4R_RAG_OPENAI_ENABLED/MODEL` → `RAG_OPENAI_ENABLED/MODEL`.
+Use the actual native spelling you had configured; no private variables were
+inspected, so this is a migration checklist, not a claim about their presence.
+
+## Safe tests
 
 ```sh
 cd docker-spring
 docker compose --env-file .env.base config --no-env-resolution --quiet
 ```
 
-This explicit public interpolation source and `--no-env-resolution` avoid reading
-private service env files. Do not use plain `docker compose config` or
-`config --environment` against the actual deployment. Validation here uses only
-public defaults, fictitious properties and loopback HTTP mocks, never a live DB/LLM.
+For precedence and credential isolation, run from repository root:
 
+```sh
+python3 py-scripts/test_compose_configuration.py
+```
 
-## Validation results
+The Python test copies only three public files into ignored `target/`, creates
+synthetic overrides under a different filename, clears inherited interpolation
+variables, and checks Compose's captured JSON without printing configuration.
+It never references the actual private file. Java bootstrap tests use generated
+public-only YAML because overriding `spring.config.import` does not remove other
+imports. Avoid an unfiltered `mvn test` here: existing DB/lifecycle suites may load
+private configuration or require services. No real DB/LLM/AWS call is part of this gate.
 
-- Compose 2.40.3: public-only structural validation **PASSED**, both in the project
-  with the explicit safe flags and in an isolated public copy without a private file.
-- Selected unit suites (29 classes): **196 PASSED**, 0 failures/errors/skipped,
-  including the corrected bootstrap test. Compilation and executable packaging **PASSED**.
-- Initial additional bootstrap test: **FAILED** (test-profile guard), followed by
-  **FAILED** isolation assertion that exposed the accumulated-import incident above.
-  Neither failure is presented as a successful isolated test.
-- Corrected bootstrap verification uses only public defaults and fictitious properties.
-- Database/live RAG/paid OpenAI/AWS integration tests: **NOT RUN** by design.
+## Results of this correction
 
-The normal runtime intentionally imports the owner-managed private file; tests must
-not assume that overriding `spring.config.import` removes imports from other sources.
-Avoid an unfiltered `mvn test` for this task: existing lifecycle/database tests may
-import private runtime configuration or require real services.
+- **199 selected Java unit tests PASSED** (29 classes), no failures/errors/skips.
+  Includes four-provider generation/translation routing, four-provider embedding
+  failover/recovery, reordering with stable endpoint identity, per-entry timeouts,
+  local-only warmup, CORS, citations, SSE and mocked S3 regressions.
+- **1 isolated Python/Compose test PASSED**, verifying synthetic override precedence,
+  exact secret allowlists and the absence of an API→Ollama health dependency.
+- Public-only Compose structural check, executable JAR packaging, and both Git
+  whitespace checks: **PASSED**.
+- Real Synology Compose version/startup, physical Ollama/DB, paid OpenAI and AWS:
+  **NOT RUN**. NAS Compose must support `include` (2.20.3+); check with
+  `docker compose version` on the NAS before manual deployment. No secrets are
+  needed for that version check. No live deployment has been performed.
+- No private `.env` was read, modified, printed or loaded in this correction.
+
+Changed files: `.env.base`, `compose-services.yml`, `application.yml`,
+`PublicRagEnvironment`, `RagConfiguration`, `OllamaModelPreloader`,
+`PublicRagEnvironmentTest`, `OllamaServerSeparationTest`,
+`EmbeddingProviderFailoverTest`, `OllamaModelPreloaderTest`, README and the three
+configuration/embedding operation documents. New files:
+`GenerationProviderProperties.java` and `py-scripts/test_compose_configuration.py`.
+No S3 implementation, dependency, vector-store port or database schema changed.

@@ -21,7 +21,6 @@ spring:
       chat:
         think: ${RAG_GENERATION_THINK}
         options:
-          model: ${r4r.rag.generation.pc-model}
           keep-alive: 3h
       embedding:
         options:
@@ -56,15 +55,10 @@ r4r:
     warmup:
       on-startup: ${RAG_WARMUP_ON_STARTUP}
       min-interval: ${RAG_WARMUP_MIN_INTERVAL}
-      pc-timeout: ${RAG_WARMUP_PC_TIMEOUT}
-      laptop-timeout: ${RAG_WARMUP_LAPTOP_TIMEOUT}
-      embedding-timeout: ${RAG_WARMUP_EMBEDDING_TIMEOUT}
     generation:
       # Local URLs/models are derived from RAG_GENERATION_PROVIDERS.
       connect-timeout: ${RAG_GENERATION_CONNECT_TIMEOUT}
       probe-timeout: ${RAG_GENERATION_PROBE_TIMEOUT}
-      pc-read-timeout: ${RAG_GENERATION_PC_TIMEOUT}
-      fallback-read-timeout: ${RAG_GENERATION_LAPTOP_TIMEOUT}
       translation-read-timeout: ${RAG_TRANSLATION_READ_TIMEOUT}
     retrieval:
       top-k: ${RAG_TOP_K}

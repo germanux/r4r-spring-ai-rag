@@ -176,6 +176,18 @@ class EmbeddingProviderFailoverTest {
                 .isInstanceOf(EmbeddingConfigurationException.class).hasMessageContaining("provider");
         assertThat(calls).isEmpty();
     }
+    @Test void fourEmbeddingProvidersFailOverAndRecoverTheFirst() throws Exception {
+        Node a=node("a"), b=node("b"), c=node("c"), d=node("d");
+        a.status=b.status=c.status=503;
+        var p=new EmbeddingFailoverProperties(List.of(provider("a",a,1000),provider("b",b,1000),
+                provider("c",c,1000),provider("d",d,1000)),Duration.ofMillis(50),Duration.ofMillis(100),
+                Duration.ofSeconds(2),768,DIGEST);
+        var router=new EmbeddingProviderRouter(p,options,Duration.ofSeconds(3));
+        router.call(request());
+        assertThat(calls).containsExactly("a /api/tags","b /api/tags","c /api/tags","d /api/tags","d /api/embed");
+        calls.clear(); a.status=200; router.call(request());
+        assertThat(calls).containsExactly("a /api/tags","a /api/embed");
+    }
     EmbeddingProviderRouter router(Node a, Node b, Node c) {
         return new EmbeddingProviderRouter(properties(a,b,c,768),options,Duration.ofSeconds(3));
     }

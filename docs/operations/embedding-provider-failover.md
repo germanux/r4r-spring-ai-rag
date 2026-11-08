@@ -6,14 +6,13 @@ Public values live in versioned `docker-spring/.env.base`; optional private `.en
 contains only secrets and overrides, and has priority. The canonical endpoint list is:
 
 ```dotenv
-RAG_EMBEDDING_PROVIDERS=http://192.168.1.209:11434,http://192.168.1.207:11434,http://192.168.1.203:11434
+RAG_EMBEDDING_PROVIDERS=http://192.168.1.209:11434|8s,http://192.168.1.207:11434|8s,http://192.168.1.203:11434|30s
 ```
 
 `PublicRagEnvironment` adapts that list to the existing typed providers. Each new
-batch starts with laptop, then desktop, then NAS. One or two entries are allowed
-for temporary overrides. Model/dimensions remain `nomic-embed-text:latest` and 768.
-Read timeouts are `RAG_EMBEDDING_LP_TIMEOUT=8s`, `RAG_EMBEDDING_PC_TIMEOUT=8s`,
-`RAG_EMBEDDING_NAS_TIMEOUT=30s`; connection/probe limits are 1s and the total is 35s.
+batch starts with laptop, then desktop, then NAS. Any positive number of entries is allowed; order defines failover priority. Model/dimensions remain `nomic-embed-text:latest` and 768.
+Read timeouts belong to their URLs in the compact entries (8s, 8s, 30s by default);
+connection/probe limits are 1s and the total is 35s.
 The public file also pins the expected digest. Warmup/runtime use the first entry.
 
 Individual URL aliases and the previous indexed-YAML configuration are superseded
