@@ -105,7 +105,7 @@ aws s3vectors list-vectors \
 
 **Condición:** el índice remoto debe contener al menos un vector. Estos pasos reutilizan un vector existente; **no** crean nuevos embeddings ni modifican AWS.
 
-**11. Guardar la clave del primer vector remoto en una variable de shell.**
+**11. Guardar la clave del primer vector remoto en una variable de shell.** Utilizar salida JSON y `jq` (ya instalado), porque la combinación de paginación, `--output text` y un filtro escalar puede devolver `None` aunque existan vectores.
 
 ```bash
 VECTOR_KEY="$(aws s3vectors list-vectors \
@@ -114,11 +114,11 @@ VECTOR_KEY="$(aws s3vectors list-vectors \
   --index-name amzn-r4r-vector-index \
   --profile r4r-s3vectors \
   --max-items 1 \
-  --query 'vectors[0].key' \
-  --output text)"
+  --output json | jq -r '.vectors[0].key // empty')"
+printf 'Clave seleccionada: <%s>\n' "$VECTOR_KEY"
 ```
 
-Si devuelve `None`, no continuar: el índice puede estar vacío.
+Si la clave aparece vacía o como `None`, **no continuar**: revisar la salida de `list-vectors --max-items 3 --output json`. El índice puede tener datos aunque la extracción de la clave haya fallado.
 
 **12. Comprobar `GetVectors` sin mostrar el vector.**
 
@@ -134,6 +134,8 @@ aws s3vectors get-vectors \
   --output json
 ```
 
+La respuesta debe ser una lista con la clave solicitada. Si devuelve `[]`, **detenerse**: la clave usada no coincide con ningún vector recuperado; no ejecutar los pasos 13–15.
+
 **13. Obtener el vector para reutilizarlo como consulta sin imprimir 768 valores.**
 
 ```bash
@@ -147,6 +149,14 @@ QUERY_VECTOR="$(aws s3vectors get-vectors \
   --query 'vectors[0].data' \
   --output json)"
 ```
+
+Confirmar que el objeto recuperado tiene exactamente 768 componentes antes de continuar:
+
+```bash
+printf '%s\n' "$QUERY_VECTOR" | jq -e '.float32 | length == 768' >/dev/null && echo 'Vector correcto: 768 dimensiones'
+```
+
+Si el comando falla, **detenerse**: `null` no es un vector válido y provocará `ParamValidation` en el siguiente paso.
 
 **14. Probar una búsqueda por similitud en AWS (top 3).** Verifica `QueryVectors`, no la generación de embeddings del RAG. La distancia esperada del mismo vector consigo mismo es cercana a cero.
 
