@@ -37,7 +37,8 @@ class ComposeConfigurationTest(unittest.TestCase):
                          {'OLLAMA_HOST', 'OLLAMA_NUM_PARALLEL', 'OLLAMA_MAX_LOADED_MODELS',
                           'OLLAMA_KEEP_ALIVE', 'RAG_EMBEDDING_MODEL'})
         api = services['api']
-        self.assertNotIn('ollama-embeddings', api['depends_on'])
+        self.assertNotIn('ollama-embeddings', api.get('depends_on', {}))
+        self.assertNotIn('postgres', api.get('depends_on', {}))
         self.assertNotIn('TUNNEL_TOKEN', api['environment'])
         self.assertNotIn('POSTGRES_TEST_USER', api['environment'])
         self.assertEqual(api['environment']['OPENAI_API_KEY'], 'fake-openai')

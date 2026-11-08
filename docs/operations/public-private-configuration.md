@@ -62,8 +62,8 @@ No AWS root credentials or AWS service call is used. Existing named-profile setu
 need separately configured SDK profile files/mounts; this change does not create
 credentials or mount host AWS files. S3 flags and Luna flags remain independent.
 
-The API depends only on healthy PostgreSQL. Ollama/NAS health is not a prerequisite
-for API startup. For `docker compose up api`, Ollama is not a transitive dependency.
+Normal API startup still requires PostgreSQL for migrations, but Compose no longer waits for PostgreSQL health. Ollama/NAS health is not a prerequisite
+for API startup. For `docker compose up api`, neither Ollama nor PostgreSQL is a transitive dependency.
 Configured local models may be unavailable on startup: asynchronous warmup records
 the failure without preventing another configured provider from handling queries.
 No real Synology deployment has been started or changed by these checks.
@@ -177,3 +177,6 @@ Changed files: `.env.base`, `compose-services.yml`, `application.yml`,
 configuration/embedding operation documents. New files:
 `GenerationProviderProperties.java` and `py-scripts/test_compose_configuration.py`.
 No S3 implementation, dependency, vector-store port or database schema changed.
+
+
+For PostgreSQL outages, see [vector read failover and S3 read-only startup](vector-store-failover.md).

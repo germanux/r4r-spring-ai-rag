@@ -1,0 +1,20 @@
+# Explicit recovery mode only. Normal startup still runs Flyway and validates pgvector.
+spring:
+  flyway:
+    enabled: false
+  sql:
+    init:
+      mode: never
+  ai:
+    vectorstore:
+      pgvector:
+        initialize-schema: false
+        schema-validation: false
+r4r:
+  catalog-on-startup: false
+  rag:
+    vector:
+      primary: s3vectors
+      failover-enabled: false
+      s3vectors:
+        enabled: true

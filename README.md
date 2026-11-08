@@ -90,3 +90,7 @@ Las listas `RAG_GENERATION_PROVIDERS`, `RAG_EMBEDDING_PROVIDERS` y
 S3 Vectors y Luna conservan sus flags independientes, deshabilitados por defecto.
 Compose 2.20.3+ mantiene el comando habitual de arranque; no hace falta exportar
 variables manualmente. Véase [configuración y migración manual](docs/operations/public-private-configuration.md).
+
+El [failover de lectura PostgreSQL → S3 Vectors](docs/operations/vector-store-failover.md)
+se activa explícitamente; el perfil `s3-readonly` permite recuperación sin PostgreSQL
+y bloquea escrituras sin desactivar las migraciones del arranque normal.

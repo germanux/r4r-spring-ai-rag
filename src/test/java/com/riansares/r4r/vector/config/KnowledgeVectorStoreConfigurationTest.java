@@ -42,11 +42,11 @@ class KnowledgeVectorStoreConfigurationTest {
     void defaultConfigurationExposesOnePostgresPortWithoutAwsProperties() {
         runner.run(context -> {
             assertThat(context).hasNotFailed()
-                    .hasSingleBean(KnowledgeVectorStore.class)
+                    .hasSingleBean(com.riansares.r4r.vector.FailoverKnowledgeVectorStore.class)
                     .hasSingleBean(PgVectorKnowledgeStore.class);
             KnowledgeVectorStore store = context.getBean(KnowledgeVectorStore.class);
-            assertThat(store).isSameAs(context.getBean(PgVectorKnowledgeStore.class));
-            assertThat(AopUtils.isAopProxy(store)).isTrue();
+            assertThat(store).isInstanceOf(com.riansares.r4r.vector.FailoverKnowledgeVectorStore.class);
+            assertThat(AopUtils.isAopProxy(context.getBean(PgVectorKnowledgeStore.class))).isTrue();
             verify(jdbc).afterPropertiesSet();
             verifyNoMoreInteractions(jdbc);
             verifyNoInteractions(vectors, transactions);

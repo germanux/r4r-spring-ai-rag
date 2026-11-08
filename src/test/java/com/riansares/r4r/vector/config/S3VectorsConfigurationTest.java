@@ -45,9 +45,9 @@ class S3VectorsConfigurationTest {
         try (var credentials = mockStatic(DefaultCredentialsProvider.class); var aws = mockStatic(S3VectorsClient.class)) {
             runner.withPropertyValues("r4r.rag.vector.s3vectors.bucket=INVALID")
                     .run(context -> {
-                        assertThat(context).hasNotFailed().hasSingleBean(KnowledgeVectorStore.class)
-                                .doesNotHaveBean(S3VectorsClient.class).doesNotHaveBean(RagVectorProperties.class);
-                        assertThat(context.getBean(DefaultConsumer.class).store()).isSameAs(context.getBean("pgVectorKnowledgeStore"));
+                        assertThat(context).hasNotFailed().hasSingleBean(com.riansares.r4r.vector.FailoverKnowledgeVectorStore.class)
+                                .doesNotHaveBean(S3VectorsClient.class).hasSingleBean(RagVectorProperties.class);
+                        assertThat(context.getBean(DefaultConsumer.class).store()).isSameAs(context.getBean("knowledgeVectorStore"));
                     });
             credentials.verifyNoInteractions(); aws.verifyNoInteractions();
         }
@@ -58,10 +58,10 @@ class S3VectorsConfigurationTest {
         enabled().withUserConfiguration(SecondaryConsumerConfiguration.class)
                 .run(context -> {
                     assertThat(context).hasNotFailed();
-                    assertThat(context.getBeansOfType(KnowledgeVectorStore.class)).hasSize(2);
+                    assertThat(context.getBeansOfType(KnowledgeVectorStore.class)).hasSize(3);
                     var primary = context.getBean(DefaultConsumer.class).store();
                     var secondary = context.getBean(SecondaryConsumer.class).store();
-                    assertThat(primary).isSameAs(context.getBean("pgVectorKnowledgeStore"));
+                    assertThat(primary).isSameAs(context.getBean("knowledgeVectorStore"));
                     assertThat(secondary).isSameAs(context.getBean("s3VectorsKnowledgeVectorStore"));
                     assertThat(secondary).isNotSameAs(primary);
                     assertThatThrownBy(() -> secondary.index(java.util.List.of())).isInstanceOf(UnsupportedOperationException.class);

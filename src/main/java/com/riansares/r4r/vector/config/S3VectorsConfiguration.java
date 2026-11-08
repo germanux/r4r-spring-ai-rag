@@ -15,7 +15,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.retries.StandardRetryStrategy;
 import software.amazon.awssdk.services.s3vectors.S3VectorsClient;
 
-/** Does not select the effective store or install a failover router. */
+/** Creates the independent S3 adapter; KnowledgeVectorStoreConfiguration owns routing. */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(prefix = "r4r.rag.vector.s3vectors", name = "enabled", havingValue = "true")
 @EnableConfigurationProperties(RagVectorProperties.class)
