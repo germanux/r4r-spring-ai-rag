@@ -139,6 +139,8 @@ services:
       RAG_S3_VECTORS_CALL_TIMEOUT: ${RAG_S3_VECTORS_CALL_TIMEOUT}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # Private project .env supplies SDK environment credentials to this service only.
+      # Region already comes from RAG_S3_VECTORS_REGION; no AWS_PROFILE or ~/.aws mount.
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
       AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}

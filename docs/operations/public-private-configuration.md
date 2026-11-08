@@ -58,9 +58,10 @@ are intentional allowlists using those effective interpolation values:
 
 An explicit `SPRING_DATASOURCE_URL` override is honored; otherwise the API uses
 `postgres:5432` on the container network. Host Java uses the LAN PostgreSQL settings.
-No AWS root credentials or AWS service call is used. Existing named-profile setups
-need separately configured SDK profile files/mounts; this change does not create
-credentials or mount host AWS files. S3 flags and Luna flags remain independent.
+No AWS root credentials or AWS service call is used. The API container uses standard
+AWS access/secret/session environment variables; it does not depend on `AWS_PROFILE`
+or `~/.aws` mounts. `RAG_S3_VECTORS_REGION` is the only regional configuration input.
+S3 flags and Luna flags remain independent. See [AWS environment integration](s3-vectors-environment.md).
 
 Normal API startup still requires PostgreSQL for migrations, but Compose no longer waits for PostgreSQL health. Ollama/NAS health is not a prerequisite
 for API startup. For `docker compose up api`, neither Ollama nor PostgreSQL is a transitive dependency.

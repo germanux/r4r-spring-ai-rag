@@ -28,7 +28,8 @@ public class S3VectorsConfiguration {
         config.validate();
         return S3VectorsClient.builder()
                 .region(Region.of(config.region()))
-                // SDK owns its standard default credentials chain and its lifecycle.
+                // SDK default chain resolves AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY from the container environment.
+                // Region is explicit above; no profile, credential file or Spring-to-SDK credential adapter is needed.
                 .httpClientBuilder(UrlConnectionHttpClient.builder()
                         .connectionTimeout(config.connectTimeout())
                         .socketTimeout(config.apiCallAttemptTimeout()))

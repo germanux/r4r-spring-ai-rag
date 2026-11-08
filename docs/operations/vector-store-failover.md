@@ -73,11 +73,15 @@ mode can start without it. Exiting the profile restores normal migrations; retur
 to writes must follow a successful normal startup. Explicit native Spring overrides
 that force incompatible routing are rejected, not silently accepted.
 
-The profile must be combined with valid owner-supplied AWS authentication. The local
-IAM profile is named `r4r-s3vectors`: its owner may select it via `AWS_PROFILE` for a
-local JVM. No AWS profiles, credentials or `.env` were read or loaded here. Docker
-has only the existing scoped AWS key/session allowlist; a host profile is not
-implicitly available in a container. No AWS file mount or root credential is added.
+The profile must be combined with owner-supplied AWS environment credentials.
+Only the API container receives `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and
+optional `AWS_SESSION_TOKEN`; `AWS_PROFILE` and host `~/.aws` mounts are not needed.
+The standard SDK default chain resolves them, not Spring authentication code.
+`RAG_S3_VECTORS_REGION` explicitly selects the client region; no extra regional
+variable is necessary. For a local JVM, Spring's `.env` property import alone does
+not export OS environment variables: the owner must supply the AWS variables to
+the process securely. No private files were read or loaded by this verification.
+See [AWS/Synology manual verification](s3-vectors-environment.md).
 
 ## Offline verification
 

@@ -18,7 +18,8 @@ class ComposeConfigurationTest(unittest.TestCase):
         overrides = fixture / 'synthetic-overrides.properties'
         overrides.write_text('POSTGRES_PASSWORD=fake-db\nOPENAI_API_KEY=fake-openai\n'
                              'TUNNEL_TOKEN=fake-tunnel\nAWS_ACCESS_KEY_ID=fake-access\n'
-                             'AWS_SECRET_ACCESS_KEY=fake-secret\n'
+                             'AWS_SECRET_ACCESS_KEY=fake-secret\nAWS_SESSION_TOKEN=fake-session\n'
+                             'RAG_S3_VECTORS_REGION=eu-west-1\n'
                              'RAG_GENERATION_PROVIDERS=http://fake-host:11434|test|7s\n')
         # Remove inherited interpolation/control variables; never load the actual project .env.
         env = {k: v for k, v in os.environ.items()
@@ -43,8 +44,26 @@ class ComposeConfigurationTest(unittest.TestCase):
         self.assertNotIn('POSTGRES_TEST_USER', api['environment'])
         self.assertEqual(api['environment']['OPENAI_API_KEY'], 'fake-openai')
         self.assertEqual(api['environment']['RAG_GENERATION_PROVIDERS'], 'http://fake-host:11434|test|7s')
-        for service in services.values():
+        self.assertEqual(api['environment']['AWS_ACCESS_KEY_ID'], 'fake-access')
+        self.assertEqual(api['environment']['AWS_SECRET_ACCESS_KEY'], 'fake-secret')
+        self.assertEqual(api['environment']['AWS_SESSION_TOKEN'], 'fake-session')
+        self.assertEqual(api['environment']['RAG_S3_VECTORS_REGION'], 'eu-west-1')
+        for name, service in services.items():
             self.assertNotIn('env_file', service)
+            variables = service.get('environment', {})
+            self.assertNotIn('AWS_PROFILE', variables)
+            self.assertNotIn('AWS_REGION', variables)
+            self.assertNotIn('AWS_DEFAULT_REGION', variables)
+            if name != 'api':
+                self.assertFalse(any(key.startswith('AWS_') for key in variables))
+        # Do not inspect a private file: check only public defaults and Git's ignore rule.
+        public = (ROOT / 'docker-spring' / '.env.base').read_text()
+        for key in ('AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN',
+                    'OPENAI_API_KEY', 'POSTGRES_PASSWORD', 'TUNNEL_TOKEN'):
+            self.assertFalse(any(line.startswith(key + '=') for line in public.splitlines()))
+        subprocess.run(['git', 'check-ignore', '-q', 'docker-spring/.env'],
+                       cwd=ROOT, env=env, check=True)
+
 
 
 if __name__ == '__main__':
