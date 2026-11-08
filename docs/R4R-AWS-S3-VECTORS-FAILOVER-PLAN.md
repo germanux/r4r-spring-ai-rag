@@ -2,6 +2,27 @@
 
 Fecha de investigación: **7 de noviembre de 2026**. Actualización: fase 2 autorizada e integrada sobre **a2f39bee79a78ab9e129ec581fc9721830ec2c01**. Estado: **fase 2 implementada, validación parcial por configuración de test ausente y fallos previos del gate histórico; fase 3 adaptador de lectura implementado y probado con mocks, pendiente de importación/verificación AWS; fase 4 a cargo de otro agente**. Las observaciones de fase 1 se conservan como históricas donde se indica.
 
+### Cierre consolidado de la sesión — 8 de noviembre de 2026
+
+**Este es el único Markdown creado por esta sesión** y el documento de entrega consolidado. Reúne investigación, decisiones finales, extracción de PG, preparación de esqueletos, implementación S3 de lectura, pruebas, limitaciones y el ajuste final de headingPath. Los documentos de operaciones, validación y benchmarks enlazados son referencias preexistentes de otros encargos: no se duplican, eliminan ni sustituyen. Los resultados necesarios para la entrega quedan aquí; los logs completos de ejecución siguen en rutas temporales /tmp y pueden desaparecer, por lo que no deben confundirse con evidencia archivada permanentemente.
+
+| Entrega | Estado consolidado |
+| --- | --- |
+| Fase 1 | Investigación y plan entregados; CodeGraph sin índice/MCP, análisis dirigido. |
+| Fase 2 | Puerto KnowledgeVectorStore, adaptador PG y configuración modular implementados, conservando comportamiento productivo. Resultados y limitaciones de sus gates en sección 16. |
+| Esqueletos | Sustituidos por implementación de fase 3; no constituyen un módulo funcional adicional ni otra documentación. |
+| Fase 3 | Adaptador S3 de lectura, mappers y activación condicional implementados; SDK 2.49.1. Escrituras S3 rechazadas; PG predeterminado. |
+| Último ajuste | headingPath ausente en metadata S3 se interpreta como lista vacía; al codificar se omite si está vacío. Solo cambia mapper S3 y tests; PG intacto. |
+| Validación | Compilación limpia y 185 unitarios seguros PASSED para fase 3 antes del último ajuste; 21 unitarios focalizados PASSED después del ajuste. Son ejecuciones con cobertura solapada, no 206 casos distintos ni una nueva suite completa de 187 verificada. |
+| AWS/corpus | Sin llamadas reales, importación, escrituras ni comprobación del recurso. Preparación manual de source_text y paridad de contexto/score reales pendientes. Resolver discrepancia de nombre del índice antes de activar. |
+| Failover | A cargo de otro agente; no implementado ni certificado por esta sesión. |
+
+**[GIT verificado al cierre]** Rama AWS `feature/aws-s3-failover`, HEAD **1b60b296506076518256978db7712cb8b5267e9f**; main **3396657615522118be85b44d4e86c0e783c971f1** (`Merge branch 'feature/aws-s3-failover'`). El merge-base coincide con el HEAD AWS, por lo que **main ya contiene todo el código confirmado de esta rama**, incluido el último fix de headingPath. Al comenzar este cierre el worktree AWS estaba limpio y no había otros Markdown locales nuevos/pendientes que unificar. El único cambio de este cierre es actualizar este documento.
+
+Para finalizar en main: el usuario debe conservar/confirmar esta actualización documental y trasladarla a main mediante su procedimiento Git habitual; no es necesario repetir la integración del código ya contenido en main. Después puede continuar en el worktree principal ya asociado a main. Esta sesión no hace commits, checkout, merge ni modifica el worktree principal. Las comprobaciones anteriores son una instantánea y deben revisarse si otro agente mueve las ramas.
+
+El resto de secciones conserva evidencias históricas identificadas por fase; este cierre y los apartados de implementación actuales prevalecen sobre propuestas o pendientes anteriores ya resueltos. No se han certificado cambios posteriores o ajenos del otro agente de embeddings/failover.
+
 Convenciones de evidencia utilizadas en todo el documento:
 
 - **[CÓDIGO]**: comprobado por lectura del worktree AWS y, cuando se indica, fuentes locales de Spring AI 1.0.0. No significa ejecutado ni desplegado.
@@ -321,7 +342,7 @@ Timeouts predeterminados: conexión 1s, intento 3s, llamada SDK 4s; validación 
 
 ### Metadata e integridad
 
-`source_text` → content, `source` → source, `headingPath` lista de strings → headingPath y `ordinal` numérico entero no negativo → index. Encabezados vacíos como lista son válidos; no sustituir un campo ausente por defaults. Se preservan texto y orden de headings. Decodificación AWS usa tipos explícitos: **Document.unwrap() convierte números a String en este SDK**, por lo que se usa asNumber().bigDecimalValue() para conservar ordinal numérico y rechazar decimales/no finitos/overflow.
+`source_text` → content, `source` → source, `headingPath` lista de strings → headingPath y `ordinal` numérico entero no negativo → index. **Ajuste final S3:** headingPath ausente se interpreta como List.of(); al escribir metadata se omite la clave si la lista está vacía, evitando arrays vacíos en AWS. Una lista explícita vacía sigue siendo legible. null explícito, tipos distintos de lista o elementos no string siguen siendo errores; source, ordinal y source_text permanecen obligatorios. Esta excepción se aplica solo al adaptador S3: no modifica la validación de metadata PG. Se preservan texto y orden de headings. Decodificación AWS usa tipos explícitos: **Document.unwrap() convierte números a String en este SDK**, por lo que se usa asNumber().bigDecimalValue() para conservar ordinal numérico y rechazar decimales/no finitos/overflow.
 
 **[DOC+CÓDIGO]** Se aplican presupuestos conservadores de JSON UTF-8: 40 KiB totales, 2 KiB filtrables excluyendo **solo source_text**, máximo 50 claves. Incluyen keys/escapado/delimitadores, por lo que pueden rechazar payloads cercanos al máximo oficial. No truncar texto ni tratar headingPath como no filtrable. [Límites oficiales](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-limitations.html) consultados: dimensión hasta 4096, Top-K hasta 10.000 y páginas hasta 100 resultados; no se usan APIs de objetos S3 ni búsqueda por escaneo.
 
@@ -457,7 +478,7 @@ No se implementó exportador Java, script automático ni SQL de escritura. Este 
 
 1. Con autorización de datos y acceso, usar **IntelliJ Database** para abrir una sesión PostgreSQL **solo lectura**, Flyway/inicialización/ingesta desactivados. Confirmar origen y seleccionar desde `vector_store` ID, content, metadata y embedding en un snapshot consistente. No exportar `knowledge_chunks` como si contuviera vectores ni consultar credenciales en consola.
 2. Exportar vectores **existentes** y metadata sin recalcular embeddings; conservar UUID exactos. Registrar número de filas, conjunto de IDs y hashes de contenido/metadata/vector de la exportación. `latest` y la dimensión no acreditan digest de todo el corpus: anotar procedencia conocida y limitaciones, sin inventarla.
-3. Preparar fuera de Git archivos JSON UTF-8 compatibles con `aws s3vectors put-vectors`: por vector `key=<UUID>`, `data={"float32":[768 valores existentes]}`, `metadata` con `source`, `headingPath`, `ordinal`, **`source_text=<texto preparado según la expansión de encabezados anterior>`**. Ningún embedding Nomic nuevo ni Bedrock. Validar valores finitos, dimensión, unicidad y límites de metadata/payload. Incluir por petición `vectorBucketName=amzn-r4r-vectors` e índice confirmado por usuario (última indicación `amzn-r4-vector-index`; antes figuraba `amzn-r4r-vector-index`); adaptar sintaxis exacta al AWS CLI instalado tras revisar ayuda.
+3. Preparar fuera de Git archivos JSON UTF-8 compatibles con `aws s3vectors put-vectors`: por vector `key=<UUID>`, `data={"float32":[768 valores existentes]}`, `metadata` con `source`, `headingPath` solo si no está vacío, `ordinal`, **`source_text=<texto preparado según la expansión de encabezados anterior>`**. Ningún embedding Nomic nuevo ni Bedrock. Validar valores finitos, dimensión, unicidad y límites de metadata/payload. Incluir por petición `vectorBucketName=amzn-r4r-vectors` e índice confirmado por usuario (última indicación `amzn-r4-vector-index`; antes figuraba `amzn-r4r-vector-index`); adaptar sintaxis exacta al AWS CLI instalado tras revisar ayuda.
 4. Antes de conectar/importar, confirmar manualmente cuenta/identidad, **región prevista eu-north-1**, GetIndex 768/COSINE y metadata no filtrable source_text, cifrado SSE-S3, permisos y contenido preexistente. No crear índices adicionales. Si existe contenido ajeno o discrepancia de esquema, detenerse y decidir con el usuario; no borrarlo ni reemplazar recursos por intuición.
 5. Desde terminal IntelliJ o terminal normal, usuario ejecuta AWS CLI con JSON local (`--cli-input-json file://...`) en lotes dentro de los límites vigentes (hasta 500 vectores y 20 MiB según documentación de fase 1). No dejar archivos con corpus en el repo ni enviar datos sin permiso específico. Registrar lotes confirmados para reanudación. Timeout puede haber escrito: repetir mismas claves es idempotente, pero verificar antes de declarar éxito.
 6. List/Get paginados en S3 Vectors para comparar **conjunto de IDs**, cantidad, metadata/campos/tipos, texto completo y vectores contra el snapshot. Detectar claves sobrantes; cualquier borrado requiere aprobación y lista explícita. No basta un count o Query Top-K. En fallo parcial mantener AWS/failover deshabilitados y completar/verificar la misma carga, sin crear otro índice.
@@ -575,6 +596,23 @@ feat(vector): implement read-only S3 Vectors retrieval and conditional wiring.
 Validate metadata, cosine thresholds and pagination; document manual context preparation.
 ```
 
+### Ajuste final: headingPath opcional en S3 — 8 de noviembre de 2026
+
+Commit de código confirmado por el usuario: **1b60b296506076518256978db7712cb8b5267e9f** (`fix(s3vectors): accept missing headingPath and omit empty heading arrays`). Cambios exclusivos en S3VectorMetadataMapper y S3VectorMetadataMapperTest:
+
+- fromMetadata y fromDocument admiten metadata sin headingPath y reconstruyen MarkdownChunk con List.of().
+- toMetadata omite headingPath cuando el chunk tiene lista vacía; conserva lista no vacía, texto/source/ordinal y retorno inmutable.
+- La ausencia se distingue de null explícito: null, tipos inválidos o elementos no string se rechazan. No se relajan los otros campos obligatorios ni la protección de encabezados sin cuerpo.
+- Se mantienen intactos PGVector, su mapper/algoritmos y el resto del código de producción.
+
+Pruebas **PASSED**: S3VectorMetadataMapperTest **7**, S3VectorsKnowledgeStoreTest **9**, S3VectorScoreMapperTest **3**, PgVectorSectionContextTest **2**; total **21**, 0 failures, 0 errors, 0 skipped. Dos casos nuevos cubren ausencia en Map/Document SDK y omisión al codificar con round-trip. Se ajusta la expectativa anterior que consideraba obligatorio headingPath y se añade rechazo explícito de null. Esto es un cambio solicitado del contrato S3, no una modificación para ocultar fallos.
+
+```bash
+mvn -o -Dtest=S3VectorMetadataMapperTest,S3VectorsKnowledgeStoreTest,S3VectorScoreMapperTest,PgVectorSectionContextTest test
+```
+
+Log temporal `/tmp/r4r-s3-empty-heading-tests.log`. Compilación Maven incluida; sin AWS/DB/LLM reales. La suite completa de 185 corresponde a la implementación anterior de fase 3 y no se repitió tras este arreglo pequeño. No sumar esos 185 y estos 21 como casos distintos.
+
 ## 17. Riesgos, incompatibilidades y dependencias
 
 | Riesgo verificado o pendiente | Tratamiento propuesto |
@@ -633,4 +671,11 @@ Al cierre se registra la lista real y los resultados en sección 16. Toda operac
 
 **Antes de fase 4/operación:** autorización nueva, corpus manual acreditado, clasificación/tiempos/errores y perfil s3-only probados. Disponibilidad backend/Nomic/generación fuera de Synology es evolución separada. Fase 2 no activa AWS ni failover vectorial.
 
-Mensaje de commit propuesto al cierre, solo texto; el usuario decide y realiza commit/push. Ninguna autorización de esta fase permite comenzar las fases 3/4.
+Sesión cerrada con documentación única consolidada. El código de fase 3 y su fix final ya están contenidos en main según la instantánea Git del cierre; únicamente resta incorporar esta actualización del plan por el usuario. No iniciar fase 4 ni activar S3 por cerrar documentación.
+
+Mensaje de commit documental propuesto, solo texto:
+
+```text
+docs(vector): consolidate session delivery and final S3 metadata behavior.
+Record validation, remaining AWS prerequisites and verified main integration.
+```
