@@ -2,69 +2,25 @@
 
 ## Configuration
 
-The ordered list in `application.yml` is the single source of embedding providers.
-Its order determines priority; each new batch starts with the first entry:
+Public values live in versioned `docker-spring/.env.base`; optional private `.env`
+contains only secrets and overrides, and has priority. The canonical endpoint list is:
 
-```yaml
-r4r:
-  rag:
-    embedding:
-      providers:
-        - name: laptop
-          base-url: http://192.168.1.209:11434
-          read-timeout: 8s
-        - name: desktop
-          base-url: http://192.168.1.207:11434
-          read-timeout: 8s
-        - name: nas
-          base-url: http://192.168.1.203:11434
-          read-timeout: 30s
-      connect-timeout: 1s
-      probe-timeout: 1s
-      total-timeout: 35s
-      dimensions: ${spring.ai.vectorstore.pgvector.dimensions}
-      expected-digest: 0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f
+```dotenv
+RAG_EMBEDDING_PROVIDERS=http://192.168.1.209:11434,http://192.168.1.207:11434,http://192.168.1.203:11434
 ```
 
-LP and PC retain short read limits; the NAS retains its longer CPU allowance.
-Connection/probe timeouts and the total budget are common. Provider names identify
-attempts in logs; URLs are never logged. Warmup/runtime use the first list entry,
-without a separate primary endpoint or three-provider warmup.
+`PublicRagEnvironment` adapts that list to the existing typed providers. Each new
+batch starts with laptop, then desktop, then NAS. One or two entries are allowed
+for temporary overrides. Model/dimensions remain `nomic-embed-text:latest` and 768.
+Read timeouts are `RAG_EMBEDDING_LP_TIMEOUT=8s`, `RAG_EMBEDDING_PC_TIMEOUT=8s`,
+`RAG_EMBEDDING_NAS_TIMEOUT=30s`; connection/probe limits are 1s and the total is 35s.
+The public file also pins the expected digest. Warmup/runtime use the first entry.
 
-The existing `RAG_EMBEDDING_MODEL` (`nomic-embed-text:latest`) and
-`RAG_EMBEDDING_DIMENSIONS` (`768`) remain the only dedicated embedding environment
-placeholders. The model is configured in Spring AI; dimensions are defined in the
-existing vector-store settings and referenced here, rather than independently set.
-The digest and timeouts are ordinary YAML values, without additional environment aliases.
-
-**Removed aliases:** `RAG_EMBEDDING_BASE_URL`, `RAG_EMBEDDING_LP_BASE_URL`,
-`RAG_EMBEDDING_PC_BASE_URL`, `RAG_EMBEDDING_NAS_BASE_URL` and dedicated embedding
-connect/read/PC-read/NAS-read/probe/total-timeout/expected-digest environment
-placeholders no longer affect this configuration. Stale values cannot silently
-redirect the preferred provider or change its priority. The old flat
-`r4r.rag.embedding.base-url`, `pc-base-url`, `nas-base-url` and read-timeout
-properties are also obsolete. No `.env` was read or modified.
-
-To change endpoints, edit the corresponding list entry in YAML or supply a Spring
-configuration override. For example, a single-source command-line override for a
-NAS container address is:
-
-```sh
-java -jar target/r4r-spring-ai-rag-0.3.2.jar \
-  --r4r.rag.embedding.providers[0].name=laptop \
-  --r4r.rag.embedding.providers[0].base-url=http://192.168.1.209:11434 \
-  --r4r.rag.embedding.providers[0].read-timeout=8s \
-  --r4r.rag.embedding.providers[1].name=desktop \
-  --r4r.rag.embedding.providers[1].base-url=http://192.168.1.207:11434 \
-  --r4r.rag.embedding.providers[1].read-timeout=8s \
-  --r4r.rag.embedding.providers[2].name=nas \
-  --r4r.rag.embedding.providers[2].base-url=http://ollama-embeddings:11434 \
-  --r4r.rag.embedding.providers[2].read-timeout=30s
-```
-
-Spring replaces lists across property sources instead of merging individual
-entries: an override must supply the complete provider list, including names and
-read timeouts. Normal operation needs no endpoint environment variables or overrides.
+Individual URL aliases and the previous indexed-YAML configuration are superseded
+by the compact list. For Docker service DNS, use `http://ollama-embeddings:11434` as
+the third URL in an intentional override. No secret file was inspected or migrated.
+See [public/private configuration](public-private-configuration.md) for precedence,
+Compose interpolation, legacy variable cleanup and safe validation.
 
 ## Compatibility and routing
 

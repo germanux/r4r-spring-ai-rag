@@ -20,13 +20,12 @@ Spring AI 1.0.0, la versión del proyecto.
 |---|---|
 | `RAG_EMBEDDING_MODEL` | `nomic-embed-text:latest` |
 | `RAG_EMBEDDING_DIMENSIONS` | `768` |
-| `RAG_PC_OLLAMA_BASE_URL` | `http://192.168.1.207:11434` |
-| `RAG_PC_GENERATION_MODEL` | `qwen3:8b` |
-| `RAG_FALLBACK_OLLAMA_BASE_URL` | `http://192.168.1.209:11434` |
-| `RAG_FALLBACK_GENERATION_MODEL` | `qwen2.5:7b` |
+| `RAG_GENERATION_PROVIDERS` | `http://192.168.1.207:11434\|qwen3:8b,http://192.168.1.209:11434\|qwen2.5:7b` |
+| `RAG_EMBEDDING_PROVIDERS` | `http://192.168.1.209:11434,http://192.168.1.207:11434,http://192.168.1.203:11434` |
 
-Los endpoints de embeddings se configuran en la lista ordenada de `application.yml`:
-portátil → PC → NAS. El alias `RAG_EMBEDDING_BASE_URL` ya no se utiliza.
+Los endpoints se configuran en `docker-spring/.env.base`: `RAG_EMBEDDING_PROVIDERS`
+(portátil → PC → NAS) y `RAG_GENERATION_PROVIDERS` (PC → portátil). El archivo
+privado `.env` solo contiene secretos y sobrescrituras.
 Véase [failover de embeddings](embedding-provider-failover.md) para endpoints,
 timeouts y overrides. Compose conserva la dependencia del servicio local, pero
 no sobrescribe la prioridad mediante una variable de entorno.

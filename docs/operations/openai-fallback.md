@@ -90,7 +90,7 @@ puede variar con tarifas, nivel de servicio, región e impuestos.
 ## Archivos de esta integración
 
 - `DEVELOPMENT.md`.
-- `docker-spring/.env.example`.
+- `docker-spring/.env.base`.
 - `front-athagon-r4r-static/index.html`.
 - `front-athagon-r4r-static/js/app.js`.
 - `front-athagon-r4r-static/js/app.test.cjs`.
@@ -108,7 +108,7 @@ puede variar con tarifas, nivel de servicio, región e impuestos.
 - `src/main/java/com/riansares/r4r/rag/OpenAiResponsesModel.java` (nuevo).
 - `src/test/java/com/riansares/r4r/llm_tests/LunaLiveIT.java` (nuevo).
 - `src/test/java/com/riansares/r4r/rag/OpenAiFallbackTest.java` (nuevo).
-- `docker-spring/.env`: archivo local ignorado; solo flags/modelo, clave conservada.
+- `docker-spring/.env`: archivo local ignorado; solo secretos y sobrescrituras; flags y modelo públicos en `.env.base`.
 
 Resultado de `mvn verify`: 131 unitarios y 23 integraciones sin LLM pasan; tres contenedores live omitidos por defecto. LunaLiveIT se ejecutó expresamente y pasó (una llamada real). Frontend estático: 67/67. Chromium con runtime simulado: ocho combinaciones ES/EN y 320/390/768/1440 px, sin desbordamientos ni excepciones JavaScript; proveedor nube sin hardware local.
 

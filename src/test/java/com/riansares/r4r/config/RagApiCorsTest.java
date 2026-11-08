@@ -34,7 +34,14 @@ class RagApiCorsTest {
         context = new AnnotationConfigWebApplicationContext();
         context.setServletContext(new MockServletContext());
         // Load the production allowlist, not a test-only copy of its origins.
-        for (var source : new YamlPropertySourceLoader().load("application", new ClassPathResource("application.yml"))) {
+        var publicDefaults = new java.util.Properties();
+                        try (var input = java.nio.file.Files.newInputStream(java.nio.file.Path.of("docker-spring/.env.base"))) {
+                            publicDefaults.load(input);
+                        }
+                        context.getEnvironment().getPropertySources().addLast(
+                                new org.springframework.core.env.PropertiesPropertySource("public-base", publicDefaults));
+                        PublicRagEnvironment.apply(context.getEnvironment());
+                        for (var source : new YamlPropertySourceLoader().load("application", new ClassPathResource("application.yml"))) {
             context.getEnvironment().getPropertySources().addFirst(source);
         }
         context.register(ProbeConfiguration.class, WebConfiguration.class);

@@ -1,8 +1,9 @@
 spring:
   config:
-    # Spring Boot treats the docker-spring/.env as a Java properties file.
-    # Operating-system environment variables still override these values.
-    import: optional:file:./docker-spring/.env[.properties]
+    # Later imports win. The private file is optional and never versioned.
+    import:
+      - optional:file:./docker-spring/.env.base[.properties]
+      - optional:file:./docker-spring/.env[.properties]
   application:
     name: r4r-spring-ai-rag
   datasource:
@@ -18,17 +19,17 @@ spring:
       chat: none
     ollama:
       chat:
-        think: false
+        think: ${RAG_GENERATION_THINK}
         options:
-          model: ${RAG_PC_GENERATION_MODEL:qwen3:8b}
+          model: ${r4r.rag.generation.pc-model}
           keep-alive: 3h
       embedding:
         options:
-          model: ${RAG_EMBEDDING_MODEL:nomic-embed-text:latest}
+          model: ${RAG_EMBEDDING_MODEL}
     vectorstore:
       pgvector:
         initialize-schema: false
-        dimensions: ${RAG_EMBEDDING_DIMENSIONS:768}
+        dimensions: ${RAG_EMBEDDING_DIMENSIONS}
         distance-type: COSINE_DISTANCE
         index-type: HNSW
         schema-name: public
@@ -38,66 +39,62 @@ spring:
 r4r:
   rag:
     openai:
-      enabled: ${RAG_OPENAI_ENABLED:false}
-      model: ${RAG_OPENAI_MODEL:gpt-6-luna}
+      read-timeout: ${RAG_OPENAI_READ_TIMEOUT}
+      max-calls-per-day: ${RAG_OPENAI_MAX_CALLS_PER_DAY}
+      enabled: ${RAG_OPENAI_ENABLED}
+      model: ${RAG_OPENAI_MODEL}
     stream:
-      timeout: ${RAG_SSE_TIMEOUT:180s}
-      heartbeat-interval: ${RAG_SSE_HEARTBEAT_INTERVAL:10s}
+      timeout: ${RAG_SSE_TIMEOUT}
+      heartbeat-interval: ${RAG_SSE_HEARTBEAT_INTERVAL}
     embedding:
-      # Priority is the list order. Legacy RAG_EMBEDDING_* endpoint aliases are ignored.
-      providers:
-        - name: laptop
-          base-url: http://192.168.1.209:11434
-          read-timeout: 8s
-        - name: desktop
-          base-url: http://192.168.1.207:11434
-          read-timeout: 8s
-        - name: nas
-          base-url: http://192.168.1.203:11434
-          read-timeout: 30s
-      connect-timeout: 1s
-      probe-timeout: 1s
-      total-timeout: 35s
+      # Providers are derived from RAG_EMBEDDING_PROVIDERS by PublicRagEnvironment.
+      connect-timeout: ${RAG_EMBEDDING_CONNECT_TIMEOUT}
+      probe-timeout: ${RAG_EMBEDDING_PROBE_TIMEOUT}
+      total-timeout: ${RAG_EMBEDDING_TOTAL_TIMEOUT}
       dimensions: ${spring.ai.vectorstore.pgvector.dimensions}
-      expected-digest: 0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f
+      expected-digest: ${RAG_EMBEDDING_EXPECTED_DIGEST}
     warmup:
-      min-interval: ${RAG_WARMUP_MIN_INTERVAL:1m}
-      pc-timeout: ${RAG_WARMUP_PC_TIMEOUT:60s}
-      laptop-timeout: ${RAG_WARMUP_LAPTOP_TIMEOUT:60s}
-      embedding-timeout: ${RAG_WARMUP_EMBEDDING_TIMEOUT:30s}
+      on-startup: ${RAG_WARMUP_ON_STARTUP}
+      min-interval: ${RAG_WARMUP_MIN_INTERVAL}
+      pc-timeout: ${RAG_WARMUP_PC_TIMEOUT}
+      laptop-timeout: ${RAG_WARMUP_LAPTOP_TIMEOUT}
+      embedding-timeout: ${RAG_WARMUP_EMBEDDING_TIMEOUT}
     generation:
-      pc-base-url: ${RAG_PC_OLLAMA_BASE_URL:http://192.168.1.207:11434}
-      pc-model: ${RAG_PC_GENERATION_MODEL:qwen3:8b}
-      fallback-base-url: ${RAG_FALLBACK_OLLAMA_BASE_URL:http://192.168.1.209:11434}
-      fallback-model: ${RAG_FALLBACK_GENERATION_MODEL:qwen2.5:7b}
-      connect-timeout: 2s
-      probe-timeout: 2s
-      fallback-read-timeout: ${RAG_FALLBACK_READ_TIMEOUT:60s}
-      translation-read-timeout: ${RAG_TRANSLATION_READ_TIMEOUT:30s}
+      # Local URLs/models are derived from RAG_GENERATION_PROVIDERS.
+      connect-timeout: ${RAG_GENERATION_CONNECT_TIMEOUT}
+      probe-timeout: ${RAG_GENERATION_PROBE_TIMEOUT}
+      pc-read-timeout: ${RAG_GENERATION_PC_TIMEOUT}
+      fallback-read-timeout: ${RAG_GENERATION_LAPTOP_TIMEOUT}
+      translation-read-timeout: ${RAG_TRANSLATION_READ_TIMEOUT}
     retrieval:
-      top-k: 5
-      min-score: 0.63
+      top-k: ${RAG_TOP_K}
+      min-score: ${RAG_MIN_SCORE}
+    vector:
+      primary: ${RAG_VECTOR_PRIMARY}
+      failover-enabled: ${RAG_VECTOR_FAILOVER_ENABLED}
+      s3vectors:
+        enabled: ${RAG_S3_VECTORS_ENABLED}
+        region: ${RAG_S3_VECTORS_REGION}
+        bucket: ${RAG_S3_VECTORS_BUCKET}
+        index: ${RAG_S3_VECTORS_INDEX}
+        connect-timeout: ${RAG_S3_VECTORS_CONNECT_TIMEOUT}
+        api-call-attempt-timeout: ${RAG_S3_VECTORS_ATTEMPT_TIMEOUT}
+        api-call-timeout: ${RAG_S3_VECTORS_CALL_TIMEOUT}
   api-security:
     # Protección ligera para la demo pública. No sustituye autenticación real.
-    enabled: ${RAG_API_SECURITY_ENABLED:true}
-    allowed-origins:
-      - ${RAG_API_ALLOWED_ORIGIN_PUBLIC:https://athagon.tech}
-      - ${RAG_API_ALLOWED_ORIGIN_LOCALHOST:http://localhost:63342}
-      - ${RAG_API_ALLOWED_ORIGIN_LOOPBACK:http://127.0.0.1:63342}
-      - ${RAG_API_ALLOWED_ORIGIN_PYTHON_LOCALHOST:http://localhost:8000}
-      - ${RAG_API_ALLOWED_ORIGIN_PYTHON_LOOPBACK:http://127.0.0.1:8000}
-      - ${RAG_API_ALLOWED_ORIGIN_SYNOX_NAS:http://192.168.1.203}
-      - ${RAG_API_ALLOWED_ORIGIN_SYNOX_NAS_S:https://192.168.1.203}
+    enabled: ${RAG_API_SECURITY_ENABLED}
+    # One allowlist, shared by MVC CORS and the consumption-security filter.
     # Ejemplos válidos: 20s, 5s, 1m, 500ms.
-    min-interval: ${RAG_API_MIN_INTERVAL:20s}
+    max-global-requests-per-minute: ${RAG_API_GLOBAL_REQUESTS_PER_MINUTE}
+    min-interval: ${RAG_API_MIN_INTERVAL}
     # true = un POST sin Origin (por ejemplo curl/Postman sin cabecera Origin) recibe 403.
-    require-origin: ${RAG_API_REQUIRE_ORIGIN:true}
+    require-origin: ${RAG_API_REQUIRE_ORIGIN}
     # Activar solo detrás de Cloudflare/reverse proxy de confianza; entonces se usa
     # CF-Connecting-IP y, como fallback, X-Forwarded-For para limitar por IP real.
-    trust-proxy-headers: ${RAG_API_TRUST_PROXY_HEADERS:false}
+    trust-proxy-headers: ${RAG_API_TRUST_PROXY_HEADERS}
     # Cota de memoria para IP activas dentro de la ventana del rate limit.
-    max-tracked-ips: ${RAG_API_MAX_TRACKED_IPS:10000}
-  catalog-on-startup: false
+    max-tracked-ips: ${RAG_API_MAX_TRACKED_IPS}
+  catalog-on-startup: ${RAG_CATALOG_ON_STARTUP}
   knowledge:
     root: ${RAG_KNOWLEDGE_PATH}
     max-file-bytes: ${RAG_MAX_FILE_BYTES}

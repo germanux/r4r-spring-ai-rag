@@ -78,3 +78,15 @@ tail -n 200 -F "$LP_LOG"
 ## Benchmark RAG y proveedores
 
 La [comparativa A–F](docs/benchmarks/rag-providers/README.md) identificó F (embeddings en portátil y generación en PC) como la más rápida: **8/8 PASS, 2,73 s de media E2E SSE**. La [validación final con preguntas ajustadas al corpus](docs/benchmarks/rag-providers/final-validation.md) obtuvo **30/30 PASS**. La configuración operativa permanece intacta; los informes explican cómo seleccionar F sin modificar credenciales ni desplegar.
+
+
+### Configuración pública y privada del RAG
+
+Los valores operativos están en [`docker-spring/.env.base`](docker-spring/.env.base),
+versionado. `docker-spring/.env` permanece privado e ignorado: solo secretos y
+sobrescrituras, con prioridad sobre la base. Sustituye al antiguo `.env.example`.
+Las listas `RAG_GENERATION_PROVIDERS`, `RAG_EMBEDDING_PROVIDERS` y
+`RAG_CORS_ALLOWED_ORIGINS` son las fuentes públicas de proveedores y orígenes.
+S3 Vectors y Luna conservan sus flags independientes, deshabilitados por defecto.
+Compose 2.24+ mantiene el comando habitual de arranque; no hace falta exportar
+variables manualmente. Véase [configuración y migración manual](docs/operations/public-private-configuration.md).
