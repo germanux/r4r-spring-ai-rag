@@ -1,4 +1,172 @@
-# include supplies public interpolation defaults; project .env overrides them normally.
-include:
-  - path: ./compose-services.yml
-    env_file: ./.env.base
+# Compose autocontenido para Synology: no requiere compose-services.yml ni .env.base.
+# Los valores privados y los ajustes personalizados se toman de .env (prioridad sobre defaults).
+services:
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: r4r-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-r4r_rag}
+      POSTGRES_USER: ${POSTGRES_USER:-r4r}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+    ports:
+      - "${POSTGRES_HOST:-192.168.1.203}:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+      - ./backup:/backup
+    restart: unless-stopped
+    mem_limit: 1536m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - r4r-network
+
+  postgres-test:
+    image: pgvector/pgvector:pg16
+    container_name: r4r-postgres-test
+    environment:
+      POSTGRES_DB: ${POSTGRES_TEST_DB:-r4r_rag_test}
+      POSTGRES_USER: ${POSTGRES_TEST_USER:-r4r_test}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+    # Both servers listen on 5432 inside the container.
+    # 5433 is published on the NAS to avoid collision with production.
+    ports:
+      - "${POSTGRES_HOST:-192.168.1.203}:${POSTGRES_TEST_PORT:-5433}:5432"
+    volumes:
+      - ./postgres-test-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - r4r-network
+
+  ollama-embeddings:
+    image: ollama/ollama:latest
+    container_name: r4r-ollama-embeddings
+    ports:
+      - "192.168.1.203:11434:11434"
+    restart: unless-stopped
+    mem_limit: 1536m
+    environment:
+      OLLAMA_HOST: ${OLLAMA_HOST:-0.0.0.0:11434}
+      OLLAMA_NUM_PARALLEL: ${OLLAMA_NUM_PARALLEL:-1}
+      OLLAMA_MAX_LOADED_MODELS: ${OLLAMA_MAX_LOADED_MODELS:-1}
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:--1}
+      RAG_EMBEDDING_MODEL: ${RAG_EMBEDDING_MODEL:-nomic-embed-text:latest}
+    volumes:
+      - ./ollama-embeddings-data:/root/.ollama
+    # Launch Ollama, wait for it, then pull the embedding model on first start.
+    # The bind mount preserves the model across container recreations.
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        ollama serve &
+        ollama_pid=$$!
+        trap 'kill "$$ollama_pid" 2>/dev/null || true; wait "$$ollama_pid" 2>/dev/null || true' TERM INT
+        until ollama list >/dev/null 2>&1; do
+          if ! kill -0 "$$ollama_pid" 2>/dev/null; then exit 1; fi
+          sleep 2
+        done
+        if ! ollama show "$$RAG_EMBEDDING_MODEL" >/dev/null 2>&1; then
+          ollama pull "$$RAG_EMBEDDING_MODEL"
+        fi
+        wait "$$ollama_pid"
+    healthcheck:
+      test: ["CMD-SHELL", 'ollama show "$$RAG_EMBEDDING_MODEL"']
+      interval: 30s
+      timeout: 15s
+      retries: 15
+      start_period: 5m
+    networks:
+      - r4r-network
+
+  api:
+    image: r4r-api:0.3.2
+    container_name: r4r-api
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://postgres:5432/${POSTGRES_DB:-r4r_rag}}
+      POSTGRES_HOST: ${POSTGRES_HOST:-192.168.1.203}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-r4r_rag}
+      POSTGRES_USER: ${POSTGRES_USER:-r4r}
+      RAG_GENERATION_PROVIDERS: ${RAG_GENERATION_PROVIDERS:-http://192.168.1.207:11434|qwen3:8b|20s,http://192.168.1.209:11434|qwen2.5:7b|60s}
+      RAG_GENERATION_CONNECT_TIMEOUT: ${RAG_GENERATION_CONNECT_TIMEOUT:-2s}
+      RAG_GENERATION_PROBE_TIMEOUT: ${RAG_GENERATION_PROBE_TIMEOUT:-2s}
+      RAG_TRANSLATION_READ_TIMEOUT: ${RAG_TRANSLATION_READ_TIMEOUT:-30s}
+      RAG_GENERATION_THINK: ${RAG_GENERATION_THINK:-false}
+      RAG_GENERATION_TEMPERATURE: ${RAG_GENERATION_TEMPERATURE:-0}
+      RAG_EMBEDDING_PROVIDERS: ${RAG_EMBEDDING_PROVIDERS:-http://192.168.1.209:11434|8s,http://192.168.1.207:11434|8s,http://192.168.1.203:11434|30s}
+      RAG_EMBEDDING_MODEL: ${RAG_EMBEDDING_MODEL:-nomic-embed-text:latest}
+      RAG_EMBEDDING_DIMENSIONS: ${RAG_EMBEDDING_DIMENSIONS:-768}
+      RAG_EMBEDDING_CONNECT_TIMEOUT: ${RAG_EMBEDDING_CONNECT_TIMEOUT:-1s}
+      RAG_EMBEDDING_PROBE_TIMEOUT: ${RAG_EMBEDDING_PROBE_TIMEOUT:-1s}
+      RAG_EMBEDDING_TOTAL_TIMEOUT: ${RAG_EMBEDDING_TOTAL_TIMEOUT:-35s}
+      RAG_EMBEDDING_EXPECTED_DIGEST: ${RAG_EMBEDDING_EXPECTED_DIGEST:-0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f}
+      RAG_CORS_ALLOWED_ORIGINS: ${RAG_CORS_ALLOWED_ORIGINS:-https://athagon.tech,http://localhost:63342,http://127.0.0.1:63342,http://localhost:8000,http://127.0.0.1:8000,http://192.168.1.203,https://192.168.1.203}
+      RAG_API_SECURITY_ENABLED: ${RAG_API_SECURITY_ENABLED:-true}
+      RAG_API_MIN_INTERVAL: ${RAG_API_MIN_INTERVAL:-20s}
+      RAG_API_GLOBAL_REQUESTS_PER_MINUTE: ${RAG_API_GLOBAL_REQUESTS_PER_MINUTE:-12}
+      RAG_API_REQUIRE_ORIGIN: ${RAG_API_REQUIRE_ORIGIN:-true}
+      RAG_API_TRUST_PROXY_HEADERS: ${RAG_API_TRUST_PROXY_HEADERS:-false}
+      RAG_API_MAX_TRACKED_IPS: ${RAG_API_MAX_TRACKED_IPS:-10000}
+      RAG_SSE_TIMEOUT: ${RAG_SSE_TIMEOUT:-180s}
+      RAG_SSE_HEARTBEAT_INTERVAL: ${RAG_SSE_HEARTBEAT_INTERVAL:-10s}
+      RAG_WARMUP_ON_STARTUP: ${RAG_WARMUP_ON_STARTUP:-true}
+      RAG_WARMUP_MIN_INTERVAL: ${RAG_WARMUP_MIN_INTERVAL:-1m}
+      RAG_TOP_K: ${RAG_TOP_K:-5}
+      RAG_MIN_SCORE: ${RAG_MIN_SCORE:-0.63}
+      RAG_KNOWLEDGE_PATH: ${RAG_KNOWLEDGE_PATH:-./knowledge}
+      RAG_MAX_FILE_BYTES: ${RAG_MAX_FILE_BYTES:-10485760}
+      RAG_MAX_CHUNK_CHARS: ${RAG_MAX_CHUNK_CHARS:-2000}
+      RAG_CATALOG_ON_STARTUP: ${RAG_CATALOG_ON_STARTUP:-false}
+      RAG_OPENAI_ENABLED: ${RAG_OPENAI_ENABLED:-false}
+      RAG_OPENAI_MODEL: ${RAG_OPENAI_MODEL:-gpt-6-luna}
+      RAG_OPENAI_READ_TIMEOUT: ${RAG_OPENAI_READ_TIMEOUT:-35s}
+      RAG_OPENAI_MAX_CALLS_PER_DAY: ${RAG_OPENAI_MAX_CALLS_PER_DAY:-20}
+      RAG_VECTOR_PRIMARY: ${RAG_VECTOR_PRIMARY:-pgvector}
+      RAG_VECTOR_FAILOVER_ENABLED: ${RAG_VECTOR_FAILOVER_ENABLED:-false}
+      RAG_S3_VECTORS_ENABLED: ${RAG_S3_VECTORS_ENABLED:-false}
+      RAG_S3_VECTORS_REGION: ${RAG_S3_VECTORS_REGION:-eu-north-1}
+      RAG_S3_VECTORS_BUCKET: ${RAG_S3_VECTORS_BUCKET:-amzn-r4r-vectors}
+      RAG_S3_VECTORS_INDEX: ${RAG_S3_VECTORS_INDEX:-amzn-r4r-vector-index}
+      RAG_S3_VECTORS_CONNECT_TIMEOUT: ${RAG_S3_VECTORS_CONNECT_TIMEOUT:-1s}
+      RAG_S3_VECTORS_ATTEMPT_TIMEOUT: ${RAG_S3_VECTORS_ATTEMPT_TIMEOUT:-3s}
+      RAG_S3_VECTORS_CALL_TIMEOUT: ${RAG_S3_VECTORS_CALL_TIMEOUT:-4s}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # Private project .env supplies SDK environment credentials to this service only.
+      # Region already comes from RAG_S3_VECTORS_REGION; no AWS_PROFILE or ~/.aws mount.
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+    ports:
+      - "18080:8080"
+    restart: unless-stopped
+    mem_limit: 1024m
+    networks:
+      - r4r-network
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: r4r-cloudflared
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
+    command: tunnel --no-autoupdate run
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks:
+      - r4r-network
+
+networks:
+  r4r-network:
+    driver: bridge
+
