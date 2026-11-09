@@ -40,7 +40,8 @@ public final class PostgresFailureClassifier {
                 else if (sql instanceof SQLTransientConnectionException) reason="jdbc_connection";
                 if (sql.getNextException()!=null) pending.add(sql.getNextException());
             }
-            connection |= cause instanceof java.net.ConnectException || cause instanceof java.net.SocketTimeoutException;
+            connection |= cause instanceof java.net.ConnectException || cause instanceof java.net.SocketTimeoutException
+                    || cause instanceof java.net.UnknownHostException;
             if (cause.getCause()!=null) pending.add(cause.getCause());
         }
         checkCancelled();

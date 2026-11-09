@@ -24,7 +24,7 @@ class SecretIsolationTest(unittest.TestCase):
                if key in ('PATH', 'HOME', 'LANG', 'JAVA_HOME', 'TMPDIR')}
         env['POSTGRES_PASSWORD'] = marker
         env['AWS_EC2_METADATA_DISABLED'] = 'true'
-        command = ['mvn', '-B', 'verify', '-Dit.test=RagStreamHttpIT',
+        command = ['mvn', '-B', 'verify', '-Dit.test=RagStreamHttpIT,VectorDegradedHttpIT',
                    '-Dspring.config.location=' + (fixture / 'application.yml').as_uri(),
                    '-Dspring.flyway.enabled=false', '-Dspring.sql.init.mode=never',
                    '-Dspring.ai.vectorstore.pgvector.initialize-schema=false',
@@ -36,6 +36,7 @@ class SecretIsolationTest(unittest.TestCase):
         reports = list((ROOT / 'target/surefire-reports').glob('*PublicRagEnvironmentTest*'))
         reports += list((ROOT / 'target/surefire-reports').glob('TEST-*.xml'))
         reports += list((ROOT / 'target/failsafe-reports').glob('*RagStreamHttpIT*'))
+        reports += list((ROOT / 'target/failsafe-reports').glob('*VectorDegradedHttpIT*'))
         fresh = [report for report in set(reports) if report.stat().st_mtime_ns >= started]
         for report in fresh:
             text = report.read_text(errors='replace')
@@ -49,6 +50,8 @@ class SecretIsolationTest(unittest.TestCase):
                         'The configuration fixture did not produce fresh reports')
         self.assertTrue(any('RagStreamHttpIT' in report.name for report in fresh),
                         'The local HTTP integration tests did not produce fresh reports')
+        self.assertTrue(any('VectorDegradedHttpIT' in report.name for report in fresh),
+                        'The degraded startup integration tests did not produce fresh reports')
 
 
 if __name__ == '__main__':

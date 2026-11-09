@@ -48,6 +48,13 @@ class PostgresAccessGateTest {
         verify(aws, times(10)).search("q", 5, .63);
         gate.beforeWrite(); verify(db, times(2)).getConnection();
     }
+    @Test void jdbcDnsFailureWithoutSqlStateStillDefersButBareDnsFailureIsNotPostgresEvidence() throws Exception {
+        doThrow(new SQLException("unavailable", new java.net.UnknownHostException("postgres"))).when(db).getConnection();
+        gate.migrateAtStartup(flyway);
+        assertThat(router().search("q", 5, .63)).isEqualTo(chunks);
+        assertThat(PostgresFailureClassifier.reason(new java.net.UnknownHostException("embedding-host"))).isNull();
+        verifyNoInteractions(pg, flyway);
+    }
     @Test void warmOutageTriggersCooldownButEmptyResultsAndHealthyReadsNeverUseAws() {
         up.set(true); gate.migrateAtStartup(flyway);
         var router = router(); router.search("q", 5, .63); verifyNoInteractions(aws);
