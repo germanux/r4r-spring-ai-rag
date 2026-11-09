@@ -23,11 +23,13 @@ class PublicRagEnvironmentTest {
         var env=new org.springframework.core.env.StandardEnvironment();
         // This fixture tests file precedence, independently of real parent-process credentials.
         env.getPropertySources().remove(org.springframework.core.env.StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
+        env.getPropertySources().remove(org.springframework.core.env.StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME);
         env.getPropertySources().addFirst(new MapPropertySource("test-only",Map.of(
                 "spring.config.location",base.toUri()+","+overrides.toUri())));
         ConfigDataEnvironmentPostProcessor.applyTo(env);
         PublicRagEnvironment.apply(env);
-        assertThat(env.getProperty("POSTGRES_PASSWORD")).isEqualTo("fictitious");
+        assertThat("fictitious".equals(env.getProperty("POSTGRES_PASSWORD")))
+                .as("Only the synthetic fixture password must be resolved").isTrue();
         assertThat(env.getProperty("POSTGRES_DB")).isEqualTo("r4r_rag");
         assertThat(env.getProperty("r4r.rag.generation.providers[0].model")).isEqualTo("test-a");
         assertThat(env.getProperty("r4r.rag.generation.providers[1].model")).isEqualTo("test-b");

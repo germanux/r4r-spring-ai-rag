@@ -23,13 +23,7 @@ public class RagQueryController {
 
     @PostMapping("/answers")
     public ResponseEntity<RagQueryResponse> answer(@RequestBody(required = false) RagQueryRequest request) {
-        if (request == null || request.question() == null || request.question().isBlank()) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        if (request.responseLanguage() != null && !request.responseLanguage().isBlank()
-                && !request.responseLanguage().equalsIgnoreCase("en")
-                && !request.responseLanguage().equalsIgnoreCase("es")) {
+        if (!RagQueryRequest.isValid(request)) {
             return ResponseEntity.badRequest().build();
         }
 

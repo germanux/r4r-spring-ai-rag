@@ -6,6 +6,13 @@ import org.springframework.core.env.Environment;
 
 /** Prevent any test Spring context from connecting to a non-test database. */
 public final class TestDatabaseGuard implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+    /** Fail closed if a database is accidentally requested by the isolated local security gate. */
+    public static final class NoExternalJdbcDriver extends org.postgresql.Driver {
+        @Override public java.sql.Connection connect(String url, java.util.Properties properties) throws java.sql.SQLException {
+            throw new java.sql.SQLException("Database access is disabled in isolated local tests");
+        }
+    }
+
     private static final String URL = "jdbc:postgresql://192.168.1.203:5433/r4r_rag_test";
     private static final String USER = "r4r_test";
 

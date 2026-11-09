@@ -106,3 +106,51 @@ Orden estricto:
 ## 6. Prompt corto para ejecutar
 
 > Lee íntegramente `docs/security-bugs-update-tasks-codex.md` y aplica **solo** sus tareas S1/S2/S3 y el ajuste local S4 que sigan pendientes en el código. Respeta los requisitos existentes (MyMemory principal, última pregunta persistente, PG→S3 read-only, PC→portátil→Luna) y no repitas la matriz de 48/48 failovers reales ya validados. Ejecuta únicamente tests locales seguros y entrega el resultado del código. **Synology, Cloudflare, DNS, túneles, contenedores y publicación los gestionaré yo: no accedas a ellos, no prepares su despliegue ni pidas credenciales o autorización.** No abras secretos, no sobreingenierices y no hagas commit/push/deploy por iniciativa propia.
+
+
+## 7. Resultado del cierre local de código — 09/11/2026
+
+Revisión inicial de esta ejecución: `534a125`, incluyendo los ajustes de alcance de `f7fbbd1` y `534a125`. Se conservan los cambios anteriores. **S1–S4 completadas; GO del código para el alcance local probado.** No quedan correcciones de esta versión identificadas en esas cuatro tareas. Esto no certifica otras superficies ajenas al encargo ni el despliegue real.
+
+| Tarea | Estado | Corrección y evidencia local |
+|---|---|---|
+| S1 | **DONE** | `RagQueryRequest.isValid` centraliza pregunta obligatoria/no blanca hasta 700 unidades UTF-16, recuperación opcional hasta 2.000 e idioma compatible. REST y SSE rechazan con 400 antes de proveedores y admisión SSE. `RagRequestValidationTest` comprueba ambos endpoints, fronteras, emoji, JSON ausente/mal formado, texto intacto y cero invocaciones al rechazar. |
+| S2 | **DONE** | Se conserva el aislamiento existente de `PublicRagEnvironmentTest`, se excluyen también propiedades externas de JVM y las aserciones de contraseña comprueban booleanos para no volcar valores al fallar. `test_secret_isolation.py` ejecuta el gate Maven con marcador sintético heredado y comprueba su ausencia en salida/reportes. `DatabaseEnvironmentTest` ya no importa el archivo privado: usa una copia pública y credenciales ficticias, también en JVM hijas. Se corrigen dos fixtures de ingesta que permitían crear el VectorStore real por comprobar existencia de una definición en vez de instalar el doble. |
+| S3 | **DONE** | Boot **3.4.5 → 3.5.16** y Spring AI **1.0.0 → 1.0.9**, usando parent/BOM. Compilación y gate local correctos sin refactor de APIs RAG. AWS SDK permanece **2.49.1** y Java objetivo/runtime **21** (OpenJDK 21.0.12.1). |
+| S4 | **DONE** | Runtime elimina query y fragmento antes de derivar el nombre de BBDD. Una autoridad PostgreSQL sin ruta no se convierte en nombre ni expone userinfo. Cuatro regresiones sintéticas comprueban el JSON; se conservan modelos, versiones y contrato existente. |
+
+### Pruebas ejecutadas y alcance exacto
+
+- **296 pruebas unitarias PASSED**, sin fallos, errores ni omisiones.
+- **5 IT HTTP locales PASSED**, con Tomcat real y recuperación/generación simuladas. `RagStreamHttpIT` ya no requiere BBDD: excluye autoconfiguración JDBC/Flyway/pgvector en ese test y aporta dobles explícitos. Mantiene pruebas de entrega SSE, desconexión y seguridad de rutas.
+- **81 pruebas Node PASSED** de `front-athagon-r4r-static/js/app.test.cjs`, sin cambios de funcionalidad ni traducciones del frontend.
+- **1 prueba Python de aislamiento PASSED**, que incluye el gate Maven anterior y el escaneo del marcador en salida y reportes recién producidos.
+- **1 prueba Python de Compose PASSED**: únicamente copias públicas y sobrescrituras ficticias, parser de configuración local, sin consultar el daemon ni operar contenedores.
+- JAR empaquetado correctamente, árbol de dependencias resuelto y `git diff --check` correcto.
+
+Comando reproducible del gate seguro: `python3 py-scripts/test_secret_isolation.py`. Internamente ejecuta `mvn -B verify -Dit.test=RagStreamHttpIT` con ubicación de configuración pública aislada, Flyway/SQL init desactivados y un driver de prueba que **rechaza cualquier conexión JDBC**. Las comprobaciones de URL/usuario de `TestDatabaseGuard` permanecen intactas. Ese driver no forma parte del JAR productivo ni modifica su configuración.
+
+**No presentar el gate seleccionado como un `mvn verify` de todas las integraciones externas.** No se ejecutaron los IT que requieren PostgreSQL del NAS ni los live de Ollama/OpenAI; no se alteraron sus expectativas, condiciones ni guardias para hacerlos pasar. Quedan fuera del alcance local autorizado, no como errores de código pendientes ni como pruebas superadas. No se repitió la matriz de failovers.
+
+Los primeros intentos del gate detectaron problemas de fixtures: un contexto que inicializaba pgvector real y fixtures sintéticas sin el perfil test por defecto; también faltaba inicializar la memoria simulada en las nuevas pruebas de runtime. Se corrigieron en tests y el gate completo seleccionado pasó después, sin exclusiones adicionales para ocultar fallos. El driver de prueba impidió que el intento de inicializar pgvector acabara accediendo a un servicio real.
+
+### Dependencias y avisos de seguridad contrastados
+
+- [Spring AI 1.0.9](https://spring.io/blog/2026/06/12/spring-ai-1-1-8-1-0-9-avaialble-now/) está publicado en Maven Central y utiliza la línea Boot 3.5. La pareja solicitada se resolvió y probó directamente; no hizo falta recurrir a Boot 3.4.13.
+- [CVE-2026-40967](https://spring.io/security/cve-2026-40967/), [CVE-2026-22738](https://spring.io/security/cve-2026-22738/) y [CVE-2026-47835](https://spring.io/security/cve-2026-47835/) están corregidas en la versión AI elegida. Además, el código de recuperación productivo no pasa filtros controlados por el usuario.
+- Los componentes afectados por [CVE-2026-47851 (PDF)](https://spring.io/security/cve-2026-47851/) y [CVE-2026-47852 (ONNX)](https://spring.io/security/cve-2026-47852/) no están presentes en el árbol de dependencias resuelto ni se usan en el código productivo de este proyecto. **NO APLICA a los componentes actuales**, no una afirmación de que AI 1.0.9 esté libre de todo aviso.
+- Árbol resuelto: Boot 3.5.16, AI 1.0.9, AWS SDK 2.49.1, Tomcat 10.1.55, Flyway 11.7.2 y PostgreSQL JDBC 42.7.11. No se sobrescribieron transitivas individualmente. No se efectuó una auditoría universal de CVE ni se enviaron binarios a escáneres externos.
+- **Única deuda de versiones futuras de este cierre:** planificar la migración mayor a una línea con soporte OSS (Boot 4 / AI 2), expresamente excluida de esta versión. [Boot 3.5.16 cierra el soporte OSS de 3.5.x](https://spring.io/blog/2026/06/25/spring-boot-3-5-16-available-now/); la actualización aplicada es el parche transitorio acordado.
+
+### Revisión rápida offline de artefactos
+
+Se inspeccionaron localmente estructura del dump versionado y exportaciones S3, sin restaurar ni conectar a ninguna BBDD/AWS. El dump contiene tablas de esquema/conocimiento/vectores, sin tablas de clientes identificadas por su estructura. No se detectaron patrones de claves privadas, claves de acceso AWS, claves OpenAI, asignaciones de secretos ni correos en los datos examinados. El JAR versionado no incluye un archivo `.env`. **Es una comprobación acotada, no certificación exhaustiva de ausencia de PII o secretos en todo el historial.** No se modificaron ni eliminaron esos artefactos.
+
+### Archivos de esta implementación
+
+- Producción: `pom.xml`, `RagQueryRequest.java`, `RagQueryController.java`, `RagStreamController.java`, `RagRuntimeController.java`.
+- Tests existentes ajustados: `PublicRagEnvironmentTest.java`, `DatabaseEnvironmentTest.java`, `TestDatabaseGuard.java`, `KnowledgeIngestionCliTest.java`, `KnowledgeIngestionSpringLifecycleTest.java`, `RagRuntimeControllerTest.java`, `RagStreamHttpIT.java`.
+- **Nuevos:** `src/test/java/com/riansares/r4r/rag/api/RagRequestValidationTest.java` y `py-scripts/test_secret_isolation.py`.
+- Documentación: únicamente esta sección de resultados en el plan existente; no se crean más documentos de trabajo.
+
+MyMemory, persistencia, reglas de citas/abstención, orden de failovers y SDK AWS se conservan. No se accedió al archivo privado de entorno ni a perfiles AWS. Ninguna intervención en infraestructura, servicios del propietario o despliegue; no se solicitan accesos y no se preparan instrucciones para operarlos. Sin commit ni push.

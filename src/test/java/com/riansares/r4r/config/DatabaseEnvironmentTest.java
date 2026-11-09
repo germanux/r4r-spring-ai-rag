@@ -3,6 +3,7 @@ package com.riansares.r4r.config;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Files;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
@@ -18,12 +19,34 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DatabaseEnvironmentTest {
+    @org.junit.jupiter.api.io.TempDir Path root;
+
+    @org.junit.jupiter.api.BeforeEach
+    void publicConfigurationOnly() throws IOException {
+        Path application = root.resolve("application.yml");
+        String yaml = Files.readString(Path.of("src/main/resources/application.yml"))
+                .replace("      - optional:file:./docker-spring/.env[.properties]\n", "")
+                .replace("optional:file:./docker-spring/.env.base[.properties]",
+                        Path.of("docker-spring/.env.base").toAbsolutePath().toUri() + "[.properties]");
+        Files.writeString(application, yaml + "\nPOSTGRES_PASSWORD: synthetic-test-password\n");
+        Files.copy(Path.of("src/test/resources/application-test.yml"), root.resolve("application-test.yml"));
+        Files.copy(Path.of("src/test/resources/application.properties"), root.resolve("application.properties"));
+    }
+
+    private StandardEnvironment isolatedEnvironment() {
+        var env = new StandardEnvironment();
+        env.getPropertySources().remove(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
+        env.getPropertySources().remove(StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME);
+        return env;
+    }
     @Configuration(proxyBeanMethods = false)
     static class EmptyConfiguration { }
 
     private StandardEnvironment productionProperties(Map<String, Object> overrides) {
-        var env = new StandardEnvironment();
-        env.getPropertySources().addFirst(new MapPropertySource("test-overrides", overrides));
+        var env = isolatedEnvironment();
+        var safeOverrides = new java.util.HashMap<String, Object>(overrides);
+        safeOverrides.put("spring.config.location", root.toUri().toString());
+        env.getPropertySources().addFirst(new MapPropertySource("test-overrides", safeOverrides));
         ConfigDataEnvironmentPostProcessor.applyTo(env);
         return env;
     }
@@ -36,13 +59,15 @@ class DatabaseEnvironmentTest {
         assertThat(env.getProperty("spring.datasource.url")).isEqualTo(
                 "jdbc:postgresql://" + env.getProperty("POSTGRES_HOST") + ":"
                         + env.getProperty("POSTGRES_PORT") + "/" + env.getProperty("POSTGRES_DB"));
-        assertThat(env.getProperty("spring.datasource.password")).isEqualTo(env.getProperty("POSTGRES_PASSWORD"));
+        assertThat("synthetic-test-password".equals(env.getProperty("spring.datasource.password")))
+                .as("Only the synthetic fixture password must be resolved").isTrue();
     }
 
     @Test
     void mavenProfileUsesOnlySynologyTestDatabase() {
         try (var context = new SpringApplicationBuilder(EmptyConfiguration.class)
-                .web(WebApplicationType.NONE).run("--spring.profiles.active=test")) {
+                .environment(isolatedEnvironment()).web(WebApplicationType.NONE)
+                .run("--spring.config.location=" + root.toUri(), "--spring.profiles.active=test")) {
             var env = context.getEnvironment();
             assertThat(env.getProperty("spring.datasource.url"))
                     .isEqualTo("jdbc:postgresql://192.168.1.203:5433/r4r_rag_test");
@@ -73,15 +98,15 @@ class DatabaseEnvironmentTest {
         var command = new java.util.ArrayList<String>();
         command.add(Path.of(System.getProperty("java.home"), "bin", "java").toString());
         command.add("-cp");
-        command.add(System.getProperty("java.class.path"));
+        command.add(System.getProperty("surefire.test.class.path", System.getProperty("java.class.path")));
         command.add(StandaloneProbe.class.getName());
+        command.add("--spring.config.location=" + root.toUri());
         command.addAll(java.util.List.of(args));
         var builder = new ProcessBuilder(command).redirectErrorStream(true);
         var env = builder.environment();
-        env.remove("SPRING_PROFILES_ACTIVE");
-        env.remove("SPRING_DATASOURCE_URL");
-        env.remove("SPRING_DATASOURCE_USERNAME");
-        env.remove("SPRING_FLYWAY_URL");
+        env.keySet().removeIf(key -> key.startsWith("AWS_") || key.startsWith("RAG_")
+                || key.startsWith("SPRING_") || key.startsWith("POSTGRES_") || key.equals("OPENAI_API_KEY")
+                || key.equals("JAVA_TOOL_OPTIONS") || key.equals("_JAVA_OPTIONS") || key.equals("JDK_JAVA_OPTIONS"));
         env.put("POSTGRES_HOST", "192.168.1.203");
         env.put("POSTGRES_TEST_PORT", "5433");
         env.put("POSTGRES_TEST_DB", missingDatabase ? "" : "r4r_rag_test");

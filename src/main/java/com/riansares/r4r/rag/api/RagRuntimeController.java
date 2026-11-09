@@ -86,8 +86,13 @@ public class RagRuntimeController {
     }
 
     private static String databaseName(String url) {
-        int slash = url.lastIndexOf('/');
-        return slash >= 0 && slash + 1 < url.length() ? url.substring(slash + 1) : "PostgreSQL · pgvector";
+        String location = url.split("[?#]", 2)[0];
+        if (location.startsWith("jdbc:postgresql://")
+                && location.indexOf('/', "jdbc:postgresql://".length()) < 0) {
+            return "PostgreSQL · pgvector";
+        }
+        int slash = location.lastIndexOf('/');
+        return slash >= 0 && slash + 1 < location.length() ? location.substring(slash + 1) : "PostgreSQL · pgvector";
     }
 
     private ProviderInfo providerInfo(GenerationRouter.Provider provider) {

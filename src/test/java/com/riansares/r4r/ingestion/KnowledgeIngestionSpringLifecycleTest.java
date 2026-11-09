@@ -165,11 +165,8 @@ class KnowledgeIngestionSpringLifecycleTest {
             // Register our mock as a singleton after all bean definitions have been processed.
             // Using registerSingleton avoids proxy wrapping when using a pre-existing mock instance.
             beanFactory.registerSingleton("knowledgeIngestionService", mock);
-            if (!beanFactory.containsBean("vectorStore")) {
-                beanFactory.registerSingleton(
-                        "vectorStore",
-                        mock(org.springframework.ai.vectorstore.VectorStore.class));
-            }
+            // A bean definition is not a test double: prevent real PG initialization in unit tests.
+            beanFactory.registerSingleton("vectorStore", mock(org.springframework.ai.vectorstore.VectorStore.class));
         }
     }
 

@@ -61,9 +61,7 @@ public class RagStreamController implements AutoCloseable {
 
     @PostMapping(value = "/api/rag/answers/stream", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> stream(@RequestBody(required = false) RagQueryRequest request) {
-        if (request == null || request.question() == null || request.question().isBlank()
-                || request.responseLanguage() != null && !request.responseLanguage().isBlank()
-                && !request.responseLanguage().equalsIgnoreCase("en") && !request.responseLanguage().equalsIgnoreCase("es")) {
+        if (!RagQueryRequest.isValid(request)) {
             return ResponseEntity.badRequest().build();
         }
         if (stopping.get() || !admission.tryAcquire()) return busy();

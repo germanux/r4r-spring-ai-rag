@@ -36,7 +36,12 @@ import static org.mockito.Mockito.*;
         "spring.ai.model.embedding=none", "r4r.rag.openai.enabled=false",
         "r4r.api-security.enabled=true", "r4r.api-security.require-origin=true",
         "r4r.rag.warmup.on-startup=false", "r4r.rag.stream.heartbeat-interval=100ms",
-        "r4r.api-security.min-interval=0s" })
+        "r4r.api-security.min-interval=0s",
+        // This HTTP/security IT mocks retrieval; it must not require any database or private configuration.
+        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,"
+                + "org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration,"
+                + "org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration,"
+                + "org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration" })
 @Import(PgVectorTestConfiguration.class)
 class RagStreamHttpIT {
     @LocalServerPort int port;
@@ -44,6 +49,7 @@ class RagStreamHttpIT {
     @org.springframework.beans.factory.annotation.Autowired com.riansares.r4r.config.RagRetrievalProperties retrieval;
     @MockBean KnowledgeVectorStore store;
     @MockBean GenerationRouter router;
+    @MockBean org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(strings = {

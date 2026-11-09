@@ -15,8 +15,27 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class RagRuntimeControllerTest {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {
+            "jdbc:postgresql://db/rag?password=synthetic-private/path&user=test",
+            "jdbc:postgresql://test:synthetic-private@db/rag#synthetic-private/path",
+            "jdbc:postgresql://db/rag?password=synthetic-private#fragment" })
+    void databaseMetadataNeverIncludesUrlParametersOrCredentials(String jdbcUrl) throws Exception {
+        var info = new RagRuntimeController(new RagRetrievalProperties(3, .63), "nomic", "768",
+                jdbcUrl, preloader, router).runtime();
+        assertThat(info.database()).isEqualTo("rag");
+        assertThat(new ObjectMapper().writeValueAsString(info)).doesNotContain("synthetic-private", "password=", "user=test");
+    }
+
+    @Test void authorityWithoutDatabaseDoesNotExposeCredentials() {
+        var info = new RagRuntimeController(new RagRetrievalProperties(3, .63), "nomic", "768",
+                "jdbc:postgresql://test:synthetic-private@db?password=synthetic-private", preloader, router).runtime();
+        assertThat(info.database()).isEqualTo("PostgreSQL · pgvector");
+    }
+
     @org.junit.jupiter.api.BeforeEach void defaults() {
         when(preloader.modelStates()).thenReturn(java.util.List.of());
+        when(preloader.memoryFor(any())).thenReturn(new OllamaModelPreloader.MemoryState(false, java.util.List.of()));
     }
     private final AtomicBoolean pcUp = new AtomicBoolean(false), laptopUp = new AtomicBoolean(true);
     private final GenerationRouter router = new GenerationRouter(
