@@ -126,6 +126,29 @@ error bodies. Both-provider failure is a safe REST 503 with retained diagnostic 
 SSE emits ERROR without ANSWER_READY. Runtime does not query the vector port and
 remains available. No new public endpoint or frontend change is needed.
 
+S3 failures additionally log `stage` (`embedding`, `embedding_validation`, `aws_query`
+or `response_validation`), exception/root types, HTTP status, an allowlisted AWS error
+code and the configured region/bucket/index. Bounded reasons distinguish missing SDK
+credentials, timeout, DNS, connection, TLS, service errors and invalid responses.
+Unknown AWS error codes become `other`; SDK exception messages, request IDs, response
+bodies and stack traces are never emitted. Cancellation is not logged as an outage.
+The original exception is rethrown, preserving routing and HTTP/SSE behavior.
+
+### Owner-provided Synology outage export, 2026-11-09
+
+The HTML export shows successful startup/migrations and a normal PG answer before
+the owner stopped PostgreSQL. At 18:53:16 CET, SQLSTATE `08003` triggers the expected
+PG-to-S3 fallback. The secondary embedding succeeds in about 130 ms, then S3 retrieval
+fails after about 5.75 s; the request ends with `both_unavailable`. This proves that
+fallback was attempted. The old logs contain no secondary exception type, status or
+error code, so they do not establish missing credentials, IAM denial, network timeout
+or invalid metadata as the cause. The duration alone is insufficient to choose one.
+
+The structured S3 diagnostic above addresses this evidence gap. Its next occurrence
+in the deployed API can identify the failing stage and error category. It is not a
+confirmed repair of the deployed S3 failure: no Synology access, credentials, AWS/IAM
+changes or live calls were performed. Keep the original owner export outside commits.
+
 The existing S3 mapper reconstructs documentary text from `source_text`, source from
 `source`, heading path and ordinal from metadata; vector keys are validated/deduplicated.
 A key-only AWS result is not enough to generate a cited answer. Missing/invalid metadata
@@ -176,9 +199,10 @@ and latches; no waits of 30 seconds, forced model unloads or production outages.
 
 ### Verified results for this implementation
 
-- **319 current-source unit tests PASS**, no failures/errors/skips. This includes
+- **331 current-source unit tests PASS**, no failures/errors/skips. This includes
   coordinator/recovery, typed migration vetoes, concurrency, transaction ordering,
-  commit/rollback, the existing vector, embedding, generation, security and API suites.
+  commit/rollback, S3 diagnostic/redaction scenarios, the existing vector, embedding,
+  generation, security and API suites.
 - **11 local HTTP/CLI IT PASS**: 5 existing streaming/security tests, 3 degraded
   startup tests and 3 child-process CLI tests. Full Spring/Tomcat/Flyway initialization
   and actual child JVM exit codes are exercised; database, AWS, embeddings and
@@ -213,9 +237,17 @@ child CLI also loads a separate public configuration directory and a filtered pr
 environment; deliberately conflicting environment flags remain part of its test.
 The degraded HTTP fixture continues to enable and exercise real failover wiring.
 Making the advisor factory static prevents early configuration instantiation during
-post-processor discovery, with an assertion covering the warning. The final 319 unit
+post-processor discovery, with an assertion covering the warning. That regression's 319 unit
 and 11 local integration tests pass with both parent flags enabled, no early
 post-processor warning and no synthetic credential in output or fresh reports.
+
+After reviewing the Synology export, the final local gate passes 331 unit and 11
+integration tests. Added diagnostic scenarios cover access denial, expired tokens,
+missing credentials, SDK call/attempt timeouts, DNS/connect/TLS, unknown service codes,
+generic SDK failures, invalid metadata, embedding errors and cancellation. Tests
+assert original exception identity, absence of private sentinel data/throwable logs
+and no extra infrastructure calls. An initial test import error was corrected before
+the successful final gate; no live S3 repair is claimed.
 
 Previous historical verification (before this change) included 227 selected Java tests
 and the explicit `s3-readonly` startup path; it did not prove automatic degraded startup.
@@ -270,4 +302,5 @@ New tests under `src/test/java/com/riansares/r4r/vector/`:
 `py-scripts/test_secret_isolation.py`, `py-scripts/test_compose_configuration.py`.
 Regression fixtures: `rag/api/RagStreamHttpIT.java`,
 `ingestion/KnowledgeIngestionCliProcessIT.java`, `config/PublicRagEnvironmentTest.java`.
+S3 outage diagnostics: `vector/s3vectors/S3VectorsKnowledgeStore.java` and its unit tests.
 Documentation: this operation guide and the routing summary in `README.md`.
