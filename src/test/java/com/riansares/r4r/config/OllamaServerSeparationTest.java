@@ -57,7 +57,7 @@ class OllamaServerSeparationTest {
                         assertThat(operations).filteredOn(s -> s.contains("/api/embed")).hasSize(2)
                                 .allMatch(s -> s.startsWith("embedding ") && s.contains("nomic-embed-text:latest"));
                         assertThat(operations).noneMatch(s -> s.startsWith("embedding ") && s.contains("/api/chat"));
-                        assertThat(operations).anyMatch(s -> s.startsWith("pc /api/chat") && s.contains("qwen3:8b"));
+                        assertThat(operations).anyMatch(s -> s.startsWith("pc /api/chat") && s.contains("qwen3:8b") && s.contains("\"temperature\":0.0"));
                         assertThat(operations).anyMatch(s -> s.startsWith("backup /api/chat") && s.contains("qwen2.5:7b"));
                         assertThat(context.getEnvironment().getProperty("spring.ai.vectorstore.pgvector.dimensions")).isEqualTo("768");
                     });

@@ -129,7 +129,11 @@ class CitedRagServiceTest {
         verify(knowledgeStore).search("¿Cuánto cuesta reformar el baño?", TEST_TOP_K, TEST_MIN_SCORE);
         verify(chatModel).call(prompt.capture());
         assertThat(prompt.getValue().getContents()).contains("How much does a bathroom renovation cost?", "Reforma del baño", "Respond in English.");
+        assertThat(prompt.getValue().getInstructions().getFirst().getText())
+                .contains("Write the entire answer in English", "every explanatory list item and technical term", "citation labels unchanged",
+                        "Return either a supported, cited answer or that abstention token alone, never both");
         assertThat(prompt.getValue().getContents()).doesNotContain("¿Cuánto cuesta reformar el baño?");
+        assertThat(prompt.getValue().getInstructions().getLast().getText()).doesNotContain("__R4R_ABSTAIN__");
         assertThat(result.citations()).containsExactly(new Citation("[S1]", "fuente.md", List.of("Baño"), 2));
     }
 

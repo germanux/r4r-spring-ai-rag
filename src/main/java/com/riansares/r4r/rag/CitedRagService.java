@@ -23,6 +23,8 @@ public class CitedRagService {
     private final int retrievalTopK;
     private final double minScore;
     private final LocalRetrievalQueryTranslator translator;
+    // MyMemory's literal construction term differs from the corpus vocabulary; preserve its meaning.
+    private static final Pattern RENOVATION_WORK = Pattern.compile("(?iu)\\btrabajos?\\s+de\\s+renovaci[oó]n\\b");
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CitedRagService.class);
     private static final Pattern ABSTAIN_TOKEN = Pattern.compile("(?i)(?<![a-z0-9_])_*R4R_ABST(?:AIN|INERSE|INENT)_*(?![a-z0-9_])");
     private static final Pattern ONLY_CITATIONS =
@@ -111,6 +113,7 @@ public class CitedRagService {
                 throw ex;
             } finally { translator.clearRequestExecution(); }
         }
+        searchQuestion = RENOVATION_WORK.matcher(searchQuestion).replaceAll("reformas");
         long normalized = System.nanoTime();
         List<MarkdownChunk> chunks;
         progress.emit("RETRIEVAL_STARTED");
@@ -277,13 +280,7 @@ public class CitedRagService {
         }
 
         promptText.append("*****\nQuestion: ").append(question).append("\n\n");
-        if ("en".equalsIgnoreCase(responseLanguage)) {
-            promptText.append("Respond in English.\n");
-        } else if ("es".equalsIgnoreCase(responseLanguage)) {
-            promptText.append("Respond in Spanish.\n");
-        } else {
-            promptText.append("Respond in the same language as the question.\n");
-        }
+
         promptText.append("""
         *****
         Answer the question directly using only facts supported by the supplied evidence.
@@ -292,13 +289,18 @@ public class CitedRagService {
         If only part of the question is supported, answer that part and explicitly state the limitation.
         Use 1–3 concise sentences when sufficient. Do not invent facts, repeat yourself, or add tangential information.
         Every factual answer must include at least one supporting [S1], [S2], etc. citation.
-        Copy each citation label exactly as supplied. Do not put headings, FAQ identifiers or explanations inside citation brackets: use [S1], never [S1: FAQ-001].
+        Copy each citation label exactly as supplied. Do not put headings, FAQ identifiers or explanations inside citation brackets: use [S1], never [S1: FAQ-001] or (S1).
         Cite only relevant sources; do not cite unused sources.
         Citations must not be the entire answer.
-    
-        If the evidence does not support an answer, respond with exactly:
-        __R4R_ABSTAIN__
         """);
+
+        if ("en".equalsIgnoreCase(responseLanguage)) {
+            promptText.append("Respond in English. Translate every source term into English; do not copy Spanish excerpts.\n");
+        } else if ("es".equalsIgnoreCase(responseLanguage)) {
+            promptText.append("Respond in Spanish.\n");
+        } else {
+            promptText.append("Respond in the same language as the question.\n");
+        }
 
         return new Prompt(List.of(
                 new org.springframework.ai.chat.messages.SystemMessage("""
@@ -311,8 +313,16 @@ public class CitedRagService {
                     the requested explanation is unsupported: output exactly __R4R_ABSTAIN__.
                     For other partially supported questions, cite the documented facts and state the limitation.
                     If no relevant fact is documented, output exactly __R4R_ABSTAIN__.
+                    Return either a supported, cited answer or that abstention token alone, never both.
+                    Do not append the abstention token to an answer supported by the evidence.
                     Preserve the requested response language and use only the supplied [S1], [S2], etc. labels.
-                    """),
+                    """ + ("en".equalsIgnoreCase(responseLanguage)
+                        ? "\nWrite the entire answer in English, including every explanatory list item and technical term. "
+                          + "Translate Spanish source wording instead of copying or quoting it. "
+                          + "Keep only proper company names and citation labels unchanged. "
+                          + "Spanish evidence is valid for English questions: when it explicitly answers the question, "
+                          + "translate those documented facts and cite them instead of abstaining because of the language difference."
+                        : "")),
                 new org.springframework.ai.chat.messages.UserMessage(promptText.toString())));
     }
 

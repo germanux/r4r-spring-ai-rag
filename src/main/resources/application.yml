@@ -21,6 +21,7 @@ spring:
       chat:
         think: ${RAG_GENERATION_THINK}
         options:
+          temperature: ${RAG_GENERATION_TEMPERATURE:0}
           keep-alive: 3h
       embedding:
         options:

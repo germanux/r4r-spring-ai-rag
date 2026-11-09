@@ -21,6 +21,8 @@ class PublicRagEnvironmentTest {
                 +"RAG_GENERATION_PROVIDERS=http://127.0.0.1:9997|test-a|20s,http://127.0.0.1:9996|test-b|30s\n"
                 +"POSTGRES_PASSWORD=fictitious\nRAG_CORS_ALLOWED_ORIGINS=http://localhost:8000\n");
         var env=new org.springframework.core.env.StandardEnvironment();
+        // This fixture tests file precedence, independently of real parent-process credentials.
+        env.getPropertySources().remove(org.springframework.core.env.StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
         env.getPropertySources().addFirst(new MapPropertySource("test-only",Map.of(
                 "spring.config.location",base.toUri()+","+overrides.toUri())));
         ConfigDataEnvironmentPostProcessor.applyTo(env);

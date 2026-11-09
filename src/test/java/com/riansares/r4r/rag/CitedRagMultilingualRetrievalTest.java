@@ -83,6 +83,19 @@ class CitedRagMultilingualRetrievalTest {
     }
 
     @Test
+    void canonicalizesExternalConstructionTerminologyWithoutReplacingTheOriginalQuestion() {
+        var service = service();
+        when(generation.call(any(Prompt.class))).thenReturn(response("It renovates homes and offices [S1]."));
+        String external = "¿Qué tipo de trabajos de renovación realiza esta empresa? ¿Funciona en casas y oficinas?";
+        assertThat(service.answer(EN, external, "en").abstention()).isFalse();
+        verifyNoInteractions(translation);
+        assertThat(embedded.getLast()).isEqualTo("¿Qué tipo de reformas realiza esta empresa? ¿Funciona en casas y oficinas?");
+        var prompt = org.mockito.ArgumentCaptor.forClass(Prompt.class);
+        verify(generation).call(prompt.capture());
+        assertThat(prompt.getValue().getContents()).contains(EN, "Respond in English.");
+    }
+
+    @Test
     void translatedOutOfDomainQuestionStillAbstainsWithoutCallingAnswerGeneration() {
         var service = service();
         when(translation.call(any(Prompt.class))).thenReturn(response("Explica la fotosíntesis."));
