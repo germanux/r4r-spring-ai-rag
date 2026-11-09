@@ -1,6 +1,7 @@
 package com.riansares.r4r.vector.config;
 
 import com.riansares.r4r.vector.FailoverKnowledgeVectorStore;
+import com.riansares.r4r.vector.PostgresAccessGate;
 import com.riansares.r4r.vector.pgvector.PgVectorKnowledgeStore;
 import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -26,10 +27,10 @@ public class KnowledgeVectorStoreConfiguration {
             @Qualifier("s3VectorsKnowledgeVectorStore") ObjectProvider<KnowledgeVectorStore> s3,
             RagVectorProperties properties,
             @Value("${r4r.rag.vector.s3vectors.enabled:false}") boolean enabled,
-            org.springframework.core.env.Environment env) {
+            org.springframework.core.env.Environment env, ObjectProvider<PostgresAccessGate> gate) {
         if (!enabled && (properties.failoverEnabled() || "s3vectors".equals(properties.primary())))
             throw new IllegalArgumentException("S3 Vectors must be enabled for the requested vector routing");
         return new FailoverKnowledgeVectorStore(postgres::getObject,enabled ? s3.getObject() : null,
-                properties.primary(),properties.failoverEnabled(),env.matchesProfiles("s3-readonly"));
+                properties.primary(),properties.failoverEnabled(),env.matchesProfiles("s3-readonly"),gate.getIfAvailable());
     }
 }

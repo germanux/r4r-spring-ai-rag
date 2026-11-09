@@ -12,7 +12,11 @@ spring:
     password: ${POSTGRES_PASSWORD}
   flyway:
     enabled: true
+    connect-retries: 0
     locations: classpath:db/migration
+  sql:
+    init:
+      mode: never # Flyway owns schema initialization, including recovery after an outage.
   ai:
     model:
       # GenerationRouter owns both generation providers; do not create a global ChatModel.
