@@ -1,3 +1,5 @@
+> **Nota de vigencia (09/11/2026): DOCUMENTO HISTÓRICO del 29/10.** Las referencias siguientes a ingesta pendiente, recuentos de pruebas antiguos y fallos ya corregidos no representan el estado actual: hay 8 fuentes, 282 fragmentos y 282 vectores S3, y la matriz live de failover del 08/11 terminó 48/48 PASS. **No ejecutar tareas antiguas de ingesta ni repetir la matriz.** La lista mínima y vigente para publicar está en [`security-bugs-update-tasks-codex.md`](security-bugs-update-tasks-codex.md), con evidencia en [`rag-live-failover-validation.md`](rag-live-failover-validation.md).
+
 # Revisión de pendientes del RAG — 2026-10-29
 
 Alcance: contrastar las referencias al producto de los diagnósticos históricos

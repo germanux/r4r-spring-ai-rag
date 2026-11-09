@@ -1,3 +1,5 @@
+> **Actualización de cierre (09/11/2026):** El problema observado con la traducción «trabajos de renovación» se corrigió en `35eda2c` normalizando **solo la consulta de recuperación**, sin sustituir MyMemory como traductor principal ni quitar el recuerdo de la última pregunta. Las validaciones posteriores enfocadas constan en [`rag-live-failover-validation.md`](../rag-live-failover-validation.md) (12/12 + 2/2). Este documento conserva la evidencia y los resultados correspondientes al 06/11; **no es la lista actual de pendientes**.
+
 # Restauración de MyMemory y verificación RAG — 6 de noviembre de 2026
 
 ## Alcance y revisión previa

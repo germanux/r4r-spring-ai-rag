@@ -1,3 +1,5 @@
+> **Actualización de cierre (09/11/2026):** Esta es la evidencia de la ejecución del 08/11 ya incorporada a `main` (`35eda2c`). **No repetir** las 48 pruebas live para cerrar la publicación. Quedan por verificar DNS del dominio API, despliegue de la imagen/JAR vigente en Synology (el NAS anterior respondía 404 al POST SSE) y una prueba funcional pública breve. Los fallos documentados del NAS anterior son históricos, no deben darse por corregidos sin desplegar. Instrucciones acotadas: [`security-bugs-update-tasks-codex.md`](security-bugs-update-tasks-codex.md).
+
 # Validación real de R4R y sus failovers
 
 Fecha: 8 de noviembre de 2026. Rama: `main`; revisión inicial: `b8c4ff25f62cac5b165a6d1347f1daafb6523e5e` (árbol inicialmente limpio).
