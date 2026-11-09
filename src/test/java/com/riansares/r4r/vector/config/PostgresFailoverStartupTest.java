@@ -27,6 +27,7 @@ import software.amazon.awssdk.services.s3vectors.model.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@org.junit.jupiter.api.extension.ExtendWith(org.springframework.boot.test.system.OutputCaptureExtension.class)
 class PostgresFailoverStartupTest {
     final DataSource db = mock(DataSource.class);
     final EmbeddingModel embeddings = mock(EmbeddingModel.class);
@@ -93,7 +94,8 @@ class PostgresFailoverStartupTest {
             return new KnowledgeIngestionService(jdbc, mock(MarkdownDocumentLoader.class), mock(HeadingMarkdownChunker.class));
         }
     }
-    @Test void bothWriteEntryPointsAreGuardedBeforeTheirTransactionStarts() throws Exception {
+    @Test void bothWriteEntryPointsAreGuardedBeforeTheirTransactionStarts(
+            org.springframework.boot.test.system.CapturedOutput output) throws Exception {
         when(db.getConnection()).thenReturn(mock(Connection.class));
         var transactions = mock(PlatformTransactionManager.class);
         var vectors = mock(org.springframework.ai.vectorstore.pgvector.PgVectorStore.class);
@@ -110,6 +112,7 @@ class PostgresFailoverStartupTest {
                     verify(vectors, never()).add(anyList());
                     verify(vectors, never()).delete(anyList());
                 });
+        assertThat(output.getAll()).doesNotContain("not eligible for getting processed by all BeanPostProcessors");
     }
     @Test void validatedWritesStillCommitAndFailedWritesStillRollBack() throws Exception {
         when(db.getConnection()).thenReturn(mock(Connection.class));

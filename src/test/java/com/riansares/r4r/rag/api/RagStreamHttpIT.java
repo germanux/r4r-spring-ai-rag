@@ -34,6 +34,8 @@ import static org.mockito.Mockito.*;
 /** Real Tomcat HTTP streaming/CORS. Retrieval and generation are simulated; no live LLM. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "spring.ai.model.embedding=none", "r4r.rag.openai.enabled=false",
+        "r4r.rag.vector.primary=pgvector", "r4r.rag.vector.failover-enabled=false",
+        "r4r.rag.vector.s3vectors.enabled=false",
         "r4r.api-security.enabled=true", "r4r.api-security.require-origin=true",
         "r4r.rag.warmup.on-startup=false", "r4r.rag.stream.heartbeat-interval=100ms",
         "r4r.api-security.min-interval=0s",

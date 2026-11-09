@@ -24,7 +24,9 @@ class SecretIsolationTest(unittest.TestCase):
                if key in ('PATH', 'HOME', 'LANG', 'JAVA_HOME', 'TMPDIR')}
         env['POSTGRES_PASSWORD'] = marker
         env['AWS_EC2_METADATA_DISABLED'] = 'true'
-        command = ['mvn', '-B', 'verify', '-Dit.test=RagStreamHttpIT,VectorDegradedHttpIT',
+        env['RAG_VECTOR_FAILOVER_ENABLED'] = 'true'
+        env['RAG_S3_VECTORS_ENABLED'] = 'true'
+        command = ['mvn', '-B', 'verify', '-Dit.test=RagStreamHttpIT,VectorDegradedHttpIT,KnowledgeIngestionCliProcessIT',
                    '-Dspring.config.location=' + (fixture / 'application.yml').as_uri(),
                    '-Dspring.flyway.enabled=false', '-Dspring.sql.init.mode=never',
                    '-Dspring.ai.vectorstore.pgvector.initialize-schema=false',
@@ -37,6 +39,7 @@ class SecretIsolationTest(unittest.TestCase):
         reports += list((ROOT / 'target/surefire-reports').glob('TEST-*.xml'))
         reports += list((ROOT / 'target/failsafe-reports').glob('*RagStreamHttpIT*'))
         reports += list((ROOT / 'target/failsafe-reports').glob('*VectorDegradedHttpIT*'))
+        reports += list((ROOT / 'target/failsafe-reports').glob('*KnowledgeIngestionCliProcessIT*'))
         fresh = [report for report in set(reports) if report.stat().st_mtime_ns >= started]
         for report in fresh:
             text = report.read_text(errors='replace')
@@ -52,6 +55,10 @@ class SecretIsolationTest(unittest.TestCase):
                         'The local HTTP integration tests did not produce fresh reports')
         self.assertTrue(any('VectorDegradedHttpIT' in report.name for report in fresh),
                         'The degraded startup integration tests did not produce fresh reports')
+        self.assertTrue(any('KnowledgeIngestionCliProcessIT' in report.name for report in fresh),
+                        'The child CLI integration tests did not produce fresh reports')
+        self.assertNotIn('not eligible for getting processed by all BeanPostProcessors', result.stdout,
+                         'Spring infrastructure was instantiated before post-processor registration completed')
 
 
 if __name__ == '__main__':

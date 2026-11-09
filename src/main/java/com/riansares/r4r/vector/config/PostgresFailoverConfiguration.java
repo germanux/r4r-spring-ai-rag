@@ -63,7 +63,9 @@ public class PostgresFailoverConfiguration {
         };
     }
     @Bean @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-    Advisor validatePostgresBeforeTransactions(ObjectProvider<PostgresAccessGate> gates) {
+    static Advisor validatePostgresBeforeTransactions(ObjectProvider<PostgresAccessGate> gates) {
+        // Auto-proxy creation discovers advisors while registering post-processors.
+        // A static factory avoids instantiating this configuration prematurely.
         var pointcut = new StaticMethodMatcherPointcut() {
             @Override public boolean matches(Method method, Class<?> target) {
                 return KnowledgeIngestionService.class.isAssignableFrom(target) && method.getName().equals("ingest")

@@ -155,9 +155,10 @@ python3 py-scripts/test_compose_configuration.py
 node --test front-athagon-r4r-static/js/app.test.cjs
 ```
 
-The Maven gate runs all unit tests and explicitly selected local HTTP ITs
-`RagStreamHttpIT,VectorDegradedHttpIT`. It does **not** claim execution of the existing
-external database/live ITs. Focused coordinator tests use a controllable monotonic clock
+The Maven gate runs all unit tests and explicitly selected local HTTP/CLI ITs
+`RagStreamHttpIT,VectorDegradedHttpIT,KnowledgeIngestionCliProcessIT`, with synthetic
+parent environment flags enabling both vector failover and S3. It does **not** claim
+execution of the existing external database/live ITs. Focused coordinator tests use a controllable monotonic clock
 and latches; no waits of 30 seconds, forced model unloads or production outages.
 
 | Required case | Automated evidence |
@@ -178,9 +179,10 @@ and latches; no waits of 30 seconds, forced model unloads or production outages.
 - **319 current-source unit tests PASS**, no failures/errors/skips. This includes
   coordinator/recovery, typed migration vetoes, concurrency, transaction ordering,
   commit/rollback, the existing vector, embedding, generation, security and API suites.
-- **8 local HTTP IT PASS**: 5 existing streaming/security tests and 3 new degraded
-  startup tests. Full Spring/Tomcat/Flyway initialization is exercised; database,
-  AWS, embeddings and generation are simulated. These are not live cloud tests.
+- **11 local HTTP/CLI IT PASS**: 5 existing streaming/security tests, 3 degraded
+  startup tests and 3 child-process CLI tests. Full Spring/Tomcat/Flyway initialization
+  and actual child JVM exit codes are exercised; database, AWS, embeddings and
+  generation are simulated. These are not live cloud tests.
 - **81 frontend tests PASS**, with no frontend changes.
 - **1 synthetic-secret local gate PASS**, including the Maven executions above and
   fresh-report checks; no marker in output or reports.
@@ -189,7 +191,8 @@ and latches; no waits of 30 seconds, forced model unloads or production outages.
   timeout forwarding and restart policy are checked, no service is started.
 - Java 21 compilation and executable **0.3.3** packaging PASS; whitespace checks PASS.
 
-The selected Maven verify is `-Dit.test=RagStreamHttpIT,VectorDegradedHttpIT` inside
+The selected Maven verify is
+`-Dit.test=RagStreamHttpIT,VectorDegradedHttpIT,KnowledgeIngestionCliProcessIT` inside
 `test_secret_isolation.py`. Existing real PostgreSQL/ingestion and live Ollama/OpenAI
 ITs are **NOT RUN**, rather than excluded to mask failures or counted as passed.
 The already validated live matrix and AWS commands 9–15 were not repeated. There is
@@ -200,6 +203,19 @@ Initial development runs found and corrected local compile/fixture issues (Sprin
 exception constructor, Mockito restubbing, lifecycle calls, explicit Flyway enablement
 under the isolated runner, JDBC double for transactional tests). Final selected gates
 have zero failures; their assertions and original regression tests were retained.
+
+The subsequent plain Maven run exposed an environment-dependent regression: inherited
+failover/S3 flags activated `PostgresAccessGate` in HTTP/CLI fixtures that deliberately
+exclude `DataSource`. The reported five HTTP context errors and two CLI exit-code
+failures were reproduced locally using public configuration and synthetic flags.
+Those fixtures now explicitly select their simulated PostgreSQL-only routing. The
+child CLI also loads a separate public configuration directory and a filtered process
+environment; deliberately conflicting environment flags remain part of its test.
+The degraded HTTP fixture continues to enable and exercise real failover wiring.
+Making the advisor factory static prevents early configuration instantiation during
+post-processor discovery, with an assertion covering the warning. The final 319 unit
+and 11 local integration tests pass with both parent flags enabled, no early
+post-processor warning and no synthetic credential in output or fresh reports.
 
 Previous historical verification (before this change) included 227 selected Java tests
 and the explicit `s3-readonly` startup path; it did not prove automatic degraded startup.
@@ -252,4 +268,6 @@ New tests under `src/test/java/com/riansares/r4r/vector/`:
 `PostgresAccessGateTest.java`, `config/PostgresFailoverStartupTest.java`,
 `VectorDegradedHttpIT.java`. Updated runners:
 `py-scripts/test_secret_isolation.py`, `py-scripts/test_compose_configuration.py`.
+Regression fixtures: `rag/api/RagStreamHttpIT.java`,
+`ingestion/KnowledgeIngestionCliProcessIT.java`, `config/PublicRagEnvironmentTest.java`.
 Documentation: this operation guide and the routing summary in `README.md`.

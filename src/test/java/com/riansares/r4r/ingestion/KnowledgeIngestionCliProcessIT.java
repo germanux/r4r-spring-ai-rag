@@ -54,6 +54,8 @@ class KnowledgeIngestionCliProcessIT {
 
     @TempDir
     private Path tempCorpus;
+    @TempDir
+    private Path tempConfiguration;
     private Process liveProcess;
 
     @AfterEach
@@ -68,6 +70,16 @@ class KnowledgeIngestionCliProcessIT {
         String classpath = System.getProperty("java.class.path");
 
         Path projectRoot = Path.of("").toAbsolutePath().normalize();
+        // Select a separate config directory: a higher-priority import does not remove
+        // the private import from the application's normal YAML.
+        String publicYaml = Files.readString(projectRoot.resolve("src/main/resources/application.yml"))
+                .replace("      - optional:file:./docker-spring/.env[.properties]\n", "")
+                .replace("optional:file:./docker-spring/.env.base[.properties]",
+                        projectRoot.resolve("docker-spring/.env.base").toUri() + "[.properties]");
+        assertThat(publicYaml.contains("./docker-spring/.env[")).isFalse();
+        Files.writeString(tempConfiguration.resolve("application.yml"), publicYaml);
+        Files.copy(projectRoot.resolve("src/test/resources/application-test.yml"),
+                tempConfiguration.resolve("application-test.yml"));
         Path testClasses = projectRoot.resolve("target").resolve("test-classes");
         Path appClasses = projectRoot.resolve("target").resolve("classes");
 
@@ -87,8 +99,19 @@ class KnowledgeIngestionCliProcessIT {
         args.add(javaExecutable());
         args.add("-cp");
         args.add(classpathWithClasses);
+        args.add("-Dspring.config.location=" + tempConfiguration.toUri());
+        args.add("-Dspring.profiles.active=test");
         args.add("-Dspring.autoconfigure.exclude=" + AUTO_CONFIGURATION_EXCLUSIONS);
         args.add("-Dspring.main.web-application-type=none");
+        args.add("-Dspring.flyway.enabled=false");
+        args.add("-Dspring.sql.init.mode=never");
+        args.add("-Dspring.ai.model.embedding=none");
+        args.add("-Dspring.datasource.driver-class-name=com.riansares.r4r.config.TestDatabaseGuard$NoExternalJdbcDriver");
+        args.add("-Dr4r.rag.vector.primary=pgvector");
+        args.add("-Dr4r.rag.vector.failover-enabled=false");
+        args.add("-Dr4r.rag.vector.s3vectors.enabled=false");
+        args.add("-Dr4r.rag.openai.enabled=false");
+        args.add("-Dr4r.rag.warmup.on-startup=false");
         args.add("-Dr4r.catalog-on-startup=false");
         args.add("-Dr4r.knowledge.root=" + corpus.toAbsolutePath());
         args.add("-Dr4r.knowledge.max-file-bytes=1048576");
@@ -98,6 +121,12 @@ class KnowledgeIngestionCliProcessIT {
 
         ProcessBuilder processBuilder = new ProcessBuilder(args);
         var env = processBuilder.environment();
+        env.keySet().removeIf(key -> !List.of("PATH", "HOME", "LANG", "JAVA_HOME", "TMPDIR",
+                "SystemRoot", "WINDIR", "TEMP", "TMP").contains(key));
+        // Deliberately conflicting environment flags must not activate real infrastructure.
+        env.put("RAG_VECTOR_FAILOVER_ENABLED", "true");
+        env.put("RAG_S3_VECTORS_ENABLED", "true");
+        env.put("AWS_EC2_METADATA_DISABLED", "true");
         env.put("RAG_KNOWLEDGE_PATH", corpus.toAbsolutePath().toString());
         env.put("RAG_MAX_FILE_BYTES", "1048576");
         env.put("RAG_MAX_CHUNK_CHARS", "2000");
@@ -240,15 +269,18 @@ class KnowledgeIngestionCliProcessIT {
         assertThat(combined)
                 .doesNotContain("Tomcat")
                 .doesNotContain("EmbeddedTomcat")
-                .doesNotContain("Web application");
+                .doesNotContain("Web application")
+                .doesNotContain("HikariPool")
+                .doesNotContain("org.flywaydb")
+                .doesNotContain("PostgresAccessGate");
     }
 
     /**
      * Verifies credential sentinel is not leaked in output.
      */
     private void assertNoSecretLeakage(String stdout, String stderr) {
-        assertThat(stdout).doesNotContain(POSTGRES_PASSWORD_SENTINEL);
-        assertThat(stderr).doesNotContain(POSTGRES_PASSWORD_SENTINEL);
+        assertThat((stdout + stderr).contains(POSTGRES_PASSWORD_SENTINEL))
+                .as("Synthetic child credential must not appear in process output").isFalse();
     }
 
     @Test

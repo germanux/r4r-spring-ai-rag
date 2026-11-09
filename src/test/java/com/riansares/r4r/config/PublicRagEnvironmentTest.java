@@ -40,6 +40,8 @@ class PublicRagEnvironmentTest {
     }
     @Test void missingPrivateImportIsOptional() throws Exception {
         var env=new org.springframework.core.env.StandardEnvironment();
+        env.getPropertySources().remove(org.springframework.core.env.StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
+        env.getPropertySources().remove(org.springframework.core.env.StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME);
         env.getPropertySources().addFirst(new MapPropertySource("test-only",Map.of("spring.config.location",
                 Path.of("docker-spring/.env.base").toUri()+"[.properties],optional:"+root.resolve("absent.properties").toUri())));
         ConfigDataEnvironmentPostProcessor.applyTo(env);
