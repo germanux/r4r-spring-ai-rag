@@ -1,12 +1,12 @@
-# R4R/RAG — cierre mínimo de seguridad y publicación (tareas para Codex)
+# R4R/RAG — cierre mínimo de código y seguridad (tareas para Codex)
 
 **Revisión consolidada:** 09/11/2026, sobre el remoto `main` en `b7b50093cc6dcf0840284c998ab90b115243e591`.  
 **Ruta real:** `docs/security-bugs-update-tasks-codex.md`.  
-**Propósito:** ejecutar un último cambio pequeño, validar y preparar el MVP público. **Este archivo sustituye**, para la siguiente ejecución, la auditoría extensa anterior (conservada en el historial Git); evita instrucciones ya superadas o contradictorias.
+**Propósito:** ejecutar únicamente correcciones pequeñas de código, dependencias y tests. **El despliegue, Synology, Cloudflare, DNS, túneles, imágenes en producción y pruebas públicas son responsabilidad exclusiva del propietario; NO son tareas de Codex.** Este archivo sustituye, para la siguiente ejecución, la auditoría extensa anterior (conservada en el historial Git).
 
 ## 1. Decisión: cerrar, no ampliar el proyecto
 
-No reimplementar RAG, failovers, Cloudflare, Docker, Spring AI ni frontend. No crear nuevos subsistemas ni más documentos de trabajo. El sistema **ya ha superado pruebas reales importantes**; lo que queda es un endurecimiento breve y una publicación correcta del binario existente.
+No reimplementar RAG, failovers, Cloudflare, Docker, Spring AI ni frontend. No crear nuevos subsistemas ni más documentos de trabajo. El sistema **ya ha superado pruebas reales importantes**; lo único encargado a Codex es un endurecimiento breve del repositorio y su validación aislada. El propietario hará la publicación por separado.
 
 ### Evidencia ya obtenida — NO repetir la matriz
 
@@ -20,14 +20,14 @@ No reimplementar RAG, failovers, Cloudflare, Docker, Spring AI ni frontend. No c
 
 Fuente detallada y evidencia histórica: `docs/rag-live-failover-validation.md` y `docs/validation/r4r-mymemory-restoration.md`.
 
-### Problemas de publicación REALES (registrados el 08/11, comprobar estado actual)
+### Contexto histórico de publicación, NO tareas de Codex (08/11)
 
 1. `r4r-api.athagon.tech` devolvía **NXDOMAIN**; todavía no consta revisión DNS posterior. **Bloquea la URL pública**, no necesariamente el acceso LAN.
 2. El NAS tenía una imagen anterior: `POST /api/rag/answers/stream` respondía **404** (REST funcionaba). El binario Java local sí implementa SSE. **Bloquea la demo SSE** hasta construir, cargar y ejecutar el JAR/imagen adecuados.
 3. Una respuesta inglesa EN09 del **NAS antiguo** incluía hechos no respaldados por cita. No debe confundirse con los resultados corregidos del binario local.
 4. No hay validación del **navegador a través del túnel público** con esa nueva imagen.
 
-**Criterio de cierre:** no declarar “publicado y probado” antes de confirmar 1–4. Los dos primeros requieren preparación/decisiones de infraestructura; no simular que el código los resolvió.
+**Estos cuatro asuntos los comprobará y resolverá el propietario.** Codex **no debe hacer comprobaciones DNS/WAN/NAS/Cloudflare, conectar a servicios públicos, preparar su despliegue, escribir instrucciones para acceder a ellos ni solicitar sus credenciales o permisos**. Tampoco debe declarar «publicado y probado» a partir de `mvn verify`.
 
 ## 2. Cambios de código permitidos y realmente útiles
 
@@ -64,41 +64,16 @@ Fuentes oficiales verificadas:
 - Advisory ONNX: https://spring.io/security/cve-2026-47852/  
 - AI 2.0.2 estable, futura migración: https://spring.io/blog/2026/10/23/spring-ai-2-1-0-RC1-available-now/
 
-### S4 — Runtime y superficie de red (solo cambios minúsculos)
+### S4 — Runtime: una corrección pequeña y aislada
 
 - `RagRuntimeController.databaseName` deriva el nombre con `lastIndexOf('/')`; si una JDBC URL ficticia contuviera query o fragmento con `password`, podría reflejarlo. **Si sigue así, excluir parámetros y fragmentos**, con un test sintético. No ocultar modelos/versiones útiles para demostrar el portfolio ni cambiar el JSON que consume la UI.
-- Revisar lectura efectiva de `RAG_API_SECURITY_ENABLED`, `RAG_API_REQUIRE_ORIGIN`, rate limit y `RAG_API_TRUST_PROXY_HEADERS`. **Origin no autentica**. No activar cabeceras forwarded por defecto ni alterar puertos/firewall sin verificar que el acceso directo al 18080 está limitado a LAN.
-- Verificar (sin cambio destructivo) que Postgres y Ollama no sean accesibles desde Internet. Si solo es comprobable desde NAS/router, consignarlo como validación manual del propietario.
+- Mantener intacta la configuración de red, Origin, rate limits y `RAG_API_TRUST_PROXY_HEADERS`; **Origin no autentica**, pero revisar topología/firewall exige acceso de infraestructura que corresponde al propietario. No acceder ni probar LAN/WAN/NAS.
 
-## 3. Despliegue: el verdadero último bloqueo
+## 3. Fuera de este encargo: publicación e infraestructura
 
-**No basta con dar PASS a Maven.** La prueba del 08/11 comprobó el código local, **no una imagen actualizada en Synology**.
+**Todo lo siguiente lo hará exclusivamente el propietario, fuera de la sesión de Codex**: reconstruir y cargar la imagen en Synology, reiniciar contenedores, ajustar Cloudflare Tunnel/DNS, comprobar accesos LAN/WAN, comprobar CORS y HTTPS públicos y probar REST/SSE en el navegador. Codex no debe abordar ni preparar estas tareas.
 
-**D1 — Identidad del despliegue**
-
-1. Comparar commit actual, JAR realmente empaquetado, `docker-spring/Dockerfile`, etiqueta `r4r-api:0.3.2`, `compose-services.yml` y contenedor NAS. El Compose tiene `image` sin `build`, y Dockerfile copia `docker-spring/app.jar`; **`docker compose build` por sí solo no reconstruye API**.
-2. Documentar comandos concretos y seguros para: empaquetar Java 21, copiar el JAR correcto a la entrada del Dockerfile, construir imagen, cargarla en Synology (UI si no hay SSH) y recrear **solo** el servicio API tras autorización del usuario. Mantener volúmenes/datos, `.env`, las tres flags `true`, migraciones y contenedores restantes; no utilizar Docker root del NAS para pruebas arbitrarias.
-3. Comprobar que `GET /api/rag/runtime` informa las versiones esperadas y que **POST** `/api/rag/answers/stream` ya no es 404; un OPTIONS 200 no valida el POST.
-4. No lanzar despliegue en el NAS sin aprobación concreta. Si se entrega un plan ejecutable, separar **PREPARAR** (autorizado para Codex) de **DESPLEGAR** (confirmación del propietario).
-
-**D2 — DNS y Cloudflare Tunnel**
-
-- Comprobar si `r4r-api.athagon.tech` sigue NXDOMAIN. Si sigue así, dejar instrucción de corrección del DNS/hostname del túnel para el propietario; **no cambiar DNS ni políticas Cloudflare por iniciativa propia**.
-- Tras resolver, confirmar HTTPS y la ruta pública de la API. El frontend HTTPS no debe llamar HTTP por contenido mixto.
-- Confirmar que solo los endpoints deseados son públicos; el puerto 18080 y PG/Ollama deben permanecer LAN-only.
-
-**D3 — Smoke test final BREVE tras despliegue autorizado**
-
-Con los endpoints reales, secretos cargados de forma normal y **respetando rate limit**:
-
-1. Preflight CORS permitido y rechazado; GET runtime (sin coste LLM).
-2. **ES01** en REST: respuesta con citas, modelo identificado.
-3. **EN09** (Humedades) en SSE: estados anteriores a `ANSWER_READY`, texto inglés, cita que realmente respalda los hechos; verificar ausencia de «blocked drains» si no figura en la fuente.
-4. **EN13** (Fotosíntesis, fuera de ámbito) en REST o SSE: abstención y cero citas.
-5. Al menos **un POST SSE público real** desde el dominio frontend/navegador, no solo LAN/curl: comprobar que Cloudflare no retiene eventos hasta finalizar. Si se prueba la ruta de MyMemory en navegador, verificar que la pregunta original y su traducción se conservan y no hay traducción duplicada.
-6. Si cualquiera de estas rutas falla, reproducir **solo esa**. No volver a correr 48 casos ni desconectar proveedores para demostrar failover; la evidencia ya existe.
-
-**Condición de publicación:** DNS HTTPS operativo, POST SSE real operativo en NAS y por el túnel, citas/idioma/abstención razonables, API imagen alineada con el commit y configuración de seguridad sin exponer servicios internos.
+**No solicitar autorización para ello, ni pedir accesos.** Al terminar el trabajo de código, limitarse a decir que el despliegue real *no se ha verificado en este encargo*. El propietario decidirá cómo, cuándo y dónde publicarlo.
 
 ## 4. Qué se descarta o aplaza expresamente
 
@@ -122,13 +97,12 @@ Orden estricto:
 2. Probar la pareja compatible de dependencias S3 con Maven; tiempo razonable, sin migración grande.
 3. `mvn verify` usando **solo DB test protegida**; reportar unitarios/IT y omitidos. Comprobar credenciales sintéticas, tests REST/SSE y traducción.
 4. Node `node --test front-athagon-r4r-static/js/app.test.cjs` y Python Compose según scripts reales; `docker compose config --quiet` sin imprimir secretos. Solo si son relevantes. No usar pruebas saltadas como evidencia.
-5. Preparar imagen y checklist D1/D2, y parar a pedir autorización para despliegue. Tras autorización, ejecutar únicamente D3.
-6. Entregar tabla muy corta `DONE / NO APLICA / BLOQUEADO / DIFERIDO`, versiones finales, número real de pruebas, archivos cambiados, estado DNS/SSE y **GO/NO-GO para publicar**.
+5. Entregar tabla muy corta `DONE / NO APLICA / BLOQUEADO / DIFERIDO`, versiones finales, número real de pruebas, archivos cambiados y **GO/NO-GO del código**. No atribuir GO a infraestructura no verificada.
 
-**Seguridad y autorizaciones:** No leer/imprimir `.env` ni perfiles AWS, no poner claves en Git, no ejecutar SQL de escritura en producción ni escrituras S3, no tocar servicios ajenos; los tests con credenciales sintéticas deben estar aislados. No hacer commit, push, cambios de DNS, NAS, rotación de claves o despliegue sin la autorización adecuada. Si una acción imprescindible depende de infraestructura fuera del repositorio, detenerse y pedir la intervención mínima.
+**Seguridad y límites absolutos:** No leer/imprimir `.env` ni perfiles AWS, no poner claves en Git, no ejecutar SQL de escritura en producción ni escrituras S3, no tocar servicios ajenos; los tests con credenciales sintéticas deben estar aislados. **No entrar, consultar ni modificar Synology, Cloudflare, DNS, túneles, router o servicios reales. No pedir sus credenciales, permisos ni autorizaciones.** No hacer commit, push ni despliegue. Si algo exige infraestructura, indicarlo como «fuera de alcance» y seguir con las tareas locales independientes.
 
 **Tiempo:** procurar cerrar sin otra sesión extensa; si la actualización de dependencias resulta compleja o un servicio no está disponible, señalarlo claramente en lugar de ampliar alcance.
 
 ## 6. Prompt corto para ejecutar
 
-> Lee íntegramente docs/security-bugs-update-tasks-codex.md y aplica **solo** sus tareas S1/S2/S3 y el ajuste pequeño S4 que siga pendiente en el código actual. Respeta los requisitos existentes (MyMemory principal, última pregunta persistente, PG→S3 read-only, PC→portátil→Luna), aprovecha los 48/48 failovers reales ya validados y no repitas la matriz. Ejecuta los gates seguros y prepara la imagen/guía de despliegue D1-D2 sin tocar NAS ni DNS sin autorización. Cuando esté autorizado el despliegue, haz únicamente el smoke breve D3. Informa de resultados y bloqueos GO/NO-GO; no abras ni expongas secretos, no sobreingenierices y no hagas commit/push/deploy por iniciativa propia.
+> Lee íntegramente `docs/security-bugs-update-tasks-codex.md` y aplica **solo** sus tareas S1/S2/S3 y el ajuste local S4 que sigan pendientes en el código. Respeta los requisitos existentes (MyMemory principal, última pregunta persistente, PG→S3 read-only, PC→portátil→Luna) y no repitas la matriz de 48/48 failovers reales ya validados. Ejecuta únicamente tests locales seguros y entrega el resultado del código. **Synology, Cloudflare, DNS, túneles, contenedores y publicación los gestionaré yo: no accedas a ellos, no prepares su despliegue ni pidas credenciales o autorización.** No abras secretos, no sobreingenierices y no hagas commit/push/deploy por iniciativa propia.
