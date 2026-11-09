@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Integration test that executes the actual KnowledgeIngestionCli as a bounded child JVM
  * and verifies its process contract without requiring live external dependencies.
  */
+@org.junit.jupiter.api.Tag("offline")
 class KnowledgeIngestionCliProcessIT {
 
     private static final String POSTGRES_PASSWORD_SENTINEL = "SECRET_CREDENTIAL_SENTINEL_2026_TEST";

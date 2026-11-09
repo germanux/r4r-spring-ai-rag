@@ -68,7 +68,7 @@ class VectorReadOnlyStartupTest {
         }
     }
     @Test void normalConfigurationKeepsMigrationsAndSchemaValidation() throws Exception {
-        var sources=new YamlPropertySourceLoader().load("normal",new ClassPathResource("application.yml"));
+        var sources=new YamlPropertySourceLoader().load("normal",new org.springframework.core.io.FileSystemResource("src/main/resources/application.yml"));
         // YAML-only inspection: do not resolve its runtime imports or open private configuration.
         assertThat(sources.getFirst().getProperty("spring.flyway.enabled")).isEqualTo(true);
         assertThat(sources.getFirst().getProperty("spring.ai.vectorstore.pgvector.schema-validation")).isEqualTo(true);

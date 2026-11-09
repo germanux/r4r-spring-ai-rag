@@ -98,9 +98,10 @@ cd docker-spring
 docker compose --env-file .env.base config --no-env-resolution --quiet
 ```
 
-Do not run plain `docker compose config`, `config --environment` or unfiltered Maven
-integration suites against the real configuration as a substitute. Existing DB/CLI
-integration tests can import `.env`; this task selects only isolated unit suites.
+Do not print plain `docker compose config` or `config --environment` against the real
+configuration as a substitute. Current Maven builds use isolated test configuration;
+real AWS integration is explicit via `mvn verify -Paws-it` and dedicated test resources.
+See [Maven testing](../testing.md) for the offline build and optional integrations.
 
 ## Security and scope
 

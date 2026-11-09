@@ -14,7 +14,7 @@ import org.springframework.ai.model.ollama.autoconfigure.OllamaEmbeddingAutoConf
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.env.YamlPropertySourceLoader;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -173,7 +173,7 @@ class OllamaServerSeparationTest {
                         context.getEnvironment().getPropertySources().addLast(
                                 new org.springframework.core.env.PropertiesPropertySource("public-base", publicDefaults));
                         PublicRagEnvironment.apply(context.getEnvironment());
-                        for (var source : new YamlPropertySourceLoader().load("application", new ClassPathResource("application.yml"))) {
+                        for (var source : new YamlPropertySourceLoader().load("application", new FileSystemResource("src/main/resources/application.yml"))) {
                             context.getEnvironment().getPropertySources().addLast(source);
                         }
                     } catch (Exception e) { throw new IllegalStateException(e); }

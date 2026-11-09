@@ -2,7 +2,6 @@ package com.riansares.r4r.rag;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.ai.ollama.api.OllamaApi;
 import java.net.URI;
 import java.net.http.*;
@@ -12,10 +11,13 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Opt-in: existing Synology model only. No downloads, unloads, text embeddings or database writes. */
-@EnabledIfEnvironmentVariable(named = "RAG_WARMUP_LIVE_TEST", matches = "true")
+@org.junit.jupiter.api.Tag("llm")
+@org.junit.jupiter.api.condition.EnabledIfSystemProperty(named = "r4r.test.llm.enabled", matches = "true",
+        disabledReason = "NOT RUN: real LLM/E2E requires -Pllm-it and explicit test endpoints/credentials")
 class OllamaEmbeddingWarmupLiveIT {
     @Test void emptyInputIsAcceptedAndConfiguredModelIsObservedInMemory() throws Exception {
-        String url = System.getenv().getOrDefault("RAG_EMBEDDING_LIVE_URL", "http://192.168.1.203:11434");
+        String url = System.getenv().getOrDefault("RAG_EMBEDDING_LIVE_URL", "");
+        assertThat(url.isBlank()).as("RAG_EMBEDDING_LIVE_URL must explicitly select a test Ollama").isFalse();
         String model = System.getenv().getOrDefault("RAG_EMBEDDING_MODEL", "nomic-embed-text:latest");
         var factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofSeconds(2)); factory.setReadTimeout(Duration.ofSeconds(30));

@@ -27,11 +27,13 @@ import static org.mockito.Mockito.*;
 
 /** Real MVC/Flyway startup and HTTP with unavailable simulated PostgreSQL, simulated AWS and LLM. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
+        "spring.ai.model.embedding=ollama",
         "spring.flyway.enabled=true", "spring.sql.init.mode=never", "r4r.catalog-on-startup=false",
         "r4r.rag.vector.primary=pgvector", "r4r.rag.vector.failover-enabled=true", "r4r.rag.vector.s3vectors.enabled=true",
         "r4r.rag.openai.enabled=false", "r4r.rag.warmup.on-startup=false", "r4r.api-security.enabled=true",
         "r4r.api-security.min-interval=0s", "r4r.api-security.max-global-requests-per-minute=1000" })
 @Import({VectorDegradedHttpIT.OfflineDatabase.class, PgVectorTestConfiguration.class})
+@Tag("offline")
 class VectorDegradedHttpIT {
     @TestConfiguration(proxyBeanMethods = false)
     static class OfflineDatabase {

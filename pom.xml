@@ -22,6 +22,9 @@
         <spring-ai.version>1.0.9</spring-ai.version>
         <aws-sdk.version>2.49.1</aws-sdk.version>
         <maven-failsafe.version>3.5.3</maven-failsafe.version>
+        <r4r.test.postgres.enabled>false</r4r.test.postgres.enabled>
+        <r4r.test.aws.enabled>false</r4r.test.aws.enabled>
+        <r4r.test.llm.enabled>false</r4r.test.llm.enabled>
     </properties>
 
     <dependencyManagement>
@@ -111,6 +114,9 @@
                 <configuration>
                     <systemPropertyVariables>
                         <spring.profiles.active>test</spring.profiles.active>
+                        <r4r.test.postgres.enabled>false</r4r.test.postgres.enabled>
+                        <r4r.test.aws.enabled>false</r4r.test.aws.enabled>
+                        <r4r.test.llm.enabled>false</r4r.test.llm.enabled>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -121,6 +127,9 @@
                 <configuration>
                     <systemPropertyVariables>
                         <spring.profiles.active>test</spring.profiles.active>
+                        <r4r.test.postgres.enabled>${r4r.test.postgres.enabled}</r4r.test.postgres.enabled>
+                        <r4r.test.aws.enabled>${r4r.test.aws.enabled}</r4r.test.aws.enabled>
+                        <r4r.test.llm.enabled>${r4r.test.llm.enabled}</r4r.test.llm.enabled>
                     </systemPropertyVariables>
                 </configuration>
                 <executions>
@@ -134,4 +143,25 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>postgres-it</id>
+            <properties>
+                <r4r.test.postgres.enabled>true</r4r.test.postgres.enabled>
+            </properties>
+        </profile>
+        <profile>
+            <id>aws-it</id>
+            <properties>
+                <r4r.test.aws.enabled>true</r4r.test.aws.enabled>
+            </properties>
+        </profile>
+        <profile>
+            <id>llm-it</id>
+            <properties>
+                <r4r.test.llm.enabled>true</r4r.test.llm.enabled>
+            </properties>
+        </profile>
+    </profiles>
 </project>

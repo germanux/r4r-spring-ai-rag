@@ -33,6 +33,12 @@ public final class TestDatabaseGuard implements ApplicationContextInitializer<Co
         require(env, "spring.datasource.hikari.username", USER, false);
         require(env, "spring.flyway.url", URL, false);
         require(env, "spring.flyway.user", USER, false);
+        if ("org.postgresql.Driver".equals(env.getProperty("spring.datasource.driver-class-name"))) {
+            if (!Boolean.getBoolean("r4r.test.postgres.enabled"))
+                throw new IllegalStateException("Real JDBC requires explicit -Ppostgres-it selection");
+            if (env.getProperty("R4R_TEST_POSTGRES_PASSWORD", "").isBlank())
+                throw new IllegalStateException("R4R_TEST_POSTGRES_PASSWORD is required for -Ppostgres-it");
+        }
     }
 
     private static void require(Environment env, String key, String expected, boolean required) {

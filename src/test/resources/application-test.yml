@@ -5,10 +5,11 @@ spring:
 
   datasource:
     # Todos los tests que necesiten PostgreSQL usan la BBDD de test, nunca la real.
-    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_TEST_PORT}/${POSTGRES_TEST_DB}
-    username: ${POSTGRES_TEST_USER}
-    password: ${POSTGRES_PASSWORD}
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${POSTGRES_HOST:192.168.1.203}:${POSTGRES_TEST_PORT:5433}/${POSTGRES_TEST_DB:r4r_rag_test}
+    username: ${POSTGRES_TEST_USER:r4r_test}
+    password: offline-test-password
+    # Only the explicit PostgreSQL integration annotation selects the real driver.
+    driver-class-name: com.riansares.r4r.config.TestDatabaseGuard$NoExternalJdbcDriver
 
 r4r:
   rag:

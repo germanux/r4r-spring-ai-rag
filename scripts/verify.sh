@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 MODE="${1:-all}"
+if (( $# > 0 )); then shift; fi
 
 run_agent_tests() {
   PYTHONPATH="$ROOT/py-ring-agent/src${PYTHONPATH:+:$PYTHONPATH}" \
@@ -22,17 +23,17 @@ case "$MODE" in
     ;;
   unit)
     run_agent_tests
-    exec mvn test
+    exec mvn test "$@"
     ;;
   integration)
-    mvn -Dtest='*IT' -Dspring.profiles.active=test test
+    exec mvn verify "$@"
     ;;
   all)
     run_agent_tests
-    mvn verify
+    mvn verify "$@"
     ;;
   *)
-    echo "Usage: $0 {agents|unit|integration|all}" >&2
+    echo "Usage: $0 {agents|unit|integration|all} [Maven arguments, e.g. -Ppostgres-it]" >&2
     exit 2
     ;;
 esac

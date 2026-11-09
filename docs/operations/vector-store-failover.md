@@ -208,22 +208,24 @@ The snapshot remains manual and can become stale after corpus updates.
 ## Reproducible controlled tests
 
 No credentials, AWS/PostgreSQL/Ollama servers or stopped production containers are
-needed. The safe local gate uses public configuration copies, a synthetic secret and
+needed. The default Maven gate uses an independent test configuration and
 a JDBC driver that refuses external database connections. Dedicated startup fixtures
 provide their own failing simulated DataSource; full HTTP tests use real MVC/Tomcat,
 real Flyway initialization and the real router/S3 adapter with simulated SDK responses
 and embeddings/generation.
 
 ```bash
+mvn clean verify
 python3 py-scripts/test_secret_isolation.py
 python3 py-scripts/test_compose_configuration.py
 node --test front-athagon-r4r-static/js/app.test.cjs
 ```
 
-The Maven gate runs all unit tests and explicitly selected local HTTP/CLI ITs
-`RagStreamHttpIT,VectorDegradedHttpIT,KnowledgeIngestionCliProcessIT`, with synthetic
-parent environment flags enabling both vector failover and S3. It does **not** claim
-execution of the existing external database/live ITs. Focused coordinator tests use a controllable monotonic clock
+The default Maven gate runs all mandatory tests and the three local HTTP/CLI ITs.
+Real PostgreSQL/AWS/LLM tests produce explicit NOT RUN/SKIPPED reports unless their
+profiles are selected. The synthetic-secret helper now runs unfiltered `mvn verify`,
+with conflicting parent flags to check isolation. See [Maven testing](../testing.md).
+Focused coordinator tests use a controllable monotonic clock
 and latches; no waits of 30 seconds, forced model unloads or production outages.
 
 | Required case | Automated evidence |
@@ -241,7 +243,7 @@ and latches; no waits of 30 seconds, forced model unloads or production outages.
 
 ### Verified results for this implementation
 
-- **331 current-source unit tests PASS**, no failures/errors/skips. This includes
+- **336 current-source mandatory tests PASS**, no failures/errors/skips. This includes
   coordinator/recovery, typed migration vetoes, concurrency, transaction ordering,
   commit/rollback, S3 diagnostic/redaction scenarios, the existing vector, embedding,
   generation, security and API suites.
@@ -259,9 +261,8 @@ and latches; no waits of 30 seconds, forced model unloads or production outages.
   internal network and production datasource, and absence of test-database coupling.
 - Java 21 compilation and executable **0.3.3** packaging PASS; whitespace checks PASS.
 
-The selected Maven verify is
-`-Dit.test=RagStreamHttpIT,VectorDegradedHttpIT,KnowledgeIngestionCliProcessIT` inside
-`test_secret_isolation.py`. Existing real PostgreSQL/ingestion and live Ollama/OpenAI
+The current Maven verify needs no test-selection or JDBC/Flyway command-line overrides.
+Existing real PostgreSQL/ingestion, AWS and live Ollama/OpenAI
 ITs are **NOT RUN**, rather than excluded to mask failures or counted as passed.
 The already validated live matrix and AWS commands 9–15 were not repeated. There is
 no new claim of physical NAS outage, real pending migration execution, live S3 startup

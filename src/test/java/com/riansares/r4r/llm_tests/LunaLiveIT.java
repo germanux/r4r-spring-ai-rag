@@ -4,19 +4,18 @@ import com.riansares.r4r.rag.*;
 import com.riansares.r4r.chunking.MarkdownChunk;
 import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import java.util.*;
-import java.nio.file.*;
 import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
 
-@EnabledIfEnvironmentVariable(named="RAG_LUNA_LIVE_TEST",matches="true")
+@org.junit.jupiter.api.Tag("llm")
+@org.junit.jupiter.api.condition.EnabledIfSystemProperty(named = "r4r.test.llm.enabled", matches = "true",
+        disabledReason = "NOT RUN: real LLM/E2E requires -Pllm-it and explicit test endpoints/credentials")
 class LunaLiveIT {
  @Test void realRemoteAnswerPreservesEnglishAndCitationsAfterSimulatedLocalFailures() throws Exception {
-  var props=new Properties();try(var in=Files.newBufferedReader(Path.of("docker-spring/.env"))){props.load(in);}
-  String key=System.getenv().getOrDefault("OPENAI_API_KEY",props.getProperty("OPENAI_API_KEY",""));
+  String key=System.getenv().getOrDefault("OPENAI_API_KEY", "");
   key=key.replaceAll("^[\"']|[\"']$","");assertThat(key.isBlank()).as("Existing API key available").isFalse();
   var http=new SimpleClientHttpRequestFactory();http.setConnectTimeout(3000);http.setReadTimeout(45000);
   var model=new OpenAiResponsesModel(RestClient.builder().baseUrl("https://api.openai.com/v1").requestFactory(http).build(),key,"gpt-6-luna");

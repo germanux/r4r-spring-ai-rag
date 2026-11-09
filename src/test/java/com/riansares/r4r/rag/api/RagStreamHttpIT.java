@@ -45,6 +45,7 @@ import static org.mockito.Mockito.*;
                 + "org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration,"
                 + "org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration" })
 @Import(PgVectorTestConfiguration.class)
+@org.junit.jupiter.api.Tag("offline")
 class RagStreamHttpIT {
     @LocalServerPort int port;
     @org.springframework.beans.factory.annotation.Autowired RagStreamController streams;

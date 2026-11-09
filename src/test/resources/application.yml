@@ -1,0 +1,65 @@
+# Test classpath shadows the production application.yml, including its private import.
+# No credentials or external providers are needed by the default Maven lifecycle.
+spring:
+  application:
+    name: r4r-spring-ai-rag-test
+  flyway:
+    enabled: false
+    connect-retries: 0
+  sql:
+    init:
+      mode: never
+  ai:
+    model:
+      chat: none
+      embedding: none
+    ollama:
+      embedding:
+        options:
+          model: nomic-embed-text:latest
+    vectorstore:
+      pgvector:
+        initialize-schema: false
+        dimensions: 768
+        distance-type: COSINE_DISTANCE
+        index-type: HNSW
+        schema-name: public
+        table-name: vector_store
+        schema-validation: true
+
+r4r:
+  rag:
+    openai:
+      enabled: false
+    retrieval:
+      top-k: 5
+      min-score: 0.63
+    generation:
+      connect-timeout: 100ms
+      probe-timeout: 100ms
+      translation-read-timeout: 100ms
+      providers:
+        - name: offline-generation
+          base-url: http://127.0.0.1:1
+          model: offline-model
+          read-timeout: 100ms
+    embedding:
+      connect-timeout: 100ms
+      probe-timeout: 100ms
+      total-timeout: 1s
+      dimensions: 768
+      expected-digest: 0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f
+      providers:
+        - name: offline-embedding
+          base-url: http://127.0.0.1:1
+          read-timeout: 100ms
+    vector:
+      primary: pgvector
+      failover-enabled: false
+      s3vectors:
+        enabled: false
+        region: eu-north-1
+        bucket: amzn-r4r-vectors
+        index: amzn-r4r-vector-index
+  api-security:
+    allowed-origins: http://localhost:8000,http://127.0.0.1:8000

@@ -152,8 +152,9 @@ synthetic overrides under a different filename, clears inherited interpolation
 variables, and checks Compose's captured JSON without printing configuration.
 It never references the actual private file. Java bootstrap tests use generated
 public-only YAML because overriding `spring.config.import` does not remove other
-imports. Avoid an unfiltered `mvn test` here: existing DB/lifecycle suites may load
-private configuration or require services. No real DB/LLM/AWS call is part of this gate.
+imports. The current Maven defaults use an independent test classpath configuration:
+`mvn test`, `mvn package` and `mvn verify` no longer require services or the private
+file. Real integrations require explicit profiles; see [Maven testing](../testing.md).
 
 ## Results of this correction
 

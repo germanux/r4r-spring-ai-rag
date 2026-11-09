@@ -25,24 +25,18 @@ import static com.riansares.r4r.llm_tests.RagLiveQuestionsIT.SLEEP_WAIT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Smoke test against the REAL, running R4R API (not mocks).
- *
- * Manual English smoke test; never enabled without RAG_LIVE_EN_TEST=true.
- * The live requests are disabled by default to keep regular builds offline.
- *
- * Run from the project root:
- *   RAG_LIVE_EN_TEST=true mvn -Dtest=NoUnitTests -Dsurefire.failIfNoSpecifiedTests=false \
- *     -Dit.test=RagLiveEnglishQuestionsIT verify
- *
- * If the repository has no Maven wrapper, replace ./mvnw with mvn.
+ * Optional smoke test against a dedicated, running R4R test API.
+ * Run: RAG_TEST_BASE_URL=http://127.0.0.1:18080 mvn verify -Pllm-it -Dit.test=RagLiveEnglishQuestionsIT
  * The 15 calls run sequentially; a slow local model may take several minutes.
  */
 @Tag("live-rag")
-@EnabledIfEnvironmentVariable(named = "RAG_LIVE_EN_TEST", matches = "(?i)true")
+@org.junit.jupiter.api.Tag("llm")
+@org.junit.jupiter.api.condition.EnabledIfSystemProperty(named = "r4r.test.llm.enabled", matches = "true",
+        disabledReason = "NOT RUN: real LLM/E2E requires -Pllm-it and explicit test endpoints/credentials")
 class RagLiveEnglishQuestionsIT {
 
     private static final String BASE_URL = System.getenv().getOrDefault(
-            "RAG_TEST_BASE_URL", "http://192.168.1.203:18080").replaceAll("/+$", "");
+            "RAG_TEST_BASE_URL", "").replaceAll("/+$", "");
     private static final URI ENDPOINT = URI.create(BASE_URL + "/api/rag/answers");
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(180);
     private static final ObjectMapper JSON = new ObjectMapper();
@@ -72,6 +66,11 @@ class RagLiveEnglishQuestionsIT {
             new QuestionCase("Out of domain: astronomy", "What is the mass of Jupiter in kilograms?", "¿Cuál es la masa de Júpiter en kilogramos?", false),
             new QuestionCase("Out of domain: literature", "Who wrote the novel One Hundred Years of Solitude?", "¿Quién escribió la novela Cien años de soledad?", false)
     );
+
+    @org.junit.jupiter.api.BeforeAll
+    static void requireDedicatedTestEndpoint() {
+        assertThat(BASE_URL.isBlank()).as("RAG_TEST_BASE_URL must explicitly select a dedicated test API").isFalse();
+    }
 
     @TestFactory
     Stream<DynamicTest> fifteenRagQuestions() {

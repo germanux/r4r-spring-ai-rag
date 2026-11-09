@@ -10,7 +10,7 @@ import org.springframework.boot.env.YamlPropertySourceLoader;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockServletContext;
 import org.springframework.test.web.servlet.MockMvc;
@@ -41,7 +41,7 @@ class RagApiCorsTest {
                         context.getEnvironment().getPropertySources().addLast(
                                 new org.springframework.core.env.PropertiesPropertySource("public-base", publicDefaults));
                         PublicRagEnvironment.apply(context.getEnvironment());
-                        for (var source : new YamlPropertySourceLoader().load("application", new ClassPathResource("application.yml"))) {
+                        for (var source : new YamlPropertySourceLoader().load("application", new FileSystemResource("src/main/resources/application.yml"))) {
             context.getEnvironment().getPropertySources().addFirst(source);
         }
         context.register(ProbeConfiguration.class, WebConfiguration.class);

@@ -7,8 +7,9 @@ OUT="$ROOT/docker-spring"
 
 cd "$ROOT"
 
-# Compilar y ejecutar todas las pruebas.
-echo "==> Compilando y ejecutando tests..."
+# Compilar y ejecutar las pruebas obligatorias y la integración offline.
+# Las integraciones reales previas al despliegue se seleccionan según docs/testing.md.
+echo "==> Compilando y ejecutando tests obligatorios e integración offline..."
 mvn clean verify
 
 # Obtener automáticamente la versión y el nombre del JAR desde Maven.

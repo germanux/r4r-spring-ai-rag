@@ -77,6 +77,11 @@ tail -n 200 -F "$LP_LOG"
 
 ## Benchmark RAG y proveedores
 
+El build Maven es offline por defecto: `mvn test` ejecuta la batería obligatoria,
+`mvn clean package` genera el JAR y `mvn clean verify` añade HTTP/SSE/failover simulado.
+PostgreSQL, AWS y LLM reales se seleccionan con `-Ppostgres-it`, `-Paws-it` y
+`-Pllm-it`. Requisitos, clasificación y comandos completos: [pruebas Maven](docs/testing.md).
+
 La [comparativa A–F](docs/benchmarks/rag-providers/README.md) identificó F (embeddings en portátil y generación en PC) como la más rápida: **8/8 PASS, 2,73 s de media E2E SSE**. La [validación final con preguntas ajustadas al corpus](docs/benchmarks/rag-providers/final-validation.md) obtuvo **30/30 PASS**. La configuración operativa permanece intacta; los informes explican cómo seleccionar F sin modificar credenciales ni desplegar.
 
 

@@ -42,6 +42,33 @@ class DatabaseEnvironmentTest {
     @Configuration(proxyBeanMethods = false)
     static class EmptyConfiguration { }
 
+    @Test
+    void defaultTestClasspathIsOfflineAndDoesNotImportPrivateConfiguration() {
+        try (var context = new SpringApplicationBuilder(EmptyConfiguration.class)
+                .environment(isolatedEnvironment()).web(WebApplicationType.NONE).run()) {
+            var env = context.getEnvironment();
+            assertThat(env.getProperty("spring.datasource.driver-class-name"))
+                    .isEqualTo(TestDatabaseGuard.NoExternalJdbcDriver.class.getName());
+            assertThat(env.getProperty("spring.flyway.enabled", Boolean.class)).isFalse();
+            assertThat(env.getProperty("r4r.rag.vector.s3vectors.enabled", Boolean.class)).isFalse();
+            assertThat(env.getProperty("r4r.rag.openai.enabled", Boolean.class)).isFalse();
+            assertThat(env.getProperty("r4r.rag.generation.providers[0].base-url")).isEqualTo("http://127.0.0.1:1");
+            assertThat(env.getPropertySources().stream().map(org.springframework.core.env.PropertySource::getName))
+                    .noneMatch(name -> name.contains("/.env[") || name.endsWith("/.env"));
+        }
+    }
+
+    @Test
+    void realJdbcCannotBeSelectedByAnOfflineSpringContext() {
+        var env = new MockEnvironment();
+        env.setActiveProfiles("test");
+        env.setProperty("spring.datasource.url", "jdbc:postgresql://192.168.1.203:5433/r4r_rag_test");
+        env.setProperty("spring.datasource.username", "r4r_test");
+        env.setProperty("spring.datasource.driver-class-name", "org.postgresql.Driver");
+        assertThatThrownBy(() -> TestDatabaseGuard.validate(env)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("explicit -Ppostgres-it");
+    }
+
     private StandardEnvironment productionProperties(Map<String, Object> overrides) {
         var env = isolatedEnvironment();
         var safeOverrides = new java.util.HashMap<String, Object>(overrides);

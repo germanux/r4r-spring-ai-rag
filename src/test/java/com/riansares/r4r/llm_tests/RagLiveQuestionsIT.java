@@ -24,24 +24,18 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Smoke test against the REAL, running R4R API (not mocks).
- *
- * Place in src/test/java/com/riansares/r4r/rag/RagLiveQuestionsIT.java.
- * The live requests are disabled by default to keep regular builds offline.
- *
- * Run from the project root:
- *   RAG_LIVE_TEST=true RAG_TEST_BASE_URL=http://192.168.1.203:18080 \
- *     ./mvnw -Dit.test=RagLiveQuestionsIT verify
- *
- * If the repository has no Maven wrapper, replace ./mvnw with mvn.
+ * Optional smoke test against a dedicated, running R4R test API.
+ * Run: RAG_TEST_BASE_URL=http://127.0.0.1:18080 mvn verify -Pllm-it -Dit.test=RagLiveQuestionsIT
  * The 15 calls run sequentially; a slow local model may take several minutes.
  */
 @Tag("live-rag")
-@EnabledIfEnvironmentVariable(named = "RAG_LIVE_TEST", matches = "(?i)true")
+@org.junit.jupiter.api.Tag("llm")
+@org.junit.jupiter.api.condition.EnabledIfSystemProperty(named = "r4r.test.llm.enabled", matches = "true",
+        disabledReason = "NOT RUN: real LLM/E2E requires -Pllm-it and explicit test endpoints/credentials")
 class RagLiveQuestionsIT {
 
     private static final String BASE_URL = System.getenv().getOrDefault(
-            "RAG_TEST_BASE_URL", "http://192.168.1.203:18080").replaceAll("/+$", "");
+            "RAG_TEST_BASE_URL", "").replaceAll("/+$", "");
     private static final URI ENDPOINT = URI.create(BASE_URL + "/api/rag/answers");
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(180);
     private static final ObjectMapper JSON = new ObjectMapper();
@@ -72,6 +66,11 @@ class RagLiveQuestionsIT {
             new QuestionCase("Fuera de dominio: astronomía", "¿Cuál es la masa de Júpiter en kilogramos?", false),
             new QuestionCase("Fuera de dominio: literatura", "¿Quién escribió la novela Cien años de soledad?", false)
     );
+
+    @org.junit.jupiter.api.BeforeAll
+    static void requireDedicatedTestEndpoint() {
+        assertThat(BASE_URL.isBlank()).as("RAG_TEST_BASE_URL must explicitly select a dedicated test API").isFalse();
+    }
 
     @TestFactory
     Stream<DynamicTest> fifteenRagQuestions() {
