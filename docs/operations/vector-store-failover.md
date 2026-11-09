@@ -147,7 +147,49 @@ or invalid metadata as the cause. The duration alone is insufficient to choose o
 The structured S3 diagnostic above addresses this evidence gap. Its next occurrence
 in the deployed API can identify the failing stage and error category. It is not a
 confirmed repair of the deployed S3 failure: no Synology access, credentials, AWS/IAM
-changes or live calls were performed. Keep the original owner export outside commits.
+changes or live calls were performed. Preserve the original owner export as supplied.
+
+The subsequent export contains successful S3 reads at 19:19:04 and 19:19:27 CET,
+interleaved with `ApiCallTimeoutException` at `aws_query`. Startup uses profile
+`default` and `jdbc:postgresql://postgres:5432/r4r_rag`; the later JDBC DNS failure
+names `postgres`. Neither this evidence nor the public Compose links API to the test
+database. Container stop/start timestamps are not included in the application export.
+
+The owner's follow-up curl probe resolves the remaining failure stage: all three
+attempts report `Resolving timed out`, with no TCP/TLS connection and HTTP `000`.
+External DNS lookup is failing within the two-second probe budget. This is not an
+AWS HTTP error or evidence of invalid metadata; lengthening the AWS call timeout
+would not repair the resolver. The failing component within the DNS forwarding path
+(Docker, NAS upstream resolver or network filtering) is not established by that probe.
+
+Compose now supplies external DNS upstreams **only for API**: `1.1.1.1` and `8.8.8.8`,
+overridable via `R4R_API_DNS_PRIMARY` and `R4R_API_DNS_SECONDARY`. These are Compose
+settings, not credentials or Spring environment variables. API remains on the existing
+`r4r-network`, where Docker's embedded resolver handles service names such as
+`postgres`. No fixed AWS/database IP or host network mode is introduced. Docker
+documents [custom-network DNS and per-container upstreams](https://docs.docker.com/engine/network/#dns-services).
+
+Public resolver reachability on the owner's NAS remains **unverified**. If that LAN
+restricts outbound DNS or uses private provider hostnames, select reachable LAN DNS
+servers with those two overrides. The fix is prepared and validated as Compose
+configuration; it is not a claim that the deployed NAS resolver has recovered.
+
+For this DNS-only update, copy the updated Compose YAML to the existing Synology
+project directory and run there:
+
+```bash
+sudo docker compose config --quiet
+sudo docker compose up -d --no-deps --force-recreate api
+sudo docker inspect --format '{{json .HostConfig.Dns}}' r4r-api
+sudo docker exec r4r-api getent hosts s3vectors.eu-north-1.api.aws
+```
+
+Reuse the existing API image: no JAR/image rebuild is needed for this configuration
+change. Repeat the owner's curl probe and an ordinary cited query after recreation.
+Check `getent hosts postgres` while the main database is running; it is expected to
+be absent if that service is stopped. `/etc/resolv.conf` may still show `127.0.0.11`
+on the custom network; that is Docker's resolver, not evidence that custom upstreams
+were ignored. None of these Synology commands was executed by this task.
 
 The existing S3 mapper reconstructs documentary text from `source_text`, source from
 `source`, heading path and ordinal from metadata; vector keys are validated/deduplicated.
@@ -212,7 +254,9 @@ and latches; no waits of 30 seconds, forced model unloads or production outages.
   fresh-report checks; no marker in output or reports.
 - **1 offline Compose test PASS**, using only the current standalone YAML and copied
   public defaults plus synthetic overrides. API has no PostgreSQL/Ollama dependency,
-  timeout forwarding and restart policy are checked, no service is started.
+  timeout forwarding and restart policy are checked, no service is started. The DNS
+  update also checks standalone DNS defaults, explicit override precedence, retained
+  internal network and production datasource, and absence of test-database coupling.
 - Java 21 compilation and executable **0.3.3** packaging PASS; whitespace checks PASS.
 
 The selected Maven verify is

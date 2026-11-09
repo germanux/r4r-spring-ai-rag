@@ -90,6 +90,11 @@ services:
   api:
     image: r4r-api:0.3.3
     container_name: r4r-api
+    # Upstream DNS for external names; Docker still resolves services on r4r-network.
+    # Override with reachable LAN resolvers if public DNS is blocked on this network.
+    dns:
+      - ${R4R_API_DNS_PRIMARY:-1.1.1.1}
+      - ${R4R_API_DNS_SECONDARY:-8.8.8.8}
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://postgres:5432/${POSTGRES_DB:-r4r_rag}}

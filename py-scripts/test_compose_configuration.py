@@ -22,6 +22,7 @@ class ComposeConfigurationTest(unittest.TestCase):
                              'RAG_S3_VECTORS_REGION=eu-west-1\n'
                              'RAG_GENERATION_PROVIDERS=http://fake-host:11434|test|7s\n'
                              'RAG_VECTOR_FAILOVER_ENABLED=true\nRAG_S3_VECTORS_ENABLED=true\n'
+                             'R4R_API_DNS_PRIMARY=9.9.9.9\nR4R_API_DNS_SECONDARY=149.112.112.112\n'
                              'RAG_PG_RECOVERY_INTERVAL=12s\nRAG_PG_CONNECTION_TIMEOUT=2s\n')
         # Remove inherited interpolation/control variables; never load the actual project .env.
         env = {k: v for k, v in os.environ.items()
@@ -42,6 +43,13 @@ class ComposeConfigurationTest(unittest.TestCase):
         api = services['api']
         self.assertNotIn('ollama-embeddings', api.get('depends_on', {}))
         self.assertNotIn('postgres', api.get('depends_on', {}))
+        self.assertNotIn('postgres-test', api.get('depends_on', {}))
+        self.assertEqual(api['dns'], ['9.9.9.9', '149.112.112.112'])
+        self.assertIn('r4r-network', api['networks'])
+        self.assertNotIn('network_mode', api)
+        self.assertEqual(api['environment']['SPRING_DATASOURCE_URL'], 'jdbc:postgresql://postgres:5432/r4r_rag')
+        self.assertFalse(any(key.startswith('POSTGRES_TEST_') for key in api['environment']))
+        self.assertFalse(any(key.startswith('R4R_API_DNS_') for key in api['environment']))
         self.assertEqual(api['restart'], 'unless-stopped')
         self.assertEqual(api['environment']['RAG_VECTOR_PRIMARY'], 'pgvector')
         self.assertEqual(api['environment']['RAG_VECTOR_FAILOVER_ENABLED'], 'true')
@@ -64,7 +72,17 @@ class ComposeConfigurationTest(unittest.TestCase):
             self.assertNotIn('AWS_REGION', variables)
             self.assertNotIn('AWS_DEFAULT_REGION', variables)
             if name != 'api':
+                self.assertNotIn('dns', service)
                 self.assertFalse(any(key.startswith('AWS_') for key in variables))
+        # Synology's standalone Compose must also work without a public defaults file.
+        empty_env = fixture / 'empty.properties'
+        empty_env.write_text('')
+        defaults = subprocess.run(
+            ['docker', 'compose', '--env-file', empty_env.name, 'config', '--no-env-resolution', '--format', 'json'],
+            cwd=fixture, env=env, capture_output=True, text=True, check=True)
+        default_api = json.loads(defaults.stdout)['services']['api']
+        self.assertEqual(default_api['dns'], ['1.1.1.1', '8.8.8.8'])
+        self.assertEqual(default_api['environment']['SPRING_DATASOURCE_URL'], 'jdbc:postgresql://postgres:5432/r4r_rag')
         # Do not inspect a private file: check only public defaults and Git's ignore rule.
         public = (ROOT / 'docker-spring' / '.env.base').read_text()
         for key in ('AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN',
