@@ -8,11 +8,13 @@
 - `RagVectorProperties` / `application.yml`: `RAG_S3_VECTORS_REGION` selects the
   explicit client region (`eu-north-1`); no `AWS_REGION`/`AWS_DEFAULT_REGION` alias
   is needed. Bucket/index are `amzn-r4r-vectors/amzn-r4r-vector-index`.
-- `.env.base`: public operation settings only. AWS access/secret/session credential
-  placeholders were removed; do not put even replacement-key placeholders there.
-- `docker-compose.yml` includes `compose-services.yml` using `.env.base` as public
-  interpolation defaults. The normal project `.env` overrides them, and the shell
-  retains Compose's normal higher precedence.
+- `.env.base`: public operation settings for local Spring execution and test fixtures.
+  AWS access/secret/session credential placeholders were removed; do not put even
+  replacement-key placeholders there. This file is not required on Synology.
+- `docker-compose.yml` is self-contained: services, networks and public interpolation
+  defaults are defined directly in that YAML using `${VAR:-default}`. It requires
+  neither `compose-services.yml` nor `.env.base`. The normal project `.env` supplies
+  secrets and overrides; the shell retains Compose's normal higher precedence.
 - Only `api.environment` maps `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, optional
   `AWS_SESSION_TOKEN`. PostgreSQL, Cloudflared and Ollama receive no AWS variables.
   No container depends on `AWS_PROFILE` or a host `~/.aws` mount.
@@ -89,21 +91,25 @@ Existing configuration tests verify no credential resolution when S3 is disabled
 `py-scripts/test_compose_configuration.py` uses an isolated public copy and synthetic
 private overrides under a different filename. It checks precedence, exact AWS
 values in API only, absence of profile/region aliases, and absence of credential
-assignments in public defaults. Captured Compose JSON is not printed.
+assignments in public defaults. It also renders the standalone YAML with an empty
+env file to verify that `.env.base` is optional. Captured Compose JSON is not printed.
 
-Safe project validation (does not resolve the actual private file):
+Syntax/default validation without loading the project `.env` or requiring `.env.base`:
 
 ```sh
 cd docker-spring
-docker compose --env-file .env.base config --no-env-resolution --quiet
+docker compose --env-file /dev/null config --no-env-resolution --quiet
 ```
+
+This does not start services or validate deployment credentials. Normal deployment
+uses the self-contained YAML and the project's private `.env` automatically.
 
 Do not print plain `docker compose config` or `config --environment` against the real
 configuration as a substitute. Current Maven builds use isolated test configuration;
 real AWS integration is explicit via `mvn verify -Paws-it` and dedicated test resources.
 See [Maven testing](../testing.md) for the offline build and optional integrations.
 
-## Security and scope
+## Scope of the original credential-chain validation
 
 `.env` is ignored by Git. The real private file, credentials and AWS profile files
 were not read, copied, printed, loaded or modified. No AWS root credentials, real
@@ -112,7 +118,7 @@ under `docs/commands/` were left untouched. Tests contain synthetic credentials 
 Static checks cover relevant public configuration, implementation, tests and operation
 documents; they are not a certification of every historical artifact in the repository.
 
-## Results of this revision
+## Historical credential-chain validation results
 
 - **230 selected Java unit tests PASSED** in 32 classes, 0 failures/errors/skips.
   Three new tests cover basic/temporary SDK environment credentials, non-default
@@ -123,14 +129,13 @@ documents; they are not a certification of every historical artifact in the repo
 - No apparent credential-value patterns were found in the scoped tracked public
   configuration, vector implementation/tests and operation documentation checked.
   New tests use clearly synthetic values; no real private file was inspected.
-- Full DB/live integration suites: **NOT RUN**, since they may import private
-  runtime configuration or require real services. IAM, actual index reads and
-  Synology failover/deployment remain manual and unverified.
+- Real DB/AWS/LLM integration suites were **NOT RUN** in that revision. Current
+  offline builds and explicit integration profiles are documented in
+  [Maven testing](../testing.md). IAM, actual index reads and Synology deployment
+  were not validated by that credential-chain check.
 
-Modified: `.env.base` (remove credential placeholders only), `compose-services.yml`
-(document existing API-only SDK injection), `S3VectorsConfiguration.java`
-(document the existing default chain), `test_compose_configuration.py`, README,
-`public-private-configuration.md`, `vector-store-failover.md`.
-New: this guide and `S3VectorsEnvironmentCredentialsTest.java`.
+The original revision removed public credential placeholders, documented API-only
+SDK injection and added isolated credential-chain checks. API environment mapping
+now lives directly in the self-contained `docker-spring/docker-compose.yml`.
 No dependency, authentication implementation, routing rule, S3 query adapter,
 write behavior or `s3-readonly` profile was changed.
