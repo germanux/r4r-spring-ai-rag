@@ -80,6 +80,29 @@ class PostgresAccessGateTest {
         assertThatThrownBy(() -> router().search("q", 5, .63)).isInstanceOf(VectorStoreUnavailableException.class);
         verifyNoInteractions(pg, aws);
     }
+    @Test void connectionLostDuringMigrationLeavesWritesClosedUntilTheNextValidatedRecovery() {
+        up.set(true);
+        when(flyway.migrate()).thenThrow(new org.flywaydb.core.internal.exception.FlywaySqlException(
+                "simulated connection loss", new SQLException("unavailable", "08006"))).thenReturn(null);
+        gate.migrateAtStartup(flyway);
+        var router = router();
+        assertThat(router.search("q", 5, .63)).isEqualTo(chunks);
+        assertThatThrownBy(() -> router.index(chunks)).isInstanceOf(CannotGetJdbcConnectionException.class);
+        verify(pg, never()).index(anyList()); verify(flyway, never()).validate();
+        time.set(Duration.ofSeconds(2).toNanos());
+        router.index(chunks);
+        verify(flyway).validate(); verify(pg).index(chunks);
+    }
+    @ParameterizedTest @ValueSource(strings = {"CHECKSUM_MISMATCH", "FAILED_VERSIONED_MIGRATION", "CONFIGURATION", "VALIDATE_ERROR"})
+    void typedFlywayIntegrityErrorsVetoRecoverableDiagnosticCauses(String code) {
+        up.set(true);
+        doThrow(new org.flywaydb.core.api.FlywayException("synthetic migration failure",
+                new SQLException("diagnostic connection", "08006"), org.flywaydb.core.api.CoreErrorCode.valueOf(code)))
+                .when(flyway).migrate();
+        assertThatThrownBy(() -> gate.migrateAtStartup(flyway)).isInstanceOf(VectorStoreUnavailableException.class);
+        assertThatThrownBy(() -> router().search("q", 5, .63)).isInstanceOf(VectorStoreUnavailableException.class);
+        verifyNoInteractions(pg, aws);
+    }
     @Test void disabledMigrationsAllowReadChecksButNeverWritesInDegradedMode() {
         up.set(true);
         var readOnly = new PostgresAccessGate(db, () -> null, properties, time::get);

@@ -13,14 +13,16 @@ class ComposeConfigurationTest(unittest.TestCase):
     def test_allowlists_precedence_and_independent_startup(self):
         fixture = ROOT / 'target' / 'compose-config-fixture'
         fixture.mkdir(parents=True, exist_ok=True)
-        for name in ('.env.base', 'docker-compose.yml', 'compose-services.yml'):
+        for name in ('.env.base', 'docker-compose.yml'):
             shutil.copyfile(ROOT / 'docker-spring' / name, fixture / name)
         overrides = fixture / 'synthetic-overrides.properties'
         overrides.write_text('POSTGRES_PASSWORD=fake-db\nOPENAI_API_KEY=fake-openai\n'
                              'TUNNEL_TOKEN=fake-tunnel\nAWS_ACCESS_KEY_ID=fake-access\n'
                              'AWS_SECRET_ACCESS_KEY=fake-secret\nAWS_SESSION_TOKEN=fake-session\n'
                              'RAG_S3_VECTORS_REGION=eu-west-1\n'
-                             'RAG_GENERATION_PROVIDERS=http://fake-host:11434|test|7s\n')
+                             'RAG_GENERATION_PROVIDERS=http://fake-host:11434|test|7s\n'
+                             'RAG_VECTOR_FAILOVER_ENABLED=true\nRAG_S3_VECTORS_ENABLED=true\n'
+                             'RAG_PG_RECOVERY_INTERVAL=12s\nRAG_PG_CONNECTION_TIMEOUT=2s\n')
         # Remove inherited interpolation/control variables; never load the actual project .env.
         env = {k: v for k, v in os.environ.items()
                if k in ('PATH', 'HOME', 'LANG', 'DOCKER_CONFIG')}
@@ -40,6 +42,13 @@ class ComposeConfigurationTest(unittest.TestCase):
         api = services['api']
         self.assertNotIn('ollama-embeddings', api.get('depends_on', {}))
         self.assertNotIn('postgres', api.get('depends_on', {}))
+        self.assertEqual(api['restart'], 'unless-stopped')
+        self.assertEqual(api['environment']['RAG_VECTOR_PRIMARY'], 'pgvector')
+        self.assertEqual(api['environment']['RAG_VECTOR_FAILOVER_ENABLED'], 'true')
+        self.assertEqual(api['environment']['RAG_S3_VECTORS_ENABLED'], 'true')
+        self.assertEqual(api['environment']['RAG_PG_RECOVERY_INTERVAL'], '12s')
+        self.assertEqual(api['environment']['RAG_PG_CONNECTION_TIMEOUT'], '2s')
+        self.assertEqual(api['environment']['RAG_PG_SOCKET_TIMEOUT'], '5s')
         self.assertNotIn('TUNNEL_TOKEN', api['environment'])
         self.assertNotIn('POSTGRES_TEST_USER', api['environment'])
         self.assertEqual(api['environment']['OPENAI_API_KEY'], 'fake-openai')

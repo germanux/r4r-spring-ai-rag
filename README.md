@@ -92,7 +92,8 @@ Compose 2.20.3+ mantiene el comando habitual de arranque; no hace falta exportar
 variables manualmente. Véase [configuración y migración manual](docs/operations/public-private-configuration.md).
 
 El [failover de lectura PostgreSQL → S3 Vectors](docs/operations/vector-store-failover.md)
-se activa explícitamente; el perfil `s3-readonly` permite recuperación sin PostgreSQL
+se activa explícitamente y permite arranque degradado y recuperación automática de
+PostgreSQL; el perfil `s3-readonly` mantiene la recuperación manual sin PostgreSQL
 y bloquea escrituras sin desactivar las migraciones del arranque normal.
 
 La [integración AWS por variables de entorno](docs/operations/s3-vectors-environment.md)

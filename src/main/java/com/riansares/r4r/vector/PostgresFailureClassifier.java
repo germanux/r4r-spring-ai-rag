@@ -6,6 +6,8 @@ import java.sql.*;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
+import org.flywaydb.core.api.CoreErrorCode;
+import org.flywaydb.core.api.FlywayException;
 
 /** Positive JDBC evidence is required; non-connectivity SQL and embedding failures veto fallback. */
 public final class PostgresFailureClassifier {
@@ -19,6 +21,12 @@ public final class PostgresFailureClassifier {
         boolean jdbc=false, connection=false; String reason=null;
         while (!pending.isEmpty()) {
             Throwable cause=pending.removeFirst(); if (!seen.add(cause)) continue;
+            if (cause instanceof FlywayException flyway) {
+                var code = flyway.getErrorCode();
+                // A connection in a diagnostic chain cannot override an explicit migration/configuration error.
+                if (code != null && code != CoreErrorCode.ERROR && code != CoreErrorCode.FAULT
+                        && code != CoreErrorCode.DB_CONNECTION) return null;
+            }
             if (cause instanceof CancellationException || cause instanceof InterruptedException
                     || cause instanceof java.nio.channels.ClosedByInterruptException
                     || cause instanceof java.io.InterruptedIOException && !(cause instanceof java.net.SocketTimeoutException)) {
@@ -26,8 +34,7 @@ public final class PostgresFailureClassifier {
                 return null;
             }
             if (cause instanceof EmbeddingUnavailableException || cause instanceof EmbeddingConfigurationException
-                    || cause instanceof IllegalArgumentException || cause instanceof javax.net.ssl.SSLException
-)
+                    || cause instanceof IllegalArgumentException || cause instanceof javax.net.ssl.SSLException)
                 return null;
             if (cause instanceof CannotGetJdbcConnectionException) { jdbc=true; reason="jdbc_connection"; }
             if (cause instanceof SQLException sql) {

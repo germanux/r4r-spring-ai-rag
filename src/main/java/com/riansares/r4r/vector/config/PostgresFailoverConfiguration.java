@@ -17,6 +17,7 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
+import org.springframework.boot.autoconfigure.flyway.FlywayConfigurationCustomizer;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.*;
 import org.springframework.core.Ordered;
@@ -33,6 +34,10 @@ public class PostgresFailoverConfiguration {
     }
     @Bean FlywayMigrationStrategy recoverablePostgresMigrations(PostgresAccessGate gate) {
         return gate::migrateAtStartup;
+    }
+    @Bean FlywayConfigurationCustomizer validateBeforeRecoveringMigrations() {
+        // Migrate's own validation supports pending migrations; public validate() alone does not.
+        return config -> config.validateOnMigrate(true).connectRetries(0);
     }
     @Bean static BeanFactoryPostProcessor deferRecoverablePgVector() {
         return factory -> {

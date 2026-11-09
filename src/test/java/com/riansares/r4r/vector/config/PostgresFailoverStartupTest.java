@@ -49,8 +49,10 @@ class PostgresFailoverStartupTest {
         float[] vector = new float[768]; vector[0] = 1;
         when(embeddings.embed("question")).thenReturn(vector);
         when(aws.queryVectors(any(QueryVectorsRequest.class))).thenReturn(QueryVectorsResponse.builder().distanceMetric(DistanceMetric.COSINE).build());
-        context().run(ctx -> {
+        context().withPropertyValues("spring.flyway.validate-on-migrate=false", "spring.flyway.connect-retries=10").run(ctx -> {
             assertThat(ctx).hasNotFailed().hasSingleBean(Flyway.class).hasSingleBean(PostgresAccessGate.class);
+            assertThat(ctx.getBean(Flyway.class).getConfiguration().isValidateOnMigrate()).isTrue();
+            assertThat(ctx.getBean(Flyway.class).getConfiguration().getConnectRetries()).isZero();
             assertThat(ctx.getBeanFactory().containsSingleton("vectorStore")).isFalse();
             assertThat(ctx.getBeanFactory().containsSingleton("pgVectorKnowledgeStore")).isFalse();
             assertThat(ctx.getBean(KnowledgeVectorStore.class).search("question", 5, .63)).isEmpty();
@@ -107,6 +109,31 @@ class PostgresFailoverStartupTest {
                     verifyNoInteractions(transactions, aws);
                     verify(vectors, never()).add(anyList());
                     verify(vectors, never()).delete(anyList());
+                });
+    }
+    @Test void validatedWritesStillCommitAndFailedWritesStillRollBack() throws Exception {
+        when(db.getConnection()).thenReturn(mock(Connection.class));
+        var flyway = mock(Flyway.class);
+        var transactions = mock(PlatformTransactionManager.class);
+        when(transactions.getTransaction(any())).thenReturn(new org.springframework.transaction.support.SimpleTransactionStatus());
+        var vectors = mock(org.springframework.ai.vectorstore.pgvector.PgVectorStore.class);
+        context().withPropertyValues("spring.flyway.enabled=false")
+                .withUserConfiguration(Writers.class).withBean(Flyway.class, () -> flyway)
+                .withBean(JdbcTemplate.class, () -> mock(JdbcTemplate.class))
+                .withBean("vectorStore", org.springframework.ai.vectorstore.pgvector.PgVectorStore.class, () -> vectors)
+                .withBean(PlatformTransactionManager.class, () -> transactions).run(ctx -> {
+                    assertThat(ctx).hasNotFailed();
+                    var adapter = ctx.getBean(PgVectorKnowledgeStore.class);
+                    adapter.index(List.of());
+                    var order = inOrder(flyway, transactions);
+                    order.verify(flyway).migrate(); order.verify(flyway).validate();
+                    order.verify(transactions).getTransaction(any()); order.verify(transactions).commit(any());
+                    var failure = new IllegalStateException("simulated write failure");
+                    doThrow(failure).when(vectors).add(anyList());
+                    assertThatThrownBy(() -> adapter.index(List.of(new com.riansares.r4r.chunking.MarkdownChunk(
+                            "faq.md", List.of("FAQ"), 1, "Evidence.")))).isSameAs(failure);
+                    verify(transactions).rollback(any());
+                    verify(aws, never()).queryVectors(any(QueryVectorsRequest.class));
                 });
     }
 }

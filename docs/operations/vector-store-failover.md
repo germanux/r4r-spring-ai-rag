@@ -1,129 +1,255 @@
-# PostgreSQL → S3 Vectors read failover
+# PostgreSQL → S3 Vectors: startup, outage and recovery
 
-## Routing
+## Root cause and current scope
 
-`FailoverKnowledgeVectorStore` is the primary implementation of the existing
-`KnowledgeVectorStore` port. `CitedRagService`, ingestion callers, generation,
-embeddings and API contracts are unchanged. Provider adapters remain separate;
-there is no JDBC interception, background monitor or sticky circuit state.
+The query router already handled JDBC failures, but normal startup still eagerly ran
+Flyway and initialized Spring AI's pgvector store. A missing Docker service hostname
+(`UnknownHostException: postgres`, normally wrapped in SQLSTATE `08001`) therefore
+stopped the application before any query could reach the router. Lazy initialization
+of only the port adapter was insufficient: its underlying `vectorStore` was eager.
+The old `s3-readonly` profile avoided startup access but required manual selection
+and did not restore PostgreSQL automatically.
 
-| Primary | Failover | S3 enabled | Behavior |
-| --- | --- | --- | --- |
-| pgvector | false | false/true | PostgreSQL only |
-| pgvector | true | true | PostgreSQL, then S3 for proven infrastructure failures |
-| s3vectors | false | true | S3 directly |
-| other combinations | | | Rejected during bean creation |
+On this branch Compose is already self-contained and **has no API dependency on a
+healthy PostgreSQL service**. That part of the reported configuration is not present
+in the current file; it is preserved and checked by the offline Compose regression.
+No live deployment, AWS index, PostgreSQL server or Docker network was inspected or
+changed during this implementation.
 
-Variables are `RAG_VECTOR_PRIMARY`, `RAG_VECTOR_FAILOVER_ENABLED`,
-`RAG_S3_VECTORS_ENABLED`. Public defaults stay pgvector/false/false. Existing public
-S3 configuration names `amzn-r4r-vectors/amzn-r4r-vector-index`, region `eu-north-1`,
-768 dimensions/cosine are retained. No index was accessed or modified by this task.
+## Modes and configuration
 
-Each new query starts at the configured primary. A valid empty PostgreSQL result
-is returned unchanged. `index()` and `replaceSource()` always call the PostgreSQL
-adapter, including when S3 is the read primary. Its transaction proxy is preserved.
-S3 is never used for writes. The explicit recovery profile below refuses writes.
+| Primary | Failover enabled | S3 enabled | Behavior |
+|---|---|---|---|
+| pgvector | false | false/true | Traditional PostgreSQL startup and reads; no S3 fallback. |
+| pgvector | true | true | Automatic degraded startup, read fallback and bounded PG recovery. |
+| s3vectors | false | true | Direct S3 reads; writes remain PG unless `s3-readonly` rejects them. |
+| Invalid combinations | | | Startup configuration error. |
 
-## Classification and diagnostics
+The existing variables remain `RAG_VECTOR_PRIMARY`, `RAG_VECTOR_FAILOVER_ENABLED`
+and `RAG_S3_VECTORS_ENABLED`. Public defaults remain `pgvector/false/false`. To enable
+automatic recovery, the owner selects `pgvector/true/true` using the existing settings.
+This task does not open or modify the private `.env`.
 
-Only the PostgreSQL search invocation is classified. It must contain positive JDBC
-evidence: `CannotGetJdbcConnectionException`, SQL connection/pool exceptions,
-JDBC infrastructure timeout, SQLSTATE `08xxx`, `57P01`, `57P02`, `57P03`, or `53300`.
-Causes and JDBC `nextException` chains are examined with cycle protection. Transport
-errors without JDBC evidence are not enough (Ollama also uses network connections).
+Additional public tuning, effective only in automatic failover mode:
 
-Embedding configuration/unavailability, authentication (`28xxx`), bad SQL/schema/data,
-configuration errors, cancellation/interruption and other SQL states veto fallback,
-even if a recoverable outer wrapper exists. `57014` is treated as SQL cancellation;
-there is no guess that every query cancellation is an infrastructure timeout.
-Infrastructure `SQLTimeoutException` with no state or HYT00/HYT01 can recover.
-The router rethrows excluded exceptions unchanged; it does not turn every DAO or
-runtime failure into a fallback.
+| Variable | Spring property | Default | Purpose |
+|---|---|---|---|
+| `RAG_PG_RECOVERY_INTERVAL` | `r4r.rag.vector.postgres.recovery-interval` | 30s | Shared cooldown before a new readiness attempt. |
+| `RAG_PG_CONNECTION_TIMEOUT` | `r4r.rag.vector.postgres.connection-timeout` | 3s | Hikari acquisition limit and default JDBC connection timeout. |
+| `RAG_PG_SOCKET_TIMEOUT` | `r4r.rag.vector.postgres.socket-timeout` | 5s | Default PostgreSQL JDBC socket read timeout. |
 
-Both-provider failure gives a safe HTTP 503 `VectorStoreUnavailableException`,
-retaining PostgreSQL as cause and S3 as a suppressed exception. Existing SSE produces
-its controlled ERROR event. No query, content, endpoint or provider response body is
-logged; logs record provider, result, duration and a bounded reason code.
+The enabled-mode pool has minimum idle zero and initialization fail timeout -1, so
+pool creation does not require a successful initial connection. Validation waits are
+bounded. Explicit JDBC `connectTimeout`/`socketTimeout` data-source properties are
+retained; choose them consistently with the request budget. Durations are validated:
+recovery 1s–5m, acquisition 500ms–30s, socket 1s–60s. Hikari/JDBC convert subsecond
+connection limits appropriately; the driver timeout has whole-second granularity.
 
-S3 chunks/metadata and search arguments pass through unchanged. Existing citation
-validation and SSE phases remain in the service. Retrieval metrics include both
-attempts. If PostgreSQL fails after its internal embedding was computed, S3 may
-compute another embedding through its existing adapter. This is a real second
-attempt, not duplicate work for measurement. No invented isolated SQL timer is added.
-S3 still uses its existing bounded SDK timeouts and no multi-attempt retry policy.
+AWS SDK configuration, standard credential chain and region are unchanged:
+`eu-north-1`, bucket `amzn-r4r-vectors`, index `amzn-r4r-vector-index`, 768 dimensions,
+cosine. No AWS_PROFILE, credential-file parsing or new authentication mechanism was
+introduced. S3 is optional when disabled and strictly read-only when enabled.
 
-## Boot when PostgreSQL is unavailable
+## Startup and Flyway safety
 
-Normal startup retains Flyway and pgvector schema validation. Do not silently skip
-failed migrations. To intentionally start **read-only S3 recovery**, the owner can
-select the `s3-readonly` Spring profile, e.g. set `SPRING_PROFILES_ACTIVE=s3-readonly`
-as a private override or pass `--spring.profiles.active=s3-readonly` locally.
-This task does not edit the private file or execute that command with credentials.
+Only when both failover and S3 are enabled:
 
-The profile:
-- selects S3 primary, enables S3 and disables redundant vector fallback;
-- disables Flyway/SQL initialization and schema creation/validation only in this mode;
-- defers just Spring AI's `vectorStore` bean and the PG adapter;
-- blocks port writes before resolving PostgreSQL;
-- leaves other modules, embeddings and generation unchanged.
+1. Spring defers the PG `vectorStore`; the PG adapter stays lazy.
+2. `PostgresAccessGate` probes the configured DataSource before migrations.
+3. If reachable, normal Flyway migration and validation run. `validateOnMigrate`
+   is mandatory in this mode, even if a conflicting native property requests false;
+   this validates existing history before applying pending migrations. Explicit
+   validation after migration gates subsequent application writes.
+4. Proven connectivity failures leave PostgreSQL unready but allow MVC/API startup.
+   The application serves reads from S3 until recovery. AWS is not queried merely
+   to start the process; if AWS also fails, queries fail safely while HTTP remains up.
+5. Authentication, configuration, SQL/schema/integrity and migration validation
+   errors remain errors. They are not relabeled as a network outage. Typed Flyway
+   validation/checksum/failed-migration errors veto even a connection error nested
+   in their diagnostic chain. Startup fails for these errors; the service does not
+   silently continue with a damaged migration history.
 
-Compose no longer makes the API depend on healthy PostgreSQL. Normal startup can
-retry via the existing `restart: unless-stopped` while PostgreSQL starts. Recovery
-mode can start without it. Exiting the profile restores normal migrations; returning
-to writes must follow a successful normal startup. Explicit native Spring overrides
-that force incompatible routing are rejected, not silently accepted.
+Flyway is **not permanently disabled**. Connection retries inside Flyway are zero;
+readiness retries belong to the gate. SQL script initialization is `never`, because
+Flyway owns the schema; all existing migration files are unchanged. Normal mode
+without AWS failover retains traditional startup requirements. The explicit
+`s3-readonly` profile also remains available: it deliberately disables migrations,
+selects S3 directly and rejects writes, without automatic return to PG.
 
-The profile must be combined with owner-supplied AWS environment credentials.
-Only the API container receives `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and
-optional `AWS_SESSION_TOKEN`; `AWS_PROFILE` and host `~/.aws` mounts are not needed.
-The standard SDK default chain resolves them, not Spring authentication code.
-`RAG_S3_VECTORS_REGION` explicitly selects the client region; no extra regional
-variable is necessary. For a local JVM, Spring's `.env` property import alone does
-not export OS environment variables: the owner must supply the AWS variables to
-the process securely. No private files were read or loaded by this verification.
-See [AWS/Synology manual verification](s3-vectors-environment.md).
+If Flyway is explicitly disabled in automatic failover mode, reads may use an
+existing schema but application writes are refused: no unvalidated write is allowed.
 
-## Offline verification
+## Queries, recovery and transactions
 
-Java tests use mocked DataSource/JDBC, embeddings and S3 clients. The startup test
-uses the actual Spring pgvector/Flyway auto-configurations and verifies no
-`DataSource.getConnection()` call, no Flyway bean, no initialized pgvector bean,
-a successful simulated S3 search, and rejected writes. Normal migration defaults
-are checked separately by reading public YAML without resolving its imports.
+`FailoverKnowledgeVectorStore` remains the primary implementation of the existing
+`KnowledgeVectorStore` port. There is no parallel router, generic JDBC interceptor,
+new scheduler, unbounded queue or background polling subsystem.
 
-Other tests cover classification exclusions, nested JDBC failures, empty results,
-primary selection, retrying PostgreSQL after recovery, arguments/metadata/citations,
-SSE/metrics, transactional writes and sanitized logging. The Compose Python test
-runs only against public copied files and synthetic overrides.
+- Healthy requests use PostgreSQL; empty successful results do not query AWS.
+- An infrastructure failure marks PG unavailable and attempts S3. During cooldown,
+  subsequent reads go to S3 without resolving/recreating the PG adapter.
+- The first request after cooldown performs one readiness attempt. A nonblocking
+  lock prevents duplicate migration/recovery jobs: concurrent requests use S3 instead
+  of waiting behind that attempt. Failed requests do not extend cooldown indefinitely.
+- When PG returns, Flyway migrates/validates before PG is selected. The lazy Spring AI
+  store performs its normal schema validation on initialization. The next successful
+  lookup uses PG and logs recovery, without restarting Spring.
+- `index()`/`replaceSource()` never use S3. An infrastructure advisor guards the
+  existing PG adapter and `KnowledgeIngestionService.ingest()` **before transaction
+  acquisition**, preventing migration inside an already-open ingestion transaction.
+  Transactional PostgreSQL behavior is retained.
+- A permanent migration error discovered during recovery blocks further PG access
+  and surfaces as a controlled error; it requires operator correction, rather than
+  automatic repair, schema recreation or silent continued fallback.
 
-No AWS, PostgreSQL, Ollama or paid generation call, ingestion, reindex or deployment
-is part of this validation. Existing live/integration suites requiring those
-services are not run. Git commit/push remain manual.
+A recovery request can spend the configured acquisition/read time and the duration
+of legitimate migrations. Other requests do not queue behind it. Normal Flyway DB
+locking still applies between independent application processes; this is a single-API
+MVP, not a distributed migration coordinator. Long future migrations may need an
+explicit maintenance window and revised JDBC budgets. No claim of one hard wall-clock
+limit across every migration statement is made. Existing SSE cancellation/deadline
+handling remains in place.
 
-### Results
+## Classification, metadata and diagnostics
 
-- **227 selected Java tests PASSED** across 31 classes, 0 failures/errors/skips.
-  Includes 25 router tests and 3 configuration/startup tests, plus existing RAG,
-  transaction, S3 adapter, embedding, generation, CORS and SSE regressions.
-- **1 isolated Python/Compose test PASSED**; public-only Compose validation passed.
-- Compilation/executable packaging and staged/unstaged whitespace checks passed.
-- Live AWS/index compatibility, real PostgreSQL outage/recovery, IAM profile and
-  deployed Synology behavior: **NOT RUN**. No credentials were resolved or tested.
-- S3 data freshness is not asserted: this read-only implementation does not sync
-  or reindex the existing index. The owner must validate that its model, vectors
-  and metadata match the current corpus before enabling it operationally.
+Only failures arising from PG access are candidates. Positive JDBC evidence is
+required: `CannotGetJdbcConnectionException`, connection/pool exceptions, infrastructure
+SQL timeouts, SQLSTATE `08xxx`, `57P01`, `57P02`, `57P03`, `53300`, or a JDBC-wrapped
+transport failure (including Docker hostname resolution). Bare Ollama/DNS exceptions
+are not sufficient. Nested bean/Flyway wrappers do not hide genuine JDBC evidence;
+embedding/configuration/authentication and nonrecoverable SQL errors still veto it.
+Cancellation/interruption never triggers vector fallback.
 
-New files:
-- `vector/FailoverKnowledgeVectorStore.java`
-- `vector/VectorStoreUnavailableException.java`
-- `vector/config/S3ReadOnlyStartupConfiguration.java`
-- `application-s3-readonly.yml`
-- `vector/FailoverKnowledgeVectorStoreTest.java`
-- `vector/config/VectorReadOnlyStartupTest.java`
-- this operation document.
+Logs contain provider/result/duration, bounded failure reason, cooldown, recovery and
+combined unavailability; never question text, document text, credentials or raw provider
+error bodies. Both-provider failure is a safe REST 503 with retained diagnostic causes;
+SSE emits ERROR without ANSWER_READY. Runtime does not query the vector port and
+remains available. No new public endpoint or frontend change is needed.
 
-Updated: `KnowledgeVectorStoreConfiguration`, the S3 configuration description,
-existing vector wiring tests, public `.env.base`, Compose API dependencies/profile
-forwarding, the isolated Compose test, README and public/private configuration guide.
-No edits to `CitedRagService`, the port, either search adapter, the corpus or SQL
-migrations. No `.env`, AWS profile or credential file was loaded.
+The existing S3 mapper reconstructs documentary text from `source_text`, source from
+`source`, heading path and ordinal from metadata; vector keys are validated/deduplicated.
+A key-only AWS result is not enough to generate a cited answer. Missing/invalid metadata
+fails rather than fabricating context. Top-K, cosine threshold and citation processing
+are unchanged. `returnMetadata=true` is explicitly verified by the tests. Existing
+heading-context validation remains in force.
+
+Embeddings and generation keep their independent routers: compatible nomic 768 vectors
+and PC → laptop → OpenAI generation. Retrieval timings include actual attempts;
+`vectorSearchMs` remains null when not independently observed. PG failure after its
+embedding may cause a second embedding for S3, as before; no extra operation is added
+just for measurement. S3 SDK requests keep existing bounded timeouts and maxAttempts=1.
+The snapshot remains manual and can become stale after corpus updates.
+
+## Reproducible controlled tests
+
+No credentials, AWS/PostgreSQL/Ollama servers or stopped production containers are
+needed. The safe local gate uses public configuration copies, a synthetic secret and
+a JDBC driver that refuses external database connections. Dedicated startup fixtures
+provide their own failing simulated DataSource; full HTTP tests use real MVC/Tomcat,
+real Flyway initialization and the real router/S3 adapter with simulated SDK responses
+and embeddings/generation.
+
+```bash
+python3 py-scripts/test_secret_isolation.py
+python3 py-scripts/test_compose_configuration.py
+node --test front-athagon-r4r-static/js/app.test.cjs
+```
+
+The Maven gate runs all unit tests and explicitly selected local HTTP ITs
+`RagStreamHttpIT,VectorDegradedHttpIT`. It does **not** claim execution of the existing
+external database/live ITs. Focused coordinator tests use a controllable monotonic clock
+and latches; no waits of 30 seconds, forced model unloads or production outages.
+
+| Required case | Automated evidence |
+|---|---|
+| 1. PG/AWS available → PG | Gate/router unit tests; no AWS calls for healthy/empty PG results. |
+| 2. PG fails during query → S3 | Router and warm-outage tests preserve metadata/arguments. |
+| 3. PG unavailable at startup | Real Flyway/Spring AI auto-config with SQL/DNS failure; actual HTTP starts and serves cited S3 responses. |
+| 4. PG recovery | Same gate/router instance with clock advancement, migration/validation before PG reuse. |
+| 5. Both unavailable | REST 503, SSE ERROR/no answer, no generation call. |
+| 6. AWS disabled | Traditional fatal PG startup retained; existing PG-only wiring/transactions pass. |
+| 7. S3 metadata/citations | Real S3 mapper and cited service through REST/SSE with SDK fixtures. |
+| 8. Models/dimensions | 768-float S3 request, configured nomic metadata, original generation model, existing provider tests. |
+| 9. Bounded attempts | Concurrent requests, cooldown, single migration, timeout validation and bounded pool tests. |
+| 10. Independent HTTP/runtime | Runtime returns 200 after combined storage failure. |
+
+### Verified results for this implementation
+
+- **319 current-source unit tests PASS**, no failures/errors/skips. This includes
+  coordinator/recovery, typed migration vetoes, concurrency, transaction ordering,
+  commit/rollback, the existing vector, embedding, generation, security and API suites.
+- **8 local HTTP IT PASS**: 5 existing streaming/security tests and 3 new degraded
+  startup tests. Full Spring/Tomcat/Flyway initialization is exercised; database,
+  AWS, embeddings and generation are simulated. These are not live cloud tests.
+- **81 frontend tests PASS**, with no frontend changes.
+- **1 synthetic-secret local gate PASS**, including the Maven executions above and
+  fresh-report checks; no marker in output or reports.
+- **1 offline Compose test PASS**, using only the current standalone YAML and copied
+  public defaults plus synthetic overrides. API has no PostgreSQL/Ollama dependency,
+  timeout forwarding and restart policy are checked, no service is started.
+- Java 21 compilation and executable **0.3.3** packaging PASS; whitespace checks PASS.
+
+The selected Maven verify is `-Dit.test=RagStreamHttpIT,VectorDegradedHttpIT` inside
+`test_secret_isolation.py`. Existing real PostgreSQL/ingestion and live Ollama/OpenAI
+ITs are **NOT RUN**, rather than excluded to mask failures or counted as passed.
+The already validated live matrix and AWS commands 9–15 were not repeated. There is
+no new claim of physical NAS outage, real pending migration execution, live S3 startup
+or production recovery verification. No existing migration SQL was changed.
+
+Initial development runs found and corrected local compile/fixture issues (Spring
+exception constructor, Mockito restubbing, lifecycle calls, explicit Flyway enablement
+under the isolated runner, JDBC double for transactional tests). Final selected gates
+have zero failures; their assertions and original regression tests were retained.
+
+Previous historical verification (before this change) included 227 selected Java tests
+and the explicit `s3-readonly` startup path; it did not prove automatic degraded startup.
+The earlier live query matrix is preserved in `../rag-live-failover-validation.md` and
+is not repeated or promoted to evidence of these new startup changes.
+
+## Manual API-only deployment on Synology (not executed)
+
+1. Keep the existing private `.env`, AWS credentials, volumes and service addresses.
+   Verify the existing routing flags are pgvector/true/true to enable this mode. No
+   new credential or AWS/IAM change is required. New timeout defaults are optional.
+2. Run the local gate above. Its successful Maven verify packages
+   `target/r4r-spring-ai-rag-0.3.3.jar` under Java 21. Build the API image using that JAR
+   as `app.jar` and the existing `docker-spring/Dockerfile`, with the NAS architecture.
+   Do not accidentally reuse the old versioned `docker-spring/app.jar`. A disposable
+   build context under `target/` avoids replacing that tracked artifact. Compose uses
+   an image, not a build section; `docker compose build api` alone cannot build it.
+3. Load the reviewed `r4r-api:0.3.3` image using the owner's normal process and update
+   the versioned Compose file (new timeout forwarding; still no PG depends_on). Save
+   the previous image ID/tag first for rollback. Do not distribute `.env` with an image.
+4. In the existing Synology project directory, the owner can validate privately and
+   recreate **only API**, without starting or stopping any dependencies:
+
+   ```bash
+   docker compose config --quiet
+   docker compose up -d --no-deps --force-recreate api
+   ```
+
+   Do not run `compose down`, remove volumes, or start the entire stack to simulate
+   failure. Keep Cloudflare and database services untouched. No index import/reindex.
+5. Check API startup logs for ready/degraded/invalid state and one ordinary cited
+   request. A startup integrity error must be investigated, not fixed by turning off
+   Flyway validation. For rollback, restore the saved API image and recreate only API.
+
+The deployment and any physical outage/recovery checks are manual, **NOT EXECUTED**
+by this task. No production credentials were read or printed; no commit is pushed.
+
+
+## Changed files
+
+New production classes under `src/main/java/com/riansares/r4r/vector/`:
+`PostgresAccessGate.java`, `PostgresFailureClassifier.java`,
+`config/PostgresFailoverConfiguration.java`, `config/PostgresFailoverProperties.java`.
+Updated there: `FailoverKnowledgeVectorStore.java` and
+`config/KnowledgeVectorStoreConfiguration.java`. Runtime mappings/defaults:
+`src/main/resources/application.yml`, `docker-spring/.env.base`,
+`docker-spring/docker-compose.yml`.
+
+New tests under `src/test/java/com/riansares/r4r/vector/`:
+`PostgresAccessGateTest.java`, `config/PostgresFailoverStartupTest.java`,
+`VectorDegradedHttpIT.java`. Updated runners:
+`py-scripts/test_secret_isolation.py`, `py-scripts/test_compose_configuration.py`.
+Documentation: this operation guide and the routing summary in `README.md`.
