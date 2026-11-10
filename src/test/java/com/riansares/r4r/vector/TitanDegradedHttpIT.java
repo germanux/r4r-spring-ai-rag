@@ -52,7 +52,7 @@ class TitanDegradedHttpIT extends VectorDegradedHttpIT {
             String source = Files.readString(file).split("CASES = List.of\\(", 2)[1].split("\\n    \\);", 2)[0];
             var matcher = pattern.matcher(source); int count = 0;
             while (matcher.find()) { cases.add(Arguments.of(lang, matcher.group(2), Boolean.parseBoolean(matcher.group(4)))); count++; }
-            assertThat(count).isEqualTo(15);
+            assertThat(count).isEqualTo(30);
         }
         return cases.stream();
     }

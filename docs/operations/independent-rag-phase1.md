@@ -1,6 +1,6 @@
 # Preguntas independientes — preparación de fase 1
 
-**Estado: PREPARADO, NO EJECUTADO. Pendiente de validación del usuario.**
+**Estado histórico de esta página: preparación de fase 1.** El usuario autorizó posteriormente la fase 2; véase [evaluación real del 10 de noviembre](rag-generalization-2026-11-10.md). Las restricciones de no ejecución descritas abajo corresponden a la entrega anterior. El `RagIndependentQuestionsIT` concreto sigue sin ejecutarse; la captura real se hizo con el diagnóstico PG/S3 y PC descrito en ese informe.
 
 Las veinte preguntas se copian literalmente del mensaje del usuario en
 `src/test/resources/evaluation/independent-questions-es.json`, con sus números,
@@ -88,3 +88,7 @@ fixture JSON y revisión de diff. **No se han ejecutado tests ni consultas de es
 veinte preguntas, ni se han consultado servicios o corpus para calificarlas.**
 No se modifican código de producción, POM, configuración, índices ni documentos del
 corpus. Esta entrega añade exclusivamente fixture, herramientas/tests y esta guía.
+
+## Revisión posterior de las preguntas pares
+
+El usuario pidió acortar las independientes 2, 4, …, 20. La fixture vigente contiene esa redacción; los originales de esta preparación se conservan en `independent-questions-es-original.json`. Véase [redacción vigente](rag-generalization-short-questions.md). Los resultados anteriores no se atribuyen a las preguntas nuevas.

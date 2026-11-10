@@ -14,8 +14,8 @@ def load_cases(root=ROOT):
         text = (root / 'src/test/java/com/riansares/r4r/llm_tests' / filename).read_text()
         block = text.split('CASES = List.of(', 1)[1].split('\n    );', 1)[0]
         entries = ENTRY.findall(block)
-        if len(entries) != 15:
-            raise ValueError('Expected 15 canonical questions in ' + filename)
+        if len(entries) != 30:
+            raise ValueError('Expected 30 canonical questions in ' + filename)
         for number, (name, question, retrieval, evidence) in enumerate(entries, 1):
             decode = lambda value: json.loads('"' + value + '"')
             result.append(dict(source=filename, number=number, name=decode(name), question=decode(question),

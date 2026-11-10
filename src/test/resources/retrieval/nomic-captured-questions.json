@@ -1,0 +1,272 @@
+[
+  {
+    "source": "RagLiveQuestionsIT.java",
+    "number": 1,
+    "name": "Primera orientación",
+    "question": "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?",
+    "retrievalQuestion": "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?",
+    "lang": "es",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveQuestionsIT.java",
+    "number": 2,
+    "name": "Solera frente a solado",
+    "question": "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?",
+    "retrievalQuestion": "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?",
+    "lang": "es",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveQuestionsIT.java",
+    "number": 3,
+    "name": "Precio por acceso",
+    "question": "¿Por qué el acceso cambia el precio de una solera?",
+    "retrievalQuestion": "¿Por qué el acceso cambia el precio de una solera?",
+    "lang": "es",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveQuestionsIT.java",
+    "number": 4,
+    "name": "Casa antigua",
+    "question": "¿Cuánto orienta una reforma integral de una casa antigua?",
+    "retrievalQuestion": "¿Cuánto orienta una reforma integral de una casa antigua?",
+    "lang": "es",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveQuestionsIT.java",
+    "number": 5,
+    "name": "Visita previa",
+    "question": "¿Una primera orientación económica sustituye una visita técnica?",
+    "retrievalQuestion": "¿Una primera orientación económica sustituye una visita técnica?",
+    "lang": "es",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveQuestionsIT.java",
+    "number": 6,
+    "name": "Patio",
+    "question": "¿Qué debe revisarse antes de pavimentar un patio?",
+    "retrievalQuestion": "¿Qué debe revisarse antes de pavimentar un patio?",
+    "lang": "es",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveQuestionsIT.java",
+    "number": 7,
+    "name": "Hormigón de camión",
+    "question": "¿Cuándo conviene usar hormigón de camión en una solera?",
+    "retrievalQuestion": "¿Cuándo conviene usar hormigón de camión en una solera?",
+    "lang": "es",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveQuestionsIT.java",
+    "number": 8,
+    "name": "Pasillo estrecho",
+    "question": "¿Cómo afecta un pasillo estrecho a la ejecución de una solera?",
+    "retrievalQuestion": "¿Cómo afecta un pasillo estrecho a la ejecución de una solera?",
+    "lang": "es",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveQuestionsIT.java",
+    "number": 9,
+    "name": "Humedades",
+    "question": "¿Qué causas de humedad pueden aparecer en una vivienda antigua?",
+    "retrievalQuestion": "¿Qué causas de humedad pueden aparecer en una vivienda antigua?",
+    "lang": "es",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveQuestionsIT.java",
+    "number": 10,
+    "name": "Plazos",
+    "question": "¿Debe incluir el presupuesto de una reforma los plazos de ejecución?",
+    "retrievalQuestion": "¿Debe incluir el presupuesto de una reforma los plazos de ejecución?",
+    "lang": "es",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveQuestionsIT.java",
+    "number": 11,
+    "name": "Presupuesto",
+    "question": "¿Qué datos debe aportar el cliente para solicitar un presupuesto?",
+    "retrievalQuestion": "¿Qué datos debe aportar el cliente para solicitar un presupuesto?",
+    "lang": "es",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveQuestionsIT.java",
+    "number": 12,
+    "name": "Baño",
+    "question": "¿Qué datos hacen falta para orientar una reforma de baño?",
+    "retrievalQuestion": "¿Qué datos hacen falta para orientar una reforma de baño?",
+    "lang": "es",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveQuestionsIT.java",
+    "number": 13,
+    "name": "Fuera de dominio: fotosíntesis",
+    "question": "¿De qué manera producen alimento las plantas mediante la fotosíntesis?",
+    "retrievalQuestion": "¿De qué manera producen alimento las plantas mediante la fotosíntesis?",
+    "lang": "es",
+    "evidence": false
+  },
+  {
+    "source": "RagLiveQuestionsIT.java",
+    "number": 14,
+    "name": "Fuera de dominio: astronomía",
+    "question": "¿Cuál es la masa de Júpiter en kilogramos?",
+    "retrievalQuestion": "¿Cuál es la masa de Júpiter en kilogramos?",
+    "lang": "es",
+    "evidence": false
+  },
+  {
+    "source": "RagLiveQuestionsIT.java",
+    "number": 15,
+    "name": "Fuera de dominio: literatura",
+    "question": "¿Quién escribió la novela Cien años de soledad?",
+    "retrievalQuestion": "¿Quién escribió la novela Cien años de soledad?",
+    "lang": "es",
+    "evidence": false
+  },
+  {
+    "source": "RagLiveEnglishQuestionsIT.java",
+    "number": 1,
+    "name": "Company services ES/EN regression",
+    "question": "What kinds of renovation work does this company do? Does it work on houses and offices?",
+    "retrievalQuestion": "¿Qué tipos de reformas realiza esta empresa? ¿Trabaja en viviendas y oficinas?",
+    "lang": "en",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveEnglishQuestionsIT.java",
+    "number": 2,
+    "name": "Concrete slab versus flooring",
+    "question": "In construction, how does the concrete base differ from the finished flooring?",
+    "retrievalQuestion": "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?",
+    "lang": "en",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveEnglishQuestionsIT.java",
+    "number": 3,
+    "name": "Access and cost",
+    "question": "Why does access affect the price of a concrete slab?",
+    "retrievalQuestion": "¿Por qué el acceso cambia el precio de una solera?",
+    "lang": "en",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveEnglishQuestionsIT.java",
+    "number": 4,
+    "name": "Old house",
+    "question": "What is the approximate cost of a complete renovation of an old house?",
+    "retrievalQuestion": "¿Cuánto orienta una reforma integral de una casa antigua?",
+    "lang": "en",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveEnglishQuestionsIT.java",
+    "number": 5,
+    "name": "Site visit",
+    "question": "Does initial cost guidance replace a technical site visit?",
+    "retrievalQuestion": "¿Una primera orientación económica sustituye una visita técnica?",
+    "lang": "en",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveEnglishQuestionsIT.java",
+    "number": 6,
+    "name": "Patio",
+    "question": "What should be checked before paving a patio?",
+    "retrievalQuestion": "¿Qué debe revisarse antes de pavimentar un patio?",
+    "lang": "en",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveEnglishQuestionsIT.java",
+    "number": 7,
+    "name": "Ready-mix concrete",
+    "question": "When is it advisable to use ready-mix concrete for a slab?",
+    "retrievalQuestion": "¿Cuándo conviene usar hormigón de camión en una solera?",
+    "lang": "en",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveEnglishQuestionsIT.java",
+    "number": 8,
+    "name": "Narrow corridor",
+    "question": "How does a narrow corridor affect the construction of a concrete slab?",
+    "retrievalQuestion": "¿Cómo afecta un pasillo estrecho a la ejecución de una solera?",
+    "lang": "en",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveEnglishQuestionsIT.java",
+    "number": 9,
+    "name": "Damp",
+    "question": "What causes of damp can occur in an old home?",
+    "retrievalQuestion": "¿Qué causas de humedad pueden aparecer en una vivienda antigua?",
+    "lang": "en",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveEnglishQuestionsIT.java",
+    "number": 10,
+    "name": "Timelines",
+    "question": "Should a renovation estimate include the execution timeline?",
+    "retrievalQuestion": "¿Debe incluir el presupuesto de una reforma los plazos de ejecución?",
+    "lang": "en",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveEnglishQuestionsIT.java",
+    "number": 11,
+    "name": "Estimate",
+    "question": "What information should a customer provide to request an estimate?",
+    "retrievalQuestion": "¿Qué datos debe aportar el cliente para solicitar un presupuesto?",
+    "lang": "en",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveEnglishQuestionsIT.java",
+    "number": 12,
+    "name": "Bathroom",
+    "question": "What information is needed to estimate a bathroom renovation?",
+    "retrievalQuestion": "¿Qué datos hacen falta para orientar una reforma de baño?",
+    "lang": "en",
+    "evidence": true
+  },
+  {
+    "source": "RagLiveEnglishQuestionsIT.java",
+    "number": 13,
+    "name": "Out of domain: photosynthesis",
+    "question": "How do plants make their food through photosynthesis?",
+    "retrievalQuestion": "¿De qué manera producen alimento las plantas mediante la fotosíntesis?",
+    "lang": "en",
+    "evidence": false
+  },
+  {
+    "source": "RagLiveEnglishQuestionsIT.java",
+    "number": 14,
+    "name": "Out of domain: astronomy",
+    "question": "What is the mass of Jupiter in kilograms?",
+    "retrievalQuestion": "¿Cuál es la masa de Júpiter en kilogramos?",
+    "lang": "en",
+    "evidence": false
+  },
+  {
+    "source": "RagLiveEnglishQuestionsIT.java",
+    "number": 15,
+    "name": "Out of domain: literature",
+    "question": "Who wrote the novel One Hundred Years of Solitude?",
+    "retrievalQuestion": "¿Quién escribió la novela Cien años de soledad?",
+    "lang": "en",
+    "evidence": false
+  }
+]

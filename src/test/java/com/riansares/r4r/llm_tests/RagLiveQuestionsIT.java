@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Optional smoke test against a dedicated, running R4R test API.
  * Run: RAG_TEST_BASE_URL=http://127.0.0.1:18080 mvn verify -Pllm-it -Dit.test=RagLiveQuestionsIT
- * The 15 calls run sequentially; a slow local model may take several minutes.
+ * The 30 calls run sequentially; a slow local model may take several minutes.
  */
 @Tag("live-rag")
 @org.junit.jupiter.api.Tag("llm")
@@ -48,7 +48,7 @@ class RagLiveQuestionsIT {
     private static final Pattern CITATION_REFERENCE = Pattern.compile("\\[S\\d+\\]");
 
     public static final long SLEEP_WAIT = 21_000;
-    // 12 preguntas del dominio R4R y 3 preguntas ajenas para verificar abstención.
+    // 19 preguntas con apoyo total/parcial y 11 sin cobertura suficiente; ver generalization-30.json.
     private static final List<QuestionCase> CASES = List.of(
             new QuestionCase("Primera orientación", "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?", true),
             new QuestionCase("Solera frente a solado", "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?", true),
@@ -62,6 +62,21 @@ class RagLiveQuestionsIT {
             new QuestionCase("Plazos", "¿Debe incluir el presupuesto de una reforma los plazos de ejecución?", true),
             new QuestionCase("Presupuesto", "¿Qué datos debe aportar el cliente para solicitar un presupuesto?", true),
             new QuestionCase("Baño", "¿Qué datos hacen falta para orientar una reforma de baño?", true),
+            new QuestionCase("Servicios de la empresa", "¿Qué tipos de reformas realiza esta empresa? ¿Trabaja en viviendas y oficinas?", true),
+            new QuestionCase("Cal aérea y cal hidráulica", "¿Qué diferencias hay entre la cal aérea y la cal hidráulica natural para trabajar sobre muros antiguos?", true),
+            new QuestionCase("Baldosa sobre pavimento existente", "¿Qué precauciones hay que tomar antes de colocar baldosa nueva sobre un pavimento existente?", true),
+            new QuestionCase("Independiente 1", "Estoy pensando en comprar un piso bastante antiguo, pero tiene grietas en algunas paredes. ¿Cómo puedo saber si es algo superficial o si me voy a meter en un problema serio?", true),
+            new QuestionCase("Independiente 2", "Los muebles de la cocina están bien. ¿Cómo la renuevo sin desmontarlo todo?", true),
+            new QuestionCase("Independiente 4", "Cuando llueve fuerte, mi terraza cala al piso de abajo. ¿Por dónde empiezo?", true),
+            new QuestionCase("Independiente 7", "Acabamos de comprar un piso y queremos reformarlo antes de mudarnos. ¿En qué orden conviene hacer los trabajos para evitar tener que romper cosas que ya están terminadas?", true),
+            new QuestionCase("Independiente 3", "En mi casa se oye absolutamente todo lo que hacen los vecinos de arriba. ¿Se puede mejorar el aislamiento acústico sin perder demasiada altura en las habitaciones?", false),
+            new QuestionCase("Independiente 5", "Quiero cambiar las ventanas de mi casa, pero no sé si realmente merece la pena instalar triple acristalamiento o si con doble es suficiente.", false),
+            new QuestionCase("Independiente 6", "Tengo un pasillo largo y oscuro. ¿Cómo gano luz y aprovecho el espacio?", false),
+            new QuestionCase("Independiente 8", "Las vigas de madera de mi casa vieja están combadas. ¿Se refuerzan o se cambian?", false),
+            new QuestionCase("Independiente 9", "Tenemos una oficina donde hace mucho calor en unas zonas y frío en otras. ¿Se puede solucionar con una reforma de la climatización sin cambiar todo el sistema?", false),
+            new QuestionCase("Independiente 10", "Quiero pasar de tienda a cafetería. ¿Qué obras necesito para abrir?", false),
+            new QuestionCase("Fuera de corpus: geotermia", "¿Qué potencia y qué número de captadores geotérmicos necesito para climatizar una vivienda de 180 m²?", false),
+            new QuestionCase("Fuera de corpus: cargador eléctrico", "¿Qué sección exacta de cable y qué magnetotérmico exige el REBT para instalar un cargador de coche eléctrico de 11 kW en mi garaje?", false),
             new QuestionCase("Fuera de dominio: fotosíntesis", "¿De qué manera producen alimento las plantas mediante la fotosíntesis?", false),
             new QuestionCase("Fuera de dominio: astronomía", "¿Cuál es la masa de Júpiter en kilogramos?", false),
             new QuestionCase("Fuera de dominio: literatura", "¿Quién escribió la novela Cien años de soledad?", false)
@@ -73,8 +88,8 @@ class RagLiveQuestionsIT {
     }
 
     @TestFactory
-    Stream<DynamicTest> fifteenRagQuestions() {
-        assertThat(CASES).hasSize(15);
+    Stream<DynamicTest> thirtyRagQuestions() {
+        assertThat(CASES).hasSize(30);
 
         List<DynamicTest> tests = new ArrayList<>();
         for (int i = 0; i < CASES.size(); i++) {
@@ -87,11 +102,11 @@ class RagLiveQuestionsIT {
         return tests.stream();
     }
 
-    // Separate opt-in regression; not one of the 15 main cases.
+    // Separate opt-in regression; not one of the 30 main cases.
     @org.junit.jupiter.api.Test
     @EnabledIfEnvironmentVariable(named = "RAG_TIMELINE_REGRESSION", matches = "(?i)true")
     void originalTimelineReasonRegression() throws Exception {
-        verifyAnswer(16, new QuestionCase("Regresión: motivo de los plazos no documentado", "¿Por qué es importante conocer el plazo previsto antes de presupuestar una reforma?", true), true);
+        verifyAnswer(31, new QuestionCase("Regresión: motivo de los plazos no documentado", "¿Por qué es importante conocer el plazo previsto antes de presupuestar una reforma?", true), true);
     }
 
     private static void verifyAnswer(int number, QuestionCase testCase) throws Exception {
@@ -115,7 +130,7 @@ class RagLiveQuestionsIT {
                 request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         double seconds = (System.nanoTime() - started) / 1_000_000_000.0;
 
-        System.out.printf("%n[%02d/15] %s%nPregunta: %s%nHTTP: %d | Tiempo: %.2f s%n",
+        System.out.printf("%n[%02d/30] %s%nPregunta: %s%nHTTP: %d | Tiempo: %.2f s%n",
                 number, testCase.name(), testCase.question(), httpResponse.statusCode(), seconds);
         System.out.println("JSON: " + httpResponse.body());
 

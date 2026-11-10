@@ -36,10 +36,11 @@ public final class NomicRetrievalDiagnostic {
         catch (Exception failure) { System.err.println("Read-only Nomic diagnostic failed: " + failure.getClass().getSimpleName()); System.exit(1); }
     }
     static void run(String[] args) throws Exception {
-        boolean run=false, generate=false;Path output=Path.of("target/nomic-readonly-diagnostic.json"), questions=null;
+        boolean run=false, generate=false, generalization=false;Path output=Path.of("target/nomic-readonly-diagnostic.json"), questions=null;
         for(int i=0;i<args.length;i++)switch(args[i]){
             case "--run" -> run=true;
             case "--generate-local" -> generate=true;
+            case "--generalization-pc" -> {generalization=true;generate=true;}
             case "--output" -> output=Path.of(args[++i]);
             case "--questions" -> questions=Path.of(args[++i]);
             default -> throw new IllegalArgumentException("Unknown diagnostic argument");
@@ -49,7 +50,14 @@ public final class NomicRetrievalDiagnostic {
         // Native production imports resolve credentials internally; no private file parsing or credential output.
         env.getPropertySources().addFirst(new MapPropertySource("diagnostic-only",Map.of(
                 "spring.config.location","file:./src/main/resources/application.yml","r4r.rag.openai.enabled","false")));
-        ConfigDataEnvironmentPostProcessor.applyTo(env);PublicRagEnvironment.apply(env);
+        ConfigDataEnvironmentPostProcessor.applyTo(env);
+        if(generalization) {
+            String pc=Arrays.stream(env.getRequiredProperty("RAG_GENERATION_PROVIDERS").split(","))
+                    .filter(value->java.net.URI.create(value.split("\\|",-1)[0]).getHost().equals("192.168.1.207"))
+                    .findFirst().orElseThrow(()->new IllegalStateException("Configured PC provider unavailable"));
+            env.getPropertySources().addFirst(new MapPropertySource("evaluation-pc-only",Map.of("RAG_GENERATION_PROVIDERS",pc)));
+        }
+        PublicRagEnvironment.apply(env);
         var embeddingConfig=Binder.get(env).bind("r4r.rag.embedding",EmbeddingFailoverProperties.class).get();
         var options=OllamaOptions.builder().model(env.getRequiredProperty("spring.ai.ollama.embedding.options.model")).build();
         var embedding=new ObservedEmbeddingModel(OllamaApi.builder().baseUrl(embeddingConfig.providers().getFirst().baseUrl()).build(),options,
@@ -64,7 +72,7 @@ public final class NomicRetrievalDiagnostic {
         var properties=new Properties();properties.setProperty("user",env.getRequiredProperty("spring.datasource.username"));
         properties.setProperty("password",env.getRequiredProperty("spring.datasource.password"));properties.setProperty("connectTimeout","3");
         properties.setProperty("socketTimeout","15");properties.setProperty("options","-c default_transaction_read_only=on");
-        var report=new LinkedHashMap<String,Object>();report.put("topK",topK);report.put("minScore",minScore);report.put("rerank",ranking);
+        var report=new LinkedHashMap<String,Object>();report.put("topK",topK);report.put("minScore",minScore);report.put("rerank",ranking);report.put("pcOnly",generalization);
         var rows=JSON.createArrayNode();
         if(questions!=null)rows.addAll((com.fasterxml.jackson.databind.node.ArrayNode)JSON.readTree(questions.toFile()));
         else for(var text:List.of("¿Con qué reformaríais una cueva?","¿Con qué reformaríais una bodega?","¿Qué mortero utilizaríais para rehabilitar una cueva antigua?"))rows.addObject().put("question",text).put("lang","es");
@@ -88,6 +96,7 @@ public final class NomicRetrievalDiagnostic {
             var results=new ArrayList<Map<String,Object>>();report.put("queries",results);
             for(var row:rows){
                 String question=row.path("question").asText(),search=row.path("retrievalQuestion").asText(question),language=row.path("lang").asText("es");
+                if(generalization && language.equals("en"))search=generation.getBean(LocalRetrievalQueryTranslator.class).translate(question);
                 long start=System.nanoTime();float[] data=embedding.embed(search);double embeddingMs=(System.nanoTime()-start)/1_000_000.0;
                 EmbeddingModel fixed=new EmbeddingModel(){
                     public float[] embed(String ignored){return data;}
@@ -97,17 +106,28 @@ public final class NomicRetrievalDiagnostic {
                 };
                 var nativePg=PgVectorStore.builder(jdbc,fixed).dimensions(768).initializeSchema(false).vectorTableValidationsEnabled(true).build();
                 nativePg.afterPropertiesSet();
-                var beforePg=new PgVectorKnowledgeStore(nativePg,jdbc,legacy).search(search,topK,minScore);
+                var beforePg=generalization?List.<MarkdownChunk>of():new PgVectorKnowledgeStore(nativePg,jdbc,legacy).search(search,topK,minScore);
                 var afterPg=new PgVectorKnowledgeStore(nativePg,jdbc,ranking).search(search,topK,minScore);
                 var s3Config=routing.s3vectors();
-                var beforeS3=new S3VectorsKnowledgeStore(aws,fixed,s3Config,new S3VectorMetadataMapper(),new S3VectorScoreMapper(),legacy).search(search,topK,minScore);
+                var beforeS3=generalization?List.<MarkdownChunk>of():new S3VectorsKnowledgeStore(aws,fixed,s3Config,new S3VectorMetadataMapper(),new S3VectorScoreMapper(),legacy).search(search,topK,minScore);
                 var afterS3=new S3VectorsKnowledgeStore(aws,fixed,s3Config,new S3VectorMetadataMapper(),new S3VectorScoreMapper(),ranking).search(search,topK,minScore);
-                var result=new LinkedHashMap<String,Object>();result.put("question",question);result.put("embeddingInput",search);result.put("embeddingDimensions",data.length);
+                var result=new LinkedHashMap<String,Object>();
+                if(row.has("caseId"))result.put("caseId",row.path("caseId").asText());
+                result.put("lang",language);result.put("question",question);result.put("embeddingInput",search);result.put("embeddingDimensions",data.length);
                 result.put("embeddingMs",embeddingMs);result.put("postgresBefore",beforePg);result.put("postgresAfter",afterPg);result.put("s3Before",beforeS3);result.put("s3After",afterS3);
                 if(generate){
-                    var rag=generation.getBean(CitedRagService.class);selected.set(beforePg);
-                    result.put("generationBefore",rag.answer(question,search,language));selected.set(afterPg);
-                    result.put("generationAfter",rag.answer(question,search,language));
+                    var rag=generation.getBean(CitedRagService.class);
+                    if(generalization) {
+                        selected.set(afterPg);var pgAnswer=rag.answer(question,search,language);result.put("postgresResponse",pgAnswer);
+                        if(afterPg.equals(afterS3)) {result.put("s3Response",pgAnswer);result.put("s3GenerationReused",true);}
+                        else {selected.set(afterS3);result.put("s3Response",rag.answer(question,search,language));result.put("s3GenerationReused",false);}
+                        var used=generation.getBean(GenerationRouter.class).lastUsed();
+                        result.put("generationProvider",Map.of("name",used.name(),"model",used.model(),"host",java.net.URI.create(used.baseUrl()).getHost()));
+                        if(!java.net.URI.create(used.baseUrl()).getHost().equals("192.168.1.207"))throw new IllegalStateException("Non-PC generation prohibited");
+                    } else {
+                        selected.set(beforePg);result.put("generationBefore",rag.answer(question,search,language));selected.set(afterPg);
+                        result.put("generationAfter",rag.answer(question,search,language));
+                    }
                     // Include original English/Spanish labels for side-by-side evidence review, never assert semantic quality from a canned response.
                     if(row.has("evidence"))result.put("expectedEvidence",row.get("evidence").booleanValue());
                 }

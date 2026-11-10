@@ -61,22 +61,18 @@ class NomicRetrievalRegressionTest {
         verify(embedding,times(1)).embed(question);verifyNoInteractions(jdbc);
     }
     static Stream<Arguments> canonicalCases() throws Exception {
-        var count=new AtomicInteger();
-        return TitanDegradedHttpIT.canonicalCases().map(args->{var values=args.get();int index=count.getAndIncrement();
-            return Arguments.of(values[0],values[1],values[2],String.format(java.util.Locale.ROOT,"%s-%02d",values[0],index%15+1));});
+        try(var stream=NomicRetrievalRegressionTest.class.getResourceAsStream("/retrieval/nomic-captured-questions.json")) {
+            var rows=NomicRegressionCorpus.JSON.readTree(stream);var cases=new ArrayList<Arguments>();
+            for(var row:rows)cases.add(Arguments.of(row.path("lang").asText(),row.path("question").asText(),row.path("evidence").asBoolean(),
+                    String.format(Locale.ROOT,"%s-%02d",row.path("lang").asText(),row.path("number").asInt()),row.path("retrievalQuestion").asText()));
+            return cases.stream();
+        }
     }
     @ParameterizedTest @MethodSource("canonicalCases")
-    void bilingualCandidatesRetainBestExistingEvidenceAndRawThreshold(String language,String question,boolean answerable,String key) throws Exception {
+    void bilingualCandidatesRetainBestExistingEvidenceAndRawThreshold(String language,String question,boolean answerable,String key,String retrieval) throws Exception {
         var ranked=corpus.ranked(corpus.query(key)).stream().filter(r->r.similarity()>.63).toList();
         var original=ranked.stream().limit(5).map(r->r.row().chunk()).toList();
         var candidates=ranked.stream().limit(20).map(r->new NomicCandidateReranker.Candidate(r.row().chunk(),r.similarity())).toList();
-        // English uses the canonical Spanish retrieval translation, matching the live RAG contract.
-        String retrieval=question;
-        if(language.equals("en")) {
-            var source=java.nio.file.Path.of("src/test/java/com/riansares/r4r/llm_tests/RagLiveEnglishQuestionsIT.java");
-            var pattern=java.util.regex.Pattern.compile("new QuestionCase\\(\"[^\"]*\", "+java.util.regex.Pattern.quote("\""+question+"\"")+", \"([^\"]*)\", (?:true|false)\\)");
-            var matcher=pattern.matcher(java.nio.file.Files.readString(source));assertThat(matcher.find()).isTrue();retrieval=matcher.group(1);
-        }
         var selected=new NomicCandidateReranker(NomicRerankProperties.defaults()).select(retrieval,candidates,5);
         assertThat(selected).hasSize(original.size());
         if(!original.isEmpty())assertThat(selected).contains(original.getFirst());

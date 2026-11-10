@@ -48,10 +48,10 @@ class ToolTests(unittest.TestCase):
 
     def test_uses_all_existing_bilingual_cases(self):
         cases = evaluate.load_cases()
-        self.assertEqual(30, len(cases))
-        self.assertEqual(15, sum(c['lang'] == 'en' for c in cases))
-        self.assertEqual(6, sum(not c['evidence'] for c in cases))
-        self.assertEqual(30, len({(c['lang'], c['number']) for c in cases}))
+        self.assertEqual(60, len(cases))
+        self.assertEqual(30, sum(c['lang'] == 'en' for c in cases))
+        self.assertEqual(22, sum(not c['evidence'] for c in cases))
+        self.assertEqual(60, len({(c['lang'], c['number']) for c in cases}))
 
     @patch('evaluate.aws')
     def test_evaluation_preview_never_calls_aws(self, aws):
