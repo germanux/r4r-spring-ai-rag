@@ -1,6 +1,72 @@
 # Generalización del RAG — evaluación real del 10 de noviembre de 2026
 
-## Resumen de resultados
+## Optimización posterior — una hora, solo PostgreSQL
+
+**Ventana de experimentación: 10-11-2026, 15:55:40–16:55:40 CET (14:55:40–15:55:40 UTC), incluida preparación y revisión intermedia; la última consulta en curso terminó a las 16:55:43 CET.** Se utilizaron las preguntas vigentes, incluidas las independientes abreviadas; no se cambió ningún texto. Esta sesión es posterior a la evaluación histórica de 70 consultas que se conserva debajo.
+
+Se completó un barrido de **95 configuraciones de recuperación × 73 consultas = 6935 búsquedas**. En el flujo de respuesta se registraron **828 consultas** (incluidas abstenciones y casos sin llamada al LLM por falta de fragmentos), en **11 tandas completas de 73** y las repeticiones dirigidas indicadas en la tabla. Son repeticiones de las mismas preguntas, no 828 preguntas independientes. Errores de ejecución registrados: **0**.
+
+Las 73 consultas son las 30 principales ES, las 30 EN, las diez independientes adicionales ES y los tres controles existentes de cueva/bodega/mortero. Se respeta el router local por defecto: PC `qwen3:8b`, LP `qwen2.5:7b`; en las generaciones registradas se utilizó el PC. Nomic conserva su router, modelo, digest y 768 dimensiones. Temperatura configurada: `0`. OpenAI, S3, Titan y failover de almacenes no intervienen en esta sesión.
+
+Para aislar parámetros y aprovechar la hora, las traducciones reales y los 73 embeddings Nomic reales se calcularon una vez y se reutilizaron entre variantes. Las búsquedas de cada variante sí se ejecutan contra PostgreSQL y las respuestas se generan con los componentes actuales. Las latencias de la tabla excluyen ese trabajo inicial y la preparación del contexto Spring; no representan el tiempo completo del endpoint. No se corrigieron las traducciones defectuosas observadas.
+
+PostgreSQL usa `default_transaction_read_only=on`, comprobado, sin Flyway, ingesta ni escrituras. Las 282 filas mantienen el mismo fingerprint antes/después de las ejecuciones. Se verificaron hashes de fuentes, preguntas, corpus y configuración: **sin cambios**. El ejecutor temporal está fuera del repositorio. Solo se actualiza este informe; los valores se probaron como ajustes temporales y no se aplican a una instancia activa.
+
+### Comparación de parámetros
+
+`m` es el multiplicador de candidatos; se recuperan hasta `topK × m` antes de elegir el contexto final. `w` es el peso BM25 léxico añadido al coseno para ordenar candidatos. El umbral se aplica al coseno original, no a la puntuación fusionada. El barrido explora umbrales entre 0,55 y 0,70, contextos de 3–10, multiplicadores 2–10 y pesos 0–0,20; no es un producto cartesiano completo de esos intervalos.
+
+**Anclas** mide si alguna sección documental de referencia está presente en 47 consultas con apoyo total/parcial. Es una medida aproximada de cobertura: no demuestra que el generador use esa fuente ni que cada afirmación sea cierta. **Abst. fuera** cuenta el indicador de abstención en 26 consultas sin respuesta completa o ambiguas; una limitación honesta puede ser una respuesta no vacía y no se considera automáticamente una alucinación. Las tandas dirigidas tienen otro denominador y no se comparan como baterías completas.
+
+| Tanda | N | topK / umbral / m / w | Anclas | Abst. fuera | Contexto medio (caracteres) | Mediana (s) |
+|---|---:|---|---:|---:|---:|---:|
+| Referencia | 73 | 5 / 0.63 / 4 / 0.075 | 37/47 | 18/26 | 2585 | 3.78 |
+| Más contexto | 73 | 8 / 0.63 / 4 / 0.075 | 38/47 | 17/26 | 3816 | 4.05 |
+| Solo menor umbral | 73 | 5 / 0.58 / 4 / 0.075 | 37/47 | 17/26 | 2948 | 4.02 |
+| 40 candidatos, primera pasada | 73 | 5 / 0.63 / 8 / 0.075 | 38/47 | 17/26 | 2595 | 3.94 |
+| Contexto de 3 | 73 | 3 / 0.63 / 8 / 0.075 | 34/47 | 18/26 | 1642 | 3.37 |
+| Referencia, repetición | 73 | 5 / 0.63 / 4 / 0.075 | 37/47 | 18/26 | 2585 | 3.90 |
+| 40 candidatos, repetición | 73 | 5 / 0.63 / 8 / 0.075 | 38/47 | 18/26 | 2595 | 3.61 |
+| Contexto de 10 y umbral menor | 73 | 10 / 0.6 / 4 / 0.075 | 40/47 | 15/26 | 5568 | 5.16 |
+| Contexto de 4 y más peso léxico | 73 | 4 / 0.63 / 10 / 0.1 | 38/47 | 18/26 | 2224 | 3.87 |
+| Punto intermedio | 73 | 7 / 0.61 / 10 / 0.075 | 40/47 | 15/26 | 3955 | 4.58 |
+| 40 candidatos y peso 0,10 | 73 | 5 / 0.63 / 8 / 0.1 | 38/47 | 17/26 | 2718 | 4.00 |
+| Repetición crítica de peso 0,10 | 15 | 5 / 0.63 / 8 / 0.1 | 6/10 | 2/5 | 3302 | 3.64 |
+| Control final de referencia | 10 | 5 / 0.63 / 4 / 0.075 | 5/9 | 1/1 | 4032 | 5.07 |
+
+### Qué mejora y qué empeora
+
+- **Ampliar candidatos resuelve un caso concreto.** La FAQ-047 de instalaciones antes de acabados está en el puesto 30 para la consulta ES, con coseno `0,63333`. Supera `0,63`, pero no entra entre los 20 candidatos de referencia. Con 40 candidatos y cinco fragmentos llega como S1; las dos pasadas responden correctamente. Las dos referencias daban una secuencia no documentada que incluía instalar laminado al principio.
+
+- **Bajar solo a 0,58 no corrige esa exclusión.** Se mantienen cinco fragmentos y 20 candidatos; la cobertura de anclas sigue en 37/47, el contexto aumenta y aparecen consejos sin respaldo, como espejos para el pasillo. Mejora la orientación sobre la pared deteriorada tras pintarla, pero pierde la abstención de la pregunta ambigua sobre arreglar frente a hacer nuevo, con una comparación de costes no acreditada.
+
+- **Más contexto puede distraer.** Con diez fragmentos y umbral 0,60 el generador llega a recomendar valorar vinílico para una terraza que filtra agua, y aplica un tabique vertical acústico al ruido del vecino de arriba. La FAQ correcta del orden de obra está presente, pero se ignora o se mezcla con una secuencia errónea. Su cobertura documental es mayor y su respuesta puede ser peor.
+
+- **Tres fragmentos pierden la mejora de la cueva.** Con m=8 se examinan 24 candidatos y se descarta el Caso G de la consulta cueva; la bodega termina recibiendo servicios genéricos de la empresa. La menor latencia no compensa esa regresión.
+
+- **Cuatro fragmentos y w=0,10 priorizan el Caso G.** La cueva recibe cal y malla citando el caso específico, y el orden de obra ES se responde bien. Sin embargo, aparece una abstención innecesaria en humedades EN. También se abstiene en grietas EN, evitando el diagnóstico infundado de la referencia: el contador de abstenciones requiere esta revisión semántica.
+
+- **Siete fragmentos / 0,61 / m=10 mejoran el orden de obra EN**, recuperando FAQ-047 con coseno `0,61704`, posición 65. A cambio, vuelven a mezclar el orden ES con laminado y a asegurar aislamiento de techo sin perder altura basándose en un tabique. No se recomienda como mejora global.
+
+- **La fidelidad sigue siendo el límite.** Grietas estructurales, privacidad acústica frente a anonimización editorial, climatización y cubiertas conservan respuestas no acreditadas en varias variantes. La regla estructural §4.4 queda en el puesto 68 ES, coseno `0,59028`; admitirla como candidata no garantiza que el reranking la seleccione. Las pruebas no justifican dar por solucionada la calidad general mediante un umbral único.
+
+### Recomendación
+
+El candidato más interesante de esta sesión es **`topK=5`, `minScore=0,63`, `candidate-multiplier=8` (40 candidatos) y `lexical-weight=0,10`**. Se ejecutó en las 73 consultas y se repitió en 15 casos críticos. La pregunta de la cueva cita el Caso G como S2 y menciona cal y malla; la de mortero da NHL 2/NHL 3.5. Responde correctamente al orden de obra ES y mantiene la respuesta de humedades EN que se perdía con cuatro fragmentos. En grietas EN se abstiene en lugar de improvisar un diagnóstico. El contexto medio aumenta aproximadamente un 5 % respecto a referencia; no se demuestra una mejora de latencia. La pregunta genérica de bodega sigue ofreciendo objetivos de rehabilitación, sin concretar material: no se declara resuelta por recuperar el Caso G.
+
+La alternativa mínima es cambiar solo el multiplicador a 8 y conservar el peso 0,075: en dos pasadas completas corrige el orden de obra ES con prácticamente el mismo contexto. El peso 0,10 prioriza mejor el Caso G, pero reordena más consultas (41/73 frente a 16/73 del cambio de multiplicador solo). No se ha probado que sea un óptimo global. No se recomienda bajar el umbral de forma general: las variantes 0,58–0,61 ensayadas generan regresiones de respaldo o mezclan contextos. La versión EN del orden de obra y la abstención innecesaria de plazos EN siguen pendientes con el candidato recomendado, al igual que varias respuestas no acreditadas sobre grietas ES, privacidad, climatización y cubiertas. No se han modificado archivos de configuración ni parámetros de una instancia activa.
+
+Las repeticiones de referencia conservan exactamente el contexto y las decisiones de abstención, pero difieren en redacción; incluso con temperatura 0 no se ha supuesto identidad literal del texto. Las comparaciones se apoyan en documentos y afirmaciones, no en igualdad de cadenas. El ajuste se hace sobre una batería conocida: no constituye validación ciega de generalización.
+
+### Evidencia y reproducción de esta sesión
+
+Los resultados completos se unifican en `target/pg-tuning-validation/results.json`, ignorado por Git: parámetros efectivos, traducciones, embeddings reales reutilizados, candidatos y scores PG, fragmentos finales, respuestas, citas, métricas, hashes y ejecutor temporal. Un `mvn clean` borra ese artefacto; durante esta sesión existe además la copia `/tmp/r4r-pg-tuning/`. Los nombres internos de trabajos programados pueden diferir del perfil finalmente elegido durante el barrido adaptativo; la tabla usa siempre los parámetros **efectivamente ejecutados**, almacenados en cada resultado.
+
+No se ejecutó Maven de nuevo: no hay cambios de código ni preguntas. Se verificaron la integridad de esos archivos y `git diff --check`. No se hicieron commits, despliegues, cambios IAM, escrituras en índices ni pruebas contra S3. Las diferencias PG/S3 de la evaluación histórica siguen documentadas debajo; en esta hora no se vuelven a medir.
+
+---
+
+## Resumen de la evaluación anterior
 
 El RAG responde bien a las preguntas habituales del corpus, pero **pierde fiabilidad con preguntas independientes**, especialmente cuando recupera textos relacionados que no resuelven la consulta concreta.
 
@@ -33,7 +99,7 @@ Los fallos principales son:
 
 Las cinco preguntas claramente ajenas o de dimensionamiento ausente —geotermia, cargador eléctrico, fotosíntesis, Júpiter y literatura— provocaron abstención en ambos idiomas. La dificultad aparece sobre todo en preguntas próximas al vocabulario del corpus.
 
-**Estos resultados corresponden a las preguntas anteriores a su abreviación. Las nuevas versiones cortas todavía no se han evaluado.** Los tests offline aprobados verifican contratos y funcionamiento, no la corrección semántica de estas respuestas. La captura terminó sin errores de transporte; no se ha corregido el sistema para superar estas preguntas.
+**Estos resultados históricos corresponden a las preguntas anteriores a su abreviación. Las versiones cortas sí se usan en la sesión posterior de optimización PG descrita al principio.** Los tests offline aprobados verifican contratos y funcionamiento, no la corrección semántica de estas respuestas. La captura terminó sin errores de transporte; no se ha corregido el sistema para superar estas preguntas.
 
 ## Organización del informe y preguntas
 
@@ -44,7 +110,7 @@ Este es el **único informe de esta evaluación**: resumen, comparación PG/S3 y
 
 `cases` contiene la redacción **vigente**. `additionalIndependentQuestions` completa los veinte independientes en ES. `history.generalization` contiene las preguntas realmente utilizadas en la captura de 70 consultas; `history.independentOriginal` conserva las veinte independientes originales; `history.nomic` mantiene la correspondencia de preguntas con los vectores antiguos de regresión. Estos históricos son evidencia, no baterías adicionales que se ejecuten automáticamente. No se reasignan vectores ni resultados antiguos a textos nuevos.
 
-**Preguntas abreviadas pendientes:** independientes pares 2, 4, 6, 8 y 10 (puestos finales 17, 18, 22, 23 y 25) y adicionales 12, 14, 16, 18 y 20. La evaluación que sigue corresponde a su redacción **anterior**. Las versiones breves no se han consultado al RAG. La unificación de archivos no cambia ningún texto, clasificación, orden o resultado.
+**Redacciones abreviadas:** independientes pares 2, 4, 6, 8 y 10 (puestos finales 17, 18, 22, 23 y 25), y adicionales 12, 14, 16, 18 y 20. La captura histórica de 70 consultas que sigue usó las versiones anteriores; la optimización posterior PG del principio utiliza las versiones vigentes. La unificación anterior no cambió textos ni resultados.
 
 ## Ejecución y límites
 
