@@ -1,0 +1,22 @@
+[
+  {"id":1,"category":"Viviendas","question":"Estoy pensando en comprar un piso bastante antiguo, pero tiene grietas en algunas paredes. ¿Cómo puedo saber si es algo superficial o si me voy a meter en un problema serio?"},
+  {"id":2,"category":"Viviendas","question":"Quiero reformar mi cocina, pero los muebles todavía están bien. ¿Hay alguna forma de renovarla sin desmontarlo todo?"},
+  {"id":3,"category":"Viviendas","question":"En mi casa se oye absolutamente todo lo que hacen los vecinos de arriba. ¿Se puede mejorar el aislamiento acústico sin perder demasiada altura en las habitaciones?"},
+  {"id":4,"category":"Viviendas","question":"Tengo una terraza que filtra agua al piso de abajo cada vez que llueve fuerte. ¿Por dónde empezaríais para localizar y solucionar el problema?"},
+  {"id":5,"category":"Viviendas","question":"Quiero cambiar las ventanas de mi casa, pero no sé si realmente merece la pena instalar triple acristalamiento o si con doble es suficiente."},
+  {"id":6,"category":"Viviendas","question":"Mi casa tiene un pasillo larguísimo y bastante oscuro. ¿Qué cambios se podrían hacer para aprovechar mejor el espacio y conseguir más luz?"},
+  {"id":7,"category":"Viviendas","question":"Acabamos de comprar un piso y queremos reformarlo antes de mudarnos. ¿En qué orden conviene hacer los trabajos para evitar tener que romper cosas que ya están terminadas?"},
+  {"id":8,"category":"Viviendas","question":"Tengo una vivienda antigua con techos de madera. Algunas vigas están algo combadas. ¿Se pueden reforzar o normalmente hay que sustituirlas?"},
+  {"id":9,"category":"Oficinas y locales","question":"Tenemos una oficina donde hace mucho calor en unas zonas y frío en otras. ¿Se puede solucionar con una reforma de la climatización sin cambiar todo el sistema?"},
+  {"id":10,"category":"Oficinas y locales","question":"Queremos convertir una tienda pequeña en una cafetería. ¿Qué obras suelen ser necesarias antes de poder abrir?"},
+  {"id":11,"category":"Oficinas y locales","question":"Estamos buscando un local para montar una clínica de fisioterapia. ¿Qué deberíamos comprobar antes de firmar el alquiler para no descubrir después que las reformas son inviables?"},
+  {"id":12,"category":"Oficinas y locales","question":"Nuestra oficina tiene muchas paredes de cristal y resulta difícil mantener conversaciones privadas. ¿Cómo mejoraríais la acústica sin perder la sensación de espacio abierto?"},
+  {"id":13,"category":"Otros edificios e instalaciones","question":"Tenemos un garaje comunitario donde aparecen charcos después de las lluvias, aunque aparentemente no entra agua por la puerta. ¿Qué posibles causas habría que investigar?"},
+  {"id":14,"category":"Otros edificios e instalaciones","question":"Queremos rehabilitar una casa de campo que lleva treinta años abandonada. ¿Qué habría que revisar antes de decidir si merece la pena recuperarla?"},
+  {"id":15,"category":"Otros edificios e instalaciones","question":"El suelo de una pista deportiva exterior se está levantando y aparecen grietas. ¿Es suficiente con cambiar el pavimento o habría que investigar qué está pasando debajo?"},
+  {"id":16,"category":"Otros edificios e instalaciones","question":"Tenemos una piscina comunitaria que pierde agua, pero no sabemos si está agrietada o si falla alguna tubería. ¿Cómo se puede localizar la avería?"},
+  {"id":17,"category":"Otros edificios e instalaciones","question":"Una nave industrial tiene una cubierta antigua que produce condensación y goteos. ¿Qué alternativas existen para corregir el problema?"},
+  {"id":18,"category":"Preguntas ambiguas o poco precisas","question":"Tengo una pared que se está poniendo feísima por abajo. La pintamos hace seis meses y ya está igual. ¿Qué haríais?"},
+  {"id":19,"category":"Preguntas ambiguas o poco precisas","question":"¿Sale más barato arreglar lo que tengo o hacerlo nuevo?"},
+  {"id":20,"category":"Preguntas ambiguas o poco precisas","question":"Quiero convertir un sótano en una habitación. ¿Qué problemas podría encontrar?"}
+]
