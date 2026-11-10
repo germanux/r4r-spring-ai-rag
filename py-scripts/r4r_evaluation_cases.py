@@ -1,24 +1,23 @@
-"""Read the canonical Java ES/EN evaluation questions; no network or runtime side effects."""
+"""Read the same ES/EN JSON question banks as Java; no network or runtime side effects."""
 import json
 from pathlib import Path
-import re
 
 ROOT = Path(__file__).resolve().parents[1]
-STRING = r'"((?:\\.|[^"\\])*)"'
-ENTRY = re.compile(r'new QuestionCase\(' + STRING + r', ' + STRING + r'(?:, ' + STRING + r')?, (true|false)\)')
 
 
 def load_cases(root=ROOT):
+    directory = root / 'src/test/resources/evaluation'
+    spanish = json.loads((directory / 'questions-es.json').read_text())['cases']
+    retrieval = {row['caseId']: row['question'] for row in spanish}
     result = []
-    for lang, filename in [('es', 'RagLiveQuestionsIT.java'), ('en', 'RagLiveEnglishQuestionsIT.java')]:
-        text = (root / 'src/test/java/com/riansares/r4r/llm_tests' / filename).read_text()
-        block = text.split('CASES = List.of(', 1)[1].split('\n    );', 1)[0]
-        entries = ENTRY.findall(block)
+    for lang in ['es', 'en']:
+        filename = 'questions-' + lang + '.json'
+        entries = json.loads((directory / filename).read_text())['cases']
         if len(entries) != 30:
             raise ValueError('Expected 30 canonical questions in ' + filename)
-        for number, (name, question, retrieval, evidence) in enumerate(entries, 1):
-            decode = lambda value: json.loads('"' + value + '"')
-            result.append(dict(source=filename, number=number, name=decode(name), question=decode(question),
-                               retrievalQuestion=decode(retrieval) if retrieval else decode(question),
-                               lang=lang, evidence=evidence == 'true'))
+        for number, row in enumerate(entries, 1):
+            if row['number'] != number or row['caseId'] != spanish[number - 1]['caseId']:
+                raise ValueError('Mismatched bilingual order in ' + filename)
+            result.append(dict(source=filename, number=number, name=row['name'], question=row['question'],
+                               retrievalQuestion=retrieval[row['caseId']], lang=lang, evidence=row['evidence']))
     return result

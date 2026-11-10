@@ -4,9 +4,7 @@ import com.riansares.r4r.rag.RagProgress;
 import com.riansares.r4r.vector.titan.TitanResponses;
 import java.net.URI;
 import java.net.http.*;
-import java.nio.file.*;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -43,18 +41,10 @@ class TitanDegradedHttpIT extends VectorDegradedHttpIT {
         assertThat(sse.body()).contains("event:ERROR").doesNotContain("event:ANSWER_READY", "private-secret");
         verify(router, never()).call(any(org.springframework.ai.chat.prompt.Prompt.class), any(RagProgress.class));
     }
-    static Stream<Arguments> canonicalCases() throws Exception {
-        // The existing live-test questions remain the sole source. No new ES/EN question battery.
-        List<Arguments> cases = new ArrayList<>();
-        var pattern = Pattern.compile("new QuestionCase\\(\"([^\"\\n]*)\", \"([^\"\\n]*)\"(?:, \"([^\"\\n]*)\")?, (true|false)\\)");
-        for (String lang : List.of("es", "en")) {
-            var file = Path.of("src/test/java/com/riansares/r4r/llm_tests", lang.equals("es") ? "RagLiveQuestionsIT.java" : "RagLiveEnglishQuestionsIT.java");
-            String source = Files.readString(file).split("CASES = List.of\\(", 2)[1].split("\\n    \\);", 2)[0];
-            var matcher = pattern.matcher(source); int count = 0;
-            while (matcher.find()) { cases.add(Arguments.of(lang, matcher.group(2), Boolean.parseBoolean(matcher.group(4)))); count++; }
-            assertThat(count).isEqualTo(30);
-        }
-        return cases.stream();
+    static Stream<Arguments> canonicalCases() {
+        return Stream.of("es", "en").flatMap(lang ->
+                com.riansares.r4r.evaluation.EvaluationQuestions.cases(lang).stream()
+                        .map(row -> Arguments.of(lang, row.question(), row.expectsEvidence())));
     }
     @ParameterizedTest @MethodSource("canonicalCases")
     void canonicalBilingualContractWithSimulatedRetrieval(String lang, String question, boolean evidence) throws Exception {

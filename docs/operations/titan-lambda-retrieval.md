@@ -28,7 +28,7 @@ activa del NAS. No se modificaron IAM, concurrencia, índices ni datos Nomic.
 | Metadatos y espacio vectorial | `S3VectorMetadataMapper`, `S3VectorScoreMapper` | Mismas clases Java en Lambda, importador y backend. Se conserva el marcador `r4r_context` y la validación de procedencia/presupuestos de bytes. |
 | Recuperación y failover | `KnowledgeVectorStore`, `FailoverKnowledgeVectorStore`, `PostgresAccessGate`, `KnowledgeVectorStoreConfiguration`, `S3VectorsKnowledgeStore` | Se añade un adaptador de transporte Lambda y un tercer proveedor opcional al router existente. |
 | Generación y citas | `CitedRagService`, `GenerationRouter`, `Citation`, DTO REST/SSE, `RagProgress` | Reutilizados. No se crea otra generación LLM, API ni estructura de citas. |
-| Evaluación ES/EN | `RagLiveQuestionsIT`, `RagLiveEnglishQuestionsIT`, `r4r_live_failover_validation.py` | Las mismas 30 preguntas; el lector auxiliar `r4r_evaluation_cases.py` las comparte con la herramienta Lambda. |
+| Evaluación ES/EN | `questions-es.json`, `questions-en.json` | Una fuente por idioma, compartida por los tests Java, `r4r_live_failover_validation.py` y la herramienta Lambda mediante `r4r_evaluation_cases.py`. |
 | Herramientas operativas | `scripts/deploy-synology.sh`, `scripts/export-docker-spring.sh`, diagnósticos de `py-scripts/` | Se conservan. No se ejecuta el despliegue NAS. `scripts-ai/export-evaluation.sh` exporta evidencia de agentes, no es una ingesta ni una batería semántica RAG. |
 
 Duplicaciones eliminadas:

@@ -1,0 +1,883 @@
+{
+  "language": "es",
+  "cases": [
+    {
+      "name": "Primera orientación",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 1,
+      "caseId": "case-01",
+      "number": 1,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?"
+    },
+    {
+      "name": "Solera frente a solado",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 2,
+      "caseId": "case-02",
+      "number": 2,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?"
+    },
+    {
+      "name": "Precio por acceso",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 3,
+      "caseId": "case-03",
+      "number": 3,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Por qué el acceso cambia el precio de una solera?"
+    },
+    {
+      "name": "Casa antigua",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 4,
+      "caseId": "case-04",
+      "number": 4,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Cuánto orienta una reforma integral de una casa antigua?"
+    },
+    {
+      "name": "Visita previa",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 5,
+      "caseId": "case-05",
+      "number": 5,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Una primera orientación económica sustituye una visita técnica?"
+    },
+    {
+      "name": "Patio",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 6,
+      "caseId": "case-06",
+      "number": 6,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Qué debe revisarse antes de pavimentar un patio?"
+    },
+    {
+      "name": "Hormigón de camión",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 7,
+      "caseId": "case-07",
+      "number": 7,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Cuándo conviene usar hormigón de camión en una solera?"
+    },
+    {
+      "name": "Pasillo estrecho",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 8,
+      "caseId": "case-08",
+      "number": 8,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Cómo afecta un pasillo estrecho a la ejecución de una solera?"
+    },
+    {
+      "name": "Humedades",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 9,
+      "caseId": "case-09",
+      "number": 9,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Qué causas de humedad pueden aparecer en una vivienda antigua?"
+    },
+    {
+      "name": "Plazos",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 10,
+      "caseId": "case-10",
+      "number": 10,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Debe incluir el presupuesto de una reforma los plazos de ejecución?"
+    },
+    {
+      "name": "Presupuesto",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 11,
+      "caseId": "case-11",
+      "number": 11,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Qué datos debe aportar el cliente para solicitar un presupuesto?"
+    },
+    {
+      "name": "Baño",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 12,
+      "caseId": "case-12",
+      "number": 12,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Qué datos hacen falta para orientar una reforma de baño?"
+    },
+    {
+      "name": "Servicios de la empresa",
+      "evidence": true,
+      "origin": "preserved-services",
+      "initialNumber": 13,
+      "caseId": "case-13",
+      "number": 13,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Qué tipos de reformas realiza esta empresa? ¿Trabaja en viviendas y oficinas?"
+    },
+    {
+      "name": "Cal aérea y cal hidráulica",
+      "evidence": true,
+      "origin": "new-in-domain",
+      "initialNumber": 14,
+      "caseId": "case-14",
+      "number": 14,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Qué diferencias hay entre la cal aérea y la cal hidráulica natural para trabajar sobre muros antiguos?"
+    },
+    {
+      "name": "Baldosa sobre pavimento existente",
+      "evidence": true,
+      "origin": "new-in-domain",
+      "initialNumber": 15,
+      "caseId": "case-15",
+      "number": 15,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Qué precauciones hay que tomar antes de colocar baldosa nueva sobre un pavimento existente?"
+    },
+    {
+      "name": "Independiente 1",
+      "evidence": true,
+      "origin": "independent",
+      "independentId": 1,
+      "coverage": "PARTIAL",
+      "initialNumber": 16,
+      "caseId": "case-16",
+      "number": 16,
+      "coverageRationale": "La regla 4.4 exige comprobación profesional antes de descartar grieta estructural; no hay método para diagnosticar esta grieta.",
+      "coverageReferences": [
+        "R4R_00 §4.4"
+      ],
+      "question": "Estoy pensando en comprar un piso bastante antiguo, pero tiene grietas en algunas paredes. ¿Cómo puedo saber si es algo superficial o si me voy a meter en un problema serio?",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 2",
+      "evidence": true,
+      "origin": "independent",
+      "independentId": 2,
+      "coverage": "PARTIAL",
+      "initialNumber": 17,
+      "caseId": "case-17",
+      "number": 17,
+      "coverageRationale": "Conservar elementos firmes y reformar selectivamente; cocina y posiciones de instalaciones. No se documenta un método de renovar frentes de muebles.",
+      "coverageReferences": [
+        "R4R_00 §2.4",
+        "R4R_10 §7.2, §7.6"
+      ],
+      "revision": "short-natural-v2-not-evaluated",
+      "question": "Los muebles de la cocina están bien. ¿Cómo la renuevo sin desmontarlo todo?",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 4",
+      "evidence": true,
+      "origin": "independent",
+      "independentId": 4,
+      "coverage": "PARTIAL",
+      "initialNumber": 19,
+      "caseId": "case-19",
+      "number": 18,
+      "coverageRationale": "Investigar causa de humedad y drenaje/pendientes/encuentros permite orientación inicial limitada; no prescribe una solución de impermeabilización de terraza.",
+      "coverageReferences": [
+        "R4R_00 §4.3",
+        "R4R_10 §6.7"
+      ],
+      "revision": "short-natural-v2-not-evaluated",
+      "question": "Cuando llueve fuerte, mi terraza cala al piso de abajo. ¿Por dónde empiezo?",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 7",
+      "evidence": true,
+      "origin": "independent",
+      "independentId": 7,
+      "coverage": "SUPPORTED",
+      "initialNumber": 22,
+      "caseId": "case-22",
+      "number": 19,
+      "coverageRationale": "Instalaciones envejecidas/incompatibles antes de cerrar paredes/suelos para no abrirlos otra vez. No es un cronograma completo.",
+      "coverageReferences": [
+        "FAQ-047",
+        "R4R_10 §7.7"
+      ],
+      "question": "Acabamos de comprar un piso y queremos reformarlo antes de mudarnos. ¿En qué orden conviene hacer los trabajos para evitar tener que romper cosas que ya están terminadas?",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 3",
+      "evidence": false,
+      "origin": "independent",
+      "independentId": 3,
+      "coverage": "INSUFFICIENT",
+      "initialNumber": 18,
+      "caseId": "case-18",
+      "number": 20,
+      "coverageRationale": "El tabique acústico de oficina no responde al ruido de vecinos a través del techo ni a la pérdida de altura.",
+      "coverageReferences": [
+        "R4R_20 §11.2"
+      ],
+      "question": "En mi casa se oye absolutamente todo lo que hacen los vecinos de arriba. ¿Se puede mejorar el aislamiento acústico sin perder demasiada altura en las habitaciones?",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 5",
+      "evidence": false,
+      "origin": "independent",
+      "independentId": 5,
+      "coverage": "INSUFFICIENT",
+      "initialNumber": 20,
+      "caseId": "case-20",
+      "number": 21,
+      "coverageRationale": "Se mencionan ventanas deficientes, sin comparación doble/triple ni criterios térmicos de selección.",
+      "coverageReferences": [
+        "R4R_10 §7.2"
+      ],
+      "question": "Quiero cambiar las ventanas de mi casa, pero no sé si realmente merece la pena instalar triple acristalamiento o si con doble es suficiente.",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 6",
+      "evidence": false,
+      "origin": "independent",
+      "independentId": 6,
+      "coverage": "INSUFFICIENT",
+      "initialNumber": 21,
+      "caseId": "case-21",
+      "number": 22,
+      "coverageRationale": "Pasillo estrecho trata transporte y ejecución de solera, no diseño para iluminación o aprovechamiento del espacio.",
+      "coverageReferences": [
+        "R4R_10 §6.4"
+      ],
+      "revision": "short-natural-v2-not-evaluated",
+      "question": "Tengo un pasillo largo y oscuro. ¿Cómo gano luz y aprovecho el espacio?",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 8",
+      "evidence": false,
+      "origin": "independent",
+      "independentId": 8,
+      "coverage": "INSUFFICIENT",
+      "initialNumber": 23,
+      "caseId": "case-23",
+      "number": 23,
+      "coverageRationale": "Vigas de madera aborda secado/encuentros, sin criterios estructurales para reforzar o sustituir una viga combada.",
+      "coverageReferences": [
+        "R4R_20 §13.8",
+        "R4R_00 §4.4"
+      ],
+      "revision": "short-natural-v2-not-evaluated",
+      "question": "Las vigas de madera de mi casa vieja están combadas. ¿Se refuerzan o se cambian?",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 9",
+      "evidence": false,
+      "origin": "independent",
+      "independentId": 9,
+      "coverage": "INSUFFICIENT",
+      "initialNumber": 24,
+      "caseId": "case-24",
+      "number": 24,
+      "coverageRationale": "Revisar climatización existente no demuestra que el desequilibrio térmico se pueda solucionar sin sustituir el sistema.",
+      "coverageReferences": [
+        "R4R_20 §11.2"
+      ],
+      "question": "Tenemos una oficina donde hace mucho calor en unas zonas y frío en otras. ¿Se puede solucionar con una reforma de la climatización sin cambiar todo el sistema?",
+      "category": "Oficinas y locales"
+    },
+    {
+      "name": "Independiente 10",
+      "evidence": false,
+      "origin": "independent",
+      "independentId": 10,
+      "coverage": "INSUFFICIENT",
+      "initialNumber": 25,
+      "caseId": "case-25",
+      "number": 25,
+      "coverageRationale": "Existe filtro general de cambio de uso/licencia/técnico; no catálogo de obras de apertura de una cafetería. Cocina doméstica no equivale a local de hostelería.",
+      "coverageReferences": [
+        "R4R_20 §14.5–14.6"
+      ],
+      "revision": "short-natural-v2-not-evaluated",
+      "question": "Quiero pasar de tienda a cafetería. ¿Qué obras necesito para abrir?",
+      "category": "Oficinas y locales"
+    },
+    {
+      "name": "Fuera de corpus: geotermia",
+      "evidence": false,
+      "origin": "new-renovation-out-of-domain",
+      "initialNumber": 26,
+      "caseId": "case-26",
+      "number": 26,
+      "coverage": "INSUFFICIENT",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Qué potencia y qué número de captadores geotérmicos necesito para climatizar una vivienda de 180 m²?"
+    },
+    {
+      "name": "Fuera de corpus: cargador eléctrico",
+      "evidence": false,
+      "origin": "new-renovation-out-of-domain",
+      "initialNumber": 27,
+      "caseId": "case-27",
+      "number": 27,
+      "coverage": "INSUFFICIENT",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Qué sección exacta de cable y qué magnetotérmico exige el REBT para instalar un cargador de coche eléctrico de 11 kW en mi garaje?"
+    },
+    {
+      "name": "Fuera de dominio: fotosíntesis",
+      "evidence": false,
+      "origin": "original-out-of-domain",
+      "initialNumber": 28,
+      "caseId": "case-28",
+      "number": 28,
+      "coverage": "INSUFFICIENT",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿De qué manera producen alimento las plantas mediante la fotosíntesis?"
+    },
+    {
+      "name": "Fuera de dominio: astronomía",
+      "evidence": false,
+      "origin": "original-out-of-domain",
+      "initialNumber": 29,
+      "caseId": "case-29",
+      "number": 29,
+      "coverage": "INSUFFICIENT",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Cuál es la masa de Júpiter en kilogramos?"
+    },
+    {
+      "name": "Fuera de dominio: literatura",
+      "evidence": false,
+      "origin": "original-out-of-domain",
+      "initialNumber": 30,
+      "caseId": "case-30",
+      "number": 30,
+      "coverage": "INSUFFICIENT",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "¿Quién escribió la novela Cien años de soledad?"
+    }
+  ],
+  "additionalIndependentQuestions": [
+    {
+      "id": 11,
+      "category": "Oficinas y locales",
+      "question": "Estamos buscando un local para montar una clínica de fisioterapia. ¿Qué deberíamos comprobar antes de firmar el alquiler para no descubrir después que las reformas son inviables?"
+    },
+    {
+      "id": 12,
+      "category": "Oficinas y locales",
+      "question": "En la oficina, con tanto cristal, se oye todo. ¿Cómo gano privacidad sin cerrar el espacio?"
+    },
+    {
+      "id": 13,
+      "category": "Otros edificios e instalaciones",
+      "question": "Tenemos un garaje comunitario donde aparecen charcos después de las lluvias, aunque aparentemente no entra agua por la puerta. ¿Qué posibles causas habría que investigar?"
+    },
+    {
+      "id": 14,
+      "category": "Otros edificios e instalaciones",
+      "question": "Una casa de campo lleva 30 años abandonada. ¿Qué reviso para ver si merece la pena arreglarla?"
+    },
+    {
+      "id": 15,
+      "category": "Otros edificios e instalaciones",
+      "question": "El suelo de una pista deportiva exterior se está levantando y aparecen grietas. ¿Es suficiente con cambiar el pavimento o habría que investigar qué está pasando debajo?"
+    },
+    {
+      "id": 16,
+      "category": "Otros edificios e instalaciones",
+      "question": "La piscina comunitaria pierde agua. ¿Cómo sé si es una grieta o una tubería?"
+    },
+    {
+      "id": 17,
+      "category": "Otros edificios e instalaciones",
+      "question": "Una nave industrial tiene una cubierta antigua que produce condensación y goteos. ¿Qué alternativas existen para corregir el problema?"
+    },
+    {
+      "id": 18,
+      "category": "Preguntas ambiguas o poco precisas",
+      "question": "La pared está fea por abajo otra vez y la pinté hace seis meses. ¿Qué hago?"
+    },
+    {
+      "id": 19,
+      "category": "Preguntas ambiguas o poco precisas",
+      "question": "¿Sale más barato arreglar lo que tengo o hacerlo nuevo?"
+    },
+    {
+      "id": 20,
+      "category": "Preguntas ambiguas o poco precisas",
+      "question": "Quiero hacer una habitación en el sótano. ¿Qué problemas puedo tener?"
+    }
+  ],
+  "history": {
+    "generalization": [
+      {
+        "caseId": "case-01",
+        "initialNumber": 1,
+        "question": "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?"
+      },
+      {
+        "caseId": "case-02",
+        "initialNumber": 2,
+        "question": "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?"
+      },
+      {
+        "caseId": "case-03",
+        "initialNumber": 3,
+        "question": "¿Por qué el acceso cambia el precio de una solera?"
+      },
+      {
+        "caseId": "case-04",
+        "initialNumber": 4,
+        "question": "¿Cuánto orienta una reforma integral de una casa antigua?"
+      },
+      {
+        "caseId": "case-05",
+        "initialNumber": 5,
+        "question": "¿Una primera orientación económica sustituye una visita técnica?"
+      },
+      {
+        "caseId": "case-06",
+        "initialNumber": 6,
+        "question": "¿Qué debe revisarse antes de pavimentar un patio?"
+      },
+      {
+        "caseId": "case-07",
+        "initialNumber": 7,
+        "question": "¿Cuándo conviene usar hormigón de camión en una solera?"
+      },
+      {
+        "caseId": "case-08",
+        "initialNumber": 8,
+        "question": "¿Cómo afecta un pasillo estrecho a la ejecución de una solera?"
+      },
+      {
+        "caseId": "case-09",
+        "initialNumber": 9,
+        "question": "¿Qué causas de humedad pueden aparecer en una vivienda antigua?"
+      },
+      {
+        "caseId": "case-10",
+        "initialNumber": 10,
+        "question": "¿Debe incluir el presupuesto de una reforma los plazos de ejecución?"
+      },
+      {
+        "caseId": "case-11",
+        "initialNumber": 11,
+        "question": "¿Qué datos debe aportar el cliente para solicitar un presupuesto?"
+      },
+      {
+        "caseId": "case-12",
+        "initialNumber": 12,
+        "question": "¿Qué datos hacen falta para orientar una reforma de baño?"
+      },
+      {
+        "caseId": "case-13",
+        "initialNumber": 13,
+        "question": "¿Qué tipos de reformas realiza esta empresa? ¿Trabaja en viviendas y oficinas?"
+      },
+      {
+        "caseId": "case-14",
+        "initialNumber": 14,
+        "question": "¿Qué diferencias hay entre la cal aérea y la cal hidráulica natural para trabajar sobre muros antiguos?"
+      },
+      {
+        "caseId": "case-15",
+        "initialNumber": 15,
+        "question": "¿Qué precauciones hay que tomar antes de colocar baldosa nueva sobre un pavimento existente?"
+      },
+      {
+        "caseId": "case-16",
+        "initialNumber": 16,
+        "question": "Estoy pensando en comprar un piso bastante antiguo, pero tiene grietas en algunas paredes. ¿Cómo puedo saber si es algo superficial o si me voy a meter en un problema serio?"
+      },
+      {
+        "caseId": "case-17",
+        "initialNumber": 17,
+        "question": "Quiero reformar mi cocina, pero los muebles todavía están bien. ¿Hay alguna forma de renovarla sin desmontarlo todo?"
+      },
+      {
+        "caseId": "case-18",
+        "initialNumber": 18,
+        "question": "En mi casa se oye absolutamente todo lo que hacen los vecinos de arriba. ¿Se puede mejorar el aislamiento acústico sin perder demasiada altura en las habitaciones?"
+      },
+      {
+        "caseId": "case-19",
+        "initialNumber": 19,
+        "question": "Tengo una terraza que filtra agua al piso de abajo cada vez que llueve fuerte. ¿Por dónde empezaríais para localizar y solucionar el problema?"
+      },
+      {
+        "caseId": "case-20",
+        "initialNumber": 20,
+        "question": "Quiero cambiar las ventanas de mi casa, pero no sé si realmente merece la pena instalar triple acristalamiento o si con doble es suficiente."
+      },
+      {
+        "caseId": "case-21",
+        "initialNumber": 21,
+        "question": "Mi casa tiene un pasillo larguísimo y bastante oscuro. ¿Qué cambios se podrían hacer para aprovechar mejor el espacio y conseguir más luz?"
+      },
+      {
+        "caseId": "case-22",
+        "initialNumber": 22,
+        "question": "Acabamos de comprar un piso y queremos reformarlo antes de mudarnos. ¿En qué orden conviene hacer los trabajos para evitar tener que romper cosas que ya están terminadas?"
+      },
+      {
+        "caseId": "case-23",
+        "initialNumber": 23,
+        "question": "Tengo una vivienda antigua con techos de madera. Algunas vigas están algo combadas. ¿Se pueden reforzar o normalmente hay que sustituirlas?"
+      },
+      {
+        "caseId": "case-24",
+        "initialNumber": 24,
+        "question": "Tenemos una oficina donde hace mucho calor en unas zonas y frío en otras. ¿Se puede solucionar con una reforma de la climatización sin cambiar todo el sistema?"
+      },
+      {
+        "caseId": "case-25",
+        "initialNumber": 25,
+        "question": "Queremos convertir una tienda pequeña en una cafetería. ¿Qué obras suelen ser necesarias antes de poder abrir?"
+      },
+      {
+        "caseId": "case-26",
+        "initialNumber": 26,
+        "question": "¿Qué potencia y qué número de captadores geotérmicos necesito para climatizar una vivienda de 180 m²?"
+      },
+      {
+        "caseId": "case-27",
+        "initialNumber": 27,
+        "question": "¿Qué sección exacta de cable y qué magnetotérmico exige el REBT para instalar un cargador de coche eléctrico de 11 kW en mi garaje?"
+      },
+      {
+        "caseId": "case-28",
+        "initialNumber": 28,
+        "question": "¿De qué manera producen alimento las plantas mediante la fotosíntesis?"
+      },
+      {
+        "caseId": "case-29",
+        "initialNumber": 29,
+        "question": "¿Cuál es la masa de Júpiter en kilogramos?"
+      },
+      {
+        "caseId": "case-30",
+        "initialNumber": 30,
+        "question": "¿Quién escribió la novela Cien años de soledad?"
+      }
+    ],
+    "independentOriginal": [
+      {
+        "id": 1,
+        "category": "Viviendas",
+        "question": "Estoy pensando en comprar un piso bastante antiguo, pero tiene grietas en algunas paredes. ¿Cómo puedo saber si es algo superficial o si me voy a meter en un problema serio?"
+      },
+      {
+        "id": 2,
+        "category": "Viviendas",
+        "question": "Quiero reformar mi cocina, pero los muebles todavía están bien. ¿Hay alguna forma de renovarla sin desmontarlo todo?"
+      },
+      {
+        "id": 3,
+        "category": "Viviendas",
+        "question": "En mi casa se oye absolutamente todo lo que hacen los vecinos de arriba. ¿Se puede mejorar el aislamiento acústico sin perder demasiada altura en las habitaciones?"
+      },
+      {
+        "id": 4,
+        "category": "Viviendas",
+        "question": "Tengo una terraza que filtra agua al piso de abajo cada vez que llueve fuerte. ¿Por dónde empezaríais para localizar y solucionar el problema?"
+      },
+      {
+        "id": 5,
+        "category": "Viviendas",
+        "question": "Quiero cambiar las ventanas de mi casa, pero no sé si realmente merece la pena instalar triple acristalamiento o si con doble es suficiente."
+      },
+      {
+        "id": 6,
+        "category": "Viviendas",
+        "question": "Mi casa tiene un pasillo larguísimo y bastante oscuro. ¿Qué cambios se podrían hacer para aprovechar mejor el espacio y conseguir más luz?"
+      },
+      {
+        "id": 7,
+        "category": "Viviendas",
+        "question": "Acabamos de comprar un piso y queremos reformarlo antes de mudarnos. ¿En qué orden conviene hacer los trabajos para evitar tener que romper cosas que ya están terminadas?"
+      },
+      {
+        "id": 8,
+        "category": "Viviendas",
+        "question": "Tengo una vivienda antigua con techos de madera. Algunas vigas están algo combadas. ¿Se pueden reforzar o normalmente hay que sustituirlas?"
+      },
+      {
+        "id": 9,
+        "category": "Oficinas y locales",
+        "question": "Tenemos una oficina donde hace mucho calor en unas zonas y frío en otras. ¿Se puede solucionar con una reforma de la climatización sin cambiar todo el sistema?"
+      },
+      {
+        "id": 10,
+        "category": "Oficinas y locales",
+        "question": "Queremos convertir una tienda pequeña en una cafetería. ¿Qué obras suelen ser necesarias antes de poder abrir?"
+      },
+      {
+        "id": 11,
+        "category": "Oficinas y locales",
+        "question": "Estamos buscando un local para montar una clínica de fisioterapia. ¿Qué deberíamos comprobar antes de firmar el alquiler para no descubrir después que las reformas son inviables?"
+      },
+      {
+        "id": 12,
+        "category": "Oficinas y locales",
+        "question": "Nuestra oficina tiene muchas paredes de cristal y resulta difícil mantener conversaciones privadas. ¿Cómo mejoraríais la acústica sin perder la sensación de espacio abierto?"
+      },
+      {
+        "id": 13,
+        "category": "Otros edificios e instalaciones",
+        "question": "Tenemos un garaje comunitario donde aparecen charcos después de las lluvias, aunque aparentemente no entra agua por la puerta. ¿Qué posibles causas habría que investigar?"
+      },
+      {
+        "id": 14,
+        "category": "Otros edificios e instalaciones",
+        "question": "Queremos rehabilitar una casa de campo que lleva treinta años abandonada. ¿Qué habría que revisar antes de decidir si merece la pena recuperarla?"
+      },
+      {
+        "id": 15,
+        "category": "Otros edificios e instalaciones",
+        "question": "El suelo de una pista deportiva exterior se está levantando y aparecen grietas. ¿Es suficiente con cambiar el pavimento o habría que investigar qué está pasando debajo?"
+      },
+      {
+        "id": 16,
+        "category": "Otros edificios e instalaciones",
+        "question": "Tenemos una piscina comunitaria que pierde agua, pero no sabemos si está agrietada o si falla alguna tubería. ¿Cómo se puede localizar la avería?"
+      },
+      {
+        "id": 17,
+        "category": "Otros edificios e instalaciones",
+        "question": "Una nave industrial tiene una cubierta antigua que produce condensación y goteos. ¿Qué alternativas existen para corregir el problema?"
+      },
+      {
+        "id": 18,
+        "category": "Preguntas ambiguas o poco precisas",
+        "question": "Tengo una pared que se está poniendo feísima por abajo. La pintamos hace seis meses y ya está igual. ¿Qué haríais?"
+      },
+      {
+        "id": 19,
+        "category": "Preguntas ambiguas o poco precisas",
+        "question": "¿Sale más barato arreglar lo que tengo o hacerlo nuevo?"
+      },
+      {
+        "id": 20,
+        "category": "Preguntas ambiguas o poco precisas",
+        "question": "Quiero convertir un sótano en una habitación. ¿Qué problemas podría encontrar?"
+      }
+    ],
+    "nomic": [
+      {
+        "source": "RagLiveQuestionsIT.java",
+        "number": 1,
+        "name": "Primera orientación",
+        "question": "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?",
+        "retrievalQuestion": "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?",
+        "lang": "es",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveQuestionsIT.java",
+        "number": 2,
+        "name": "Solera frente a solado",
+        "question": "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?",
+        "retrievalQuestion": "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?",
+        "lang": "es",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveQuestionsIT.java",
+        "number": 3,
+        "name": "Precio por acceso",
+        "question": "¿Por qué el acceso cambia el precio de una solera?",
+        "retrievalQuestion": "¿Por qué el acceso cambia el precio de una solera?",
+        "lang": "es",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveQuestionsIT.java",
+        "number": 4,
+        "name": "Casa antigua",
+        "question": "¿Cuánto orienta una reforma integral de una casa antigua?",
+        "retrievalQuestion": "¿Cuánto orienta una reforma integral de una casa antigua?",
+        "lang": "es",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveQuestionsIT.java",
+        "number": 5,
+        "name": "Visita previa",
+        "question": "¿Una primera orientación económica sustituye una visita técnica?",
+        "retrievalQuestion": "¿Una primera orientación económica sustituye una visita técnica?",
+        "lang": "es",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveQuestionsIT.java",
+        "number": 6,
+        "name": "Patio",
+        "question": "¿Qué debe revisarse antes de pavimentar un patio?",
+        "retrievalQuestion": "¿Qué debe revisarse antes de pavimentar un patio?",
+        "lang": "es",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveQuestionsIT.java",
+        "number": 7,
+        "name": "Hormigón de camión",
+        "question": "¿Cuándo conviene usar hormigón de camión en una solera?",
+        "retrievalQuestion": "¿Cuándo conviene usar hormigón de camión en una solera?",
+        "lang": "es",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveQuestionsIT.java",
+        "number": 8,
+        "name": "Pasillo estrecho",
+        "question": "¿Cómo afecta un pasillo estrecho a la ejecución de una solera?",
+        "retrievalQuestion": "¿Cómo afecta un pasillo estrecho a la ejecución de una solera?",
+        "lang": "es",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveQuestionsIT.java",
+        "number": 9,
+        "name": "Humedades",
+        "question": "¿Qué causas de humedad pueden aparecer en una vivienda antigua?",
+        "retrievalQuestion": "¿Qué causas de humedad pueden aparecer en una vivienda antigua?",
+        "lang": "es",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveQuestionsIT.java",
+        "number": 10,
+        "name": "Plazos",
+        "question": "¿Debe incluir el presupuesto de una reforma los plazos de ejecución?",
+        "retrievalQuestion": "¿Debe incluir el presupuesto de una reforma los plazos de ejecución?",
+        "lang": "es",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveQuestionsIT.java",
+        "number": 11,
+        "name": "Presupuesto",
+        "question": "¿Qué datos debe aportar el cliente para solicitar un presupuesto?",
+        "retrievalQuestion": "¿Qué datos debe aportar el cliente para solicitar un presupuesto?",
+        "lang": "es",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveQuestionsIT.java",
+        "number": 12,
+        "name": "Baño",
+        "question": "¿Qué datos hacen falta para orientar una reforma de baño?",
+        "retrievalQuestion": "¿Qué datos hacen falta para orientar una reforma de baño?",
+        "lang": "es",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveQuestionsIT.java",
+        "number": 13,
+        "name": "Fuera de dominio: fotosíntesis",
+        "question": "¿De qué manera producen alimento las plantas mediante la fotosíntesis?",
+        "retrievalQuestion": "¿De qué manera producen alimento las plantas mediante la fotosíntesis?",
+        "lang": "es",
+        "evidence": false
+      },
+      {
+        "source": "RagLiveQuestionsIT.java",
+        "number": 14,
+        "name": "Fuera de dominio: astronomía",
+        "question": "¿Cuál es la masa de Júpiter en kilogramos?",
+        "retrievalQuestion": "¿Cuál es la masa de Júpiter en kilogramos?",
+        "lang": "es",
+        "evidence": false
+      },
+      {
+        "source": "RagLiveQuestionsIT.java",
+        "number": 15,
+        "name": "Fuera de dominio: literatura",
+        "question": "¿Quién escribió la novela Cien años de soledad?",
+        "retrievalQuestion": "¿Quién escribió la novela Cien años de soledad?",
+        "lang": "es",
+        "evidence": false
+      }
+    ]
+  },
+  "regressions": {
+    "timeline": {
+      "name": "Regresión: motivo de los plazos no documentado",
+      "question": "¿Por qué es importante conocer el plazo previsto antes de presupuestar una reforma?",
+      "evidence": true
+    },
+    "cave": [
+      {
+        "key": "cave",
+        "question": "¿Con qué reformaríais una cueva?",
+        "originalRank": 19
+      },
+      {
+        "key": "cellar",
+        "question": "¿Con qué reformaríais una bodega?",
+        "originalRank": 6
+      },
+      {
+        "key": "mortar",
+        "question": "¿Qué mortero utilizaríais para rehabilitar una cueva antigua?",
+        "originalRank": 3
+      }
+    ]
+  }
+}

@@ -1,0 +1,714 @@
+{
+  "language": "en",
+  "cases": [
+    {
+      "name": "Primera orientación",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 1,
+      "caseId": "case-01",
+      "number": 1,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "If I want initial guidance on my renovation, what details should I provide?"
+    },
+    {
+      "name": "Solera frente a solado",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 2,
+      "caseId": "case-02",
+      "number": 2,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "In construction, how does the concrete base differ from the finished flooring?"
+    },
+    {
+      "name": "Precio por acceso",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 3,
+      "caseId": "case-03",
+      "number": 3,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "Why does access affect the price of a concrete slab?"
+    },
+    {
+      "name": "Casa antigua",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 4,
+      "caseId": "case-04",
+      "number": 4,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "What is the approximate cost of a complete renovation of an old house?"
+    },
+    {
+      "name": "Visita previa",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 5,
+      "caseId": "case-05",
+      "number": 5,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "Does initial cost guidance replace a technical site visit?"
+    },
+    {
+      "name": "Patio",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 6,
+      "caseId": "case-06",
+      "number": 6,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "What should be checked before paving a patio?"
+    },
+    {
+      "name": "Hormigón de camión",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 7,
+      "caseId": "case-07",
+      "number": 7,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "When is it advisable to use ready-mix concrete for a slab?"
+    },
+    {
+      "name": "Pasillo estrecho",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 8,
+      "caseId": "case-08",
+      "number": 8,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "How does a narrow corridor affect the construction of a concrete slab?"
+    },
+    {
+      "name": "Humedades",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 9,
+      "caseId": "case-09",
+      "number": 9,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "What causes of damp can occur in an old home?"
+    },
+    {
+      "name": "Plazos",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 10,
+      "caseId": "case-10",
+      "number": 10,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "Should a renovation estimate include the execution timeline?"
+    },
+    {
+      "name": "Presupuesto",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 11,
+      "caseId": "case-11",
+      "number": 11,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "What information should a customer provide to request an estimate?"
+    },
+    {
+      "name": "Baño",
+      "evidence": true,
+      "origin": "original",
+      "initialNumber": 12,
+      "caseId": "case-12",
+      "number": 12,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "What information is needed to estimate a bathroom renovation?"
+    },
+    {
+      "name": "Servicios de la empresa",
+      "evidence": true,
+      "origin": "preserved-services",
+      "initialNumber": 13,
+      "caseId": "case-13",
+      "number": 13,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "What kinds of renovation work does this company do? Does it work on houses and offices?"
+    },
+    {
+      "name": "Cal aérea y cal hidráulica",
+      "evidence": true,
+      "origin": "new-in-domain",
+      "initialNumber": 14,
+      "caseId": "case-14",
+      "number": 14,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "What are the differences between air lime and natural hydraulic lime when working on old walls?"
+    },
+    {
+      "name": "Baldosa sobre pavimento existente",
+      "evidence": true,
+      "origin": "new-in-domain",
+      "initialNumber": 15,
+      "caseId": "case-15",
+      "number": 15,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "What precautions should be taken before laying new tiles over an existing floor?"
+    },
+    {
+      "name": "Independiente 1",
+      "evidence": true,
+      "origin": "independent",
+      "independentId": 1,
+      "coverage": "PARTIAL",
+      "initialNumber": 16,
+      "caseId": "case-16",
+      "number": 16,
+      "coverageRationale": "La regla 4.4 exige comprobación profesional antes de descartar grieta estructural; no hay método para diagnosticar esta grieta.",
+      "coverageReferences": [
+        "R4R_00 §4.4"
+      ],
+      "question": "I'm thinking of buying a fairly old flat, but there are cracks in some walls. How can I tell whether they are superficial or whether I'm getting into a serious problem?",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 2",
+      "evidence": true,
+      "origin": "independent",
+      "independentId": 2,
+      "coverage": "PARTIAL",
+      "initialNumber": 17,
+      "caseId": "case-17",
+      "number": 17,
+      "coverageRationale": "Conservar elementos firmes y reformar selectivamente; cocina y posiciones de instalaciones. No se documenta un método de renovar frentes de muebles.",
+      "coverageReferences": [
+        "R4R_00 §2.4",
+        "R4R_10 §7.2, §7.6"
+      ],
+      "revision": "short-natural-v2-not-evaluated",
+      "question": "The kitchen cabinets are fine. How can I refresh it without taking everything apart?",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 4",
+      "evidence": true,
+      "origin": "independent",
+      "independentId": 4,
+      "coverage": "PARTIAL",
+      "initialNumber": 19,
+      "caseId": "case-19",
+      "number": 18,
+      "coverageRationale": "Investigar causa de humedad y drenaje/pendientes/encuentros permite orientación inicial limitada; no prescribe una solución de impermeabilización de terraza.",
+      "coverageReferences": [
+        "R4R_00 §4.3",
+        "R4R_10 §6.7"
+      ],
+      "revision": "short-natural-v2-not-evaluated",
+      "question": "When it rains heavily, my terrace leaks into the flat below. Where do I start?",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 7",
+      "evidence": true,
+      "origin": "independent",
+      "independentId": 7,
+      "coverage": "SUPPORTED",
+      "initialNumber": 22,
+      "caseId": "case-22",
+      "number": 19,
+      "coverageRationale": "Instalaciones envejecidas/incompatibles antes de cerrar paredes/suelos para no abrirlos otra vez. No es un cronograma completo.",
+      "coverageReferences": [
+        "FAQ-047",
+        "R4R_10 §7.7"
+      ],
+      "question": "We've just bought a flat and want to renovate it before moving in. In what order should the work be done to avoid having to break things that are already finished?",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 3",
+      "evidence": false,
+      "origin": "independent",
+      "independentId": 3,
+      "coverage": "INSUFFICIENT",
+      "initialNumber": 18,
+      "caseId": "case-18",
+      "number": 20,
+      "coverageRationale": "El tabique acústico de oficina no responde al ruido de vecinos a través del techo ni a la pérdida de altura.",
+      "coverageReferences": [
+        "R4R_20 §11.2"
+      ],
+      "question": "In my home, we can hear absolutely everything the upstairs neighbours do. Can the sound insulation be improved without losing too much ceiling height in the rooms?",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 5",
+      "evidence": false,
+      "origin": "independent",
+      "independentId": 5,
+      "coverage": "INSUFFICIENT",
+      "initialNumber": 20,
+      "caseId": "case-20",
+      "number": 21,
+      "coverageRationale": "Se mencionan ventanas deficientes, sin comparación doble/triple ni criterios térmicos de selección.",
+      "coverageReferences": [
+        "R4R_10 §7.2"
+      ],
+      "question": "I want to replace my home's windows, but I don't know whether triple glazing is really worthwhile or whether double glazing is enough.",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 6",
+      "evidence": false,
+      "origin": "independent",
+      "independentId": 6,
+      "coverage": "INSUFFICIENT",
+      "initialNumber": 21,
+      "caseId": "case-21",
+      "number": 22,
+      "coverageRationale": "Pasillo estrecho trata transporte y ejecución de solera, no diseño para iluminación o aprovechamiento del espacio.",
+      "coverageReferences": [
+        "R4R_10 §6.4"
+      ],
+      "revision": "short-natural-v2-not-evaluated",
+      "question": "I have a long, dark corridor. How can I get more light and make better use of the space?",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 8",
+      "evidence": false,
+      "origin": "independent",
+      "independentId": 8,
+      "coverage": "INSUFFICIENT",
+      "initialNumber": 23,
+      "caseId": "case-23",
+      "number": 23,
+      "coverageRationale": "Vigas de madera aborda secado/encuentros, sin criterios estructurales para reforzar o sustituir una viga combada.",
+      "coverageReferences": [
+        "R4R_20 §13.8",
+        "R4R_00 §4.4"
+      ],
+      "revision": "short-natural-v2-not-evaluated",
+      "question": "The wooden beams in my old house are bowed. Can they be reinforced or do they need replacing?",
+      "category": "Viviendas"
+    },
+    {
+      "name": "Independiente 9",
+      "evidence": false,
+      "origin": "independent",
+      "independentId": 9,
+      "coverage": "INSUFFICIENT",
+      "initialNumber": 24,
+      "caseId": "case-24",
+      "number": 24,
+      "coverageRationale": "Revisar climatización existente no demuestra que el desequilibrio térmico se pueda solucionar sin sustituir el sistema.",
+      "coverageReferences": [
+        "R4R_20 §11.2"
+      ],
+      "question": "Our office is very hot in some areas and cold in others. Can this be solved by renovating the climate-control installation without replacing the whole system?",
+      "category": "Oficinas y locales"
+    },
+    {
+      "name": "Independiente 10",
+      "evidence": false,
+      "origin": "independent",
+      "independentId": 10,
+      "coverage": "INSUFFICIENT",
+      "initialNumber": 25,
+      "caseId": "case-25",
+      "number": 25,
+      "coverageRationale": "Existe filtro general de cambio de uso/licencia/técnico; no catálogo de obras de apertura de una cafetería. Cocina doméstica no equivale a local de hostelería.",
+      "coverageReferences": [
+        "R4R_20 §14.5–14.6"
+      ],
+      "revision": "short-natural-v2-not-evaluated",
+      "question": "I want to turn a shop into a café. What building work do I need before opening?",
+      "category": "Oficinas y locales"
+    },
+    {
+      "name": "Fuera de corpus: geotermia",
+      "evidence": false,
+      "origin": "new-renovation-out-of-domain",
+      "initialNumber": 26,
+      "caseId": "case-26",
+      "number": 26,
+      "coverage": "INSUFFICIENT",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "What capacity and how many geothermal collectors do I need to heat and cool a 180 m² home?"
+    },
+    {
+      "name": "Fuera de corpus: cargador eléctrico",
+      "evidence": false,
+      "origin": "new-renovation-out-of-domain",
+      "initialNumber": 27,
+      "caseId": "case-27",
+      "number": 27,
+      "coverage": "INSUFFICIENT",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "What exact cable cross-section and circuit breaker does the REBT require for installing an 11 kW electric car charger in my garage?"
+    },
+    {
+      "name": "Fuera de dominio: fotosíntesis",
+      "evidence": false,
+      "origin": "original-out-of-domain",
+      "initialNumber": 28,
+      "caseId": "case-28",
+      "number": 28,
+      "coverage": "INSUFFICIENT",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "How do plants make their food through photosynthesis?"
+    },
+    {
+      "name": "Fuera de dominio: astronomía",
+      "evidence": false,
+      "origin": "original-out-of-domain",
+      "initialNumber": 29,
+      "caseId": "case-29",
+      "number": 29,
+      "coverage": "INSUFFICIENT",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "What is the mass of Jupiter in kilograms?"
+    },
+    {
+      "name": "Fuera de dominio: literatura",
+      "evidence": false,
+      "origin": "original-out-of-domain",
+      "initialNumber": 30,
+      "caseId": "case-30",
+      "number": 30,
+      "coverage": "INSUFFICIENT",
+      "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
+      "coverageReferences": [],
+      "question": "Who wrote the novel One Hundred Years of Solitude?"
+    }
+  ],
+  "additionalIndependentQuestions": [],
+  "history": {
+    "generalization": [
+      {
+        "caseId": "case-01",
+        "initialNumber": 1,
+        "question": "If I want initial guidance on my renovation, what details should I provide?"
+      },
+      {
+        "caseId": "case-02",
+        "initialNumber": 2,
+        "question": "In construction, how does the concrete base differ from the finished flooring?"
+      },
+      {
+        "caseId": "case-03",
+        "initialNumber": 3,
+        "question": "Why does access affect the price of a concrete slab?"
+      },
+      {
+        "caseId": "case-04",
+        "initialNumber": 4,
+        "question": "What is the approximate cost of a complete renovation of an old house?"
+      },
+      {
+        "caseId": "case-05",
+        "initialNumber": 5,
+        "question": "Does initial cost guidance replace a technical site visit?"
+      },
+      {
+        "caseId": "case-06",
+        "initialNumber": 6,
+        "question": "What should be checked before paving a patio?"
+      },
+      {
+        "caseId": "case-07",
+        "initialNumber": 7,
+        "question": "When is it advisable to use ready-mix concrete for a slab?"
+      },
+      {
+        "caseId": "case-08",
+        "initialNumber": 8,
+        "question": "How does a narrow corridor affect the construction of a concrete slab?"
+      },
+      {
+        "caseId": "case-09",
+        "initialNumber": 9,
+        "question": "What causes of damp can occur in an old home?"
+      },
+      {
+        "caseId": "case-10",
+        "initialNumber": 10,
+        "question": "Should a renovation estimate include the execution timeline?"
+      },
+      {
+        "caseId": "case-11",
+        "initialNumber": 11,
+        "question": "What information should a customer provide to request an estimate?"
+      },
+      {
+        "caseId": "case-12",
+        "initialNumber": 12,
+        "question": "What information is needed to estimate a bathroom renovation?"
+      },
+      {
+        "caseId": "case-13",
+        "initialNumber": 13,
+        "question": "What kinds of renovation work does this company do? Does it work on houses and offices?"
+      },
+      {
+        "caseId": "case-14",
+        "initialNumber": 14,
+        "question": "What are the differences between air lime and natural hydraulic lime when working on old walls?"
+      },
+      {
+        "caseId": "case-15",
+        "initialNumber": 15,
+        "question": "What precautions should be taken before laying new tiles over an existing floor?"
+      },
+      {
+        "caseId": "case-16",
+        "initialNumber": 16,
+        "question": "I'm thinking of buying a fairly old flat, but there are cracks in some walls. How can I tell whether they are superficial or whether I'm getting into a serious problem?"
+      },
+      {
+        "caseId": "case-17",
+        "initialNumber": 17,
+        "question": "I want to renovate my kitchen, but the cabinets are still in good condition. Is there a way to refresh it without taking everything apart?"
+      },
+      {
+        "caseId": "case-18",
+        "initialNumber": 18,
+        "question": "In my home, we can hear absolutely everything the upstairs neighbours do. Can the sound insulation be improved without losing too much ceiling height in the rooms?"
+      },
+      {
+        "caseId": "case-19",
+        "initialNumber": 19,
+        "question": "I have a terrace that leaks water into the flat below whenever it rains heavily. Where would you start to locate and solve the problem?"
+      },
+      {
+        "caseId": "case-20",
+        "initialNumber": 20,
+        "question": "I want to replace my home's windows, but I don't know whether triple glazing is really worthwhile or whether double glazing is enough."
+      },
+      {
+        "caseId": "case-21",
+        "initialNumber": 21,
+        "question": "My home has a very long and rather dark corridor. What changes could make better use of the space and bring in more light?"
+      },
+      {
+        "caseId": "case-22",
+        "initialNumber": 22,
+        "question": "We've just bought a flat and want to renovate it before moving in. In what order should the work be done to avoid having to break things that are already finished?"
+      },
+      {
+        "caseId": "case-23",
+        "initialNumber": 23,
+        "question": "I have an old home with wooden ceilings. Some beams are slightly bowed. Can they be reinforced, or do they normally need replacing?"
+      },
+      {
+        "caseId": "case-24",
+        "initialNumber": 24,
+        "question": "Our office is very hot in some areas and cold in others. Can this be solved by renovating the climate-control installation without replacing the whole system?"
+      },
+      {
+        "caseId": "case-25",
+        "initialNumber": 25,
+        "question": "We want to turn a small shop into a café. What building work is usually needed before opening?"
+      },
+      {
+        "caseId": "case-26",
+        "initialNumber": 26,
+        "question": "What capacity and how many geothermal collectors do I need to heat and cool a 180 m² home?"
+      },
+      {
+        "caseId": "case-27",
+        "initialNumber": 27,
+        "question": "What exact cable cross-section and circuit breaker does the REBT require for installing an 11 kW electric car charger in my garage?"
+      },
+      {
+        "caseId": "case-28",
+        "initialNumber": 28,
+        "question": "How do plants make their food through photosynthesis?"
+      },
+      {
+        "caseId": "case-29",
+        "initialNumber": 29,
+        "question": "What is the mass of Jupiter in kilograms?"
+      },
+      {
+        "caseId": "case-30",
+        "initialNumber": 30,
+        "question": "Who wrote the novel One Hundred Years of Solitude?"
+      }
+    ],
+    "independentOriginal": [],
+    "nomic": [
+      {
+        "source": "RagLiveEnglishQuestionsIT.java",
+        "number": 1,
+        "name": "Company services ES/EN regression",
+        "question": "What kinds of renovation work does this company do? Does it work on houses and offices?",
+        "retrievalQuestion": "¿Qué tipos de reformas realiza esta empresa? ¿Trabaja en viviendas y oficinas?",
+        "lang": "en",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveEnglishQuestionsIT.java",
+        "number": 2,
+        "name": "Concrete slab versus flooring",
+        "question": "In construction, how does the concrete base differ from the finished flooring?",
+        "retrievalQuestion": "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?",
+        "lang": "en",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveEnglishQuestionsIT.java",
+        "number": 3,
+        "name": "Access and cost",
+        "question": "Why does access affect the price of a concrete slab?",
+        "retrievalQuestion": "¿Por qué el acceso cambia el precio de una solera?",
+        "lang": "en",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveEnglishQuestionsIT.java",
+        "number": 4,
+        "name": "Old house",
+        "question": "What is the approximate cost of a complete renovation of an old house?",
+        "retrievalQuestion": "¿Cuánto orienta una reforma integral de una casa antigua?",
+        "lang": "en",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveEnglishQuestionsIT.java",
+        "number": 5,
+        "name": "Site visit",
+        "question": "Does initial cost guidance replace a technical site visit?",
+        "retrievalQuestion": "¿Una primera orientación económica sustituye una visita técnica?",
+        "lang": "en",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveEnglishQuestionsIT.java",
+        "number": 6,
+        "name": "Patio",
+        "question": "What should be checked before paving a patio?",
+        "retrievalQuestion": "¿Qué debe revisarse antes de pavimentar un patio?",
+        "lang": "en",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveEnglishQuestionsIT.java",
+        "number": 7,
+        "name": "Ready-mix concrete",
+        "question": "When is it advisable to use ready-mix concrete for a slab?",
+        "retrievalQuestion": "¿Cuándo conviene usar hormigón de camión en una solera?",
+        "lang": "en",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveEnglishQuestionsIT.java",
+        "number": 8,
+        "name": "Narrow corridor",
+        "question": "How does a narrow corridor affect the construction of a concrete slab?",
+        "retrievalQuestion": "¿Cómo afecta un pasillo estrecho a la ejecución de una solera?",
+        "lang": "en",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveEnglishQuestionsIT.java",
+        "number": 9,
+        "name": "Damp",
+        "question": "What causes of damp can occur in an old home?",
+        "retrievalQuestion": "¿Qué causas de humedad pueden aparecer en una vivienda antigua?",
+        "lang": "en",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveEnglishQuestionsIT.java",
+        "number": 10,
+        "name": "Timelines",
+        "question": "Should a renovation estimate include the execution timeline?",
+        "retrievalQuestion": "¿Debe incluir el presupuesto de una reforma los plazos de ejecución?",
+        "lang": "en",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveEnglishQuestionsIT.java",
+        "number": 11,
+        "name": "Estimate",
+        "question": "What information should a customer provide to request an estimate?",
+        "retrievalQuestion": "¿Qué datos debe aportar el cliente para solicitar un presupuesto?",
+        "lang": "en",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveEnglishQuestionsIT.java",
+        "number": 12,
+        "name": "Bathroom",
+        "question": "What information is needed to estimate a bathroom renovation?",
+        "retrievalQuestion": "¿Qué datos hacen falta para orientar una reforma de baño?",
+        "lang": "en",
+        "evidence": true
+      },
+      {
+        "source": "RagLiveEnglishQuestionsIT.java",
+        "number": 13,
+        "name": "Out of domain: photosynthesis",
+        "question": "How do plants make their food through photosynthesis?",
+        "retrievalQuestion": "¿De qué manera producen alimento las plantas mediante la fotosíntesis?",
+        "lang": "en",
+        "evidence": false
+      },
+      {
+        "source": "RagLiveEnglishQuestionsIT.java",
+        "number": 14,
+        "name": "Out of domain: astronomy",
+        "question": "What is the mass of Jupiter in kilograms?",
+        "retrievalQuestion": "¿Cuál es la masa de Júpiter en kilogramos?",
+        "lang": "en",
+        "evidence": false
+      },
+      {
+        "source": "RagLiveEnglishQuestionsIT.java",
+        "number": 15,
+        "name": "Out of domain: literature",
+        "question": "Who wrote the novel One Hundred Years of Solitude?",
+        "retrievalQuestion": "¿Quién escribió la novela Cien años de soledad?",
+        "lang": "en",
+        "evidence": false
+      }
+    ]
+  },
+  "regressions": {
+    "timeline": {
+      "name": "Regresión: motivo de los plazos no documentado",
+      "question": "Why is it important to know the expected timeline before preparing a renovation estimate?",
+      "evidence": true
+    }
+  }
+}

@@ -22,10 +22,13 @@ import static org.mockito.Mockito.*;
 class NomicRetrievalRegressionTest {
     static NomicRegressionCorpus corpus;
     @BeforeAll static void load() throws Exception { corpus=new NomicRegressionCorpus(); }
-    static Stream<Arguments> caveCases() { return Stream.of(
-            Arguments.of("cave","¿Con qué reformaríais una cueva?",19),
-            Arguments.of("cellar","¿Con qué reformaríais una bodega?",6),
-            Arguments.of("mortar","¿Qué mortero utilizaríais para rehabilitar una cueva antigua?",3)); }
+    static Stream<Arguments> caveCases() {
+        var cases = new ArrayList<Arguments>();
+        for (var row : com.riansares.r4r.evaluation.EvaluationQuestions.document("es").path("regressions").path("cave")) {
+            cases.add(Arguments.of(row.path("key").asText(), row.path("question").asText(), row.path("originalRank").asInt()));
+        }
+        return cases.stream();
+    }
     @ParameterizedTest @MethodSource("caveCases")
     void bothNomicAdaptersRecoverOriginalCaseWithoutChangingEmbeddingsOrThreshold(String key,String question,int originalRank) {
         var vector=corpus.query(key);var ranked=corpus.ranked(vector);
@@ -60,13 +63,15 @@ class NomicRetrievalRegressionTest {
         assertThat(pgResults).containsExactlyElementsOf(s3Results);
         verify(embedding,times(1)).embed(question);verifyNoInteractions(jdbc);
     }
-    static Stream<Arguments> canonicalCases() throws Exception {
-        try(var stream=NomicRetrievalRegressionTest.class.getResourceAsStream("/retrieval/nomic-captured-questions.json")) {
-            var rows=NomicRegressionCorpus.JSON.readTree(stream);var cases=new ArrayList<Arguments>();
-            for(var row:rows)cases.add(Arguments.of(row.path("lang").asText(),row.path("question").asText(),row.path("evidence").asBoolean(),
-                    String.format(Locale.ROOT,"%s-%02d",row.path("lang").asText(),row.path("number").asInt()),row.path("retrievalQuestion").asText()));
-            return cases.stream();
+    static Stream<Arguments> canonicalCases() {
+        var cases = new ArrayList<Arguments>();
+        for (String lang : List.of("es", "en")) {
+            for (var row : com.riansares.r4r.evaluation.EvaluationQuestions.document(lang).path("history").path("nomic")) {
+                cases.add(Arguments.of(lang, row.path("question").asText(), row.path("evidence").asBoolean(),
+                        String.format(Locale.ROOT,"%s-%02d",lang,row.path("number").asInt()),row.path("retrievalQuestion").asText()));
+            }
         }
+        return cases.stream();
     }
     @ParameterizedTest @MethodSource("canonicalCases")
     void bilingualCandidatesRetainBestExistingEvidenceAndRawThreshold(String language,String question,boolean answerable,String key,String retrieval) throws Exception {

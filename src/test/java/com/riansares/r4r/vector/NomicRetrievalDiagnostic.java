@@ -75,7 +75,7 @@ public final class NomicRetrievalDiagnostic {
         var report=new LinkedHashMap<String,Object>();report.put("topK",topK);report.put("minScore",minScore);report.put("rerank",ranking);report.put("pcOnly",generalization);
         var rows=JSON.createArrayNode();
         if(questions!=null)rows.addAll((com.fasterxml.jackson.databind.node.ArrayNode)JSON.readTree(questions.toFile()));
-        else for(var text:List.of("¿Con qué reformaríais una cueva?","¿Con qué reformaríais una bodega?","¿Qué mortero utilizaríais para rehabilitar una cueva antigua?"))rows.addObject().put("question",text).put("lang","es");
+        else for(var row:com.riansares.r4r.evaluation.EvaluationQuestions.document("es").path("regressions").path("cave"))rows.addObject().put("question",row.path("question").asText()).put("lang","es");
         var selected=new AtomicReference<List<MarkdownChunk>>(List.of());
         KnowledgeVectorStore supplied=new KnowledgeVectorStore(){
             public void index(List<MarkdownChunk> chunks){throw new UnsupportedOperationException("Read-only diagnostic");}
