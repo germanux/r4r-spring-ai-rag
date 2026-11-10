@@ -15,6 +15,14 @@ class HandlerTest {
  QueryOutputVector hit() {return QueryOutputVector.builder().key("a").distance(.2f).metadata(Document.fromMap(Map.of(
  "source",Document.fromString("a.md"),"source_text",Document.fromString("Evidence"),"ordinal",Document.fromNumber(0)))).build();}
  QueryVectorsResponse page(String token) {return QueryVectorsResponse.builder().distanceMetric(DistanceMetric.COSINE).vectors(hit()).nextToken(token).build();}
+ @Test void preservesMultilineAndQuotedMetadata() throws Exception {
+  String text="Line one\n\"Quoted\" and backslash \\";
+  var m=new java.util.LinkedHashMap<>(hit().metadata().asMap());m.put("source_text",Document.fromString(text));
+  when(client.queryVectors(any(QueryVectorsRequest.class))).thenReturn(page(null).toBuilder().vectors(hit().toBuilder().metadata(Document.fromMap(m)).build()).build());
+  var result=Handler.JSON.readTree(Handler.JSON.writeValueAsBytes(handler.query(input())));
+  assertEquals(text,result.at("/vectors/0/metadata/source_text").textValue());
+  assertTrue(result.at("/vectors/0/metadata/ordinal").isIntegralNumber());
+ }
  @Test void valid() throws Exception {when(client.queryVectors(any(QueryVectorsRequest.class))).thenReturn(page(null));assertEquals(768,handler.query(input()).get("dimensions"));}
  @Test void invalidVectors() {var n=input();n.putArray("embedding").add(1);assertThrows(IllegalArgumentException.class,()->handler.query(n));n.set("embedding",Handler.JSON.nullNode());assertThrows(IllegalArgumentException.class,()->handler.query(n));verifyNoInteractions(client);}
  @Test void zeroAndNonfinite() {for(double v:new double[]{0,Double.NaN,Double.POSITIVE_INFINITY}) {var n=input();((com.fasterxml.jackson.databind.node.ArrayNode)n.get("embedding")).set(0,Handler.JSON.getNodeFactory().numberNode(v));assertThrows(IllegalArgumentException.class,()->handler.query(n));}}

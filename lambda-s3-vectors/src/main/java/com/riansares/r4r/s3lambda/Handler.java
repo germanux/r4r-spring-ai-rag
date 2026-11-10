@@ -51,13 +51,26 @@ public final class Handler implements RequestStreamHandler {
                 if(hit.key()==null || hit.key().isBlank() || !keys.add(hit.key()) || hit.distance()==null || hits.size()>=k) throw new IllegalStateException();
                 new S3VectorScoreMapper().toScore(hit.distance());
                 new S3VectorMetadataMapper().fromDocument(hit.metadata());
-                hits.add(Map.of("key",hit.key(),"distance",hit.distance(),"metadata",JSON.readTree(hit.metadata().toString())));
+                hits.add(Map.of("key",hit.key(),"distance",hit.distance(),"metadata",javaValue(hit.metadata())));
             }
             token=response.nextToken(); if(token!=null && token.isBlank()) token=null;
             if(token!=null && !tokens.add(token)) throw new IllegalStateException();
         } while(token!=null);
         return Map.of("schemaVersion",1,"index","amzn-r4r-vector-index","bucket","amzn-r4r-vectors","dimensions",768,
             "distanceMetric","cosine","vectors",hits,"vectorSearchMs",(System.nanoTime()-start)/1e6);
+    }
+    // Document.toString is diagnostic output, not a JSON serialization contract.
+    private static Object javaValue(software.amazon.awssdk.core.document.Document value) {
+        if(value == null || value.isNull()) return null;
+        if(value.isNumber()) return value.asNumber().bigDecimalValue();
+        if(value.isString()) return value.asString();
+        if(value.isBoolean()) return value.asBoolean();
+        if(value.isList()) return value.asList().stream().map(Handler::javaValue).toList();
+        if(value.isMap()) {
+            Map<String,Object> map=new LinkedHashMap<>();
+            value.asMap().forEach((key,child)->map.put(key,javaValue(child)));return map;
+        }
+        throw new IllegalStateException("Unsupported metadata");
     }
     @Override public void handleRequest(InputStream input,OutputStream output,Context context) throws IOException {
         try {
