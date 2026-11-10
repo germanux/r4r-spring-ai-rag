@@ -1,6 +1,41 @@
 # Generalización del RAG — evaluación real del 10 de noviembre de 2026
 
-La batería de control funciona mucho mejor que las preguntas independientes. La captura termina sin errores de transporte, pero eso **no equivale a una evaluación semántica aprobada**: aparecen respuestas convincentes sin respaldo, transferencia de consejos entre contextos incompatibles y abstenciones inconsistentes entre ES/EN. No se ha corregido el sistema para superar estas preguntas.
+## Resumen de resultados
+
+El RAG responde bien a las preguntas habituales del corpus, pero **pierde fiabilidad con preguntas independientes**, especialmente cuando recupera textos relacionados que no resuelven la consulta concreta.
+
+Se evaluaron **70 consultas**, usando el PC con `qwen3:8b`:
+
+| Valoración | Respuestas |
+|---|---:|
+| Correctas | 28 |
+| Parciales | 9 |
+| Incorrectas o sin respaldo | 13 |
+| Genéricas, sin resolver la pregunta | 3 |
+| Abstenciones justificadas | 16 |
+| Abstención innecesaria | 1 |
+
+Estos recuentos corresponden a las respuestas PG representativas; las tres respuestas S3 generadas por separado reciben las mismas categorías. No se cuentan las respuestas reutilizadas como observaciones independientes.
+
+**PostgreSQL frente a S3:** devolvieron exactamente los mismos fragmentos y orden en **67 de 70 consultas**. Las tres diferencias no cambiaron la valoración de las respuestas. No aparece una ventaja clara de un almacén sobre el otro.
+
+**Español frente a inglés:** hay diferencias relevantes:
+
+- Sobre plazos del presupuesto, ES responde correctamente; EN se abstiene teniendo la información.
+- Sobre climatización, ES asegura una solución sin respaldo suficiente; EN se abstiene.
+- La traducción interna convierte triple/doble acristalamiento en doble/doble y confunde hormigón de camión con hormigón armado.
+
+Los fallos principales son:
+
+- **Recuperación:** devuelve información de cisternas para una terraza o de pintura de techos para una pared deteriorada por abajo.
+- **Generación:** aplica consejos a situaciones que las fuentes no justifican; por ejemplo, un tabique opaco presentado como solución que mantiene la apertura visual de una oficina acristalada.
+- **Citación:** las etiquetas apuntan correctamente a fragmentos reales, pero algunas afirmaciones **no están respaldadas por esos fragmentos**.
+
+Las cinco preguntas claramente ajenas o de dimensionamiento ausente —geotermia, cargador eléctrico, fotosíntesis, Júpiter y literatura— provocaron abstención en ambos idiomas. La dificultad aparece sobre todo en preguntas próximas al vocabulario del corpus.
+
+**Estos resultados corresponden a las preguntas anteriores a su abreviación. Las nuevas versiones cortas todavía no se han evaluado.** Los tests offline aprobados verifican contratos y funcionamiento, no la corrección semántica de estas respuestas. La captura terminó sin errores de transporte; no se ha corregido el sistema para superar estas preguntas.
+
+## Organización del informe y preguntas
 
 Este es el **único informe de esta evaluación**: resumen, comparación PG/S3 y ES/EN, diagnóstico, comandos y registro completo de respuestas al final. Las preguntas para ejecutar tests tienen solo dos fuentes:
 
