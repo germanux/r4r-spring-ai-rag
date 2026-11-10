@@ -1,5 +1,6 @@
 package com.riansares.r4r.vector.config;
 
+import com.riansares.r4r.config.NomicRerankProperties;
 import com.riansares.r4r.vector.FailoverKnowledgeVectorStore;
 import com.riansares.r4r.vector.PostgresAccessGate;
 import com.riansares.r4r.vector.pgvector.PgVectorKnowledgeStore;
@@ -13,12 +14,13 @@ import org.springframework.context.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration(proxyBeanMethods=false)
-@EnableConfigurationProperties(RagVectorProperties.class)
+@EnableConfigurationProperties({RagVectorProperties.class, NomicRerankProperties.class})
 public class KnowledgeVectorStoreConfiguration {
     @Bean
     @Lazy
-    PgVectorKnowledgeStore pgVectorKnowledgeStore(VectorStore vectorStore,JdbcTemplate jdbcTemplate) {
-        return new PgVectorKnowledgeStore(vectorStore,jdbcTemplate);
+    PgVectorKnowledgeStore pgVectorKnowledgeStore(VectorStore vectorStore,JdbcTemplate jdbcTemplate,
+            NomicRerankProperties ranking) {
+        return new PgVectorKnowledgeStore(vectorStore,jdbcTemplate,ranking);
     }
     @Bean
     @Primary

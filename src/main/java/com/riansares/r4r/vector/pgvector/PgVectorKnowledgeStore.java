@@ -1,5 +1,7 @@
 package com.riansares.r4r.vector.pgvector;
 
+import com.riansares.r4r.config.NomicRerankProperties;
+import com.riansares.r4r.vector.NomicCandidateReranker;
 import com.riansares.r4r.chunking.MarkdownChunk;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
@@ -25,11 +27,18 @@ public class PgVectorKnowledgeStore implements KnowledgeVectorStore {
 
     private final VectorStore vectorStore;
     private final JdbcTemplate jdbcTemplate;
+    private final NomicCandidateReranker reranker;
 
     public PgVectorKnowledgeStore(
             VectorStore vectorStore,
             JdbcTemplate jdbcTemplate) {
 
+        this(vectorStore, jdbcTemplate, NomicRerankProperties.defaults());
+    }
+
+    public PgVectorKnowledgeStore(VectorStore vectorStore, JdbcTemplate jdbcTemplate,
+            NomicRerankProperties ranking) {
+        this.reranker = new NomicCandidateReranker(ranking);
         this.vectorStore = Objects.requireNonNull(vectorStore, "vectorStore");
         this.jdbcTemplate = Objects.requireNonNull(jdbcTemplate, "jdbcTemplate");
     }
@@ -115,14 +124,16 @@ public class PgVectorKnowledgeStore implements KnowledgeVectorStore {
 
         SearchRequest request = SearchRequest.builder()
                 .query(query)
-                .topK(topK)
+                .topK(reranker.candidateCount(topK))
                 .similarityThreshold(minScore)
                 .build();
 
-        return vectorStore.similaritySearch(request).stream()
+        var candidates = vectorStore.similaritySearch(request).stream()
                 .map(this::expandSectionHeading)
-                .map(this::fromDocument)
+                .map(document -> new NomicCandidateReranker.Candidate(
+                        fromDocument(document), document.getScore() == null ? Double.NaN : document.getScore()))
                 .toList();
+        return reranker.select(query, candidates, topK);
     }
 
     /** Heading-only chunks need their own section's evidence, not an invented answer. */

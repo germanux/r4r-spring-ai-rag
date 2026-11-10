@@ -65,7 +65,7 @@ Inventario auditado de las 41 clases obligatorias, bajo
 | `rag` | `CitedRagMultilingualRetrievalTest`, `CitedRagServiceCitationsTest`, `CitedRagServiceInvalidAnswersTest`, `CitedRagServiceTest`, `EmbeddingProviderFailoverTest`, `GenerationRouterTest`, `LocalRetrievalQueryTranslatorTest`, `OllamaModelPreloaderTest`, `OllamaThinkingInterceptorTest`, `OpenAiFallbackTest`, `RagStreamingTest` |
 | `rag/api` | `InferenceHostTest`, `RagQueryControllerTest`, `RagRequestValidationTest`, `RagRuntimeControllerTest`, `RagStreamControllerTest` |
 | `service` | `KnowledgeCatalogServiceTest` |
-| `vector` | `FailoverKnowledgeVectorStoreTest`, `PostgresAccessGateTest`, `TitanFailoverTest` |
+| `vector` | `FailoverKnowledgeVectorStoreTest`, `PostgresAccessGateTest`, `TitanFailoverTest`, `NomicCandidateRerankerTest`, `NomicRetrievalRegressionTest` |
 | `vector/config` | `KnowledgeVectorStoreConfigurationTest`, `PostgresFailoverStartupTest`, `S3VectorsConfigurationTest`, `S3VectorsEnvironmentCredentialsTest`, `VectorReadOnlyStartupTest`, `TitanRetrievalConfigurationTest` |
 | `vector/titan` | `TitanLambdaKnowledgeStoreTest` |
 | `vector/pgvector` | `PgVectorKnowledgeStoreTest`, `PgVectorSectionContextTest` |
@@ -263,3 +263,22 @@ Las 30 preguntas en `TitanDegradedHttpIT` prueban contrato y flujo con respuesta
 simuladas; **no certifican relevancia semántica, permisos ni latencias reales**.
 La evaluación real y los comandos de activación, IAM y comprobación del corpus están
 en [la guía Titan](operations/titan-lambda-retrieval.md).
+
+
+## Regresión semántica Nomic y Caso G
+
+`NomicRetrievalRegressionTest` añade tres consultas de cueva/bodega/mortero y reutiliza
+las 30 preguntas ES/EN originales. Reproduce offline vectores Nomic reales capturados,
+leyendo el corpus exportado existente y comprobando su checksum. Los mocks sustituyen
+el transporte de PG/S3, no los vectores ni el cálculo de ranking. Se mantienen el
+umbral de coseno y las comprobaciones de abstención/citas.
+
+`NomicRetrievalDiagnostic` es una herramienta main de test, no un test automático:
+requiere `--run`, fuerza PG en solo lectura, usa el perfil `r4r-codex` para S3 y no
+arranca Boot/Flyway. `--generate-local` habilita explícitamente generación Ollama,
+con OpenAI desactivado. No consulta Bedrock. Sus comandos, comparativas reales y
+parámetros de ranking están en [el diagnóstico del Caso G](operations/nomic-cave-retrieval.md).
+
+La comparación real ejecutada en esta revisión comprende las tres regresiones y
+las 30 preguntas ES/EN, antes/después. Los resultados completos permanecen en runtime
+ignorado; el informe documenta las cantidades y distingue estas mediciones de mocks.

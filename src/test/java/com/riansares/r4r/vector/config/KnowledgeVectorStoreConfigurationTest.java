@@ -73,11 +73,22 @@ class KnowledgeVectorStoreConfigurationTest {
             assertThat(store.search("consulta", 5, .63)).containsExactly(first, second);
             verify(vectors).similaritySearch(argThat((SearchRequest request) ->
                     request.getQuery().equals("consulta")
-                            && request.getTopK() == 5
+                            && request.getTopK() == 20
                             && request.getSimilarityThreshold() == .63));
             verify(jdbc).afterPropertiesSet();
             verifyNoMoreInteractions(jdbc);
             verifyNoInteractions(transactions);
+        });
+    }
+
+    @Test
+    void explicitLegacyRankingKeepsOriginalRequestAndThreshold() {
+        when(vectors.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
+        runner.withPropertyValues("r4r.rag.retrieval.rerank.candidate-multiplier=1",
+                "r4r.rag.retrieval.rerank.lexical-weight=0").run(context -> {
+            assertThat(context.getBean(KnowledgeVectorStore.class).search("q",5,.63)).isEmpty();
+            verify(vectors).similaritySearch(argThat((SearchRequest request) -> request.getTopK()==5
+                    && request.getSimilarityThreshold()==.63));
         });
     }
 

@@ -16,6 +16,10 @@ class TitanFailoverTest {
     final List<MarkdownChunk> docs = List.of(new MarkdownChunk("faq.md", List.of("FAQ"), 2, "Evidence"));
     FailoverKnowledgeVectorStore router(boolean enabled) { return new FailoverKnowledgeVectorStore(() -> pg, s3, "pgvector", true, false, null, enabled ? titan : null); }
     void pgDown() { doThrow(new CannotGetJdbcConnectionException("offline")).when(pg).search("q", 5, .6); }
+    @Test void enabledTitanDoesNotChangeWriteOwnership() {
+        var router=router(true);router.index(docs);router.replaceSource("faq.md",docs);
+        verify(pg).index(docs);verify(pg).replaceSource("faq.md",docs);verifyNoInteractions(s3,titan);
+    }
     @Test void healthyPgAndEmptyPgDoNotCallAnySecondary() {
         when(pg.search("q", 5, .6)).thenReturn(docs, List.of());
         assertThat(router(true).search("q", 5, .6)).isSameAs(docs);

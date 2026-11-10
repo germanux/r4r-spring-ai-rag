@@ -46,7 +46,9 @@ public final class TitanLambdaKnowledgeStore implements KnowledgeVectorStore {
             var body = JSON.readTree(response.payload().asByteArray());
             if (!"amazon.titan-embed-text-v2:0".equals(body.at("/provider/embedding").asText())
                     || !"r4r-titan-v2-1024".equals(body.at("/provider/index").asText())
-                    || body.at("/provider/dimensions").asInt() != 1024
+                    || !body.at("/provider/dimensions").isIntegralNumber()
+                    || !body.at("/provider/dimensions").canConvertToInt()
+                    || body.at("/provider/dimensions").intValue() != 1024
                     || !"aws-s3-vectors".equals(body.at("/provider/vectorStore").asText()))
                 throw new IllegalStateException("Unexpected embedding space");
             var docs = body.path("documents");
@@ -61,7 +63,7 @@ public final class TitanLambdaKnowledgeStore implements KnowledgeVectorStore {
                 Map<String, Object> values = JSON.convertValue(doc.path("metadata"), new TypeReference<>() {});
                 var chunk = metadata.fromMetadata(values);
                 if (!doc.path("text").isTextual() || !doc.path("text").asText().equals(chunk.content())
-                        || !doc.path("source").asText().equals(chunk.source()) || !doc.path("ordinal").isIntegralNumber()
+                        || !doc.path("source").isTextual() || !doc.path("source").asText().equals(chunk.source()) || !doc.path("ordinal").isIntegralNumber()
                         || !doc.path("ordinal").canConvertToInt() || doc.path("ordinal").intValue() != chunk.index()
                         || !JSON.valueToTree(chunk.headingPath()).equals(doc.path("headingPath")))
                     throw new IllegalStateException("Inconsistent retrieval provenance");

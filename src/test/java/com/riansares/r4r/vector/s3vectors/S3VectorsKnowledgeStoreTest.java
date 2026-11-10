@@ -54,7 +54,7 @@ class S3VectorsKnowledgeStoreTest {
         assertThat(first.vectorBucketName()).isEqualTo("test-vector-bucket");
         assertThat(first.indexName()).isEqualTo("test-vector-index");
         assertThat(first.returnDistance()).isTrue(); assertThat(first.returnMetadata()).isTrue();
-        assertThat(first.topK()).isEqualTo(3);
+        assertThat(first.topK()).isEqualTo(12); // Four candidates per requested result, same raw cosine threshold.
         assertThat(first.queryVector().float32()).hasSize(768);
         assertThat(first.nextToken()).isNull(); assertThat(second.nextToken()).isEqualTo("next");
         assertThat(second.queryVector()).isEqualTo(first.queryVector());
@@ -121,7 +121,7 @@ class S3VectorsKnowledgeStoreTest {
     @Test void rejectsRepeatedTokensExcessResultsAndUnboundedEmptyPages() {
         when(client.queryVectors(any(QueryVectorsRequest.class))).thenReturn(page("repeat"));
         assertThatThrownBy(() -> store.search("q", 5, .63)).hasMessageContaining("pagination token");
-        when(client.queryVectors(any(QueryVectorsRequest.class))).thenReturn(page(null, hit("a", .1f), hit("b", .2f)));
+        when(client.queryVectors(any(QueryVectorsRequest.class))).thenReturn(page(null, hit("a", .1f), hit("b", .2f), hit("c", .2f), hit("d", .2f), hit("e", .2f)));
         assertThatThrownBy(() -> store.search("q", 1, .63)).hasMessageContaining("topK");
         var counter = new java.util.concurrent.atomic.AtomicInteger();
         when(client.queryVectors(any(QueryVectorsRequest.class))).thenAnswer(i -> page("token" + counter.incrementAndGet()));

@@ -1,5 +1,7 @@
 package com.riansares.r4r.vector.s3vectors;
 
+import com.riansares.r4r.config.NomicRerankProperties;
+import com.riansares.r4r.vector.NomicCandidateReranker;
 import com.riansares.r4r.chunking.MarkdownChunk;
 import com.riansares.r4r.vector.config.RagVectorProperties;
 import com.riansares.r4r.vector.port.KnowledgeVectorStore;
@@ -39,9 +41,17 @@ public final class S3VectorsKnowledgeStore implements KnowledgeVectorStore {
     private final RagVectorProperties.S3Vectors config;
     private final S3VectorMetadataMapper metadata;
     private final S3VectorScoreMapper scores;
+    private final NomicCandidateReranker reranker;
 
     public S3VectorsKnowledgeStore(S3VectorsClient client, EmbeddingModel embeddings,
             RagVectorProperties.S3Vectors config, S3VectorMetadataMapper metadata, S3VectorScoreMapper scores) {
+        this(client, embeddings, config, metadata, scores, NomicRerankProperties.defaults());
+    }
+
+    public S3VectorsKnowledgeStore(S3VectorsClient client, EmbeddingModel embeddings,
+            RagVectorProperties.S3Vectors config, S3VectorMetadataMapper metadata, S3VectorScoreMapper scores,
+            NomicRerankProperties ranking) {
+        this.reranker = new NomicCandidateReranker(ranking);
         this.client = Objects.requireNonNull(client, "client");
         this.embeddings = Objects.requireNonNull(embeddings, "embeddings");
         this.config = Objects.requireNonNull(config, "config");
@@ -67,6 +77,7 @@ public final class S3VectorsKnowledgeStore implements KnowledgeVectorStore {
         if (!Double.isFinite(minScore) || minScore < 0 || minScore > 1) {
             throw new IllegalArgumentException("minScore must be finite and between 0.0 and 1.0");
         }
+        int candidateCount = reranker.candidateCount(topK);
         checkCancelled();
         String stage = "embedding";
         try {
@@ -82,7 +93,7 @@ public final class S3VectorsKnowledgeStore implements KnowledgeVectorStore {
             }
             if (squaredNorm == 0) throw invalid("query embedding must not be zero for cosine distance");
             QueryVectorsRequest base = QueryVectorsRequest.builder()
-                    .vectorBucketName(config.bucket()).indexName(config.index()).topK(topK)
+                    .vectorBucketName(config.bucket()).indexName(config.index()).topK(candidateCount)
                     .queryVector(VectorData.fromFloat32(values)).returnDistance(true).returnMetadata(true).build();
             List<Hit> hits = new ArrayList<>();
             var tokens = new HashSet<String>();
@@ -91,7 +102,7 @@ public final class S3VectorsKnowledgeStore implements KnowledgeVectorStore {
             int pages = 0;
             do {
                 checkCancelled();
-                if (++pages > topK + 1) throw invalid("pagination exceeded a bounded number of pages");
+                if (++pages > candidateCount + 1) throw invalid("pagination exceeded a bounded number of pages");
                 stage = "aws_query";
                 var page = client.queryVectors(base.toBuilder().nextToken(token).build());
                 stage = "response_validation";
@@ -106,16 +117,18 @@ public final class S3VectorsKnowledgeStore implements KnowledgeVectorStore {
                     double distance = output.distance().doubleValue();
                     scores.toScore(distance); // Validate even candidates excluded by the threshold.
                     hits.add(new Hit(distance, metadata.fromDocument(output.metadata())));
-                    if (hits.size() > topK) throw invalid("query returned more than the requested topK");
+                    if (hits.size() > candidateCount) throw invalid("query returned more than the requested topK");
                 }
                 token = page.nextToken();
                 if (token != null && token.isBlank()) token = null;
                 if (token != null && !tokens.add(token)) throw invalid("query repeated a pagination token");
             } while (token != null);
             checkCancelled();
-            return hits.stream().sorted(Comparator.comparingDouble(Hit::distance))
-                    .filter(hit -> scores.meetsThreshold(hit.distance(), minScore)).limit(topK)
-                    .map(Hit::chunk).toList(); // Stable sort retains received order for equal distances.
+            var eligible = hits.stream().sorted(Comparator.comparingDouble(Hit::distance))
+                    .filter(hit -> scores.meetsThreshold(hit.distance(), minScore))
+                    .map(hit -> new NomicCandidateReranker.Candidate(hit.chunk(), scores.toScore(hit.distance())))
+                    .toList();
+            return reranker.select(query, eligible, topK); // Stable sort retains received order for equal distances.
         } catch (RuntimeException failure) {
             logFailure(stage, failure);
             throw failure; // Preserve the original error and the router's cancellation/503 contract.

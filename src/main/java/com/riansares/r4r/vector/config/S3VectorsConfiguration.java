@@ -1,5 +1,6 @@
 package com.riansares.r4r.vector.config;
 
+import com.riansares.r4r.config.NomicRerankProperties;
 import com.riansares.r4r.vector.s3vectors.S3VectorMetadataMapper;
 import com.riansares.r4r.vector.s3vectors.S3VectorScoreMapper;
 import com.riansares.r4r.vector.s3vectors.S3VectorsKnowledgeStore;
@@ -18,7 +19,7 @@ import software.amazon.awssdk.services.s3vectors.S3VectorsClient;
 /** Creates the independent S3 adapter; KnowledgeVectorStoreConfiguration owns routing. */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(prefix = "r4r.rag.vector.s3vectors", name = "enabled", havingValue = "true")
-@EnableConfigurationProperties(RagVectorProperties.class)
+@EnableConfigurationProperties({RagVectorProperties.class, NomicRerankProperties.class})
 public class S3VectorsConfiguration {
 
     @Bean(name = "s3VectorsClient", destroyMethod = "close")
@@ -43,8 +44,8 @@ public class S3VectorsConfiguration {
     @Bean(name = "s3VectorsKnowledgeVectorStore", defaultCandidate = false)
     S3VectorsKnowledgeStore s3VectorsKnowledgeVectorStore(
             @Qualifier("s3VectorsClient") S3VectorsClient client,
-            EmbeddingModel embeddingModel, RagVectorProperties properties) {
+            EmbeddingModel embeddingModel, RagVectorProperties properties, NomicRerankProperties ranking) {
         return new S3VectorsKnowledgeStore(client, embeddingModel, properties.s3vectors(),
-                new S3VectorMetadataMapper(), new S3VectorScoreMapper());
+                new S3VectorMetadataMapper(), new S3VectorScoreMapper(), ranking);
     }
 }

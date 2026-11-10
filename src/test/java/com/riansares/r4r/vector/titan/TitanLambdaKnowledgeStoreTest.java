@@ -61,7 +61,7 @@ class TitanLambdaKnowledgeStoreTest {
         assertThat((Double)progress.metrics().get("lambdaInvokeMs")).isGreaterThanOrEqualTo(0);
         assertThat(progress.metrics().get("embeddingMs")).isNull();
     }
-    @ParameterizedTest @ValueSource(strings = {"space", "text", "ordinal", "metrics", "duplicate", "abstained", "score"})
+    @ParameterizedTest @ValueSource(strings = {"space", "text", "ordinal", "metrics", "duplicate", "abstained", "score", "dimensions-text", "dimensions-fraction", "dimensions-nomic", "source-type"})
     void rejectsCorruptContract(String corruption) {
         var body = TitanResponses.body(true);
         var doc = (com.fasterxml.jackson.databind.node.ObjectNode) body.at("/documents/0");
@@ -73,6 +73,12 @@ class TitanLambdaKnowledgeStoreTest {
             case "duplicate" -> ((com.fasterxml.jackson.databind.node.ArrayNode)body.get("documents")).add(doc.deepCopy());
             case "abstained" -> body.put("abstained", true);
             case "score" -> doc.put("score", 2);
+            case "dimensions-text" -> ((com.fasterxml.jackson.databind.node.ObjectNode)body.get("provider")).put("dimensions", "1024");
+            case "dimensions-fraction" -> ((com.fasterxml.jackson.databind.node.ObjectNode)body.get("provider")).put("dimensions", 1024.5);
+            case "dimensions-nomic" -> ((com.fasterxml.jackson.databind.node.ObjectNode)body.get("provider")).put("dimensions", 768);
+            case "source-type" -> {
+                doc.put("source", 123); ((com.fasterxml.jackson.databind.node.ObjectNode)doc.get("metadata")).put("source", "123");
+            }
         }
         when(lambda.invoke(any(InvokeRequest.class))).thenReturn(TitanResponses.response(body));
         assertThatThrownBy(() -> store.search("q", 5, .6)).isInstanceOf(VectorStoreUnavailableException.class);
