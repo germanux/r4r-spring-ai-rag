@@ -15,6 +15,7 @@ public final class RagProgress {
     private final Consumer<Map<String, Object>> sink;
     private final AtomicBoolean cancelled = new AtomicBoolean();
     private volatile Double embeddingMs, retrievalIncludingEmbeddingMs, generationMs;
+    private volatile Double vectorSearchMs, lambdaInvokeMs;
     private GenerationRouter.Provider used;
     private volatile Integer documentsFound;
 
@@ -33,7 +34,8 @@ public final class RagProgress {
     public Map<String, Object> metrics() {
         Map<String, Object> metrics = new LinkedHashMap<>();
         metrics.put("embeddingMs", embeddingMs);
-        metrics.put("vectorSearchMs", null); // No isolated SQL timer in Spring AI 1.0 PgVectorStore.
+        metrics.put("vectorSearchMs", vectorSearchMs); // Only remote Titan reports an isolated search timer.
+        metrics.put("lambdaInvokeMs", lambdaInvokeMs);
         metrics.put("retrievalIncludingEmbeddingMs", retrievalIncludingEmbeddingMs);
         metrics.put("generationMs", generationMs);
         metrics.put("totalMs", (System.nanoTime() - started) / 1_000_000.0);
@@ -71,6 +73,19 @@ public final class RagProgress {
         EMBEDDING_SCOPE.set(this);
         try { checkCancelled(); return action.get(); }
         finally { if (previous == null) EMBEDDING_SCOPE.remove(); else EMBEDDING_SCOPE.set(previous); }
+    }
+    /** Remote stages are supplied by Lambda; invocation time is measured by the backend. */
+    public static void observeLambdaRetrieval(double embedding, double search, double invoke) {
+        RagProgress progress = EMBEDDING_SCOPE.get();
+        if (progress == null) return;
+        progress.checkCancelled();
+        progress.embeddingMs = (progress.embeddingMs == null ? 0 : progress.embeddingMs) + embedding;
+        progress.vectorSearchMs = search;
+        progress.lambdaInvokeMs = invoke;
+    }
+    public static void observeLambdaInvocation(double ms) {
+        RagProgress progress = EMBEDDING_SCOPE.get();
+        if (progress != null) progress.lambdaInvokeMs = ms;
     }
     static void checkEmbeddingCancellation() {
         RagProgress progress = EMBEDDING_SCOPE.get();

@@ -27,10 +27,15 @@ public class KnowledgeVectorStoreConfiguration {
             @Qualifier("s3VectorsKnowledgeVectorStore") ObjectProvider<KnowledgeVectorStore> s3,
             RagVectorProperties properties,
             @Value("${r4r.rag.vector.s3vectors.enabled:false}") boolean enabled,
-            org.springframework.core.env.Environment env, ObjectProvider<PostgresAccessGate> gate) {
+            org.springframework.core.env.Environment env, ObjectProvider<PostgresAccessGate> gate,
+            @Qualifier("titanKnowledgeVectorStore") ObjectProvider<KnowledgeVectorStore> titan) {
         if (!enabled && (properties.failoverEnabled() || "s3vectors".equals(properties.primary())))
             throw new IllegalArgumentException("S3 Vectors must be enabled for the requested vector routing");
+        KnowledgeVectorStore titanStore = titan.getIfAvailable();
+        if (titanStore != null && (!enabled || "pgvector".equals(properties.primary()) && !properties.failoverEnabled()))
+            throw new IllegalArgumentException("Titan requires S3 primary or enabled PostgreSQL to S3 failover");
         return new FailoverKnowledgeVectorStore(postgres::getObject,enabled ? s3.getObject() : null,
-                properties.primary(),properties.failoverEnabled(),env.matchesProfiles("s3-readonly"),gate.getIfAvailable());
+                properties.primary(),properties.failoverEnabled(),env.matchesProfiles("s3-readonly"),gate.getIfAvailable(),
+                titanStore);
     }
 }

@@ -11,15 +11,9 @@ def redact(text):
  return text
 
 def cases():
- result=[]
- for lang,filename in [('es','RagLiveQuestionsIT.java'),('en','RagLiveEnglishQuestionsIT.java')]:
-  text=(ROOT/'src/test/java/com/riansares/r4r/llm_tests'/filename).read_text()
-  entries=re.findall(r'new QuestionCase\("([^"\n]*)", "([^"\n]*)"(?:, "([^"\n]*)")?, (true|false)\)',text)
-  entries=entries[:15]
-  for i,entry in enumerate(entries):
-   name,question,retrieval,evidence=entry
-   if i==0 or name in ('Humedades','Damp') or 'fotosíntesis' in name or 'photosynthesis' in name:
-    result.append(dict(source=filename,number=i+1,name=name,question=question,lang=lang,evidence=evidence=='true'))
+ from r4r_evaluation_cases import load_cases
+ result=[entry for entry in load_cases() if entry['number']==1 or entry['name'] in ('Humedades','Damp')
+         or 'fotosíntesis' in entry['name'] or 'photosynthesis' in entry['name']]
  assert len(result)==6
  return result
 

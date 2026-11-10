@@ -57,10 +57,37 @@ public final class S3VectorMetadataMapper {
     }
 
     public MarkdownChunk fromDocument(Document metadata) {
+        return fromMetadata(documentValues(metadata));
+    }
+
+    public Map<String, Object> metadataValues(Document metadata) {
+        Map<String, Object> values = documentValues(metadata);
+        fromMetadata(values);
+        return java.util.Collections.unmodifiableMap(values);
+    }
+
+    private static Map<String, Object> documentValues(Document metadata) {
         if (metadata == null || !metadata.isMap()) throw invalid("metadata must be an object");
         Map<String, Object> values = new LinkedHashMap<>();
         metadata.asMap().forEach((key, value) -> values.put(key, javaValue(value)));
-        return fromMetadata(values);
+        return values;
+    }
+
+    /** Adapt an existing export to S3's supported scalar/string-list metadata without losing provenance. */
+    public Map<String, Object> forStorage(Map<String, Object> metadata) {
+        fromMetadata(metadata);
+        Map<String, Object> values = new LinkedHashMap<>();
+        metadata.forEach((key, value) -> {
+            if (value == null || value instanceof List<?> list && list.isEmpty()) return;
+            if (!(value instanceof String || value instanceof Boolean || value instanceof Number
+                    || value instanceof List<?> list && list.stream().allMatch(String.class::isInstance)))
+                throw invalid("unsupported storage metadata type");
+            if (value instanceof Number number && !Double.isFinite(number.doubleValue()))
+                throw invalid("non-finite metadata number");
+            values.put(key, value);
+        });
+        fromMetadata(values);
+        return Map.copyOf(values);
     }
 
     private static Object javaValue(Document value) {

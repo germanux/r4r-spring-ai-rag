@@ -20,6 +20,7 @@ class SecretIsolationTest(unittest.TestCase):
         env['AWS_EC2_METADATA_DISABLED'] = 'true'
         env['RAG_VECTOR_FAILOVER_ENABLED'] = 'true'
         env['RAG_S3_VECTORS_ENABLED'] = 'true'
+        env['RAG_TITAN_ENABLED'] = 'true'
         env['OPENAI_API_KEY'] = marker
         env['AWS_ACCESS_KEY_ID'] = 'SYNTHETIC_TEST_ACCESS'
         env['AWS_SECRET_ACCESS_KEY'] = marker
@@ -53,7 +54,7 @@ class SecretIsolationTest(unittest.TestCase):
                         'The child CLI integration tests did not produce fresh reports')
         for name in ('PostgresBaselineIT', 'KnowledgeIngestionServiceIT', 'PgVectorKnowledgeStoreIT',
                      'PgVectorKnowledgeStoreTransactionalRollbackIT', 'S3VectorsReadOnlyIT', 'LunaLiveIT',
-                     'RagLiveQuestionsIT', 'RagLiveEnglishQuestionsIT', 'OllamaEmbeddingWarmupLiveIT'):
+                     'RagLiveQuestionsIT', 'RagLiveEnglishQuestionsIT', 'OllamaEmbeddingWarmupLiveIT', 'TitanLambdaReadOnlyIT'):
             selected = [report for report in fresh if report.name.startswith('TEST-')
                         and report.name.endswith('.' + name + '.xml')]
             self.assertEqual(len(selected), 1, name + ' must produce an explicit NOT RUN report')

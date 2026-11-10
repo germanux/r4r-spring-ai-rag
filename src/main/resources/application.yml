@@ -71,6 +71,14 @@ r4r:
     vector:
       primary: ${RAG_VECTOR_PRIMARY}
       failover-enabled: ${RAG_VECTOR_FAILOVER_ENABLED}
+      titan:
+        enabled: ${RAG_TITAN_ENABLED:false}
+        function-name: ${RAG_TITAN_FUNCTION:r4r-titan-retrieval}
+        region: ${RAG_TITAN_REGION:eu-north-1}
+        timeout: ${RAG_TITAN_TIMEOUT:5s}
+        max-top-k: ${RAG_TITAN_MAX_TOP_K:20}
+        # Blank until real ES/EN evaluation selects a Titan-specific threshold.
+        minimum-similarity: ${RAG_TITAN_MIN_SIMILARITY:}
       postgres:
         recovery-interval: ${RAG_PG_RECOVERY_INTERVAL:30s}
         connection-timeout: ${RAG_PG_CONNECTION_TIMEOUT:3s}

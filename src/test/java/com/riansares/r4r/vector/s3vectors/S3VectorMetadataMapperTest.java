@@ -88,6 +88,14 @@ class S3VectorMetadataMapperTest {
         assertThat(mapper.fromMetadata(metadata).content()).isEqualTo(metadata.get("source_text"));
     }
 
+    @Test void optionalNullMetadataRetainsExistingNomicReadBehavior() {
+        var values = Document.fromMap(Map.of("source", Document.fromString("a.md"), "source_text", Document.fromString("Evidence."),
+                "ordinal", Document.fromNumber(1), "optional", Document.fromNull()));
+        assertThat(mapper.fromDocument(values).source()).isEqualTo("a.md");
+        assertThat(mapper.metadataValues(values)).containsEntry("optional", null);
+        assertThat(mapper.forStorage(mapper.metadataValues(values))).doesNotContainKey("optional");
+    }
+
     private static Map<String, Object> valid() {
         return new HashMap<>(Map.of("source", "a.md", "headingPath", List.of("Section"), "ordinal", 1, "source_text", "Evidence."));
     }

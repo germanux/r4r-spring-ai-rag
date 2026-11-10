@@ -1,120 +1,275 @@
-# R4R: retrieval privado con Titan V2 y Lambda
+# Titan V2: integración con la recuperación R4R
 
-Estado comprobado: 9 de noviembre de 2026. **Despliegue parcial; retrieval real pendiente de desbloqueo de Bedrock.** No implica recuperación completa del backend NAS ni de la generación.
+## Estado comprobado el 10 de noviembre de 2026
 
-## Arquitectura e implementación
+Rama de partida `feature/aws-bedrock-embed-titan`, HEAD `5cd8754`; árbol limpio antes
+del trabajo. Tras la espera solicitada de cinco horas, a las **05:42 CET** se realizó
+**una sola invocación mínima**, con `r4r-codex`, región `eu-north-1` y un intento total.
+AWS devolvió `ThrottlingException: Too many requests`. No se repitió la invocación,
+ni se enviaron preguntas válidas mediante Lambda para volver a invocar Bedrock.
+Esto **no confirma** que haya terminado la verificación de la cuenta.
 
-Invocación privada síncrona IAM → `RetrievalHandler` Java 21 → `BedrockRuntimeClient.InvokeModel` → `S3VectorsClient.QueryVectors` → textos/citas. Sin Spring Boot, PostgreSQL, Nomic, Ollama, VPC, API pública, DNS ni dependencia del NAS en este servicio. El backend publicado sigue dependiendo de Synology.
+AWS confirmó la Lambda `r4r-titan-retrieval` activa, Java 21, 1024 MB, 30 segundos,
+x86_64, rol `r4r-lambda-execution`. El índice `r4r-titan-v2-1024` existe, usa
+float32/coseno/1024 dimensiones y tenía **0 vectores**. Nomic sigue en su índice
+independiente `amzn-r4r-vector-index` de 768 dimensiones.
 
-Módulo Maven independiente `lambda-titan/`, AWS SDK 2.49.1, clientes estáticos reutilizados, HTTP URLConnection, timeout por API de 10 s, intento de 8 s, conexión de 2 s, máximo 2 intentos SDK. Las dos APIs secuenciales tienen un presupuesto nominal de 20 s dentro del timeout Lambda de 30 s; paginaciones adicionales siguen limitadas por el timeout Lambda. Pregunta de 1–10000 caracteres, payload ≤64 KiB, topK entero entre 1 y 20. Errores AWS no se convierten en resultados vacíos. Los logs propios contienen tipo de error, identificador y tiempos, nunca pregunta, documentos o mensajes SDK. El runtime añade su stack trace saneado.
+**Titan permanece desactivado por defecto.** La integración de código y sus pruebas
+offline están completas; ingesta, calibración y recuperación semántica real siguen
+pendientes de Bedrock. No se ha desplegado el backend ni cambiado la configuración
+activa del NAS. No se modificaron IAM, concurrencia, índices ni datos Nomic.
 
-`amazon.titan-embed-text-v2:0`, `dimensions=1024`, `normalize=true`. Se rechazan vectores vacíos, de dimensión incorrecta o no finitos. Respuesta: `documents` con `id`, `text`, `source`, `headingPath`, `ordinal`, `score` y metadatos completos; `metrics` con `embeddingMs`, `vectorSearchMs`, `totalMs`; proveedor, `abstained` y estado de calibración. Score = similitud coseno `1-distance`, rango [-1,1], independiente de la conversión/umbral Nomic. No representa probabilidad de respuesta correcta.
+## Auditoría y reutilización
 
-Por defecto no hay umbral Titan: `calibration=uncalibrated`. Una lista no vacía no demuestra relevancia. `TITAN_MIN_SIMILARITY` permite configurar un umbral propio después de evaluación humana ES/EN; no se ha calibrado ni habilitado en AWS. No hay generación ni evaluación automática fiable de abstención semántica todavía.
+| Necesidad | Implementación existente | Decisión Titan |
+|---|---|---|
+| Extracción y chunking | `MarkdownDocumentLoader`, `HeadingMarkdownChunker`, `MarkdownChunk` | No volver a ejecutar extracción/chunking: ya existen los 282 fragmentos exportados. Se reutiliza `MarkdownChunk`. |
+| Ingesta PostgreSQL | `KnowledgeIngestionService`, `KnowledgeIngestionOrchestration`, `KnowledgeIngestionCli`, `IngestionConfiguration`, `KnowledgeIngestionResult` | Se conservan: gestionan documentos fuente, JDBC y transacciones. Invocarlos para Titan exigiría PG y volvería a fragmentar. El adaptador Java lee exclusivamente el export ya validado. |
+| Metadatos y espacio vectorial | `S3VectorMetadataMapper`, `S3VectorScoreMapper` | Mismas clases Java en Lambda, importador y backend. Se conserva el marcador `r4r_context` y la validación de procedencia/presupuestos de bytes. |
+| Recuperación y failover | `KnowledgeVectorStore`, `FailoverKnowledgeVectorStore`, `PostgresAccessGate`, `KnowledgeVectorStoreConfiguration`, `S3VectorsKnowledgeStore` | Se añade un adaptador de transporte Lambda y un tercer proveedor opcional al router existente. |
+| Generación y citas | `CitedRagService`, `GenerationRouter`, `Citation`, DTO REST/SSE, `RagProgress` | Reutilizados. No se crea otra generación LLM, API ni estructura de citas. |
+| Evaluación ES/EN | `RagLiveQuestionsIT`, `RagLiveEnglishQuestionsIT`, `r4r_live_failover_validation.py` | Las mismas 30 preguntas; el lector auxiliar `r4r_evaluation_cases.py` las comparte con la herramienta Lambda. |
+| Herramientas operativas | `scripts/deploy-synology.sh`, `scripts/export-docker-spring.sh`, diagnósticos de `py-scripts/` | Se conservan. No se ejecuta el despliegue NAS. `scripts-ai/export-evaluation.sh` exporta evidencia de agentes, no es una ingesta ni una batería semántica RAG. |
 
-## Recursos y resultados AWS reales
+Duplicaciones eliminadas:
 
-Todos en cuenta `124021120482`, región `eu-north-1`. Identidad comprobada exactamente: `arn:aws:iam::124021120482:user/r4r-codex-deployer`. CLI siempre con `--profile r4r-codex --region eu-north-1`. No se inspeccionaron archivos de credenciales.
+- `corpus.py` deja de implementar validación, metadatos, embeddings e importación.
+  Es un lanzador compatible del importador Java. Sus antiguos invariantes se prueban
+  ahora en `CorpusImporterTest` y las pruebas Java de metadatos/embeddings.
+- `RetrievalHandler.document()` utiliza el mapper existente, sin interpretar
+  `Document.toString()` ni mantener otra validación de citas.
+- El adaptador `TitanEmbeddingClient` comparte solicitud y validación de embeddings
+  entre Lambda e importador; no transforma vectores Nomic en vectores Titan.
+- Se eliminan las 12 preguntas duplicadas de `evaluate.py`; se leen las 30 originales.
+- `deploy.py` actualiza solamente el código de la función existente. Se elimina la
+  solicitud de concurrencia reservada 2 y el aprovisionamiento de índices/logs/IAM.
 
-| Recurso | Resultado |
-| --- | --- |
-| Bucket existente `amzn-r4r-vectors` | Confirmado por GetIndex/ListIndexes, coincide con configuración/export del repositorio |
-| Índice original `amzn-r4r-vector-index` | 768, float32, cosine, 282 claves únicas. Solo lectura; textos/metadatos comparados antes/después y exactamente iguales |
-| Nuevo índice `r4r-titan-v2-1024` | Creado y confirmado: 1024, float32, cosine, `source_text` no filtrable, AES256; **0 vectores** |
-| Lambda `r4r-titan-retrieval` | Creada; Active / Successful; Java 21 x86_64, 1024 MB, 30 s, sin VPC |
-| Rol existente `r4r-lambda-execution` | Usado sin modificaciones IAM |
-| Logs `/aws/lambda/r4r-titan-retrieval` | Creados, consultables mediante FilterLogEvents, retención 7 días confirmada |
-| Concurrencia reservada 2 | **No aplicada**: PutFunctionConcurrency rechazado por límite de capacidad de cuenta |
+Para mantener el JAR Lambda ligero, su POM incorpora mediante `build-helper` y una
+lista explícita del compilador **tres fuentes Java existentes**: `MarkdownChunk`,
+`S3VectorMetadataMapper`, `S3VectorScoreMapper`. Hay una sola implementación física;
+no se copia código y no se incorpora Spring. Esto conserva el build Maven ordinario
+del backend sin convertir el repositorio en un reactor nuevo ni exigir `mvn install`.
+Cualquier cambio compartido debe validarse con ambos comandos Maven.
 
-ARN función: `arn:aws:lambda:eu-north-1:124021120482:function:r4r-titan-retrieval`.
-ARN índice: `arn:aws:s3vectors:eu-north-1:124021120482:bucket/amzn-r4r-vectors/index/r4r-titan-v2-1024`.
-SHA256 base64 del código desplegado: `6jAUdmzFtVk8YmKTiyurpaWM/1uGljEgZAv2p989ya0=`.
+## Comportamiento Spring
 
-No se ha activado provisioned concurrency ni SnapStart. La función conserva concurrencia compartida de cuenta: la reserva de 2 **no limita actualmente sus ejecuciones**. No se han creado triggers ni endpoints públicos.
+Orden normal: **PGVector → S3/Nomic → Lambda Titan**. Se intenta el siguiente proveedor
+ante una indisponibilidad técnica. Una búsqueda válida vacía termina la recuperación
+sin forzar otro proveedor. Los errores de esquema, autenticación SQL, configuración,
+metadatos y cancelación conservan las reglas anteriores.
 
-### Bloqueos externos verificables
+Si Nomic está inaccesible en la consulta PG, Titan puede recuperar directamente:
+PGVector y el respaldo S3 utilizan el mismo embedding Nomic, por lo que repetir
+Nomic en S3 no resolvería esa indisponibilidad. Esto solo se habilita cuando Titan
+está configurado y el failover existente está activo. Las escrituras siguen en PG.
+El modo `s3-readonly` también permite Titan tras un fallo técnico de S3/Nomic.
 
-1. Una única llamada real `bedrock-runtime invoke-model` devolvió `AccessDeniedException`: **“Your account is currently being verified. Verification normally takes less than 2 hours.”** Acción: `bedrock:InvokeModel`, recurso `arn:aws:bedrock:eu-north-1::foundation-model/amazon.titan-embed-text-v2:0`. AWS no identifica un permiso IAM ausente; requiere completar la verificación de cuenta. El mensaje indica contactar `aws-verification@amazon.com` si persiste después de dos horas. No se envió ningún mensaje ni se repitió la llamada. El acceso efectivo de Bedrock desde el rol Lambda sigue sin probar.
-2. `lambda:PutFunctionConcurrency` sobre la función autorizada devolvió `InvalidParameterValueException`: **“Specified ReservedConcurrentExecutions for function decreases account's UnreservedConcurrentExecution below its minimum value of [10].”** Requiere capacidad de concurrencia disponible en la cuenta. No se modificaron otras funciones, reservas ni cuotas. No es una denegación IAM.
+`TitanLambdaKnowledgeStore` envía **texto + topK**, nunca embeddings Nomic. Invoca
+sincrónicamente mediante AWS SDK, sin reintentos, con tiempo máximo configurado.
+Valida `FunctionError` además del HTTP 200: un HTTP 200 de Lambda puede contener
+un fallo de la función. Se rechazan otro modelo/índice/dimensión, resultados
+sobrantes/duplicados, scores inválidos, procedencia contradictoria y métricas
+inválidas. Los errores producen la respuesta controlada existente; no son resultados
+vacíos exitosos ni exponen mensajes privados de AWS.
 
-## Corpus y actualización reanudable
+El handler genera el embedding Titan 1024, consulta solo el índice Titan y devuelve
+IDs originales, scores, textos y metadatos. Spring aplica **un umbral propio Titan**,
+reconstruye `MarkdownChunk` y utiliza la generación/citación existentes.
+La calibración Nomic no se transfiere a Titan. Para activar se exige un umbral
+explícito; la variable Lambda heredada `TITAN_MIN_SIMILARITY`, si se utiliza, debe
+ser coherente con esa calibración. La activación recomendada filtra en Spring y deja
+esa variable Lambda sin establecer.
 
-Se inspeccionaron Markdown de `knowledge/`, exportaciones `knowledge/struct-data/r4r-s3vectors*.json`, utilidades `py-scripts/r4r-vector-diagnostic.py`, mapper y adaptador S3 existentes. Reconstruir con el chunker actual podría cambiar límites y contexto de headings. Se seleccionó **`r4r-s3vectors-import.json`**, porque sus 282 claves y todos sus metadatos coinciden exactamente con la exportación remota actual (incluye expansiones `r4r_context`). El otro export `r4r-s3vectors-aws.json` tiene las mismas claves pero metadatos diferentes: no se seleccionó. Ocho fuentes, 141794 caracteres / 144768 bytes UTF-8 de texto.
+Métricas:
 
-Manifest SHA256 canónico de claves/metadatos normalizados según `corpus.fingerprint`:
-`034703cf21bad0d54c6c4d246ad473188ef9138c6de2d537c0a17de44e0b3ed6`.
+- `embeddingMs`: tiempo informado por Lambda, sumado al de intentos locales previos.
+- `vectorSearchMs`: búsqueda remota aislada; sigue siendo nulo para PG/Nomic donde
+  Spring AI no facilita ese temporizador separado.
+- `lambdaInvokeMs`: tiempo del SDK en Spring, también si falla o expira la llamada;
+  incluye transporte y cold start, se solapa con los tiempos internos y **no se suma** a ellos.
+- `totalMs`: tiempo total de la petición RAG en Spring. Lambda también devuelve su
+  propio `metrics.totalMs`, validado por el adaptador, con un ámbito diferente.
 
-`corpus.py` no usa PostgreSQL ni modifica origen. Conserva IDs, texto exacto, source, ordinal, headings y contexto. Omite arrays vacíos/null; valida procedencia y presupuestos de metadatos. Añade hash del contenido y modelo. El registro remoto con misma clave/metadatos actúa como checkpoint durable: permite continuar tras interrupción sin repetir embeddings completados. PutVectors sobrescribe la misma clave sin duplicados. Tras cada escritura compara metadatos y float32 leídos; al finalizar verifica conjunto exacto y conteo. Reintentos CLI standard, máximo 3; AccessDenied no se sortea. Claves remotas inesperadas causan parada, nunca eliminación.
+En simulaciones, los tiempos internos suministrados por los mocks no son mediciones
+AWS y pueden superar el tiempo de ejecución local del test. Ni estas métricas ni la
+antigua validación de entrada de 318 ms demuestran recuperación semántica real.
 
-Para actualizar: revisar un nuevo export contra el corpus vigente, ejecutar primero dry-run, usar `--source archivo.json --ingest` y conservar el manifest de salida. Si hay documentos eliminados, reconciliar manualmente: esta fase no autoriza borrar vectores. La reanudación confía en checkpoints remotos creados por este importador; no es una auditoría criptográfica contra modificaciones externas de sus vectores.
+## Configuración preparada, sin activar
 
-## Reproducción
+Se sigue la convención existente: `application.yml`, `docker-spring/.env.base`
+(público) y defaults del Compose autocontenido. No existe un `.env.example` canónico;
+no se introduce otra plantilla divergente. No se modifica el `.env` privado.
 
-Desde raíz, con AWS CLI v2, Python 3, Java 21 y Maven:
+```properties
+RAG_TITAN_ENABLED=false
+RAG_TITAN_FUNCTION=r4r-titan-retrieval
+RAG_TITAN_REGION=eu-north-1
+RAG_TITAN_TIMEOUT=5s
+RAG_TITAN_MAX_TOP_K=20
+RAG_TITAN_MIN_SIMILARITY=
+```
+
+El umbral vacío es intencionado mientras esté desactivado. Activar exige un valor
+finito `[0,1]` elegido con evaluación real; timeout `[100ms,30s]`, topK `[1,20]`.
+El topK solicitado por el servicio se limita al máximo Titan configurado.
+Solo se admite la función indicada (nombre o ARN exacto) en `eu-north-1`.
+Titan requiere S3 como principal o `RAG_VECTOR_FAILOVER_ENABLED=true` con
+`RAG_S3_VECTORS_ENABLED=true`. Por defecto no se crea el cliente Lambda ni se
+resuelven credenciales Titan. El perfil test bloquea también `RAG_TITAN_ENABLED`
+heredado del entorno del desarrollador.
+
+## Importador Java reanudable
+
+Fuente única: `knowledge/struct-data/r4r-s3vectors-import.json`.
+
+- SHA-256 del archivo: `89ab0be789a5399b58697d477169b577d21d11558cac13400d70d2f590e5c634`.
+- 282 IDs únicos, 8 fuentes, 141794 caracteres originales.
+- Manifiesto normalizado: `034703cf21bad0d54c6c4d246ad473188ef9138c6de2d537c0a17de44e0b3ed6`,
+  **idéntico al de la herramienta anterior**.
+
+El importador verifica el checksum completo antes de construir clientes AWS.
+Ignora los embeddings Nomic del export, conserva keys/texto/metadatos y solo genera
+embeddings Titan reales. Omite nulos/listas vacías incompatibles; no aparecen listas
+headingPath vacías en este export. Añade `embedding_model` y `titan_content_sha256`.
+Verifica dimensión, float32, coseno y configuración de metadatos del índice destino.
+
+Cada upsert se verifica con GetVectors, comparando metadatos y los 1024 floats.
+Al reanudar, incluso una fila con tags correctos debe devolver un vector válido de
+1024 dimensiones. No se eliminan filas: keys inesperadas detienen la ejecución.
+Las filas remotas son el checkpoint duradero, también si el proceso se interrumpe
+tras la escritura. Un informe local se sustituye atómicamente después de cada éxito
+y ante el primer error, con contadores, key y tipo de error, sin texto ni mensajes
+SDK. Se detiene ante el primer fallo, incluidos throttling/denegación; un nuevo
+intento solo se inicia explícitamente. El resultado final exige exactamente las
+keys y los metadatos esperados. No se consulta PG ni se escribe en Nomic.
 
 ```bash
-aws sts get-caller-identity --profile r4r-codex --region eu-north-1
-mvn clean verify
 mvn -f lambda-titan/pom.xml clean verify
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s lambda-titan -p 'test_*.py'
+# Auditoría offline; no crea clientes ni llama AWS:
 python3 lambda-titan/corpus.py
+# Alternativa Java equivalente:
+java -cp lambda-titan/target/r4r-titan-retrieval-1.0.0.jar \
+  com.riansares.r4r.titan.CorpusImporter
+# SOLO cuando Bedrock esté confirmado operativo; también sirve para reanudar:
+python3 lambda-titan/corpus.py --ingest --report lambda-titan/target/import-report.json
 ```
 
-Tras resolver la verificación Bedrock, probar una sola llamada antes de ingesta:
+El SDK del importador usa explícitamente `ProfileCredentialsProvider("r4r-codex")`
+y `eu-north-1`, valida STS contra el deployer esperado y usa un solo intento AWS.
+El handler utiliza exclusivamente el rol de ejecución de Lambda.
+
+## IAM e identidad del NAS
+
+Spring conserva la cadena de credenciales del SDK utilizada por S3. Compose pasa
+credenciales de entorno al servicio `api`; no monta perfiles AWS ni copia las
+credenciales del deployer. **El ARN efectivo del NAS no está verificado**: el intento
+SSH en modo no interactivo devolvió `Permission denied (publickey,password)`.
+No se inspeccionaron secretos ni se cambió configuración para resolverlo.
+
+La política preparada [backend-invoke-titan.json](../../lambda-titan/iam/backend-invoke-titan.json)
+concede únicamente `lambda:InvokeFunction` al ARN:
+`arn:aws:lambda:eu-north-1:124021120482:function:r4r-titan-retrieval`.
+Un administrador debe aplicarla al usuario/rol **real del backend**, si carece de
+ese permiso. No al deployer como sustituto de la identidad de producción.
+No se ha aplicado ninguna política ni repetido inspecciones administrativas IAM.
+
+Diagnóstico preparado para el operador, en el NAS, con el JAR verificado disponible:
 
 ```bash
-aws bedrock-runtime invoke-model --model-id amazon.titan-embed-text-v2:0 \
-  --body '{"inputText":"Información para una reforma","dimensions":1024,"normalize":true}' \
-  --cli-binary-format raw-in-base64-out --profile r4r-codex --region eu-north-1 /tmp/titan-probe.json
-python3 -c 'import json; x=json.load(open("/tmp/titan-probe.json")); assert len(x["embedding"]) == 1024'
-python3 lambda-titan/deploy.py
-python3 lambda-titan/corpus.py --ingest
-python3 lambda-titan/evaluate.py --run --output /tmp/r4r-titan-evaluation.json
+sudo docker cp r4r-titan-retrieval-1.0.0.jar r4r-api:/tmp/r4r-titan-diagnostic.jar
+sudo docker exec r4r-api java -cp /tmp/r4r-titan-diagnostic.jar \
+  com.riansares.r4r.titan.RuntimeIdentity
 ```
 
-`deploy.py` verifica identidad, crea o actualiza exclusivamente índice/función/logs indicados, espera estado Active y configura reserva 2. Se detiene ante errores reales; actualmente el último paso seguirá bloqueado por capacidad de cuenta. En actualización usa RevisionId para el código; no altera umbrales existentes. No ejecutarlo simultáneamente desde varios procesos.
+Este comando hace solo STS y muestra account/ARN. Debe ejecutarse **dentro del
+contenedor existente**, heredando sus credenciales de runtime; no con un perfil de
+despliegue del PC. No se ejecutó aquí. El archivo temporal no activa Titan ni cambia
+la configuración del backend. `RuntimeIdentity` no imprime claves ni tokens.
 
-Invocación privada tras ingesta:
+## Activación y validación real, pendiente
+
+1. Confirmar con AWS la disponibilidad de Bedrock. En una futura comprobación
+   autorizada, realizar una única llamada mínima:
+
+   ```bash
+   AWS_MAX_ATTEMPTS=1 aws bedrock-runtime invoke-model \
+     --profile r4r-codex --region eu-north-1 \
+     --model-id amazon.titan-embed-text-v2:0 \
+     --content-type application/json --accept application/json \
+     --cli-binary-format raw-in-base64-out \
+     --body '{"inputText":"Prueba Titan","dimensions":1024,"normalize":true}' \
+     /tmp/r4r-titan-test.json
+   ```
+
+   Un throttling/AccessDenied no autoriza la ingesta ni demuestra activación. No se
+   repitió esta llamada después del fallo observado en esta ejecución.
+
+2. Ejecutar el importador anterior y exigir éxito del informe con 282 filas entre
+   `imported` y `resumed`, cero errores. Recontar solo el índice Titan:
+
+   ```bash
+   aws s3vectors list-vectors --profile r4r-codex --region eu-north-1 \
+     --vector-bucket-name amzn-r4r-vectors --index-name r4r-titan-v2-1024 \
+     --query 'length(vectors)' --output json
+   ```
+
+3. Evaluar las **30 preguntas originales ES/EN**, seleccionar/calibrar el umbral y
+   revisar textos, scores, procedencia, abstenciones y latencias reales. Ejemplo de
+   umbral experimental (no una recomendación validada):
+
+   ```bash
+   python3 lambda-titan/evaluate.py  # solo enumera, offline
+   python3 lambda-titan/evaluate.py --run --minimum-similarity 0.60 \
+     --output lambda-titan/target/evaluation-real.json
+   mvn verify -Ptitan-it -Dr4r.test.titan.minimum-similarity=0.60
+   ```
+
+   El evaluador se detiene si Lambda devuelve FunctionError; no continúa enviando
+   preguntas tras un bloqueo. El tiempo `lambdaInvokeMs` de esta herramienta incluye
+   además el arranque de AWS CLI, a diferencia del SDK del backend. Las pruebas
+   `titan-it` ejercitan el adaptador Java real, exigen evidencia de dominio y
+   abstención fuera del corpus; una calibración incorrecta hace fallar la batería.
+   No generan respuestas LLM. La batería `llm-it` existente comprueba generación
+   completa contra una API de pruebas dedicada.
+
+4. Verificar la identidad real del backend y el permiso mínimo anterior. Mantener
+   credenciales de despliegue fuera de producción.
+5. Preparar la configuración del backend en un entorno de pruebas dedicado: activar
+   el failover existente, Titan y su umbral validado. Ajustar su timeout con datos
+   reales (por ejemplo 25s, dentro del límite y del presupuesto total del servicio).
+6. Ejecutar REST/SSE con PG sano, PG caído y Nomic sano, PG/Nomic caídos con Titan
+   sano, Lambda caída/timeout, todos fallidos y recuperación PG. Verificar citas,
+   errores controlados y continuidad del proceso. Simular fallos en el entorno
+   dedicado; no parar servicios de producción para esta prueba.
+7. Ejecutar la batería completa y preparar el despliegue backend posterior:
+
+   ```bash
+   mvn clean verify -Ppostgres-it,aws-it,llm-it,titan-it \
+     -Dr4r.test.titan.minimum-similarity=0.60
+   mvn -f lambda-titan/pom.xml clean verify
+   python3 -m unittest discover -s lambda-titan -p 'test_*.py'
+   ```
+
+   Requiere PG/pgvector de pruebas, credenciales/endpoints dedicados y LLM según
+   [testing.md](../testing.md). Sustituir 0.60 por el umbral validado. No se ha
+   ejecutado la batería real por el bloqueo actual ni se ha desplegado el backend.
+
+Si cambia la Lambda, actualizar **solo su código** después de verificar el JAR:
 
 ```bash
-aws lambda invoke --function-name r4r-titan-retrieval \
-  --payload '{"question":"¿Qué información hace falta para una reforma?","topK":5}' \
-  --cli-binary-format raw-in-base64-out --profile r4r-codex --region eu-north-1 /tmp/retrieval.json
-aws logs filter-log-events --log-group-name /aws/lambda/r4r-titan-retrieval \
-  --profile r4r-codex --region eu-north-1
+python3 lambda-titan/deploy.py           # preview sin AWS
+python3 lambda-titan/deploy.py --update  # perfil r4r-codex, eu-north-1
 ```
 
-Comprobar `FunctionError`, además del StatusCode 200 del transporte. Los scripts usan perfil/región explícitos en cada llamada; dentro de Lambda el SDK usa el rol de ejecución, sin perfil local.
+El despliegue valida identidad/configuración, usa revision-id y compara SHA-256
+local/remoto. No crea recursos ni cambia configuración, roles, memoria, timeout,
+retención de logs o concurrencia. Se mantiene concurrencia compartida.
 
-## Pruebas y mediciones
+## Fuentes de los contratos AWS
 
-- Backend `mvn clean verify`: BUILD SUCCESS, Surefire 336 pruebas sin fallos; Failsafe 35, 24 omitidas por perfiles externos, sin fallos. Primer intento en sandbox falló por attach Mockito; ejecución fuera del sandbox pasó sin alterar producto ni tests.
-- Lambda `mvn -f lambda-titan/pom.xml clean verify`: BUILD SUCCESS, 12 pruebas sin AWS: petición Titan, decodificación, float32, procedencia/citas, input inválido, ausencia de resultados, umbral independiente, errores Bedrock/S3, timeouts de ambas APIs y saneamiento de logs.
-- Python: 5 pruebas offline de metadatos, vectores y manifest; dry-run valida 282 documentos.
-- Una llamada Titan real: denegada por verificación de cuenta; sin embedding ni medida válida.
-- Una invocación Lambda real con pregunta vacía: error esperado `Invalid retrieval request`, confirma empaquetado, carga del handler y logging; no llama Bedrock. RequestId `bc39096b-9335-4776-977c-927456cca490`. **No demuestra retrieval**.
-- CloudWatch: Init 1314.02 ms; Duration 318.37 ms; Billed Duration 1633 ms; máximo de memoria 146 MB; validación propia totalMs 52.373091. No extrapolar estos tiempos a embeddings/búsqueda. `embeddingMs` y `vectorSearchMs` reales: pendientes.
-- `evaluate.py`: 12 casos ES/EN (8 sobre presupuesto, humedad, cobertura y baños; 4 negativos sobre medicina/espacio). Preparados, no ejecutados. Revisar textos/citas manualmente; separar datos de calibración de validación antes de fijar umbral. No afirmar calidad ni abstención sin esa revisión.
-- Presupuesto inicial: 1 intento Titan + 1 invocación Lambda consumidos; no se ejecutaron consultas semánticas. Máximo 50 llamadas iniciales de evaluación; los 282 embeddings de ingesta se contabilizan aparte. No repetir automáticamente la batería.
+- [Invoke sincrónico y errores de función](https://docs.aws.amazon.com/lambda/latest/api/API_Invoke.html).
+- [Parámetros Titan Embeddings](https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-titan-embed-text.html).
+- [Titan V2 y dimensiones](https://docs.aws.amazon.com/bedrock/latest/userguide/titan-embedding-models.html).
 
-## Integración Spring Boot: pendiente por bloqueo concreto
-
-Se revisaron `KnowledgeVectorStoreConfiguration`, `FailoverKnowledgeVectorStore`, `S3VectorsKnowledgeStore` y `S3VectorMetadataMapper`. La condición solicitada —demostrar retrieval real antes de integrarlo— sigue bloqueada por InvokeModel y un índice Titan vacío. No se añadió un fallback no probado al backend publicado. Su configuración, generación, SSE, cuotas y rutas siguen intactas; nada desplegado en Synology.
-
-Después de resolverlo: decorar el `KnowledgeVectorStore` de lectura existente con un adaptador Lambda activado por propiedad independiente `enabled=false`; escrituras siempre delegadas a PostgreSQL. Invocar solamente ante excepciones técnicas clasificadas de embeddings/vector store tras agotar la ruta vigente. Propagar cancelaciones, validación e interrupciones; una lista vacía retorna vacía y nunca activa fallback. Usar `LambdaClient` independiente del router Nomic, timeout dentro del presupuesto SSE, comprobar FunctionError y reconstruir `MarkdownChunk(source, headingPath, ordinal, text)` para las citas existentes. No pasar minScore Nomic al servicio Titan. Tests offline deben cubrir respuesta vacía sin fallback, caída técnica, cancelación, fallo Lambda, citas y escrituras. El principal de ejecución del backend necesitará `lambda:InvokeFunction` sobre el ARN exacto; no se comprobó ni cambió su identidad o configuración privada.
-
-IAM declarado por el propietario: deployer con InvokeModel, lectura Nomic, creación/escritura Titan, operaciones Lambda/logs y PassRole al rol indicado. Rol Lambda solo InvokeModel, lectura del índice Titan y logs básicos. No se solicitó inspección IAM administrativa ni se cambiaron políticas.
-
-## Costes y límites
-
-No hay consumo provisionado permanente. Estimación ilustrativa de cómputo: 50 ejecuciones de 30 s a 1 GB = 1500 GB-s; usando $0.0000166667/GB-s y $0.20/millón de peticiones de los ejemplos oficiales, unos **$0.02501**, excluyendo Bedrock, S3 Vectors, logs, impuestos y free tier. El smoke test de 1.633 GB-s representa aproximadamente $0.0000274 con esas mismas tarifas de referencia, no una factura.
-
-Ingesta: 282 peticiones Titan, unos 35448 tokens si se supone 4 caracteres/token (solo aproximación; registrar inputTextTokenCount real). Coste = tokens / 1000 × tarifa Titan V2 regional. Vectores float32: 1155072 bytes, más textos, claves y metadatos. Coste de S3 Vectors incluye almacenamiento lógico, PUT, consultas/procesamiento y devolución; logs retienen siete días. No se ha obtenido una cotización regional ni datos de facturación. Confirmar tarifas Stockholm antes de uso continuado.
-
-Referencias oficiales consultadas: [formato Titan V2](https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-titan-embed-text.html), [empaquetado Lambda Java](https://docs.aws.amazon.com/lambda/latest/dg/java-package.html), [Bedrock precios](https://aws.amazon.com/bedrock/pricing/), [Lambda precios](https://aws.amazon.com/lambda/pricing/), [S3 Vectors precios](https://aws.amazon.com/s3/pricing/).
-
-## Git y aceptación
-
-Rama recibida `feature/aws-bedrock-embed-titan`, HEAD `355573c`; un worktree, inicialmente limpio. No se cambió rama ni se escribió historia: AGENTS.md reserva los commits al controlador determinista y prohíbe git add/commit/checkout en sesiones modelo. No merge/push. Cambios limitados a nuevo módulo y este documento; corpus y código backend intactos.
-
-Pendientes de aceptación: embedding Titan real 1024, ingesta 282, recuperación ES/EN, calibración/abstención, tiempos de APIs, reserva de concurrencia, integración backend tras demostración. El despliegue por sí solo no completa esos criterios.
+Los recursos/estados de esta ejecución proceden de consultas AWS con el perfil
+obligatorio, no de inferir la activación por la fecha ni de resultados simulados.

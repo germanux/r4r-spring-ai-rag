@@ -1,48 +1,49 @@
 #!/usr/bin/env python3
-"""Optional bounded real ES/EN evaluation. Run only after successful ingestion."""
+"""Optional real Lambda retrieval evaluation using the existing 30 Java ES/EN cases."""
+import argparse
 import json
-import tempfile
 from pathlib import Path
-from corpus import aws
+import sys
+import tempfile
+import time
+from aws_cli import aws
 
-CASES = [
-    ('es-budget','¿Qué información hace falta para preparar un presupuesto de reforma?',True),
-    ('en-budget','What information do you need to prepare a renovation quote?',True),
-    ('es-damp','¿Cómo abordáis las humedades en una vivienda?',True),
-    ('en-damp','How do you deal with damp in a home?',True),
-    ('es-area','¿Trabajáis en Ocaña y Tembleque?',True),
-    ('en-area','Do you serve Ocaña and Tembleque?',True),
-    ('es-bath','¿Qué tenéis en cuenta al reformar un baño?',True),
-    ('en-bath','What do you consider when renovating a bathroom?',True),
-    ('es-absent','¿Cuál es la dosis de insulina para tratar la diabetes?',False),
-    ('en-absent','What insulin dosage should I use for diabetes?',False),
-    ('es-space','¿Cuál es el calendario de lanzamientos espaciales de 2030?',False),
-    ('en-space','What is the space launch schedule for 2030?',False),
-]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'py-scripts'))
+from r4r_evaluation_cases import load_cases
 
 
-def main():
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--run',action='store_true')
-    parser.add_argument('--output',type=Path,default=Path('/tmp/r4r-titan-evaluation.json'))
-    args = parser.parse_args()
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--run', action='store_true')
+    parser.add_argument('--minimum-similarity', type=float)
+    parser.add_argument('--output', type=Path, default=Path('/tmp/r4r-titan-evaluation.json'))
+    args = parser.parse_args(argv)
+    cases = load_cases()
     if not args.run:
-        print('Offline preview: 12 cases, 8 in-domain, 4 abstention; use --run after ingestion')
+        print(f'Offline preview: {len(cases)} canonical ES/EN questions; no AWS calls')
         return
-    assert len(CASES) <= 50
+    if args.minimum_similarity is None or not 0 <= args.minimum_similarity <= 1:
+        parser.error('Supply an explicitly selected Titan --minimum-similarity in [0,1]')
     rows = []
+    args.output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as directory:
-        for label, question, answerable in CASES:
+        for case in cases:
             output = Path(directory) / 'response.json'
-            result = aws('lambda','invoke','--function-name','r4r-titan-retrieval','--payload',json.dumps({'question':question,'topK':5}),
-                         '--cli-binary-format','raw-in-base64-out',str(output))
+            start = time.monotonic()
+            result = aws('lambda', 'invoke', '--function-name', 'r4r-titan-retrieval', '--invocation-type', 'RequestResponse',
+                         '--payload', json.dumps({'question': case['question'], 'topK': 5}),
+                         '--cli-binary-format', 'raw-in-base64-out', str(output))
+            invoke_ms = (time.monotonic() - start) * 1000
             if result.get('FunctionError'):
-                raise RuntimeError('Lambda evaluation failed at ' + label + '; stop, inspect CloudWatch')
+                raise RuntimeError('Lambda evaluation failed; no further questions invoked')
             response = json.loads(output.read_text())
-            rows.append(dict(case=label,expectedAnswerable=answerable,**response))
-            args.output.write_text(json.dumps(rows,ensure_ascii=False,indent=2))
-    print('Saved 12 responses; human relevance/citation review required before selecting Titan threshold')
+            selected = [doc for doc in response['documents'] if doc['score'] >= args.minimum_similarity]
+            rows.append(dict(case=case, response=response, selectedDocuments=selected,
+                             abstained=not selected, evidenceExpectationMatched=bool(selected) == case['evidence'],
+                             lambdaInvokeMs=invoke_ms, measurement='real AWS; CLI invocation includes local CLI startup'))
+            args.output.write_text(json.dumps(rows, ensure_ascii=False, indent=2))
+    print(f'Saved {len(rows)} real retrieval responses; inspect relevance/provenance and abstention. Generation is evaluated by existing backend LLM tests.')
+
 
 if __name__ == '__main__':
     main()

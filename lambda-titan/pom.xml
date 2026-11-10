@@ -5,6 +5,7 @@
   <dependencyManagement><dependencies><dependency><groupId>software.amazon.awssdk</groupId><artifactId>bom</artifactId><version>2.49.1</version><type>pom</type><scope>import</scope></dependency></dependencies></dependencyManagement>
   <dependencies>
     <dependency><groupId>software.amazon.awssdk</groupId><artifactId>bedrockruntime</artifactId></dependency>
+    <dependency><groupId>software.amazon.awssdk</groupId><artifactId>sts</artifactId></dependency>
     <dependency><groupId>software.amazon.awssdk</groupId><artifactId>s3vectors</artifactId></dependency>
     <dependency><groupId>software.amazon.awssdk</groupId><artifactId>url-connection-client</artifactId></dependency>
     <dependency><groupId>com.amazonaws</groupId><artifactId>aws-lambda-java-core</artifactId><version>1.2.3</version></dependency>
@@ -13,7 +14,20 @@
     <dependency><groupId>org.mockito</groupId><artifactId>mockito-core</artifactId><version>5.17.0</version><scope>test</scope></dependency>
   </dependencies>
   <build><plugins>
-    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.14.0</version></plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.14.0</version>
+      <configuration><includes>
+        <include>com/riansares/r4r/titan/**/*.java</include>
+        <include>com/riansares/r4r/chunking/MarkdownChunk.java</include>
+        <include>com/riansares/r4r/vector/s3vectors/S3VectorMetadataMapper.java</include>
+        <include>com/riansares/r4r/vector/s3vectors/S3VectorScoreMapper.java</include>
+      </includes></configuration>
+    </plugin>
+    <!-- Compile the three existing dependency-free R4R sources directly, never the Spring application. -->
+    <plugin><groupId>org.codehaus.mojo</groupId><artifactId>build-helper-maven-plugin</artifactId><version>3.6.1</version>
+      <executions><execution><id>reuse-r4r-metadata</id><phase>generate-sources</phase><goals><goal>add-source</goal></goals>
+        <configuration><sources><source>${project.basedir}/../src/main/java</source></sources></configuration>
+      </execution></executions>
+    </plugin>
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>3.5.3</version></plugin>
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-shade-plugin</artifactId><version>3.6.0</version><executions><execution><phase>package</phase><goals><goal>shade</goal></goals><configuration><createDependencyReducedPom>false</createDependencyReducedPom><filters><filter><artifact>*:*</artifact><excludes><exclude>META-INF/*.SF</exclude><exclude>META-INF/*.RSA</exclude><exclude>META-INF/*.DSA</exclude></excludes></filter></filters><transformers><transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/></transformers></configuration></execution></executions></plugin>
   </plugins></build>

@@ -81,6 +81,9 @@ class ComposeConfigurationTest(unittest.TestCase):
             ['docker', 'compose', '--env-file', empty_env.name, 'config', '--no-env-resolution', '--format', 'json'],
             cwd=fixture, env=env, capture_output=True, text=True, check=True)
         default_api = json.loads(defaults.stdout)['services']['api']
+        self.assertEqual(default_api['environment']['RAG_TITAN_ENABLED'], 'false')
+        self.assertEqual(default_api['environment']['RAG_TITAN_MIN_SIMILARITY'], '')
+        self.assertEqual(default_api['environment']['RAG_TITAN_FUNCTION'], 'r4r-titan-retrieval')
         self.assertEqual(default_api['dns'], ['1.1.1.1', '8.8.8.8'])
         self.assertEqual(default_api['environment']['SPRING_DATASOURCE_URL'], 'jdbc:postgresql://postgres:5432/r4r_rag')
         # Do not inspect a private file: check only public defaults and Git's ignore rule.

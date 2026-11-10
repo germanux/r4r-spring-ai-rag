@@ -55,6 +55,8 @@ r4r:
           read-timeout: 100ms
     vector:
       primary: pgvector
+      titan:
+        enabled: false
       failover-enabled: false
       s3vectors:
         enabled: false

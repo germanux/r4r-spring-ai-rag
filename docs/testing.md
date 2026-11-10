@@ -17,6 +17,7 @@ de necesitar los servicios de la aplicación durante las pruebas.
 | `mvn clean verify` | Lo anterior, recompilando desde cero. |
 | `mvn verify -Ppostgres-it` | Añade PostgreSQL/pgvector real. |
 | `mvn verify -Paws-it` | Añade el smoke de lectura AWS real. |
+| `mvn verify -Ptitan-it -Dr4r.test.titan.minimum-similarity=VALOR` | Añade las 30 preguntas de recuperación Titan real, tras ingesta y calibración. |
 | `mvn verify -Pllm-it` | Añade Ollama, OpenAI y API RAG real. |
 
 Los perfiles se pueden combinar: añaden integraciones a la batería ordinaria.
@@ -64,8 +65,9 @@ Inventario auditado de las 41 clases obligatorias, bajo
 | `rag` | `CitedRagMultilingualRetrievalTest`, `CitedRagServiceCitationsTest`, `CitedRagServiceInvalidAnswersTest`, `CitedRagServiceTest`, `EmbeddingProviderFailoverTest`, `GenerationRouterTest`, `LocalRetrievalQueryTranslatorTest`, `OllamaModelPreloaderTest`, `OllamaThinkingInterceptorTest`, `OpenAiFallbackTest`, `RagStreamingTest` |
 | `rag/api` | `InferenceHostTest`, `RagQueryControllerTest`, `RagRequestValidationTest`, `RagRuntimeControllerTest`, `RagStreamControllerTest` |
 | `service` | `KnowledgeCatalogServiceTest` |
-| `vector` | `FailoverKnowledgeVectorStoreTest`, `PostgresAccessGateTest` |
-| `vector/config` | `KnowledgeVectorStoreConfigurationTest`, `PostgresFailoverStartupTest`, `S3VectorsConfigurationTest`, `S3VectorsEnvironmentCredentialsTest`, `VectorReadOnlyStartupTest` |
+| `vector` | `FailoverKnowledgeVectorStoreTest`, `PostgresAccessGateTest`, `TitanFailoverTest` |
+| `vector/config` | `KnowledgeVectorStoreConfigurationTest`, `PostgresFailoverStartupTest`, `S3VectorsConfigurationTest`, `S3VectorsEnvironmentCredentialsTest`, `VectorReadOnlyStartupTest`, `TitanRetrievalConfigurationTest` |
+| `vector/titan` | `TitanLambdaKnowledgeStoreTest` |
 | `vector/pgvector` | `PgVectorKnowledgeStoreTest`, `PgVectorSectionContextTest` |
 | `vector/s3vectors` | `S3VectorMetadataMapperTest`, `S3VectorScoreMapperTest`, `S3VectorsKnowledgeStoreTest` |
 
@@ -75,6 +77,7 @@ Inventario auditado de las 41 clases obligatorias, bajo
 |---|---:|---|
 | `RagStreamHttpIT` | 5 | Tomcat/HTTP real, SSE, eventos antes de terminar la generación, desconexión y Origin. |
 | `VectorDegradedHttpIT` | 3 | Arranque Spring con PG inaccesible desde el inicio; lectura S3 simulada y citas por REST/SSE; ambos almacenes fallan y runtime sigue disponible. |
+| `TitanDegradedHttpIT` | 35 | Reutiliza el fixture de arranque degradado y las 30 preguntas ES/EN originales; Lambda simulada, REST/SSE, citas, abstención y timeout. |
 | `KnowledgeIngestionCliProcessIT` | 3 | JVM hija real, salidas 0/4, resultado JSON, cierre del proceso y aislamiento de credenciales. |
 
 Estas pruebas ejecutan Spring y el transporte real de la API, usando DataSource,
@@ -226,3 +229,37 @@ flags legacy de pruebas reales activados en el proceso padre.
 Los helpers `LiveFailoverExecution` y `LiveEvidenceSnapshot` no son tests JUnit ni
 entran en la selección Surefire/Failsafe. Son herramientas manuales históricas y no
 se ejecutaron. No se modificó código de producción, migraciones ni recursos reales.
+
+
+## Lambda Titan e importador
+
+El módulo independiente reutiliza las fuentes ligeras de metadatos/chunks del backend.
+El `verify` raíz no ejecuta sus tests automáticamente; deben ejecutarse ambos gates
+cuando cambie código compartido o antes de actualizar Lambda:
+
+```bash
+mvn clean verify
+mvn -f lambda-titan/pom.xml clean verify
+python3 -m unittest discover -s lambda-titan -p 'test_*.py'
+python3 lambda-titan/corpus.py
+python3 lambda-titan/evaluate.py
+python3 py-scripts/test_secret_isolation.py
+python3 py-scripts/test_compose_configuration.py
+```
+
+`CorpusImporterTest` verifica el export original de 282 filas, conservación de IDs/texto,
+manifiesto, idempotencia/reanudación, metadatos, vectores, errores y destino exclusivo
+Titan con SDK simulado. `RetrievalHandlerTest` cubre el contrato Lambda, Bedrock denegado,
+timeouts y datos/citas. Python comprueba lanzadores, perfil/región, stop tras error y
+reutilización de preguntas; ya no implementa validación/ingesta paralela.
+
+`TitanLambdaReadOnlyIT` aparece como **NOT RUN/SKIPPED** salvo `-Ptitan-it` y requiere
+un umbral explícito en `-Dr4r.test.titan.minimum-similarity`. Usa `r4r-codex` y
+`eu-north-1`, solo consulta la función Titan existente. No escribir vectores ni invocar
+la batería real mientras Bedrock siga bloqueado. La condición JUnit impide que una
+variable de entorno heredada active estas llamadas en el build ordinario.
+
+Las 30 preguntas en `TitanDegradedHttpIT` prueban contrato y flujo con respuestas
+simuladas; **no certifican relevancia semántica, permisos ni latencias reales**.
+La evaluación real y los comandos de activación, IAM y comprobación del corpus están
+en [la guía Titan](operations/titan-lambda-retrieval.md).

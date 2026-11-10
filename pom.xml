@@ -24,6 +24,7 @@
         <maven-failsafe.version>3.5.3</maven-failsafe.version>
         <r4r.test.postgres.enabled>false</r4r.test.postgres.enabled>
         <r4r.test.aws.enabled>false</r4r.test.aws.enabled>
+        <r4r.test.titan.enabled>false</r4r.test.titan.enabled>
         <r4r.test.llm.enabled>false</r4r.test.llm.enabled>
     </properties>
 
@@ -47,6 +48,10 @@
     </dependencyManagement>
 
     <dependencies>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>lambda</artifactId>
+        </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3vectors</artifactId>
@@ -117,6 +122,7 @@
                         <r4r.test.postgres.enabled>false</r4r.test.postgres.enabled>
                         <r4r.test.aws.enabled>false</r4r.test.aws.enabled>
                         <r4r.test.llm.enabled>false</r4r.test.llm.enabled>
+                        <r4r.test.titan.enabled>false</r4r.test.titan.enabled>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -130,6 +136,7 @@
                         <r4r.test.postgres.enabled>${r4r.test.postgres.enabled}</r4r.test.postgres.enabled>
                         <r4r.test.aws.enabled>${r4r.test.aws.enabled}</r4r.test.aws.enabled>
                         <r4r.test.llm.enabled>${r4r.test.llm.enabled}</r4r.test.llm.enabled>
+                        <r4r.test.titan.enabled>${r4r.test.titan.enabled}</r4r.test.titan.enabled>
                     </systemPropertyVariables>
                 </configuration>
                 <executions>
@@ -145,6 +152,10 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>titan-it</id>
+            <properties><r4r.test.titan.enabled>true</r4r.test.titan.enabled></properties>
+        </profile>
         <profile>
             <id>postgres-it</id>
             <properties>
