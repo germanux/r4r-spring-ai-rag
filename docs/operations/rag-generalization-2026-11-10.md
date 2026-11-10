@@ -1,5 +1,9 @@
 # Generalización del RAG — evaluación real del 10 de noviembre de 2026
 
+## Configuración congelada — 0.3.4
+
+Por instrucción del usuario se aplica la configuración conocida: `topK=5`, `minScore=0.63`, `candidate-multiplier=8` y `lexical-weight=0.10`. Se actualizan la configuración pública, sus valores de respaldo en Spring/Compose y la versión Maven/imagen a `0.3.4`. Se detiene la comparación adicional; no se ejecutan más pruebas ni compilación para este cambio. La validación completa de críticos S3 no se declara realizada. No se despliega en Synology ni se modifican las preguntas, la lógica RAG o los índices.
+
 ## Optimización posterior — una hora, solo PostgreSQL
 
 **Ventana de experimentación: 10-11-2026, 15:55:40–16:55:40 CET (14:55:40–15:55:40 UTC), incluida preparación y revisión intermedia; la última consulta en curso terminó a las 16:55:43 CET.** Se utilizaron las preguntas vigentes, incluidas las independientes abreviadas; no se cambió ningún texto. Esta sesión es posterior a la evaluación histórica de 70 consultas que se conserva debajo.

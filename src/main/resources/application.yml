@@ -69,8 +69,8 @@ r4r:
       top-k: ${RAG_TOP_K}
       min-score: ${RAG_MIN_SCORE}
       rerank:
-        candidate-multiplier: ${RAG_RETRIEVAL_CANDIDATE_MULTIPLIER:4}
-        lexical-weight: ${RAG_RETRIEVAL_LEXICAL_WEIGHT:0.075}
+        candidate-multiplier: ${RAG_RETRIEVAL_CANDIDATE_MULTIPLIER:8}
+        lexical-weight: ${RAG_RETRIEVAL_LEXICAL_WEIGHT:0.10}
     vector:
       primary: ${RAG_VECTOR_PRIMARY}
       failover-enabled: ${RAG_VECTOR_FAILOVER_ENABLED}
