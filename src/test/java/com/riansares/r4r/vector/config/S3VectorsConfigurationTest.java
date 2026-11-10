@@ -41,6 +41,13 @@ class S3VectorsConfigurationTest {
     }
     record SecondaryConsumer(KnowledgeVectorStore store) { }
 
+    @Test void lambdaTransportCreatesOnlyLambdaClient() {
+        runner.withPropertyValues("r4r.rag.vector.s3vectors.enabled=true", "r4r.rag.vector.s3vectors.transport=lambda",
+            "r4r.rag.vector.s3vectors.bucket=amzn-r4r-vectors", "r4r.rag.vector.s3vectors.index=amzn-r4r-vector-index")
+            .run(context -> assertThat(context).hasNotFailed().hasSingleBean(software.amazon.awssdk.services.lambda.LambdaClient.class)
+                .doesNotHaveBean(S3VectorsClient.class));
+    }
+
     @Test void defaultPgDoesNotCreateClientResolveCredentialsOrRequireS3Configuration() {
         try (var credentials = mockStatic(DefaultCredentialsProvider.class); var aws = mockStatic(S3VectorsClient.class)) {
             runner.withPropertyValues("r4r.rag.vector.s3vectors.bucket=INVALID")

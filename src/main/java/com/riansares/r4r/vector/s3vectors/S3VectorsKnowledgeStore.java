@@ -36,7 +36,7 @@ public final class S3VectorsKnowledgeStore implements KnowledgeVectorStore {
             "NotFoundException", "ResourceNotFoundException", "ServiceUnavailableException",
             "InternalServerException", "ThrottlingException", "RequestTimeout", "RequestTimeoutException",
             "TooManyRequestsException");
-    private final S3VectorsClient client;
+    private final java.util.function.Function<QueryVectorsRequest, software.amazon.awssdk.services.s3vectors.model.QueryVectorsResponse> transport;
     private final EmbeddingModel embeddings;
     private final RagVectorProperties.S3Vectors config;
     private final S3VectorMetadataMapper metadata;
@@ -51,8 +51,13 @@ public final class S3VectorsKnowledgeStore implements KnowledgeVectorStore {
     public S3VectorsKnowledgeStore(S3VectorsClient client, EmbeddingModel embeddings,
             RagVectorProperties.S3Vectors config, S3VectorMetadataMapper metadata, S3VectorScoreMapper scores,
             NomicRerankProperties ranking) {
+        this(client::queryVectors, embeddings, config, metadata, scores, ranking);
+    }
+
+    public S3VectorsKnowledgeStore(java.util.function.Function<QueryVectorsRequest, software.amazon.awssdk.services.s3vectors.model.QueryVectorsResponse> transport, EmbeddingModel embeddings,
+            RagVectorProperties.S3Vectors config, S3VectorMetadataMapper metadata, S3VectorScoreMapper scores, NomicRerankProperties ranking) {
         this.reranker = new NomicCandidateReranker(ranking);
-        this.client = Objects.requireNonNull(client, "client");
+        this.transport = Objects.requireNonNull(transport);
         this.embeddings = Objects.requireNonNull(embeddings, "embeddings");
         this.config = Objects.requireNonNull(config, "config");
         this.metadata = Objects.requireNonNull(metadata, "metadata");
@@ -104,7 +109,7 @@ public final class S3VectorsKnowledgeStore implements KnowledgeVectorStore {
                 checkCancelled();
                 if (++pages > candidateCount + 1) throw invalid("pagination exceeded a bounded number of pages");
                 stage = "aws_query";
-                var page = client.queryVectors(base.toBuilder().nextToken(token).build());
+                var page = transport.apply(base.toBuilder().nextToken(token).build());
                 stage = "response_validation";
                 if (page == null || page.distanceMetric() != DistanceMetric.COSINE) {
                     throw invalid("query response must specify cosine distance");

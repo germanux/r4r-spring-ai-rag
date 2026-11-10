@@ -87,6 +87,7 @@ r4r:
         connection-timeout: ${RAG_PG_CONNECTION_TIMEOUT:3s}
         socket-timeout: ${RAG_PG_SOCKET_TIMEOUT:5s}
       s3vectors:
+        transport: ${RAG_S3_VECTORS_TRANSPORT:direct}
         enabled: ${RAG_S3_VECTORS_ENABLED}
         region: ${RAG_S3_VECTORS_REGION}
         bucket: ${RAG_S3_VECTORS_BUCKET}
