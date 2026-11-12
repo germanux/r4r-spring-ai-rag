@@ -12,7 +12,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.utils import ImageReader
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'front-athagon-r4r-static/docs'
 SOURCES = sorted(p for p in (ROOT / 'knowledge').rglob('R4R_*.md'))
 FONT = Path('/usr/share/fonts/truetype/dejavu')

@@ -77,7 +77,7 @@ exportan sample.md ni el catálogo técnico de repositorios. Las citas conocidas
 enlazan al PDF; los nombres desconocidos permanecen como texto seguro.
 
 Regenerar desde la raíz:
-  python3 front-athagon-r4r-static/tools/export_sources.py
+  python3 py-scripts/export_sources.py
 Dependencias locales: reportlab, markdown, beautifulsoup4 y fuentes DejaVu.
 El logo de docs/riansares-4r-logo.png se extrajo de word/media/image1.png del
 DOCX de presupuesto facilitado. Los MD originales y el backend no se modifican.
