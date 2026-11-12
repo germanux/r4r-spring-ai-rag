@@ -53,3 +53,18 @@ una medida de seguridad. La seguridad real debe aplicarse en la API /
 reverse proxy antes de abrirla públicamente.
 
 PostgreSQL no debe exponerse a Internet.
+
+Preview y validación UX
+----------------------
+El autoplay requiere scroll y 50% del textarea visible durante 400 ms. Se ejecuta
+una vez por sessionStorage; Probar la demo permite repetirlo. No genera tráfico.
+El texto es una muestra guionizada basada en la descripción publicada de Riansares,
+no una grabación certificada de una respuesta del modelo. Las consultas manuales
+siguen usando SSE. La inspección runtime y warmup requieren una acción explícita.
+
+Pruebas desde la raíz del repositorio:
+  node front-athagon-r4r-static/js/app.test.cjs
+  node front-athagon-r4r-static/js/browser.test.cjs
+La segunda requiere Playwright instalado; PLAYWRIGHT_MODULE permite indicar su
+ruta y CHROMIUM_PATH un Chromium existente. Usa rutas interceptadas sin LLM real,
+viewports 1440x900 y 390x844, y captura PNG en /tmp/r4r-1440.png y /tmp/r4r-390.png.

@@ -112,6 +112,8 @@ function openPage(lang = 'es', storage = new Map(), options = {}) {
     } };
   vm.createContext(context);
   for (const file of ['i18n.js', 'app.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context, { filename: file });
+  // Runtime inspection is now an explicit visitor action; opening the page is offline.
+  if (!options.offline) document.getElementById("apiBaseUrl").handlers.change();
   const node = id => document.getElementById(id);
   const changeLanguage = value => { node('languageSelect').value = value; node('languageSelect').handlers.change(); };
   return { document, node, storage, requests, navigations, clipboard, timers, changeLanguage,
@@ -239,10 +241,11 @@ for (const lang of ['es', 'en']) {
     const sample = p.document.querySelectorAll('.sample')[0];
     await sample.handlers.click();
     assert.equal(p.node('question').value, sample.dataset.question);
-    await p.node('tryDemoButton').handlers.click({ preventDefault() {} });
-    assert.equal(p.node('question').value, p.t('demoQuestion'));
-    const demoRequest = p.requests.filter(r => r.url.endsWith('/answers')).at(-1);
-    assert.equal(JSON.parse(demoRequest.init.body).question, p.t('demoQuestion'));
+    const beforeDemo = p.requests.length;
+    const demo = p.node('tryDemoButton').handlers.click({ preventDefault() {} });
+    p.node('question').handlers.input();
+    await demo;
+    assert.equal(p.requests.length, beforeDemo);
     p.node('question').value = 'Keyboard query';
     await p.node('question').handlers.keydown({ ctrlKey: true, key: 'Enter' });
     assert.equal(p.storage.get('r4r.lastQuestion'), 'Keyboard query');
@@ -528,7 +531,7 @@ for (const lang of ['es', 'en']) {
       modelStatus: 'Modelo cargado', loadedModels: [{ name: 'qwen2.5:7b', parameterSize: '7.6B' }], topK: 3, minScore: .63
     } });
     await tick();
-    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Pregunta a nuestra IA con RAG' : 'Ask our RAG-powered AI a question');
+    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Pregunta a nuestra IA con RAG' : 'Ask this RAG-powered AI a question');
     assert.equal(p.document.querySelectorAll('.arch-step').length, 4);
     assert.equal(p.document.querySelectorAll('.inference-host').length, 4);
     assert.equal(p.document.querySelectorAll('.primary-host')[0].textContent.includes('NVIDIA GeForce RTX 4060'), true);
@@ -907,4 +910,10 @@ test('SSE timeout cancels its reader and permits a later query without automatic
   assert.equal(p.node('sendButton').disabled, false);
   assert.ok(p.node('errorBox').textContent.includes(p.t('timeout')));
   assert.equal(p.requests.filter(r => r.url.endsWith('/answers/stream')).length, 1);
+});
+
+test('initial page stays offline until an explicit visitor action', async () => {
+  const p = openPage('es', new Map(), { offline: true });
+  await tick();
+  assert.equal(p.requests.length, 0);
 });

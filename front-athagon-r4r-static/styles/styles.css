@@ -1162,3 +1162,10 @@ kbd {
 
 .rag-progress { list-style: none; padding: 0; margin: 16px 0; text-align: left; font-size: .9rem; line-height: 1.6; overflow-wrap: anywhere; }
 .rag-progress li { padding: 4px 0; }
+
+/* Keep dynamic response height changes from anchoring lower information sections. */
+body { overflow-anchor: none; }
+.response-panel { min-height: 420px; scroll-margin-top: 85px; }
+.is-preview-pressed { filter: brightness(.8); transform: translateY(2px); }
+#previewNotice { font-size: .85rem; opacity: .8; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .spinner { animation: none; } }

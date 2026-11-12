@@ -153,7 +153,12 @@
   changeLanguage(initialLanguage);
   if (savedQuestion === null) question.value = t("demoQuestion");
   languageSelect.addEventListener("change", () => {
-    if (["es", "en"].includes(languageSelect.value)) changeLanguage(languageSelect.value);
+    if (["es", "en"].includes(languageSelect.value)) {
+      const hadPreview = !$("previewNotice").hidden;
+      engage();
+      if (hadPreview) { question.value = ""; lastPayload = null; phase = "idle"; renderEmpty(); $("previewNotice").hidden = true; }
+      changeLanguage(languageSelect.value);
+    }
   });
   endpointPreset.addEventListener("change", () => {
     const preset = API_ENDPOINTS[endpointPreset.value];
@@ -169,22 +174,122 @@
   updateCounter();
 
   const tryDemoButton = $("tryDemoButton");
-  if (tryDemoButton) {
-    tryDemoButton.addEventListener("click", (event) => {
-      event.preventDefault();
-      question.value = t("demoQuestion");
-      updateCounter();
-      document.getElementById("demo").scrollIntoView({ behavior: "smooth", block: "start" });
-      return sendQuestion();
+  let preview = false;
+  let previewTimer;
+  let previewResolve;
+  let previewObserver;
+  let previewSeen = false;
+  let userEngaged = Boolean(savedQuestion);
+  const previewKey = "r4r.preview.seen";
+  try { previewSeen = sessionStorage.getItem(previewKey) === "1"; } catch { /* Optional storage. */ }
+  const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  function cancelPreview() {
+    clearTimeout(previewTimer);
+    previewResolve?.(false);
+    previewResolve = null;
+    if (!preview) return;
+    preview = false;
+    sendButton.classList.toggle("is-preview-pressed", false);
+    setLoading(false);
+    phase = "idle";
+    lastPayload = null;
+    progressRows = [];
+    renderProgress();
+    renderEmpty();
+    $("previewNotice").hidden = true;
+  }
+  function pausePreview(ms) {
+    return new Promise(resolve => {
+      previewResolve = resolve;
+      previewTimer = setTimeout(() => { previewResolve = null; resolve(preview); }, ms);
     });
   }
+  async function runPreview() {
+    if (activeQueryController) return;
+    cancelPreview();
+    preview = true;
+    renderEmpty();
+    previewSeen = true;
+    previewObserver?.disconnect();
+    try { sessionStorage.setItem(previewKey, "1"); } catch { /* Optional storage. */ }
+    const notice = $("previewNotice");
+    notice.hidden = false;
+    notice.textContent = isEnglish ? "Scripted preview · no API request" : "Vista previa guionizada · sin conexión a la API";
+    question.value = "";
+    const text = t("demoQuestion");
+    if (reducedMotion()) question.value = text;
+    else for (const char of text) {
+      question.value += char;
+      updateCounter();
+      if (!await pausePreview(40)) return;
+    }
+    updateCounter();
+    if (!await pausePreview(400)) return;
+    sendButton.classList.toggle("is-preview-pressed", true);
+    if (!await pausePreview(220)) return;
+    sendButton.classList.toggle("is-preview-pressed", false);
+    phase = "loading";
+    lastPayload = null;
+    progressRows = [];
+    renderEmpty();
+    emptyState.hidden = true;
+    setLoading(true);
+    // Keep the real submit control available so it can interrupt the preview.
+    sendButton.disabled = false;
+    loadingState.hidden = false;
+    resultMode.textContent = t("inProgress");
+    for (const stage of ["REQUEST_RECEIVED", "EMBEDDING_STARTED", "EMBEDDING_COMPLETED", "RETRIEVAL_STARTED", "RETRIEVAL_COMPLETED", "GENERATION_STARTED", "GENERATION_COMPLETED", "VALIDATION_COMPLETED"]) {
+      receiveProgress({ stage, documentsFound: 1 });
+      if (!await pausePreview(reducedMotion() ? 80 : 450)) return;
+    }
+    // Grounded in the knowledge-base description already published above the input.
+    // This is an illustrative fixture, not a claimed recording of a live model run.
+    const answer = isEnglish
+      ? "The four Rs stand for Reformas (renovations), Rehabilitación (rehabilitation), Revestimientos (coverings) and Reparaciones (repairs). [S1]"
+      : "Las cuatro R significan Reformas, Rehabilitación, Revestimientos y Reparaciones. [S1]";
+    const payload = { answer, abstained: false, citations: [{ label: "[S1]", source: "Riansares 4R", headingPath: [isEnglish ? "Knowledge base description" : "Descripción de la base de conocimiento"], ordinal: 1 }] };
+    setLoading(false);
+    renderResult({ ...payload, answer: " " });
+    answerText.setAttribute("aria-live", "off");
+    if (!reducedMotion()) for (let i = 0; i < answer.length; i += 6) {
+      answerText.textContent = answer.slice(0, i + 6);
+      if (!await pausePreview(35)) return;
+    }
+    lastPayload = payload;
+    phase = "success";
+    renderResult(payload);
+    resultMode.textContent = t("result");
+    preview = false;
+  }
+  function engage() {
+    userEngaged = true;
+    previewObserver?.disconnect();
+    cancelPreview();
+  }
+  question.addEventListener("focus", engage);
+  question.addEventListener("input", () => { engage(); updateCounter(); });
+  if (tryDemoButton) tryDemoButton.addEventListener("click", event => {
+    event.preventDefault();
+    return runPreview();
+  });
+  if (typeof IntersectionObserver !== "undefined" && !previewSeen && !userEngaged) {
+    previewObserver = new IntersectionObserver(entries => {
+      clearTimeout(previewTimer);
+      if (entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= 0.5)) {
+        previewTimer = setTimeout(() => {
+          if (!userEngaged && !previewSeen && document.activeElement !== question) runPreview();
+        }, 400);
+      }
+    }, { threshold: 0.5 });
+    window.addEventListener("scroll", () => previewObserver?.observe(question), { once: true, passive: true });
+  }
+  window.addEventListener("pagehide", () => { cancelPreview(); previewObserver?.disconnect(); clearTimeout(runtimePoll); });
 
   let runtimePoll;
   let runtimeRequest = 0;
   let runtimePollBudget = 18;
   const warmupAttempts = new Map();
-  requestWarmup();
-  loadRuntimeInfo();
+  // Backend activity starts only after an explicit visitor action.
   async function requestWarmup() {
     const baseUrl = validBaseUrl(apiBaseUrl.value);
     const now = performance.now();
@@ -360,10 +465,10 @@
 
   document.querySelectorAll(".sample").forEach((button) => {
     button.addEventListener("click", async () => {
+      engage();
       if (sendButton.disabled) return;
       question.value = button.dataset.question || "";
       updateCounter();
-      question.focus();
       await sendQuestion();
     });
   });
@@ -377,6 +482,8 @@
   });
 
   clearButton.addEventListener("click", () => {
+    engage();
+    $("previewNotice").hidden = true;
     question.value = "";
     phase = "idle";
     lastPayload = null;
@@ -386,7 +493,7 @@
     question.focus();
   });
 
-  question.addEventListener("input", updateCounter);
+
 
   question.addEventListener("keydown", (event) => {
     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
@@ -504,6 +611,8 @@
   }
 
   async function sendQuestion() {
+    engage();
+    $("previewNotice").hidden = true;
     if (sendButton.disabled) return;
 
     const text = question.value.trim();
@@ -540,6 +649,11 @@
     apiState.textContent = t("querying");
     resultMode.textContent = t("inProgress");
     httpStatus.textContent = "…";
+    // Position once, before the request. Never move the reader at completion.
+    const panel = document.querySelector(".response-panel");
+    const bounds = panel?.getBoundingClientRect?.();
+    if (bounds && (bounds.top < 0 || bounds.top > window.innerHeight - 120))
+      panel.scrollIntoView({ behavior: "instant", block: "start" });
 
     const controller = new AbortController();
     activeQueryController = controller;
@@ -591,7 +705,7 @@
       renderResult(payload);
       apiState.textContent = t(apiStatus);
       resultMode.textContent = t("result");
-      if (isEnglish) resultContent.scrollIntoView({ behavior: "smooth", block: "start" });
+
     } catch (error) {
       const duration = Math.round(performance.now() - started);
       elapsed.textContent = `${duration} ms`;
