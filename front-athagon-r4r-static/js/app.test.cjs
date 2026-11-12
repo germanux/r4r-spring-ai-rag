@@ -531,7 +531,7 @@ for (const lang of ['es', 'en']) {
       modelStatus: 'Modelo cargado', loadedModels: [{ name: 'qwen2.5:7b', parameterSize: '7.6B' }], topK: 3, minScore: .63
     } });
     await tick();
-    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Pregunta a nuestra IA con RAG' : 'Ask this RAG-powered AI a question');
+    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Pregunta a la IA con RAG' : 'Ask this RAG-powered AI a question');
     assert.equal(p.document.querySelectorAll('.arch-step').length, 4);
     assert.equal(p.document.querySelectorAll('.inference-host').length, 4);
     assert.equal(p.document.querySelectorAll('.primary-host')[0].textContent.includes('NVIDIA GeForce RTX 4060'), true);
@@ -916,4 +916,15 @@ test('initial page stays offline until an explicit visitor action', async () => 
   const p = openPage('es', new Map(), { offline: true });
   await tick();
   assert.equal(p.requests.length, 0);
+});
+
+test('known Markdown sources link to PDFs with the original basename', async () => {
+ const p = openPage('es', new Map(), { payload: { answer: 'Evidence [S1]', abstained: false, citations: [{label:'[S1]',source:'faqs/R4R_40_ALL_FAQ.md',headingPath:[],ordinal:1}] }});
+ p.node('question').value='Consulta';
+ await p.node('sendButton').handlers.click();
+ const card = p.node('citations').children[0];
+ const source=card.children[0].children[1];
+ assert.equal(source.tagName,'a');
+ assert.equal(source.getAttribute('href'),'docs/R4R_40_ALL_FAQ.pdf');
+ assert.equal(source.textContent,'R4R_40_ALL_FAQ.pdf');
 });

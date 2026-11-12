@@ -1166,6 +1166,6 @@ kbd {
 /* Keep dynamic response height changes from anchoring lower information sections. */
 body { overflow-anchor: none; }
 .response-panel { min-height: 420px; scroll-margin-top: 85px; }
-.is-preview-pressed { filter: brightness(.8); transform: translateY(2px); }
+.submit-btn.is-preview-pressed { background: #ffd35a; color: #172d42; box-shadow: 0 0 0 5px rgba(255,211,90,.35); transform: translateY(3px); }
 #previewNotice { font-size: .85rem; opacity: .8; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .spinner { animation: none; } }

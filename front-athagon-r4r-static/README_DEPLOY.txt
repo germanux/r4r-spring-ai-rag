@@ -56,7 +56,7 @@ PostgreSQL no debe exponerse a Internet.
 
 Preview y validación UX
 ----------------------
-El autoplay requiere scroll y 50% del textarea visible durante 400 ms. Se ejecuta
+El autoplay requiere 50% del textarea visible durante 400 ms, también al entrar. Se ejecuta
 una vez por sessionStorage; Probar la demo permite repetirlo. No genera tráfico.
 El texto es una muestra guionizada basada en la descripción publicada de Riansares,
 no una grabación certificada de una respuesta del modelo. Las consultas manuales
@@ -68,3 +68,16 @@ Pruebas desde la raíz del repositorio:
 La segunda requiere Playwright instalado; PLAYWRIGHT_MODULE permite indicar su
 ruta y CHROMIUM_PATH un Chromium existente. Usa rutas interceptadas sin LLM real,
 viewports 1440x900 y 390x844, y captura PNG en /tmp/r4r-1440.png y /tmp/r4r-390.png.
+
+PDF de las fuentes
+------------------
+Ocho documentos de knowledge/R4R_*.md (incluidas sus subcarpetas) se exportan
+a docs/ conservando exactamente el nombre y cambiando .md por .pdf. No se
+exportan sample.md ni el catálogo técnico de repositorios. Las citas conocidas
+enlazan al PDF; los nombres desconocidos permanecen como texto seguro.
+
+Regenerar desde la raíz:
+  python3 front-athagon-r4r-static/tools/export_sources.py
+Dependencias locales: reportlab, markdown, beautifulsoup4 y fuentes DejaVu.
+El logo de docs/riansares-4r-logo.png se extrajo de word/media/image1.png del
+DOCX de presupuesto facilitado. Los MD originales y el backend no se modifican.

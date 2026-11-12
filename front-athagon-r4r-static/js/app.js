@@ -179,8 +179,8 @@
   let previewResolve;
   let previewObserver;
   let previewSeen = false;
-  let userEngaged = Boolean(savedQuestion);
-  const previewKey = "r4r.preview.seen";
+  let userEngaged = false;
+  const previewKey = "r4r.preview.v2.seen";
   try { previewSeen = sessionStorage.getItem(previewKey) === "1"; } catch { /* Optional storage. */ }
   const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   function cancelPreview() {
@@ -226,7 +226,7 @@
     updateCounter();
     if (!await pausePreview(400)) return;
     sendButton.classList.toggle("is-preview-pressed", true);
-    if (!await pausePreview(220)) return;
+    if (!await pausePreview(650)) return;
     sendButton.classList.toggle("is-preview-pressed", false);
     phase = "loading";
     lastPayload = null;
@@ -247,7 +247,7 @@
     const answer = isEnglish
       ? "The four Rs stand for Reformas (renovations), Rehabilitación (rehabilitation), Revestimientos (coverings) and Reparaciones (repairs). [S1]"
       : "Las cuatro R significan Reformas, Rehabilitación, Revestimientos y Reparaciones. [S1]";
-    const payload = { answer, abstained: false, citations: [{ label: "[S1]", source: "Riansares 4R", headingPath: [isEnglish ? "Knowledge base description" : "Descripción de la base de conocimiento"], ordinal: 1 }] };
+    const payload = { answer, abstained: false, citations: [{ label: "[S1]", source: "R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md", headingPath: [isEnglish ? "Knowledge base description" : "Descripción de la base de conocimiento"], ordinal: 1 }] };
     setLoading(false);
     renderResult({ ...payload, answer: " " });
     answerText.setAttribute("aria-live", "off");
@@ -281,7 +281,7 @@
         }, 400);
       }
     }, { threshold: 0.5 });
-    window.addEventListener("scroll", () => previewObserver?.observe(question), { once: true, passive: true });
+    previewObserver.observe(question);
   }
   window.addEventListener("pagehide", () => { cancelPreview(); previewObserver?.disconnect(); clearTimeout(runtimePoll); });
 
@@ -793,9 +793,21 @@
       label.className = "citation-label";
       label.textContent = citation?.label || "[S?]";
 
-      const source = document.createElement("span");
+      const sourceName = typeof citation?.source === "string" ? citation.source.replace(/\\/g, "/") : "";
+      const documentName = sourceName.split("/").pop();
+      const publicSources = new Set([
+        "R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md", "R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+        "R4R_20_CASOS_OFICINAS_CUEVAS_BANOS_Y_FILTROS.md", "R4R_30_METODO_PRESUPUESTOS_SEO_CATALOGO_Y_PLANTILLAS.md",
+        "R4R_40_ALL_FAQ.md", "R4R_50_STRUCTURED_EXTRA_DATA.md", "R4R_60_SERVICE_AREA_TOWNS.md", "R4R_70_WEB_SOURCE_MANIFEST.md"
+      ]);
+      const source = document.createElement(publicSources.has(documentName) ? "a" : "span");
+      if (publicSources.has(documentName)) {
+        source.setAttribute("href", `docs/${documentName.replace(/\.md$/, ".pdf")}`);
+        source.setAttribute("target", "_blank");
+        source.setAttribute("rel", "noopener");
+      }
       source.className = "citation-source";
-      source.textContent = citation?.source || t("unknownSource");
+      source.textContent = publicSources.has(documentName) ? documentName.replace(/\.md$/, ".pdf") : citation?.source || t("unknownSource");
 
       top.append(label, source);
 

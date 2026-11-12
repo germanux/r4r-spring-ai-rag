@@ -7,12 +7,20 @@ const context=await browser.newContext({viewport});
 const page=await context.newPage();let external=[],errors=[];
 page.on('pageerror',e=>errors.push(e.message));
 await page.route('**/*',route=>{const u=new URL(route.request().url());if(u.hostname==='preview.test'){let f=path.join(process.cwd(),'front-athagon-r4r-static',u.pathname==='/'?'index.html':u.pathname);return route.fulfill({body:fs.readFileSync(f),contentType:f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':'text/html'});}external.push(u.href);return route.abort();});
-await page.goto('http://preview.test/');await page.waitForTimeout(700);
-assert.equal(external.length,0);assert.equal(await page.locator('#previewNotice').isVisible(),false);
-await page.mouse.wheel(0,180);await page.locator('#question').scrollIntoViewIfNeeded();await page.waitForTimeout(1200);
+await page.addInitScript(() => localStorage.setItem('r4r.lastQuestion', 'A previous query'));
+await page.goto('http://preview.test/');
+const inputVisible = await page.locator('#question').evaluate(el => { const r=el.getBoundingClientRect();return Math.max(0, Math.min(r.bottom,innerHeight)-Math.max(0,r.top))/r.height >= .5; });
+if(!inputVisible) {
+ await page.waitForTimeout(700);assert.equal(await page.locator('#previewNotice').isVisible(),false);
+ await page.locator('#question').scrollIntoViewIfNeeded();
+}
+await page.waitForFunction(()=>document.querySelector('#previewNotice').hidden===false);
+await page.waitForFunction(()=>document.querySelector('#sendButton').classList.contains('is-preview-pressed'),{},{timeout:10000});
 assert(await page.locator('#question').inputValue());
 await page.waitForFunction(()=>document.querySelector('#resultContent').hidden===false && document.querySelector('#sendLabel').textContent!=='Processing…',{},{timeout:18000});
-await page.waitForTimeout(1800);assert.equal(external.length,0);assert.equal(errors.length,0,errors.join(','));
+await page.waitForFunction(()=>document.querySelector('#answerText').textContent.endsWith('[S1]'));assert.equal(external.length,0);assert.equal(errors.length,0,errors.join(','));
+const pdfLink=page.locator('#citations a');assert((await pdfLink.getAttribute('href')).endsWith('R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.pdf'));
+assert.equal(await page.locator('footer').innerText().then(t=>t.includes('maintained by')),false);
 await page.screenshot({path:`/tmp/r4r-${viewport.width}.png`,fullPage:true});
 await page.locator('#tryDemoButton').click();await page.waitForTimeout(300);await page.locator('#question').fill('Mi pregunta');await page.waitForTimeout(700);assert.equal(await page.locator('#question').inputValue(),'Mi pregunta');
 await page.reload();await page.locator('#question').scrollIntoViewIfNeeded();await page.waitForTimeout(800);assert.equal(await page.locator('#previewNotice').isVisible(),false);
