@@ -94,3 +94,4 @@ config/r4r-agents.json.**
 # Shared public defaults are versioned; private overrides remain ignored.
 !/docker-spring/.env.base
 /docker-spring/app.jar
+.r4r-translation-cache*/
