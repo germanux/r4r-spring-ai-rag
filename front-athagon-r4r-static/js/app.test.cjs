@@ -442,7 +442,7 @@ for (const lang of ['es', 'en']) {
     } });
     await tick();
     assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Tu asistente de IA para reformas' : 'Your AI assistant for renovations');
-    assert.equal(p.document.querySelectorAll('.arch-step').length, 4);
+    assert.equal(p.document.querySelectorAll('.arch-step').length, 5);
     assert.equal(p.document.querySelectorAll('.inference-host').length, 4);
     assert.equal(p.document.querySelectorAll('.primary-host')[0].textContent.includes('NVIDIA GeForce RTX 4060'), true);
     assert.equal(p.node('runtimeModel'), null);
