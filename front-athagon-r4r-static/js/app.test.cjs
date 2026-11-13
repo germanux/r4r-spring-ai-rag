@@ -927,3 +927,26 @@ test('numeric source sections use actual PDF page targets and preserve evidence 
  assert.equal(link.getAttribute('href'),catalogue.R4R_10.en.url+'#page='+catalogue.R4R_10.en.sectionPages['section-6-3']);
  assert.ok(link.textContent.includes('PDF'));assert.ok(p.node('citations').textContent.includes(source));
 });
+
+test('completed answers reveal sources after the visible press delay',async()=>{
+ const p=openPage('es',new Map(),{offline:true});p.node('question').value='A question';await p.node('sendButton').handlers.click();
+ assert.equal(p.node('sourcesDetails').open,false);
+ const timer=[...p.timers.values()].find(t=>t.delay===280);assert.ok(timer);timer.fn();
+ assert.equal(p.node('sourcesDetails').open,true);
+});
+test('new ES/EN quick question includes suelo without reusing a differently worded recording',()=>{
+ for(const lang of ['es','en']) {
+  const p=openPage(lang,new Map(),{offline:true});
+  const button=p.document.querySelectorAll('.sample')[2];assert.ok(button.dataset.question.includes('suelo'));
+  assert.ok(button.dataset.question.includes('solera'));assert.ok(button.dataset.question.includes('solado'));
+ }
+});
+
+test('the updated three-term example has an exact real saved fallback in both languages',async()=>{
+ for(const lang of ['es','en']){
+  const p=openPage(lang,new Map(),{offline:true,networkFails:true});const button=p.document.querySelectorAll('.sample')[2];
+  const recordings=JSON.parse(p.node('recordedExamples').textContent);const saved=recordings.liveExamples[lang].find(r=>r.question===button.dataset.question);
+  assert.ok(saved);await button.handlers.click();assert.equal(p.node('previewNotice').textContent,p.t('savedResponse'));
+  assert.ok(p.node('answerText').textContent.includes('suelo'));assert.ok(saved.citations.length>0);
+ }
+});

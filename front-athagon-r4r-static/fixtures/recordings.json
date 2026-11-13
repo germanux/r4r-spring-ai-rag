@@ -904,7 +904,9 @@
         "providerName": "PC principal"
       },
       {
-        "answer": "La **solera** es la capa base o elemento de apoyo que recibe el pavimento, mientras que el **solado** es el pavimento final transitable, como baldosa o material equivalente. Esta distinción se documenta en [S1], [S2] y [S3].",
+        "language": "es",
+        "question": "¿Cuál es la diferencia entre suelo, solera y solado?",
+        "answer": "El **suelo** es el término general para la superficie que soporta el peso, mientras que la **solera** es la capa base o estructural que recibe el pavimento, y el **solado** es el pavimento final transitable, como baldosa o piedra. Esta distinción se documenta en [S1], [S2] y [S3]. La solera puede ser renovada sin cambiar el solado, según [S5].",
         "abstained": false,
         "citations": [
           {
@@ -934,12 +936,19 @@
               "FAQ-041 — ¿Qué diferencia hay entre solera y solado?"
             ],
             "ordinal": 50
+          },
+          {
+            "label": "[S5]",
+            "source": "es/guides/R4R_105_SOLERA_SOLADO_PATIOS_DRENAJE_Y_PENDIENTES.md",
+            "headingPath": [
+              "Patios y pavimentos — solera, solado, humedad y evacuación",
+              "¿Se puede cambiar el solado sin rehacer la solera?"
+            ],
+            "ordinal": 2
           }
         ],
-        "language": "es",
-        "question": "¿Cuál es la diferencia entre solera y solado?",
-        "recordedAt": "2026-11-13T15:51:46.009665+00:00",
-        "durationMs": 2839,
+        "recordedAt": "2026-11-13T17:33:47.852418+00:00",
+        "durationMs": 3760,
         "events": [
           {
             "stage": "REQUEST_RECEIVED",
@@ -956,34 +965,34 @@
           },
           {
             "stage": "EMBEDDING_COMPLETED",
-            "elapsedMs": 1081,
-            "durationMs": 1080.180327,
+            "elapsedMs": 1175,
+            "durationMs": 1173.951766,
             "model": "nomic-embed-text:latest"
           },
           {
             "stage": "RETRIEVAL_COMPLETED",
-            "elapsedMs": 1118,
+            "elapsedMs": 1220,
             "documentsFound": 5,
-            "durationMs": 1118.110714
+            "durationMs": 1218.887917
           },
           {
             "stage": "GENERATION_STARTED",
-            "elapsedMs": 1129,
+            "elapsedMs": 1231,
             "provider": "PC principal",
             "model": "qwen3:8b"
           },
           {
             "stage": "GENERATION_COMPLETED",
-            "elapsedMs": 2810,
+            "elapsedMs": 3662,
             "provider": "PC principal",
             "model": "qwen3:8b",
-            "durationMs": 1690.7888
+            "durationMs": 2441.410594
           },
           {
             "stage": "VALIDATION_COMPLETED",
-            "elapsedMs": 2812,
+            "elapsedMs": 3664,
             "documentsFound": 5,
-            "durationMs": 1.338575
+            "durationMs": 1.021117
           }
         ],
         "model": "qwen3:8b",
@@ -1289,7 +1298,9 @@
         "providerName": "PC principal"
       },
       {
-        "answer": "The **solera** is a structural base or leveling layer that supports the final flooring, often made of concrete or mortar, with specific thickness, reinforcement, slopes, and joints [S3]. The **solado** is the final, walkable surface such as tiles or stone placed over a suitable base [S2]. They are not synonyms; the solera can be renewed while the solado may require a new solera before installation [S1].",
+        "language": "en",
+        "question": "What is the difference between a floor (suelo), a concrete slab base (solera), and floor finishing (solado)?",
+        "answer": "A **floor (suelo)** refers to the entire surface area, including both the **concrete slab base (solera)** and the **floor finishing (solado)**. The **solera** is the structural base or leveling layer that supports the floor, while the **solado** is the final, walkable surface such as tiles or stone placed over a suitable support. The solera and solado are not synonyms; the solado can be renewed without replacing the solera, provided the support remains stable and free from defects. [S1], [S2], [S3], [S4], [S5]",
         "abstained": false,
         "citations": [
           {
@@ -1312,6 +1323,16 @@
           },
           {
             "label": "[S3]",
+            "source": "es/faqs/R4R_40_ALL_FAQ.md",
+            "headingPath": [
+              "Riansares 4R — todas las preguntas frecuentes",
+              "Suelos",
+              "FAQ-041 — ¿Qué diferencia hay entre solera y solado?"
+            ],
+            "ordinal": 50
+          },
+          {
+            "label": "[S4]",
             "source": "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
             "headingPath": [
               "Riansares 4R — casos de patios, viviendas, humedades y reparaciones",
@@ -1319,12 +1340,19 @@
               "6.3. Distinción entre solera y solado"
             ],
             "ordinal": 4
+          },
+          {
+            "label": "[S5]",
+            "source": "es/guides/R4R_105_SOLERA_SOLADO_PATIOS_DRENAJE_Y_PENDIENTES.md",
+            "headingPath": [
+              "Patios y pavimentos — solera, solado, humedad y evacuación",
+              "¿Se puede cambiar el solado sin rehacer la solera?"
+            ],
+            "ordinal": 2
           }
         ],
-        "language": "en",
-        "question": "What is the difference between a concrete subfloor (solera) and floor tiling (solado)?",
-        "recordedAt": "2026-11-13T15:53:54.171358+00:00",
-        "durationMs": 4413,
+        "recordedAt": "2026-11-13T17:34:15.095241+00:00",
+        "durationMs": 5243,
         "events": [
           {
             "stage": "REQUEST_RECEIVED",
@@ -1336,48 +1364,48 @@
           },
           {
             "stage": "TRANSLATION_COMPLETED",
-            "elapsedMs": 661,
-            "durationMs": 660.781999
+            "elapsedMs": 663,
+            "durationMs": 662.872956
           },
           {
             "stage": "RETRIEVAL_STARTED",
-            "elapsedMs": 662
+            "elapsedMs": 663
           },
           {
             "stage": "EMBEDDING_STARTED",
-            "elapsedMs": 664,
+            "elapsedMs": 665,
             "model": "nomic-embed-text:latest"
           },
           {
             "stage": "EMBEDDING_COMPLETED",
-            "elapsedMs": 1747,
-            "durationMs": 1082.046662,
+            "elapsedMs": 1748,
+            "durationMs": 1082.54516,
             "model": "nomic-embed-text:latest"
           },
           {
             "stage": "RETRIEVAL_COMPLETED",
-            "elapsedMs": 1798,
+            "elapsedMs": 1781,
             "documentsFound": 5,
-            "durationMs": 1135.988061
+            "durationMs": 1117.239294
           },
           {
             "stage": "GENERATION_STARTED",
-            "elapsedMs": 1809,
+            "elapsedMs": 1792,
             "provider": "PC principal",
             "model": "qwen3:8b"
           },
           {
             "stage": "GENERATION_COMPLETED",
-            "elapsedMs": 4389,
+            "elapsedMs": 5173,
             "provider": "PC principal",
             "model": "qwen3:8b",
-            "durationMs": 2590.279862
+            "durationMs": 3391.224273
           },
           {
             "stage": "VALIDATION_COMPLETED",
-            "elapsedMs": 4390,
+            "elapsedMs": 5175,
             "documentsFound": 5,
-            "durationMs": 0.684801
+            "durationMs": 1.505842
           }
         ],
         "model": "qwen3:8b",

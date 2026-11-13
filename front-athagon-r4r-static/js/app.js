@@ -87,6 +87,21 @@
   const citationCount = $("citationCount");
   const loadingState = $("loadingState");
   const sourcesDetails = $("sourcesDetails");
+  let sourcesTimer;
+  const sourcesHeading = sourcesDetails.querySelector(".citations-head");
+  function cancelSourcesPress() {
+    clearTimeout(sourcesTimer);
+    sourcesHeading.classList.toggle("is-preview-pressed", false);
+  }
+  function revealSources() {
+    cancelSourcesPress();
+    if (!lastPayload?.citations?.length) return;
+    if (!reducedMotion()) sourcesHeading.classList.toggle("is-preview-pressed", true);
+    sourcesTimer = setTimeout(() => {
+      sourcesHeading.classList.toggle("is-preview-pressed", false);
+      sourcesDetails.open = true;
+    }, reducedMotion() ? 0 : 280);
+  }
 
   const normalizeBaseUrl = (value) => (value || "").trim().replace(/\/+$/, "");
 
@@ -195,6 +210,7 @@
   const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   function cancelPreview() {
     clearTimeout(previewTimer);
+    cancelSourcesPress();
     previewResolve?.(false);
     previewResolve = null;
     if (!preview) return;
@@ -280,11 +296,12 @@
     answerText.setAttribute("aria-live", "off");
     if (!reducedMotion()) for (let i = 0; i < answer.length; i += 6) {
       answerText.textContent = answer.slice(0, i + 6);
-      if (!await pausePreview(35)) return;
+      if (!await pausePreview(26)) return;
     }
     lastPayload = payload;
     phase = "success";
     renderResult(payload);
+    revealSources();
     resultMode.textContent = t("result");
     $("answerProvider").textContent = [data.providerName, data.model, data.recordedAt].filter(Boolean).join(" · ");
     elapsed.textContent = Number.isFinite(data.durationMs) ? `${t("recordedDuration")}: ${data.durationMs} ms` : "";
@@ -751,6 +768,7 @@
       lastPayload = payload;
       apiStatus = "online";
       renderResult(payload);
+      revealSources();
       apiState.textContent = t(apiStatus);
       resultMode.textContent = t("result");
 
@@ -767,7 +785,7 @@
       const failedService = lastError.kind === "timeout" || !lastError.kind || lastError.status >= 500;
       const approvedExample = allowSaved;
       if (saved && failedService && approvedExample && allowSaved) {
-        displayedRecording = true;phase = "success";lastPayload = saved;renderResult(saved);
+        displayedRecording = true;phase = "success";lastPayload = saved;renderResult(saved);revealSources();
         errorBox.hidden = false;errorBox.textContent = errorMessage(lastError);
         replyMode = "savedResponse";$("previewNotice").textContent = t(replyMode);
         $("answerProvider").textContent = [saved.providerName,saved.model,saved.recordedAt].filter(Boolean).join(" · ");
@@ -793,6 +811,8 @@
   }
 
   function renderEmpty() {
+    cancelSourcesPress();
+    sourcesDetails.open = false;
     $("progressDetails").hidden = true;
     emptyState.hidden = false;
     resultContent.hidden = true;

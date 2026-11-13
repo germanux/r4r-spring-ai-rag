@@ -21,7 +21,7 @@ const root=path.resolve(__dirname,'..');
   await page.goto('http://preview.test/');await page.locator('#question').scrollIntoViewIfNeeded();
   await page.waitForFunction(()=>document.querySelector('#answerText').textContent.includes('[S4]'));
   assert.equal(count,0);assert.notEqual(await page.evaluate(()=>document.activeElement.id),'question');
-  await page.locator('#sourcesDetails > summary').click();assert(await page.locator('#resultContent').isVisible());assert(await page.locator('#citations').isVisible());
+  await page.waitForFunction(()=>document.querySelector('#sourcesDetails').open);assert(await page.locator('#resultContent').isVisible());assert(await page.locator('#citations').isVisible());
   await page.reload();await page.locator('#question').scrollIntoViewIfNeeded();await page.locator('#previewNotice').waitFor();
   await page.locator('#question').fill('My interruption');await page.waitForTimeout(100);
   assert.equal(await page.locator('#question').inputValue(),'My interruption');assert.equal(count,0);

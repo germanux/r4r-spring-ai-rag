@@ -12,11 +12,12 @@ const response={stage:'ANSWER_READY',answer:'Safe **answer** [S1]',abstained:fal
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{
    const original=window.setTimeout;window.setTimeout=(fn,delay,...args)=>original(fn,delay<10000?Math.min(delay,3):delay,...args);
-   window.playback={questions:[],answers:[],pressed:false};
+   window.playback={questions:[],answers:[],pressed:false,sourcesPressed:false};
    const value=Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value');
    Object.defineProperty(HTMLTextAreaElement.prototype,'value',{...value,set(v){window.playback.questions.push(v);value.set.call(this,v)}});
    addEventListener('DOMContentLoaded',()=>new MutationObserver(()=>{
     const button=document.querySelector('#sendButton');if(button?.classList.contains('is-preview-pressed'))window.playback.pressed=true;
+    if(document.querySelector('.citations-head')?.classList.contains('is-preview-pressed'))window.playback.sourcesPressed=true;
     const text=document.querySelector('#answerText')?.textContent;if(text)window.playback.answers.push(text);
    }).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true}));
   });
@@ -40,10 +41,10 @@ const response={stage:'ANSWER_READY',answer:'Safe **answer** [S1]',abstained:fal
   const playback=await page.evaluate(()=>window.playback);
   for(const data of fixtures.kitchen[lang]) {assert(playback.questions.includes(data.question));assert(playback.answers.includes(data.answer));}
   assert(playback.questions.some(q=>q.length>0 && q.length<fixtures.kitchen[lang][0].question.length));
-  assert(playback.pressed);assert.equal(requests.length,0);
+  assert(playback.pressed);assert(playback.sourcesPressed);assert.equal(requests.length,0);
   assert.equal(await page.locator('#endpointSettings').isVisible(),false);
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-  await page.locator('#sourcesDetails').click();
+  await page.waitForFunction(()=>document.querySelector('#sourcesDetails').open);
   const source=page.locator('#citations a').first();assert((await source.getAttribute('href')).includes('/'+lang+'/'));
   const pdf=await page.evaluate(async url=>{const response=await fetch(url);const bytes=new Uint8Array(await response.arrayBuffer());return {status:response.status,type:response.headers.get('content-type'),signature:new TextDecoder().decode(bytes.slice(0,5))}},await source.getAttribute('href'));
   assert.equal(pdf.status,200);assert(pdf.type.startsWith('application/pdf'));assert.equal(pdf.signature,'%PDF-');
