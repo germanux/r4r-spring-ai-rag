@@ -7,7 +7,7 @@ const root=path.resolve(__dirname,'..');
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce',locale:'es'});
   const page=await context.newPage();let count=0,mode='ok',failed=false;
   page.on('requestfailed',r=>{if(r.url().includes('/answers/stream'))failed=true});
-  await page.addInitScript(()=>{const timer=setTimeout;window.setTimeout=(f,ms,...args)=>timer(f,ms===180000?50:ms<10000?Math.min(ms,4):ms,...args)});
+  await page.addInitScript(()=>{const timer=setTimeout;window.setTimeout=(f,ms,...args)=>timer(f,ms===180000?50:ms===200?150:ms<10000?Math.min(ms,4):ms,...args)});
   await page.route('**/*',async r=>{
    const u=new URL(r.request().url());
    if(u.hostname==='preview.test'){const f=path.join(root,u.pathname==='/'?'index.html':u.pathname);return r.fulfill({body:fs.readFileSync(f),contentType:f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':'text/html'})}
@@ -21,6 +21,7 @@ const root=path.resolve(__dirname,'..');
   await page.goto('http://preview.test/');await page.locator('#question').scrollIntoViewIfNeeded();
   await page.waitForFunction(()=>document.querySelector('#answerText').textContent.includes('[S4]'));
   assert.equal(count,0);assert.notEqual(await page.evaluate(()=>document.activeElement.id),'question');
+  await page.locator('#sourcesDetails > summary').click();assert(await page.locator('#resultContent').isVisible());assert(await page.locator('#citations').isVisible());
   await page.reload();await page.locator('#question').scrollIntoViewIfNeeded();await page.locator('#previewNotice').waitFor();
   await page.locator('#question').fill('My interruption');await page.waitForTimeout(100);
   assert.equal(await page.locator('#question').inputValue(),'My interruption');assert.equal(count,0);

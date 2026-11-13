@@ -202,12 +202,15 @@
     question.classList.toggle("is-demo-typing", false);
     sendButton.classList.toggle("is-preview-pressed", false);
     setLoading(false);
-    phase = "idle";
-    lastPayload = null;
-    progressRows = [];
-    renderProgress();
-    renderEmpty();
-    $("previewNotice").hidden = true;
+    // Opening sources during the pause must keep the completed recorded answer.
+    if (phase !== "success" || !lastPayload) {
+      phase = "idle";
+      lastPayload = null;
+      progressRows = [];
+      renderProgress();
+      renderEmpty();
+      $("previewNotice").hidden = true;
+    }
   }
   function pausePreview(ms) {
     return new Promise(resolve => {
@@ -258,6 +261,7 @@
     loadingState.hidden = false;
     resultMode.textContent = t("inProgress");
     if (!data.events.length) {
+      $("progressDetails").hidden = false;
       $("ragProgress").textContent = t("noRecordedTimeline");
       for (const stage of ["preparing", "searching", "generating", "verifying"]) {
         $("simpleProgress").textContent = t(stage);
@@ -594,6 +598,7 @@
     if (!list) return;
     const providerName = provider => ({ "PC principal": t("localModels").desktop, "Portátil ASUS": t("localModels").laptop, "OpenAI": "OpenAI" }[provider] || t("unknownHost"));
     list.replaceChildren();
+    $("progressDetails").hidden = progressRows.length === 0;
     for (const row of progressRows) {
       const event = row.event;
       const li = document.createElement("li");
@@ -788,6 +793,7 @@
   }
 
   function renderEmpty() {
+    $("progressDetails").hidden = true;
     emptyState.hidden = false;
     resultContent.hidden = true;
     errorBox.hidden = true;

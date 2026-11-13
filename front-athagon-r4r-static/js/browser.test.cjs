@@ -57,7 +57,8 @@ const response={stage:'ANSWER_READY',answer:'Safe **answer** [S1]',abstained:fal
   assert(requests[0].body.question.includes(lang==='es'?'cuatro R':'four Rs'));
   for(const button of await page.locator('.sample').all()) {const n=requests.length;await button.click();await page.waitForFunction(()=>!document.querySelector('#sendButton').disabled);assert.equal(requests.length,n+1);}
   await page.locator('#question').fill('Free query');const n=requests.length;await page.locator('#question').press('Shift+Enter');assert.equal(requests.length,n);await page.locator('#question').press('Enter');await page.waitForFunction(()=>!document.querySelector('#sendButton').disabled);assert.equal(requests.length,n+1);
-  assert.equal(await page.locator('#answerText strong').innerText(),'answer');
+  assert.equal(await page.locator('#answerText strong').innerText(),'answer');assert(await page.locator('#progressDetails').isVisible());
+  await page.locator('#progressDetails > summary').click();assert((await page.locator('#ragProgress').innerText()).includes('GENERATION_STARTED'));assert((await page.locator('#ragProgress').innerText()).includes('ANSWER_READY'));
   status=429;await page.locator('#sendButton').click();await page.locator('#errorBox').waitFor();assert((await page.locator('#errorBox').innerText()).includes('20 s'));
   status=503;await page.locator('#tryDemoButton').click();await page.waitForFunction(()=>!document.querySelector('#sendButton').disabled);assert.equal(await page.locator('#previewNotice').innerText(),lang==='es'?'Respuesta guardada':'Saved response');
   await page.locator('#question').fill('An arbitrary unsupported query');await page.locator('#sendButton').click();await page.waitForFunction(()=>!document.querySelector('#sendButton').disabled);assert.equal(await page.locator('#resultContent').isVisible(),false);

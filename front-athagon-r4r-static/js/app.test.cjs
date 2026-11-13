@@ -909,3 +909,11 @@ test('valid live abstentions and 429 never become automatic saved answers', asyn
  await limited.node('tryDemoButton').handlers.click({preventDefault(){}});
  assert.equal(limited.node('resultContent').hidden,true);assert.ok(limited.node('errorBox').textContent.includes('25 s'));
 });
+
+test('completed SSE history remains inspectable outside the hidden loading block', async()=>{
+ const p=openPage('es',new Map(),{offline:true,stream:async()=>sseResponse([{stage:'REQUEST_RECEIVED',elapsedMs:0},{stage:'GENERATION_STARTED',provider:'PC principal',model:'qwen3:8b',elapsedMs:2},{stage:'GENERATION_COMPLETED',provider:'PC principal',model:'qwen3:8b',elapsedMs:3},{stage:'ANSWER_READY',answer:'Done',abstained:false,citations:[]}])});
+ p.node('question').value='Question';await p.node('sendButton').handlers.click();
+ assert.equal(p.node('loadingState').hidden,true);assert.equal(p.node('progressDetails').hidden,false);
+ assert.equal(p.node('loadingState').contains(p.node('progressDetails')),false);
+ for(const stage of ['REQUEST_RECEIVED','GENERATION_STARTED','GENERATION_COMPLETED','ANSWER_READY'])assert.ok(p.node('ragProgress').textContent.includes(stage));
+});

@@ -1204,3 +1204,6 @@ a:focus-visible,button:focus-visible,textarea:focus-visible,select:focus-visible
 .arch-step summary::after { grid-row:1; grid-column:2; }
 .architecture-route > .arch-step::after { display:none; }
 @media(max-width:760px) { .architecture-route { grid-template-columns:minmax(0,1fr); } }
+
+.query-telemetry { margin:12px 0; font-size:.85rem; }
+.query-telemetry > summary { cursor:pointer; min-height:44px; padding:12px 0; }
