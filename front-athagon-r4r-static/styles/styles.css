@@ -1223,3 +1223,5 @@ a:focus-visible,button:focus-visible,textarea:focus-visible,select:focus-visible
 .elapsed:empty, .http-status:empty { display:none; }
 .response-panel > .panel-head > .elapsed { margin-left:auto; text-align:right; white-space:nowrap; }
 .answer-box .block-head { justify-content:flex-end; }
+
+.runtime-panel > .config-details + .config-details { margin-top:12px; }

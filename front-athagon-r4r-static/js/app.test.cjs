@@ -442,8 +442,8 @@ for (const lang of ['es', 'en']) {
     } });
     await tick();
     assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Asistente de IA para reformas' : 'Your AI assistant for renovations');
-    assert.equal(p.document.querySelectorAll('.arch-step').length, 5);
-    assert.equal(p.document.querySelectorAll('.inference-host').length, 4);
+    assert.equal(p.document.querySelectorAll('.arch-step').length, 6);
+    assert.equal(p.document.querySelectorAll('.inference-host').length, 3);
     assert.equal(p.document.querySelectorAll('.primary-host')[0].textContent.includes('NVIDIA GeForce RTX 4060'), true);
     assert.equal(p.node('runtimeModel'), null);
     assert.equal(p.node('runtimePreferred').textContent, `Ollama · ${p.t('hostNames').desktop}`);
@@ -597,7 +597,7 @@ for (const lang of ['es', 'en']) {
     assert.equal(p.document.querySelectorAll('.config-details')[0].open, false);
     assert.equal(p.node('runtimeModelFull'), null);
     const role = p.document.querySelectorAll('.runtime-summary')[0];
-    assert.ok(p.document.querySelectorAll('.config-details')[1].contains(role));
+    assert.ok(p.document.querySelectorAll('.config-details')[2].contains(role));
     assert.ok(html.indexOf('id="demo"') < html.indexOf('id="como-funciona"'));
     assert.ok(html.indexOf('id="como-funciona"') < html.indexOf('id="arquitectura"'));
     assert.ok(html.indexOf('id="arquitectura"') < html.indexOf('id="runtime"'));
@@ -983,4 +983,17 @@ test('response timing is in the header and successful answers have no duplicate 
  assert.equal(p.document.querySelectorAll('[data-i18n]').filter(node=>node.getAttribute('data-i18n')==='page.ctrl_enter_to_submit').length,0);
  assert.ok(!html.includes('data-i18n="page.adaptable"'));
  for(const lang of ['es','en']) {p.changeLanguage(lang);assert.ok(p.node('architectureContent').textContent.includes(p.t('page.how_summary')));}
+});
+
+test('technical subsections separate diagram, execution flow and configuration in ES/EN',()=>{
+ for(const lang of ['es','en']) {
+  const p=openPage(lang,new Map(),{offline:true});const sections=p.document.querySelectorAll('.config-details');
+  assert.equal(sections.length,3);assert.equal(sections[0].getAttribute('id'),'engineeringDetails');assert.equal(sections[1].getAttribute('id'),'flowDetails');
+  for(const section of sections)assert.equal(section.open,false);
+  assert.equal(p.node('engineeringDetails').contains(p.document.querySelectorAll('.architecture-diagram')[0]),true);
+  assert.equal(p.node('engineeringDetails').contains(p.document.querySelectorAll('.architecture-route')[0]),false);
+  assert.equal(p.node('flowDetails').contains(p.document.querySelectorAll('.architecture-route')[0]),true);
+  const backup=p.document.querySelectorAll('.arch-step').find(step=>step.textContent.includes('04b'));
+  assert.ok(backup.textContent.includes('GPT-6 Luna'));assert.ok(backup.textContent.includes(p.t('page.remote_topology')));
+ }
 });

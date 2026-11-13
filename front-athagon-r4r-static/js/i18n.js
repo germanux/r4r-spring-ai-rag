@@ -3,6 +3,8 @@ const R4RI18n = (() => {
   "use strict";
   const dictionary = {
     "es": {
+      "page.execution_flow": "Flujo y proveedores",
+      "page.generation_backup": "Respaldo de generación",
       "page.query_steps": "Pasos de la consulta",
       "busyPublic": "El servicio está ocupado temporalmente. Inténtalo más tarde.",
       "recordedDuration": "Captura",
@@ -17,7 +19,7 @@ const R4RI18n = (() => {
       "page.engineering_generation": "Ollama utiliza PC, portátil y OpenAI como respaldo configurado. El NAS y su conexión siguen siendo dependencias.",
       "page.engineering_retrieval": "Nomic embeddings y PostgreSQL/pgvector recuperan documentación; AWS Lambda Java 21 y S3 Vectors ofrecen respaldo.",
       "page.engineering_stack": "Java 21, Spring Boot y Spring AI coordinan el RAG bilingüe.",
-      "page.engineering_architecture": "Ingeniería y arquitectura",
+      "page.engineering_architecture": "Diagrama y tecnologías",
       "page.how_summary": "La consulta busca documentos y genera una respuesta con fuentes verificables. El mismo sistema puede adaptarse a manuales y documentación de otros sectores.",
       "notQueried": "No consultado: abre Detalles técnicos para consultar el estado.",
       "rateLimited": "El servicio está ocupado o ha alcanzado su límite de consultas. Inténtalo más tarde.",
@@ -218,6 +220,8 @@ const R4RI18n = (() => {
       "page.embedding_dimensions": "Dimensiones de embeddings"
     },
     "en": {
+      "page.execution_flow": "Request Flow & Providers",
+      "page.generation_backup": "Generation fallback",
       "page.query_steps": "Query progress",
       "busyPublic": "The service is temporarily busy. Please try again later.",
       "recordedDuration": "Recorded",
@@ -232,7 +236,7 @@ const R4RI18n = (() => {
       "page.engineering_generation": "Ollama uses the PC, laptop and configured OpenAI fallback. The NAS and its connection remain dependencies.",
       "page.engineering_retrieval": "Nomic embeddings and PostgreSQL/pgvector retrieve documents; AWS Lambda Java 21 and S3 Vectors provide backup.",
       "page.engineering_stack": "Java 21, Spring Boot and Spring AI coordinate bilingual RAG.",
-      "page.engineering_architecture": "Engineering & Architecture",
+      "page.engineering_architecture": "Diagram & Technologies",
       "page.how_summary": "Your question finds relevant documents and produces an answer with sources you can check. The same system can be adapted to manuals and documentation in other industries.",
       "notQueried": "Not checked: open Technical details to query the status.",
       "rateLimited": "The service is busy or has reached its request limit. Please try again later.",
