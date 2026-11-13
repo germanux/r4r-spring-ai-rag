@@ -25,7 +25,7 @@ const response={stage:'ANSWER_READY',answer:'Safe **answer** [S1]',abstained:fal
    if(u.hostname==='preview.test') {
     const filename=path.join(root,u.pathname==='/'?'index.html':u.pathname);
     if(!fs.existsSync(filename))return route.fulfill({status:404,body:'not found'});
-    return route.fulfill({body:fs.readFileSync(filename),contentType:filename.endsWith('.js')?'text/javascript':filename.endsWith('.css')?'text/css':filename.endsWith('.png')?'image/png':filename.endsWith('.svg')?'image/svg+xml':filename.endsWith('.json')?'application/json':'text/html'});
+    return route.fulfill({body:fs.readFileSync(filename),contentType:filename.endsWith('.js')?'text/javascript':filename.endsWith('.css')?'text/css':filename.endsWith('.png')?'image/png':filename.endsWith('.svg')?'image/svg+xml':filename.endsWith('.json')?'application/json':filename.endsWith('.pdf')?'application/pdf':'text/html'});
    }
    const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'Content-Type','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Expose-Headers':'Retry-After','Retry-After':'20'};
    if(req.method()==='OPTIONS')return route.fulfill({status:204,headers,body:''});
@@ -45,9 +45,8 @@ const response={stage:'ANSWER_READY',answer:'Safe **answer** [S1]',abstained:fal
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   await page.locator('#sourcesDetails').click();
   const source=page.locator('#citations a').first();assert((await source.getAttribute('href')).includes('/'+lang+'/'));
-  // Browser navigation uses the same intercepted local asset paths; validate content in a tab.
-  const doc=await context.newPage();await doc.route('**/*',r=>{const file=path.join(root,new URL(r.request().url()).pathname);return r.fulfill({body:fs.readFileSync(file),contentType:'text/html'})});
-  await doc.goto('http://preview.test/'+await source.getAttribute('href'));assert(await doc.locator('h1').innerText());await doc.close();
+  const pdf=await page.evaluate(async url=>{const response=await fetch(url);const bytes=new Uint8Array(await response.arrayBuffer());return {status:response.status,type:response.headers.get('content-type'),signature:new TextDecoder().decode(bytes.slice(0,5))}},await source.getAttribute('href'));
+  assert.equal(pdf.status,200);assert(pdf.type.startsWith('application/pdf'));assert.equal(pdf.signature,'%PDF-');
   await page.locator('#runtimeToggle').click();await page.locator('#engineeringDetails > summary').click();assert(await page.locator('#engineeringDetails').getAttribute('open')!==null);
   if(width===390 || width===1280) await page.screenshot({path:`/tmp/r4r-technical-${lang}-${width}.png`,fullPage:true});
   await page.locator('#runtimeToggle').click();requests=[];

@@ -1,38 +1,9 @@
 {
   "R4R_00": {
-    "es": {
-      "source": "es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md",
-      "title": "Riansares 4R — identidad, criterios y voz editorial",
-      "url": "docs/es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.html",
-      "sections": [
-        "section-2",
-        "section-2-1",
-        "section-2-2",
-        "section-2-3",
-        "section-2-4",
-        "section-2-5",
-        "section-3",
-        "section-3-1",
-        "section-3-2",
-        "section-3-3",
-        "section-4",
-        "section-4-1",
-        "section-4-2",
-        "section-4-3",
-        "section-4-4",
-        "section-4-5",
-        "section-5",
-        "section-5-1",
-        "section-5-2",
-        "section-5-3",
-        "section-5-4"
-      ],
-      "sha256": "ba7294b2c32ab9916f90a3026685f7d8e602a22026a0898600578dc08548244a"
-    },
     "en": {
       "source": "en/R4R_00_IDENTITY_CRITERIA_AND_EDITORIAL_VOICE.md",
       "title": "Riansares 4R — identity, criteria, and editorial voice",
-      "url": "docs/en/R4R_00_IDENTITY_CRITERIA_AND_EDITORIAL_VOICE.html",
+      "url": "docs/en/R4R_00_IDENTITY_CRITERIA_AND_EDITORIAL_VOICE.pdf",
       "sections": [
         "section-2",
         "section-2-1",
@@ -56,59 +27,91 @@
         "section-5-3",
         "section-5-4"
       ],
-      "sha256": "bea2ff1a6121d73530f9b5ea73448ab276a2e33147d5d659de155d3050432591"
+      "sectionPages": {
+        "section-2": 1,
+        "section-2-1": 1,
+        "section-2-2": 1,
+        "section-2-3": 1,
+        "section-2-4": 2,
+        "section-2-5": 3,
+        "section-3": 3,
+        "section-3-1": 3,
+        "section-3-2": 3,
+        "section-3-3": 4,
+        "section-4": 4,
+        "section-4-1": 4,
+        "section-4-2": 5,
+        "section-4-3": 5,
+        "section-4-4": 5,
+        "section-4-5": 5,
+        "section-5": 6,
+        "section-5-1": 6,
+        "section-5-2": 6,
+        "section-5-3": 7,
+        "section-5-4": 7
+      },
+      "sha256": "bea2ff1a6121d73530f9b5ea73448ab276a2e33147d5d659de155d3050432591",
+      "pdfSha256": "eb69f14725d4fa2b64a06f750935e9b9dbaaa766345851f01afab84d55d0f88f"
+    },
+    "es": {
+      "source": "es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md",
+      "title": "Riansares 4R — identidad, criterios y voz editorial",
+      "url": "docs/es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.pdf",
+      "sections": [
+        "section-2",
+        "section-2-1",
+        "section-2-2",
+        "section-2-3",
+        "section-2-4",
+        "section-2-5",
+        "section-3",
+        "section-3-1",
+        "section-3-2",
+        "section-3-3",
+        "section-4",
+        "section-4-1",
+        "section-4-2",
+        "section-4-3",
+        "section-4-4",
+        "section-4-5",
+        "section-5",
+        "section-5-1",
+        "section-5-2",
+        "section-5-3",
+        "section-5-4"
+      ],
+      "sectionPages": {
+        "section-2": 1,
+        "section-2-1": 1,
+        "section-2-2": 1,
+        "section-2-3": 1,
+        "section-2-4": 2,
+        "section-2-5": 3,
+        "section-3": 3,
+        "section-3-1": 3,
+        "section-3-2": 3,
+        "section-3-3": 4,
+        "section-4": 4,
+        "section-4-1": 4,
+        "section-4-2": 5,
+        "section-4-3": 5,
+        "section-4-4": 5,
+        "section-4-5": 5,
+        "section-5": 6,
+        "section-5-1": 6,
+        "section-5-2": 6,
+        "section-5-3": 7,
+        "section-5-4": 7
+      },
+      "sha256": "ba7294b2c32ab9916f90a3026685f7d8e602a22026a0898600578dc08548244a",
+      "pdfSha256": "ac16bdf8eb60966b3c15aebd3501cfaa2ea053726d2ba77c4cf4cc585faa2380"
     }
   },
   "R4R_10": {
-    "es": {
-      "source": "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
-      "title": "Riansares 4R — casos de patios, viviendas, humedades y reparaciones",
-      "url": "docs/es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.html",
-      "sections": [
-        "section-6",
-        "section-6-1",
-        "section-6-2",
-        "section-6-3",
-        "section-6-4",
-        "section-6-5",
-        "section-6-6",
-        "section-6-7",
-        "section-7",
-        "section-7-1",
-        "section-7-2",
-        "section-7-3",
-        "section-7-4",
-        "section-7-5",
-        "section-7-6",
-        "section-7-7",
-        "section-7-8",
-        "section-7-9",
-        "section-8",
-        "section-8-1",
-        "section-8-2",
-        "section-8-3",
-        "section-8-4",
-        "section-8-5",
-        "section-8-6",
-        "section-8-7",
-        "section-9",
-        "section-9-1",
-        "section-9-2",
-        "section-9-3",
-        "section-9-4",
-        "section-9-5",
-        "section-10",
-        "section-10-1",
-        "section-10-2",
-        "section-10-3",
-        "section-10-4"
-      ],
-      "sha256": "40089f93004bb70c93a6bcae64ddd03c0626b49a0a386ad4e14fad5121e7ffd6"
-    },
     "en": {
       "source": "en/R4R_10_PATIO_HOME_DAMP_AND_REPAIR_CASES.md",
       "title": "Riansares 4R — Patio, Home, Damp and Repair Cases",
-      "url": "docs/en/R4R_10_PATIO_HOME_DAMP_AND_REPAIR_CASES.html",
+      "url": "docs/en/R4R_10_PATIO_HOME_DAMP_AND_REPAIR_CASES.pdf",
       "sections": [
         "section-6",
         "section-6-1",
@@ -148,58 +151,139 @@
         "section-10-3",
         "section-10-4"
       ],
-      "sha256": "3662b4aac52db0e0d14f69de13a7979a72be634ca784b34188095bb55a4a4523"
+      "sectionPages": {
+        "section-6": 1,
+        "section-6-1": 1,
+        "section-6-2": 1,
+        "section-6-3": 2,
+        "section-6-4": 2,
+        "section-6-5": 3,
+        "section-6-6": 3,
+        "section-6-7": 3,
+        "section-7": 4,
+        "section-7-1": 4,
+        "section-7-2": 4,
+        "section-7-3": 5,
+        "section-7-4": 5,
+        "section-7-5": 6,
+        "section-7-6": 6,
+        "section-7-7": 6,
+        "section-7-8": 7,
+        "section-7-9": 7,
+        "section-8": 7,
+        "section-8-1": 7,
+        "section-8-2": 8,
+        "section-8-3": 8,
+        "section-8-4": 9,
+        "section-8-5": 9,
+        "section-8-6": 10,
+        "section-8-7": 10,
+        "section-9": 11,
+        "section-9-1": 11,
+        "section-9-2": 11,
+        "section-9-3": 11,
+        "section-9-4": 12,
+        "section-9-5": 12,
+        "section-10": 13,
+        "section-10-1": 13,
+        "section-10-2": 13,
+        "section-10-3": 14,
+        "section-10-4": 14
+      },
+      "sha256": "3662b4aac52db0e0d14f69de13a7979a72be634ca784b34188095bb55a4a4523",
+      "pdfSha256": "0c9dd7091ea41e9d82fc51d085dbd4919b9970203c3829445850a8fa71fbfb2c"
+    },
+    "es": {
+      "source": "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+      "title": "Riansares 4R — casos de patios, viviendas, humedades y reparaciones",
+      "url": "docs/es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.pdf",
+      "sections": [
+        "section-6",
+        "section-6-1",
+        "section-6-2",
+        "section-6-3",
+        "section-6-4",
+        "section-6-5",
+        "section-6-6",
+        "section-6-7",
+        "section-7",
+        "section-7-1",
+        "section-7-2",
+        "section-7-3",
+        "section-7-4",
+        "section-7-5",
+        "section-7-6",
+        "section-7-7",
+        "section-7-8",
+        "section-7-9",
+        "section-8",
+        "section-8-1",
+        "section-8-2",
+        "section-8-3",
+        "section-8-4",
+        "section-8-5",
+        "section-8-6",
+        "section-8-7",
+        "section-9",
+        "section-9-1",
+        "section-9-2",
+        "section-9-3",
+        "section-9-4",
+        "section-9-5",
+        "section-10",
+        "section-10-1",
+        "section-10-2",
+        "section-10-3",
+        "section-10-4"
+      ],
+      "sectionPages": {
+        "section-6": 1,
+        "section-6-1": 1,
+        "section-6-2": 1,
+        "section-6-3": 2,
+        "section-6-4": 2,
+        "section-6-5": 3,
+        "section-6-6": 3,
+        "section-6-7": 3,
+        "section-7": 4,
+        "section-7-1": 4,
+        "section-7-2": 4,
+        "section-7-3": 5,
+        "section-7-4": 5,
+        "section-7-5": 6,
+        "section-7-6": 6,
+        "section-7-7": 6,
+        "section-7-8": 7,
+        "section-7-9": 7,
+        "section-8": 7,
+        "section-8-1": 7,
+        "section-8-2": 8,
+        "section-8-3": 8,
+        "section-8-4": 9,
+        "section-8-5": 9,
+        "section-8-6": 10,
+        "section-8-7": 10,
+        "section-9": 11,
+        "section-9-1": 11,
+        "section-9-2": 11,
+        "section-9-3": 11,
+        "section-9-4": 12,
+        "section-9-5": 12,
+        "section-10": 13,
+        "section-10-1": 13,
+        "section-10-2": 13,
+        "section-10-3": 14,
+        "section-10-4": 14
+      },
+      "sha256": "40089f93004bb70c93a6bcae64ddd03c0626b49a0a386ad4e14fad5121e7ffd6",
+      "pdfSha256": "c4334cf524784c31382e68b226663a107164f7b40f875079a476613bd6672d62"
     }
   },
   "R4R_20": {
-    "es": {
-      "source": "es/R4R_20_CASOS_OFICINAS_CUEVAS_BANOS_Y_FILTROS.md",
-      "title": "Riansares 4R — casos de oficinas, cuevas, baños y filtros comerciales",
-      "url": "docs/es/R4R_20_CASOS_OFICINAS_CUEVAS_BANOS_Y_FILTROS.html",
-      "sections": [
-        "section-11",
-        "section-11-1",
-        "section-11-2",
-        "section-11-3",
-        "section-11-4",
-        "section-11-5",
-        "section-11-6",
-        "section-11-7",
-        "section-12",
-        "section-12-1",
-        "section-12-2",
-        "section-12-3",
-        "section-12-4",
-        "section-12-5",
-        "section-12-6",
-        "section-12-7",
-        "section-12-8",
-        "section-13",
-        "section-13-1",
-        "section-13-2",
-        "section-13-3",
-        "section-13-4",
-        "section-13-5",
-        "section-13-6",
-        "section-13-7",
-        "section-13-8",
-        "section-13-9",
-        "section-13-10",
-        "section-13-11",
-        "section-14",
-        "section-14-1",
-        "section-14-2",
-        "section-14-3",
-        "section-14-4",
-        "section-14-5",
-        "section-14-6"
-      ],
-      "sha256": "a6b263eccfa50f01a17742a16b9d60f762b80b71bfd88f9acf3264e76eafa41c"
-    },
     "en": {
       "source": "en/R4R_20_OFFICE_CELLAR_BATHROOM_AND_CLIENT_SCREENING_CASES.md",
       "title": "Riansares 4R — Office, Cave, Bathroom and Client Screening Cases",
-      "url": "docs/en/R4R_20_OFFICE_CELLAR_BATHROOM_AND_CLIENT_SCREENING_CASES.html",
+      "url": "docs/en/R4R_20_OFFICE_CELLAR_BATHROOM_AND_CLIENT_SCREENING_CASES.pdf",
       "sections": [
         "section-11",
         "section-11-1",
@@ -238,62 +322,136 @@
         "section-14-5",
         "section-14-6"
       ],
-      "sha256": "716d793353f10a21e2b3d6d6faeebf927a722fb50b6f14ad04f8e09623fb58e8"
+      "sectionPages": {
+        "section-11": 1,
+        "section-11-1": 1,
+        "section-11-2": 1,
+        "section-11-3": 2,
+        "section-11-4": 2,
+        "section-11-5": 2,
+        "section-11-6": 3,
+        "section-11-7": 3,
+        "section-12": 4,
+        "section-12-1": 4,
+        "section-12-2": 4,
+        "section-12-3": 5,
+        "section-12-4": 5,
+        "section-12-5": 6,
+        "section-12-6": 6,
+        "section-12-7": 7,
+        "section-12-8": 7,
+        "section-13": 8,
+        "section-13-1": 8,
+        "section-13-2": 8,
+        "section-13-3": 9,
+        "section-13-4": 9,
+        "section-13-5": 9,
+        "section-13-6": 10,
+        "section-13-7": 11,
+        "section-13-8": 11,
+        "section-13-9": 11,
+        "section-13-10": 12,
+        "section-13-11": 12,
+        "section-14": 13,
+        "section-14-1": 13,
+        "section-14-2": 14,
+        "section-14-3": 14,
+        "section-14-4": 15,
+        "section-14-5": 16,
+        "section-14-6": 16
+      },
+      "sha256": "716d793353f10a21e2b3d6d6faeebf927a722fb50b6f14ad04f8e09623fb58e8",
+      "pdfSha256": "44990989f75277b96422f20657c1a1b63874a6c3c884da1a05d7811b468a4fa0"
+    },
+    "es": {
+      "source": "es/R4R_20_CASOS_OFICINAS_CUEVAS_BANOS_Y_FILTROS.md",
+      "title": "Riansares 4R — casos de oficinas, cuevas, baños y filtros comerciales",
+      "url": "docs/es/R4R_20_CASOS_OFICINAS_CUEVAS_BANOS_Y_FILTROS.pdf",
+      "sections": [
+        "section-11",
+        "section-11-1",
+        "section-11-2",
+        "section-11-3",
+        "section-11-4",
+        "section-11-5",
+        "section-11-6",
+        "section-11-7",
+        "section-12",
+        "section-12-1",
+        "section-12-2",
+        "section-12-3",
+        "section-12-4",
+        "section-12-5",
+        "section-12-6",
+        "section-12-7",
+        "section-12-8",
+        "section-13",
+        "section-13-1",
+        "section-13-2",
+        "section-13-3",
+        "section-13-4",
+        "section-13-5",
+        "section-13-6",
+        "section-13-7",
+        "section-13-8",
+        "section-13-9",
+        "section-13-10",
+        "section-13-11",
+        "section-14",
+        "section-14-1",
+        "section-14-2",
+        "section-14-3",
+        "section-14-4",
+        "section-14-5",
+        "section-14-6"
+      ],
+      "sectionPages": {
+        "section-11": 1,
+        "section-11-1": 1,
+        "section-11-2": 1,
+        "section-11-3": 2,
+        "section-11-4": 2,
+        "section-11-5": 2,
+        "section-11-6": 3,
+        "section-11-7": 3,
+        "section-12": 4,
+        "section-12-1": 4,
+        "section-12-2": 4,
+        "section-12-3": 5,
+        "section-12-4": 5,
+        "section-12-5": 6,
+        "section-12-6": 6,
+        "section-12-7": 7,
+        "section-12-8": 7,
+        "section-13": 8,
+        "section-13-1": 8,
+        "section-13-2": 8,
+        "section-13-3": 9,
+        "section-13-4": 9,
+        "section-13-5": 9,
+        "section-13-6": 10,
+        "section-13-7": 11,
+        "section-13-8": 11,
+        "section-13-9": 12,
+        "section-13-10": 12,
+        "section-13-11": 12,
+        "section-14": 13,
+        "section-14-1": 13,
+        "section-14-2": 14,
+        "section-14-3": 15,
+        "section-14-4": 15,
+        "section-14-5": 16,
+        "section-14-6": 16
+      },
+      "sha256": "a6b263eccfa50f01a17742a16b9d60f762b80b71bfd88f9acf3264e76eafa41c",
+      "pdfSha256": "1e222ac145fc533fb0698be467c9160a717d08b0d68c109c41a465ca5cba5d75"
     }
   },
   "R4R_30": {
-    "es": {
-      "source": "es/R4R_30_METODO_PRESUPUESTOS_SEO_CATALOGO_Y_PLANTILLAS.md",
-      "title": "Riansares 4R — método, presupuestos, SEO, catálogo y plantillas",
-      "url": "docs/es/R4R_30_METODO_PRESUPUESTOS_SEO_CATALOGO_Y_PLANTILLAS.html",
-      "sections": [
-        "section-15",
-        "section-15-1",
-        "section-15-2",
-        "section-15-3",
-        "section-15-4",
-        "section-15-5",
-        "section-16",
-        "section-16-1",
-        "section-16-2",
-        "section-16-3",
-        "section-16-4",
-        "section-17",
-        "section-18",
-        "section-18-1",
-        "section-18-2",
-        "section-18-3",
-        "section-18-4",
-        "section-19",
-        "section-19-1",
-        "section-19-2",
-        "section-19-3",
-        "section-19-4",
-        "section-20",
-        "section-21",
-        "section-21-1",
-        "section-21-2",
-        "section-21-3",
-        "section-22",
-        "section-23",
-        "section-24",
-        "section-25",
-        "section-26",
-        "section-27",
-        "section-28",
-        "section-29",
-        "section-30",
-        "section-31",
-        "section-32",
-        "section-33",
-        "section-34"
-      ],
-      "sha256": "63c8bbc078b3504df97373acc3a5dd37a7292b81104fa9691a8f5d66370ee2a9"
-    },
     "en": {
       "source": "en/R4R_30_METHOD_QUOTATIONS_SEO_CATALOGUE_AND_TEMPLATES.md",
       "title": "Riansares 4R — method, quotations, SEO, catalogue and templates",
-      "url": "docs/en/R4R_30_METHOD_QUOTATIONS_SEO_CATALOGUE_AND_TEMPLATES.html",
+      "url": "docs/en/R4R_30_METHOD_QUOTATIONS_SEO_CATALOGUE_AND_TEMPLATES.pdf",
       "sections": [
         "section-15",
         "section-15-1",
@@ -336,599 +494,881 @@
         "section-33",
         "section-34"
       ],
-      "sha256": "375cb5392c5e397efcfcf8331f3dc048824215593e9e4394fdf358780f261b2c"
+      "sectionPages": {
+        "section-15": 1,
+        "section-15-1": 1,
+        "section-15-2": 1,
+        "section-15-3": 2,
+        "section-15-4": 2,
+        "section-15-5": 2,
+        "section-16": 3,
+        "section-16-1": 3,
+        "section-16-2": 3,
+        "section-16-3": 4,
+        "section-16-4": 4,
+        "section-17": 4,
+        "section-18": 5,
+        "section-18-1": 5,
+        "section-18-2": 5,
+        "section-18-3": 5,
+        "section-18-4": 6,
+        "section-19": 6,
+        "section-19-1": 6,
+        "section-19-2": 6,
+        "section-19-3": 7,
+        "section-19-4": 7,
+        "section-20": 8,
+        "section-21": 9,
+        "section-21-1": 9,
+        "section-21-2": 9,
+        "section-21-3": 10,
+        "section-22": 10,
+        "section-23": 10,
+        "section-24": 11,
+        "section-25": 11,
+        "section-26": 12,
+        "section-27": 13,
+        "section-28": 13,
+        "section-29": 14,
+        "section-30": 14,
+        "section-31": 14,
+        "section-32": 14,
+        "section-33": 14,
+        "section-34": 15
+      },
+      "sha256": "375cb5392c5e397efcfcf8331f3dc048824215593e9e4394fdf358780f261b2c",
+      "pdfSha256": "a2a4de15fcafca4558533325b627419fd9dd07aa2615b48f10fad5fd6895a3a5"
+    },
+    "es": {
+      "source": "es/R4R_30_METODO_PRESUPUESTOS_SEO_CATALOGO_Y_PLANTILLAS.md",
+      "title": "Riansares 4R — método, presupuestos, SEO, catálogo y plantillas",
+      "url": "docs/es/R4R_30_METODO_PRESUPUESTOS_SEO_CATALOGO_Y_PLANTILLAS.pdf",
+      "sections": [
+        "section-15",
+        "section-15-1",
+        "section-15-2",
+        "section-15-3",
+        "section-15-4",
+        "section-15-5",
+        "section-16",
+        "section-16-1",
+        "section-16-2",
+        "section-16-3",
+        "section-16-4",
+        "section-17",
+        "section-18",
+        "section-18-1",
+        "section-18-2",
+        "section-18-3",
+        "section-18-4",
+        "section-19",
+        "section-19-1",
+        "section-19-2",
+        "section-19-3",
+        "section-19-4",
+        "section-20",
+        "section-21",
+        "section-21-1",
+        "section-21-2",
+        "section-21-3",
+        "section-22",
+        "section-23",
+        "section-24",
+        "section-25",
+        "section-26",
+        "section-27",
+        "section-28",
+        "section-29",
+        "section-30",
+        "section-31",
+        "section-32",
+        "section-33",
+        "section-34"
+      ],
+      "sectionPages": {
+        "section-15": 1,
+        "section-15-1": 1,
+        "section-15-2": 1,
+        "section-15-3": 2,
+        "section-15-4": 2,
+        "section-15-5": 2,
+        "section-16": 3,
+        "section-16-1": 3,
+        "section-16-2": 3,
+        "section-16-3": 4,
+        "section-16-4": 4,
+        "section-17": 4,
+        "section-18": 5,
+        "section-18-1": 5,
+        "section-18-2": 5,
+        "section-18-3": 5,
+        "section-18-4": 6,
+        "section-19": 6,
+        "section-19-1": 6,
+        "section-19-2": 6,
+        "section-19-3": 7,
+        "section-19-4": 7,
+        "section-20": 8,
+        "section-21": 9,
+        "section-21-1": 9,
+        "section-21-2": 9,
+        "section-21-3": 10,
+        "section-22": 10,
+        "section-23": 11,
+        "section-24": 11,
+        "section-25": 12,
+        "section-26": 12,
+        "section-27": 13,
+        "section-28": 13,
+        "section-29": 14,
+        "section-30": 14,
+        "section-31": 14,
+        "section-32": 14,
+        "section-33": 14,
+        "section-34": 15
+      },
+      "sha256": "63c8bbc078b3504df97373acc3a5dd37a7292b81104fa9691a8f5d66370ee2a9",
+      "pdfSha256": "6789f65bdd4a16033831bbdfa175c62315dd5ee22f44310880129d9186099b86"
     }
   },
   "R4R_115": {
-    "es": {
-      "source": "es/cases/R4R_115_CASOS_HIPOTETICOS_COCINAS_Y_FONTANERIA.md",
-      "title": "Casos hipotéticos — cocinas, fugas y decisiones de renovación",
-      "url": "docs/es/R4R_115_CASOS_HIPOTETICOS_COCINAS_Y_FONTANERIA.html",
-      "sections": [],
-      "sha256": "4e749567607a722a07c4fc204662980f71e1ed14af85137a089b4f7b5f4516c0"
-    },
     "en": {
       "source": "en/cases/R4R_115_HYPOTHETICAL_KITCHEN_AND_PLUMBING_CASES.md",
       "title": "Hypothetical cases — kitchens, leaks and renovation decisions",
-      "url": "docs/en/R4R_115_HYPOTHETICAL_KITCHEN_AND_PLUMBING_CASES.html",
+      "url": "docs/en/cases/R4R_115_HYPOTHETICAL_KITCHEN_AND_PLUMBING_CASES.pdf",
       "sections": [],
-      "sha256": "28fcf4e628d460cfae37bb2bf6ad54f7bf09673034bea5396fcb3458952f0b78"
+      "sectionPages": {},
+      "sha256": "28fcf4e628d460cfae37bb2bf6ad54f7bf09673034bea5396fcb3458952f0b78",
+      "pdfSha256": "91786a49105ad3cbaaaa3a813168a5a154067c2dfab8e21a1f61caf7fe9d522c"
+    },
+    "es": {
+      "source": "es/cases/R4R_115_CASOS_HIPOTETICOS_COCINAS_Y_FONTANERIA.md",
+      "title": "Casos hipotéticos — cocinas, fugas y decisiones de renovación",
+      "url": "docs/es/cases/R4R_115_CASOS_HIPOTETICOS_COCINAS_Y_FONTANERIA.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "4e749567607a722a07c4fc204662980f71e1ed14af85137a089b4f7b5f4516c0",
+      "pdfSha256": "1d991404623cf3fb7fdd00b1413d292bdc80575af6d68a993474426598def22a"
     }
   },
   "R4R_116": {
-    "es": {
-      "source": "es/cases/R4R_116_CASOS_HIPOTETICOS_HUMEDADES_Y_ESTRUCTURAS.md",
-      "title": "Casos hipotéticos — humedad, rehabilitación y estructuras",
-      "url": "docs/es/R4R_116_CASOS_HIPOTETICOS_HUMEDADES_Y_ESTRUCTURAS.html",
-      "sections": [],
-      "sha256": "debab57e526c75630ae0ba7ebec2f0845fedf10a3d83fab26e04296d8b6fb2c1"
-    },
     "en": {
       "source": "en/cases/R4R_116_HYPOTHETICAL_DAMP_AND_STRUCTURE_CASES.md",
       "title": "Hypothetical cases — damp, rehabilitation and structures",
-      "url": "docs/en/R4R_116_HYPOTHETICAL_DAMP_AND_STRUCTURE_CASES.html",
+      "url": "docs/en/cases/R4R_116_HYPOTHETICAL_DAMP_AND_STRUCTURE_CASES.pdf",
       "sections": [],
-      "sha256": "c45330591c6e0210b82c4b7fcddda267b94b0bddf95623adad9c294f7fd96dfc"
+      "sectionPages": {},
+      "sha256": "c45330591c6e0210b82c4b7fcddda267b94b0bddf95623adad9c294f7fd96dfc",
+      "pdfSha256": "d587f7ecfdabcc15d9717f89fb015ac0eb5b3be672c9b3b911799363bdbd9c0e"
+    },
+    "es": {
+      "source": "es/cases/R4R_116_CASOS_HIPOTETICOS_HUMEDADES_Y_ESTRUCTURAS.md",
+      "title": "Casos hipotéticos — humedad, rehabilitación y estructuras",
+      "url": "docs/es/cases/R4R_116_CASOS_HIPOTETICOS_HUMEDADES_Y_ESTRUCTURAS.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "debab57e526c75630ae0ba7ebec2f0845fedf10a3d83fab26e04296d8b6fb2c1",
+      "pdfSha256": "a264ff24e20753f5fe296772b66fb4792860da65bca558f127bd7516af4f32e0"
     }
   },
   "R4R_117": {
-    "es": {
-      "source": "es/cases/R4R_117_CASOS_HIPOTETICOS_OFICINAS_LOCALES_Y_ESPACIOS_PUBLICOS.md",
-      "title": "Casos hipotéticos — oficinas, locales y espacios públicos",
-      "url": "docs/es/R4R_117_CASOS_HIPOTETICOS_OFICINAS_LOCALES_Y_ESPACIOS_PUBLICOS.html",
-      "sections": [],
-      "sha256": "ecbeb122f26d5b9f353354cc6b283cc74eb0f820e5cc1dfb7e7c924bd0766dda"
-    },
     "en": {
       "source": "en/cases/R4R_117_HYPOTHETICAL_OFFICE_COMMERCIAL_AND_PUBLIC_SPACE_CASES.md",
       "title": "Hypothetical cases — offices, commercial premises and public spaces",
-      "url": "docs/en/R4R_117_HYPOTHETICAL_OFFICE_COMMERCIAL_AND_PUBLIC_SPACE_CASES.html",
+      "url": "docs/en/cases/R4R_117_HYPOTHETICAL_OFFICE_COMMERCIAL_AND_PUBLIC_SPACE_CASES.pdf",
       "sections": [],
-      "sha256": "42c29ac9cd103102eba01ffae998aa1b3ef330bfca6bdd03a3528518702bb4f9"
+      "sectionPages": {},
+      "sha256": "42c29ac9cd103102eba01ffae998aa1b3ef330bfca6bdd03a3528518702bb4f9",
+      "pdfSha256": "47c2a9d36e767c403027448abf5832882ce349fee30e1bc035302ab6cd1a2ed7"
+    },
+    "es": {
+      "source": "es/cases/R4R_117_CASOS_HIPOTETICOS_OFICINAS_LOCALES_Y_ESPACIOS_PUBLICOS.md",
+      "title": "Casos hipotéticos — oficinas, locales y espacios públicos",
+      "url": "docs/es/cases/R4R_117_CASOS_HIPOTETICOS_OFICINAS_LOCALES_Y_ESPACIOS_PUBLICOS.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "ecbeb122f26d5b9f353354cc6b283cc74eb0f820e5cc1dfb7e7c924bd0766dda",
+      "pdfSha256": "99150e3f47f2657740e3052796bc2daeb4c96e4ed3dbd59bf316de8f4d24207c"
     }
   },
   "R4R_91": {
-    "es": {
-      "source": "es/cases/R4R_91_CASOS_HIPOTETICOS_VARIADOS.md",
-      "title": "Riansares 4R — casos hipotéticos de consulta para ampliar cobertura",
-      "url": "docs/es/R4R_91_CASOS_HIPOTETICOS_VARIADOS.html",
-      "sections": [],
-      "sha256": "f9260adac4ba7d6dd48e030326c19689b30c7ac80235860de785e0ce4181f97f"
-    },
     "en": {
       "source": "en/cases/R4R_91_VARIED_HYPOTHETICAL_CASES.md",
       "title": "Riansares 4R — hypothetical consultation cases to broaden coverage",
-      "url": "docs/en/R4R_91_VARIED_HYPOTHETICAL_CASES.html",
+      "url": "docs/en/cases/R4R_91_VARIED_HYPOTHETICAL_CASES.pdf",
       "sections": [],
-      "sha256": "9efea58c1fce4499c8205102cab0444f772c45c853f3209e42f861652e5161cf"
+      "sectionPages": {},
+      "sha256": "9efea58c1fce4499c8205102cab0444f772c45c853f3209e42f861652e5161cf",
+      "pdfSha256": "ccdfc2dcbcb82f73a6735ff54ca3e785c0802aab254dd2c1b4068c1ca1a74082"
+    },
+    "es": {
+      "source": "es/cases/R4R_91_CASOS_HIPOTETICOS_VARIADOS.md",
+      "title": "Riansares 4R — casos hipotéticos de consulta para ampliar cobertura",
+      "url": "docs/es/cases/R4R_91_CASOS_HIPOTETICOS_VARIADOS.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "f9260adac4ba7d6dd48e030326c19689b30c7ac80235860de785e0ce4181f97f",
+      "pdfSha256": "45118918a5d858e9bb54881c1a3763752b92467755b8257a7f6870cb0de0ba3b"
     }
   },
   "R4R_40": {
-    "es": {
-      "source": "es/faqs/R4R_40_ALL_FAQ.md",
-      "title": "Riansares 4R — todas las preguntas frecuentes",
-      "url": "docs/es/R4R_40_ALL_FAQ.html",
-      "sections": [],
-      "sha256": "41d807525320aad561788f0c29ee43977a75da0892f88b85d19d64662cd62926"
-    },
     "en": {
       "source": "en/faqs/R4R_40_ALL_FAQ.md",
       "title": "Riansares 4R — all frequently asked questions",
-      "url": "docs/en/R4R_40_ALL_FAQ.html",
+      "url": "docs/en/faqs/R4R_40_ALL_FAQ.pdf",
       "sections": [],
-      "sha256": "0eadde3e8e1c7fbe445eea01d0d9051c1259b725cb70616c8c5903dba6e61652"
+      "sectionPages": {},
+      "sha256": "0eadde3e8e1c7fbe445eea01d0d9051c1259b725cb70616c8c5903dba6e61652",
+      "pdfSha256": "7187d9523603b25f3561df96fa696bc32b3fe0e25cab5b767d2d09ef35dbf6d7"
+    },
+    "es": {
+      "source": "es/faqs/R4R_40_ALL_FAQ.md",
+      "title": "Riansares 4R — todas las preguntas frecuentes",
+      "url": "docs/es/faqs/R4R_40_ALL_FAQ.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "41d807525320aad561788f0c29ee43977a75da0892f88b85d19d64662cd62926",
+      "pdfSha256": "d40010f6e03b79ce76bab5eaa39d6557985ecfb5e7402ea48d3877a2b4367ad7"
     }
   },
   "R4R_101": {
-    "es": {
-      "source": "es/guides/R4R_101_FONTANERIA_FUGAS_DIAGNOSTICO_Y_REPARACION.md",
-      "title": "Guía práctica — averías de agua y fontanería doméstica",
-      "url": "docs/es/R4R_101_FONTANERIA_FUGAS_DIAGNOSTICO_Y_REPARACION.html",
-      "sections": [],
-      "sha256": "9b59b4fc65fe2baca383b5c3eebfab365978a6a7de1646f022dd90ab666b1028"
-    },
     "en": {
       "source": "en/guides/R4R_101_PLUMBING_LEAKS_DIAGNOSIS_AND_REPAIR.md",
       "title": "Practical guide — water leaks and domestic plumbing failures",
-      "url": "docs/en/R4R_101_PLUMBING_LEAKS_DIAGNOSIS_AND_REPAIR.html",
+      "url": "docs/en/guides/R4R_101_PLUMBING_LEAKS_DIAGNOSIS_AND_REPAIR.pdf",
       "sections": [],
-      "sha256": "8faf91dd4609d5dd5c1d741c28fae98a0b67922067725d6cf62e7ecfbe1653cd"
+      "sectionPages": {},
+      "sha256": "8faf91dd4609d5dd5c1d741c28fae98a0b67922067725d6cf62e7ecfbe1653cd",
+      "pdfSha256": "bde29abdc2fb68b57d68f4329d4bb96ae1c2e85a63326472d8a6936a26880410"
+    },
+    "es": {
+      "source": "es/guides/R4R_101_FONTANERIA_FUGAS_DIAGNOSTICO_Y_REPARACION.md",
+      "title": "Guía práctica — averías de agua y fontanería doméstica",
+      "url": "docs/es/guides/R4R_101_FONTANERIA_FUGAS_DIAGNOSTICO_Y_REPARACION.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "9b59b4fc65fe2baca383b5c3eebfab365978a6a7de1646f022dd90ab666b1028",
+      "pdfSha256": "d2fedc897201dcb97bbe8b968e475a687ae89eb19dbb76df7424ff3e1ab5fca5"
     }
   },
   "R4R_102": {
-    "es": {
-      "source": "es/guides/R4R_102_REFORMA_COCINA_MUEBLES_AZULEJOS_Y_ELECTRODOMESTICOS.md",
-      "title": "Cocinas — alcance, materiales y coordinación de oficios",
-      "url": "docs/es/R4R_102_REFORMA_COCINA_MUEBLES_AZULEJOS_Y_ELECTRODOMESTICOS.html",
-      "sections": [],
-      "sha256": "bbdc39a2d8a0d6de4c32e00caa39a17cb99593e8c57d0b1c959f1d684c3556a2"
-    },
     "en": {
       "source": "en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.md",
       "title": "Kitchens — scope, materials and trade coordination",
-      "url": "docs/en/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.html",
+      "url": "docs/en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.pdf",
       "sections": [],
-      "sha256": "deaa9d6f5a2229efa7ddb27d38477a9fce165ec0f9715bb8ac076a655e275417"
+      "sectionPages": {},
+      "sha256": "deaa9d6f5a2229efa7ddb27d38477a9fce165ec0f9715bb8ac076a655e275417",
+      "pdfSha256": "3f91e36e34dd67fb1d9c19a30983373da91bf41a84b758f7bf8a83c68d5abad5"
+    },
+    "es": {
+      "source": "es/guides/R4R_102_REFORMA_COCINA_MUEBLES_AZULEJOS_Y_ELECTRODOMESTICOS.md",
+      "title": "Cocinas — alcance, materiales y coordinación de oficios",
+      "url": "docs/es/guides/R4R_102_REFORMA_COCINA_MUEBLES_AZULEJOS_Y_ELECTRODOMESTICOS.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "bbdc39a2d8a0d6de4c32e00caa39a17cb99593e8c57d0b1c959f1d684c3556a2",
+      "pdfSha256": "b4f908f24459d0857f96bbc6c435270f337090b0c43f54790394284d68dcce15"
     }
   },
   "R4R_103": {
-    "es": {
-      "source": "es/guides/R4R_103_PRESUPUESTO_COCINA_MEDICIONES_Y_VARIACIONES.md",
-      "title": "Cocinas — presupuesto por partidas y control de cambios",
-      "url": "docs/es/R4R_103_PRESUPUESTO_COCINA_MEDICIONES_Y_VARIACIONES.html",
-      "sections": [],
-      "sha256": "ac4dafa7664fd79b83c0b17fe2edf5068808f402c2b6b99098e0e635f8b3e911"
-    },
     "en": {
       "source": "en/guides/R4R_103_KITCHEN_QUOTATIONS_MEASUREMENTS_AND_VARIATIONS.md",
       "title": "Kitchens — itemised quotations and change control",
-      "url": "docs/en/R4R_103_KITCHEN_QUOTATIONS_MEASUREMENTS_AND_VARIATIONS.html",
+      "url": "docs/en/guides/R4R_103_KITCHEN_QUOTATIONS_MEASUREMENTS_AND_VARIATIONS.pdf",
       "sections": [],
-      "sha256": "b6e2006459ee5b2c0f9c510f570c172bfdbb60e1f8d47da3555c6831c2385085"
+      "sectionPages": {},
+      "sha256": "b6e2006459ee5b2c0f9c510f570c172bfdbb60e1f8d47da3555c6831c2385085",
+      "pdfSha256": "76c0cfaa2926f8c8e0d017220eb8fb213fe6d1aec3368b418450590c5a2d156a"
+    },
+    "es": {
+      "source": "es/guides/R4R_103_PRESUPUESTO_COCINA_MEDICIONES_Y_VARIACIONES.md",
+      "title": "Cocinas — presupuesto por partidas y control de cambios",
+      "url": "docs/es/guides/R4R_103_PRESUPUESTO_COCINA_MEDICIONES_Y_VARIACIONES.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "ac4dafa7664fd79b83c0b17fe2edf5068808f402c2b6b99098e0e635f8b3e911",
+      "pdfSha256": "ceb83aed7a6c108e8bd49f99f6239defd9cc7b5bb1e02647b76c8e71eb86f9a6"
     }
   },
   "R4R_104": {
-    "es": {
-      "source": "es/guides/R4R_104_DUCHAS_PENDIENTES_IMPERMEABILIZACION_Y_BANOS.md",
-      "title": "Baños — duchas, pendientes, impermeabilización y accesibilidad",
-      "url": "docs/es/R4R_104_DUCHAS_PENDIENTES_IMPERMEABILIZACION_Y_BANOS.html",
-      "sections": [],
-      "sha256": "da083a21b179f22eec4b7edca5bd165040074a71d94c5882ef43260e28b8cac5"
-    },
     "en": {
       "source": "en/guides/R4R_104_SHOWERS_GRADIENTS_WATERPROOFING_AND_BATHROOMS.md",
       "title": "Bathrooms — showers, gradients, waterproofing and accessibility",
-      "url": "docs/en/R4R_104_SHOWERS_GRADIENTS_WATERPROOFING_AND_BATHROOMS.html",
+      "url": "docs/en/guides/R4R_104_SHOWERS_GRADIENTS_WATERPROOFING_AND_BATHROOMS.pdf",
       "sections": [],
-      "sha256": "c69a06eb8faef8e6883873a41306eb59d538b07ec54a6d15e61613299b7c1f77"
+      "sectionPages": {},
+      "sha256": "c69a06eb8faef8e6883873a41306eb59d538b07ec54a6d15e61613299b7c1f77",
+      "pdfSha256": "f8bb9b79315462d99ec0a50f0874027756fadd5714beba07735e5c4f2db6bc9f"
+    },
+    "es": {
+      "source": "es/guides/R4R_104_DUCHAS_PENDIENTES_IMPERMEABILIZACION_Y_BANOS.md",
+      "title": "Baños — duchas, pendientes, impermeabilización y accesibilidad",
+      "url": "docs/es/guides/R4R_104_DUCHAS_PENDIENTES_IMPERMEABILIZACION_Y_BANOS.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "da083a21b179f22eec4b7edca5bd165040074a71d94c5882ef43260e28b8cac5",
+      "pdfSha256": "2d52096c350689d77cd6c5e73d33ee1d2a8e73721954fec356ef845b9c04ddbb"
     }
   },
   "R4R_105": {
-    "es": {
-      "source": "es/guides/R4R_105_SOLERA_SOLADO_PATIOS_DRENAJE_Y_PENDIENTES.md",
-      "title": "Patios y pavimentos — solera, solado, humedad y evacuación",
-      "url": "docs/es/R4R_105_SOLERA_SOLADO_PATIOS_DRENAJE_Y_PENDIENTES.html",
-      "sections": [],
-      "sha256": "813b383d7d8fa8159e817da04337f4cb5b2e6df267fee14c69e3595ee3feb81a"
-    },
     "en": {
       "source": "en/guides/R4R_105_FLOOR_SLAB_FLOOR_FINISH_PATIOS_DRAINAGE_AND_GRADIENTS.md",
       "title": "Patios and flooring — slab base, floor finish, damp and drainage",
-      "url": "docs/en/R4R_105_FLOOR_SLAB_FLOOR_FINISH_PATIOS_DRAINAGE_AND_GRADIENTS.html",
+      "url": "docs/en/guides/R4R_105_FLOOR_SLAB_FLOOR_FINISH_PATIOS_DRAINAGE_AND_GRADIENTS.pdf",
       "sections": [],
-      "sha256": "e3aa3b2fa28bf4a3e397f617c896a2f76373a1ebba72d7f520c6cff61418854d"
+      "sectionPages": {},
+      "sha256": "e3aa3b2fa28bf4a3e397f617c896a2f76373a1ebba72d7f520c6cff61418854d",
+      "pdfSha256": "39b4aad94635e09c8c8b38f3b626d1b617f31987fe54483212ec8aae463c2f86"
+    },
+    "es": {
+      "source": "es/guides/R4R_105_SOLERA_SOLADO_PATIOS_DRENAJE_Y_PENDIENTES.md",
+      "title": "Patios y pavimentos — solera, solado, humedad y evacuación",
+      "url": "docs/es/guides/R4R_105_SOLERA_SOLADO_PATIOS_DRENAJE_Y_PENDIENTES.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "813b383d7d8fa8159e817da04337f4cb5b2e6df267fee14c69e3595ee3feb81a",
+      "pdfSha256": "1ffdc66a3d5d96c802ac42793517470deb877203dc79f124fe24ef0324cc4705"
     }
   },
   "R4R_106": {
-    "es": {
-      "source": "es/guides/R4R_106_HUMEDADES_CAPILARIDAD_CONDENSACION_FILTRACION.md",
-      "title": "Humedades — identificación del origen y decisiones de reparación",
-      "url": "docs/es/R4R_106_HUMEDADES_CAPILARIDAD_CONDENSACION_FILTRACION.html",
-      "sections": [],
-      "sha256": "12abc8d21e6f79d8e00bae4124b6d106798ddebb4b89ca35a5155a4cb477bdd9"
-    },
     "en": {
       "source": "en/guides/R4R_106_DAMP_RISING_DAMP_CONDENSATION_AND_WATER_INGRESS.md",
       "title": "Damp — identifying the source and repair decisions",
-      "url": "docs/en/R4R_106_DAMP_RISING_DAMP_CONDENSATION_AND_WATER_INGRESS.html",
+      "url": "docs/en/guides/R4R_106_DAMP_RISING_DAMP_CONDENSATION_AND_WATER_INGRESS.pdf",
       "sections": [],
-      "sha256": "5b55547cde3d3b3fd128ceb224123f993d8e868961d69050c3101915500d6ca8"
+      "sectionPages": {},
+      "sha256": "5b55547cde3d3b3fd128ceb224123f993d8e868961d69050c3101915500d6ca8",
+      "pdfSha256": "f84ac0a39c8a552f19eeb33c2fa6baeb730cd7e197aa4e8ae960196e4f1975bf"
+    },
+    "es": {
+      "source": "es/guides/R4R_106_HUMEDADES_CAPILARIDAD_CONDENSACION_FILTRACION.md",
+      "title": "Humedades — identificación del origen y decisiones de reparación",
+      "url": "docs/es/guides/R4R_106_HUMEDADES_CAPILARIDAD_CONDENSACION_FILTRACION.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "12abc8d21e6f79d8e00bae4124b6d106798ddebb4b89ca35a5155a4cb477bdd9",
+      "pdfSha256": "0870eddbe1ca64b43f365a1d73c7e8125daa1788bc293eb3efbbcc2d8dee744b"
     }
   },
   "R4R_107": {
-    "es": {
-      "source": "es/guides/R4R_107_FACHADAS_CUBIERTAS_Y_REHABILITACION_PRUDENTE.md",
-      "title": "Rehabilitación — fachadas, cubiertas y edificios existentes",
-      "url": "docs/es/R4R_107_FACHADAS_CUBIERTAS_Y_REHABILITACION_PRUDENTE.html",
-      "sections": [],
-      "sha256": "86229c6014e2a444e9e4a4f2c5327650a0e3528d3dab46749173341f173bbfea"
-    },
     "en": {
       "source": "en/guides/R4R_107_FACADES_ROOFS_AND_CAUTIOUS_REHABILITATION.md",
       "title": "Rehabilitation — façades, roofs and existing buildings",
-      "url": "docs/en/R4R_107_FACADES_ROOFS_AND_CAUTIOUS_REHABILITATION.html",
+      "url": "docs/en/guides/R4R_107_FACADES_ROOFS_AND_CAUTIOUS_REHABILITATION.pdf",
       "sections": [],
-      "sha256": "9ff4ea28bb30f4adf5e4d0e909f3d4d691fe7d8db10f294e92ea241fe32c3afd"
+      "sectionPages": {},
+      "sha256": "9ff4ea28bb30f4adf5e4d0e909f3d4d691fe7d8db10f294e92ea241fe32c3afd",
+      "pdfSha256": "1653e9ba45c14aa88fa6ecce6f817202325689849b11fea7686458c5bbe2491c"
+    },
+    "es": {
+      "source": "es/guides/R4R_107_FACHADAS_CUBIERTAS_Y_REHABILITACION_PRUDENTE.md",
+      "title": "Rehabilitación — fachadas, cubiertas y edificios existentes",
+      "url": "docs/es/guides/R4R_107_FACHADAS_CUBIERTAS_Y_REHABILITACION_PRUDENTE.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "86229c6014e2a444e9e4a4f2c5327650a0e3528d3dab46749173341f173bbfea",
+      "pdfSha256": "99852b9f27bfd86ac1b5774ebf9a93bde0280b9c9fbeef02617ae3477ca78955"
     }
   },
   "R4R_108": {
-    "es": {
-      "source": "es/guides/R4R_108_VIVIENDA_HABITADA_REFORMAS_POR_FASES.md",
-      "title": "Obras con vivienda ocupada — fases, seguridad y coordinación",
-      "url": "docs/es/R4R_108_VIVIENDA_HABITADA_REFORMAS_POR_FASES.html",
-      "sections": [],
-      "sha256": "c875858162734bfdbe6ab1813d468560178a4234cf95d2bc49d9bea25f99f6f0"
-    },
     "en": {
       "source": "en/guides/R4R_108_OCCUPIED_HOMES_AND_PHASED_RENOVATIONS.md",
       "title": "Work in occupied homes — phases, safety and coordination",
-      "url": "docs/en/R4R_108_OCCUPIED_HOMES_AND_PHASED_RENOVATIONS.html",
+      "url": "docs/en/guides/R4R_108_OCCUPIED_HOMES_AND_PHASED_RENOVATIONS.pdf",
       "sections": [],
-      "sha256": "32159c994500e3bffa58a95cb3e9143d8c32a054527b38c0423fc0f16029671a"
+      "sectionPages": {},
+      "sha256": "32159c994500e3bffa58a95cb3e9143d8c32a054527b38c0423fc0f16029671a",
+      "pdfSha256": "cb28f463ae115c4d935b543ac88670778def919a94bbdb0f06bf31460f4e125b"
+    },
+    "es": {
+      "source": "es/guides/R4R_108_VIVIENDA_HABITADA_REFORMAS_POR_FASES.md",
+      "title": "Obras con vivienda ocupada — fases, seguridad y coordinación",
+      "url": "docs/es/guides/R4R_108_VIVIENDA_HABITADA_REFORMAS_POR_FASES.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "c875858162734bfdbe6ab1813d468560178a4234cf95d2bc49d9bea25f99f6f0",
+      "pdfSha256": "29644f7ff18ca6baafa00f0fbf27c33c4107299f26b8a9976efab7eca2aa2b67"
     }
   },
   "R4R_109": {
-    "es": {
-      "source": "es/guides/R4R_109_OFICINAS_COMERCIOS_Y_LOCAL_CON_ACTIVIDAD.md",
-      "title": "Oficinas y locales — reforma mientras continúa la actividad",
-      "url": "docs/es/R4R_109_OFICINAS_COMERCIOS_Y_LOCAL_CON_ACTIVIDAD.html",
-      "sections": [],
-      "sha256": "21707aba815be6ec1a7981aee964d11ae50648e8ae918a1670e7f23eff073ec0"
-    },
     "en": {
       "source": "en/guides/R4R_109_OFFICES_SHOPS_AND_OPERATING_PREMISES.md",
       "title": "Offices and commercial premises — renovation while business continues",
-      "url": "docs/en/R4R_109_OFFICES_SHOPS_AND_OPERATING_PREMISES.html",
+      "url": "docs/en/guides/R4R_109_OFFICES_SHOPS_AND_OPERATING_PREMISES.pdf",
       "sections": [],
-      "sha256": "0957ce385d96523ab692227ccb156e32d33544cb8548068553b88920a37570a8"
+      "sectionPages": {},
+      "sha256": "0957ce385d96523ab692227ccb156e32d33544cb8548068553b88920a37570a8",
+      "pdfSha256": "3fa80cd5695cb021d28dd829ea8c0547d456cba3f8238039bcb384ecbb778592"
+    },
+    "es": {
+      "source": "es/guides/R4R_109_OFICINAS_COMERCIOS_Y_LOCAL_CON_ACTIVIDAD.md",
+      "title": "Oficinas y locales — reforma mientras continúa la actividad",
+      "url": "docs/es/guides/R4R_109_OFICINAS_COMERCIOS_Y_LOCAL_CON_ACTIVIDAD.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "21707aba815be6ec1a7981aee964d11ae50648e8ae918a1670e7f23eff073ec0",
+      "pdfSha256": "9f5edd283c015ba1f61ddeabe2c176384c5fc4342ec614e62aad4a05ea070d0e"
     }
   },
   "R4R_110": {
-    "es": {
-      "source": "es/guides/R4R_110_COMUNIDADES_PATIOS_CUBIERTAS_Y_ZONAS_COMUNES.md",
-      "title": "Comunidades de vecinos — reparaciones y obras en elementos comunes",
-      "url": "docs/es/R4R_110_COMUNIDADES_PATIOS_CUBIERTAS_Y_ZONAS_COMUNES.html",
-      "sections": [],
-      "sha256": "c8e82f6406ace0e7ceb8b413bddd1d42c93571824d629acfdc9835577146f3d4"
-    },
     "en": {
       "source": "en/guides/R4R_110_OWNERS_ASSOCIATIONS_PATIOS_ROOFS_AND_COMMON_AREAS.md",
       "title": "Owners’ associations — repairs and work on communal elements",
-      "url": "docs/en/R4R_110_OWNERS_ASSOCIATIONS_PATIOS_ROOFS_AND_COMMON_AREAS.html",
+      "url": "docs/en/guides/R4R_110_OWNERS_ASSOCIATIONS_PATIOS_ROOFS_AND_COMMON_AREAS.pdf",
       "sections": [],
-      "sha256": "1c6ec37b4edb28dcef37c394364f0c5192b1c1ef732474a1212f78185bab46e6"
+      "sectionPages": {},
+      "sha256": "1c6ec37b4edb28dcef37c394364f0c5192b1c1ef732474a1212f78185bab46e6",
+      "pdfSha256": "44869b62160f2c14c5acdbf1607e84cf1d9673b3abb6f90a235e0caa665d07e5"
+    },
+    "es": {
+      "source": "es/guides/R4R_110_COMUNIDADES_PATIOS_CUBIERTAS_Y_ZONAS_COMUNES.md",
+      "title": "Comunidades de vecinos — reparaciones y obras en elementos comunes",
+      "url": "docs/es/guides/R4R_110_COMUNIDADES_PATIOS_CUBIERTAS_Y_ZONAS_COMUNES.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "c8e82f6406ace0e7ceb8b413bddd1d42c93571824d629acfdc9835577146f3d4",
+      "pdfSha256": "e77252f697036fa166c583c6aefe81cbd33529cb3b3a8780de23bb25dd51c6d7"
     }
   },
   "R4R_111": {
-    "es": {
-      "source": "es/guides/R4R_111_AISLAMIENTO_VENTANAS_Y_REHABILITACION_ENERGETICA.md",
-      "title": "Aislamiento y rehabilitación energética — decisiones fundamentadas",
-      "url": "docs/es/R4R_111_AISLAMIENTO_VENTANAS_Y_REHABILITACION_ENERGETICA.html",
-      "sections": [],
-      "sha256": "48dc5317ee9c112751ec3bf6f0a93964b579fbbf18dd8ea90f1842480eb2944b"
-    },
     "en": {
       "source": "en/guides/R4R_111_INSULATION_WINDOWS_AND_ENERGY_RENOVATION.md",
       "title": "Insulation and energy renovation — informed decisions",
-      "url": "docs/en/R4R_111_INSULATION_WINDOWS_AND_ENERGY_RENOVATION.html",
+      "url": "docs/en/guides/R4R_111_INSULATION_WINDOWS_AND_ENERGY_RENOVATION.pdf",
       "sections": [],
-      "sha256": "f13cdf92f526c13354f37c4539a619031ff20106fd5c68e2ecf2269004e834f1"
+      "sectionPages": {},
+      "sha256": "f13cdf92f526c13354f37c4539a619031ff20106fd5c68e2ecf2269004e834f1",
+      "pdfSha256": "462622f6a22e0db056daee1c49333b611523bb463ff09ca6d63a6a3ff0f358ae"
+    },
+    "es": {
+      "source": "es/guides/R4R_111_AISLAMIENTO_VENTANAS_Y_REHABILITACION_ENERGETICA.md",
+      "title": "Aislamiento y rehabilitación energética — decisiones fundamentadas",
+      "url": "docs/es/guides/R4R_111_AISLAMIENTO_VENTANAS_Y_REHABILITACION_ENERGETICA.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "48dc5317ee9c112751ec3bf6f0a93964b579fbbf18dd8ea90f1842480eb2944b",
+      "pdfSha256": "2ca7b96d5bc888a0ea6aacf3231376171bdf97aaa89ce92b6e5216c3548566af"
     }
   },
   "R4R_112": {
-    "es": {
-      "source": "es/guides/R4R_112_OBRA_SEGURA_PERMISOS_Y_RESIDUOS.md",
-      "title": "Obra segura — permisos, profesionales y residuos",
-      "url": "docs/es/R4R_112_OBRA_SEGURA_PERMISOS_Y_RESIDUOS.html",
-      "sections": [],
-      "sha256": "0c0d63a05a5a23d58910192fdb8832ce22d1ddaf839f48263987aa0c666e3a59"
-    },
     "en": {
       "source": "en/guides/R4R_112_SAFE_WORK_PERMITS_AND_WASTE.md",
       "title": "Site safety — permits, hazardous materials and waste",
-      "url": "docs/en/R4R_112_SAFE_WORK_PERMITS_AND_WASTE.html",
+      "url": "docs/en/guides/R4R_112_SAFE_WORK_PERMITS_AND_WASTE.pdf",
       "sections": [],
-      "sha256": "791b79718136d5dc40a09cb13d32f9e447c139530fa00d36b3155aaa4c1506bd"
+      "sectionPages": {},
+      "sha256": "791b79718136d5dc40a09cb13d32f9e447c139530fa00d36b3155aaa4c1506bd",
+      "pdfSha256": "c87f673e624e4617f0a09cf40a60cfa837ad61aef78d7873ce8b801731079235"
+    },
+    "es": {
+      "source": "es/guides/R4R_112_OBRA_SEGURA_PERMISOS_Y_RESIDUOS.md",
+      "title": "Obra segura — permisos, profesionales y residuos",
+      "url": "docs/es/guides/R4R_112_OBRA_SEGURA_PERMISOS_Y_RESIDUOS.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "0c0d63a05a5a23d58910192fdb8832ce22d1ddaf839f48263987aa0c666e3a59",
+      "pdfSha256": "ac81e74f9980a73029703a7a9934dec127bc179e07163222c06b4c57730d127f"
     }
   },
   "R4R_113": {
-    "es": {
-      "source": "es/guides/R4R_113_OTROS_ESPACIOS_GARAJES_PISCINAS_POLIDEPORTIVOS.md",
-      "title": "Otros espacios — garajes, piscinas, zonas deportivas y naves",
-      "url": "docs/es/R4R_113_OTROS_ESPACIOS_GARAJES_PISCINAS_POLIDEPORTIVOS.html",
-      "sections": [],
-      "sha256": "8e953e8e87def65c089d855c3efe38feff2f3078aab0ff634c3993a80e348f2a"
-    },
     "en": {
       "source": "en/guides/R4R_113_OTHER_SPACES_GARAGES_POOLS_AND_SPORTS_CENTRES.md",
       "title": "Other spaces — garages, pools, sports areas and industrial buildings",
-      "url": "docs/en/R4R_113_OTHER_SPACES_GARAGES_POOLS_AND_SPORTS_CENTRES.html",
+      "url": "docs/en/guides/R4R_113_OTHER_SPACES_GARAGES_POOLS_AND_SPORTS_CENTRES.pdf",
       "sections": [],
-      "sha256": "b069e0ce3d1f0f02a270f9f12df0bd8b9d9392edabef7669b0ad073dd24c61f1"
+      "sectionPages": {},
+      "sha256": "b069e0ce3d1f0f02a270f9f12df0bd8b9d9392edabef7669b0ad073dd24c61f1",
+      "pdfSha256": "8391789cef8d53d35de849be0566cf3af88beea0e595a1431c954fa8815c2c4c"
+    },
+    "es": {
+      "source": "es/guides/R4R_113_OTROS_ESPACIOS_GARAJES_PISCINAS_POLIDEPORTIVOS.md",
+      "title": "Otros espacios — garajes, piscinas, zonas deportivas y naves",
+      "url": "docs/es/guides/R4R_113_OTROS_ESPACIOS_GARAJES_PISCINAS_POLIDEPORTIVOS.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "8e953e8e87def65c089d855c3efe38feff2f3078aab0ff634c3993a80e348f2a",
+      "pdfSha256": "58e6bb23702a38dfe8793e5ac4013b9af83d36c9f1abdd69cb3f87e730b85fce"
     }
   },
   "R4R_114": {
-    "es": {
-      "source": "es/guides/R4R_114_GUIA_DE_RESPUESTAS_PRUDENTES_Y_LIMITES_DEL_ASESORAMIENTO.md",
-      "title": "Orientación al visitante — qué puede responder un asistente de reformas",
-      "url": "docs/es/R4R_114_GUIA_DE_RESPUESTAS_PRUDENTES_Y_LIMITES_DEL_ASESORAMIENTO.html",
-      "sections": [],
-      "sha256": "c4ce43b6e41e4356a09d446b4bf888ada5f1c612a4dfbe175d6495a565717d6e"
-    },
     "en": {
       "source": "en/guides/R4R_114_CAUTIOUS_RESPONSES_AND_LIMITS_OF_ADVICE.md",
       "title": "Visitor guidance — what a renovation assistant can answer",
-      "url": "docs/en/R4R_114_CAUTIOUS_RESPONSES_AND_LIMITS_OF_ADVICE.html",
+      "url": "docs/en/guides/R4R_114_CAUTIOUS_RESPONSES_AND_LIMITS_OF_ADVICE.pdf",
       "sections": [],
-      "sha256": "694739245faa0c3f5a34bb4297c71fb42ec7cdb117422807aec2d5f1983d78c4"
+      "sectionPages": {},
+      "sha256": "694739245faa0c3f5a34bb4297c71fb42ec7cdb117422807aec2d5f1983d78c4",
+      "pdfSha256": "ba3beb2fccf0ee0e43a5d9df992d6c4bea63dda7f986b5b36556006269aa3ba1"
+    },
+    "es": {
+      "source": "es/guides/R4R_114_GUIA_DE_RESPUESTAS_PRUDENTES_Y_LIMITES_DEL_ASESORAMIENTO.md",
+      "title": "Orientación al visitante — qué puede responder un asistente de reformas",
+      "url": "docs/es/guides/R4R_114_GUIA_DE_RESPUESTAS_PRUDENTES_Y_LIMITES_DEL_ASESORAMIENTO.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "c4ce43b6e41e4356a09d446b4bf888ada5f1c612a4dfbe175d6495a565717d6e",
+      "pdfSha256": "fa266b4c7fe449009b670138117ad8265f1e9069f85d65fd66303dec40e1b99e"
     }
   },
   "R4R_118": {
-    "es": {
-      "source": "es/guides/R4R_118_PREGUNTAS_INICIALES_Y_SEGUIMIENTO_DE_OBRA.md",
-      "title": "Atención al cliente — preguntas de entrada, entregas y mantenimiento",
-      "url": "docs/es/R4R_118_PREGUNTAS_INICIALES_Y_SEGUIMIENTO_DE_OBRA.html",
-      "sections": [],
-      "sha256": "4bd1cb5727909b57a64a18c480eeaa6d699736d089210555e59f1274dbf002a2"
-    },
     "en": {
       "source": "en/guides/R4R_118_INITIAL_QUESTIONS_AND_WORK_FOLLOW_UP.md",
       "title": "Customer service — initial questions, handover and maintenance",
-      "url": "docs/en/R4R_118_INITIAL_QUESTIONS_AND_WORK_FOLLOW_UP.html",
+      "url": "docs/en/guides/R4R_118_INITIAL_QUESTIONS_AND_WORK_FOLLOW_UP.pdf",
       "sections": [],
-      "sha256": "27b715b8fb40c7efcb75e46317b68cc576f5ba455362576c4b0d16a51bc696db"
+      "sectionPages": {},
+      "sha256": "27b715b8fb40c7efcb75e46317b68cc576f5ba455362576c4b0d16a51bc696db",
+      "pdfSha256": "67984ff2004f9b0b1a9a4ecb66d3da16dd2323ac83cddec33ec3f1bf96466d78"
+    },
+    "es": {
+      "source": "es/guides/R4R_118_PREGUNTAS_INICIALES_Y_SEGUIMIENTO_DE_OBRA.md",
+      "title": "Atención al cliente — preguntas de entrada, entregas y mantenimiento",
+      "url": "docs/es/guides/R4R_118_PREGUNTAS_INICIALES_Y_SEGUIMIENTO_DE_OBRA.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "4bd1cb5727909b57a64a18c480eeaa6d699736d089210555e59f1274dbf002a2",
+      "pdfSha256": "e2a258b6d7d81ab5d73dd0d5574e14aad62b38168095fa966e2cb51ea9d7b389"
     }
   },
   "R4R_122": {
-    "es": {
-      "source": "es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.md",
-      "title": "Cómo expresar dudas de reformas — ejemplos de consultas reales y ambiguas",
-      "url": "docs/es/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.html",
-      "sections": [],
-      "sha256": "afe6330a04ef9ca94dd977f64f4aa025604c6dea0f4e86bc7f8e4ecb8d68a724"
-    },
     "en": {
       "source": "en/guides/R4R_122_REAL_VISITOR_WORDING.md",
       "title": "How to express renovation concerns — examples of real-world and ambiguous queries",
-      "url": "docs/en/R4R_122_REAL_VISITOR_WORDING.html",
+      "url": "docs/en/guides/R4R_122_REAL_VISITOR_WORDING.pdf",
       "sections": [],
-      "sha256": "59fcb5ccee08159d438157a1b742b1be2d1e7f5aa10df95716d6be5d6caea60c"
+      "sectionPages": {},
+      "sha256": "59fcb5ccee08159d438157a1b742b1be2d1e7f5aa10df95716d6be5d6caea60c",
+      "pdfSha256": "2678a0c45865b564983888d8959dc0e773ab6f36f1c0e7e350bc9bfa5b1eaf57"
+    },
+    "es": {
+      "source": "es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.md",
+      "title": "Cómo expresar dudas de reformas — ejemplos de consultas reales y ambiguas",
+      "url": "docs/es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "afe6330a04ef9ca94dd977f64f4aa025604c6dea0f4e86bc7f8e4ecb8d68a724",
+      "pdfSha256": "44dc851fc6249b1e6db3a2f544ca243c2286697a6f94fef603e2834b3a1275fc"
     }
   },
   "R4R_80": {
-    "es": {
-      "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
-      "title": "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma",
-      "url": "docs/es/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.html",
-      "sections": [],
-      "sha256": "2b15e4e8dc966df98a2c3f06bf4321b9d2a736f6e63f1175e16c2f921bed6786"
-    },
     "en": {
       "source": "en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.md",
       "title": "Riansares 4R — kitchens: broken pipes, leaks and pre-renovation decisions",
-      "url": "docs/en/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.html",
+      "url": "docs/en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.pdf",
       "sections": [],
-      "sha256": "c32c3fbb72e8fdd9effaeb0a268da59b068d2aa91e6bbd9ab8718c453e15242a"
+      "sectionPages": {},
+      "sha256": "c32c3fbb72e8fdd9effaeb0a268da59b068d2aa91e6bbd9ab8718c453e15242a",
+      "pdfSha256": "577ef97a9d9b478943dc5ba074a2f491d17b5391d7d44ae38f60bc47052e4428"
+    },
+    "es": {
+      "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+      "title": "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma",
+      "url": "docs/es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "2b15e4e8dc966df98a2c3f06bf4321b9d2a736f6e63f1175e16c2f921bed6786",
+      "pdfSha256": "f076a87340e7d1cc5cf8c82e821354ed29fc5274047ef4fa1a2a7b7805e36b7f"
     }
   },
   "R4R_81": {
-    "es": {
-      "source": "es/guides/R4R_81_BANOS_DUCHAS_Y_SANEAMIENTO.md",
-      "title": "Riansares 4R — baños: fugas, duchas, saneamiento e impermeabilización",
-      "url": "docs/es/R4R_81_BANOS_DUCHAS_Y_SANEAMIENTO.html",
-      "sections": [],
-      "sha256": "704177b0dc17f0e0bbef899f7e89c0da9d0e18d92cf69b686930caa76f23ae74"
-    },
     "en": {
       "source": "en/guides/R4R_81_BATHROOMS_SHOWERS_DRAINAGE_AND_WATERPROOFING.md",
       "title": "Riansares 4R — bathrooms: leaks, showers, drainage and waterproofing",
-      "url": "docs/en/R4R_81_BATHROOMS_SHOWERS_DRAINAGE_AND_WATERPROOFING.html",
+      "url": "docs/en/guides/R4R_81_BATHROOMS_SHOWERS_DRAINAGE_AND_WATERPROOFING.pdf",
       "sections": [],
-      "sha256": "8cf37939e85e609c6ce34e8d2223b469017477adf08a9bcf7e3ce5980ae3801e"
+      "sectionPages": {},
+      "sha256": "8cf37939e85e609c6ce34e8d2223b469017477adf08a9bcf7e3ce5980ae3801e",
+      "pdfSha256": "8f516b44c0879a572017a15ebc30d4664e6c6b0d32a97f413fe9066b4ae90869"
+    },
+    "es": {
+      "source": "es/guides/R4R_81_BANOS_DUCHAS_Y_SANEAMIENTO.md",
+      "title": "Riansares 4R — baños: fugas, duchas, saneamiento e impermeabilización",
+      "url": "docs/es/guides/R4R_81_BANOS_DUCHAS_Y_SANEAMIENTO.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "704177b0dc17f0e0bbef899f7e89c0da9d0e18d92cf69b686930caa76f23ae74",
+      "pdfSha256": "2ec9a71beb8f2e150f38e10d2c0ae3217f0014729a31714c697279071e774733"
     }
   },
   "R4R_82": {
-    "es": {
-      "source": "es/guides/R4R_82_HUMEDADES_FUGAS_CONDENSACION_Y_MOHO.md",
-      "title": "Riansares 4R — humedades: diagnóstico diferencial y reparación",
-      "url": "docs/es/R4R_82_HUMEDADES_FUGAS_CONDENSACION_Y_MOHO.html",
-      "sections": [],
-      "sha256": "cab259a510a5c2b6fd680d75360f9c2c3f0160d1ffa8ed2476ac02fe3195c80d"
-    },
     "en": {
       "source": "en/guides/R4R_82_DAMP_LEAKS_CONDENSATION_AND_MOULD.md",
       "title": "Riansares 4R — damp: differential diagnosis and repair",
-      "url": "docs/en/R4R_82_DAMP_LEAKS_CONDENSATION_AND_MOULD.html",
+      "url": "docs/en/guides/R4R_82_DAMP_LEAKS_CONDENSATION_AND_MOULD.pdf",
       "sections": [],
-      "sha256": "cf6ef83d9398f1dd940717bd64652d194fb0771e232a488f2c5597ac6a81f6cf"
+      "sectionPages": {},
+      "sha256": "cf6ef83d9398f1dd940717bd64652d194fb0771e232a488f2c5597ac6a81f6cf",
+      "pdfSha256": "af010e6a270e7a4ecebfbd1128f3df8ebfa236f43a2409b57fa7d410e55347b2"
+    },
+    "es": {
+      "source": "es/guides/R4R_82_HUMEDADES_FUGAS_CONDENSACION_Y_MOHO.md",
+      "title": "Riansares 4R — humedades: diagnóstico diferencial y reparación",
+      "url": "docs/es/guides/R4R_82_HUMEDADES_FUGAS_CONDENSACION_Y_MOHO.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "cab259a510a5c2b6fd680d75360f9c2c3f0160d1ffa8ed2476ac02fe3195c80d",
+      "pdfSha256": "bc4030ae7c98137e377c836586782cadb1ab956cf13a08bdf84f555d5d1eb8fd"
     }
   },
   "R4R_83": {
-    "es": {
-      "source": "es/guides/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.md",
-      "title": "Riansares 4R — viviendas antiguas: rehabilitar con criterio y seguridad",
-      "url": "docs/es/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.html",
-      "sections": [],
-      "sha256": "6fc9d93803ef5fb4263bb4d9d7ebce8f284821b9ff0dd1b5764f8470874f5113"
-    },
     "en": {
       "source": "en/guides/R4R_83_OLD_HOMES_AND_REHABILITATION.md",
       "title": "Riansares 4R — old homes: sound and safe rehabilitation",
-      "url": "docs/en/R4R_83_OLD_HOMES_AND_REHABILITATION.html",
+      "url": "docs/en/guides/R4R_83_OLD_HOMES_AND_REHABILITATION.pdf",
       "sections": [],
-      "sha256": "25c1a05a01cfd63a7985093e1b1a65941913db6e5da46a230127ead0130e1a9a"
+      "sectionPages": {},
+      "sha256": "25c1a05a01cfd63a7985093e1b1a65941913db6e5da46a230127ead0130e1a9a",
+      "pdfSha256": "a877f4c2a66a1e883b2a6f538c0ef5adc17143e03f0a8a580a2b2d86ab06f3e1"
+    },
+    "es": {
+      "source": "es/guides/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.md",
+      "title": "Riansares 4R — viviendas antiguas: rehabilitar con criterio y seguridad",
+      "url": "docs/es/guides/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "6fc9d93803ef5fb4263bb4d9d7ebce8f284821b9ff0dd1b5764f8470874f5113",
+      "pdfSha256": "7d41d44f5af8b02ba9e4bea4bbcba518df53d2fe2153f3c6ab103bb7e8ab08fd"
     }
   },
   "R4R_84": {
-    "es": {
-      "source": "es/guides/R4R_84_PATIOS_SOLERAS_SOLADOS_Y_DRENAJE.md",
-      "title": "Riansares 4R — patios y pavimentos: solera, solado y drenaje",
-      "url": "docs/es/R4R_84_PATIOS_SOLERAS_SOLADOS_Y_DRENAJE.html",
-      "sections": [],
-      "sha256": "946696416da0a1d1c564367aa5cdd07b3cc587c7c4a14893ec28c6167eef1088"
-    },
     "en": {
       "source": "en/guides/R4R_84_PATIOS_CONCRETE_BASES_FLOOR_FINISHES_AND_DRAINAGE.md",
       "title": "Riansares 4R — patios and paving: concrete base, floor finish and drainage",
-      "url": "docs/en/R4R_84_PATIOS_CONCRETE_BASES_FLOOR_FINISHES_AND_DRAINAGE.html",
+      "url": "docs/en/guides/R4R_84_PATIOS_CONCRETE_BASES_FLOOR_FINISHES_AND_DRAINAGE.pdf",
       "sections": [],
-      "sha256": "fe24d9ab04dbac5641714b1c95cb14c7f7ddbb054ed8128de789b440187b03fc"
+      "sectionPages": {},
+      "sha256": "fe24d9ab04dbac5641714b1c95cb14c7f7ddbb054ed8128de789b440187b03fc",
+      "pdfSha256": "dc51eaa54cf34ba0582023fe9534c42059c302a77c14cd82759d231870cb73ef"
+    },
+    "es": {
+      "source": "es/guides/R4R_84_PATIOS_SOLERAS_SOLADOS_Y_DRENAJE.md",
+      "title": "Riansares 4R — patios y pavimentos: solera, solado y drenaje",
+      "url": "docs/es/guides/R4R_84_PATIOS_SOLERAS_SOLADOS_Y_DRENAJE.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "946696416da0a1d1c564367aa5cdd07b3cc587c7c4a14893ec28c6167eef1088",
+      "pdfSha256": "357fa38252568e8a38ddb8b84ae82adb74f24d1f9fac2389f701fbdefa1d0015"
     }
   },
   "R4R_85": {
-    "es": {
-      "source": "es/guides/R4R_85_OFICINAS_LOCALES_Y_COMUNIDADES.md",
-      "title": "Riansares 4R — oficinas, locales y comunidades: alcance y coordinación",
-      "url": "docs/es/R4R_85_OFICINAS_LOCALES_Y_COMUNIDADES.html",
-      "sections": [],
-      "sha256": "dd42267e29f406de1f11b41663a3ffa239499825727e660c31f6d34c3e1360b2"
-    },
     "en": {
       "source": "en/guides/R4R_85_OFFICES_COMMERCIAL_PREMISES_AND_OWNERS_ASSOCIATIONS.md",
       "title": "Riansares 4R — offices, commercial premises and owners’ associations: scope and coordination",
-      "url": "docs/en/R4R_85_OFFICES_COMMERCIAL_PREMISES_AND_OWNERS_ASSOCIATIONS.html",
+      "url": "docs/en/guides/R4R_85_OFFICES_COMMERCIAL_PREMISES_AND_OWNERS_ASSOCIATIONS.pdf",
       "sections": [],
-      "sha256": "125064a4be4f4c4251d748fe3d48ec8a40563c721765585adbf11bca361e0d33"
+      "sectionPages": {},
+      "sha256": "125064a4be4f4c4251d748fe3d48ec8a40563c721765585adbf11bca361e0d33",
+      "pdfSha256": "d576b527ae84f5318b5ec8df06b620c5460fc16eceb742473d7a67b4800cc88b"
+    },
+    "es": {
+      "source": "es/guides/R4R_85_OFICINAS_LOCALES_Y_COMUNIDADES.md",
+      "title": "Riansares 4R — oficinas, locales y comunidades: alcance y coordinación",
+      "url": "docs/es/guides/R4R_85_OFICINAS_LOCALES_Y_COMUNIDADES.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "dd42267e29f406de1f11b41663a3ffa239499825727e660c31f6d34c3e1360b2",
+      "pdfSha256": "8ed59575c255a1bcd9ff63573413fd8daa5ccc695a81c6de6d3bc0c16db8130b"
     }
   },
   "R4R_86": {
-    "es": {
-      "source": "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
-      "title": "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance",
-      "url": "docs/es/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.html",
-      "sections": [],
-      "sha256": "8bf152106c740a6bc22ba57095c591f7e1c5df6a5ff2d85b8be955fb7461aa56"
-    },
     "en": {
       "source": "en/guides/R4R_86_QUOTATIONS_MEASUREMENTS_AND_SCOPE_CHANGES.md",
       "title": "Riansares 4R — quotations, measurements, extras and scope changes",
-      "url": "docs/en/R4R_86_QUOTATIONS_MEASUREMENTS_AND_SCOPE_CHANGES.html",
+      "url": "docs/en/guides/R4R_86_QUOTATIONS_MEASUREMENTS_AND_SCOPE_CHANGES.pdf",
       "sections": [],
-      "sha256": "3b2f8c834544ba7aaf2acd23152256c16be34e5452292076b9ed6af7fade8a2e"
+      "sectionPages": {},
+      "sha256": "3b2f8c834544ba7aaf2acd23152256c16be34e5452292076b9ed6af7fade8a2e",
+      "pdfSha256": "d91ebc5b7febe301fa7eb4a25863c906afc41a70954b2a72b852a20b7d100642"
+    },
+    "es": {
+      "source": "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
+      "title": "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance",
+      "url": "docs/es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "8bf152106c740a6bc22ba57095c591f7e1c5df6a5ff2d85b8be955fb7461aa56",
+      "pdfSha256": "f68008950a8a81e68c4a468ce58c77a74dd17ed27999d3d0b0b5c537ae970845"
     }
   },
   "R4R_87": {
-    "es": {
-      "source": "es/guides/R4R_87_AISLAMIENTO_VENTILACION_Y_REHABILITACION_ENERGETICA.md",
-      "title": "Riansares 4R — eficiencia energética, aislamiento y ventilación",
-      "url": "docs/es/R4R_87_AISLAMIENTO_VENTILACION_Y_REHABILITACION_ENERGETICA.html",
-      "sections": [],
-      "sha256": "7727edc4c98d7d70f749402bfd7ef48d817e6ceccfaab010e82b0011a710369d"
-    },
     "en": {
       "source": "en/guides/R4R_87_INSULATION_VENTILATION_AND_ENERGY_RENOVATION.md",
       "title": "Riansares 4R — energy efficiency, insulation and ventilation",
-      "url": "docs/en/R4R_87_INSULATION_VENTILATION_AND_ENERGY_RENOVATION.html",
+      "url": "docs/en/guides/R4R_87_INSULATION_VENTILATION_AND_ENERGY_RENOVATION.pdf",
       "sections": [],
-      "sha256": "b5560ea352c480ceb752e2a6a0c3d35769f82c89e8925224f349435f302ba30f"
+      "sectionPages": {},
+      "sha256": "b5560ea352c480ceb752e2a6a0c3d35769f82c89e8925224f349435f302ba30f",
+      "pdfSha256": "0c36f0dc3d16c63a32ac8a069ac2cd25a5d13af2cea3e867247a07283ef0db94"
+    },
+    "es": {
+      "source": "es/guides/R4R_87_AISLAMIENTO_VENTILACION_Y_REHABILITACION_ENERGETICA.md",
+      "title": "Riansares 4R — eficiencia energética, aislamiento y ventilación",
+      "url": "docs/es/guides/R4R_87_AISLAMIENTO_VENTILACION_Y_REHABILITACION_ENERGETICA.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "7727edc4c98d7d70f749402bfd7ef48d817e6ceccfaab010e82b0011a710369d",
+      "pdfSha256": "21d99db51e42a92f59602282bbbb3c16689419e251e1496880ef1ea458573446"
     }
   },
   "R4R_88": {
-    "es": {
-      "source": "es/guides/R4R_88_SEGURIDAD_INSTALACIONES_PERMISOS_Y_MATERIALES.md",
-      "title": "Riansares 4R — seguridad, permisos, instalaciones y materiales de riesgo",
-      "url": "docs/es/R4R_88_SEGURIDAD_INSTALACIONES_PERMISOS_Y_MATERIALES.html",
-      "sections": [],
-      "sha256": "88dbdbe88491eb0668f3c7d4d36fd6aab9e69041febe23277b5a940511d42881"
-    },
     "en": {
       "source": "en/guides/R4R_88_SAFETY_SERVICES_PERMITS_AND_HAZARDOUS_MATERIALS.md",
       "title": "Riansares 4R — safety, permits, services and hazardous materials",
-      "url": "docs/en/R4R_88_SAFETY_SERVICES_PERMITS_AND_HAZARDOUS_MATERIALS.html",
+      "url": "docs/en/guides/R4R_88_SAFETY_SERVICES_PERMITS_AND_HAZARDOUS_MATERIALS.pdf",
       "sections": [],
-      "sha256": "e5fb0c7c081808048917dd1da73f7d1189f73c36787443c9a3e6337a56482f1d"
+      "sectionPages": {},
+      "sha256": "e5fb0c7c081808048917dd1da73f7d1189f73c36787443c9a3e6337a56482f1d",
+      "pdfSha256": "96a5efdd90c9bf788296767702a1e9d21adf02654f7726d3d8c4def199679012"
+    },
+    "es": {
+      "source": "es/guides/R4R_88_SEGURIDAD_INSTALACIONES_PERMISOS_Y_MATERIALES.md",
+      "title": "Riansares 4R — seguridad, permisos, instalaciones y materiales de riesgo",
+      "url": "docs/es/guides/R4R_88_SEGURIDAD_INSTALACIONES_PERMISOS_Y_MATERIALES.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "88dbdbe88491eb0668f3c7d4d36fd6aab9e69041febe23277b5a940511d42881",
+      "pdfSha256": "912c98fa24c5ec4f28e8df7fee332ddb9ac9ab904a79811e5740e192d34a65a9"
     }
   },
   "R4R_89": {
-    "es": {
-      "source": "es/guides/R4R_89_OTROS_ESPACIOS_Y_OBRAS_ESPECIALES.md",
-      "title": "Riansares 4R — otras obras: piscinas, naves, terrazas y equipamientos",
-      "url": "docs/es/R4R_89_OTROS_ESPACIOS_Y_OBRAS_ESPECIALES.html",
-      "sections": [],
-      "sha256": "26b922ed7ae2c8f93e327f7e78ed120af735c6b96d5b3443c67adbd0a1b88169"
-    },
     "en": {
       "source": "en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.md",
       "title": "Riansares 4R — other works: pools, industrial buildings, terraces and facilities",
-      "url": "docs/en/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.html",
+      "url": "docs/en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.pdf",
       "sections": [],
-      "sha256": "6024c997c9d6eb31beca61e34b2ecedf21267b5d5629c668cb712dcadf6fd4d7"
+      "sectionPages": {},
+      "sha256": "6024c997c9d6eb31beca61e34b2ecedf21267b5d5629c668cb712dcadf6fd4d7",
+      "pdfSha256": "691b9a889818baf3595ca23cefc8886e5443a010bed2eb7acd7d6f0b1d152aa0"
+    },
+    "es": {
+      "source": "es/guides/R4R_89_OTROS_ESPACIOS_Y_OBRAS_ESPECIALES.md",
+      "title": "Riansares 4R — otras obras: piscinas, naves, terrazas y equipamientos",
+      "url": "docs/es/guides/R4R_89_OTROS_ESPACIOS_Y_OBRAS_ESPECIALES.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "26b922ed7ae2c8f93e327f7e78ed120af735c6b96d5b3443c67adbd0a1b88169",
+      "pdfSha256": "3dde26a83beaba063c4652f3441c3cb2160ad4ae80b431919738f4484fd35b7a"
     }
   },
   "R4R_90": {
-    "es": {
-      "source": "es/guides/R4R_90_INCIDENTES_SOPORTE_Y_ENTREGA.md",
-      "title": "Riansares 4R — incidencias, reparaciones posteriores y entrega",
-      "url": "docs/es/R4R_90_INCIDENTES_SOPORTE_Y_ENTREGA.html",
-      "sections": [],
-      "sha256": "7de5bf13c6c3a2a296bb74701d7349a7a57ebbe08e5d013a9ac3977f73500856"
-    },
     "en": {
       "source": "en/guides/R4R_90_INCIDENTS_SUPPORT_AND_HANDOVER.md",
       "title": "Riansares 4R — incidents, subsequent repairs and handover",
-      "url": "docs/en/R4R_90_INCIDENTS_SUPPORT_AND_HANDOVER.html",
+      "url": "docs/en/guides/R4R_90_INCIDENTS_SUPPORT_AND_HANDOVER.pdf",
       "sections": [],
-      "sha256": "f8d94cb5381af1190d508e5c8a6f7c0661d13e16a3c818ff941174d73606213f"
+      "sectionPages": {},
+      "sha256": "f8d94cb5381af1190d508e5c8a6f7c0661d13e16a3c818ff941174d73606213f",
+      "pdfSha256": "26e7a8c829cb1c2c0ab41247d5000ce13a645cf1dd7ec52591d7845b5df45ce3"
+    },
+    "es": {
+      "source": "es/guides/R4R_90_INCIDENTES_SOPORTE_Y_ENTREGA.md",
+      "title": "Riansares 4R — incidencias, reparaciones posteriores y entrega",
+      "url": "docs/es/guides/R4R_90_INCIDENTES_SOPORTE_Y_ENTREGA.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "7de5bf13c6c3a2a296bb74701d7349a7a57ebbe08e5d013a9ac3977f73500856",
+      "pdfSha256": "a51e22eb0b3d9ac5c17a96e920b2ff71d0948d5011fa3657bec23f2e0761a29a"
     }
   },
   "R4R_124": {
-    "es": {
-      "source": "es/sources/R4R_124_FUENTES_EUROPEAS_Y_ESTADOUNIDENSES_APLICACION_PRUDENTE.md",
-      "title": "Fuentes técnicas — aplicación prudente de guías españolas, británicas y estadounidenses",
-      "url": "docs/es/R4R_124_FUENTES_EUROPEAS_Y_ESTADOUNIDENSES_APLICACION_PRUDENTE.html",
-      "sections": [],
-      "sha256": "8fe88e1cbec32aa86aeb0d2b56158d78b44bd3d17c045ce318b0caff8d1e090d"
-    },
     "en": {
       "source": "en/sources/R4R_124_EUROPEAN_AND_US_SOURCES_CAUTIOUS_APPLICATION.md",
       "title": "Technical sources — cautious application of Spanish, British and US guidance",
-      "url": "docs/en/R4R_124_EUROPEAN_AND_US_SOURCES_CAUTIOUS_APPLICATION.html",
+      "url": "docs/en/sources/R4R_124_EUROPEAN_AND_US_SOURCES_CAUTIOUS_APPLICATION.pdf",
       "sections": [],
-      "sha256": "7f6e88d64486d7e4a82ced7974130dc05993b39740c9cddbcca5fb61521aa3b0"
+      "sectionPages": {},
+      "sha256": "7f6e88d64486d7e4a82ced7974130dc05993b39740c9cddbcca5fb61521aa3b0",
+      "pdfSha256": "1569de15f5a29850a20d7041f8ca90697f017a626844e941b7c34a1a00d6a56f"
+    },
+    "es": {
+      "source": "es/sources/R4R_124_FUENTES_EUROPEAS_Y_ESTADOUNIDENSES_APLICACION_PRUDENTE.md",
+      "title": "Fuentes técnicas — aplicación prudente de guías españolas, británicas y estadounidenses",
+      "url": "docs/es/sources/R4R_124_FUENTES_EUROPEAS_Y_ESTADOUNIDENSES_APLICACION_PRUDENTE.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "8fe88e1cbec32aa86aeb0d2b56158d78b44bd3d17c045ce318b0caff8d1e090d",
+      "pdfSha256": "9a92dbed8dbd4ab18882c29e1ea41fdde7af7822aace7d6119a73fdc02a1b739"
     }
   },
   "R4R_70": {
-    "es": {
-      "source": "es/sources/R4R_70_WEB_SOURCE_MANIFEST.md",
-      "title": "Fuentes web consultadas",
-      "url": "docs/es/R4R_70_WEB_SOURCE_MANIFEST.html",
-      "sections": [],
-      "sha256": "39cd5ae0f8b10ab0d534a3a23f9d03c242447168e3a254f2803549cfdd5e7f4f"
-    },
     "en": {
       "source": "en/sources/R4R_70_WEB_SOURCE_MANIFEST.md",
       "title": "Web sources consulted",
-      "url": "docs/en/R4R_70_WEB_SOURCE_MANIFEST.html",
+      "url": "docs/en/sources/R4R_70_WEB_SOURCE_MANIFEST.pdf",
       "sections": [],
-      "sha256": "bd215c9e67a30e27f6c15b2f77bb05baac0f91bb00ecb5e8e7dd104aae68b83b"
+      "sectionPages": {},
+      "sha256": "bd215c9e67a30e27f6c15b2f77bb05baac0f91bb00ecb5e8e7dd104aae68b83b",
+      "pdfSha256": "f4864c5050b6c436f43ff4c169e717453aa7b0252b7b63d1a8a814c25944c3be"
+    },
+    "es": {
+      "source": "es/sources/R4R_70_WEB_SOURCE_MANIFEST.md",
+      "title": "Fuentes web consultadas",
+      "url": "docs/es/sources/R4R_70_WEB_SOURCE_MANIFEST.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "39cd5ae0f8b10ab0d534a3a23f9d03c242447168e3a254f2803549cfdd5e7f4f",
+      "pdfSha256": "20f7b66312a21800aea0011ee89ca509ec259c5d0ded8cea09afa7337a988837"
     }
   },
   "R4R_71": {
-    "es": {
-      "source": "es/sources/R4R_71_REFERENCIAS_TECNICAS_INTERNACIONALES_2026.md",
-      "title": "Riansares 4R — fuentes técnicas externas verificadas noviembre 2026",
-      "url": "docs/es/R4R_71_REFERENCIAS_TECNICAS_INTERNACIONALES_2026.html",
-      "sections": [],
-      "sha256": "d796f760df60338cdf4c8a13a6f002bf90e35481c59086e89f95942b565228cf"
-    },
     "en": {
       "source": "en/sources/R4R_71_INTERNATIONAL_TECHNICAL_REFERENCES_2026.md",
       "title": "Riansares 4R — external technical sources verified November 2026",
-      "url": "docs/en/R4R_71_INTERNATIONAL_TECHNICAL_REFERENCES_2026.html",
+      "url": "docs/en/sources/R4R_71_INTERNATIONAL_TECHNICAL_REFERENCES_2026.pdf",
       "sections": [],
-      "sha256": "713d7d4d47fa42c9c9196aac8d3fa899d242d8b8c3b03ac2cef1b22eb38ec1e9"
+      "sectionPages": {},
+      "sha256": "713d7d4d47fa42c9c9196aac8d3fa899d242d8b8c3b03ac2cef1b22eb38ec1e9",
+      "pdfSha256": "77092f8774eeb5bb20d23a8bee5921ad330a8974e3a7eb6313ce5a6eff015a2a"
+    },
+    "es": {
+      "source": "es/sources/R4R_71_REFERENCIAS_TECNICAS_INTERNACIONALES_2026.md",
+      "title": "Riansares 4R — fuentes técnicas externas verificadas noviembre 2026",
+      "url": "docs/es/sources/R4R_71_REFERENCIAS_TECNICAS_INTERNACIONALES_2026.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "d796f760df60338cdf4c8a13a6f002bf90e35481c59086e89f95942b565228cf",
+      "pdfSha256": "34f5c468d0e0978287fce8f12b739cc4c8c312bce0d126c8d558a9d5860beb6f"
     }
   },
   "R4R_50": {
-    "es": {
-      "source": "es/struct-data/R4R_50_STRUCTURED_EXTRA_DATA.md",
-      "title": "Riansares 4R — datos estructurados adicionales",
-      "url": "docs/es/R4R_50_STRUCTURED_EXTRA_DATA.html",
-      "sections": [],
-      "sha256": "5f92f487e8c7055044fe2d670455bbdcfe77dcc5ba6b78795ad8a9c9f7b6a9ad"
-    },
     "en": {
       "source": "en/struct-data/R4R_50_STRUCTURED_EXTRA_DATA.md",
       "title": "Riansares 4R — additional structured data",
-      "url": "docs/en/R4R_50_STRUCTURED_EXTRA_DATA.html",
+      "url": "docs/en/struct-data/R4R_50_STRUCTURED_EXTRA_DATA.pdf",
       "sections": [],
-      "sha256": "c855e863103dca1f0c8da5356d6804d3f5556e31ac88065ecf2d12fb79d620d6"
+      "sectionPages": {},
+      "sha256": "c855e863103dca1f0c8da5356d6804d3f5556e31ac88065ecf2d12fb79d620d6",
+      "pdfSha256": "1a6eb64f318e3bae3bbcb2a72ea2a139d7cf8853cd6e581d0349945760d0f94d"
+    },
+    "es": {
+      "source": "es/struct-data/R4R_50_STRUCTURED_EXTRA_DATA.md",
+      "title": "Riansares 4R — datos estructurados adicionales",
+      "url": "docs/es/struct-data/R4R_50_STRUCTURED_EXTRA_DATA.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "5f92f487e8c7055044fe2d670455bbdcfe77dcc5ba6b78795ad8a9c9f7b6a9ad",
+      "pdfSha256": "233a51f2ea59d7f73e4fd4eb4d1051647f0be359dd98886400b1d0574aabf89e"
     }
   },
   "R4R_60": {
-    "es": {
-      "source": "es/territory/R4R_60_SERVICE_AREA_TOWNS.md",
-      "title": "Riansares 4R — cobertura territorial",
-      "url": "docs/es/R4R_60_SERVICE_AREA_TOWNS.html",
-      "sections": [],
-      "sha256": "12843970e738b3e354a73e94d8f341edee69014e218b36395b7cd9765a3cce89"
-    },
     "en": {
       "source": "en/territory/R4R_60_SERVICE_AREA_TOWNS.md",
       "title": "Riansares 4R — service area",
-      "url": "docs/en/R4R_60_SERVICE_AREA_TOWNS.html",
+      "url": "docs/en/territory/R4R_60_SERVICE_AREA_TOWNS.pdf",
       "sections": [],
-      "sha256": "68f9f4d8d07fda1dfa59e8c5b770a8d2515b9fc20e935d2ecc673d2f2b434862"
+      "sectionPages": {},
+      "sha256": "68f9f4d8d07fda1dfa59e8c5b770a8d2515b9fc20e935d2ecc673d2f2b434862",
+      "pdfSha256": "c9a186b9bcc4546f996990cf111e4fffd4a1f9e4a6bf9e51d30830760f73d1ad"
+    },
+    "es": {
+      "source": "es/territory/R4R_60_SERVICE_AREA_TOWNS.md",
+      "title": "Riansares 4R — cobertura territorial",
+      "url": "docs/es/territory/R4R_60_SERVICE_AREA_TOWNS.pdf",
+      "sections": [],
+      "sectionPages": {},
+      "sha256": "12843970e738b3e354a73e94d8f341edee69014e218b36395b7cd9765a3cce89",
+      "pdfSha256": "5175d43b92c90a7187539e5accc2dbb3b8227fdc2fbee92d8e620a70aebf1cbf"
     }
   }
 }

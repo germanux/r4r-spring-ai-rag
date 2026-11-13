@@ -835,7 +835,7 @@ test('known Markdown sources link to PDFs with the original basename', async () 
  const card = p.node('citations').children[0];
  const source=card.children[0].children[1];
  assert.equal(source.tagName,'a');
- assert.equal(source.getAttribute('href'),'docs/es/R4R_40_ALL_FAQ.html');
+ assert.equal(source.getAttribute('href'),'docs/es/faqs/R4R_40_ALL_FAQ.pdf');
  assert.ok(source.textContent.includes('preguntas frecuentes'));assert.ok(source.textContent.includes('Abrir documento'));
 });
 
@@ -916,4 +916,14 @@ test('completed SSE history remains inspectable outside the hidden loading block
  assert.equal(p.node('loadingState').hidden,true);assert.equal(p.node('progressDetails').hidden,false);
  assert.equal(p.node('loadingState').contains(p.node('progressDetails')),false);
  for(const stage of ['REQUEST_RECEIVED','GENERATION_STARTED','GENERATION_COMPLETED','ANSWER_READY'])assert.ok(p.node('ragProgress').textContent.includes(stage));
+});
+
+test('numeric source sections use actual PDF page targets and preserve evidence trace',async()=>{
+ const catalogue=JSON.parse(fs.readFileSync(path.join(root,'docs/catalogue.json'),'utf8'));
+ const source='es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md';
+ const p=openPage('en',new Map(),{offline:true,payload:{answer:'Evidence [S1]',abstained:false,citations:[{label:'[S1]',source,headingPath:['6.3. Distinción entre solera y solado'],ordinal:5}]}});
+ p.node('question').value='Question';await p.node('sendButton').handlers.click();
+ const link=p.node('citations').children[0].children[0].children[1];
+ assert.equal(link.getAttribute('href'),catalogue.R4R_10.en.url+'#page='+catalogue.R4R_10.en.sectionPages['section-6-3']);
+ assert.ok(link.textContent.includes('PDF'));assert.ok(p.node('citations').textContent.includes(source));
 });

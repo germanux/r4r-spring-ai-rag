@@ -865,12 +865,12 @@
       const source = document.createElement(selected ? "a" : "span");
       if (selected) {
         const section = (citation.headingPath || []).map(heading => /^(\d+(?:\.\d+)*)/.exec(heading)?.[1]).filter(Boolean).reverse()
-          .map(number => "section-" + number.replace(/\./g, "-")).find(anchor => selected.sections?.includes(anchor));
-        source.setAttribute("href", selected.url + (section ? "#" + section : ""));
+          .map(number => "section-" + number.replace(/\./g, "-")).find(anchor => selected.sectionPages?.[anchor]);
+        source.setAttribute("href", selected.url + (section ? "#page=" + selected.sectionPages[section] : ""));
         source.setAttribute("target", "_blank"); source.setAttribute("rel", "noopener");
       }
       source.className = "citation-source";
-      source.textContent = selected ? `${selected.title.replace(/^Riansares 4R\s*[—-]\s*/, "")} · ${t("openDocument")} (${selected.source.startsWith("en/") ? "EN" : "ES"})` : t("unknownSource");
+      source.textContent = selected ? `${selected.title.replace(/^Riansares 4R\s*[—-]\s*/, "")} · ${t("openDocument")} (PDF · ${selected.source.startsWith("en/") ? "EN" : "ES"})` : t("unknownSource");
       const trace = document.createElement("details");
       const traceLabel = document.createElement("summary");traceLabel.textContent = t("originalSource");
       const traceText = document.createElement("p");traceText.textContent = sourceName;
