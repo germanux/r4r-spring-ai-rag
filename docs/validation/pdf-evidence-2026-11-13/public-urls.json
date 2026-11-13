@@ -1,0 +1,335 @@
+{
+  "base": "https://athagon.tech/r4r-rag/",
+  "total": 90,
+  "passed": 8,
+  "failures": [
+    {
+      "url": "docs/en/R4R_00_IDENTITY_CRITERIA_AND_EDITORIAL_VOICE.pdf",
+      "error": "docs/en/R4R_00_IDENTITY_CRITERIA_AND_EDITORIAL_VOICE.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.pdf",
+      "error": "docs/es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.pdf",
+      "error": "docs/es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/R4R_20_CASOS_OFICINAS_CUEVAS_BANOS_Y_FILTROS.pdf",
+      "error": "docs/es/R4R_20_CASOS_OFICINAS_CUEVAS_BANOS_Y_FILTROS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/R4R_10_PATIO_HOME_DAMP_AND_REPAIR_CASES.pdf",
+      "error": "docs/en/R4R_10_PATIO_HOME_DAMP_AND_REPAIR_CASES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/R4R_20_OFFICE_CELLAR_BATHROOM_AND_CLIENT_SCREENING_CASES.pdf",
+      "error": "docs/en/R4R_20_OFFICE_CELLAR_BATHROOM_AND_CLIENT_SCREENING_CASES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/cases/R4R_115_HYPOTHETICAL_KITCHEN_AND_PLUMBING_CASES.pdf",
+      "error": "docs/en/cases/R4R_115_HYPOTHETICAL_KITCHEN_AND_PLUMBING_CASES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/R4R_30_METHOD_QUOTATIONS_SEO_CATALOGUE_AND_TEMPLATES.pdf",
+      "error": "docs/en/R4R_30_METHOD_QUOTATIONS_SEO_CATALOGUE_AND_TEMPLATES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/cases/R4R_115_CASOS_HIPOTETICOS_COCINAS_Y_FONTANERIA.pdf",
+      "error": "docs/es/cases/R4R_115_CASOS_HIPOTETICOS_COCINAS_Y_FONTANERIA.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/R4R_30_METODO_PRESUPUESTOS_SEO_CATALOGO_Y_PLANTILLAS.pdf",
+      "error": "docs/es/R4R_30_METODO_PRESUPUESTOS_SEO_CATALOGO_Y_PLANTILLAS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/cases/R4R_116_CASOS_HIPOTETICOS_HUMEDADES_Y_ESTRUCTURAS.pdf",
+      "error": "docs/es/cases/R4R_116_CASOS_HIPOTETICOS_HUMEDADES_Y_ESTRUCTURAS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/cases/R4R_116_HYPOTHETICAL_DAMP_AND_STRUCTURE_CASES.pdf",
+      "error": "docs/en/cases/R4R_116_HYPOTHETICAL_DAMP_AND_STRUCTURE_CASES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/cases/R4R_117_HYPOTHETICAL_OFFICE_COMMERCIAL_AND_PUBLIC_SPACE_CASES.pdf",
+      "error": "docs/en/cases/R4R_117_HYPOTHETICAL_OFFICE_COMMERCIAL_AND_PUBLIC_SPACE_CASES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/cases/R4R_91_VARIED_HYPOTHETICAL_CASES.pdf",
+      "error": "docs/en/cases/R4R_91_VARIED_HYPOTHETICAL_CASES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/faqs/R4R_40_ALL_FAQ.pdf",
+      "error": "docs/es/faqs/R4R_40_ALL_FAQ.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/cases/R4R_117_CASOS_HIPOTETICOS_OFICINAS_LOCALES_Y_ESPACIOS_PUBLICOS.pdf",
+      "error": "docs/es/cases/R4R_117_CASOS_HIPOTETICOS_OFICINAS_LOCALES_Y_ESPACIOS_PUBLICOS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_101_FONTANERIA_FUGAS_DIAGNOSTICO_Y_REPARACION.pdf",
+      "error": "docs/es/guides/R4R_101_FONTANERIA_FUGAS_DIAGNOSTICO_Y_REPARACION.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/faqs/R4R_40_ALL_FAQ.pdf",
+      "error": "docs/en/faqs/R4R_40_ALL_FAQ.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/cases/R4R_91_CASOS_HIPOTETICOS_VARIADOS.pdf",
+      "error": "docs/es/cases/R4R_91_CASOS_HIPOTETICOS_VARIADOS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_101_PLUMBING_LEAKS_DIAGNOSIS_AND_REPAIR.pdf",
+      "error": "docs/en/guides/R4R_101_PLUMBING_LEAKS_DIAGNOSIS_AND_REPAIR.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_103_KITCHEN_QUOTATIONS_MEASUREMENTS_AND_VARIATIONS.pdf",
+      "error": "docs/en/guides/R4R_103_KITCHEN_QUOTATIONS_MEASUREMENTS_AND_VARIATIONS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.pdf",
+      "error": "docs/en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_102_REFORMA_COCINA_MUEBLES_AZULEJOS_Y_ELECTRODOMESTICOS.pdf",
+      "error": "docs/es/guides/R4R_102_REFORMA_COCINA_MUEBLES_AZULEJOS_Y_ELECTRODOMESTICOS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_104_SHOWERS_GRADIENTS_WATERPROOFING_AND_BATHROOMS.pdf",
+      "error": "docs/en/guides/R4R_104_SHOWERS_GRADIENTS_WATERPROOFING_AND_BATHROOMS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_103_PRESUPUESTO_COCINA_MEDICIONES_Y_VARIACIONES.pdf",
+      "error": "docs/es/guides/R4R_103_PRESUPUESTO_COCINA_MEDICIONES_Y_VARIACIONES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_104_DUCHAS_PENDIENTES_IMPERMEABILIZACION_Y_BANOS.pdf",
+      "error": "docs/es/guides/R4R_104_DUCHAS_PENDIENTES_IMPERMEABILIZACION_Y_BANOS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_105_FLOOR_SLAB_FLOOR_FINISH_PATIOS_DRAINAGE_AND_GRADIENTS.pdf",
+      "error": "docs/en/guides/R4R_105_FLOOR_SLAB_FLOOR_FINISH_PATIOS_DRAINAGE_AND_GRADIENTS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_105_SOLERA_SOLADO_PATIOS_DRENAJE_Y_PENDIENTES.pdf",
+      "error": "docs/es/guides/R4R_105_SOLERA_SOLADO_PATIOS_DRENAJE_Y_PENDIENTES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_106_DAMP_RISING_DAMP_CONDENSATION_AND_WATER_INGRESS.pdf",
+      "error": "docs/en/guides/R4R_106_DAMP_RISING_DAMP_CONDENSATION_AND_WATER_INGRESS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_106_HUMEDADES_CAPILARIDAD_CONDENSACION_FILTRACION.pdf",
+      "error": "docs/es/guides/R4R_106_HUMEDADES_CAPILARIDAD_CONDENSACION_FILTRACION.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_108_VIVIENDA_HABITADA_REFORMAS_POR_FASES.pdf",
+      "error": "docs/es/guides/R4R_108_VIVIENDA_HABITADA_REFORMAS_POR_FASES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_107_FACHADAS_CUBIERTAS_Y_REHABILITACION_PRUDENTE.pdf",
+      "error": "docs/es/guides/R4R_107_FACHADAS_CUBIERTAS_Y_REHABILITACION_PRUDENTE.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_107_FACADES_ROOFS_AND_CAUTIOUS_REHABILITATION.pdf",
+      "error": "docs/en/guides/R4R_107_FACADES_ROOFS_AND_CAUTIOUS_REHABILITATION.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_108_OCCUPIED_HOMES_AND_PHASED_RENOVATIONS.pdf",
+      "error": "docs/en/guides/R4R_108_OCCUPIED_HOMES_AND_PHASED_RENOVATIONS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_110_COMUNIDADES_PATIOS_CUBIERTAS_Y_ZONAS_COMUNES.pdf",
+      "error": "docs/es/guides/R4R_110_COMUNIDADES_PATIOS_CUBIERTAS_Y_ZONAS_COMUNES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_109_OFFICES_SHOPS_AND_OPERATING_PREMISES.pdf",
+      "error": "docs/en/guides/R4R_109_OFFICES_SHOPS_AND_OPERATING_PREMISES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_110_OWNERS_ASSOCIATIONS_PATIOS_ROOFS_AND_COMMON_AREAS.pdf",
+      "error": "docs/en/guides/R4R_110_OWNERS_ASSOCIATIONS_PATIOS_ROOFS_AND_COMMON_AREAS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_111_INSULATION_WINDOWS_AND_ENERGY_RENOVATION.pdf",
+      "error": "docs/en/guides/R4R_111_INSULATION_WINDOWS_AND_ENERGY_RENOVATION.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_109_OFICINAS_COMERCIOS_Y_LOCAL_CON_ACTIVIDAD.pdf",
+      "error": "docs/es/guides/R4R_109_OFICINAS_COMERCIOS_Y_LOCAL_CON_ACTIVIDAD.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_111_AISLAMIENTO_VENTANAS_Y_REHABILITACION_ENERGETICA.pdf",
+      "error": "docs/es/guides/R4R_111_AISLAMIENTO_VENTANAS_Y_REHABILITACION_ENERGETICA.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_112_OBRA_SEGURA_PERMISOS_Y_RESIDUOS.pdf",
+      "error": "docs/es/guides/R4R_112_OBRA_SEGURA_PERMISOS_Y_RESIDUOS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_113_OTHER_SPACES_GARAGES_POOLS_AND_SPORTS_CENTRES.pdf",
+      "error": "docs/en/guides/R4R_113_OTHER_SPACES_GARAGES_POOLS_AND_SPORTS_CENTRES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_112_SAFE_WORK_PERMITS_AND_WASTE.pdf",
+      "error": "docs/en/guides/R4R_112_SAFE_WORK_PERMITS_AND_WASTE.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_113_OTROS_ESPACIOS_GARAJES_PISCINAS_POLIDEPORTIVOS.pdf",
+      "error": "docs/es/guides/R4R_113_OTROS_ESPACIOS_GARAJES_PISCINAS_POLIDEPORTIVOS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_114_CAUTIOUS_RESPONSES_AND_LIMITS_OF_ADVICE.pdf",
+      "error": "docs/en/guides/R4R_114_CAUTIOUS_RESPONSES_AND_LIMITS_OF_ADVICE.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_114_GUIA_DE_RESPUESTAS_PRUDENTES_Y_LIMITES_DEL_ASESORAMIENTO.pdf",
+      "error": "docs/es/guides/R4R_114_GUIA_DE_RESPUESTAS_PRUDENTES_Y_LIMITES_DEL_ASESORAMIENTO.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_118_INITIAL_QUESTIONS_AND_WORK_FOLLOW_UP.pdf",
+      "error": "docs/en/guides/R4R_118_INITIAL_QUESTIONS_AND_WORK_FOLLOW_UP.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_118_PREGUNTAS_INICIALES_Y_SEGUIMIENTO_DE_OBRA.pdf",
+      "error": "docs/es/guides/R4R_118_PREGUNTAS_INICIALES_Y_SEGUIMIENTO_DE_OBRA.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.pdf",
+      "error": "docs/es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.pdf",
+      "error": "docs/en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_122_REAL_VISITOR_WORDING.pdf",
+      "error": "docs/en/guides/R4R_122_REAL_VISITOR_WORDING.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.pdf",
+      "error": "docs/es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_81_BANOS_DUCHAS_Y_SANEAMIENTO.pdf",
+      "error": "docs/es/guides/R4R_81_BANOS_DUCHAS_Y_SANEAMIENTO.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_82_DAMP_LEAKS_CONDENSATION_AND_MOULD.pdf",
+      "error": "docs/en/guides/R4R_82_DAMP_LEAKS_CONDENSATION_AND_MOULD.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_82_HUMEDADES_FUGAS_CONDENSACION_Y_MOHO.pdf",
+      "error": "docs/es/guides/R4R_82_HUMEDADES_FUGAS_CONDENSACION_Y_MOHO.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_81_BATHROOMS_SHOWERS_DRAINAGE_AND_WATERPROOFING.pdf",
+      "error": "docs/en/guides/R4R_81_BATHROOMS_SHOWERS_DRAINAGE_AND_WATERPROOFING.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_84_PATIOS_CONCRETE_BASES_FLOOR_FINISHES_AND_DRAINAGE.pdf",
+      "error": "docs/en/guides/R4R_84_PATIOS_CONCRETE_BASES_FLOOR_FINISHES_AND_DRAINAGE.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_84_PATIOS_SOLERAS_SOLADOS_Y_DRENAJE.pdf",
+      "error": "docs/es/guides/R4R_84_PATIOS_SOLERAS_SOLADOS_Y_DRENAJE.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_83_OLD_HOMES_AND_REHABILITATION.pdf",
+      "error": "docs/en/guides/R4R_83_OLD_HOMES_AND_REHABILITATION.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_85_OFFICES_COMMERCIAL_PREMISES_AND_OWNERS_ASSOCIATIONS.pdf",
+      "error": "docs/en/guides/R4R_85_OFFICES_COMMERCIAL_PREMISES_AND_OWNERS_ASSOCIATIONS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.pdf",
+      "error": "docs/es/guides/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_87_INSULATION_VENTILATION_AND_ENERGY_RENOVATION.pdf",
+      "error": "docs/en/guides/R4R_87_INSULATION_VENTILATION_AND_ENERGY_RENOVATION.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_86_QUOTATIONS_MEASUREMENTS_AND_SCOPE_CHANGES.pdf",
+      "error": "docs/en/guides/R4R_86_QUOTATIONS_MEASUREMENTS_AND_SCOPE_CHANGES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.pdf",
+      "error": "docs/es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_85_OFICINAS_LOCALES_Y_COMUNIDADES.pdf",
+      "error": "docs/es/guides/R4R_85_OFICINAS_LOCALES_Y_COMUNIDADES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_87_AISLAMIENTO_VENTILACION_Y_REHABILITACION_ENERGETICA.pdf",
+      "error": "docs/es/guides/R4R_87_AISLAMIENTO_VENTILACION_Y_REHABILITACION_ENERGETICA.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_88_SAFETY_SERVICES_PERMITS_AND_HAZARDOUS_MATERIALS.pdf",
+      "error": "docs/en/guides/R4R_88_SAFETY_SERVICES_PERMITS_AND_HAZARDOUS_MATERIALS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.pdf",
+      "error": "docs/en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_89_OTROS_ESPACIOS_Y_OBRAS_ESPECIALES.pdf",
+      "error": "docs/es/guides/R4R_89_OTROS_ESPACIOS_Y_OBRAS_ESPECIALES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/guides/R4R_90_INCIDENTS_SUPPORT_AND_HANDOVER.pdf",
+      "error": "docs/en/guides/R4R_90_INCIDENTS_SUPPORT_AND_HANDOVER.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_88_SEGURIDAD_INSTALACIONES_PERMISOS_Y_MATERIALES.pdf",
+      "error": "docs/es/guides/R4R_88_SEGURIDAD_INSTALACIONES_PERMISOS_Y_MATERIALES.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/guides/R4R_90_INCIDENTES_SOPORTE_Y_ENTREGA.pdf",
+      "error": "docs/es/guides/R4R_90_INCIDENTES_SOPORTE_Y_ENTREGA.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/sources/R4R_124_EUROPEAN_AND_US_SOURCES_CAUTIOUS_APPLICATION.pdf",
+      "error": "docs/en/sources/R4R_124_EUROPEAN_AND_US_SOURCES_CAUTIOUS_APPLICATION.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/sources/R4R_124_FUENTES_EUROPEAS_Y_ESTADOUNIDENSES_APLICACION_PRUDENTE.pdf",
+      "error": "docs/es/sources/R4R_124_FUENTES_EUROPEAS_Y_ESTADOUNIDENSES_APLICACION_PRUDENTE.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/sources/R4R_70_WEB_SOURCE_MANIFEST.pdf",
+      "error": "docs/en/sources/R4R_70_WEB_SOURCE_MANIFEST.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/struct-data/R4R_50_STRUCTURED_EXTRA_DATA.pdf",
+      "error": "docs/en/struct-data/R4R_50_STRUCTURED_EXTRA_DATA.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/sources/R4R_70_WEB_SOURCE_MANIFEST.pdf",
+      "error": "docs/es/sources/R4R_70_WEB_SOURCE_MANIFEST.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/sources/R4R_71_REFERENCIAS_TECNICAS_INTERNACIONALES_2026.pdf",
+      "error": "docs/es/sources/R4R_71_REFERENCIAS_TECNICAS_INTERNACIONALES_2026.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/sources/R4R_71_INTERNATIONAL_TECHNICAL_REFERENCES_2026.pdf",
+      "error": "docs/en/sources/R4R_71_INTERNATIONAL_TECHNICAL_REFERENCES_2026.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/struct-data/R4R_50_STRUCTURED_EXTRA_DATA.pdf",
+      "error": "docs/es/struct-data/R4R_50_STRUCTURED_EXTRA_DATA.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/en/territory/R4R_60_SERVICE_AREA_TOWNS.pdf",
+      "error": "docs/en/territory/R4R_60_SERVICE_AREA_TOWNS.pdf: HTTP 404\n\n404 !== 200\n"
+    },
+    {
+      "url": "docs/es/territory/R4R_60_SERVICE_AREA_TOWNS.pdf",
+      "error": "docs/es/territory/R4R_60_SERVICE_AREA_TOWNS.pdf: HTTP 404\n\n404 !== 200\n"
+    }
+  ]
+}

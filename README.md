@@ -32,7 +32,7 @@ zero downtime or large-scale availability.
   The three cumulative kitchen questions replay the six user-supplied real ES/EN results without API calls.
 - The CTA, four quick examples and arbitrary questions all use live SSE. Exact verified CTA/example recordings are a clearly labelled fallback only after network failure, timeout or 5xx; arbitrary submissions and 429 never silently become recordings. Translation is delegated to the existing
   backend; the browser no longer contacts MyMemory.
-- Citations preserve their original source trace while opening the verified language counterpart from a 41-ID bilingual catalogue. Existing branded PDFs remain available; 82 fresh readable document views cover the reorganized corpus. Internal
+- Citations preserve their original source trace while opening the verified language counterpart from a 41-ID bilingual PDF catalogue. The original eight PDFs remain available alongside 82 branded ES/EN PDFs covering the reorganized corpus. Internal
   ordinals are restricted to `?dev=1`, alongside endpoint controls.
 - Runtime is queried on opening Technical details, keeping the initial preview
   completely offline. Per-answer provider/model comes from that request's events;
@@ -62,7 +62,7 @@ into the hosting repository's `html-static/r4r-rag/`; keep `r4r-rag-demo/` intac
 Do not publish test scripts as application assets. The site retains `noindex`.
 No deployment or push is part of this release.
 
-[Latest frontend validation](docs/validation/bilingual-frontend-final-2026-11-13/README.md)
+[Latest PDF evidence correction](docs/validation/pdf-evidence-2026-11-13/README.md)
 record the live ES/EN results, browser checks, accessibility measurements and limits.
 Domestic NAS, network and tunnel dependencies remain. Captured examples improve
 predictability but cannot establish general model accuracy. Three-user comprehension

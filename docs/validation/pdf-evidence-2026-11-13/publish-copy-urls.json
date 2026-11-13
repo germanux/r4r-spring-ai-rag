@@ -1,0 +1,6 @@
+{
+  "base": "http://127.0.0.1:8766/r4r-rag/",
+  "total": 90,
+  "passed": 90,
+  "failures": []
+}

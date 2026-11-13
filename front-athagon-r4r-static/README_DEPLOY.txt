@@ -1,3 +1,32 @@
+PDF EVIDENCE CORRECTION — 2026-11-13 (overrides HTML-view instructions below)
+============================================================================
+The primary evidence viewer is PDF in both ES and EN. Generate the complete set:
+  python3 py-scripts/export_sources.py
+The compatibility command export_public_documents.py also generates PDFs only.
+Both commands build 82 PDFs from the unchanged Markdown corpus and update the
+PDF-only catalogue and embedded mapping only after all files validate with pdfinfo.
+Paths preserve corpus language/subdirectories: docs/<source path with .pdf>.
+The original eight root-level PDFs remain byte-for-byte unchanged. Old generated
+HTML views are retained only for compatibility; no current citation points to them.
+The English UI selects the verified English counterpart by stable R4R ID and
+preserves the original retrieved citation. Numeric sections use actual PDF #page
+numbers, never stale HTML anchors. The generator uses the established layout/logo.
+
+Local checks:
+  node front-athagon-r4r-static/js/app.test.cjs
+  node front-athagon-r4r-static/js/pdf-links.test.cjs
+  node front-athagon-r4r-static/js/browser.test.cjs
+HTTP release verification (checks all 82 new and 8 legacy PDFs):
+  R4R_PDF_BASE_URL=https://athagon.tech/r4r-rag/ node front-athagon-r4r-static/js/pdf-links.test.cjs
+Use R4R_PDF_REPORT=/tmp/report.json to record every missing/stale/non-PDF URL.
+Checks require Node and Poppler (pdfinfo); PDF generation requires the existing
+reportlab, markdown, bs4 and DejaVu fonts. No frontend framework is added.
+
+A coherent static package is prepared in athagon-web.git/html-static/r4r-rag/.
+GitLab authentication is unavailable; no push or deployment has occurred.
+Publish all new PDFs with catalogue/index/app together, then rerun the HTTP check.
+Detailed results: docs/validation/pdf-evidence-2026-11-13/README.md.
+
 LATEST RELEASE — bilingual frontend completion (2026-11-13)
 ==========================================================
 Autoplay: three cumulative kitchen questions, six original supplied answers,

@@ -1,0 +1,17 @@
+[
+  {
+    "url": "docs/R4R_50_STRUCTURED_EXTRA_DATA.pdf",
+    "valid": false,
+    "error": "timed out"
+  },
+  {
+    "url": "docs/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.pdf",
+    "valid": false,
+    "error": "timed out"
+  },
+  {
+    "url": "docs/R4R_60_SERVICE_AREA_TOWNS.pdf",
+    "valid": false,
+    "error": "<urlopen error [Errno 113] No route to host>"
+  }
+]
