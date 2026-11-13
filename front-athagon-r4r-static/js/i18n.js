@@ -443,9 +443,9 @@ const R4RI18n = (() => {
     noCitations: "No citations were returned.", unknownSource: "unknown source",
     noHeading: "No heading path", ordinal: "Chunk ordinal",
     timeout: "The query exceeded the 180 second time limit.",
-    invalidJson: (status) => `HTTP ${status}: the response is not valid JSON.`,
-    httpError: (status) => `Request failed (HTTP ${status}).`,
-    forbidden: "HTTP 403: access denied by the server. Check the allowed origin and API access rules.",
+    invalidJson: () => "The service returned an unreadable response.",
+    httpError: () => "The service could not complete the request.",
+    forbidden: "This page is not permitted to use the service.",
     cors: "Check connectivity, DNS, mixed HTTP/HTTPS content and whether the API permits this page’s origin through CORS.",
     sources: (count) => `${count} source${count === 1 ? "" : "s"}`
   });
@@ -461,9 +461,9 @@ const R4RI18n = (() => {
     noCitations: "No se han devuelto citas.", unknownSource: "fuente desconocida",
     noHeading: "Sin ruta de encabezados", ordinal: "Ordinal del fragmento",
     timeout: "La consulta ha superado el tiempo máximo de 180 segundos.",
-    invalidJson: (status) => `HTTP ${status}: la respuesta no es JSON válido.`,
-    httpError: (status) => `HTTP ${status}`,
-    forbidden: "HTTP 403: el servidor ha denegado el acceso. Revisa el origen permitido y las reglas de acceso de la API.",
+    invalidJson: () => "No se ha podido interpretar la respuesta del servicio.",
+    httpError: () => "No se ha podido completar la consulta.",
+    forbidden: "Esta página no tiene permiso para utilizar el servicio.",
     cors: "Revisa la conectividad, DNS, contenido mixto HTTP/HTTPS y que la API permita el origen de esta página mediante CORS.",
     sources: (count) => `${count} fuente${count === 1 ? "" : "s"}`
   });

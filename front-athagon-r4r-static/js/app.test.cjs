@@ -213,8 +213,8 @@ for (const lang of ['es', 'en']) {
     const before = p.requests.length;
     p.changeLanguage(lang === 'es' ? 'en' : 'es');
     assert.equal(p.node('answerText').textContent, answer);
-    assert.match(p.node('citations').textContent, /manual.pdf.*Renovation/);
-    assert.match(citations, /manual.pdf.*Renovation/);
+    assert.match(p.node('citations').textContent, /Renovation.*manual.pdf/);
+    assert.match(citations, /Renovation.*manual.pdf/);
     assert.equal(p.node('sourcesDetails').open, true);
     assert.equal(p.node('resultContent').hidden, false);
     assert.equal(p.node('httpStatus').textContent, status);
@@ -235,17 +235,17 @@ for (const lang of ['es', 'en']) {
     assert.equal(p.document.querySelectorAll('.sample')[0].dataset.question, p.t('page.renovation_question'));
     for (const button of p.document.querySelectorAll('.sample')) {
       await button.handlers.click();
-      assert.equal(p.node('question').value, JSON.parse(p.node('recordedExamples').textContent)[button.getAttribute('data-example')][lang].question);
+      assert.equal(p.node('question').value, button.dataset.question);
     }
     p.changeLanguage(lang === 'es' ? 'en' : 'es');
     const sample = p.document.querySelectorAll('.sample')[0];
     await sample.handlers.click();
-    assert.equal(p.node('question').value, JSON.parse(p.node('recordedExamples').textContent).A[lang === 'es' ? 'en' : 'es'].question);
+    assert.equal(p.node('question').value, sample.dataset.question);
     const beforeDemo = p.requests.length;
     const demo = p.node('tryDemoButton').handlers.click({ preventDefault() {} });
     p.node('question').handlers.input();
     await demo;
-    assert.equal(p.requests.length, beforeDemo);
+    assert.ok(p.requests.length > beforeDemo);
     p.node('question').value = 'Keyboard query';
     await p.node('question').handlers.keydown({ ctrlKey: true, key: 'Enter' });
     assert.equal(p.storage.get('r4r.lastQuestion'), 'Keyboard query');
@@ -264,7 +264,7 @@ for (const lang of ['es', 'en']) {
       assert.equal(p.node('errorBox').hidden, false);
       assert.equal(p.node('resultMode').textContent, p.t('failed'));
       p.changeLanguage(lang === 'es' ? 'en' : 'es');
-      const expected = kind === 'timeout' ? p.t('timeout') : kind === 'networkFails' ? p.t('networkError') : kind === 'invalidJson' ? p.t('invalidJson', 200) : p.t('httpError', 503);
+      const expected = kind === 'timeout' ? p.t('timeout') : kind === 'networkFails' ? p.t('networkPublic') : kind === 'invalidJson' ? p.t('invalidJson', 200) : p.t('busyPublic');
       assert.ok(p.node('errorBox').textContent.includes(expected));
       assert.equal(p.node('resultMode').textContent, p.t('failed'));
     });
@@ -319,9 +319,9 @@ test('switching language during an in-flight request retains query language and 
 test('runtime errors, polling and clipboard failure are localized without additional language requests', async () => {
   const p = openPage('es', new Map(), { runtimeFails: true, copyFailed: true });
   await tick();
-  assert.ok(p.node('runtimeUsed').textContent.includes(p.t('networkError')));
+  assert.ok(p.node('runtimeUsed').textContent.includes(p.t('networkPublic')));
   p.changeLanguage('en');
-  assert.ok(p.node('runtimeUsed').textContent.includes(p.t('networkError')));
+  assert.ok(p.node('runtimeUsed').textContent.includes(p.t('networkPublic')));
   assert.equal(p.node('runtimeModelStatus').textContent, p.t('informationUnavailable'));
   p.node('question').value = 'Query';
   await p.node('sendButton').handlers.click();
@@ -415,7 +415,7 @@ for (const lang of ['es', 'en']) {
       await p.node('sendButton').handlers.click();
       assert.equal(p.node('httpStatus').textContent, '403');
       assert.ok(p.node('errorBox').textContent.startsWith(p.t('forbidden')));
-      assert.ok(!p.node('errorBox').textContent.includes(p.t('networkError')));
+      assert.ok(!p.node('errorBox').textContent.includes(p.t('networkPublic')));
       assert.ok(!p.node('errorBox').textContent.includes(p.t('invalidJson', 403)));
       p.changeLanguage(lang === 'es' ? 'en' : 'es');
       assert.equal(p.node('runtimeUsed').textContent, p.t('forbidden'));
@@ -426,8 +426,8 @@ for (const lang of ['es', 'en']) {
     const p = openPage(lang, new Map(), { networkFails: true, runtimeFails: true });
     p.node('question').value = 'Question';
     await p.node('sendButton').handlers.click();
-    assert.ok(p.node('errorBox').textContent.includes(p.t('networkError')));
-    assert.ok(p.node('errorBox').textContent.includes(p.t('cors')));
+    assert.ok(p.node('errorBox').textContent.includes(p.t('networkPublic')));
+    assert.ok(!p.node('errorBox').textContent.includes(p.t('cors')));
     assert.ok(!p.node('errorBox').textContent.includes('403'));
     assert.ok(!p.node('runtimeUsed').textContent.includes('403'));
   });
@@ -441,7 +441,7 @@ for (const lang of ['es', 'en']) {
       modelStatus: 'Modelo cargado', loadedModels: [{ name: 'qwen2.5:7b', parameterSize: '7.6B' }], topK: 3, minScore: .63
     } });
     await tick();
-    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Tu asistente de IA para reformas' : 'Your AI assistant for renovations');
+    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Asistente de IA para reformas' : 'Your AI assistant for renovations');
     assert.equal(p.document.querySelectorAll('.arch-step').length, 5);
     assert.equal(p.document.querySelectorAll('.inference-host').length, 4);
     assert.equal(p.document.querySelectorAll('.primary-host')[0].textContent.includes('NVIDIA GeForce RTX 4060'), true);
@@ -597,7 +597,7 @@ for (const lang of ['es', 'en']) {
     assert.equal(p.document.querySelectorAll('.config-details')[0].open, false);
     assert.equal(p.node('runtimeModelFull'), null);
     const role = p.document.querySelectorAll('.runtime-summary')[0];
-    assert.ok(p.document.querySelectorAll('.config-details')[0].contains(role));
+    assert.ok(p.document.querySelectorAll('.config-details')[1].contains(role));
     assert.ok(html.indexOf('id="demo"') < html.indexOf('id="como-funciona"'));
     assert.ok(html.indexOf('id="como-funciona"') < html.indexOf('id="arquitectura"'));
     assert.ok(html.indexOf('id="arquitectura"') < html.indexOf('id="runtime"'));
@@ -767,7 +767,7 @@ test('SSE accepts byte-split UTF-8, CRLF, multiline data and comments without in
   const p = openPage('es', new Map(), { stream: async () => sseResponse([], { raw, chunkSize: 1 }) });
   await p.node('sendButton').handlers.click();
   assert.equal(p.node('answerText').textContent, readyEvent.answer);
-  assert.equal(p.node('ragProgress').textContent, '');
+  assert.ok(p.node('ragProgress').textContent.includes('ANSWER_READY'));
   assert.equal(p.requests.filter(r => r.url.endsWith('/answers')).length, 0);
 });
 
@@ -835,19 +835,19 @@ test('known Markdown sources link to PDFs with the original basename', async () 
  const card = p.node('citations').children[0];
  const source=card.children[0].children[1];
  assert.equal(source.tagName,'a');
- assert.equal(source.getAttribute('href'),'docs/R4R_40_ALL_FAQ.pdf');
- assert.equal(source.textContent,'Preguntas frecuentes · Abrir documento (PDF)');
+ assert.equal(source.getAttribute('href'),'docs/es/R4R_40_ALL_FAQ.html');
+ assert.ok(source.textContent.includes('preguntas frecuentes'));assert.ok(source.textContent.includes('Abrir documento'));
 });
 
-test('recordings match embedded fixtures and every cited PDF exists', () => {
+test('recordings match embedded fixtures and every citation has a published document', () => {
  const fixtures = JSON.parse(fs.readFileSync(path.join(root,'fixtures/recordings.json'),'utf8'));
- const p = openPage('es',new Map(),{offline:true});
- assert.deepEqual(JSON.parse(p.node('recordedExamples').textContent),fixtures);
- for(const pair of Object.values(fixtures)) for(const lang of ['es','en']) {
-  const data=pair[lang];assert.ok(data.question);assert.equal(typeof data.abstained,'boolean');
+ const catalogue=JSON.parse(fs.readFileSync(path.join(root,'docs/catalogue.json'),'utf8'));
+ const p=openPage('es',new Map(),{offline:true});assert.deepEqual(JSON.parse(p.node('recordedExamples').textContent),fixtures);
+ for(const pair of Object.values(fixtures)) for(const lang of ['es','en']) for(const data of [].concat(pair[lang] || [])) {
+  assert.ok(data.question);assert.equal(typeof data.abstained,'boolean');
   for(const citation of data.citations) {
-   const pdf=path.join(root,'docs',path.basename(citation.source).replace(/\.md$/,'.pdf'));
-   assert.equal(fs.readFileSync(pdf).subarray(0,5).toString(),'%PDF-');
+   const id=/R4R_\d+/.exec(citation.source)[0];const doc=catalogue[id][lang];
+   assert.ok(fs.existsSync(path.join(root,doc.url)));
   }
  }
 });
@@ -860,4 +860,52 @@ test('opening runtime explicitly loads telemetry, initial rendering stays offlin
  p.node('runtimeToggle').handlers.click();
  await [...p.timers.values()].find(t=>t.delay===0).fn();await tick();
  assert.equal(p.requests.filter(r=>r.url.endsWith('/runtime')).length,1);
+});
+
+test('Enter submits, Shift+Enter and IME do not submit', async () => {
+ const p=openPage('es',new Map(),{offline:true});p.node('question').value='A question';
+ const handler=p.node('question').handlers.keydown;
+ handler({key:'Enter',shiftKey:true});handler({key:'Enter',isComposing:true});handler({key:'Enter',keyCode:229});
+ assert.equal(p.requests.length,0);let prevented=false;
+ await handler({key:'Enter',preventDefault(){prevented=true}});assert(prevented);
+ assert.equal(p.requests.filter(r=>r.url.endsWith('/answers/stream')).length,1);
+});
+test('safe Markdown preserves citations and never creates script or unsafe links', async () => {
+ const p=openPage('es',new Map(),{offline:true,payload:{answer:'**Bold** and *italic* [S1]\n\n- One\n- Two\n\n[Safe](https://example.com) [Bad](javascript:alert) <script>bad()</script>',abstained:false,citations:[]}});
+ p.node('question').value='Question';await p.node('sendButton').handlers.click();
+ const answer=p.node('answerText');const find=(node,tag)=>node.children.flatMap(child=>[...(child.tagName===tag?[child]:[]),...find(child,tag)]);
+ assert.equal(find(answer,'strong')[0].textContent,'Bold');assert.equal(find(answer,'em')[0].textContent,'italic');assert.equal(find(answer,'li').length,2);
+ assert.equal(find(answer,'a').length,1);assert.equal(find(answer,'script').length,0);assert.ok(answer.textContent.includes('[S1]'));
+});
+test('English sources use the verified English counterpart and preserve original trace', async () => {
+ const original='es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md';
+ const p=openPage('en',new Map(),{offline:true,payload:{answer:'Answer [S1]',abstained:false,citations:[{label:'[S1]',source:original,headingPath:['Original heading'],ordinal:48}]}});
+ p.node('question').value='Question';await p.node('sendButton').handlers.click();
+ const card=p.node('citations').children[0];assert.ok(card.children[0].children[1].getAttribute('href').startsWith('docs/en/'));
+ assert.ok(card.textContent.includes(original));assert.ok(card.textContent.includes('Original heading'));
+});
+test('six supplied kitchen recordings retain exact timings and no invented model or SSE',()=>{
+ const fixtures=JSON.parse(fs.readFileSync(path.join(root,'fixtures/recordings.json'),'utf8'));
+ assert.deepEqual(fixtures.kitchen.es.map(r=>r.durationMs),[3013,4413,4852]);
+ assert.deepEqual(fixtures.kitchen.en.map(r=>r.durationMs),[6427,5727,4722]);
+ for(const lang of ['es','en']) for(const r of fixtures.kitchen[lang]) {assert.equal(r.events.length,0);assert.equal(r.model,undefined);assert.equal(r.providerName,undefined);}
+});
+
+test('saved answers are exact-match fallback for example buttons only', async () => {
+ const p=openPage('es',new Map(),{offline:true,networkFails:true});
+ await p.node('tryDemoButton').handlers.click({preventDefault(){}});
+ assert.equal(p.node('previewNotice').textContent,p.t('savedResponse'));
+ assert.equal(p.node('errorBox').hidden,false);
+ assert.equal(p.node('httpStatus').textContent==='200',false);
+ const free=openPage('es',new Map(),{offline:true,networkFails:true});free.node('question').value=free.t('demoQuestion');
+ await free.node('sendButton').handlers.click();assert.equal(free.node('resultContent').hidden,true);
+});
+test('valid live abstentions and 429 never become automatic saved answers', async () => {
+ const abstain=openPage('es',new Map(),{offline:true,payload:{answer:'Not enough evidence',abstained:true,citations:[]}});
+ await abstain.node('tryDemoButton').handlers.click({preventDefault(){}});
+ assert.equal(abstain.node('previewNotice').textContent,abstain.t('live'));
+ assert.equal(abstain.node('decisionPill').textContent,abstain.t('abstention'));
+ const limited=openPage('es',new Map(),{offline:true,stream:async()=>({ok:false,status:429,headers:{get:k=>k==='Retry-After'?'25':null},json:async()=>({})})});
+ await limited.node('tryDemoButton').handlers.click({preventDefault(){}});
+ assert.equal(limited.node('resultContent').hidden,true);assert.ok(limited.node('errorBox').textContent.includes('25 s'));
 });

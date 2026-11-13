@@ -136,6 +136,7 @@
   let copyStatus = "copy";
   let displayedRecording = false;
   let lastRecordedKey = "C";
+  let replyMode = "";
   function changeLanguage(language) {
     isEnglish = language === "en";
     R4RI18n.setLanguage(language);
@@ -145,6 +146,7 @@
   }
   function renderDynamicText() {
     apiState.textContent = t(apiStatus);
+    if (replyMode) $("previewNotice").textContent = t(replyMode);
     sendLabel.textContent = t(sendButton.disabled ? "loading" : "send");
     copyAnswerButton.textContent = t(copyStatus);
     resultMode.textContent = t({ idle: "waiting", loading: "inProgress", success: "result", error: "failed" }[phase]);
@@ -161,9 +163,9 @@
     if (["es", "en"].includes(languageSelect.value)) {
       const hadPreview = displayedRecording || preview;
       engage();
-      if (hadPreview) { question.value = ""; lastPayload = null; phase = "idle"; renderEmpty(); $("previewNotice").hidden = true; }
+      if (hadPreview) { displayedRecording = false; question.value = ""; lastPayload = null; phase = "idle"; renderEmpty(); $("previewNotice").hidden = true; }
       changeLanguage(languageSelect.value);
-      if (hadPreview && recording(lastRecordedKey)) recordedResult(lastRecordedKey);
+
     }
   });
   endpointPreset.addEventListener("change", () => {
@@ -179,21 +181,9 @@
 
   updateCounter();
 
+  const documentSources = JSON.parse($("documentSources").textContent);
   const recordings = JSON.parse($("recordedExamples").textContent);
   const recording = key => recordings[key]?.[isEnglish ? "en" : "es"];
-  function recordedResult(key) {
-    const data = recording(key);
-    if (!data) return false;
-    engage(); displayedRecording = true; lastRecordedKey = key;
-    question.value = data.question; updateCounter();
-    phase = "success"; lastPayload = data; progressRows = [];
-    data.events.forEach(receiveProgress);
-    setLoading(false); renderResult(data);
-    $("previewNotice").hidden = false; $("previewNotice").textContent = t("recorded");
-    $("answerProvider").textContent = [data.providerName, data.model, data.recordedAt].filter(Boolean).join(" · ");
-    resultMode.textContent = t("result");
-    return true;
-  }
   const tryDemoButton = $("tryDemoButton");
   let preview = false;
   let previewTimer;
@@ -201,8 +191,7 @@
   let previewObserver;
   let previewSeen = false;
   let userEngaged = false;
-  const previewKey = "r4r.preview.v2.seen";
-  try { previewSeen = sessionStorage.getItem(previewKey) === "1"; } catch { /* Optional storage. */ }
+
   const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   function cancelPreview() {
     clearTimeout(previewTimer);
@@ -210,6 +199,7 @@
     previewResolve = null;
     if (!preview) return;
     preview = false;
+    question.classList.toggle("is-demo-typing", false);
     sendButton.classList.toggle("is-preview-pressed", false);
     setLoading(false);
     phase = "idle";
@@ -233,18 +223,23 @@
     renderEmpty();
     previewSeen = true;
     previewObserver?.disconnect();
-    try { sessionStorage.setItem(previewKey, "1"); } catch { /* Optional storage. */ }
+
+    question.classList.toggle("is-demo-typing", true);
     const notice = $("previewNotice");
     notice.hidden = false;
-    notice.textContent = t("recorded");
+    replyMode = "recorded";notice.textContent = t(replyMode);
     question.value = "";
-    const data = recording("C");
+    const sequence = recordings.kitchen?.[isEnglish ? "en" : "es"] || [recording("C")];
+    for (const data of sequence) {
     const text = data.question;
+    const previousText = question.value;
+    if (!text.startsWith(previousText)) question.value = "";
+    const suffix = text.slice(question.value.length);
     if (reducedMotion()) question.value = text;
-    else for (const char of text) {
+    else for (const char of suffix) {
       question.value += char;
       updateCounter();
-      if (!await pausePreview(40)) return;
+      if (!await pausePreview(28)) return;
     }
     updateCounter();
     if (!await pausePreview(400)) return;
@@ -259,8 +254,16 @@
     setLoading(true);
     // Keep the real submit control available so it can interrupt the preview.
     sendButton.disabled = false;
+    clearButton.disabled = false;
     loadingState.hidden = false;
     resultMode.textContent = t("inProgress");
+    if (!data.events.length) {
+      $("ragProgress").textContent = t("noRecordedTimeline");
+      for (const stage of ["preparing", "searching", "generating", "verifying"]) {
+        $("simpleProgress").textContent = t(stage);
+        if (!await pausePreview(reducedMotion() ? 30 : 350)) return;
+      }
+    }
     for (const event of data.events) {
       receiveProgress(event);
       if (!await pausePreview(reducedMotion() ? 40 : 260)) return;
@@ -268,6 +271,7 @@
     const payload = data;
     const answer = data.answer;
     setLoading(false);
+    $("simpleProgress").textContent = t("done");
     renderResult({ ...payload, answer: " " });
     answerText.setAttribute("aria-live", "off");
     if (!reducedMotion()) for (let i = 0; i < answer.length; i += 6) {
@@ -279,19 +283,27 @@
     renderResult(payload);
     resultMode.textContent = t("result");
     $("answerProvider").textContent = [data.providerName, data.model, data.recordedAt].filter(Boolean).join(" · ");
+    elapsed.textContent = Number.isFinite(data.durationMs) ? `${t("recordedDuration")}: ${data.durationMs} ms` : "";
+    if (!await pausePreview(reducedMotion() ? 200 : 3000)) return;
+    }
     preview = false;
+    question.classList.toggle("is-demo-typing", false);
+    if (!window.matchMedia?.("(pointer: coarse)").matches && document.activeElement === document.body)
+      question.focus({ preventScroll: true });
   }
   function engage() {
     userEngaged = true;
     previewObserver?.disconnect();
     cancelPreview();
   }
+  document.addEventListener("pointerdown", event => { if (preview && event.target?.closest?.("button, a, select, summary, textarea")) engage(); });
   question.addEventListener("focus", engage);
   question.addEventListener("input", () => { engage(); updateCounter(); });
   if (tryDemoButton) tryDemoButton.addEventListener("click", event => {
     event.preventDefault();
-    question.scrollIntoView({ behavior: reducedMotion() ? "instant" : "smooth", block: "center" });
-    return runPreview();
+    if (activeQueryController) return;
+    engage(); question.value = t("demoQuestion"); updateCounter();
+    return sendQuestion({ allowSaved: true });
   });
   if (typeof IntersectionObserver !== "undefined" && !previewSeen && !userEngaged) {
     previewObserver = new IntersectionObserver(entries => {
@@ -476,24 +488,23 @@
     if (error?.kind === "stream") return t("streamError");
     if (error?.kind === "timeout") return t("timeout");
     if (error?.status === 429) return t("rateLimited") + (error.retryAfter ? ` (${error.retryAfter} s)` : "");
+    if (error?.status === 503) return t("busyPublic");
+    if (error?.status >= 500) return t("backendUnavailable");
     if (error?.kind === "http") {
       const message = error.status === 403 ? t("forbidden") : t("httpError", error.status);
       return `${message}${error.detail ? `\n${error.detail}` : ""}`;
     }
     if (error?.kind === "json") return t("invalidJson", error.status);
     // Fetch cannot distinguish a network failure from a browser-blocked CORS response.
-    return `${t("networkError")}\n\n${t("cors")}`;
+    return developerMode ? `${t("networkError")}\n\n${t("cors")}` : t("networkPublic");
   }
 
   document.querySelectorAll(".sample").forEach((button) => {
     button.addEventListener("click", async () => {
       if (activeQueryController) return;
-      if (recordedResult(button.getAttribute("data-example"))) return;
-      engage();
-      if (sendButton.disabled) return;
-      question.value = button.dataset.question || "";
-      updateCounter();
-      // Unrecorded examples only fill the input; submit remains an explicit live action.
+      engage(); question.value = button.dataset.question || ""; updateCounter();
+      question.focus({ preventScroll: true });
+      await sendQuestion({ allowSaved: true });
     });
   });
 
@@ -514,13 +525,14 @@
     lastError = null;
     updateCounter();
     renderEmpty();
-    question.focus();
+    question.focus({ preventScroll: true });
   });
 
 
 
   question.addEventListener("keydown", (event) => {
-    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing && event.keyCode !== 229) {
+      event.preventDefault?.();
       return sendQuestion();
     }
   });
@@ -554,18 +566,20 @@
 
   function receiveProgress(event) {
     if (!event || typeof event.stage !== "string") return;
-    if (event.stage === "ANSWER_READY") return;
+    if (event.provider && typeof event.provider === "object") event = { ...event, model: event.model || event.provider.model, provider: event.provider.name };
+    if (event.stage === "ANSWER_READY") $("simpleProgress").textContent = t("done");
     if (!preview && ["GENERATION_STARTED", "GENERATION_COMPLETED"].includes(event.stage))
       $("answerProvider").textContent = [event.provider, event.model].filter(Boolean).join(" · ");
-    $("simpleProgress").textContent = t(event.stage === "GENERATION_STARTED" ? "generating" : ["GENERATION_COMPLETED", "VALIDATION_COMPLETED"].includes(event.stage) ? "done" : "searching");
+    const simpleStage = event.stage === "ANSWER_READY" ? "done" : event.stage.startsWith("VALIDATION") ? "verifying" : event.stage.startsWith("GENERATION") ? "generating"
+      : /^(REQUEST|TRANSLATION)/.test(event.stage) ? "preparing" : "searching";
+    $("simpleProgress").textContent = t(simpleStage);
     const known = ["REQUEST_RECEIVED", "TRANSLATION_STARTED", "TRANSLATION_COMPLETED", "TRANSLATION_FALLBACK",
       "EMBEDDING_STARTED", "EMBEDDING_COMPLETED", "RETRIEVAL_STARTED", "RETRIEVAL_COMPLETED", "GENERATION_STARTED",
-      "PROVIDER_FAILED", "FAILOVER_STARTED", "GENERATION_COMPLETED", "VALIDATION_COMPLETED", "ERROR"];
+      "PROVIDER_FAILED", "FAILOVER_STARTED", "GENERATION_COMPLETED", "VALIDATION_COMPLETED", "ANSWER_READY", "ERROR"];
     if (!known.includes(event.stage)) return;
     if (event.stage === "PROVIDER_FAILED") lastFailedProvider = event.provider;
     if (event.stage === "FAILOVER_STARTED") event = { ...event, previousProvider: lastFailedProvider };
-    const root = ["PROVIDER_FAILED", "FAILOVER_STARTED"].includes(event.stage) ? "GENERATION" : event.stage.replace(/_(STARTED|COMPLETED)$/, "");
-    const key = `${root}:${event.stage === "FAILOVER_STARTED" ? event.previousProvider || "" : event.provider || ""}`;
+    const key = `${event.stage}:${event.stage === "FAILOVER_STARTED" ? event.previousProvider || "" : event.provider || ""}`;
     const row = { key, event, pending: event.stage.endsWith("_STARTED") && event.stage !== "FAILOVER_STARTED", failed: ["ERROR", "PROVIDER_FAILED", "FAILOVER_STARTED", "TRANSLATION_FALLBACK"].includes(event.stage) };
     const index = progressRows.findIndex(row => row.key === key);
     if (index >= 0 && event.stage === "RETRIEVAL_COMPLETED") {
@@ -589,7 +603,13 @@
         .replace("{previous}", providerName(event.previousProvider));
       if (event.stage === "RETRIEVAL_COMPLETED" && event.documentsFound === 0) message = t("progressNoEvidence");
       const duration = Number.isFinite(event.durationMs) && event.durationMs >= 0 ? ` (${Math.round(event.durationMs)} ms)` : "";
-      li.textContent = `${row.failed ? "!" : row.pending ? "⟳" : "✓"} ${message}${duration}`;
+      const telemetry = [event.stage, Number.isFinite(event.elapsedMs) ? `${event.elapsedMs} ms` : null, event.model, event.provider, Number.isFinite(event.documentsFound) ? `${event.documentsFound} docs` : null].filter(Boolean).join(" · ");
+      li.textContent = telemetry + " — " + `${row.failed ? "!" : row.pending ? "⟳" : "✓"} ${message}${duration}`;
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");summary.textContent = t("page.technical_details");
+      const raw = document.createElement("pre");
+      const allowed = Object.fromEntries(Object.entries(event).filter(([key]) => /^(stage|elapsedMs|durationMs|model|provider|documentsFound|embeddingModel|embeddingProvider|message)$/.test(key)));
+      raw.textContent = JSON.stringify(allowed, null, 2);details.append(summary, raw);li.appendChild(details);
       list.appendChild(li);
     }
   }
@@ -637,11 +657,13 @@
     }
   }
 
-  async function sendQuestion() {
+  async function sendQuestion(options = {}) {
+    const allowSaved = options.allowSaved === true;
+    if (activeQueryController || (sendButton.disabled && !preview)) return;
     engage();
     displayedRecording = false;
     $("previewNotice").hidden = false;
-    $("previewNotice").textContent = t("live");
+    replyMode = "live";$("previewNotice").textContent = t(replyMode);
     $("answerProvider").textContent = "";
     answerText.setAttribute("aria-live", "polite");
     if (sendButton.disabled) return;
@@ -734,7 +756,16 @@
       apiState.textContent = t(apiStatus);
       resultMode.textContent = t("failed");
 
-      renderError(errorMessage(lastError));
+      const saved = Object.values(recordings).flatMap(pair => Array.isArray(pair?.[requestLanguage]) ? pair[requestLanguage] : pair?.[requestLanguage] ? [pair[requestLanguage]] : []).find(data => data.question === text);
+      const failedService = lastError.kind === "timeout" || !lastError.kind || lastError.status >= 500;
+      const approvedExample = text === t("demoQuestion") || Array.from(document.querySelectorAll(".sample")).some(button => button.dataset.question === text);
+      if (saved && failedService && approvedExample && allowSaved) {
+        displayedRecording = true;phase = "success";lastPayload = saved;renderResult(saved);
+        errorBox.hidden = false;errorBox.textContent = errorMessage(lastError);
+        replyMode = "savedResponse";$("previewNotice").textContent = t(replyMode);
+        $("answerProvider").textContent = [saved.providerName,saved.model,saved.recordedAt].filter(Boolean).join(" · ");
+        elapsed.textContent = "";
+      } else renderError(errorMessage(lastError));
     } finally {
       clearTimeout(timeout);
       activeQueryController = null;
@@ -786,14 +817,7 @@
       ? t("noEvidence")
       : t("evidence");
 
-    // Render emphasis without interpreting model output as HTML.
-    answerText.replaceChildren();
-    const parts = (answer || (abstained ? t("abstained") : t("emptyAnswer"))).split(/(\*\*[^*]+\*\*)/g);
-    for (const part of parts) {
-      const node = document.createElement(part.startsWith("**") && part.endsWith("**") ? "strong" : "span");
-      node.textContent = node.tagName.toLowerCase() === "strong" ? part.slice(2, -2) : part;
-      answerText.appendChild(node);
-    }
+    renderMarkdown(answerText, answer || (abstained ? t("abstained") : t("emptyAnswer")));
 
     citationCount.textContent = t("sources", sourceList.length);
     citations.replaceChildren();
@@ -821,27 +845,23 @@
 
       const sourceName = typeof citation?.source === "string" ? citation.source.replace(/\\/g, "/") : "";
       const documentName = sourceName.split("/").pop();
-      const publicSources = new Set([
-        "R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md", "R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
-        "R4R_20_CASOS_OFICINAS_CUEVAS_BANOS_Y_FILTROS.md", "R4R_30_METODO_PRESUPUESTOS_SEO_CATALOGO_Y_PLANTILLAS.md",
-        "R4R_40_ALL_FAQ.md", "R4R_50_STRUCTURED_EXTRA_DATA.md", "R4R_60_SERVICE_AREA_TOWNS.md", "R4R_70_WEB_SOURCE_MANIFEST.md"
-      ]);
-      const source = document.createElement(publicSources.has(documentName) ? "a" : "span");
-      if (publicSources.has(documentName)) {
-        source.setAttribute("href", `docs/${documentName.replace(/\.md$/, ".pdf")}`);
-        source.setAttribute("target", "_blank");
-        source.setAttribute("rel", "noopener");
+      const stableId = /^R4R_\d+/.exec(documentName || "")?.[0];
+      const documents = documentSources[stableId];
+      const sourceLanguage = sourceName.startsWith("en/") ? "en" : "es";
+      const selected = documents?.[isEnglish ? "en" : "es"] || documents?.[sourceLanguage];
+      const source = document.createElement(selected ? "a" : "span");
+      if (selected) {
+        const section = (citation.headingPath || []).map(heading => /^(\d+(?:\.\d+)*)/.exec(heading)?.[1]).filter(Boolean).reverse()
+          .map(number => "section-" + number.replace(/\./g, "-")).find(anchor => selected.sections?.includes(anchor));
+        source.setAttribute("href", selected.url + (section ? "#" + section : ""));
+        source.setAttribute("target", "_blank"); source.setAttribute("rel", "noopener");
       }
       source.className = "citation-source";
-      const titles = {
-        "R4R_00": ["Identidad y servicios", "Identity and services"], "R4R_10": ["Patios, viviendas y reparaciones", "Patios, homes and repairs"],
-        "R4R_20": ["Oficinas, cuevas y baños", "Offices, caves and bathrooms"], "R4R_30": ["Método y presupuestos", "Methods and estimates"],
-        "R4R_40": ["Preguntas frecuentes", "Frequently asked questions"], "R4R_50": ["Datos de referencia", "Reference data"],
-        "R4R_60": ["Cobertura territorial", "Service area"], "R4R_70": ["Fuentes consultadas", "Source bibliography"]
-      };
-      const title = titles[documentName?.slice(0, 6)];
-      source.textContent = title ? `${title[isEnglish ? 1 : 0]} · ${t("openDocument")} (PDF)` : citation?.source || t("unknownSource");
-
+      source.textContent = selected ? `${selected.title.replace(/^Riansares 4R\s*[—-]\s*/, "")} · ${t("openDocument")} (${selected.source.startsWith("en/") ? "EN" : "ES"})` : t("unknownSource");
+      const trace = document.createElement("details");
+      const traceLabel = document.createElement("summary");traceLabel.textContent = t("originalSource");
+      const traceText = document.createElement("p");traceText.textContent = sourceName;
+      trace.append(traceLabel, traceText);
       top.append(label, source);
 
       const path = document.createElement("div");
@@ -855,10 +875,41 @@
         ? `${t("ordinal")}: ${citation.ordinal}`
         : `${t("ordinal")}: —`;
 
-      card.append(top, path);
+      card.append(top, path, trace);
       if (developerMode) card.appendChild(ordinal);
       citations.appendChild(card);
     });
+  }
+
+  function renderMarkdown(target, text) {
+    target.replaceChildren();
+    function inline(parent, value) {
+      for (const token of value.split(/(\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]\n]+\]\([^\s)]+\))/g)) {
+        let node;
+        const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(token);
+        if (link && /^https?:\/\//i.test(link[2])) {
+          node = document.createElement("a");node.setAttribute("href", link[2]);node.setAttribute("rel", "noopener noreferrer");node.setAttribute("target", "_blank");node.textContent = link[1];
+        } else {
+          const bold = token.startsWith("**") && token.endsWith("**");
+          const italic = !bold && token.startsWith("*") && token.endsWith("*") && token.length > 2;
+          node = document.createElement(bold ? "strong" : italic ? "em" : "span");
+          node.textContent = bold ? token.slice(2, -2) : italic ? token.slice(1, -1) : token;
+        }
+        parent.appendChild(node);
+      }
+    }
+    let list = null;
+    for (const line of text.split("\n")) {
+      const item = /^(?:[-*] |\d+\. )(.*)$/.exec(line);
+      if (item) {
+        const kind = /^\d/.test(line) ? "ol" : "ul";
+        if (!list || list.tagName.toLowerCase() !== kind) { list = document.createElement(kind);target.appendChild(list); }
+        const li = document.createElement("li");inline(li, item[1]);list.appendChild(li);
+      } else {
+        list = null;if (!line.trim()) continue;
+        const paragraph = document.createElement("p");inline(paragraph, line);target.appendChild(paragraph);
+      }
+    }
   }
 
   function updateCounter() {

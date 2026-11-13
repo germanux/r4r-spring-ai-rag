@@ -486,5 +486,968 @@
         }
       ]
     }
+  },
+  "kitchen": {
+    "es": [
+      {
+        "language": "es",
+        "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago?",
+        "answer": "Si existe una fuga activa, cerrar el suministro accesible cuando pueda hacerse con seguridad, proteger la zona y contactar con un profesional competente. [S1]",
+        "abstained": false,
+        "citations": [
+          {
+            "label": "[S1]",
+            "source": "R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.pdf",
+            "headingPath": [
+              "Ampliación temática: fugas de cocina y reformas progresivas. Pregunta: «Tengo tuberías rotas en mi cocina. ¿Qué hago?»."
+            ],
+            "ordinal": 48
+          }
+        ],
+        "durationMs": 3013,
+        "recordedAt": "2026-11-13",
+        "events": [],
+        "provenance": "User-supplied verified backend results; original SSE timeline and model/provider metadata were not supplied."
+      },
+      {
+        "language": "es",
+        "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago?\nAdemás, quiero reformar la cocina. ¿Qué me recomiendas?",
+        "answer": "Si tienes tuberías rotas en tu cocina, la prioridad es detener el suministro con la llave de paso accesible, evitar usar esa instalación y solicitar a un profesional la localización y reparación de la fuga [S3]. Además, si quieres reformar la cocina, conviene resolver primero la fuga y revisar fontanería y desagües antes de colocar azulejos, muebles y acabados [S3].",
+        "abstained": false,
+        "citations": [
+          {
+            "label": "[S3]",
+            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+            "headingPath": [
+              "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma."
+            ],
+            "ordinal": 0
+          }
+        ],
+        "durationMs": 4413,
+        "recordedAt": "2026-11-13",
+        "events": [],
+        "provenance": "User-supplied verified backend results; original SSE timeline and model/provider metadata were not supplied."
+      },
+      {
+        "language": "es",
+        "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago?\nAdemás, quiero reformar la cocina. ¿Qué me recomiendas?\n¿Puedo cambiar también los azulejos?",
+        "answer": "Si tienes tuberías rotas en tu cocina, primero debes cerrar el suministro de agua con seguridad, proteger la zona y contactar a un profesional para reparar la fuga y verificar la estanqueidad [S3]. Además, si quieres reformar la cocina, conviene resolver primero la fuga y revisar la fontanería y desagües antes de colocar azulejos, muebles y acabados [S1]. También puedes cambiar los azulejos, siempre que primero se resuelva la avería y se comprueben los soportes y trazados [S4].",
+        "abstained": false,
+        "citations": [
+          {
+            "label": "[S1]",
+            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+            "headingPath": [
+              "Pregunta sobre tuberías rotas y reforma."
+            ],
+            "ordinal": 3
+          },
+          {
+            "label": "[S3]",
+            "source": "R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.pdf",
+            "headingPath": [
+              "Ampliación temática sobre fugas de cocina."
+            ],
+            "ordinal": 48
+          },
+          {
+            "label": "[S4]",
+            "source": "es/guides/R4R_102_REFORMA_COCINA_MUEBLES_AZULEJOS_Y_ELECTRODOMESTICOS.md",
+            "headingPath": [
+              "Pregunta sobre sustitución de azulejos con tuberías rotas."
+            ],
+            "ordinal": 1
+          }
+        ],
+        "durationMs": 4852,
+        "recordedAt": "2026-11-13",
+        "events": [],
+        "provenance": "User-supplied verified backend results; original SSE timeline and model/provider metadata were not supplied."
+      }
+    ],
+    "en": [
+      {
+        "language": "en",
+        "question": "I have broken pipes in my kitchen. What should I do?",
+        "answer": "If you have broken pipes in your kitchen, the first step is to stop the water supply using the accessible shut-off valve, avoid using the affected installation, and contact a professional for locating and repairing the leak. [S2] If there is proximity of water and electricity, avoid manipulating hazardous elements and do not touch electrical outlets or wiring affected by water; electrical intervention should be handled by a qualified professional. [S4]",
+        "abstained": false,
+        "citations": [
+          {
+            "label": "[S2]",
+            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+            "headingPath": [
+              "Question about broken kitchen pipes."
+            ],
+            "ordinal": 1
+          },
+          {
+            "label": "[S4]",
+            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+            "headingPath": [
+              "General kitchen plumbing and leak guidance."
+            ],
+            "ordinal": 0
+          }
+        ],
+        "durationMs": 6427,
+        "recordedAt": "2026-11-13",
+        "events": [],
+        "provenance": "User-supplied verified backend results; original SSE timeline and model/provider metadata were not supplied."
+      },
+      {
+        "language": "en",
+        "question": "I have broken pipes in my kitchen. What should I do?\nI also want to renovate my kitchen. What do you recommend?",
+        "answer": "First, address the broken pipes by stopping the water supply with the accessible shut-off valve, avoiding use of the affected installation, and contacting a professional for repair. Ensure the area is protected, document damage, and notify your insurance or landlord if necessary. After repairs, check for leaks, dryness, and structural integrity before proceeding with renovations. [S3]\nBefore renovating, prioritize fixing the plumbing and checking drains before installing tiles, appliances, and finishes. Define the scope of work, separating essential repairs from optional upgrades, and budget separately for each part. [S1]",
+        "abstained": false,
+        "citations": [
+          {
+            "label": "[S1]",
+            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+            "headingPath": [
+              "Question about broken pipes and renovating a kitchen."
+            ],
+            "ordinal": 3
+          },
+          {
+            "label": "[S3]",
+            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+            "headingPath": [
+              "General kitchen plumbing and leak guidance."
+            ],
+            "ordinal": 0
+          }
+        ],
+        "durationMs": 5727,
+        "recordedAt": "2026-11-13",
+        "events": [],
+        "provenance": "User-supplied verified backend results; original SSE timeline and model/provider metadata were not supplied."
+      },
+      {
+        "language": "en",
+        "question": "I have broken pipes in my kitchen. What should I do?\nI also want to renovate my kitchen. What do you recommend?\nCan I replace the tiles too?",
+        "answer": "If you have broken pipes in your kitchen, you should first repair the leak and check for secure supports and dry conditions before proceeding with any renovations. [S4]\nYou can renovate your kitchen alongside the pipe repair, but it is recommended to address the plumbing and drainage issues first before installing tiles, countertops, and finishes. [S2]\nYou can replace the tiles as part of the renovation, provided the pipes are repaired, the area is dry, and the support is secure. [S1]",
+        "abstained": false,
+        "citations": [
+          {
+            "label": "[S1]",
+            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+            "headingPath": [
+              "Question about replacing kitchen tiles."
+            ],
+            "ordinal": 4
+          },
+          {
+            "label": "[S2]",
+            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+            "headingPath": [
+              "Question about renovation after broken pipes."
+            ],
+            "ordinal": 3
+          },
+          {
+            "label": "[S4]",
+            "source": "R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.pdf",
+            "headingPath": [
+              "Kitchen leak case."
+            ],
+            "ordinal": 48
+          }
+        ],
+        "durationMs": 4722,
+        "recordedAt": "2026-11-13",
+        "events": [],
+        "provenance": "User-supplied verified backend results; original SSE timeline and model/provider metadata were not supplied."
+      }
+    ]
+  },
+  "liveExamples": {
+    "es": [
+      {
+        "answer": "Las cuatro R de Riansares 4R significan: Reformas, Rehabilitación, Revestimientos y Reparaciones. Esta información está documentada en [S1], [S2] y [S3].",
+        "abstained": false,
+        "citations": [
+          {
+            "label": "[S1]",
+            "source": "es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md",
+            "headingPath": [
+              "Riansares 4R — identidad, criterios y voz editorial",
+              "2. Identidad de Riansares 4R"
+            ],
+            "ordinal": 1
+          },
+          {
+            "label": "[S2]",
+            "source": "es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md",
+            "headingPath": [
+              "Riansares 4R — identidad, criterios y voz editorial",
+              "2. Identidad de Riansares 4R",
+              "2.1. Nombre y significado"
+            ],
+            "ordinal": 2
+          },
+          {
+            "label": "[S3]",
+            "source": "es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md",
+            "headingPath": [
+              "Riansares 4R — identidad, criterios y voz editorial"
+            ],
+            "ordinal": 0
+          }
+        ],
+        "language": "es",
+        "question": "¿Qué significan las cuatro R de Riansares 4R?",
+        "recordedAt": "2026-11-13T15:50:31.498025+00:00",
+        "durationMs": 3752,
+        "events": [
+          {
+            "stage": "REQUEST_RECEIVED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "RETRIEVAL_STARTED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "EMBEDDING_STARTED",
+            "elapsedMs": 0,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "EMBEDDING_COMPLETED",
+            "elapsedMs": 1709,
+            "durationMs": 1708.178491,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "RETRIEVAL_COMPLETED",
+            "elapsedMs": 1910,
+            "documentsFound": 5,
+            "durationMs": 1910.241357
+          },
+          {
+            "stage": "GENERATION_STARTED",
+            "elapsedMs": 1921,
+            "provider": "PC principal",
+            "model": "qwen3:8b"
+          },
+          {
+            "stage": "GENERATION_COMPLETED",
+            "elapsedMs": 3716,
+            "provider": "PC principal",
+            "model": "qwen3:8b",
+            "durationMs": 1805.090495
+          },
+          {
+            "stage": "VALIDATION_COMPLETED",
+            "elapsedMs": 3725,
+            "documentsFound": 5,
+            "durationMs": 8.669991
+          }
+        ],
+        "model": "qwen3:8b",
+        "providerName": "PC principal"
+      },
+      {
+        "answer": "La empresa realiza reformas de oficinas, como se menciona en [S2] y [S4], y también realiza reformas de casas antiguas, según [S1]. No se especifica si realiza reformas de otros tipos de edificios.",
+        "abstained": false,
+        "citations": [
+          {
+            "label": "[S1]",
+            "source": "es/R4R_30_METODO_PRESUPUESTOS_SEO_CATALOGO_Y_PLANTILLAS.md",
+            "headingPath": [
+              "Riansares 4R — método, presupuestos, SEO, catálogo y plantillas",
+              "19. SEO local y GEO",
+              "19.3. Intenciones de búsqueda",
+              "Comercial"
+            ],
+            "ordinal": 25
+          },
+          {
+            "label": "[S2]",
+            "source": "es/R4R_20_CASOS_OFICINAS_CUEVAS_BANOS_Y_FILTROS.md",
+            "headingPath": [
+              "Riansares 4R — casos de oficinas, cuevas, baños y filtros comerciales",
+              "11. Caso F — Reforma de oficinas y aseos corporativos"
+            ],
+            "ordinal": 1
+          },
+          {
+            "label": "[S4]",
+            "source": "es/guides/R4R_85_OFICINAS_LOCALES_Y_COMUNIDADES.md",
+            "headingPath": [
+              "Riansares 4R — oficinas, locales y comunidades: alcance y coordinación",
+              "¿Qué cambia al reformar una oficina ocupada?"
+            ],
+            "ordinal": 1
+          }
+        ],
+        "language": "es",
+        "question": "¿Qué tipo de reformas hace esta empresa? ¿Casas y oficinas?",
+        "recordedAt": "2026-11-13T15:50:56.229302+00:00",
+        "durationMs": 2731,
+        "events": [
+          {
+            "stage": "REQUEST_RECEIVED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "RETRIEVAL_STARTED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "EMBEDDING_STARTED",
+            "elapsedMs": 1,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "EMBEDDING_COMPLETED",
+            "elapsedMs": 1108,
+            "durationMs": 1107.107057,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "RETRIEVAL_COMPLETED",
+            "elapsedMs": 1188,
+            "documentsFound": 5,
+            "durationMs": 1187.087132
+          },
+          {
+            "stage": "GENERATION_STARTED",
+            "elapsedMs": 1207,
+            "provider": "PC principal",
+            "model": "qwen3:8b"
+          },
+          {
+            "stage": "GENERATION_COMPLETED",
+            "elapsedMs": 2702,
+            "provider": "PC principal",
+            "model": "qwen3:8b",
+            "durationMs": 1511.352577
+          },
+          {
+            "stage": "VALIDATION_COMPLETED",
+            "elapsedMs": 2703,
+            "documentsFound": 5,
+            "durationMs": 0.679574
+          }
+        ],
+        "model": "qwen3:8b",
+        "providerName": "PC principal"
+      },
+      {
+        "answer": "Para una primera orientación de una reforma, se requiere ubicación, fotografías, medidas aproximadas, uso del espacio, problema, resultado esperado y plazo. Esta información permite una primera orientación, pero no sustituye la visita, las mediciones ni el diagnóstico de instalaciones ocultas. [S1]",
+        "abstained": false,
+        "citations": [
+          {
+            "label": "[S1]",
+            "source": "es/faqs/R4R_40_ALL_FAQ.md",
+            "headingPath": [
+              "Riansares 4R — todas las preguntas frecuentes",
+              "Presupuesto",
+              "FAQ-001 — ¿Qué información hace falta para una primera orientación?"
+            ],
+            "ordinal": 3
+          }
+        ],
+        "language": "es",
+        "question": "¿Qué información hace falta para una primera orientación de una reforma?",
+        "recordedAt": "2026-11-13T15:51:21.169972+00:00",
+        "durationMs": 2940,
+        "events": [
+          {
+            "stage": "REQUEST_RECEIVED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "RETRIEVAL_STARTED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "EMBEDDING_STARTED",
+            "elapsedMs": 0,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "EMBEDDING_COMPLETED",
+            "elapsedMs": 1074,
+            "durationMs": 1074.091678,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "RETRIEVAL_COMPLETED",
+            "elapsedMs": 1114,
+            "documentsFound": 5,
+            "durationMs": 1113.858225
+          },
+          {
+            "stage": "GENERATION_STARTED",
+            "elapsedMs": 1124,
+            "provider": "PC principal",
+            "model": "qwen3:8b"
+          },
+          {
+            "stage": "GENERATION_COMPLETED",
+            "elapsedMs": 2918,
+            "provider": "PC principal",
+            "model": "qwen3:8b",
+            "durationMs": 1803.75636
+          },
+          {
+            "stage": "VALIDATION_COMPLETED",
+            "elapsedMs": 2919,
+            "documentsFound": 5,
+            "durationMs": 0.471507
+          }
+        ],
+        "model": "qwen3:8b",
+        "providerName": "PC principal"
+      },
+      {
+        "answer": "La **solera** es la capa base o elemento de apoyo que recibe el pavimento, mientras que el **solado** es el pavimento final transitable, como baldosa o material equivalente. Esta distinción se documenta en [S1], [S2] y [S3].",
+        "abstained": false,
+        "citations": [
+          {
+            "label": "[S1]",
+            "source": "es/guides/R4R_84_PATIOS_SOLERAS_SOLADOS_Y_DRENAJE.md",
+            "headingPath": [
+              "Riansares 4R — patios y pavimentos: solera, solado y drenaje",
+              "¿Qué diferencia hay entre solera y solado?"
+            ],
+            "ordinal": 1
+          },
+          {
+            "label": "[S2]",
+            "source": "es/guides/R4R_105_SOLERA_SOLADO_PATIOS_DRENAJE_Y_PENDIENTES.md",
+            "headingPath": [
+              "Patios y pavimentos — solera, solado, humedad y evacuación",
+              "¿Qué diferencia hay entre solera y solado?"
+            ],
+            "ordinal": 1
+          },
+          {
+            "label": "[S3]",
+            "source": "es/faqs/R4R_40_ALL_FAQ.md",
+            "headingPath": [
+              "Riansares 4R — todas las preguntas frecuentes",
+              "Suelos",
+              "FAQ-041 — ¿Qué diferencia hay entre solera y solado?"
+            ],
+            "ordinal": 50
+          }
+        ],
+        "language": "es",
+        "question": "¿Cuál es la diferencia entre solera y solado?",
+        "recordedAt": "2026-11-13T15:51:46.009665+00:00",
+        "durationMs": 2839,
+        "events": [
+          {
+            "stage": "REQUEST_RECEIVED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "RETRIEVAL_STARTED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "EMBEDDING_STARTED",
+            "elapsedMs": 1,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "EMBEDDING_COMPLETED",
+            "elapsedMs": 1081,
+            "durationMs": 1080.180327,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "RETRIEVAL_COMPLETED",
+            "elapsedMs": 1118,
+            "documentsFound": 5,
+            "durationMs": 1118.110714
+          },
+          {
+            "stage": "GENERATION_STARTED",
+            "elapsedMs": 1129,
+            "provider": "PC principal",
+            "model": "qwen3:8b"
+          },
+          {
+            "stage": "GENERATION_COMPLETED",
+            "elapsedMs": 2810,
+            "provider": "PC principal",
+            "model": "qwen3:8b",
+            "durationMs": 1690.7888
+          },
+          {
+            "stage": "VALIDATION_COMPLETED",
+            "elapsedMs": 2812,
+            "documentsFound": 5,
+            "durationMs": 1.338575
+          }
+        ],
+        "model": "qwen3:8b",
+        "providerName": "PC principal"
+      },
+      {
+        "answer": "",
+        "abstained": true,
+        "citations": [],
+        "language": "es",
+        "question": "Explica la fotosíntesis de las plantas y la función de los cloroplastos.",
+        "recordedAt": "2026-11-13T15:52:10.053998+00:00",
+        "durationMs": 2044,
+        "events": [
+          {
+            "stage": "REQUEST_RECEIVED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "RETRIEVAL_STARTED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "EMBEDDING_STARTED",
+            "elapsedMs": 0,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "EMBEDDING_COMPLETED",
+            "elapsedMs": 1183,
+            "durationMs": 1182.325607,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "RETRIEVAL_COMPLETED",
+            "elapsedMs": 1240,
+            "documentsFound": 5,
+            "durationMs": 1240.171741
+          },
+          {
+            "stage": "GENERATION_STARTED",
+            "elapsedMs": 1249,
+            "provider": "PC principal",
+            "model": "qwen3:8b"
+          },
+          {
+            "stage": "GENERATION_COMPLETED",
+            "elapsedMs": 2019,
+            "provider": "PC principal",
+            "model": "qwen3:8b",
+            "durationMs": 777.372556
+          },
+          {
+            "stage": "VALIDATION_COMPLETED",
+            "elapsedMs": 2020,
+            "documentsFound": 5
+          }
+        ],
+        "model": "qwen3:8b",
+        "providerName": "PC principal"
+      }
+    ],
+    "en": [
+      {
+        "answer": "The four Rs in Riansares 4R stand for **Reformas**, **Rehabilitación**, **Revestimientos**, and **Reparaciones**. These terms translate to **Reforms**, **Rehabilitation**, **Cladding**, and **Repairs** respectively. This information is explicitly documented in [S1] and [S2].",
+        "abstained": false,
+        "citations": [
+          {
+            "label": "[S1]",
+            "source": "es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md",
+            "headingPath": [
+              "Riansares 4R — identidad, criterios y voz editorial",
+              "2. Identidad de Riansares 4R",
+              "2.1. Nombre y significado"
+            ],
+            "ordinal": 2
+          },
+          {
+            "label": "[S2]",
+            "source": "es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md",
+            "headingPath": [
+              "Riansares 4R — identidad, criterios y voz editorial",
+              "2. Identidad de Riansares 4R"
+            ],
+            "ordinal": 1
+          }
+        ],
+        "language": "en",
+        "question": "What do the four Rs in Riansares 4R stand for? Please translate them into English too.",
+        "recordedAt": "2026-11-13T15:52:36.613109+00:00",
+        "durationMs": 4559,
+        "events": [
+          {
+            "stage": "REQUEST_RECEIVED",
+            "elapsedMs": 1
+          },
+          {
+            "stage": "TRANSLATION_STARTED",
+            "elapsedMs": 1
+          },
+          {
+            "stage": "TRANSLATION_COMPLETED",
+            "elapsedMs": 778,
+            "durationMs": 776.798247
+          },
+          {
+            "stage": "RETRIEVAL_STARTED",
+            "elapsedMs": 778
+          },
+          {
+            "stage": "EMBEDDING_STARTED",
+            "elapsedMs": 780,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "EMBEDDING_COMPLETED",
+            "elapsedMs": 1954,
+            "durationMs": 1173.429666,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "RETRIEVAL_COMPLETED",
+            "elapsedMs": 2068,
+            "documentsFound": 5,
+            "durationMs": 1290.185752
+          },
+          {
+            "stage": "GENERATION_STARTED",
+            "elapsedMs": 2077,
+            "provider": "PC principal",
+            "model": "qwen3:8b"
+          },
+          {
+            "stage": "GENERATION_COMPLETED",
+            "elapsedMs": 4531,
+            "provider": "PC principal",
+            "model": "qwen3:8b",
+            "durationMs": 2463.208086
+          },
+          {
+            "stage": "VALIDATION_COMPLETED",
+            "elapsedMs": 4534,
+            "documentsFound": 5,
+            "durationMs": 2.38063
+          }
+        ],
+        "model": "qwen3:8b",
+        "providerName": "PC principal"
+      },
+      {
+        "answer": "The company performs renovations on houses and offices, including kitchens, bathrooms, and partial or full renovation of finishes and installations. This is explicitly stated in [S1].",
+        "abstained": false,
+        "citations": [
+          {
+            "label": "[S1]",
+            "source": "es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md",
+            "headingPath": [
+              "Riansares 4R — identidad, criterios y voz editorial",
+              "2. Identidad de Riansares 4R",
+              "2.3. Servicios nucleares",
+              "Reformas"
+            ],
+            "ordinal": 5
+          }
+        ],
+        "language": "en",
+        "question": "What types of renovations does this company do? Houses and offices?",
+        "recordedAt": "2026-11-13T15:53:01.939789+00:00",
+        "durationMs": 3326,
+        "events": [
+          {
+            "stage": "REQUEST_RECEIVED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "TRANSLATION_STARTED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "TRANSLATION_COMPLETED",
+            "elapsedMs": 636,
+            "durationMs": 636.435565
+          },
+          {
+            "stage": "RETRIEVAL_STARTED",
+            "elapsedMs": 636
+          },
+          {
+            "stage": "EMBEDDING_STARTED",
+            "elapsedMs": 638,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "EMBEDDING_COMPLETED",
+            "elapsedMs": 1717,
+            "durationMs": 1079.089497,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "RETRIEVAL_COMPLETED",
+            "elapsedMs": 1761,
+            "documentsFound": 5,
+            "durationMs": 1125.014581
+          },
+          {
+            "stage": "GENERATION_STARTED",
+            "elapsedMs": 1770,
+            "provider": "PC principal",
+            "model": "qwen3:8b"
+          },
+          {
+            "stage": "GENERATION_COMPLETED",
+            "elapsedMs": 3300,
+            "provider": "PC principal",
+            "model": "qwen3:8b",
+            "durationMs": 1537.269153
+          },
+          {
+            "stage": "VALIDATION_COMPLETED",
+            "elapsedMs": 3302,
+            "documentsFound": 5,
+            "durationMs": 2.211572
+          }
+        ],
+        "model": "qwen3:8b",
+        "providerName": "PC principal"
+      },
+      {
+        "answer": "For an initial assessment of a renovation, the required information includes location, photographs, approximate measurements, current use of the space, the problem, the desired outcome, and the estimated timeline. This information allows for an initial orientation, but it does not replace an on-site visit, measurements, or a technical inspection. [S3]",
+        "abstained": false,
+        "citations": [
+          {
+            "label": "[S3]",
+            "source": "es/faqs/R4R_40_ALL_FAQ.md",
+            "headingPath": [
+              "Riansares 4R — todas las preguntas frecuentes",
+              "Presupuesto",
+              "FAQ-001 — ¿Qué información hace falta para una primera orientación?"
+            ],
+            "ordinal": 3
+          }
+        ],
+        "language": "en",
+        "question": "What information is needed for an initial assessment of a renovation?",
+        "recordedAt": "2026-11-13T15:53:27.757837+00:00",
+        "durationMs": 3818,
+        "events": [
+          {
+            "stage": "REQUEST_RECEIVED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "TRANSLATION_STARTED",
+            "elapsedMs": 1
+          },
+          {
+            "stage": "TRANSLATION_COMPLETED",
+            "elapsedMs": 553,
+            "durationMs": 550.519451
+          },
+          {
+            "stage": "RETRIEVAL_STARTED",
+            "elapsedMs": 553
+          },
+          {
+            "stage": "EMBEDDING_STARTED",
+            "elapsedMs": 554,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "EMBEDDING_COMPLETED",
+            "elapsedMs": 1636,
+            "durationMs": 1082.050057,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "RETRIEVAL_COMPLETED",
+            "elapsedMs": 1686,
+            "documentsFound": 5,
+            "durationMs": 1132.583446
+          },
+          {
+            "stage": "GENERATION_STARTED",
+            "elapsedMs": 1694,
+            "provider": "PC principal",
+            "model": "qwen3:8b"
+          },
+          {
+            "stage": "GENERATION_COMPLETED",
+            "elapsedMs": 3787,
+            "provider": "PC principal",
+            "model": "qwen3:8b",
+            "durationMs": 2100.732308
+          },
+          {
+            "stage": "VALIDATION_COMPLETED",
+            "elapsedMs": 3789,
+            "documentsFound": 5,
+            "durationMs": 2.030239
+          }
+        ],
+        "model": "qwen3:8b",
+        "providerName": "PC principal"
+      },
+      {
+        "answer": "The **solera** is a structural base or leveling layer that supports the final flooring, often made of concrete or mortar, with specific thickness, reinforcement, slopes, and joints [S3]. The **solado** is the final, walkable surface such as tiles or stone placed over a suitable base [S2]. They are not synonyms; the solera can be renewed while the solado may require a new solera before installation [S1].",
+        "abstained": false,
+        "citations": [
+          {
+            "label": "[S1]",
+            "source": "es/guides/R4R_84_PATIOS_SOLERAS_SOLADOS_Y_DRENAJE.md",
+            "headingPath": [
+              "Riansares 4R — patios y pavimentos: solera, solado y drenaje",
+              "¿Qué diferencia hay entre solera y solado?"
+            ],
+            "ordinal": 1
+          },
+          {
+            "label": "[S2]",
+            "source": "es/guides/R4R_105_SOLERA_SOLADO_PATIOS_DRENAJE_Y_PENDIENTES.md",
+            "headingPath": [
+              "Patios y pavimentos — solera, solado, humedad y evacuación",
+              "¿Qué diferencia hay entre solera y solado?"
+            ],
+            "ordinal": 1
+          },
+          {
+            "label": "[S3]",
+            "source": "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+            "headingPath": [
+              "Riansares 4R — casos de patios, viviendas, humedades y reparaciones",
+              "6. Caso A — Patio, solera, pavimento y drenaje",
+              "6.3. Distinción entre solera y solado"
+            ],
+            "ordinal": 4
+          }
+        ],
+        "language": "en",
+        "question": "What is the difference between a concrete subfloor (solera) and floor tiling (solado)?",
+        "recordedAt": "2026-11-13T15:53:54.171358+00:00",
+        "durationMs": 4413,
+        "events": [
+          {
+            "stage": "REQUEST_RECEIVED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "TRANSLATION_STARTED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "TRANSLATION_COMPLETED",
+            "elapsedMs": 661,
+            "durationMs": 660.781999
+          },
+          {
+            "stage": "RETRIEVAL_STARTED",
+            "elapsedMs": 662
+          },
+          {
+            "stage": "EMBEDDING_STARTED",
+            "elapsedMs": 664,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "EMBEDDING_COMPLETED",
+            "elapsedMs": 1747,
+            "durationMs": 1082.046662,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "RETRIEVAL_COMPLETED",
+            "elapsedMs": 1798,
+            "documentsFound": 5,
+            "durationMs": 1135.988061
+          },
+          {
+            "stage": "GENERATION_STARTED",
+            "elapsedMs": 1809,
+            "provider": "PC principal",
+            "model": "qwen3:8b"
+          },
+          {
+            "stage": "GENERATION_COMPLETED",
+            "elapsedMs": 4389,
+            "provider": "PC principal",
+            "model": "qwen3:8b",
+            "durationMs": 2590.279862
+          },
+          {
+            "stage": "VALIDATION_COMPLETED",
+            "elapsedMs": 4390,
+            "documentsFound": 5,
+            "durationMs": 0.684801
+          }
+        ],
+        "model": "qwen3:8b",
+        "providerName": "PC principal"
+      },
+      {
+        "answer": "",
+        "abstained": true,
+        "citations": [],
+        "language": "en",
+        "question": "Explain photosynthesis in plants and the role of chloroplasts.",
+        "recordedAt": "2026-11-13T15:54:18.724047+00:00",
+        "durationMs": 2552,
+        "events": [
+          {
+            "stage": "REQUEST_RECEIVED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "TRANSLATION_STARTED",
+            "elapsedMs": 0
+          },
+          {
+            "stage": "TRANSLATION_COMPLETED",
+            "elapsedMs": 691,
+            "durationMs": 690.844941
+          },
+          {
+            "stage": "RETRIEVAL_STARTED",
+            "elapsedMs": 691
+          },
+          {
+            "stage": "EMBEDDING_STARTED",
+            "elapsedMs": 693,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "EMBEDDING_COMPLETED",
+            "elapsedMs": 1783,
+            "durationMs": 1090.064539,
+            "model": "nomic-embed-text:latest"
+          },
+          {
+            "stage": "RETRIEVAL_COMPLETED",
+            "elapsedMs": 1810,
+            "documentsFound": 5,
+            "durationMs": 1118.336261
+          },
+          {
+            "stage": "GENERATION_STARTED",
+            "elapsedMs": 1823,
+            "provider": "PC principal",
+            "model": "qwen3:8b"
+          },
+          {
+            "stage": "GENERATION_COMPLETED",
+            "elapsedMs": 2530,
+            "provider": "PC principal",
+            "model": "qwen3:8b",
+            "durationMs": 719.383589
+          },
+          {
+            "stage": "VALIDATION_COMPLETED",
+            "elapsedMs": 2531,
+            "documentsFound": 5
+          }
+        ],
+        "model": "qwen3:8b",
+        "providerName": "PC principal"
+      }
+    ]
   }
 }
