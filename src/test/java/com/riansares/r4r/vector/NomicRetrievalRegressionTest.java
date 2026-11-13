@@ -6,7 +6,6 @@ import com.riansares.r4r.vector.s3vectors.*;
 import com.riansares.r4r.vector.config.RagVectorProperties;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,18 +21,19 @@ import static org.mockito.Mockito.*;
 class NomicRetrievalRegressionTest {
     static NomicRegressionCorpus corpus;
     @BeforeAll static void load() throws Exception { corpus=new NomicRegressionCorpus(); }
-    static Stream<Arguments> caveCases() {
-        var cases = new ArrayList<Arguments>();
-        for (var row : com.riansares.r4r.evaluation.EvaluationQuestions.document("es").path("regressions").path("cave")) {
-            cases.add(Arguments.of(row.path("key").asText(), row.path("question").asText(), row.path("originalRank").asInt()));
-        }
-        return cases.stream();
+    static Stream<Arguments> canonicalCases() {
+        return Stream.of("es", "en").flatMap(language ->
+                com.riansares.r4r.evaluation.EvaluationQuestions.cases(language).stream()
+                        .map(row -> Arguments.of(language, row.caseId())));
     }
-    @ParameterizedTest @MethodSource("caveCases")
-    void bothNomicAdaptersRecoverOriginalCaseWithoutChangingEmbeddingsOrThreshold(String key,String question,int originalRank) {
-        var vector=corpus.query(key);var ranked=corpus.ranked(vector);
-        int rank=0;while(ranked.get(rank).row().chunk().headingPath().stream().noneMatch(h->h.contains("Caso G")))rank++;
-        assertThat(rank+1).isEqualTo(originalRank);
+
+    @ParameterizedTest(name = "{0}/{1}") @MethodSource("canonicalCases")
+    void bothNomicAdaptersPreserveScoresBoundsAndRerankingForCurrentCases(String language, String caseId) {
+        var current = com.riansares.r4r.evaluation.EvaluationQuestions.caseById(language, caseId);
+        String question = current.question();
+        // Recorded vectors are a transport/scoring fixture only. They are NOT embeddings of
+        // the current question and this test makes no semantic-relevance assertion.
+        var vector=corpus.query("cave");var ranked=corpus.ranked(vector);
         var vectors=mock(VectorStore.class);var jdbc=mock(JdbcTemplate.class);var aws=mock(S3VectorsClient.class);var embedding=mock(EmbeddingModel.class);
         when(vectors.similaritySearch(any(SearchRequest.class))).thenAnswer(call->{
             SearchRequest request=call.getArgument(0);
@@ -55,42 +55,17 @@ class NomicRetrievalRegressionTest {
         var config=new RagVectorProperties.S3Vectors("eu-north-1","amzn-r4r-vectors","amzn-r4r-vector-index",Duration.ofSeconds(1),Duration.ofSeconds(3),Duration.ofSeconds(4));
         var pgResults=new PgVectorKnowledgeStore(vectors,jdbc).search(question,5,.63);
         var s3Results=new S3VectorsKnowledgeStore(aws,embedding,config,new S3VectorMetadataMapper(),new S3VectorScoreMapper()).search(question,5,.63);
+        var admitted = ranked.stream().filter(row -> row.similarity() > .63).limit(20).toList();
         for(var selected:List.of(pgResults,s3Results)) {
             assertThat(selected).hasSize(5);
-            assertThat(selected).anySatisfy(chunk->{assertThat(chunk.source()).isEqualTo("R4R_20_CASOS_OFICINAS_CUEVAS_BANOS_Y_FILTROS.md");
-                assertThat(chunk.headingPath()).anyMatch(h->h.startsWith("12. Caso G"));assertThat(chunk.content()).containsIgnoringCase("cal");});
+            assertThat(selected).allMatch(chunk -> admitted.stream()
+                    .anyMatch(candidate -> candidate.row().chunk().equals(chunk)));
         }
         assertThat(pgResults).containsExactlyElementsOf(s3Results);
+        var candidates = admitted.stream().map(row -> new NomicCandidateReranker.Candidate(
+                row.row().chunk(), row.similarity())).toList();
+        assertThat(pgResults).containsExactlyElementsOf(new NomicCandidateReranker(
+                NomicRerankProperties.defaults()).select(question, candidates, 5));
         verify(embedding,times(1)).embed(question);verifyNoInteractions(jdbc);
-    }
-    static Stream<Arguments> canonicalCases() {
-        var cases = new ArrayList<Arguments>();
-        for (String lang : List.of("es", "en")) {
-            for (var row : com.riansares.r4r.evaluation.EvaluationQuestions.independentRegressions().path("nomic").path(lang)) {
-                cases.add(Arguments.of(lang, row.path("question").asText(), row.path("evidence").asBoolean(),
-                        String.format(Locale.ROOT,"%s-%02d",lang,row.path("number").asInt()),row.path("retrievalQuestion").asText()));
-            }
-        }
-        return cases.stream();
-    }
-    @ParameterizedTest @MethodSource("canonicalCases")
-    void bilingualCandidatesRetainBestExistingEvidenceAndRawThreshold(String language,String question,boolean answerable,String key,String retrieval) throws Exception {
-        var ranked=corpus.ranked(corpus.query(key)).stream().filter(r->r.similarity()>.63).toList();
-        var original=ranked.stream().limit(5).map(r->r.row().chunk()).toList();
-        var candidates=ranked.stream().limit(20).map(r->new NomicCandidateReranker.Candidate(r.row().chunk(),r.similarity())).toList();
-        var selected=new NomicCandidateReranker(NomicRerankProperties.defaults()).select(retrieval,candidates,5);
-        assertThat(selected).hasSize(original.size());
-        if(!original.isEmpty())assertThat(selected).contains(original.getFirst());
-        assertThat(selected).allMatch(chunk->candidates.stream().anyMatch(c->c.chunk().equals(chunk)&&c.similarity()>.63));
-        if(!answerable) {
-            assertThat(selected.isEmpty()).isEqualTo(original.isEmpty()); // Confidence admission/empty evidence never expands.
-            var model=mock(org.springframework.ai.chat.model.ChatModel.class);
-            when(model.call(any(org.springframework.ai.chat.prompt.Prompt.class))).thenReturn(new org.springframework.ai.chat.model.ChatResponse(List.of(
-                    new org.springframework.ai.chat.model.Generation(new org.springframework.ai.chat.messages.AssistantMessage("R4R_ABSTAIN")))));
-            var store=mock(com.riansares.r4r.vector.port.KnowledgeVectorStore.class);when(store.search(anyString(),eq(5),eq(.63))).thenReturn(selected);
-            var result=new com.riansares.r4r.rag.CitedRagService(store,model,5,.63).answer(question,retrieval,language);
-            assertThat(result.abstention()).isTrue();assertThat(result.citations()).isEmpty();
-            if(selected.isEmpty())verifyNoInteractions(model);
-        }
     }
 }

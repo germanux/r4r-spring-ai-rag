@@ -48,8 +48,8 @@ class RagIndependentQuestionsIT {
     RagVectorProperties routing;
 
     @BeforeAll void prepare() throws Exception {
-        for(var q:IndependentQuestions.load()) {
-            var entry=new LinkedHashMap<String,Object>();entry.put("id",q.id());entry.put("category",q.category());
+        for(var q:EvaluationQuestions.cases("es")) {
+            var entry=new LinkedHashMap<String,Object>();entry.put("caseId",q.caseId());entry.put("name",q.name());
             entry.put("question",q.question());entry.put("status","NOT_RUN");records.add(entry);
         }
         report.put("phase",1);report.put("qualityEvaluationPerformed",false);report.put("startedAt",Instant.now().toString());
@@ -106,8 +106,8 @@ class RagIndependentQuestionsIT {
         } catch(Exception failure) { report.put("setupErrorType",failure.getClass().getSimpleName());save();throw failure; }
     }
     @TestFactory Stream<DynamicTest> captureQuestions() throws Exception {
-        return IndependentQuestions.load().stream().map(q->DynamicTest.dynamicTest("Phase 1 / "+q.id()+" / "+q.category(),()->{
-            var entry=records.get(q.id()-1);recording.reset();var progress=RagProgress.silent();
+        return EvaluationQuestions.cases("es").stream().map(q->DynamicTest.dynamicTest("Phase 1 / "+q.caseId()+" / "+q.name(),()->{
+            var entry=records.stream().filter(row -> q.caseId().equals(row.get("caseId"))).findFirst().orElseThrow();recording.reset();var progress=RagProgress.silent();
             var router=context.getBean(GenerationRouter.class);router.clearRequestExecution();
             try {
                 // Original question is passed verbatim. Only the existing RAG's own normalization applies.

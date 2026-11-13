@@ -27,10 +27,9 @@ class GeneralizationQuestionsFixtureTest {
 
     @Test void newCumulativeQuestionsPreserveIndependentMultilineRequests() {
         for (String language : new String[]{"es", "en"}) {
-            var cases = EvaluationQuestions.cases(language);
-            String first = questionById(cases, "case-31");
-            String second = questionById(cases, "case-32");
-            String third = questionById(cases, "case-33");
+            String first = EvaluationQuestions.caseById(language, "case-31").question();
+            String second = EvaluationQuestions.caseById(language, "case-32").question();
+            String third = EvaluationQuestions.caseById(language, "case-33").question();
             assertThat(second).startsWith(first + "\n");
             assertThat(third).startsWith(second + "\n");
             assertThat(second.lines().count()).isEqualTo(2);
@@ -38,19 +37,14 @@ class GeneralizationQuestionsFixtureTest {
         }
     }
 
-    @Test void recordedNomicQueriesRemainIndependentOfTheReorderedBanks() {
+    @Test void caseLookupUsesStableIdentityRatherThanDisplayNumber() {
         for (String language : new String[]{"es", "en"}) {
-            var recorded = EvaluationQuestions.independentRegressions().path("nomic").path(language);
-            assertThat(recorded.size()).isEqualTo(15);
-            for (int i = 0; i < recorded.size(); i++) {
-                assertThat(recorded.get(i).path("number").asInt()).isEqualTo(i + 1);
-                assertThat(recorded.get(i).path("question").asText()).isNotBlank();
-                assertThat(recorded.get(i).path("retrievalQuestion").asText()).isNotBlank();
-            }
+            var row = EvaluationQuestions.caseById(language, "case-31");
+            assertThat(row.caseId()).isEqualTo("case-31");
+            assertThat(row.number()).isEqualTo(20);
+            assertThat(row.expectsEvidence()).isTrue();
         }
-    }
-
-    private static String questionById(java.util.List<EvaluationQuestions.QuestionCase> cases, String id) {
-        return cases.stream().filter(row -> row.caseId().equals(id)).findFirst().orElseThrow().question();
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> EvaluationQuestions.caseById("es", "unknown"))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

@@ -23,16 +23,6 @@ public final class EvaluationQuestions {
         }
     }
 
-    /** Frozen queries for independent regressions and the recorded Nomic embeddings. */
-    public static JsonNode independentRegressions() {
-        try (var input = EvaluationQuestions.class.getResourceAsStream("/evaluation/independent-regressions.json")) {
-            if (input == null) throw new IllegalStateException("Missing independent regression questions");
-            return new ObjectMapper().readTree(input);
-        } catch (IOException failure) {
-            throw new IllegalStateException("Cannot read independent regression questions", failure);
-        }
-    }
-
     public static List<QuestionCase> cases(String language) {
         var spanish = document("es").path("cases");
         var result = new ArrayList<QuestionCase>();
@@ -46,6 +36,11 @@ public final class EvaluationQuestions {
                     row.path("name").asText(), row.path("question").asText(), retrieval, row.path("evidence").asBoolean()));
         }
         return List.copyOf(result);
+    }
+
+    public static QuestionCase caseById(String language, String caseId) {
+        return cases(language).stream().filter(row -> row.caseId().equals(caseId)).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown evaluation case: " + caseId));
     }
 
     public static QuestionCase timeline(String language) {
