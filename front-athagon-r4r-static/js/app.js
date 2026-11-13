@@ -96,11 +96,15 @@
   function revealSources() {
     cancelSourcesPress();
     if (!lastPayload?.citations?.length) return;
-    if (!reducedMotion()) sourcesHeading.classList.toggle("is-preview-pressed", true);
-    sourcesTimer = setTimeout(() => {
-      sourcesHeading.classList.toggle("is-preview-pressed", false);
-      sourcesDetails.open = true;
-    }, reducedMotion() ? 0 : 280);
+    const press = () => {
+      if (!reducedMotion()) sourcesHeading.classList.toggle("is-preview-pressed", true);
+      sourcesTimer = setTimeout(() => {
+        sourcesHeading.classList.toggle("is-preview-pressed", false);
+        sourcesDetails.open = true;
+      }, reducedMotion() ? 0 : 280);
+    };
+    if (preview && !reducedMotion()) sourcesTimer = setTimeout(press, 700);
+    else press();
   }
 
   const normalizeBaseUrl = (value) => (value || "").trim().replace(/\/+$/, "");
@@ -162,7 +166,7 @@
   }
   function renderDynamicText() {
     apiState.textContent = t(apiStatus);
-    if (replyMode) $("previewNotice").textContent = t(replyMode);
+    if (replyMode) { $("previewNotice").textContent = replyMode === "recorded" ? "" : t(replyMode); $("previewNotice").hidden = replyMode === "recorded"; }
     sendLabel.textContent = t(sendButton.disabled ? "loading" : "send");
     copyAnswerButton.textContent = t(copyStatus);
     resultMode.textContent = t({ idle: "waiting", loading: "inProgress", success: "result", error: "failed" }[phase]);
@@ -247,8 +251,8 @@
 
     question.classList.toggle("is-demo-typing", true);
     const notice = $("previewNotice");
-    notice.hidden = false;
-    replyMode = "recorded";notice.textContent = t(replyMode);
+    notice.hidden = true;
+    replyMode = "recorded";notice.textContent = "";
     question.value = "";
     const sequence = recordings.kitchen?.[isEnglish ? "en" : "es"] || [recording("C")];
     for (const data of sequence) {
@@ -857,7 +861,7 @@
     if (loadingState) loadingState.hidden = true;
     httpStatus.textContent = "";
     resultMode.textContent = t("waiting");
-    elapsed.textContent = "";
+    elapsed.textContent = preview ? t("recordedDuration") : "";
   }
 
   function renderError(message) {
@@ -881,11 +885,12 @@
     errorBox.hidden = true;
     resultContent.hidden = false;
 
+    $("decisionRow").hidden = !abstained;
     decisionPill.textContent = abstained ? t("abstention") : t("answer");
     decisionPill.classList.toggle("abstain", abstained);
     decisionText.textContent = abstained
       ? t("noEvidence")
-      : t("evidence");
+      : "";
 
     renderMarkdown(answerText, answer || (abstained ? t("abstained") : t("emptyAnswer")));
 

@@ -973,3 +973,14 @@ test('query technical details follow the answer and source disclosure',()=>{
  assert.ok(html.indexOf('id="simpleProgressSteps"')<html.indexOf('id="resultContent"'));
  assert.ok(html.indexOf('id="sourcesDetails"')<html.indexOf('id="progressDetails"'));
 });
+
+test('response timing is in the header and successful answers have no duplicate title or explanation',async()=>{
+ const p=openPage('es',new Map(),{offline:true});p.node('question').value='Question';await p.node('sendButton').handlers.click();
+ assert.equal(p.node('decisionRow').hidden,true);assert.equal(p.node('decisionText').textContent,'');
+ assert.equal(p.node('resultContent').contains(p.node('elapsed')),false);
+ assert.ok(p.document.querySelectorAll('.panel-head').some(node=>node.contains(p.node('elapsed'))));
+ assert.equal(p.document.querySelectorAll('[data-i18n]').filter(node=>node.getAttribute('data-i18n')==='page.answer').length,0);
+ assert.equal(p.document.querySelectorAll('[data-i18n]').filter(node=>node.getAttribute('data-i18n')==='page.ctrl_enter_to_submit').length,0);
+ assert.ok(!html.includes('data-i18n="page.adaptable"'));
+ for(const lang of ['es','en']) {p.changeLanguage(lang);assert.ok(p.node('architectureContent').textContent.includes(p.t('page.how_summary')));}
+});

@@ -18,7 +18,7 @@ const R4RI18n = (() => {
       "page.engineering_retrieval": "Nomic embeddings y PostgreSQL/pgvector recuperan documentación; AWS Lambda Java 21 y S3 Vectors ofrecen respaldo.",
       "page.engineering_stack": "Java 21, Spring Boot y Spring AI coordinan el RAG bilingüe.",
       "page.engineering_architecture": "Ingeniería y arquitectura",
-      "page.how_summary": "La consulta busca documentación pertinente y genera una respuesta con citas. Puedes abrir las fuentes y revisar los detalles de cada ejecución.",
+      "page.how_summary": "La consulta busca documentos y genera una respuesta con fuentes verificables. El mismo sistema puede adaptarse a manuales y documentación de otros sectores.",
       "notQueried": "No consultado: abre Detalles técnicos para consultar el estado.",
       "rateLimited": "El servicio está ocupado o ha alcanzado su límite de consultas. Inténtalo más tarde.",
       "done": "Respuesta lista",
@@ -233,7 +233,7 @@ const R4RI18n = (() => {
       "page.engineering_retrieval": "Nomic embeddings and PostgreSQL/pgvector retrieve documents; AWS Lambda Java 21 and S3 Vectors provide backup.",
       "page.engineering_stack": "Java 21, Spring Boot and Spring AI coordinate bilingual RAG.",
       "page.engineering_architecture": "Engineering & Architecture",
-      "page.how_summary": "Your question retrieves relevant documents and generates an answer with citations. You can open the sources and inspect each execution.",
+      "page.how_summary": "Your question finds relevant documents and produces an answer with sources you can check. The same system can be adapted to manuals and documentation in other industries.",
       "notQueried": "Not checked: open Technical details to query the status.",
       "rateLimited": "The service is busy or has reached its request limit. Please try again later.",
       "done": "Answer ready",
@@ -435,7 +435,7 @@ const R4RI18n = (() => {
   };
   Object.assign(dictionary.en, {
     saved: "endpoint saved", copied: "Copied", copy: "Copy", querying: "querying",
-    inProgress: "query in progress", result: "RAG response", failed: "the query failed",
+    inProgress: "query in progress", result: "Answer ready", failed: "the query failed",
     loading: "Querying…", send: "Get an answer", waiting: "waiting for a query",
     abstention: "NOT ENOUGH INFORMATION", answer: "AI RESPONSE",
     noEvidence: "There is not enough evidence to answer reliably.",
@@ -453,7 +453,7 @@ const R4RI18n = (() => {
   });
   Object.assign(dictionary.es, {
     saved: "endpoint guardado", copied: "Copiado", copy: "Copiar", querying: "consultando",
-    inProgress: "consulta en curso", result: "respuesta RAG", failed: "la consulta ha fallado",
+    inProgress: "consulta en curso", result: "Respuesta lista", failed: "la consulta ha fallado",
     loading: "Consultando…", send: "Obtener respuesta", waiting: "esperando una consulta",
     abstention: "INFORMACIÓN INSUFICIENTE", answer: "RESPUESTA DE LA IA",
     noEvidence: "No hay evidencia suficiente para responder con seguridad.",

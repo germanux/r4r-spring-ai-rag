@@ -11,7 +11,7 @@ const response={stage:'ANSWER_READY',answer:'Safe **answer** [S1]',abstained:fal
   const page=await context.newPage();let requests=[],errors=[],status=200;
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{
-   const original=window.setTimeout;window.setTimeout=(fn,delay,...args)=>original(fn,delay<10000?Math.min(delay,3):delay,...args);
+   const original=window.setTimeout;window.setTimeout=(fn,delay,...args)=>original(fn,delay===3000?30:delay<10000?Math.min(delay,3):delay,...args);
    window.playback={questions:[],answers:[],pressed:false,sourcesPressed:false};
    const value=Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value');
    Object.defineProperty(HTMLTextAreaElement.prototype,'value',{...value,set(v){window.playback.questions.push(v);value.set.call(this,v)}});
