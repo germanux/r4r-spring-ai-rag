@@ -37,6 +37,13 @@ public final class MarkdownDocumentLoader {
 
     /** Strict bilingual corpus selection for the complete ingestion CLI. */
     public List<KnowledgeDocument> loadBilingual() throws IOException {
+        return loadBilingualCorpus().documents();
+    }
+
+    /** One validated snapshot, including explicit exclusions for selective database cleanup. */
+    public record BilingualCorpus(List<KnowledgeDocument> documents, List<String> excludedSources) { }
+
+    public BilingualCorpus loadBilingualCorpus() throws IOException {
         var documents = loadAll().stream()
                 .filter(d -> d.source().matches("(?:es|en)/(?:[^/]+/)*R4R_\\d+_[^/]+\\.md"))
                 .toList();
@@ -44,6 +51,7 @@ public final class MarkdownDocumentLoader {
         ids.put("es", new java.util.HashSet<>());
         ids.put("en", new java.util.HashSet<>());
         var selected = new java.util.ArrayList<KnowledgeDocument>();
+        var excluded = new java.util.ArrayList<String>();
         for (var document : documents) {
             String language = document.source().substring(0, 2);
             var matcher = java.util.regex.Pattern.compile("R4R_(\\d+)_").matcher(document.source());
@@ -54,8 +62,8 @@ public final class MarkdownDocumentLoader {
                     || !java.util.regex.Pattern.compile("(?m)^language: *[\"']?" + language + "[\"']? *$")
                     .matcher(parts[1]).find())
                 throw new IllegalArgumentException("Invalid language/frontmatter: " + document.source());
-            if (!java.util.regex.Pattern.compile("(?m)^ingest_into_editorial_rag: *false *$")
-                    .matcher(parts[1]).find()) selected.add(document);
+            if (isExcludedFromEditorialRag(document)) excluded.add(document.source());
+            else selected.add(document);
         }
         if (ids.get("es").isEmpty() || !ids.get("es").equals(ids.get("en"))) {
             var missingEn = new java.util.TreeSet<>(ids.get("es")); missingEn.removeAll(ids.get("en"));
@@ -71,7 +79,15 @@ public final class MarkdownDocumentLoader {
         }
         if (!selectedEs.equals(selectedEn))
             throw new IllegalArgumentException("Translation pair ingestion flags disagree");
-        return List.copyOf(selected);
+        return new BilingualCorpus(List.copyOf(selected), List.copyOf(excluded));
+    }
+
+    /** Only frontmatter can opt a source out; matching text in its body has no effect. */
+    public static boolean isExcludedFromEditorialRag(KnowledgeDocument document) {
+        String[] parts = document.content().split("---", 3);
+        return parts.length == 3 && parts[0].isBlank()
+                && java.util.regex.Pattern.compile("(?m)^ingest_into_editorial_rag: *false *\r?$")
+                        .matcher(parts[1]).find();
     }
 
     private KnowledgeDocument read(Path root, Path path) {

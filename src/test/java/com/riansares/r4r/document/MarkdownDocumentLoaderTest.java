@@ -70,4 +70,35 @@ class MarkdownDocumentLoaderTest {
         var loader = new MarkdownDocumentLoader(new KnowledgeProperties(root, 4096, 200));
         org.assertj.core.api.Assertions.assertThatThrownBy(loader::loadBilingual).hasMessageContaining("flags disagree");
     }
+    @Test
+    void excludedDocumentsAreRetainedInTheValidatedSnapshotForCleanup() throws Exception {
+        for (String language : java.util.List.of("es", "en")) {
+            Files.createDirectories(root.resolve(language + "/sources"));
+            Files.writeString(root.resolve(language + "/sources/R4R_71_REFERENCES.md"),
+                    "---\nlanguage: " + language + "\ningest_into_editorial_rag: false\n---\n# References");
+        }
+        var corpus = new MarkdownDocumentLoader(new KnowledgeProperties(root, 4096, 200)).loadBilingualCorpus();
+        assertThat(corpus.documents()).isEmpty();
+        assertThat(corpus.excludedSources()).containsExactly(
+                "en/sources/R4R_71_REFERENCES.md", "es/sources/R4R_71_REFERENCES.md");
+    }
+
+    @Test
+    void bodyTextCannotExcludeADocument() {
+        assertThat(MarkdownDocumentLoader.isExcludedFromEditorialRag(new KnowledgeDocument("guide.md",
+                "# Guide\ningest_into_editorial_rag: false"))).isFalse();
+        assertThat(MarkdownDocumentLoader.isExcludedFromEditorialRag(new KnowledgeDocument("guide.md",
+                "---\nlanguage: es\n---\n# Guide\ningest_into_editorial_rag: false"))).isFalse();
+    }
+
+    @Test
+    void actualExternalReferenceDocumentsAreExcludedFromTheBilingualCorpus() throws Exception {
+        var corpus = new MarkdownDocumentLoader(new KnowledgeProperties(Path.of("knowledge"), 1_048_576, 2000))
+                .loadBilingualCorpus();
+        String es = "es/sources/R4R_71_REFERENCIAS_TECNICAS_INTERNACIONALES_2026.md";
+        String en = "en/sources/R4R_71_INTERNATIONAL_TECHNICAL_REFERENCES_2026.md";
+        assertThat(corpus.excludedSources()).contains(es, en);
+        assertThat(corpus.documents()).extracting(KnowledgeDocument::source).doesNotContain(es, en);
+    }
+
 }

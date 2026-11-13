@@ -49,6 +49,10 @@ public class KnowledgeIngestionService {
         try {
             for (KnowledgeDocument document : documentLoader.loadAll()) {
                 discoveredSources++;
+                if (MarkdownDocumentLoader.isExcludedFromEditorialRag(document)) {
+                    deletedSources += deleteExcludedSource(document.source());
+                    continue;
+                }
 
                 byte[] documentChecksum = sha256(
                         document.content().getBytes(StandardCharsets.UTF_8));
@@ -100,7 +104,8 @@ public class KnowledgeIngestionService {
     /** Complete NAS workflow. The legacy documentary-only entry point remains compatible. */
     @Transactional(rollbackFor = Exception.class)
     public java.util.Map<String, Object> ingestIndexed(boolean checkOnly, boolean replaceAll) throws Exception {
-        var documents = documentLoader.loadBilingual();
+        var corpus = documentLoader.loadBilingualCorpus();
+        var documents = corpus.documents();
         var chunks = new java.util.LinkedHashMap<String, List<MarkdownChunk>>();
         for (var document : documents) {
             // Metadata is preserved for source checksums but is not evidence to embed.
@@ -151,17 +156,28 @@ public class KnowledgeIngestionService {
                 "SELECT source_path FROM knowledge_sources", String.class));
         existing.addAll(jdbcTemplate.queryForList("SELECT DISTINCT metadata->>'source' FROM vector_store", String.class));
         existing.removeAll(chunks.keySet());
+        existing.removeAll(corpus.excludedSources());
         if (!existing.isEmpty() && !replaceAll)
             throw new IllegalStateException("Obsolete sources present; explicit --r4r.ingestion.replace-all=true required");
+        int deletedSources = 0;
         if (replaceAll) {
             jdbcTemplate.update("DELETE FROM vector_store");
             jdbcTemplate.update("DELETE FROM knowledge_chunks");
             jdbcTemplate.update("DELETE FROM knowledge_sources");
+        } else {
+            for (String source : corpus.excludedSources()) deletedSources += deleteExcludedSource(source);
         }
+        int unchangedSources = 0;
         var store = indexedStore.getObject();
         for (var document : documents) {
-            long sourceId = insertOrUpdateSource(document.source(), sha256(document.content().getBytes(StandardCharsets.UTF_8)));
+            byte[] checksum = sha256(document.content().getBytes(StandardCharsets.UTF_8));
             var parts = chunks.get(document.source());
+            Long unchangedId = findSourceIdByPathAndSha256(document.source(), checksum);
+            if (unchangedId != null && isSourceIndexed(unchangedId, document.source(), parts.size())) {
+                unchangedSources++;
+                continue;
+            }
+            long sourceId = insertOrUpdateSource(document.source(), checksum);
             replaceChunks(sourceId, parts);
             store.index(parts);
             System.out.println("R4R_INDEXED_SOURCE=" + document.source() + " chunks=" + parts.size());
@@ -180,8 +196,34 @@ public class KnowledgeIngestionService {
                     OR to_jsonb(c.heading_path) IS DISTINCT FROM v.metadata->'headingPath'
                 """, Long.class);
         if (mismatches == null || mismatches != 0) throw new IllegalStateException("Vector content/metadata mismatch");
+        result.put("deletedSources", deletedSources);
+        result.put("unchangedSources", unchangedSources);
+        result.put("indexedSources", documents.size() - unchangedSources);
         result.put("success", true);
         return result;
+    }
+
+    /** The caller's transaction covers all three tables, including orphan vectors. */
+    private int deleteExcludedSource(String source) {
+        jdbcTemplate.update("DELETE FROM vector_store WHERE metadata->>'source' = ?", source);
+        jdbcTemplate.update("""
+                DELETE FROM knowledge_chunks WHERE source_id IN
+                    (SELECT id FROM knowledge_sources WHERE source_path = ?)
+                """, source);
+        return jdbcTemplate.update("DELETE FROM knowledge_sources WHERE source_path = ?", source);
+    }
+
+    private boolean isSourceIndexed(long sourceId, String source, int expectedChunks) {
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject("""
+                SELECT (SELECT count(*) FROM knowledge_chunks WHERE source_id = ?) = ?
+                   AND (SELECT count(*) FROM vector_store WHERE metadata->>'source' = ?) = ?
+                   AND NOT EXISTS (
+                       SELECT 1 FROM knowledge_chunks c
+                       LEFT JOIN vector_store v ON v.metadata->>'source' = ?
+                           AND (v.metadata->>'ordinal')::integer = c.ordinal
+                       WHERE c.source_id = ? AND (v.id IS NULL OR c.content IS DISTINCT FROM v.content
+                           OR to_jsonb(c.heading_path) IS DISTINCT FROM v.metadata->'headingPath'))
+                """, Boolean.class, sourceId, expectedChunks, source, expectedChunks, source, sourceId));
     }
 
     private void addCounts(java.util.Map<String, Object> result) {

@@ -9,7 +9,7 @@ version: "1.0"
 status: "referencias_verificadas"
 content_zone: "CONOCIMIENTO_COMPLEMENTARIO"
 scope: "Referencias españolas, europeas y estadounidenses para nuevas guías"
-ingest_into_editorial_rag: true
+ingest_into_editorial_rag: false
 ---
 
 # Riansares 4R — fuentes técnicas externas verificadas noviembre 2026

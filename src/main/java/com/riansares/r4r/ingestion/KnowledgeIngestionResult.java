@@ -6,7 +6,7 @@ package com.riansares.r4r.ingestion;
  * @param discoveredSources total number of discovery sources found in the configured root directory
  * @param changedSources     number of sources that were actually updated (checksum differs)
  * @param unchangedSources   number of sources skipped because checksum matches existing record
- * @param deletedSources     number of sources removed from storage (unsupported, always zero for now)
+ * @param deletedSources     number of explicitly excluded sources removed from storage
  * @param persistedChunks    total chunk count persisted across all changed sources
  * @param durationMs         ingestion duration in milliseconds
  */
