@@ -2,18 +2,18 @@
 title: "Patios and flooring — slab base, floor finish, damp and drainage"
 project: "Riansares 4R"
 language: "en"
-document_type: "technical_guide"
+document_type: "guia_tecnica"
 created_at: "2026-11-13"
 updated_at: "2026-11-13"
-status: "general_guidance_and_hypothetical_cases"
-content_zone: "SUPPLEMENTARY_KNOWLEDGE"
+status: "orientacion_general_y_casos_hipoteticos"
+content_zone: "CONOCIMIENTO_COMPLEMENTARIO"
 ---
 
 # Patios and flooring — slab base, floor finish, damp and drainage
 
-## What is the difference between a solera and a solado?
+## What is the difference between a concrete floor base and a floor finish?
 
-A **solera** is a base layer or supporting element on which flooring may be laid. A **solado** is the walkable floor finish, such as tiles or another suitable material. They are not synonyms; the construction system and intended use determine the appropriate build-up.
+A **concrete floor base** is a base layer or supporting element on which flooring may be laid. A **floor finish** is the walkable floor finish, such as tiles or another suitable material. They are not synonyms; the construction system and intended use determine the appropriate build-up.
 
 ## Can the floor finish be replaced without rebuilding the slab base?
 

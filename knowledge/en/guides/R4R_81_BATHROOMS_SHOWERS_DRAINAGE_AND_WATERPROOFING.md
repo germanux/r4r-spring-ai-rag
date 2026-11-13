@@ -1,13 +1,13 @@
 ---
 title: "Riansares 4R — bathrooms: leaks, showers, drainage and waterproofing"
 project: "Riansares 4R"
-document_type: "technical_guide"
+document_type: "guia_tecnica"
 language: "en"
 created_at: "2026-11-13"
 updated_at: "2026-11-13"
 version: "1.0"
-status: "general_guide"
-content_zone: "SUPPLEMENTARY_KNOWLEDGE"
+status: "guia_general"
+content_zone: "CONOCIMIENTO_COMPLEMENTARIO"
 scope: "Partial and full bathroom renovation, water-tightness, wastewater drainage and ventilation"
 ingest_into_editorial_rag: true
 ---
@@ -32,7 +32,7 @@ It depends on the position and height of the drain, trap, space available, falls
 
 ## What happens when a toilet is relocated?
 
-Waste must flow along a route compatible with the soil stack, gradients, diameters and inspection access. Moving a toilet can require raising the floor, adding a service boxing or changing drainage. Check feasibility on site; do not promise relocation without study.
+Waste must flow along a route compatible with the soil stack, gradients, diameters and inspection access. Moving a toilet can require raising the floor, adding a service enclosure or changing drainage. Check feasibility on site; do not promise relocation without study.
 
 ## What can be done with a small bathroom without a window?
 

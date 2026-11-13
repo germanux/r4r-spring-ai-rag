@@ -2,11 +2,11 @@
 title: "Kitchens — scope, materials and trade coordination"
 project: "Riansares 4R"
 language: "en"
-document_type: "technical_guide"
+document_type: "guia_tecnica"
 created_at: "2026-11-13"
 updated_at: "2026-11-13"
-status: "general_guidance_and_hypothetical_cases"
-content_zone: "SUPPLEMENTARY_KNOWLEDGE"
+status: "orientacion_general_y_casos_hipoteticos"
+content_zone: "CONOCIMIENTO_COMPLEMENTARIO"
 ---
 
 # Kitchens — scope, materials and trade coordination

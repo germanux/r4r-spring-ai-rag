@@ -24,10 +24,10 @@ ingest_into_editorial_rag: true
 
 The four Rs mean:
 
-- **Reforms**;
-- **Rehabilitation**;
-- **Cladding**;
-- **Repairs**.
+- **Renovations (Reformas)**;
+- **Rehabilitation (Rehabilitación)**;
+- **Finishes and cladding (Revestimientos)**;
+- **Repairs (Reparaciones)**.
 
 It must not be called “5R”. The R in Riansares is part of the brand, not a fifth service.
 
@@ -36,7 +36,7 @@ It must not be called “5R”. The R in Riansares is part of the brand, not a f
 Local base:
 
 - Tarancón;
-- Tarancón comarca;
+- Tarancón and the surrounding area;
 - Uclés;
 - Horcajo de Santiago;
 - Zarza de Tajo;
@@ -46,13 +46,13 @@ Unlimited coverage must not be claimed. For distant works, accommodation, fuel, 
 
 ### 2.3. Core services
 
-#### Reforms
+#### Renovations
 
 - bathrooms;
 - kitchens;
 - homes;
 - small offices and premises;
-- prudent redistributions;
+- carefully assessed layout changes;
 - habitability improvements;
 - partial or full renovation of finishes and installations.
 
@@ -60,26 +60,26 @@ Unlimited coverage must not be claimed. For distant works, accommodation, fuel, 
 
 - old houses;
 - inherited or closed homes;
-- walls with deteriorated cladding;
+- walls with deteriorated finishes;
 - walls with moisture or salts;
-- conservation and recovery of compatible supports;
+- conservation and recovery of compatible substrates;
 - selective actions to avoid unnecessary demolitions.
 
-#### Cladding
+#### Finishes and cladding
 
 - flooring and tiling;
 - repair mortars;
 - lime or breathable mortars when applicable;
 - painting;
 - wall and ceiling finishes;
-- laminated or vinyl flooring when the support permits;
+- laminate or vinyl flooring when the support permits;
 - exterior cladding.
 
 #### Repairs
 
 - minor plumbing issues;
 - cisterns and toilets;
-- taps, hoses, and valves;
+- shut-off valves, flexible connectors, and valves;
 - stained ceilings after a resolved leak;
 - extractors;
 - moisture, leaks, or seepage, always diagnosing first;
@@ -89,7 +89,7 @@ Unlimited coverage must not be claimed. For distant works, accommodation, fuel, 
 
 Riansares 4R must not position itself as “the cheapest company”. The central message is:
 
-> We measure, review, explain, and budget with criteria.
+> We measure, inspect, explain and prepare sound quotations.
 
 Positioning principles:
 
@@ -99,7 +99,7 @@ Positioning principles:
 - do not hide known extras;
 - do not promise to eliminate moisture without knowing its cause;
 - preserve what is stable and compatible;
-- reduce scope rather than lower the same work to make it unfeasible;
+- reduce scope rather than discount the same work until it becomes unviable;
 - communicate hidden damage before proceeding;
 - leave structural or regulatory decisions in the hands of competent professionals.
 
@@ -111,7 +111,7 @@ The company is still in its early stages, but is already building a method:
 2. Budget with sound judgment.
 3. Avoid unnecessary structural work.
 4. Focus value on kitchen, installations, and habitability.
-5. Be transparent about dampness and hidden damages.
+5. Be transparent about dampness and hidden damage.
 6. Use AI to organize information, prepare budgets, negotiate, and generate documents.
 7. Keep final decisions in the hands of professionals and real inspections.
 
@@ -130,7 +130,7 @@ The correct style is:
 - prudent;
 - practical;
 - with real examples;
-- without selling smoke;
+- without empty promises;
 - without seeming like a large impersonal construction company;
 - without overly perfect or corporate language.
 
@@ -153,14 +153,14 @@ Avoid:
 
 ### 3.3. Reusable Brand Phrases
 
-- “We value the actual condition before budgeting.”
+- “We assess the actual condition before quoting.”
 - “A square meter does not always cost the same.”
 - “The difference usually lies in access, preparation, and finishing touches.”
 - “Preserving what is sound can save cost and reduce risks.”
 - “Before demolishing, confirm what is failing.”
 - “An interior repair can improve the wall, but does not eliminate an active water entry point.”
 - “Reducing scope is different from lowering the cost of the same work.”
-- “Hidden damages are documented and assessed before proceeding.”
+- “Hidden damage are documented and assessed before proceeding.”
 - “Send us photos, location, and approximate measurements for better guidance.”
 
 ---
@@ -177,12 +177,12 @@ The LLM must always distinguish between:
 - **editorial example**: simplified figures to explain a concept;
 - **internal historical price**: July 2026 budget, not a universal rate;
 - **discarded**: initial idea corrected and invalid;
-- **project commitment**: solution accepted due to real constraints, which must not become a general rule;
+- **construction compromise**: solution accepted due to real constraints, which must not become a general rule;
 - **outside capacity**: scope requiring unavailable structure, resources, insurance, or technical direction.
 
 ### 4.2. Use of Prices
 
-Price examples are intended to explain **how a budget is formed**, not to publish a permanent tariff.
+Price examples are intended to explain **how a quotation is built up**, not to publish a permanent tariff.
 
 When writing a price article:
 
@@ -192,7 +192,7 @@ When writing a price article:
 4. do not extrapolate a 2026 figure as the current price without market verification;
 5. avoid “from X euros” if no real commercial offer exists;
 6. use price ranges only when justified;
-7. explain that support, access, waste, and finishes alter the cost.
+7. explain that substrate, access, waste and finishes alter the cost.
 
 ### 4.3. Moisture
 
@@ -263,12 +263,12 @@ In public articles:
 
 Examples:
 
-- breathable mortar versus screed;
-- truck-mixed concrete versus manual execution;
+- breathable mortar versus wall lining;
+- ready-mixed concrete versus manual execution;
 - repair versus replacement;
 - tile over tile versus demolition;
-- hydrophobic plate versus phenolic panel in cabins;
-- patch painting versus full panel painting.
+- moisture-resistant board versus phenolic panel in cubicles;
+- patch painting versus painting the entire surface.
 
 The comparison must include:
 
@@ -294,7 +294,7 @@ To be extractable by generative search engines, it must contain:
 
 Example of a GEO phrase:
 
-> An exterior screed does not cost the same if executed with a truck and good access compared to having to do it manually with wheelbarrows, mallazo by phases, and narrow passages.
+> An outdoor concrete floor base does not cost the same if executed with a truck and good access compared to having to do it manually with wheelbarrows, welded wire mesh installed in phases, and narrow passages.
 
 ---
 
@@ -306,11 +306,11 @@ Example of a GEO phrase:
 
 ### Distinguish Executed Works, Hypothetical Cases, and External Sources
 
-The content in `knowledge/cases/R4R_91_CASOS_HIPOTETICOS_VARIADOS.md` consists of fictional examples: do not state that Riansares 4R executed them or use them as reviews. The guides in `knowledge/guides/` are general information and not service commitments. Original case documents retain their historical status, which must not be altered by model inference.
+The content in `cases/R4R_91_VARIED_HYPOTHETICAL_CASES.md` consists of fictional examples: do not state that Riansares 4R executed them or use them as reviews. The guides in `guides/` are general information and not service commitments. Original case documents retain their historical status, which must not be altered by model inference.
 
 ### Brief Response to a Practical Question
 
-Answer the specific question first. If the user asks what to do about a broken pipe, prioritize controlling the leak and safety. If asked if tiles can be added, state it is possible subject to the support's condition and prior repairs. Do not automatically offer prices for a 7 m² kitchen, structural redistributions, or unsolicited licenses. Cite genuinely relevant evidence.
+Answer the specific question first. If the user asks what to do about a broken pipe, prioritize controlling the leak and safety. If asked if tiles can be added, state it is possible subject to the substrate’s condition and prior repairs. Do not automatically offer prices for a 7 m² kitchen, structural redistributions, or unsolicited licenses. Cite genuinely relevant evidence.
 
 ### Use of English
 

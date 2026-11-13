@@ -2,11 +2,11 @@
 title: "Practical guide — water leaks and domestic plumbing failures"
 project: "Riansares 4R"
 language: "en"
-document_type: "technical_guide"
+document_type: "guia_tecnica"
 created_at: "2026-11-13"
 updated_at: "2026-11-13"
-status: "general_guidance_and_hypothetical_cases"
-content_zone: "SUPPLEMENTARY_KNOWLEDGE"
+status: "orientacion_general_y_casos_hipoteticos"
+content_zone: "CONOCIMIENTO_COMPLEMENTARIO"
 ---
 
 # Practical guide — water leaks and domestic plumbing failures
@@ -25,7 +25,7 @@ Yes, if the remaining installation is in adequate condition and the repaired joi
 
 ## When should the entire water installation be assessed?
 
-When failures recur, pressure is frequently lost, corrosion is found, branches are difficult to trace, or renovations would leave old pipes inaccessible. Assessment does not automatically imply full replacement; it should identify actual risks and opportunities.
+When failures recur, pressure is frequently lost, corrosion is found, branches are difficult to access for inspection, or renovations would leave old pipes inaccessible. Assessment does not automatically imply full replacement; it should identify actual risks and opportunities.
 
 ## Can new tiles be installed immediately after sealing a leak?
 

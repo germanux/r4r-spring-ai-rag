@@ -1,13 +1,13 @@
 ---
 title: "Riansares 4R — kitchens: broken pipes, leaks and pre-renovation decisions"
 project: "Riansares 4R"
-document_type: "technical_guide"
+document_type: "guia_tecnica"
 language: "en"
 created_at: "2026-11-13"
 updated_at: "2026-11-13"
 version: "1.0"
-status: "general_guide"
-content_zone: "SUPPLEMENTARY_KNOWLEDGE"
+status: "guia_general"
+content_zone: "CONOCIMIENTO_COMPLEMENTARIO"
 scope: "Kitchen plumbing, leaks, planning, wall tiles and progressive inquiries"
 ingest_into_editorial_rag: true
 ---

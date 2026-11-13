@@ -1,23 +1,39 @@
-# Riansares 4R — Cases of Offices, Closets, Bathrooms and Commercial Filters
+---
+title: "Riansares 4R — Office, Cave, Bathroom and Client Screening Cases"
+project: "Riansares 4R"
+document_type: "Canonical editorial knowledge"
+language: "en"
+created_at: "2026-07-27"
+updated_at: "2026-11-13"
+version: "4.1"
+status: "canonical"
+content_zone: "EDITORIAL"
+canonical_set: "R4R_EDITORIAL_2026-07-27"
+part: "3/4"
+scope: "Canonical cases F–I"
+ingest_into_editorial_rag: true
+---
+
+# Riansares 4R — Office, Cave, Bathroom and Client Screening Cases
 
 ## 11. Case F — Office and Corporate Restroom Renovation
 
 ### 11.1. Context
 
-Corporate project divided into three packages:
+Local corporate project divided into three packages:
 
 1. Redistributing conference room and office space;
 2. Comprehensive restroom renovation;
 3. General painting and false ceiling.
 
-The main lesson was that a corporate renovation should not be budgeted as a simple domestic project. There is coordination, documentation, parallel teams, compliance, risk of timeline and visual quality.
+The main lesson was that a corporate renovation should not be budgeted as a simple domestic project. There is coordination, documentation, parallel teams, compliance, schedule risk and visual quality.
 
-### 11.2. Redistributing
+### 11.2. Layout Changes
 
 Works studied:
 
-- Demolition of factory partition;
-- Demolition of construction shelves;
+- Demolition of masonry partition;
+- Demolition of built-in masonry shelving;
 - Removal of debris;
 - New acoustic partition;
 - Conservation and selective closure of doors;
@@ -31,7 +47,7 @@ New partition:
 
 - Metal framing;
 - Mineral wool;
-- Double plate on both sides;
+- Double boarding on both sides;
 - Bands and sealing;
 - Finish for painting.
 
@@ -51,31 +67,31 @@ Criteria:
 
 Preliminary layout:
 
-- Approximate space of 2.50 × 3.20 m;
-- Three cabins on one side;
+- Approximate space of 2,50 × 3,20 m;
+- Three cubicles on one side;
 - Two sinks on the other;
 - One exterior door preserved;
 - Another door annulled;
-- Sanitation conditional to verification;
-- Cabin doors preferably outward;
-- Approximate cabin depth of 1.20 m;
-- Widths of slopes of thicknesses and regulations.
+- Drainage subject to checking;
+- Cubicle doors preferably outward;
+- Approximate cubicle depth of 1,20 m;
+- Widths subject to partition thicknesses and regulations.
 
-Cabin systems to be compared:
+Cubicle systems to be compared:
 
-- Reinforced hydrophobic panel;
+- Reinforced moisture-resistant board;
 - Compact phenolic panel;
-- Lightweight covered factory.
+- Lightweight rendered masonry.
 
 There is no universally better solution. Cost, space, impacts, humidity, maintenance, and finish must be compared.
 
-### 11.5. False Ceiling
+### 11.5. Suspended Ceiling
 
 Criteria:
 
 - Clean dry or with low humidity;
 - Test on an inconspicuous panel;
-- Do not use vapor without verifying compatibility;
+- Do not use steam without verifying compatibility;
 - Replace panels that do not recover uniformity;
 - Verify format and availability;
 - Separate external cleaning from internal cleaning of ducts;
@@ -122,7 +138,7 @@ It is not advisable to count the coordinator as a productive worker if their act
 
 ### 12.1. Context and real objective
 
-Case of a cave or auxiliary cellar formed by several small rooms, vaults, natural arches, corners, and very irregular supports. Old white lime, brown earth or limestone, flaking, surface cracks, poyetes, and elements typical of a space used as a storage or cellar were observed.
+Case of a cave or auxiliary cellar formed by several small rooms, vaults, natural arches, corners, and very irregular substrates. Old white lime, brown earth or limestone, flaking, surface cracks, built-in masonry benches, and elements typical of a space used as a storage or cellar were observed.
 
 The objective was not to convert it into a smooth room or residential space. It was:
 
@@ -130,8 +146,8 @@ The objective was not to convert it into a smooth room or residential space. It 
 - stabilize ceilings and loose areas;
 - prevent continuous falling of earth or finishes;
 - preserve the rustic geometry;
-- maintain a system compatible with an old support that needs to evacuate moisture;
-- execute a solution provided for the auxiliary use of the space.
+- maintain a system compatible with an old substrate that needs to evacuate moisture;
+- execute a solution proportionate to the ancillary use of the space.
 
 Working hypothesis used in the historical budget:
 
@@ -141,25 +157,25 @@ Working hypothesis used in the historical budget:
 
 These figures were budget limits, not a definitive geometric measurement.
 
-### 12.2. Lime Plaster, NHL, and Hybrid Mortars
+### 12.2. Air Lime, NHL and Hybrid Mortars
 
 Several materials were compared:
 
-- **Air lime**: highly breathable and traditional, but slow-setting and less suitable for heavy loads over wet or weak supports;
+- **Air lime**: highly breathable and traditional, but slow-setting and less suitable for thick applications over damp or weak substrates;
 - **Natural hydraulic lime NHL 2 or NHL 3.5**: technically the most compatible option with stone, earth, and ancient buildings; sets with ambient humidity and maintains moderate stiffness;
 - **Premixed lime mortar**: facilitates dosing and regularity, but its data sheet must be reviewed;
-- **Hybrid lime mortar with hydraulic or cementitious aggregate**: cheaper and more practical, although typically stiffer and less traditional;
+- **Hybrid lime mortar with hydraulic or cementitious binder**: cheaper and more practical, although typically stiffer and less traditional;
 - **Pure cement**: discarded as a general render for the cave; may be reserved for localized brickwork or reinforcements if the system requires it.
 
-In the case, a commercial white render with lime, vapor-permeable and projectable, had been tested. It was considered usable on firm areas, but not equivalent to pure NHL restoration mortar.
+In the case, a commercial white render with lime, vapor-permeable and spray-applied, had been tested. It was considered usable on sound areas, but not equivalent to pure NHL restoration mortar.
 
 Editorial Rule:
 
 > Do not classify a mortar as suitable merely because the word “lime” appears on the bag. The mortar must be reviewed for binders, strength, thickness, support, and breathability.
 
-### 12.3. First Manual Layer and Preparation
+### 12.3. First Hand-applied Coat and Preparation
 
-An experienced worker noted that the first projected layer would not adhere well to earth or loose limestone. The final criterion was:
+An experienced worker noted that the first sprayed layer would not adhere well to earth or loose limestone. The final criterion was:
 
 1. Move objects and protect the area;
 2. Scrape only loose material;
@@ -167,8 +183,8 @@ An experienced worker noted that the first projected layer would not adhere well
 4. Do not destroy the remaining firm white lime;
 5. Create a small pilot section;
 6. Place mesh on ceilings and weak points;
-7. Apply the first layer of lime mortar by hand, pressing it against the support and mesh;
-8. Leave a rustic finish, without mastering the entire geometry.
+7. Apply the first coat of lime mortar by hand, pressing it against the support and mesh;
+8. Leave a rustic finish, without screeding the entire irregular geometry flat.
 
 The pilot section serves to check:
 
@@ -181,12 +197,12 @@ The pilot section serves to check:
 
 ### 12.4. Galvanized Mesh
 
-The preferred mesh was triple-twisted galvanized, fine and flexible, more adaptable to vaults than a rigid mesh of links.
+The preferred mesh was triple-twisted galvanized, fine and flexible, more adaptable to vaults than a rigid linked mesh.
 
 Reference studied:
 
 - Approximate mesh spacing of 13 mm;
-- Approximate wire diameter of 0.7 mm;
+- Approximate wire diameter of 0,7 mm;
 - Roll of around 1 × 50 m.
 
 Placement criteria:
@@ -212,7 +228,7 @@ The mesh does not convert an unstable support into a safe structure.
 
 ### 12.5. Thickness and Consumption
 
-The target thickness ended up being around 10 mm total, applied in one or two passes depending on support. It should not be promised a uniform layer of 20 mm across an irregular cave without measuring consumption, added weight, and substrate condition.
+The target thickness ended up being around 10 mm total, applied in one or two passes depending on support. Do not promise a uniform layer of 20 mm across an irregular cave without measuring consumption, added weight, and substrate condition.
 
 On surfaces of this type, consumption depends more on:
 
@@ -225,22 +241,22 @@ On surfaces of this type, consumption depends more on:
 
 than on square meters of floor.
 
-### 12.6. Brick Arches and Formwork
+### 12.6. Brick Arches and Centring
 
-It was studied to add two brick arches and a small reinforcement wall. The conclusion was that the arches were the part that most increased difficulty and cost.
+Adding two brick arches was considered and a small reinforcement wall. The conclusion was that the arches were the part that most increased difficulty and cost.
 
 An arch requires:
 
-- replanning of width, height, start, and curve;
+- setting out width, height, springing points and curve;
 - solid supports;
-- wooden formwork, paneling, or other sufficiently rigid mold;
+- timber centring, boards or another sufficiently rigid form;
 - placement of bricks with radial joints;
 - closure via the keystone;
 - curing time;
 - dismantling of the formwork;
 - finishes and integration with the cave.
 
-An arch should not be built "by hand." Sacks or polystyrene may help as fill or secondary form, but they do not replace a stable formwork.
+An arch should not be built freehand. Sacks or polystyrene may help as fill or secondary form, but they do not replace a stable formwork.
 
 The correct commercial reduction was to eliminate the arches, keeping only stabilization work and necessary reinforcement. It is a clear example of **reducing scope**, not of executing the same work for less money.
 
@@ -277,26 +293,26 @@ A reasonable warranty may cover detachment or defects attributable to execution 
 - behavior of previous materials not removed;
 - impacts, use, or subsequent interventions.
 
-It should not be guaranteed that an interior coating eliminates humidity from a cave.
+It should not be guaranteed that an internal finish permanently eliminates damp from a cave.
 
 ## 13. Case H — Two Adjacent Bathrooms in an Old and Narrow House
 
 ### 13.1. Context
 
-Case of execution of two small, contiguous, and interconnected bathrooms linked to rentable rooms in an old house with a sloped roof, lime and stone walls, wooden beams, and very limited space.
+Case of execution of two small, adjacent bathrooms linked to rentable rooms in an old house with a sloped roof, lime and stone walls, wooden beams, and very limited space.
 
 Measures managed during the process:
 
-- interior widths between approximately 1.07 and 1.21 m;
-- a critical zone close to 0.99 m before finishes;
-- depth close to 2.50 m;
+- interior widths between approximately 1,07 and 1,21 m;
+- a critical zone close to 0,99 m before finishes;
+- depth close to 2,50 m;
 - elevated shower trays to achieve slope;
-- compressed sanitation between toilets, showers, and partitions.
+- tightly constrained drainage between toilets, showers, and partitions.
 
 The objective was robust functionality, not luxury or universal accessibility. Priorities were:
 
 - drainage without counter-slopes;
-- inspections at critical points;
+- inspection access at critical points;
 - stable shower bases;
 - localized waterproofing;
 - flat surface for tiling;
@@ -304,7 +320,7 @@ The objective was robust functionality, not luxury or universal accessibility. P
 - compatibility with partially embedded beams;
 - future repair capacity.
 
-### 13.2. 90 and 110 mm Sanitation
+### 13.2. 90 and 110 mm Drainage
 
 The main collector was PVC of 110 mm. Toilets had a horizontal exit close to 90 mm. The general rule is to transition to 110 mm as soon as possible, but the case showed a practical exception:
 
@@ -325,7 +341,7 @@ Minimum conditions to accept a similar compromise:
 
 ### 13.3. Fittings, Clearances, and Chemical Welding
 
-Compressor fittings may facilitate disassembly, but only when they remain accessible and without stress.
+Compression couplings may facilitate disassembly, but only when they remain accessible and without stress.
 
 Rules:
 
@@ -336,21 +352,21 @@ Rules:
 - do not extend 90 mm segments only to gain disassembly;
 - do not use PVC glue as filler for large clearances.
 
-PVC glue performs a chemical welding between compatible pieces. It does not replace an incorrect cup or resolve diameter differences of 0.5–1 mm. When pieces do not fit, the correct solution is to cut, replace, or seek a compatible adapter.
+PVC glue performs a chemical welding between compatible pieces. It does not replace an incorrect socket or resolve diameter differences of 0,5–1 mm. When pieces do not fit, the correct solution is to cut, replace, or seek a compatible adapter.
 
-### 13.4. Technical Boxes and Registers
+### 13.4. Service Enclosures and Inspection Access
 
 Two concepts were separated:
 
 - **fixed and waterproof zone**: simple pipes and low-risk lines that can remain closed;
-- **registrable critical zone**: branches, couplings, unions, and points that may require intervention.
+- **accessible critical zone**: branches, couplings, unions, and points that may require intervention.
 
 Preferences:
 
-- vertical registration before horizontal cover in a wet zone;
-- sacrificial cover only when it remains out of direct water and its reopening is assumed;
-- do not support shelves or partitions over pipes;
-- the box must not act as a wall structure;
+- vertical inspection access rather than a horizontal cover in a wet zone;
+- sacrificial cover only when it remains out of direct water and its future opening up is accepted;
+- do not support hollow clay boards or partitions on pipes;
+- the enclosure must not serve as the wall’s structure;
 - if aesthetics allow, it is better to leave a technical point visible or cover it with a removable panel than to bury it irreversibly.
 
 ### 13.5. Elevated Bases for Shower Trays
@@ -371,12 +387,12 @@ Recommended sequence:
 
 1. clean and vacuum;
 2. mark levels with a laser;
-3. present the valve and check the slope;
+3. dry-fit the shower waste and check the slope;
 4. moisten the support;
-5. apply a bonding layer or mortar when appropriate;
-6. create references and master marks;
-7. place shelves or formwork well seated to lighten;
-8. reinforce and execute a continuous mortar bed;
+5. apply a bonding agent or cement slurry when appropriate;
+6. set reference levels and screed guides;
+7. place well-bedded hollow clay boards or blocks to reduce weight;
+8. fill solid and form a continuous mortar bed;
 9. leave the base flat and level;
 10. cure;
 11. waterproof;
@@ -384,9 +400,9 @@ Recommended sequence:
 
 The slope is incorporated in the tray; the base must not be arbitrarily inclined.
 
-### 13.6. Recreido and Waterproofing
+### 13.6. Screed and Waterproofing
 
-For recreido thicknesses of 5–6 cm, a semi-dry mortar, compacted and ruled, was considered more appropriate than filling everything with costly self-leveling compound.
+For screed thicknesses of 5–6 cm, a semi-dry mortar, compacted and ruled, was considered more appropriate than filling everything with costly self-leveling compound.
 
 The studied waterproofing system contemplated:
 
@@ -401,9 +417,9 @@ Indiscriminate waterproofing of all old lime and wood walls was not recommended.
 
 An impermeable liquid membrane may temporarily remain exposed, but in high and visible areas, it must be checked if it allows a compatible bathroom paint. In direct water areas, the usual solution is to protect it with ceramic cladding.
 
-### 13.7. Hydrophobic Panel and Lime Mortar in Dry Zones
+### 13.7. Moisture-resistant Board and Lime Mortar in Dry Zones
 
-For the shower zone, a hydrophobic panel properly installed or a cementitious panel was preferred:
+For the shower zone, a moisture-resistant board properly installed or a cementitious panel was preferred:
 
 - controlled plane;
 - sufficiently close supports;
@@ -422,13 +438,13 @@ In the dry half of the WC and sink, visible or finished lime mortar could be pre
 
 It should not receive direct water or be treated as a shower without protection.
 
-### 13,8. Wooden Beams
+### 13.8. Wooden Beams
 
 The beams were partially embedded and it was not possible to treat their entire surface. The criterion was to allow the visible face to continue drying.
 
 Avoid:
 
-- closed varnishes;
+- impermeable enamel coatings;
 - glossy polyurethane finishes;
 - fully wrapping the wood with cement, silicone, or waterproof membrane;
 - rigidly sealing the wood-lime joint.
@@ -437,9 +453,9 @@ Prefer:
 
 - cleaning and vacuuming;
 - checking for dryness and condition;
-- open-pore lasur when applicable;
+- open-pore wood stain when applicable;
 - ventilation via extractor;
-- flexible joint or non-rigid meeting.
+- flexible joint or non-rigid junction.
 
 ### 13.9. Tiling and Adhesives
 
@@ -448,7 +464,7 @@ With large pieces of approximately 30 × 90 cm, horizontal placement was conside
 - flat support;
 - panel without movement;
 - appropriate flexible adhesive;
-- double bonding;
+- adhesive applied to both substrate and tile back;
 - full coverage;
 - regular joints;
 - elastic sealing at corners.
@@ -457,10 +473,10 @@ For adhering shower trays, domestic water-based adhesives and sanitary silicone 
 
 ### 13.10. Errors to Avoid
 
-- sealing PVC with asphalt fabric or heat;
+- sealing PVC with bituminous membrane or heat;
 - using PVC glue to fill gaps;
 - burying removable fittings without access;
-- supporting walls or partitions on pipes;
+- supporting walls or hollow clay boards on pipes;
 - creating a hollow tray base;
 - adding an unnecessary rim;
 - waterproofing over irregular hollow bricks without regularizing;
@@ -482,15 +498,15 @@ The case highlighted a significant difference between:
 
 Internal reference figures for 2026 were managed as:
 
-- around €8,000 for a local company adjusted for the two bathrooms;
-- €4,500–€7,000 with extensive management and partial self-execution;
-- economic cost exceeding the sum of the value of unfactured time.
+- around €8.000 for a local company adjusted for the two bathrooms;
+- €4.500–€7.000 with extensive management and partial self-execution;
+- higher economic cost once the value of unbilled time is included.
 
 The editorial lesson is not to publish these figures as rates. It is to explain that inexpensive materials do not eliminate the cost of:
 
-- re-planning;
-- sanitation;
-- records;
+- setting out;
+- drainage;
+- inspection access;
 - waterproofing;
 - drying;
 - testing;
@@ -507,7 +523,7 @@ In agreements of work in exchange for accommodation, both parties must value in 
 - review date;
 - what happens when the initially agreed work is completed.
 
-## 14. Case I — Commercial Filters: Small Clear Work and Large Overcapacity Project
+## 14. Case I — Client Screening: Clearly Defined Small Job and Large Project Beyond Capacity
 
 ### 14.1. Installation of Fixtures in a Local Bathroom
 
@@ -520,7 +536,7 @@ A small job was studied that included:
 - installing a high suspended auxiliary cabinet;
 - hanging an electric towel rail and connecting it to an existing outlet.
 
-A critical clarification was interpreting "columna" correctly: it was not a construction column or a waste pipe, but a high bathroom cabinet.
+A critical clarification was interpreting "columna" correctly: it was not a structural column or a waste pipe, but a high bathroom cabinet.
 
 Estimated duration:
 
@@ -529,7 +545,7 @@ Estimated duration:
 
 The figure dropped from €650 to €420, €350, and finally €300 as it was confirmed that:
 
-- no radiator was removed;
+- no water-filled radiator was removed;
 - no new electrical installation existed;
 - no plumbing modifications were made;
 - the furniture was provided by the client;
@@ -563,7 +579,7 @@ This does not justify charging below cost. It allows adjusting the price to the 
 
 ### 14.3. "Blind" Budget for a Guesthouse or Bar
 
-Documentation was received for a renovation and expansion for tourist and bar use, with an architect's valuation of 37,250 €.
+Documentation was received for a renovation and expansion for tourist and bar use, with an architect's valuation of 37.250 €.
 
 The document included a partial package with:
 
@@ -571,7 +587,7 @@ The document included a partial package with:
 - anchor plates;
 - metal columns and beams;
 - elevator shaft and pit;
-- new staircase and landings;
+- new staircase and stringers;
 - railings;
 - openings;
 - manholes;
@@ -600,14 +616,14 @@ It must never be compared to an execution offer without verifying:
 
 ### 14.4. Elevator: Civil Work vs. Equipment
 
-The package included the shaft, pit, and structural preparation. It did not include:
+The package included the shaft, pit, and structural preparation. There was no evidence that it included:
 
 - cab;
 - guides;
 - machinery;
-- floor doors;
+- landing doors;
 - installation by an elevator company;
-- legalization;
+- regulatory approval;
 - commissioning.
 
 Editorial Rule:
@@ -650,8 +666,8 @@ Saying no to a project can be a correct business decision.
 
 ### Bathrooms: Pre-tiling Checks
 
-In bathroom renovations, before closing finishes and applying final coatings, it is advisable to verify water connections, drainage, support, seals, and waterproofing solutions. A hydrophobic plate does not mean complete waterproofing. In narrow bathrooms, the dimensions, drain height, and access conditions determine the final solution.
+In bathroom renovations, before closing up walls and applying finishes, it is advisable to verify water connections, drainage, support, seals, and waterproofing solutions. A moisture-resistant board does not mean complete waterproofing. In narrow bathrooms, the dimensions, drain height, and access conditions determine the final solution.
 
 ### Offices and Premises: Scope Subject to Use
 
-The constraints of capacity, accessibility, ventilation, safety, and continuity of activity depend on the building's function. An example of an office does not authorize or certify the execution of warehouses, bars, or public facilities; these cases are treated as general guidance in `guides/R4R_85_OFICINAS_LOCALES_Y_COMUNIDADES.md`.
+The constraints of occupancy, accessibility, ventilation, safety, and continuity of activity depend on the building's function. An example of an office does not authorize or certify the execution of warehouses, bars, or public facilities; these cases are treated as general guidance in `guides/R4R_85_OFFICES_COMMERCIAL_PREMISES_AND_OWNERS_ASSOCIATIONS.md`.
