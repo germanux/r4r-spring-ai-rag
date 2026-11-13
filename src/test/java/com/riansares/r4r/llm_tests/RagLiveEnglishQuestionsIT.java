@@ -97,20 +97,7 @@ class RagLiveEnglishQuestionsIT {
                 .build();
 
         long started = System.nanoTime();
-        HttpResponse<String> httpResponse = null;
-        for (int attempt = 0; attempt < 4; attempt++) {
-            httpResponse = HTTP.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (httpResponse.statusCode() != 429) break;
-            String retryAfter = httpResponse.headers().firstValue("Retry-After").orElse("20");
-            long delay;
-            try {
-                delay = Long.parseLong(retryAfter);
-            } catch (NumberFormatException ex) {
-                delay = Math.max(0, Duration.between(java.time.Instant.now(),
-                        java.time.ZonedDateTime.parse(retryAfter, java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME).toInstant()).toSeconds() + 1);
-            }
-            Thread.sleep(Math.max(1, delay) * 1000);
-        }
+        HttpResponse<String> httpResponse = RagTestHttpClient.send(HTTP, request);
         double seconds = (System.nanoTime() - started) / 1_000_000_000.0;
 
         System.out.printf("%n[%02d/35] %s%nPregunta: %s%nHTTP: %d | Tiempo: %.2f s%n",

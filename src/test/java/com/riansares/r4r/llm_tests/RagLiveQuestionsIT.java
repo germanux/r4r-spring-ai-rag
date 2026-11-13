@@ -49,7 +49,7 @@ class RagLiveQuestionsIT {
             Pattern.compile("^(?:\\[S\\d+\\][\\s,;:.]*)+$");
     private static final Pattern CITATION_REFERENCE = Pattern.compile("\\[S\\d+\\]");
 
-    public static final long SLEEP_WAIT = 21_000;
+    public static final long SLEEP_WAIT = 2_000;
     private static final List<QuestionCase> CASES = EvaluationQuestions.cases("es");
 
     @org.junit.jupiter.api.BeforeAll
@@ -96,8 +96,7 @@ class RagLiveQuestionsIT {
                 .build();
 
         long started = System.nanoTime();
-        HttpResponse<String> httpResponse = HTTP.send(
-                request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        HttpResponse<String> httpResponse = RagTestHttpClient.send(HTTP, request);
         double seconds = (System.nanoTime() - started) / 1_000_000_000.0;
 
         System.out.printf("%n[%02d/35] %s%nPregunta: %s%nHTTP: %d | Tiempo: %.2f s%n",
