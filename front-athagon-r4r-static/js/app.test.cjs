@@ -71,7 +71,7 @@ function openPage(lang = 'es', storage = new Map(), options = {}) {
   let runtimeCalls = 0, nextTimer = 0;
   const context = { document, URL, URLSearchParams, AbortController, TextEncoder, TextDecoder, Uint8Array, performance,
     navigator: { language: lang, clipboard: { writeText: async text => { if (options.copyFailed) throw Error('Clipboard denied'); clipboard.push(text); } } },
-    window: { addEventListener(event, handler) { this.handlers[event] = handler; }, handlers: {}, location: { hash: options.hash || '', assign: url => navigations.push(url), replace: url => navigations.push(url) } },
+    window: { addEventListener(event, handler) { this.handlers[event] = handler; }, handlers: {}, location: { hash: options.hash || '', search: options.search || '', assign: url => navigations.push(url), replace: url => navigations.push(url) } },
     localStorage: { getItem: key => { if (options.storageFails) throw Error('Storage disabled'); return storage.get(key) ?? null; },
       setItem: (key, value) => { if (options.storageFails || options.writeFails) throw Error('Quota exceeded'); storage.set(key, value); } },
     setTimeout: (fn, delay) => { const id = ++nextTimer; timers.set(id, { fn, delay }); return id; },
@@ -837,4 +837,27 @@ test('known Markdown sources link to PDFs with the original basename', async () 
  assert.equal(source.tagName,'a');
  assert.equal(source.getAttribute('href'),'docs/R4R_40_ALL_FAQ.pdf');
  assert.equal(source.textContent,'Preguntas frecuentes · Abrir documento (PDF)');
+});
+
+test('recordings match embedded fixtures and every cited PDF exists', () => {
+ const fixtures = JSON.parse(fs.readFileSync(path.join(root,'fixtures/recordings.json'),'utf8'));
+ const p = openPage('es',new Map(),{offline:true});
+ assert.deepEqual(JSON.parse(p.node('recordedExamples').textContent),fixtures);
+ for(const pair of Object.values(fixtures)) for(const lang of ['es','en']) {
+  const data=pair[lang];assert.ok(data.question);assert.equal(typeof data.abstained,'boolean');
+  for(const citation of data.citations) {
+   const pdf=path.join(root,'docs',path.basename(citation.source).replace(/\.md$/,'.pdf'));
+   assert.equal(fs.readFileSync(pdf).subarray(0,5).toString(),'%PDF-');
+  }
+ }
+});
+test('endpoint controls require explicit developer mode', () => {
+ assert.equal(openPage('es',new Map(),{offline:true}).node('endpointSettings').hidden,true);
+ assert.equal(openPage('es',new Map(),{offline:true,search:'?dev=1'}).node('endpointSettings').hidden,false);
+});
+test('opening runtime explicitly loads telemetry, initial rendering stays offline', async () => {
+ const p=openPage('es',new Map(),{offline:true});assert.equal(p.requests.length,0);
+ p.node('runtimeToggle').handlers.click();
+ await [...p.timers.values()].find(t=>t.delay===0).fn();await tick();
+ assert.equal(p.requests.filter(r=>r.url.endsWith('/runtime')).length,1);
 });

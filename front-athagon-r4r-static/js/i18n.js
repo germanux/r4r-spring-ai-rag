@@ -153,7 +153,7 @@ const R4RI18n = (() => {
       "page.fallback_connection": "Ollama → respaldo automático · qwen2.5:7b",
       "page.primary_gpu": "Generación principal. Linux · NVIDIA GeForce RTX 4060.",
       "page.backup_gpu": "Generación de respaldo. Linux · NVIDIA GeForce GTX 1050.",
-      "page.observed_generation": "ÚLTIMA RESPUESTA · MODELO Y EQUIPO",
+      "page.observed_generation": "ESTADO DE LA API · TELEMETRÍA GLOBAL",
       "page.last_generation_host": "Equipo de la última generación",
       "page.current_memory": "Estado de memoria informado por el backend",
       "page.configured_preferred": "Proveedor preferente configurado",

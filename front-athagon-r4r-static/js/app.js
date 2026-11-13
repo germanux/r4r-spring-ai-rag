@@ -290,6 +290,7 @@
   question.addEventListener("input", () => { engage(); updateCounter(); });
   if (tryDemoButton) tryDemoButton.addEventListener("click", event => {
     event.preventDefault();
+    question.scrollIntoView({ behavior: reducedMotion() ? "instant" : "smooth", block: "center" });
     return runPreview();
   });
   if (typeof IntersectionObserver !== "undefined" && !previewSeen && !userEngaged) {
