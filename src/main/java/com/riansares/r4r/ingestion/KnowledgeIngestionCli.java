@@ -44,7 +44,26 @@ public class KnowledgeIngestionCli {
      */
     static int execute(String[] args) {
         SpringApplicationBuilder builder = createBuilder();
+        // CLI-only defaults: a lost NAS must not leave an ingestion JVM waiting indefinitely.
+        builder.properties(java.util.Map.of(
+                "spring.datasource.hikari.connection-timeout", "5000",
+                "spring.datasource.hikari.data-source-properties.connectTimeout", "5",
+                "spring.datasource.hikari.data-source-properties.socketTimeout", "30",
+                "spring.datasource.hikari.data-source-properties.tcpKeepAlive", "true"));
         try (var context = builder.run(args)) {
+            if (context.getEnvironment().getProperty("r4r.ingestion.index", Boolean.class, false)) {
+                try {
+                    var result = context.getBean(KnowledgeIngestionService.class).ingestIndexed(
+                            context.getEnvironment().getProperty("r4r.ingestion.check-only", Boolean.class, false),
+                            context.getEnvironment().getProperty("r4r.ingestion.replace-all", Boolean.class, false));
+                    System.out.println("R4R_INGESTION_RESULT=" + new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(result));
+                    return EXIT_CODE_SUCCESS;
+                } catch (Exception failure) {
+                    // Do not print database URLs, credentials or response bodies on failures.
+                    System.err.println("ERROR: Complete ingestion failed: " + failure.getClass().getSimpleName());
+                    return EXIT_CODE_INGESTION_FAILURE;
+                }
+            }
             var orchestration = context.getBean(KnowledgeIngestionOrchestration.class);
             if (orchestration == null) {
                 System.err.println("ERROR: KnowledgeIngestionOrchestration bean not found");

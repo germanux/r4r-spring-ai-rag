@@ -28,4 +28,46 @@ class MarkdownDocumentLoaderTest {
                 .extracting(KnowledgeDocument::source)
                 .containsExactly("nested/a.md", "z.md");
     }
+    @Test
+    void bilingualSelectionRequiresPairsAndExcludesManifestAndReadme() throws Exception {
+        for (String language : java.util.List.of("es", "en")) {
+            Files.createDirectories(root.resolve(language));
+            Files.writeString(root.resolve(language + "/R4R_00_IDENTITY.md"),
+                    "---\nlanguage: " + language + "\n---\n# Identity\nEvidence");
+            Files.writeString(root.resolve(language + "/R4R_70_MANIFEST.md"),
+                    "---\nlanguage: " + language + "\ningest_into_editorial_rag: false\n---\n# Manifest");
+            Files.writeString(root.resolve(language + "/README.md"), "# Developer notes");
+        }
+        var loader = new MarkdownDocumentLoader(new KnowledgeProperties(root, 4096, 200));
+        assertThat(loader.loadBilingual()).extracting(KnowledgeDocument::source)
+                .containsExactly("en/R4R_00_IDENTITY.md", "es/R4R_00_IDENTITY.md");
+        Files.delete(root.resolve("en/R4R_00_IDENTITY.md"));
+        org.assertj.core.api.Assertions.assertThatThrownBy(loader::loadBilingual)
+                .hasMessageContaining("Missing translation pairs");
+    }
+
+    @Test
+    void duplicateIdentifiersAndWrongLanguageFailBeforeIndexing() throws Exception {
+        Files.createDirectories(root.resolve("es"));
+        Files.createDirectories(root.resolve("en"));
+        Files.writeString(root.resolve("es/R4R_00_A.md"), "---\nlanguage: es\n---\n# A");
+        Files.writeString(root.resolve("es/R4R_00_B.md"), "---\nlanguage: es\n---\n# B");
+        Files.writeString(root.resolve("en/R4R_00_A.md"), "---\nlanguage: en\n---\n# A");
+        var loader = new MarkdownDocumentLoader(new KnowledgeProperties(root, 4096, 200));
+        org.assertj.core.api.Assertions.assertThatThrownBy(loader::loadBilingual).hasMessageContaining("Duplicate");
+        Files.delete(root.resolve("es/R4R_00_B.md"));
+        Files.writeString(root.resolve("en/R4R_00_A.md"), "---\nlanguage: es\n---\n# A");
+        org.assertj.core.api.Assertions.assertThatThrownBy(loader::loadBilingual).hasMessageContaining("Invalid language");
+    }
+    @Test
+    void translationPairsMustAgreeOnIngestionExclusion() throws Exception {
+        for (String language : java.util.List.of("es", "en")) {
+            Files.createDirectories(root.resolve(language));
+            Files.writeString(root.resolve(language + "/R4R_00_A.md"),
+                    "---\nlanguage: " + language + "\ningest_into_editorial_rag: "
+                            + language.equals("es") + "\n---\n# A");
+        }
+        var loader = new MarkdownDocumentLoader(new KnowledgeProperties(root, 4096, 200));
+        org.assertj.core.api.Assertions.assertThatThrownBy(loader::loadBilingual).hasMessageContaining("flags disagree");
+    }
 }

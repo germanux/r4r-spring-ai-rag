@@ -18,7 +18,7 @@ final class NomicRegressionCorpus {
     final JsonNode queries;
     NomicRegressionCorpus() throws Exception {
         try (var stream = getClass().getResourceAsStream("/retrieval/nomic-query-vectors.json")) { queries = JSON.readTree(stream); }
-        var bytes = Files.readAllBytes(Path.of("knowledge/struct-data/r4r-s3vectors-import.json"));
+        var bytes = Files.readAllBytes(Path.of("docs/knowledge/data/struct-data/r4r-s3vectors-import.json"));
         if (!HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)).equals(queries.path("corpusSha256").asText()))
             throw new IllegalStateException("Regression corpus checksum changed");
         for (var row : JSON.readTree(bytes).path("vectors")) {
