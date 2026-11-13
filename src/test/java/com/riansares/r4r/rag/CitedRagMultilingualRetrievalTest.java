@@ -44,7 +44,8 @@ class CitedRagMultilingualRetrievalTest {
         vectors.add(List.of(new Document("La empresa reforma baños, cocinas, viviendas y pequeñas oficinas.",
                 Map.of("source", "servicios.md", "headingPath", List.of("Servicios"), "ordinal", 0))));
         return new CitedRagService(new PgVectorKnowledgeStore(vectors, mock(JdbcTemplate.class)),
-                generation, 3, .63, new LocalRetrievalQueryTranslator(translation));
+                generation, 3, .63, new LocalRetrievalQueryTranslator(translation), null,
+                com.riansares.r4r.config.RetrievalTranslationMode.ALWAYS);
     }
 
     @Test

@@ -114,3 +114,9 @@ r4r:
     root: ${RAG_KNOWLEDGE_PATH}
     max-file-bytes: ${RAG_MAX_FILE_BYTES}
     max-chunk-chars: ${RAG_MAX_CHUNK_CHARS}
+
+# never: direct ES/EN; always: translate EN first; auto: EN translation only after empty direct retrieval.
+# Explicit retrievalQuestion remains supported and is never translated again.
+retrieval:
+  translation:
+    mode: ${RAG_RETRIEVAL_TRANSLATION_MODE:never}

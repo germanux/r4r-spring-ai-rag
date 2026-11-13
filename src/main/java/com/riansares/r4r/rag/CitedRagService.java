@@ -1,6 +1,7 @@
 package com.riansares.r4r.rag;
 
 import com.riansares.r4r.chunking.MarkdownChunk;
+import com.riansares.r4r.config.RetrievalTranslationMode;
 import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -24,6 +25,7 @@ public class CitedRagService {
     private final double minScore;
     private final LocalRetrievalQueryTranslator translator;
     private final EvidenceRelevanceFilter relevanceFilter;
+    private final RetrievalTranslationMode translationMode;
     // MyMemory's literal construction term differs from the corpus vocabulary; preserve its meaning.
     private static final Pattern RENOVATION_WORK = Pattern.compile("(?iu)\\btrabajos?\\s+de\\s+renovaci[oó]n\\b");
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CitedRagService.class);
@@ -79,6 +81,14 @@ public class CitedRagService {
     public CitedRagService(KnowledgeVectorStore knowledgeStore, ChatModel chatModel,
                           int retrievalTopK, double minScore, LocalRetrievalQueryTranslator translator,
                           EvidenceRelevanceFilter relevanceFilter) {
+        this(knowledgeStore, chatModel, retrievalTopK, minScore, translator, relevanceFilter,
+                RetrievalTranslationMode.NEVER);
+    }
+
+    public CitedRagService(KnowledgeVectorStore knowledgeStore, ChatModel chatModel,
+                          int retrievalTopK, double minScore, LocalRetrievalQueryTranslator translator,
+                          EvidenceRelevanceFilter relevanceFilter, RetrievalTranslationMode translationMode) {
+        this.translationMode = Objects.requireNonNull(translationMode, "translationMode");
         this.relevanceFilter = relevanceFilter;
         this.translator = translator;
         this.knowledgeStore = Objects.requireNonNull(knowledgeStore, "knowledgeStore");
@@ -105,23 +115,18 @@ public class CitedRagService {
         progress.checkCancelled();
         long started = System.nanoTime();
         validateQuestion(question);
-        String searchQuestion = retrievalQuestion == null || retrievalQuestion.isBlank()
-                ? question : retrievalQuestion;
+        boolean explicitRetrieval = retrievalQuestion != null && !retrievalQuestion.isBlank();
+        String searchQuestion = explicitRetrieval ? retrievalQuestion : question;
+        boolean canTranslate = !explicitRetrieval && "en".equalsIgnoreCase(responseLanguage) && translator != null;
         boolean translatedRemotely = false;
-        if ((retrievalQuestion == null || retrievalQuestion.isBlank())
-                && "en".equalsIgnoreCase(responseLanguage) && translator != null) {
-            progress.emit("TRANSLATION_STARTED");
-            long translating = System.nanoTime();
-            try {
-                searchQuestion = translator.translate(question);
-                translatedRemotely = translator.lastTranslationUsedRemote();
-                progress.emit("TRANSLATION_COMPLETED", null, null, (System.nanoTime() - translating) / 1_000_000.0, null);
-            } catch (RuntimeException ex) {
-                traceFailure("normalization", started, ex);
-                throw ex;
-            } finally { translator.clearRequestExecution(); }
+        if (canTranslate && translationMode == RetrievalTranslationMode.ALWAYS) {
+            var translated = translateForRetrieval(question, progress, started);
+            searchQuestion = translated.question();
+            translatedRemotely = translated.remote();
+        } else if (explicitRetrieval) {
+            // Retain the existing caller-supplied retrievalQuestion contract.
+            searchQuestion = RENOVATION_WORK.matcher(searchQuestion).replaceAll("reformas");
         }
-        searchQuestion = RENOVATION_WORK.matcher(searchQuestion).replaceAll("reformas");
         long normalized = System.nanoTime();
         List<MarkdownChunk> chunks;
         boolean partialEvidence = false;
@@ -129,6 +134,14 @@ public class CitedRagService {
         String finalSearchQuestion = searchQuestion;
         try {
             chunks = progress.duringRetrieval(() -> retrieveEvidence(finalSearchQuestion));
+            if (chunks.isEmpty() && canTranslate && translationMode == RetrievalTranslationMode.AUTO) {
+                progress.emit("RETRIEVAL_COMPLETED", null, 0,
+                        (System.nanoTime() - normalized) / 1_000_000.0, "no_evidence");
+                var translated = translateForRetrieval(question, progress, started);
+                translatedRemotely = translated.remote();
+                progress.emit("RETRIEVAL_STARTED");
+                chunks = progress.duringRetrieval(() -> retrieveEvidence(translated.question()));
+            }
             if (relevanceFilter != null) {
                 progress.checkCancelled();
                 var selection = relevanceFilter.select(question, chunks, translatedRemotely);
@@ -197,6 +210,23 @@ public class CitedRagService {
         trace("answered", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
         progress.emit("VALIDATION_COMPLETED", null, chunks.size(), (System.nanoTime() - generated) / 1_000_000.0, "answered");
         return RagResult.ofAnswer(answer, citations);
+    }
+
+    private record TranslatedQuery(String question, boolean remote) { }
+
+    private TranslatedQuery translateForRetrieval(String question, RagProgress progress, long requestStarted) {
+        progress.emit("TRANSLATION_STARTED");
+        long translating = System.nanoTime();
+        try {
+            String translated = translator.translate(question);
+            boolean remote = translator.lastTranslationUsedRemote();
+            progress.emit("TRANSLATION_COMPLETED", null, null,
+                    (System.nanoTime() - translating) / 1_000_000.0, null);
+            return new TranslatedQuery(RENOVATION_WORK.matcher(translated).replaceAll("reformas"), remote);
+        } catch (RuntimeException failure) {
+            traceFailure("normalization", requestStarted, failure);
+            throw failure;
+        } finally { translator.clearRequestExecution(); }
     }
 
     private void trace(String result, int chunks, long started, long normalized,

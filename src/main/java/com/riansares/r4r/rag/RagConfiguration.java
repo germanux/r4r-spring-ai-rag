@@ -99,12 +99,14 @@ public class RagConfiguration {
             GenerationRouter chatModel,
             RagRetrievalProperties properties,
             LocalRetrievalQueryTranslator translator,
-            @Value("${r4r.rag.evidence-relevance.enabled:false}") boolean relevanceEnabled) {
+            @Value("${r4r.rag.evidence-relevance.enabled:false}") boolean relevanceEnabled,
+            @Value("${retrieval.translation.mode:never}") String translationMode) {
 
         return new CitedRagService(
                 knowledgeStore,
                 chatModel,
                 properties.topK(),
-                properties.minScore(), translator, relevanceEnabled ? new EvidenceRelevanceFilter(chatModel) : null);
+                properties.minScore(), translator, relevanceEnabled ? new EvidenceRelevanceFilter(chatModel) : null,
+                com.riansares.r4r.config.RetrievalTranslationMode.parse(translationMode));
     }
 }

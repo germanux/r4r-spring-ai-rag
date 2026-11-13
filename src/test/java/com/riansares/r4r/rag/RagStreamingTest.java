@@ -117,7 +117,7 @@ class RagStreamingTest {
         when(store.search(anyString(), anyInt(), anyDouble())).thenReturn(List.of());
         var translator = mock(LocalRetrievalQueryTranslator.class);
         when(translator.translate("Question")).thenReturn("Pregunta");
-        var service = new CitedRagService(store, pc, 3, .63, translator);
+        var service = new CitedRagService(store, pc, 3, .63, translator, null, com.riansares.r4r.config.RetrievalTranslationMode.ALWAYS);
         service.answer("Question", "Pregunta externa", "en", progress);
         verify(translator, never()).translate(anyString());
         assertThat(stages()).doesNotContain("TRANSLATION_STARTED", "TRANSLATION_COMPLETED", "EMBEDDING_STARTED");

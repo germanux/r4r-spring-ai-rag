@@ -38,7 +38,7 @@ class OpenAiFallbackTest {
         var targets = List.of(down, down, new GenerationRouter.Target(
                 new GenerationRouter.Provider("OpenAI", "https://api.openai.com/v1", "gpt-6-luna"), remote, () -> true));
         var translator = new LocalRetrievalQueryTranslator(new GenerationRouter(targets));
-        var service = new CitedRagService(store, new GenerationRouter(targets), 3, .63, translator);
+        var service = new CitedRagService(store, new GenerationRouter(targets), 3, .63, translator, null, com.riansares.r4r.config.RetrievalTranslationMode.ALWAYS);
 
         var answer = service.answer(english, null, "en");
         assertThat(answer.abstention()).isFalse();
