@@ -1,0 +1,14 @@
+{
+  "mobile": {
+    "score": 100,
+    "lighthouseVersion": "13.6.0",
+    "url": "http://127.0.0.1:8765/",
+    "failedAudits": []
+  },
+  "desktop": {
+    "score": 100,
+    "lighthouseVersion": "13.6.0",
+    "url": "http://127.0.0.1:8765/",
+    "failedAudits": []
+  }
+}

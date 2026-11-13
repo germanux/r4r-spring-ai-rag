@@ -1,3 +1,74 @@
+# R4R — AI assistant for renovation questions
+
+A deployed bilingual assistant that answers questions about renovation materials,
+methods and projects using Riansares 4R documents, with PDF citations visitors can
+check. The public frontend is static HTML/CSS/JavaScript in
+`front-athagon-r4r-static/`; `frontend/` contains the separate Angular application.
+
+![Public assistant on desktop](docs/validation/final-public-ux/desktop.png)
+
+## How it works
+
+```mermaid
+flowchart LR
+  UI[Static frontend] --> API[Spring Boot / Spring AI on NAS]
+  API --> EMB[Ollama embeddings]
+  EMB --> PG[PostgreSQL / pgvector]
+  API -. retrieval backup .-> L[AWS Lambda Java 21]
+  L --> S3[S3 Vectors]
+  API --> PC[PC / Ollama]
+  PC -. generation fallback .-> LAP[Laptop / Ollama]
+  LAP -. enabled last resort .-> OAI[OpenAI]
+```
+
+Java 21 and Spring AI coordinate retrieval and generation; SSE exposes actual
+processing stages. IAM constrains the Lambda/S3 Vectors path. AWS retrieval backup
+does not replace the NAS API. This release does not claim Bedrock/Titan is operational,
+zero downtime or large-scale availability.
+
+## Visitor experience and trade-offs
+
+- Visibility triggers a recorded solera/solado walkthrough once per session.
+  Examples use real saved ES/EN results instantly and consume no API requests.
+- Arbitrary questions use live SSE. Translation is delegated to the existing
+  backend; the browser no longer contacts MyMemory.
+- Citations open branded PDFs with their original source basename. Internal
+  ordinals are restricted to `?dev=1`, alongside endpoint controls.
+- Runtime is queried on opening Technical details, keeping the initial preview
+  completely offline. Per-answer provider/model comes from that request's events;
+  global runtime information is separate.
+
+## Run and validate
+
+```bash
+python3 -m http.server 8765 --directory front-athagon-r4r-static
+node front-athagon-r4r-static/js/app.test.cjs
+# Requires an existing Playwright installation and Chromium:
+node front-athagon-r4r-static/js/browser.test.cjs
+mvn clean verify
+```
+
+For an existing external installation set `PLAYWRIGHT_MODULE` and `CHROMIUM_PATH`.
+No new frontend dependency is required. The static site needs no build step.
+The existing Maven test configuration controls optional database/cloud/live-model
+gates; unit and browser regression tests do not require an LLM. Regenerate the
+branded knowledge PDFs with `python3 py-scripts/export_sources.py`.
+
+## Deployment and evidence
+
+Copy `index.html`, `js/`, `styles/`, `assets/` and `docs/` from the static frontend
+into the hosting repository's `html-static/r4r-rag/`; keep `r4r-rag-demo/` intact.
+Do not publish test scripts as application assets. The site retains `noindex`.
+No deployment or push is part of this release.
+
+[Validation report and bilingual evidence](docs/validation/final-public-ux/README.md)
+record the live ES/EN results, browser checks, accessibility measurements and limits.
+Domestic NAS, network and tunnel dependencies remain. Captured examples improve
+predictability but cannot establish general model accuracy. Three-user comprehension
+acceptance remains a manual task.
+
+## Existing operational notes
+
 # R4R worktree branch synchronization v3
 
 Files:

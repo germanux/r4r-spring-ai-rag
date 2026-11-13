@@ -81,3 +81,14 @@ Regenerar desde la raíz:
 Dependencias locales: reportlab, markdown, beautifulsoup4 y fuentes DejaVu.
 El logo de docs/riansares-4r-logo.png se extrajo de word/media/image1.png del
 DOCX de presupuesto facilitado. Los MD originales y el backend no se modifican.
+
+Final public UX release (2026-11-13)
+----------------------------------
+Quick examples are now recorded ES/EN answers, not automatic live queries.
+The solera/solado autoplay uses captured SSE and final-answer data embedded in
+index.html; fixtures/recordings.json retains the matching portable JSON.
+If updating fixtures, update the embedded JSON as well (tests check equality).
+Only explicit submit sends a live query. English translation belongs to the server.
+Runtime loads on opening Technical details; endpoint controls require ?dev=1.
+Deploy assets/ alongside index.html, js/, styles/ and docs/.
+See docs/validation/final-public-ux/README.md from the repository root.
