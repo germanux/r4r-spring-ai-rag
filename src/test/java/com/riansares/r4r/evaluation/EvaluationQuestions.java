@@ -40,7 +40,7 @@ public final class EvaluationQuestions {
 
     public static QuestionCase timeline(String language) {
         var row = document(language).path("regressions").path("timeline");
-        return new QuestionCase("timeline-reason", 31, row.path("name").asText(), row.path("question").asText(),
+        return new QuestionCase("timeline-reason", 36, row.path("name").asText(), row.path("question").asText(),
                 document("es").path("regressions").path("timeline").path("question").asText(), row.path("evidence").asBoolean());
     }
 }

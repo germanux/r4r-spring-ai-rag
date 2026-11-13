@@ -13,8 +13,8 @@ def load_cases(root=ROOT):
     for lang in ['es', 'en']:
         filename = 'questions-' + lang + '.json'
         entries = json.loads((directory / filename).read_text())['cases']
-        if len(entries) != 30:
-            raise ValueError('Expected 30 canonical questions in ' + filename)
+        if len(entries) != 35:
+            raise ValueError('Expected 35 canonical questions in ' + filename)
         for number, row in enumerate(entries, 1):
             if row['number'] != number or row['caseId'] != spanish[number - 1]['caseId']:
                 raise ValueError('Mismatched bilingual order in ' + filename)

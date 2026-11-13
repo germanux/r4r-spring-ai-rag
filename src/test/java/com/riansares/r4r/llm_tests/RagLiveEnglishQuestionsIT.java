@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Optional smoke test against a dedicated, running R4R test API.
  * Run: RAG_TEST_BASE_URL=http://127.0.0.1:18080 mvn verify -Pllm-it -Dit.test=RagLiveEnglishQuestionsIT
- * The 30 calls run sequentially; a slow local model may take several minutes.
+ * The 35 calls run sequentially; a slow local model may take several minutes.
  */
 @Tag("live-rag")
 @org.junit.jupiter.api.Tag("llm")
@@ -58,8 +58,8 @@ class RagLiveEnglishQuestionsIT {
     }
 
     @TestFactory
-    Stream<DynamicTest> thirtyRagQuestions() {
-        assertThat(CASES).hasSize(30);
+    Stream<DynamicTest> thirtyFiveRagQuestions() {
+        assertThat(CASES).hasSize(35);
 
         List<DynamicTest> tests = new ArrayList<>();
         for (int i = 0; i < CASES.size(); i++) {
@@ -72,11 +72,11 @@ class RagLiveEnglishQuestionsIT {
         return tests.stream();
     }
 
-    // Separate opt-in regression; not one of the 30 main cases.
+    // Separate opt-in regression; not one of the 35 main cases.
     @org.junit.jupiter.api.Test
     @EnabledIfEnvironmentVariable(named = "RAG_TIMELINE_REGRESSION", matches = "(?i)true")
     void originalTimelineReasonRegression() throws Exception {
-        verifyAnswer(31, EvaluationQuestions.timeline("en"), true);
+        verifyAnswer(36, EvaluationQuestions.timeline("en"), true);
     }
 
     private static void verifyAnswer(int number, QuestionCase testCase) throws Exception {
@@ -113,7 +113,7 @@ class RagLiveEnglishQuestionsIT {
         }
         double seconds = (System.nanoTime() - started) / 1_000_000_000.0;
 
-        System.out.printf("%n[%02d/30] %s%nPregunta: %s%nHTTP: %d | Tiempo: %.2f s%n",
+        System.out.printf("%n[%02d/35] %s%nPregunta: %s%nHTTP: %d | Tiempo: %.2f s%n",
                 number, testCase.name(), testCase.question(), httpResponse.statusCode(), seconds);
         System.out.println("JSON: " + httpResponse.body());
 

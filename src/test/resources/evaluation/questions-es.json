@@ -409,6 +409,83 @@
       "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
       "coverageReferences": [],
       "question": "¿Quién escribió la novela Cien años de soledad?"
+    },
+    {
+      "name": "Tuberías rotas en cocina",
+      "evidence": true,
+      "origin": "post-bilingual-2026-11-13",
+      "initialNumber": 31,
+      "caseId": "case-31",
+      "number": 31,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "La guía R4R_80 y FAQ-053 explican priorizar seguridad, cierre seguro del suministro y reparación profesional, comprobando estanqueidad y secado antes de cerrar; no exige una reforma integral.",
+      "coverageReferences": [
+        "knowledge/es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+        "knowledge/es/faqs/R4R_40_ALL_FAQ.md — FAQ-053"
+      ],
+      "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago?"
+    },
+    {
+      "name": "Fuga y reforma de cocina",
+      "evidence": true,
+      "origin": "post-bilingual-2026-11-13",
+      "initialNumber": 32,
+      "caseId": "case-32",
+      "number": 32,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "R4R_80 distingue reparación imprescindible de reforma opcional, planificación de fontanería y desagües antes de acabados, conservación de elementos viables y valoración por partidas.",
+      "coverageReferences": [
+        "knowledge/es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+        "knowledge/es/faqs/R4R_40_ALL_FAQ.md — FAQ-054, FAQ-068"
+      ],
+      "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago?\nAdemás, quiero reformar la cocina. ¿Qué me recomiendas?"
+    },
+    {
+      "name": "Fuga, reforma y azulejos de cocina",
+      "evidence": true,
+      "origin": "post-bilingual-2026-11-13",
+      "initialNumber": 33,
+      "caseId": "case-33",
+      "number": 33,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "R4R_80 responde a las tres consultas: controlar la fuga, definir reforma opcional y cambiar azulejos tras reparar y comprobar un soporte firme y seco, con partidas separadas.",
+      "coverageReferences": [
+        "knowledge/es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+        "knowledge/es/faqs/R4R_40_ALL_FAQ.md — FAQ-053–FAQ-056"
+      ],
+      "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago?\nAdemás, quiero reformar la cocina. ¿Qué me recomiendas?\n¿Puedo cambiar también los azulejos?"
+    },
+    {
+      "name": "Piscina con fugas y revestimiento desprendido",
+      "evidence": true,
+      "origin": "post-bilingual-2026-11-13",
+      "initialNumber": 34,
+      "caseId": "case-34",
+      "number": 34,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "R4R_89 X-01 y R4R_113 distinguen una reparación superficial del diagnóstico de pérdidas por vaso, juntas o tuberías; revisar soporte, adherencia e impermeabilización antes de reponer piezas, sin atribuir el servicio a R4R.",
+      "coverageReferences": [
+        "knowledge/es/guides/R4R_89_OTROS_ESPACIOS_Y_OBRAS_ESPECIALES.md — X-01",
+        "knowledge/es/guides/R4R_113_OTROS_ESPACIOS_GARAJES_PISCINAS_POLIDEPORTIVOS.md",
+        "knowledge/es/cases/R4R_117_CASOS_HIPOTETICOS_OFICINAS_LOCALES_Y_ESPACIOS_PUBLICOS.md — O-30"
+      ],
+      "question": "Tengo una piscina que pierde agua y algunas piezas del revestimiento se desprenden. ¿Basta con volver a pegarlas?"
+    },
+    {
+      "name": "Vestuarios públicos y obra por fases",
+      "evidence": true,
+      "origin": "post-bilingual-2026-11-13",
+      "initialNumber": 35,
+      "caseId": "case-35",
+      "number": 35,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "R4R_89 y R4R_113 cubren uso público, ventilación, agua, drenaje, resbaladicidad, accesibilidad, evacuación, permisos y fases compatibles con usuarios, higiene y seguridad; no acreditan un servicio ejecutado por R4R.",
+      "coverageReferences": [
+        "knowledge/es/guides/R4R_89_OTROS_ESPACIOS_Y_OBRAS_ESPECIALES.md — X-02",
+        "knowledge/es/guides/R4R_113_OTROS_ESPACIOS_GARAJES_PISCINAS_POLIDEPORTIVOS.md",
+        "knowledge/es/faqs/R4R_40_ALL_FAQ.md — FAQ-075"
+      ],
+      "question": "Quiero reformar los vestuarios de un polideportivo abierto al público. ¿Qué debo revisar para ejecutar la obra por fases?"
     }
   ],
   "additionalIndependentQuestions": [

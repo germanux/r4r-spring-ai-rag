@@ -409,6 +409,83 @@
       "coverageRationale": "Pregunta de control original o añadida; ver fuentes y evaluación del informe.",
       "coverageReferences": [],
       "question": "Who wrote the novel One Hundred Years of Solitude?"
+    },
+    {
+      "name": "Broken kitchen pipes",
+      "evidence": true,
+      "origin": "post-bilingual-2026-11-13",
+      "initialNumber": 31,
+      "caseId": "case-31",
+      "number": 31,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "R4R_80 and FAQ-053 prioritise safety, safe supply shut-off and professional repair, with watertightness and drying checks before closing up; a complete renovation is not required.",
+      "coverageReferences": [
+        "knowledge/en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.md",
+        "knowledge/en/faqs/R4R_40_ALL_FAQ.md — FAQ-053"
+      ],
+      "question": "I have broken pipes in my kitchen. What should I do?"
+    },
+    {
+      "name": "Kitchen leak and renovation",
+      "evidence": true,
+      "origin": "post-bilingual-2026-11-13",
+      "initialNumber": 32,
+      "caseId": "case-32",
+      "number": 32,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "R4R_80 separates essential repairs from optional renovation, plans water and drainage before finishes, retains viable elements and prices work separately.",
+      "coverageReferences": [
+        "knowledge/en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.md",
+        "knowledge/en/faqs/R4R_40_ALL_FAQ.md — FAQ-054, FAQ-068"
+      ],
+      "question": "I have broken pipes in my kitchen. What should I do?\nI also want to renovate my kitchen. What do you recommend?"
+    },
+    {
+      "name": "Kitchen leak, renovation and tiles",
+      "evidence": true,
+      "origin": "post-bilingual-2026-11-13",
+      "initialNumber": 33,
+      "caseId": "case-33",
+      "number": 33,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "R4R_80 addresses all three questions: control the leak, define optional renovation and replace tiles after repair on a sound, dry substrate, with separate work items.",
+      "coverageReferences": [
+        "knowledge/en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.md",
+        "knowledge/en/faqs/R4R_40_ALL_FAQ.md — FAQ-053–FAQ-056"
+      ],
+      "question": "I have broken pipes in my kitchen. What should I do?\nI also want to renovate my kitchen. What do you recommend?\nCan I replace the tiles too?"
+    },
+    {
+      "name": "Leaking pool and loose tiles",
+      "evidence": true,
+      "origin": "post-bilingual-2026-11-13",
+      "initialNumber": 34,
+      "caseId": "case-34",
+      "number": 34,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "R4R_89 X-01 and R4R_113 distinguish surface repair from diagnosing shell, joint or pipe leaks; inspect substrate, adhesion and waterproofing before replacing tiles, without claiming an R4R service.",
+      "coverageReferences": [
+        "knowledge/en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.md — X-01",
+        "knowledge/en/guides/R4R_113_OTHER_SPACES_GARAGES_POOLS_AND_SPORTS_CENTRES.md",
+        "knowledge/en/cases/R4R_117_HYPOTHETICAL_OFFICE_COMMERCIAL_AND_PUBLIC_SPACE_CASES.md — O-30"
+      ],
+      "question": "My swimming pool is losing water and some tiles are coming loose. Is reattaching them enough?"
+    },
+    {
+      "name": "Public changing rooms and phased work",
+      "evidence": true,
+      "origin": "post-bilingual-2026-11-13",
+      "initialNumber": 35,
+      "caseId": "case-35",
+      "number": 35,
+      "coverage": "SUPPORTED",
+      "coverageRationale": "R4R_89 and R4R_113 cover public use, ventilation, water, drainage, slip resistance, accessibility, escape routes, permits and phases compatible with users, hygiene and safety; they do not establish an R4R service.",
+      "coverageReferences": [
+        "knowledge/en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.md — X-02",
+        "knowledge/en/guides/R4R_113_OTHER_SPACES_GARAGES_POOLS_AND_SPORTS_CENTRES.md",
+        "knowledge/en/faqs/R4R_40_ALL_FAQ.md — FAQ-075"
+      ],
+      "question": "I want to renovate changing rooms in a sports centre that remains open. What should I check to carry out the work in phases?"
     }
   ],
   "additionalIndependentQuestions": [],

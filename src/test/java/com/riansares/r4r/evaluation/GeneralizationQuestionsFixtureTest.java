@@ -8,8 +8,8 @@ class GeneralizationQuestionsFixtureTest {
     @Test void bilingualQuestionBanksPreserveOrderCoverageAndHistoricalIdentity() {
         var es = EvaluationQuestions.cases("es");
         var en = EvaluationQuestions.cases("en");
-        assertThat(es).hasSize(30);
-        assertThat(en).hasSize(30);
+        assertThat(es).hasSize(35);
+        assertThat(en).hasSize(35);
         for (String language : new String[]{"es", "en"}) {
             var bank = EvaluationQuestions.document(language);
             var identities = new HashSet<String>();
@@ -18,18 +18,44 @@ class GeneralizationQuestionsFixtureTest {
             assertThat(bank.path("history").path("nomic").size()).isEqualTo(15);
             for (int i = 0; i < cases.size(); i++) {
                 var row = bank.path("cases").get(i);
-                var original = bank.path("history").path("generalization").get(row.path("initialNumber").asInt() - 1);
                 assertThat(identities.add(cases.get(i).caseId())).isTrue();
-                assertThat(cases.get(i).caseId()).isEqualTo(es.get(i).caseId()).isEqualTo(original.path("caseId").asText());
+                assertThat(cases.get(i).caseId()).isEqualTo(es.get(i).caseId());
                 assertThat(cases.get(i).number()).isEqualTo(i + 1);
                 assertThat(cases.get(i).question()).isNotBlank();
                 assertThat(cases.get(i).retrievalQuestion()).isEqualTo(es.get(i).question());
-                assertThat(cases.get(i).expectsEvidence()).isEqualTo(i < 19);
+                assertThat(cases.get(i).expectsEvidence()).isEqualTo(i < 19 || i >= 30);
                 assertThat(row.path("coverage").asText()).isIn("SUPPORTED", "PARTIAL", "INSUFFICIENT");
                 assertThat(row.path("coverageRationale").asText()).isNotBlank();
-                if (!row.has("revision")) assertThat(cases.get(i).question()).isEqualTo(original.path("question").asText());
+                if (i < 30) {
+                    var original = bank.path("history").path("generalization").get(row.path("initialNumber").asInt() - 1);
+                    assertThat(cases.get(i).caseId()).isEqualTo(original.path("caseId").asText());
+                    if (!row.has("revision")) assertThat(cases.get(i).question()).isEqualTo(original.path("question").asText());
+                } else {
+                    assertThat(cases.get(i).caseId()).isEqualTo("case-" + (i + 1));
+                    assertThat(row.path("origin").asText()).isEqualTo("post-bilingual-2026-11-13");
+                    assertThat(row.path("coverage").asText()).isEqualTo("SUPPORTED");
+                    assertThat(row.path("coverageReferences").isArray()).isTrue();
+                    assertThat(row.path("coverageReferences").size()).isGreaterThan(0);
+                    for (var reference : row.path("coverageReferences")) {
+                        var path = java.nio.file.Path.of(reference.asText().split(" — ", 2)[0]);
+                        assertThat(path).exists();
+                    }
+                }
             }
             assertThat(EvaluationQuestions.timeline(language).question()).isNotBlank();
+        }
+    }
+
+    @Test void newCumulativeQuestionsPreserveIndependentMultilineRequests() {
+        for (String language : new String[]{"es", "en"}) {
+            var cases = EvaluationQuestions.cases(language);
+            String first = cases.get(30).question();
+            String second = cases.get(31).question();
+            String third = cases.get(32).question();
+            assertThat(second).startsWith(first + "\n");
+            assertThat(third).startsWith(second + "\n");
+            assertThat(second.lines().count()).isEqualTo(2);
+            assertThat(third.lines().count()).isEqualTo(3);
         }
     }
 
