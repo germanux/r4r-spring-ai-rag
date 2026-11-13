@@ -1169,3 +1169,13 @@ body { overflow-anchor: none; }
 .submit-btn.is-preview-pressed { background: #ffd35a; color: #172d42; box-shadow: 0 0 0 5px rgba(255,211,90,.35); transform: translateY(3px); }
 #previewNotice { font-size: .85rem; opacity: .8; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .spinner { animation: none; } }
+
+/* Final public UX: secondary controls, legible sources and compact mobile header. */
+.sample-card { min-height:44px; background:#e4edf5; border:1px solid #71869a; color:#203445; font:inherit; font-weight:700; cursor:pointer; }
+.sample-card:hover { background:#d3e2ef; border-color:#334357; }
+.sample-card:active { transform:translateY(2px); background:#c6d7e6; }
+a:focus-visible,button:focus-visible,textarea:focus-visible,select:focus-visible { outline:3px solid #087e8b; outline-offset:3px; }
+.citation-source { overflow-wrap:anywhere; } .citation a { color:#174d71; text-decoration:underline; }
+.concept-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+[hidden] { display:none !important; }
+@media(max-width:760px) { .concept-grid { grid-template-columns:1fr; } .hero { padding-top:20px; } .nav-shell { gap:8px; } .site-header nav { gap:10px; } .hero h1 { font-size:2rem; } .sample-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }

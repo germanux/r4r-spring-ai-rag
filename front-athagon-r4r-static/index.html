@@ -7,6 +7,11 @@
   <meta name="robots" content="noindex,nofollow"/>
   <meta name="theme-color" content="#334357"/>
   <title data-i18n="page.athagon_labs_riansares_4r_rag_with_citations">Athagon Labs · IA autoalojada · RAG con respuestas verificables</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml"/>
+  <meta property="og:title" content="Asistente de IA para reformas" data-i18n-content="page.hero_title"/>
+  <meta property="og:description" content="Respuestas claras con fuentes verificables" data-i18n-content="page.description"/>
+  <meta property="og:image" content="https://athagon.tech/r4r-rag/assets/social.png"/>
+  <meta name="twitter:card" content="summary_large_image"/>
   <link rel="stylesheet" href="styles/styles.css?v=bb420c44341e"/>
 </head>
 <body class="spanish-demo">
@@ -31,10 +36,10 @@
   <section class="hero">
     <div class="shell hero-shell">
       <div class="hero-copy compact-hero">
-        <div class="status-row" aria-label="Características principales" data-i18n-aria-label="page.key_features"><span data-i18n="page.local_ai">IA en mis equipos</span><span data-i18n="page.citations">RAG con fuentes</span><span data-i18n="page.backup_tag">Respaldo automático</span><span>ES / EN</span></div>
+        <div class="status-row"><span data-i18n="page.citations">IA con fuentes (RAG)</span></div>
         <h1 data-i18n="page.hero_title">Pregunta a la IA con RAG</h1>
         <p class="hero-lede" data-i18n="page.hero_subtitle">Comprueba la respuesta y descubre de dónde sale la información. La IA consulta documentos de Riansares 4R, empresa de reformas, para ayudarte y mostrarte las fuentes utilizadas.</p>
-        <p class="hero-stack">Java · Spring Boot · Spring AI · pgvector · Ollama · OpenAI API</p>
+        
         <div class="hero-actions"><a class="btn primary" href="#demo" id="tryDemoButton" data-i18n-text-0="page.try_the_demo">Probar la demo <span aria-hidden="true">↓</span></a></div>
       </div>
     </div>
@@ -80,22 +85,22 @@
               <div class="examples-title" data-i18n="page.more_quick_examples">Más ejemplos rápidos</div>
             </div>
             <div class="sample-grid" aria-label="Preguntas de ejemplo" data-i18n-aria-label="page.example_questions">
-              <button class="sample-card sample" data-question="¿Qué tipo de reformas hace esta empresa? ¿Casas y oficinas?" data-i18n-data-question="page.renovation_question">
+              <button class="sample-card sample" type="button" data-question="¿Qué tipo de reformas hace esta empresa? ¿Casas y oficinas?" data-i18n-data-question="page.renovation_question">
                 <span class="sample-title" data-i18n="page.renovations">Tipos de reformas</span>
               </button>
-              <button class="sample-card sample" data-question="¿Qué información hace falta para una primera orientación de una reforma?" data-i18n-data-question="page.what_information_is_needed_for_an_initial_assessment_of_a_renovation">
+              <button class="sample-card sample" type="button" data-question="¿Qué información hace falta para una primera orientación de una reforma?" data-i18n-data-question="page.what_information_is_needed_for_an_initial_assessment_of_a_renovation">
                 <span class="sample-title" data-i18n="page.initial_assessment">Orientación</span>
               </button>
-              <button class="sample-card sample" data-question="¿Cuál es la diferencia entre solera y solado?" data-i18n-data-question="page.what_is_the_difference_between_a_concrete_subfloor_solera_and_floor_tiling_solado">
+              <button class="sample-card sample" type="button" data-question="¿Cuál es la diferencia entre solera y solado?" data-i18n-data-question="page.what_is_the_difference_between_a_concrete_subfloor_solera_and_floor_tiling_solado">
                 <span class="sample-title" data-i18n="page.subfloor_vs_flooring">Solera / solado</span>
               </button>
-              <button class="sample-card sample" data-question="Explica la fotosíntesis de las plantas y la función de los cloroplastos." data-i18n-data-question="page.explain_photosynthesis_in_plants_and_the_role_of_chloroplasts">
+              <button class="sample-card sample" type="button" data-question="Explica la fotosíntesis de las plantas y la función de los cloroplastos." data-i18n-data-question="page.explain_photosynthesis_in_plants_and_the_role_of_chloroplasts">
                 <span class="sample-title" data-i18n="page.out_of_scope">Fuera de tema</span>
               </button>
             </div>
           </div>
 
-          <details class="endpoint-settings">
+          <details class="endpoint-settings" id="endpointSettings" hidden>
             <summary data-i18n="page.demo_api_endpoint">Endpoint de la demo</summary>
             <div class="endpoint-row">
               <select id="endpointPreset" aria-label="Endpoint de la API" data-i18n-aria-label="page.api_endpoint"></select>
@@ -128,7 +133,7 @@
             <span class="loading-badge" data-i18n="page.query_in_progress">CONSULTA EN CURSO</span>
             <div class="loading-icon" aria-hidden="true">⌕</div>
             <h3 data-i18n="page.preparing_an_answer_with_sources">Preparando una respuesta con fuentes…</h3>
-            <ol id="ragProgress" class="rag-progress" aria-live="polite"></ol>
+            <p id="simpleProgress" role="status" aria-live="polite"></p><details><summary data-i18n="page.technical_details">Detalles técnicos</summary><ol id="ragProgress" class="rag-progress"></ol></details>
           </div>
 
           <div id="resultContent" class="result-content" hidden>
@@ -143,7 +148,7 @@
                 <h3 data-i18n="page.answer">RESPUESTA DE LA IA</h3>
                 <button id="copyAnswerButton" type="button" class="text-btn" data-i18n="page.copy">Copiar</button>
               </div>
-              <div id="answerText" class="answer-text"></div>
+              <p id="answerProvider" class="translation-note"></p><div id="answerText" class="answer-text" aria-live="polite"></div>
             </div>
 
             <details class="citations-block" id="sourcesDetails">
@@ -160,7 +165,7 @@
 
   <section class="section concept-section" id="como-funciona">
     <div class="shell">
-      <h2 class="section-heading"><button id="conceptToggle" class="section-toggle" type="button" aria-expanded="false" aria-controls="conceptContent"><span data-i18n="page.what_it_demonstrates">¿QUÉ TIENE DE ESPECIAL?</span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
+      <p class="architecture-caption" data-i18n="page.adaptable"></p><h2 class="section-heading"><button id="conceptToggle" class="section-toggle" type="button" aria-expanded="false" aria-controls="conceptContent"><span data-i18n="page.what_it_demonstrates">¿QUÉ TIENE DE ESPECIAL?</span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
       <div id="conceptContent" hidden>
       <div class="concept-grid">
         <article class="concept-card panel">
@@ -178,17 +183,14 @@
           <h3 data-i18n="page.automatic_failover_title">Tenemos un plan B</h3>
           <p data-i18n="page.automatic_failover_description">Si fallan técnicamente el PC y el portátil, se intenta OpenAI como último respaldo, solo si está habilitado.</p>
         </article>
-        <article class="concept-card panel">
-          <span class="concept-number">04</span>
-          <h3 data-i18n="page.abstains_outside_its_domain">Sabe decir «no lo sé»</h3>
-          <p data-i18n="page.when_a_question_falls_outside_the_available_knowledge_it_abstains_instead_of_pretending_to">Si no encuentra información suficiente, te lo dice. Porque una IA fiable también debe reconocer sus límites.</p>
-        </article>
+
       </div>
 
       </div>
     </div>
   </section>
 
+<section class="section"><div class="shell"><h2 data-i18n="page.engineering_title"></h2><p data-i18n="page.engineering"></p><p class="hero-stack">Java 21 · Spring Boot · Spring AI · Ollama · PostgreSQL/pgvector · AWS Lambda · S3 Vectors</p></div></section>
   <section class="section architecture-section" id="arquitectura">
     <div class="shell">
       <h2 class="section-heading"><button id="architectureToggle" class="section-toggle" type="button" aria-expanded="false" aria-controls="architectureContent"><span data-i18n="page.architecture">CÓMO FUNCIONA</span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
@@ -199,7 +201,7 @@
           <details class="arch-step"><summary><span class="node-id">03</span><strong data-i18n="page.vector_database">Busca información</strong><small>NAS Synology · pgvector</small></summary><p data-i18n="page.searches_relevant_passages_in_riansares_4r_documentation">Localiza los documentos y fragmentos más relevantes.</p></details>
           <details class="arch-step llm"><summary><span class="node-id">04</span><strong data-i18n="page.generation_role">Genera una respuesta</strong><small data-i18n="page.generation_servers">Ollama · PC y respaldo</small></summary><p data-i18n="page.generates_an_answer_grounded_in_the_retrieved_context">La IA responde utilizando la información encontrada y muestra sus fuentes.</p></details>
         </div>
-        <p class="architecture-caption" data-i18n="page.topology_note">Detrás de esta demo trabajan varios equipos con funciones diferentes: unos buscan la información y otros generan las respuestas.</p>
+        <p class="architecture-caption" data-i18n="page.aws_backup"></p><p class="architecture-caption" data-i18n="page.topology_note">Detrás de esta demo trabajan varios equipos con funciones diferentes: unos buscan la información y otros generan las respuestas.</p>
         <p id="localFallbackStatus" class="architecture-caption" role="status" hidden></p>
         <div class="inference-hosts">
           <article class="inference-host primary-host" data-local-provider="desktop">
@@ -243,8 +245,8 @@
         <details class="config-details">
           <summary data-i18n="page.view_runtime_configuration">Configuración, hardware y métricas</summary>
         <dl class="runtime-summary">
-          <div><dt data-i18n="page.used_model_identifier">Identificador del modelo de la última respuesta</dt><dd id="runtimeUsedModel">—</dd></div>
-          <div><dt data-i18n="page.configured_preferred">Proveedor preferente configurado</dt><dd><span id="runtimePreferred">—</span></dd></div>
+          <div><dt data-i18n="page.used_model_identifier">Identificador del modelo de la última respuesta</dt><dd id="runtimeUsedModel" data-i18n="notQueried">No consultado</dd></div>
+          <div><dt data-i18n="page.configured_preferred">Proveedor preferente configurado</dt><dd><span id="runtimePreferred" data-i18n="notQueried">No consultado</span></dd></div>
         </dl>
       <p class="translation-note" data-i18n="page.public_frontend_scope">MyMemory traduce las consultas inglesas para buscar documentos en español; si falla, se usa traducción local. La respuesta conserva el idioma solicitado.</p>
           <div class="config-grid" id="runtimeConfig">
@@ -255,13 +257,13 @@
             <div><span data-i18n="page.local_models">Modelos locales · configuración de referencia</span><strong><span data-i18n="page.local_models_details">Ollama
 PC: qwen3:8b
 Portátil ASUS: qwen2.5:7b
-Embeddings:</span> <span id="runtimeEmbeddingModel">—</span> · <span id="runtimeEmbeddings">—</span></strong></div>
-            <div><span data-i18n="page.remote_fallback">Respaldo remoto configurado</span><strong id="runtimeRemote">—</strong></div>
+Embeddings:</span> <span id="runtimeEmbeddingModel" data-i18n="notQueried">No consultado</span> · <span id="runtimeEmbeddings" data-i18n="notQueried">No consultado</span></strong></div>
+            <div><span data-i18n="page.remote_fallback">Respaldo remoto configurado</span><strong id="runtimeRemote" data-i18n="notQueried">No consultado</strong></div>
             <div><span data-i18n="page.backup_details">Respaldo de generación</span><strong data-i18n="page.backup_implementation">PC → portátil ASUS → OpenAI, si está habilitado. Si todos fallan, error controlado.</strong></div>
             <div data-local-provider="desktop"><p class="local-provider-status" hidden>Modelo local no disponible en la última respuesta</p><span data-i18n="page.hardware_desktop">PC de sobremesa · hardware configurado</span><strong>NVIDIA GeForce RTX 4060 · 8 GB VRAM · Intel i9-14900KF · 64 GB DDR5 RAM</strong></div>
             <div data-local-provider="laptop"><p class="local-provider-status" hidden>Modelo local no disponible en la última respuesta</p><span data-i18n="page.hardware_laptop">Portátil ASUS · hardware configurado</span><strong>NVIDIA GeForce GTX 1050 · 4 GB VRAM · Intel i7-7700HQ · 32 GB RAM</strong></div>
-            <div><span data-i18n="page.retrieval">Recuperación</span><strong id="runtimeRetrieval">—</strong></div>
-            <div class="runtime-host-info"><span data-i18n="page.memory_details">Estado y memoria de Ollama</span><strong id="runtimeModelStatus">—</strong><small id="runtimeMemoryScope" class="host-hardware"></small><strong id="runtimeOllama" data-i18n="page.checking_ollama">Consultando Ollama…</strong></div>
+            <div><span data-i18n="page.retrieval">Recuperación</span><strong id="runtimeRetrieval" data-i18n="notQueried">No consultado</strong></div>
+            <div class="runtime-host-info"><span data-i18n="page.memory_details">Estado y memoria de Ollama</span><strong id="runtimeModelStatus" data-i18n="notQueried">No consultado</strong><small id="runtimeMemoryScope" class="host-hardware"></small><strong id="runtimeOllama" data-i18n="page.checking_ollama">Consultando Ollama…</strong></div>
           </div>
         </details>
         </div>
@@ -274,7 +276,7 @@ Embeddings:</span> <span id="runtimeEmbeddingModel">—</span> · <span id="runt
 
 <footer class="footer">
   <div class="shell footer-row">
-    <span data-i18n="page.athagon_labs_independent_software_engineering_lab">ATHAGON LABS · Germán Caballero</span>
+    <a href="https://athagon.tech/">ATHAGON LABS · Germán Caballero</a><a href="https://github.com/germanux/r4r-spring-ai-rag">GitHub</a><span data-i18n="page.author"></span>
     <span data-i18n="page.riansares_4r_rag_with_citations_2026">Riansares 4R · RAG con citas · 2026</span>
   </div>
 </footer>
