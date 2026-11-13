@@ -4,8 +4,8 @@ project: "Riansares 4R"
 document_type: "Conocimiento canónico editorial"
 language: "es"
 created_at: "2026-07-27"
-updated_at: "2026-07-27"
-version: "4.0"
+updated_at: "2026-11-13"
+version: "4.1"
 status: "canonical"
 content_zone: "EDITORIAL"
 canonical_set: "R4R_EDITORIAL_2026-07-27"
@@ -602,3 +602,23 @@ La clienta tenía previsto cambiar el inodoro meses después. Por ello se redujo
 Lección:
 
 > Cuando el elemento se sustituirá pronto, puede ser más sensato hacer una reparación mínima viable que una rehabilitación completa.
+
+---
+
+## Ampliación temática — fugas de cocina y reformas progresivas (noviembre 2026)
+
+### Pregunta: «Tengo tuberías rotas en mi cocina. ¿Qué hago?»
+
+Si existe una fuga activa, cerrar el suministro accesible cuando pueda hacerse con seguridad, proteger la zona y contactar con un profesional competente. Si hay proximidad de agua y electricidad, evitar manipulación peligrosa. Una vez reparada la avería se comprueba estanqueidad, posibles daños por humedad y secado antes de recomponer los acabados. No afirmar que toda la instalación está obsoleta sin inspección.
+
+### Pregunta: «Además quiero reformar la cocina. ¿Qué recomiendas?»
+
+Aprovechar para planificar instalaciones antes de cerrar paredes, pero separar reparaciones imprescindibles de acabados y mobiliario opcionales. Revisar ubicación de fregadero, enchufes, desagües y aparatos; estimar por partidas según medidas y estado real. Puede ser viable conservar distribución y elementos sanos.
+
+### Pregunta: «¿Puedo cambiar también los azulejos?»
+
+Sí. Como parte opcional de la reforma, tras solucionar filtraciones y comprobar soporte, pueden retirarse y sustituirse azulejos. No colocar revestimientos sobre soportes húmedos o inestables sin tratamiento adecuado. La reparación de fontanería y el revestimiento son trabajos diferentes que deben presupuestarse por separado.
+
+### Alcance
+
+Estas indicaciones son orientación general respaldada por `guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md`; no son un nuevo caso ejecutado ni un presupuesto real.

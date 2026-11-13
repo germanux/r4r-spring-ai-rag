@@ -4,8 +4,8 @@ project: "Riansares 4R"
 document_type: "Conocimiento canónico editorial"
 language: "es"
 created_at: "2026-07-27"
-updated_at: "2026-07-27"
-version: "4.0"
+updated_at: "2026-11-13"
+version: "4.1"
 status: "canonical"
 content_zone: "EDITORIAL"
 canonical_set: "R4R_EDITORIAL_2026-07-27"
@@ -662,3 +662,15 @@ La conclusión fue no asumir el proyecto como contratista principal debido a:
 Podrían estudiarse partidas independientes y muy delimitadas, pero no asumir estructura, foso, hueco de ascensor o coordinación global sin equipo, seguros y soporte técnico suficientes.
 
 Decir que no a una obra puede ser una decisión empresarial correcta.
+
+---
+
+## Ampliación — condiciones de uso y pruebas antes de cerrar obra (noviembre 2026)
+
+### Baños: comprobaciones previas al alicatado
+
+En reformas de baños, antes de cerrar paramentos y colocar acabados conviene verificar conexiones de agua, evacuación, soporte, sellados y solución de impermeabilización. Placa hidrófuga no significa impermeabilización completa. En baños estrechos, las cotas, la altura de desagües y el acceso condicionan la solución final.
+
+### Oficinas y locales: alcance sujeto a uso
+
+Los condicionantes de aforo, accesibilidad, ventilación, seguridad y continuidad de actividad dependen de la función del inmueble. Un ejemplo de oficina no habilita ni acredita la ejecución de naves, bares o equipamientos públicos; estos casos se tratan como orientación general en `guides/R4R_85_OFICINAS_LOCALES_Y_COMUNIDADES.md`.

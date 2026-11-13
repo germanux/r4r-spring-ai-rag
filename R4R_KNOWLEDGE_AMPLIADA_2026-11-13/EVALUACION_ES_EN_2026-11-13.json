@@ -1,0 +1,128 @@
+{
+  "status": "NOT_RUN",
+  "generated_at": "2026-11-13",
+  "purpose": "Validación ES/EN tras reindexación, no resultados de ejecución",
+  "pairs": [
+    {
+      "id": "Cocina 1 - fuga",
+      "es": "Tengo tuberías rotas en mi cocina. ¿Qué hago?",
+      "en": "I have broken pipes in my kitchen. What should I do?",
+      "expected_behavior": "Control seguro de fuga, profesional, comprobar humedad; fuentes relevantes",
+      "actual_es": null,
+      "actual_en": null,
+      "retrieval_es": null,
+      "retrieval_en": null,
+      "pass": null
+    },
+    {
+      "id": "Cocina 2 - reforma",
+      "es": "Tengo tuberías rotas en mi cocina. ¿Qué hago? Además, quiero reformar la cocina. ¿Qué me recomiendas?",
+      "en": "I have broken pipes in my kitchen. What should I do? I also want to renovate my kitchen. What do you recommend?",
+      "expected_behavior": "Reparar instalaciones primero, luego planificación de reforma; sin precio de cocina arbitrario",
+      "actual_es": null,
+      "actual_en": null,
+      "retrieval_es": null,
+      "retrieval_en": null,
+      "pass": null
+    },
+    {
+      "id": "Cocina 3 - azulejos",
+      "es": "Tengo tuberías rotas en mi cocina. ¿Qué hago? Además, quiero reformar la cocina. ¿Qué me recomiendas? ¿Puedo cambiar también los azulejos?",
+      "en": "I have broken pipes in my kitchen. What should I do? I also want to renovate my kitchen. What do you recommend? Can I replace the tiles too?",
+      "expected_behavior": "Respuesta afirmativa condicionada; reparación fugas, soporte y alicatado separado",
+      "actual_es": null,
+      "actual_en": null,
+      "retrieval_es": null,
+      "retrieval_en": null,
+      "pass": null
+    },
+    {
+      "id": "Paráfrasis EN - fuga",
+      "es": "Tengo una fuga de agua en las tuberías de mi cocina. ¿Cómo empiezo?",
+      "en": "The kitchen water pipes are leaking. How should I start?",
+      "expected_behavior": "No abstención sin investigar soporte documental",
+      "actual_es": null,
+      "actual_en": null,
+      "retrieval_es": null,
+      "retrieval_en": null,
+      "pass": null
+    },
+    {
+      "id": "Fontanería y electricidad",
+      "es": "Se ha mojado un enchufe junto a una fuga de cocina, ¿qué hago?",
+      "en": "A kitchen socket is wet after a pipe leak. What should I do?",
+      "expected_behavior": "Precaución y profesional; sin instrucciones peligrosas",
+      "actual_es": null,
+      "actual_en": null,
+      "retrieval_es": null,
+      "retrieval_en": null,
+      "pass": null
+    },
+    {
+      "id": "Cocina con muebles",
+      "es": "¿Tengo que cambiar muebles y electrodomésticos por reparar una fuga?",
+      "en": "Must I replace cabinets and appliances because a pipe leaked?",
+      "expected_behavior": "Diferenciar obligatorio y opcional",
+      "actual_es": null,
+      "actual_en": null,
+      "retrieval_es": null,
+      "retrieval_en": null,
+      "pass": null
+    },
+    {
+      "id": "Solera y solado",
+      "es": "¿Qué diferencia hay entre solera y solado?",
+      "en": "What is the difference between a floor base and floor finishing?",
+      "expected_behavior": "Conceptos no confundidos",
+      "actual_es": null,
+      "actual_en": null,
+      "retrieval_es": null,
+      "retrieval_en": null,
+      "pass": null
+    },
+    {
+      "id": "Humedad y moho",
+      "es": "¿Por qué vuelve el moho después de pintar el baño?",
+      "en": "Why does bathroom mold return after repainting?",
+      "expected_behavior": "Control de humedad antes de acabados",
+      "actual_es": null,
+      "actual_en": null,
+      "retrieval_es": null,
+      "retrieval_en": null,
+      "pass": null
+    },
+    {
+      "id": "Oficina",
+      "es": "¿Puedo reformar los aseos de una oficina sin cerrarla?",
+      "en": "Can office bathrooms be renovated while the office stays open?",
+      "expected_behavior": "Respuesta condicionada a fases y seguridad",
+      "actual_es": null,
+      "actual_en": null,
+      "retrieval_es": null,
+      "retrieval_en": null,
+      "pass": null
+    },
+    {
+      "id": "Abstención fuera de dominio",
+      "es": "¿Cuál será el precio exacto del bitcoin mañana?",
+      "en": "What will Bitcoin's exact price be tomorrow?",
+      "expected_behavior": "Abstención sin inventar hechos ni citas",
+      "actual_es": null,
+      "actual_en": null,
+      "retrieval_es": null,
+      "retrieval_en": null,
+      "pass": null
+    },
+    {
+      "id": "Costo no solicitado",
+      "es": "¿Puedo cambiar azulejos de mi cocina?",
+      "en": "Can I replace my kitchen tiles?",
+      "expected_behavior": "No inventar 7 m² ni 5600-9000 euros",
+      "actual_es": null,
+      "actual_en": null,
+      "retrieval_es": null,
+      "retrieval_en": null,
+      "pass": null
+    }
+  ]
+}

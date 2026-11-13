@@ -3,8 +3,8 @@ title: "Riansares 4R — todas las preguntas frecuentes"
 document_type: "FAQ editorial enriquecida"
 language: "es"
 created_at: "2026-07-27"
-updated_at: "2026-07-27"
-version: "1.0"
+updated_at: "2026-11-13"
+version: "1.1"
 status: "research_enriched"
 content_zone: "EDITORIAL"
 ingest_into_editorial_rag: true
@@ -369,6 +369,180 @@ No automáticamente. Debe distinguirse defecto de ejecución de causa externa, s
 Por escrito, identificando partida y síntomas, aportando fotografías y permitiendo una inspección antes de atribuir causa.
 
 **Base:** SRC-CM-REFORMAS
+
+
+
+## Consultas prácticas ampliadas — noviembre 2026
+
+Las siguientes respuestas son orientativas. No acreditan trabajos realizados ni sustituyen diagnóstico profesional.
+
+### FAQ-053 — Tengo una tubería rota en la cocina, ¿qué hago primero?
+
+Si hay fuga activa, cerrar el suministro accesible si es seguro, evitar instalaciones eléctricas mojadas y solicitar reparación profesional. Comprobar estanqueidad y secado antes de cerrar paredes o instalar muebles.
+
+**Categoría:** Fontanería. **Base:** EXT-EPA-MOISTURE.
+
+### FAQ-054 — ¿Una avería obliga a reformar toda la cocina?
+
+No. Una avería puede repararse de forma localizada si el resto está en buen estado. La renovación integral es opcional y requiere un alcance y presupuesto propios.
+
+**Categoría:** Cocinas. **Base:** BASE-CANONICA.
+
+### FAQ-055 — ¿Puedo aprovechar una reparación de tuberías para renovar azulejos?
+
+Sí. Primero se localiza y repara la fuga, se verifica el secado y soporte; después puede alicatarse con preparación y sistema adecuados. Las partidas se separan.
+
+**Categoría:** Cocinas. **Base:** BASE-CANONICA.
+
+### FAQ-056 — ¿Puedo cambiar también los muebles y electrodomésticos?
+
+Sí, si el propietario lo decide y las medidas, conexiones hidráulicas, desagües, ventilación y circuitos eléctricos son compatibles. No es obligatorio cambiarlos por una fuga.
+
+**Categoría:** Cocinas. **Base:** BASE-CANONICA.
+
+### FAQ-057 — ¿Conviene cambiar todas las tuberías antiguas?
+
+Depende del material, corrosión, historial de fugas, accesos y estado de los tramos restantes. Una sola fuga no justifica siempre sustituir toda la red.
+
+**Categoría:** Cocinas. **Base:** BASE-CANONICA.
+
+### FAQ-058 — ¿Es recomendable mover el fregadero y el lavavajillas?
+
+Puede ser viable, pero se deben revisar recorridos de agua, desagües, pendientes, electricidad, ventilación y accesibilidad para mantenimiento. Mantener posición suele simplificar trabajos.
+
+**Categoría:** Cocinas. **Base:** BASE-CANONICA.
+
+### FAQ-059 — ¿Qué hacer si hay agua cerca de enchufes?
+
+No tocar elementos energizados mojados. Aislar suministros solo cuando pueda hacerse de forma segura y contactar a profesionales competentes si existe riesgo.
+
+**Categoría:** Cocinas. **Base:** EXT-BOE-REBT.
+
+### FAQ-060 — ¿Por qué vuelve el moho después de limpiar?
+
+Porque persiste una fuente de humedad o condensación. Se necesita identificar la causa, reparar filtraciones o fugas y mejorar secado o ventilación según el diagnóstico.
+
+**Categoría:** Humedades. **Base:** EXT-EPA-MOISTURE.
+
+### FAQ-061 — ¿Cuánto esperar para reparar un techo mojado?
+
+No hay plazo universal para repintar. Primero detener la fuga y comprobar que el soporte está suficientemente seco; EPA aconseja secar pronto materiales mojados para reducir riesgo de moho.
+
+**Categoría:** Humedades. **Base:** EXT-EPA-GUIDE.
+
+### FAQ-062 — ¿Una placa hidrófuga sustituye la impermeabilización de la ducha?
+
+No. La ducha requiere sistema de impermeabilización continuo y encuentros, juntas y pasos de instalaciones correctamente resueltos.
+
+**Categoría:** Baños. **Base:** BASE-CANONICA.
+
+### FAQ-063 — ¿Qué revisar si una ducha pierde agua?
+
+Drenaje, sifón, juntas, mampara, encuentros e impermeabilización. La silicona exterior no siempre corrige el origen de una filtración interna.
+
+**Categoría:** Baños. **Base:** BASE-CANONICA.
+
+### FAQ-064 — ¿Se puede cambiar bañera por ducha manteniendo el desagüe?
+
+Depende de la posición, sifón, alturas, pendientes y acceso. Se decide midiendo y comprobando la instalación real, no solo por catálogo.
+
+**Categoría:** Baños. **Base:** BASE-CANONICA.
+
+### FAQ-065 — ¿Puedo demoler un tabique de una casa antigua?
+
+Antes debe identificarse si soporta cargas, contiene instalaciones o necesita permiso y proyecto. No determinar por fotografías si un muro es portante.
+
+**Categoría:** Rehabilitación. **Base:** BASE-CANONICA.
+
+### FAQ-066 — ¿Por qué entra agua en casa después de pavimentar el patio?
+
+Pueden influir pendientes, cotas del umbral, drenaje, bajantes y encuentros. Hace falta diagnosticar la evacuación antes de añadir nuevas capas.
+
+**Categoría:** Patios. **Base:** BASE-CANONICA.
+
+### FAQ-067 — ¿Es lo mismo solera que solado?
+
+No. La solera es parte de la base o soporte; el solado es el pavimento de acabado. Se puede renovar uno sin cambiar el otro si el soporte resulta adecuado.
+
+**Categoría:** Patios. **Base:** BASE-CANONICA.
+
+### FAQ-068 — ¿Se puede renovar una cocina por fases?
+
+Sí. Primero resolver averías y decidir instalaciones; después acabados y mobiliario. Hay que comprobar que dividir la obra no implique repetir demoliciones.
+
+**Categoría:** Presupuestos. **Base:** EXT-NARI-FAQ.
+
+### FAQ-069 — ¿Qué se hace con un imprevisto detrás del alicatado?
+
+Documentarlo, explicar causa y alternativas, medir y valorar el trabajo adicional antes de continuar cuando sea posible.
+
+**Categoría:** Presupuestos. **Base:** BASE-CANONICA.
+
+### FAQ-070 — ¿Se puede dar un precio para una cocina sin conocer los metros?
+
+No un presupuesto fiable. Primero se necesita superficie, alcance, distribución, estado de instalaciones, materiales y accesos. No tomar automáticamente el ejemplo de 7 m².
+
+**Categoría:** Presupuestos. **Base:** EXT-NARI-FAQ.
+
+### FAQ-071 — ¿Cambiar ventanas puede afectar la ventilación?
+
+Sí. Si mejora la estanqueidad, hay que revisar cómo se renueva el aire y si hay riesgo de condensación, junto con los requisitos aplicables.
+
+**Categoría:** Eficiencia. **Base:** EXT-CTE-HS.
+
+### FAQ-072 — ¿Se puede reformar una oficina mientras se trabaja?
+
+A veces, con fases, protección del personal, control de polvo y ruido, accesos y cortes de suministro. Verificar exigencias específicas del local.
+
+**Categoría:** Oficinas. **Base:** EXT-NAHB-LIVING.
+
+### FAQ-073 — ¿Qué hacer si aparece un material sospechoso de amianto?
+
+Detener los trabajos que puedan alterarlo y consultar un especialista habilitado. No retirarlo, cortarlo ni lijarlo por cuenta propia.
+
+**Categoría:** Seguridad. **Base:** EXT-HSE-ASBESTOS.
+
+### FAQ-074 — ¿Se puede reparar una piscina solo con pintura?
+
+Una pérdida de agua exige identificar si procede de evaporación, tuberías, juntas o vaso; no asumir que pintar resuelve el origen. No es un servicio confirmado de R4R.
+
+**Categoría:** Otros espacios. **Base:** BASE-CANONICA.
+
+### FAQ-075 — ¿Qué cambia en la reforma de un polideportivo?
+
+Uso público, evacuación, accesibilidad, ventilación, drenaje, seguridad, permisos y ejecución por fases. Requiere profesionales y normativa del uso concreto.
+
+**Categoría:** Otros espacios. **Base:** BASE-CANONICA.
+
+### FAQ-076 — ¿Por qué conviene no tapar una pared húmeda con pladur?
+
+Porque puede ocultar una filtración activa, degradar materiales y dificultar comprobaciones. Antes deben estudiarse origen de agua y solución constructiva compatible.
+
+**Categoría:** Rehabilitación. **Base:** EXT-CTE-HS.
+
+### FAQ-077 — ¿Qué comprobar antes de entregar un baño reformado?
+
+Fugas, evacuación, sellados, funcionamiento de sanitarios, ventilación, remates, limpieza y pendientes acordados; conservar documentación y garantías.
+
+**Categoría:** Entrega. **Base:** BASE-CANONICA.
+
+### FAQ-078 — ¿Se puede vivir en la casa mientras se reforma la cocina?
+
+Depende de cortes de servicios, seguridad, polvo y habitabilidad; conviene prever zona temporal para preparar comida y acordar horarios.
+
+**Categoría:** Cocinas. **Base:** EXT-NAHB-LIVING.
+
+### FAQ-079 — ¿Puedo preguntar en inglés sobre reformas españolas?
+
+Sí, pero la respuesta debe basarse en documentos pertinentes y citas verificables; el idioma por sí solo no garantiza una buena recuperación. Se necesita comparar las consultas equivalentes.
+
+**Categoría:** Bilingüe. **Base:** BASE-CANONICA.
+
+### FAQ-080 — ¿La norma estadounidense de plomo en viviendas anteriores a 1978 se aplica en España?
+
+No. Esa fecha y obligaciones corresponden a la normativa estadounidense EPA RRP; las obras en España se rigen por sus propias exigencias legales y evaluaciones de riesgo.
+
+**Categoría:** Seguridad. **Base:** EXT-EPA-LEAD.
 
 
 ## Fuentes web

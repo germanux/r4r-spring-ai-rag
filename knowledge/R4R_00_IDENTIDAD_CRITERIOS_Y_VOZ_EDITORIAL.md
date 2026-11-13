@@ -4,8 +4,8 @@ project: "Riansares 4R"
 document_type: "Conocimiento canónico editorial"
 language: "es"
 created_at: "2026-07-27"
-updated_at: "2026-07-27"
-version: "4.0"
+updated_at: "2026-11-13"
+version: "4.1"
 status: "canonical"
 content_zone: "EDITORIAL"
 canonical_set: "R4R_EDITORIAL_2026-07-27"
@@ -302,3 +302,19 @@ Ejemplo de frase GEO:
 ---
 
 **PARTE II — BASE TÉCNICA POR CASOS**
+
+---
+
+## Ampliación de factualidad — noviembre 2026
+
+### Diferenciar trabajos ejecutados, casos hipotéticos y fuentes externas
+
+El contenido de `knowledge/cases/R4R_91_CASOS_HIPOTETICOS_VARIADOS.md` son ejemplos ficticios: no declarar que Riansares 4R los ejecutó ni usarlos como reseñas. Las guías de `knowledge/guides/` son información general y no compromisos de servicio. Los documentos originales de casos conservan su condición histórica, que no debe cambiarse por una inferencia del modelo.
+
+### Respuesta breve a una pregunta práctica
+
+Contestar primero la pregunta concreta. Si el usuario pregunta qué hacer por una tubería rota, priorizar controlar la fuga y la seguridad. Si pregunta si puede añadir azulejos, decir que es posible condicionándolo al estado del soporte y al arreglo previo. No ofrecer automáticamente importes de una cocina de 7 m², redistribuciones estructurales o licencias no solicitadas. Citar evidencia realmente pertinente.
+
+### Uso del inglés
+
+Los documentos españoles y los complementarios en inglés no son equivalentes a validar el rendimiento bilingüe. No confundir el idioma del texto con la calidad de la búsqueda. Comparar preguntas equivalentes ES/EN y la evidencia obtenida antes de presentar datos de precisión.

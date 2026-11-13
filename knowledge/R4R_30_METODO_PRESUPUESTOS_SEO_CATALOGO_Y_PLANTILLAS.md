@@ -4,8 +4,8 @@ project: "Riansares 4R"
 document_type: "Conocimiento canónico editorial"
 language: "es"
 created_at: "2026-07-27"
-updated_at: "2026-07-27"
-version: "4.0"
+updated_at: "2026-11-13"
+version: "4.1"
 status: "canonical"
 content_zone: "EDITORIAL"
 canonical_set: "R4R_EDITORIAL_2026-07-27"
@@ -621,3 +621,19 @@ Utilizar esta instrucción con el LLM local:
 - **Fuera de capacidad:** trabajo cuyo riesgo, estructura, medios o responsabilidad exceden los recursos disponibles.
 
 ---
+
+---
+
+## Ampliación — preguntas reales, presupuestos y evidencias (noviembre 2026)
+
+### Primero resolver la intención del cliente
+
+Para «¿qué hago con una fuga?» la respuesta empieza por detener la fuga y comprobar seguridad; para «¿puedo cambiar azulejos?» empieza por la viabilidad condicionada; para «¿cuánto cuesta?» se solicitan medidas, alcance y calidades. Nunca responder de forma automática con el precio de una cocina de 7 m² si nadie dijo que la cocina mide 7 m².
+
+### Distinguir referencias técnicas de precios comerciales
+
+Las guías internacionales (EPA, NARI, NAHB, HSE) aportan buenas prácticas generales, no precios locales, garantías comerciales ni normas de obligado cumplimiento en España. El precio depende de medición, proyecto, permisos, materiales y fecha. Fuente ampliada: `sources/R4R_71_REFERENCIAS_TECNICAS_INTERNACIONALES_2026.md`.
+
+### Evaluación bilingüe antes de publicar nuevos ejemplos
+
+Repetir preguntas equivalentes en español e inglés sobre la misma cocina, comparar fragmentos recuperados y citas, y registrar cuándo la respuesta se abstiene. Una respuesta fluida no demuestra soporte documental; una abstención puede ser correcta cuando no hay evidencia. Almacenar resultados y modelos reales de la ejecución, no supuestos.
