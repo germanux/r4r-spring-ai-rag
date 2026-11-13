@@ -92,12 +92,16 @@ class MarkdownDocumentLoaderTest {
     }
 
     @Test
-    void actualExternalReferenceDocumentsAreExcludedFromTheBilingualCorpus() throws Exception {
+    void archivedExternalReferenceDocumentsAreOutsideTheBilingualCorpus() throws Exception {
         var corpus = new MarkdownDocumentLoader(new KnowledgeProperties(Path.of("knowledge"), 1_048_576, 2000))
                 .loadBilingualCorpus();
         String es = "es/sources/R4R_71_REFERENCIAS_TECNICAS_INTERNACIONALES_2026.md";
         String en = "en/sources/R4R_71_INTERNATIONAL_TECHNICAL_REFERENCES_2026.md";
-        assertThat(corpus.excludedSources()).contains(es, en);
+        assertThat(Path.of("knowledge").resolve(es)).doesNotExist();
+        assertThat(Path.of("knowledge").resolve(en)).doesNotExist();
+        assertThat(Path.of("docs/knowledge/old").resolve(es)).exists();
+        assertThat(Path.of("docs/knowledge/old").resolve(en)).exists();
+        assertThat(corpus.excludedSources()).doesNotContain(es, en);
         assertThat(corpus.documents()).extracting(KnowledgeDocument::source).doesNotContain(es, en);
     }
 
