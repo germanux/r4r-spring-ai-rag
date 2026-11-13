@@ -1,0 +1,15 @@
+{
+  "calls": [
+    {
+      "url": "https://r4r-api.athagon.tech/api/rag/answers/stream",
+      "body": {
+        "question": "What do the four Rs in Riansares 4R stand for? Please translate them into English too.",
+        "responseLanguage": "en"
+      }
+    }
+  ],
+  "status": 200,
+  "mode": "Live",
+  "answer": "The four Rs in Riansares 4R stand for Reformas, Rehabilitación, Revestimientos, and Reparaciones. These terms translate to Reforms, Rehabilitation, Cladding, and Repairs respectively. This information is explicitly documented in [S1] and [S2].",
+  "model": "PC principal · qwen3:8b"
+}

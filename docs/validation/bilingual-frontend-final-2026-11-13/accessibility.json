@@ -1,0 +1,14 @@
+{
+  "mobile": {
+    "accessibility": 100,
+    "version": "13.6.0",
+    "url": "http://127.0.0.1:8765/",
+    "failed": []
+  },
+  "desktop": {
+    "accessibility": 100,
+    "version": "13.6.0",
+    "url": "http://127.0.0.1:8765/",
+    "failed": []
+  }
+}

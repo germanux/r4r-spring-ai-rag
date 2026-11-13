@@ -1,3 +1,39 @@
+LATEST RELEASE — bilingual frontend completion (2026-11-13)
+==========================================================
+Autoplay: three cumulative kitchen questions, six original supplied answers,
+zero backend requests, once per page load. Their SSE timeline and models were
+not supplied: presentation stages are explicitly labelled and carry no invented timings.
+CTA and the four original examples query the API first. Only matching verified
+recordings can be a labelled fallback on network failure, timeout or 5xx. No
+automatic fallback for 429, valid abstentions or arbitrary typed submissions.
+Enter submits; Shift+Enter adds a newline; IME composition does not submit.
+Technical engineering content is nested in Technical Details, collapsed by default.
+
+Source publishing:
+  python3 py-scripts/export_public_documents.py
+This generates 82 readable branded ES/EN HTML documents and docs/catalogue.json.
+It preserves the source corpus, pairs by stable R4R ID, records content hashes,
+and embeds the catalogue in index.html. Numeric section anchors are used only
+when they exist in the selected document. The eight older PDFs stay untouched.
+Optional PDF export now preserves language/subfolder paths to avoid collisions.
+When editing fixture JSON, sync the recordedExamples JSON in index.html; tests
+verify equality. No kitchen capture requests are part of the fixture process.
+
+Deploy index.html, js/app.js, js/i18n.js, styles/, assets/ and all of docs/ under
+/r4r-rag/. No push or deployment was performed. New document URLs currently
+return 404 on NAS and Athagon until these generated files are published.
+
+Tests from repository root:
+  node front-athagon-r4r-static/js/app.test.cjs
+  node front-athagon-r4r-static/js/browser.test.cjs
+  node front-athagon-r4r-static/js/interaction.test.cjs
+Browser tests require existing Playwright/Chromium; PLAYWRIGHT_MODULE and
+CHROMIUM_PATH support an external installation. They use mocked transport and
+accelerated animation timers, independently of the real CTA/example captures.
+See docs/validation/bilingual-frontend-final-2026-11-13/README.md.
+
+HISTORICAL NOTES (superseded where the latest release above differs)
+-----------------------------------------------------------------
 R4R RAG STATIC DEMO
 ===================
 

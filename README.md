@@ -28,11 +28,11 @@ zero downtime or large-scale availability.
 
 ## Visitor experience and trade-offs
 
-- Visibility triggers a recorded solera/solado walkthrough once per session.
-  Examples use real saved ES/EN results instantly and consume no API requests.
-- Arbitrary questions use live SSE. Translation is delegated to the existing
+- Visibility triggers the recorded kitchen walkthrough once per page load.
+  The three cumulative kitchen questions replay the six user-supplied real ES/EN results without API calls.
+- The CTA, four quick examples and arbitrary questions all use live SSE. Exact verified CTA/example recordings are a clearly labelled fallback only after network failure, timeout or 5xx; arbitrary submissions and 429 never silently become recordings. Translation is delegated to the existing
   backend; the browser no longer contacts MyMemory.
-- Citations open branded PDFs with their original source basename. Internal
+- Citations preserve their original source trace while opening the verified language counterpart from a 41-ID bilingual catalogue. Existing branded PDFs remain available; 82 fresh readable document views cover the reorganized corpus. Internal
   ordinals are restricted to `?dev=1`, alongside endpoint controls.
 - Runtime is queried on opening Technical details, keeping the initial preview
   completely offline. Per-answer provider/model comes from that request's events;
@@ -45,6 +45,7 @@ python3 -m http.server 8765 --directory front-athagon-r4r-static
 node front-athagon-r4r-static/js/app.test.cjs
 # Requires an existing Playwright installation and Chromium:
 node front-athagon-r4r-static/js/browser.test.cjs
+node front-athagon-r4r-static/js/interaction.test.cjs
 mvn clean verify
 ```
 
@@ -61,7 +62,7 @@ into the hosting repository's `html-static/r4r-rag/`; keep `r4r-rag-demo/` intac
 Do not publish test scripts as application assets. The site retains `noindex`.
 No deployment or push is part of this release.
 
-[Validation report and bilingual evidence](docs/validation/final-public-ux/README.md)
+[Latest frontend validation](docs/validation/bilingual-frontend-final-2026-11-13/README.md)
 record the live ES/EN results, browser checks, accessibility measurements and limits.
 Domestic NAS, network and tunnel dependencies remain. Captured examples improve
 predictability but cannot establish general model accuracy. Three-user comprehension
