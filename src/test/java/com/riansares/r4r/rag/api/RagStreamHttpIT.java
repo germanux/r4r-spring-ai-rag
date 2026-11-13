@@ -54,6 +54,13 @@ class RagStreamHttpIT {
     @MockBean GenerationRouter router;
     @MockBean org.springframework.jdbc.core.JdbcTemplate jdbc;
 
+    @org.junit.jupiter.api.BeforeEach
+    void relevantSimulatedEvidence() {
+        when(router.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(
+                new AssistantMessage("{\"sources\":[1],\"coverage\":\"full\"}")))));
+    }
+
+
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(strings = {
             "/api/rag/answers/%73tream", "/api/rag/answers;v=1/stream", "/api/rag/%61nswers" })

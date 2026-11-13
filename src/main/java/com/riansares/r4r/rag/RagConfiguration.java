@@ -98,12 +98,13 @@ public class RagConfiguration {
             KnowledgeVectorStore knowledgeStore,
             GenerationRouter chatModel,
             RagRetrievalProperties properties,
-            LocalRetrievalQueryTranslator translator) {
+            LocalRetrievalQueryTranslator translator,
+            @Value("${r4r.rag.evidence-relevance.enabled:false}") boolean relevanceEnabled) {
 
         return new CitedRagService(
                 knowledgeStore,
                 chatModel,
                 properties.topK(),
-                properties.minScore(), translator);
+                properties.minScore(), translator, relevanceEnabled ? new EvidenceRelevanceFilter(chatModel) : null);
     }
 }

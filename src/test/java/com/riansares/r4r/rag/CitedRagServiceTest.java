@@ -78,7 +78,7 @@ class CitedRagServiceTest {
         verify(chatModel).call(promptCaptor.capture());
 
         assertThat(promptCaptor.getValue().getContents())
-                .containsSubsequence("[S1]\nFirst content", "[S2]\nSecond content", "Question: test question")
+                .containsSubsequence("[S1]\nSource: doc1.md\nScope: Section\nFirst content", "[S2]\nSource: doc2.md\nScope: Other\nSecond content", "Question: test question")
                 .contains("/no_think")
                 .contains("__R4R_ABSTAIN__", "1–3 concise sentences", "only facts supported");
         assertThat(result.answer()).isEqualTo("Combined answer [S1][S2]");

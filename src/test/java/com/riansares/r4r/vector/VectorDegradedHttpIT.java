@@ -53,6 +53,9 @@ class VectorDegradedHttpIT {
     final ObjectMapper json = new ObjectMapper();
     final GenerationRouter.Provider provider = new GenerationRouter.Provider("PC principal", "http://simulated-pc", "qwen3:8b");
     @BeforeEach void responses() {
+        // A separate relevance call precedes the existing answer/SSE routing contract.
+        when(router.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(
+                new AssistantMessage("{\"sources\":[1],\"coverage\":\"full\"}")))));
         var metadata = Document.fromMap(Map.of("source", Document.fromString("faq.md"),
                 "source_text", Document.fromString("La empresa reforma viviendas y oficinas."),
                 "headingPath", Document.fromList(List.of(Document.fromString("Servicios"))), "ordinal", Document.fromNumber(2)));

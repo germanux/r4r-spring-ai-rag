@@ -66,5 +66,16 @@ class LocalRetrievalQueryTranslatorTest {
         verify(laptop, times(1)).call(any(Prompt.class));
     }
 
+    @Test void concreteSupplyAndReinforcementAreDistinctTranslationConcepts() {
+        var model=mock(ChatModel.class);
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            Prompt prompt=invocation.getArgument(0);
+            assertThat(prompt.getContents()).contains("Ready-mix concrete = hormigón de camión", "Reinforced concrete = hormigón armado", "double versus triple glazing");
+            return response("¿Cuándo conviene usar hormigón de camión?");
+        });
+        assertThat(new LocalRetrievalQueryTranslator(model).translate("When should I use ready-mix concrete?"))
+                .isEqualTo("¿Cuándo conviene usar hormigón de camión?");
+    }
+
     private static ChatResponse response(String text) { return new ChatResponse(List.of(new Generation(new AssistantMessage(text)))); }
 }

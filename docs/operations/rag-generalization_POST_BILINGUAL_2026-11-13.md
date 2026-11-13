@@ -483,8 +483,8 @@ scores/candidatos crudos que el endpoint no expone.
 
 **Respuesta real:**
 
-> The evidence does not explicitly state whether bowed wooden beams can be reinforced or need replacing. It does, however, mention that when reviewing wooden beams, it is important to check for damage, humidity, biological attacks, and structural integrity. This suggests that a structural evaluation is necessary to determine if reinforcement or replacement is required. 
-> 
+> The evidence does not explicitly state whether bowed wooden beams can be reinforced or need replacing. It does, however, mention that when reviewing wooden beams, it is important to check for damage, humidity, biological attacks, and structural integrity. This suggests that a structural evaluation is necessary to determine if reinforcement or replacement is required.
+>
 > [S2]
 
 - Resultado: **PASS**; semántica `CORRECT_LIMITED_GUIDANCE`; relevancia `HIGH`; respaldo de citas `SUPPORTED`; idioma `PASS`.
@@ -837,7 +837,7 @@ E2E 2.70 s; citas: es/faqs/R4R_40_ALL_FAQ.md:2.
 
 Pregunta: ¿Qué tipos de reformas realiza esta empresa? ¿Trabaja en viviendas y oficinas?
 
-> La empresa realiza reformas de baños, cocinas, viviendas, pequeñas oficinas y locales, así como redistribuciones prudentes, mejoras de habitabilidad y renovación parcial o integral de acabados e instalaciones. [S1]  
+> La empresa realiza reformas de baños, cocinas, viviendas, pequeñas oficinas y locales, así como redistribuciones prudentes, mejoras de habitabilidad y renovación parcial o integral de acabados e instalaciones. [S1]
 > Trabaja en viviendas y oficinas, según se menciona en la lista de tipos de reformas. [S1]
 
 E2E 3.59 s; citas: es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md:5.
@@ -868,3 +868,183 @@ E2E 3.59 s; citas: es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md:5.
 SHA-256 export NAS: `dcd2b6dc342951c030c58b840687d9ae05594ede8cba03f2fc13b109a09611aa`.
 
 SHA-256 payload S3 preparado: `f0d7df8f6dd8e4b29036f47ebd6defd24f305b5e89ac53ae6b926c752d938373`.
+
+## Intervención focalizada posterior — cierre solicitado por el usuario
+
+Se diagnosticaron los 11 números afectados: 07,09,16,17,19,21,22,24,25,33,35.
+La repetición prevista era ES/EN (22 consultas), pero se detuvo por petición del
+usuario para ahorrar tokens; **no se declara una batería completa ni los 11 problemas resueltos**.
+
+Hallazgos comprobados: EN07 traducía ready-mix como hormigón armado; EN21 perdía
+triple y comparaba doble/doble. En ES16 había evidencia de grietas entre los 40
+candidatos, pero el ranking elegía fuentes sobre cubierta, sales y baños. ES22
+no tenía evidencia de diseño de iluminación: aparecían transporte y extractores.
+EN09 añadía flooding a una lista que no lo documentaba. EN35 tenía contexto
+deportivo pertinente y fallaba por missing_citations. Los parciales mezclaban
+procedimientos de baños con vivienda completa o hechos de distintas fuentes.
+
+Cambios: glosario fiel en traducción, conservación de comparaciones, palabras
+funcionales excluidas de BM25, ámbito de fuente explícito en el prompt y reglas
+de soporte por afirmación. TopK5, minScore0.63, modelos y pesos no se cambian.
+Se añadió un filtro de pertinencia con el mismo modelo, **opcional y desactivado
+por defecto** (`r4r.rag.evidence-relevance.enabled=true` para validarlo). Añade una
+inferencia; su evaluación viva es insuficiente y no se activa de forma general.
+La respuesta JSON inválida del filtro es un error, no una abstención legítima.
+
+Maven: la versión con filtro pasó 440 unitarios y Failsafe113, con 27 omitidos y
+ningún fallo. Los dobles HTTP se adaptaron a la llamada de clasificación sin
+relajar sus aserciones. Se verifica de nuevo la configuración opt-in al cerrar.
+No hay despliegue, commit, push, reindexado ni escrituras PostgreSQL.
+
+La primera pasada sin filtro y las dos respuestas de prueba con filtro se
+conservan debajo; no se ocultan los errores de conexión ni resultados deficientes.
+Los artefactos detallados están en `/tmp/r4r-targeted-artifacts/`, incluido el
+diagnóstico de traducciones, candidatos con scores y contexto.
+
+### Primera pasada: prompt/ranking/traducción
+
+
+**07 ES** — CAPTURED
+
+Pregunta: ¿Cuándo conviene usar hormigón de camión en una solera?
+
+Cuando se ejecuta una solera en un patio exterior con acceso, conviene usar hormigón de camión debido a las ventajas como descarga cercana, ejecución rápida, mezcla homogénea y menor riesgo de que el hormigón fragüe antes de extenderlo. [S3]
+
+Citas: es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md:6
+
+**09 ES** — CAPTURED
+
+Pregunta: ¿Qué causas de humedad pueden aparecer en una vivienda antigua?
+
+Las causas de humedad que pueden aparecer en una vivienda antigua incluyen fugas sin detectar, humedad lateral, filtración, condensación, sales acumuladas, cubiertas o canalizaciones, y tratamientos anteriores incompatibles [S1]. Además, la capilaridad y la humedad en muros gruesos también pueden contribuir a la presencia de humedad [S4].
+
+Citas: es/guides/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.md:4, es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md:18
+
+**16 ES** — CAPTURED
+
+Pregunta: Estoy pensando en comprar un piso bastante antiguo, pero tiene grietas en algunas paredes. ¿Cómo puedo saber si es algo superficial o si me voy a meter en un problema serio?
+
+Para determinar si las grietas en las paredes de un piso antiguo son superficiales o indican un problema serio, debes documentar las grietas, comprobar posibles movimientos y entradas de agua, y derivar la evaluación estructural cuando proceda. No prometer impermeabilización definitiva por pintar o revestir. [S5]
+
+Citas: es/guides/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.md:6
+
+**17 ES** — CAPTURED
+
+Pregunta: Los muebles de la cocina están bien. ¿Cómo la renuevo sin desmontarlo todo?
+
+Para renovar la cocina sin desmontar los muebles, se debe adaptar la iluminación y los enchufes, y conservar las posiciones de agua y desagüe si son viables. [S1]
+Sin embargo, es necesario primero valorar fugas y redes ocultas, y definir la distribución antes de coordinar muebles y acabados. [S3]
+
+Citas: es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md:17, es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.md:4
+
+**19 ES** — CAPTURED
+
+Pregunta: Acabamos de comprar un piso y queremos reformarlo antes de mudarnos. ¿En qué orden conviene hacer los trabajos para evitar tener que romper cosas que ya están terminadas?
+
+Para evitar tener que romper cosas que ya están terminadas, se debe revisar primero la distribución, instalaciones, pendientes, ventilación y estado de soportes del baño, y luego planificar las demoliciones, fontanería, desagües, impermeabilización, pruebas, alicatado, sanitarios y remates. El orden se adapta a cada obra. [S2]
+
+Citas: es/guides/R4R_81_BANOS_DUCHAS_Y_SANEAMIENTO.md:1
+
+**21 ES** — CAPTURED
+
+Pregunta: Quiero cambiar las ventanas de mi casa, pero no sé si realmente merece la pena instalar triple acristalamiento o si con doble es suficiente.
+
+El cambio de ventanas puede afectar el equilibrio entre infiltración de aire y ventilación, lo cual puede influir en la humedad interior. No se puede concluir automáticamente que las ventanas nuevas sean defectuosas; deben analizarse puentes térmicos, temperatura y ventilación. [S2]
+
+Citas: es/guides/R4R_87_AISLAMIENTO_VENTILACION_Y_REHABILITACION_ENERGETICA.md:2
+
+**22 ES** — CAPTURED
+
+Pregunta: Tengo un pasillo largo y oscuro. ¿Cómo gano luz y aprovecho el espacio?
+
+Para ganar luz en un pasillo largo y oscuro, se debe considerar la ventilación adecuada a uso y normativa aplicables, ya que no confundir el encendido con el cumplimiento de caudal. [S2]
+Para aprovechar el espacio, se debe revisar el uso, fricción, impactos, planeidad, humedad del soporte, mantenimiento, seguridad y normativa deportiva aplicable, aunque esta información se refiere a un polideportivo. [S4]
+Sin embargo, no se proporcionan detalles específicos sobre cómo mejorar la iluminación o aprovechar el espacio en un pasillo largo y oscuro.
+
+Citas: es/guides/R4R_104_DUCHAS_PENDIENTES_IMPERMEABILIZACION_Y_BANOS.md:5, es/guides/R4R_113_OTROS_ESPACIOS_GARAJES_PISCINAS_POLIDEPORTIVOS.md:0
+
+**24 ES** — CAPTURED
+
+Pregunta: Tenemos una oficina donde hace mucho calor en unas zonas y frío en otras. ¿Se puede solucionar con una reforma de la climatización sin cambiar todo el sistema?
+
+La calificación energética puede mejorar con una reforma si se reducen la demanda y/o consumo, según la metodología de certificación aplicable. [S2]
+Sin embargo, la evidencia no aborda directamente la solución de problemas de climatización en una oficina, por lo que no se puede afirmar con base en los documentos proporcionados si una reforma parcial sería suficiente.
+
+Citas: es/guides/R4R_111_AISLAMIENTO_VENTANAS_Y_REHABILITACION_ENERGETICA.md:7
+
+**25 ES** — CAPTURED
+
+Pregunta: Quiero pasar de tienda a cafetería. ¿Qué obras necesito para abrir?
+
+Para pasar de tienda a cafetería y abrir, es necesario estudiar la estabilidad, instalaciones, evacuación, licencia y accesibilidad antes de realizar cualquier obra [S1]. Además, se debe considerar la distribución, materiales deseados, acceso, uso actual y plazos para pedir un presupuesto de reforma [S2].
+
+Citas: es/cases/R4R_91_CASOS_HIPOTETICOS_VARIADOS.md:10, es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md:1
+
+**33 ES** — ERROR
+
+Pregunta: Tengo tuberías rotas en mi cocina. ¿Qué hago?
+Además, quiero reformar la cocina. ¿Qué me recomiendas?
+¿Puedo cambiar también los azulejos?
+
+Sin respuesta final / error o cancelación
+
+Citas:
+
+**35 ES** — ERROR
+
+Pregunta: Quiero reformar los vestuarios de un polideportivo abierto al público. ¿Qué debo revisar para ejecutar la obra por fases?
+
+Sin respuesta final / error o cancelación
+
+Citas:
+
+**07 EN** — CAPTURED
+
+Pregunta: When is it advisable to use ready-mix concrete for a slab?
+
+It is advisable to use ready-mix concrete for a slab when the work site has direct access, as this allows for quick execution, homogeneous mixing, less handling, and a reduced risk of the concrete setting before spreading. [S2]
+
+Citas: es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md:6
+
+**09 EN** — CAPTURED
+
+Pregunta: What causes of damp can occur in an old home?
+
+Water ingress in an old home can be caused by several factors, including capillary action, lateral humidity, leakage, and condensation. These causes are explicitly documented in the evidence and are part of the differential diagnosis for dampness in older buildings. [S4]
+
+Citas: es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md:18
+
+**16 EN** — CAPTURED
+
+Pregunta: I'm thinking of buying a fairly old flat, but there are cracks in some walls. How can I tell whether they are superficial or whether I'm getting into a serious problem?
+
+If you notice cracks in walls, you should stop work in the affected area, secure the environment, and document the evolution of the cracks. This is necessary to determine whether the cracks are superficial or indicate a serious structural issue. [S1]
+
+Citas: es/guides/R4R_88_SEGURIDAD_INSTALACIONES_PERMISOS_Y_MATERIALES.md:7
+
+**17 EN** — CAPTURED
+
+Pregunta: The kitchen cabinets are fine. How can I refresh it without taking everything apart?
+
+To refresh the kitchen without taking everything apart, you can focus on updating finishes and fixtures while preserving the cabinets. Consider replacing the countertops, updating the hardware, and installing new lighting. You may also replace the tiles if the underlying structure is sound, as this can be done as part of a renovation without full demolition. [S4]
+
+Citas: es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md:4
+
+### Prueba del filtro: interrumpida por el usuario
+
+
+**07 ES** — CAPTURED
+
+Pregunta: ¿Cuándo conviene usar hormigón de camión en una solera?
+
+La evidencia indica que conviene usar hormigón de camión en una solera cuando se trata de un **patio exterior con acceso**, debido a las ventajas como descarga cercana, ejecución rápida, mezcla homogénea y menor riesgo de fraguado prematuro. [S1]
+
+Citas: es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md:5
+
+**09 ES** — CAPTURED
+
+Pregunta: ¿Qué causas de humedad pueden aparecer en una vivienda antigua?
+
+La evidencia documenta que pueden existir fugas sin detectar, humedad, instalaciones obsoletas, condensación, soportes disgregados, plagas y ventilación inadecuada como riesgos en una vivienda antigua cerrada durante años [S1]. No se establece explícitamente qué causas de humedad pueden aparecer, aunque se mencionan síntomas relacionados con la humedad, como su relación con lluvia o uso de agua, ubicación, estacionalidad, daños vecinos, reformas previas y ventilación [S2].
+
+Citas: es/guides/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.md:4, es/guides/R4R_118_PREGUNTAS_INICIALES_Y_SEGUIMIENTO_DE_OBRA.md:3

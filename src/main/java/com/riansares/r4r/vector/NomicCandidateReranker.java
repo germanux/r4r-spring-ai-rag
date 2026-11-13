@@ -10,6 +10,16 @@ import java.util.regex.Pattern;
 public final class NomicCandidateReranker {
     private static final Pattern MARKS = Pattern.compile("\\p{M}+");
     private static final Pattern TERM = Pattern.compile("[\\p{L}\\p{N}]+");
+    // Function words were outweighing the actual subject in bilingual question reranking.
+    // This changes lexical ordering only: raw cosine admission and all configured weights stay intact.
+    private static final Set<String> STOP_WORDS = Set.of((
+            "a al algo algunas algunos ante asi aun cada como con cual cuando de del desde donde "
+            + "el ella en entre era es esa esas ese eso esos esta estas este esto estos ha hay la las le les lo los "
+            + "mas me mi mis muy nos o para pero por porque que quien se ser si sobre su sus te tiene "
+            + "tu un una unas unos y ya "
+            + "an and are as at be been but by can do does for from had has have how if in into is it its "
+            + "more my of on or our so some than that the their them there these they this those "
+            + "to too us was we were what when where which who why will with would you your").split(" "));
     private static final double K1 = 1.2, B = .75;
     private final NomicRerankProperties config;
     public record Candidate(MarkdownChunk chunk, double similarity) { }
@@ -57,7 +67,10 @@ public final class NomicCandidateReranker {
     private static List<String> tokens(String value) {
         String normalized = MARKS.matcher(Normalizer.normalize(value.toLowerCase(Locale.ROOT), Normalizer.Form.NFD)).replaceAll("");
         var matcher = TERM.matcher(normalized); var result = new ArrayList<String>();
-        while (matcher.find()) result.add(matcher.group());
+        while (matcher.find()) {
+            String term = matcher.group();
+            if (!STOP_WORDS.contains(term)) result.add(term);
+        }
         return result;
     }
 }

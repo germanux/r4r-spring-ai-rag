@@ -32,4 +32,15 @@ class NomicCandidateRerankerTest {
         assertThat(reranker.select("same",List.of(first,second),1)).containsExactly(first.chunk());
         assertThat(reranker.select("same",List.of(first,second),5)).containsExactly(first.chunk(),second.chunk());
     }
+    @Test void grammaticalOverlapCannotOutrankTheActualSubject() {
+        var functionWords=candidate("como si en algunas hay un pero me",.705);
+        var subject=candidate("grietas inspeccion estructural",.70);
+        var ranker=new NomicCandidateReranker(new NomicRerankProperties(8,.10));
+        assertThat(ranker.select("como si hay grietas en algunas",List.of(functionWords,subject),1))
+                .containsExactly(subject.chunk());
+        var englishFunctionWords=candidate("the what is how can you your in on a an and",.705);
+        var englishSubject=candidate("cracks structural inspection",.70);
+        assertThat(ranker.select("how can you inspect the cracks",List.of(englishFunctionWords,englishSubject),1))
+                .containsExactly(englishSubject.chunk());
+    }
 }
