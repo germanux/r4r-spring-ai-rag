@@ -66,7 +66,7 @@ class NomicRetrievalRegressionTest {
     static Stream<Arguments> canonicalCases() {
         var cases = new ArrayList<Arguments>();
         for (String lang : List.of("es", "en")) {
-            for (var row : com.riansares.r4r.evaluation.EvaluationQuestions.document(lang).path("history").path("nomic")) {
+            for (var row : com.riansares.r4r.evaluation.EvaluationQuestions.independentRegressions().path("nomic").path(lang)) {
                 cases.add(Arguments.of(lang, row.path("question").asText(), row.path("evidence").asBoolean(),
                         String.format(Locale.ROOT,"%s-%02d",lang,row.path("number").asInt()),row.path("retrievalQuestion").asText()));
             }

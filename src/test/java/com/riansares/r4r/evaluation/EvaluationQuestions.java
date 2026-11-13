@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/** One question bank per language, shared by live, simulated and historical replay tests. */
+/** One question bank per language, shared by live and simulated tests. */
 public final class EvaluationQuestions {
     private EvaluationQuestions() { }
 
@@ -20,6 +20,16 @@ public final class EvaluationQuestions {
             return new ObjectMapper().readTree(input);
         } catch (IOException failure) {
             throw new IllegalStateException("Cannot read evaluation questions: " + language, failure);
+        }
+    }
+
+    /** Frozen queries for independent regressions and the recorded Nomic embeddings. */
+    public static JsonNode independentRegressions() {
+        try (var input = EvaluationQuestions.class.getResourceAsStream("/evaluation/independent-regressions.json")) {
+            if (input == null) throw new IllegalStateException("Missing independent regression questions");
+            return new ObjectMapper().readTree(input);
+        } catch (IOException failure) {
+            throw new IllegalStateException("Cannot read independent regression questions", failure);
         }
     }
 

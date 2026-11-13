@@ -8,20 +8,21 @@ from r4r_evaluation_cases import ROOT, load_cases
 
 
 class EvaluationCasesTest(unittest.TestCase):
-    def test_loads_35_cases_per_language_without_changing_historical_banks(self):
+    def test_loads_35_aligned_cases_with_the_clean_evidence_contract(self):
         cases = load_cases()
         self.assertEqual(len(cases), 70)
         for language in ('es', 'en'):
             rows = [row for row in cases if row['lang'] == language]
             self.assertEqual([row['number'] for row in rows], list(range(1, 36)))
-            self.assertEqual(rows[31]['question'].splitlines()[0], rows[30]['question'])
-            self.assertTrue(rows[32]['question'].startswith(rows[31]['question'] + '\n'))
             bank = json.loads((ROOT / 'src/test/resources/evaluation' / f'questions-{language}.json').read_text())
-            self.assertEqual(len(bank['history']['generalization']), 30)
-            self.assertEqual(len(bank['history']['nomic']), 15)
-            self.assertEqual([row['caseId'] for row in bank['cases'][30:]],
-                             [f'case-{n}' for n in range(31, 36)])
-            self.assertTrue(all(row['evidence'] for row in bank['cases'][30:]))
+            self.assertEqual([row['evidence'] for row in rows], [True] * 24 + [False] * 11)
+            self.assertEqual(len({row['caseId'] for row in bank['cases']}), 35)
+            by_id = {row['caseId']: row for row in bank['cases']}
+            first, second, third = [by_id[f'case-{n}']['question'] for n in (31, 32, 33)]
+            self.assertTrue(second.startswith(first + '\n'))
+            self.assertTrue(third.startswith(second + '\n'))
+            self.assertEqual(len(second.splitlines()), 2)
+            self.assertEqual(len(third.splitlines()), 3)
         spanish = [row for row in cases if row['lang'] == 'es']
         english = [row for row in cases if row['lang'] == 'en']
         self.assertEqual([row['retrievalQuestion'] for row in english],
