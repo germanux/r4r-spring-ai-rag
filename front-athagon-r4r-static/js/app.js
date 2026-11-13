@@ -704,9 +704,11 @@
     httpStatus.textContent = "…";
     // Position once, before the request. Never move the reader at completion.
     const panel = document.querySelector(".response-panel");
+    const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect?.().height || 80;
+    if (panel?.style) panel.style.scrollMarginTop = `${headerHeight + 12}px`;
     const bounds = panel?.getBoundingClientRect?.();
-    if (bounds && (bounds.top < 0 || bounds.top > window.innerHeight - 120))
-      panel.scrollIntoView({ behavior: "instant", block: "start" });
+    if (bounds && (bounds.top < headerHeight || bounds.top > window.innerHeight - 120))
+      panel.scrollIntoView({ behavior: reducedMotion() ? "instant" : "smooth", block: "start" });
 
     const controller = new AbortController();
     activeQueryController = controller;
@@ -758,7 +760,7 @@
 
       const saved = Object.values(recordings).flatMap(pair => Array.isArray(pair?.[requestLanguage]) ? pair[requestLanguage] : pair?.[requestLanguage] ? [pair[requestLanguage]] : []).find(data => data.question === text);
       const failedService = lastError.kind === "timeout" || !lastError.kind || lastError.status >= 500;
-      const approvedExample = text === t("demoQuestion") || Array.from(document.querySelectorAll(".sample")).some(button => button.dataset.question === text);
+      const approvedExample = allowSaved;
       if (saved && failedService && approvedExample && allowSaved) {
         displayedRecording = true;phase = "success";lastPayload = saved;renderResult(saved);
         errorBox.hidden = false;errorBox.textContent = errorMessage(lastError);
@@ -806,6 +808,11 @@
     const abstained = Boolean(payload?.abstained);
     const answer = typeof payload?.answer === "string" ? payload.answer : "";
     const sourceList = Array.isArray(payload?.citations) ? payload.citations : [];
+    if (!displayedRecording && !$("answerProvider").textContent && payload?.provider) {
+      const provider = payload.provider;
+      const label = provider.name === "OpenAI" ? "OpenAI" : t("hostNames")[provider.inferenceHost?.type] || t("unknownHost");
+      $("answerProvider").textContent = [label, provider.model].filter(Boolean).join(" · ");
+    }
 
     emptyState.hidden = true;
     errorBox.hidden = true;
