@@ -113,7 +113,7 @@ function openPage(lang = 'es', storage = new Map(), options = {}) {
   vm.createContext(context);
   for (const file of ['i18n.js', 'app.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context, { filename: file });
   // Runtime inspection is now an explicit visitor action; opening the page is offline.
-  if (!options.offline) document.getElementById("apiBaseUrl").handlers.change();
+  if (!options.offline) { document.getElementById('runtimeContent').hidden=false; document.getElementById("apiBaseUrl").handlers.change(); }
   const node = id => document.getElementById(id);
   const changeLanguage = value => { node('languageSelect').value = value; node('languageSelect').handlers.change(); };
   return { document, node, storage, requests, navigations, clipboard, timers, changeLanguage,
@@ -139,7 +139,7 @@ for (const lang of ['es', 'en']) {
       const body = JSON.parse(page.requests.find(r => r.url.endsWith('/answers')).init.body);
       assert.equal(body.question, 'Question');
       assert.equal(body.responseLanguage, lang);
-      assert.equal(body.retrievalQuestion, lang === 'en' ? '¿Qué reformas?' : undefined);
+      assert.equal(body.retrievalQuestion, undefined);
       page.changeLanguage(lang === 'en' ? 'es' : 'en');
       assert.equal(page.node('runtimeUsed').textContent, failed ? page.t('generationFailed') : 'Qwen2.5 7B');
     });
@@ -149,9 +149,9 @@ for (const lang of ['es', 'en']) {
     await tick();
     assert.equal(p.document.documentElement.lang, lang);
     assert.equal(p.node('languageSelect').value, lang);
-    assert.match(p.document.title, lang === 'es' ? /IA autoalojada/ : /Self-Hosted AI/);
+    assert.match(p.document.title, lang === 'es' ? /Asistente de IA/ : /AI assistant/);
     const description = p.document.querySelectorAll('meta').find(n => n.getAttribute('name') === 'description');
-    assert.match(description.getAttribute('content'), /Spring AI/);
+    assert.match(description.getAttribute('content'), /Athagon Labs/);
     assert.equal(p.node('question').getAttribute('placeholder'), p.t('page.e_g_what_information_is_needed_for_an_initial_assessment_of_a_renovation_in_an_older_house'));
     assert.equal(p.node('languageSelect').getAttribute('aria-label'), lang === 'es' ? 'Idioma' : 'Language');
     assert.equal(p.node('endpointPreset').children.length, 4);
@@ -235,12 +235,12 @@ for (const lang of ['es', 'en']) {
     assert.equal(p.document.querySelectorAll('.sample')[0].dataset.question, p.t('page.renovation_question'));
     for (const button of p.document.querySelectorAll('.sample')) {
       await button.handlers.click();
-      assert.equal(p.node('question').value, button.dataset.question);
+      assert.equal(p.node('question').value, JSON.parse(p.node('recordedExamples').textContent)[button.getAttribute('data-example')][lang].question);
     }
     p.changeLanguage(lang === 'es' ? 'en' : 'es');
     const sample = p.document.querySelectorAll('.sample')[0];
     await sample.handlers.click();
-    assert.equal(p.node('question').value, sample.dataset.question);
+    assert.equal(p.node('question').value, JSON.parse(p.node('recordedExamples').textContent).A[lang === 'es' ? 'en' : 'es'].question);
     const beforeDemo = p.requests.length;
     const demo = p.node('tryDemoButton').handlers.click({ preventDefault() {} });
     p.node('question').handlers.input();
@@ -357,101 +357,11 @@ test('abstention, empty answers and citation fallback labels translate while sou
   }
 });
 
-test('English preserves the original question and uses MyMemory Spanish only for retrieval', async () => {
-  const p = openPage('en');
-  p.node('question').value = 'Original question';
-  await p.node('sendButton').handlers.click();
-  const body = JSON.parse(p.requests.find(r => r.url.endsWith('/answers')).init.body);
-  assert.deepEqual(body, { question: 'Original question', retrievalQuestion: '¿Qué reformas?', responseLanguage: 'en' });
-  const translation = p.requests.find(r => r.url.includes('mymemory'));
-  assert.equal(new URL(translation.url).searchParams.get('q'), body.question);
-  assert.equal(new URL(translation.url).searchParams.get('langpair'), 'en|es');
-  assert.equal(p.requests.filter(r => r.url.includes('mymemory')).length, 1);
-  assert.equal(p.node('answerText').textContent, 'Answer [S1]');
-  assert.equal(p.node('question').value, 'Original question');
-  assert.equal(p.storage.get('r4r.lastQuestion'), 'Original question');
-  assert.ok(p.node('citations').textContent.includes('manual.pdf'));
-});
-
-test('Spanish does not contact a translator', async () => {
-  const p = openPage('es');
-  p.node('question').value = '¿Qué reformas?';
-  await p.node('sendButton').handlers.click();
-  assert.ok(p.requests.every(r => !r.url.includes('mymemory')));
-  assert.deepEqual(JSON.parse(p.requests.find(r => r.url.endsWith('/answers')).init.body),
-    { question: '¿Qué reformas?', responseLanguage: 'es' });
-});
-
-for (const failure of ['network', 'http', 'status', 'quota', 'json', 'empty', 'missing', 'unchanged', 'unchangedWhitespace', 'tooLong']) {
-  test(`MyMemory ${failure}: omit retrievalQuestion to activate backend fallback, no retry`, async () => {
-    const p = openPage('en', new Map(), { translation: async () => {
-      if (failure === 'network') throw TypeError('Failed to fetch');
-      return { ok: failure !== 'http', json: async () => {
-        if (failure === 'json') throw SyntaxError('Bad JSON');
-        return { responseStatus: failure === 'status' ? 429 : 200, quotaFinished: failure === 'quota',
-          responseData: failure === 'missing' ? null : { translatedText:
-            failure === 'empty' ? ' ' : failure === 'unchanged' ? 'ORIGINAL QUESTION' : failure === 'unchangedWhitespace' ? '  ORIGINAL   QUESTION  ' : failure === 'tooLong' ? 'x'.repeat(2001) : '¿Qué reformas?' } };
-      } };
-    } });
-    p.node('question').value = 'Original question';
-    await p.node('sendButton').handlers.click();
-    assert.deepEqual(JSON.parse(p.requests.find(r => r.url.endsWith('/answers')).init.body),
-      { question: 'Original question', responseLanguage: 'en' });
-    assert.equal(p.requests.filter(r => r.url.includes('mymemory')).length, 1);
-    assert.equal(p.node('answerText').textContent, 'Answer [S1]');
-    assert.equal(p.node('sendButton').disabled, false);
-  });
-}
-
-test('MyMemory failure followed by backend fallback failure displays an HTTP error, not abstention', async () => {
-  const p = openPage('en', new Map(), { failed: true, translation: async () => { throw TypeError('Unavailable'); } });
-  p.node('question').value = 'Original question';
-  await p.node('sendButton').handlers.click();
-  assert.deepEqual(JSON.parse(p.requests.find(r => r.url.endsWith('/answers')).init.body),
-    { question: 'Original question', responseLanguage: 'en' });
-  assert.equal(p.storage.get('r4r.lastQuestion'), 'Original question');
-  assert.equal(p.node('question').value, 'Original question');
-  assert.equal(p.node('httpStatus').textContent, '503');
-  assert.ok(p.node('errorBox').textContent.includes(p.t('httpError', 503)));
-  assert.equal(p.node('resultContent').hidden, true);
-  assert.equal(p.node('sendButton').disabled, false);
-});
-
-test('MyMemory timeout after 5 seconds activates fallback and blocks duplicate submissions', async () => {
-  const p = openPage('en', new Map(), { translation: (url, init) => new Promise((resolve, reject) => {
-    init.signal.addEventListener('abort', () => reject({ name: 'AbortError' }));
-  }) });
-  p.node('question').value = 'Original question';
-  const sending = p.node('sendButton').handlers.click();
-  await p.node('sendButton').handlers.click();
-  assert.equal(p.requests.filter(r => r.url.includes('mymemory')).length, 1);
-  [...p.timers.values()].find(t => t.delay === 5000).fn();
-  await sending;
-  assert.equal(JSON.parse(p.requests.find(r => r.url.endsWith('/answers')).init.body).retrievalQuestion, undefined);
-  assert.equal(p.node('sendButton').disabled, false);
-  assert.ok([...p.timers.values()].every(t => t.delay !== 5000 && t.delay !== 180000));
-});
-
-test('Overall timeout cancels translation and does not submit a RAG request', async () => {
-  const p = openPage('en', new Map(), { translation: (url, init) => new Promise((resolve, reject) => {
-    init.signal.addEventListener('abort', () => reject({ name: 'AbortError' }));
-  }) });
-  p.node('question').value = 'Original question';
-  const sending = p.node('sendButton').handlers.click();
-  [...p.timers.values()].find(t => t.delay === 180000).fn();
-  await sending;
-  assert.ok(!p.requests.some(r => r.url.endsWith('/answers')));
-  assert.ok(p.node('errorBox').textContent.includes(p.t('timeout')));
-});
-
-test('Questions over the 500 UTF-8 byte MyMemory limit go intact to the local fallback', async () => {
-  const p = openPage('en');
-  const text = 'é'.repeat(251);
-  p.node('question').value = text;
-  await p.node('sendButton').handlers.click();
-  assert.ok(!p.requests.some(r => r.url.includes('mymemory')));
-  assert.deepEqual(JSON.parse(p.requests.find(r => r.url.endsWith('/answers')).init.body),
-    { question: text, responseLanguage: 'en' });
+test('English delegates retrieval translation to the server without third-party requests', async () => {
+ const p = openPage('en');p.node('question').value='Original question';
+ await p.node('sendButton').handlers.click();
+ assert.deepEqual(JSON.parse(p.requests.find(r=>r.url.endsWith('/answers')).init.body),{question:'Original question',responseLanguage:'en'});
+ assert.ok(!p.requests.some(r=>r.url.includes('mymemory')));
 });
 
 test('single entry point has valid assets, anchors, unique IDs and no legacy file references', () => {
@@ -531,7 +441,7 @@ for (const lang of ['es', 'en']) {
       modelStatus: 'Modelo cargado', loadedModels: [{ name: 'qwen2.5:7b', parameterSize: '7.6B' }], topK: 3, minScore: .63
     } });
     await tick();
-    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Pregunta a la IA con RAG' : 'Ask this RAG-powered AI a question');
+    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Tu asistente de IA para reformas' : 'Your AI assistant for renovations');
     assert.equal(p.document.querySelectorAll('.arch-step').length, 4);
     assert.equal(p.document.querySelectorAll('.inference-host').length, 4);
     assert.equal(p.document.querySelectorAll('.primary-host')[0].textContent.includes('NVIDIA GeForce RTX 4060'), true);
@@ -602,7 +512,7 @@ test('runtime never invents failover, a last-used host or a configured model fro
 
 for (const lang of ['es', 'en']) {
   test(`${lang}: all sections start closed and controls retain aria-expanded`, () => {
-    const p = openPage(lang);
+    const p = openPage(lang, new Map(), {offline:true});
     const before = p.requests.length;
     for (const [buttonId, panelId] of [['architectureToggle', 'architectureContent'], ['runtimeToggle', 'runtimeContent'], ['conceptToggle', 'conceptContent']]) {
       const button = p.node(buttonId), panel = p.node(panelId);
@@ -624,7 +534,7 @@ for (const lang of ['es', 'en']) {
     assert.equal(p.requests.length, before);
   });
   test(`${lang}: navigation opens architecture without preventing the original anchor behavior`, () => {
-    const p = openPage(lang);
+    const p = openPage(lang, new Map(), {offline:true});
     const link = p.document.querySelectorAll('a').find(n => n.getAttribute('href') === '#arquitectura');
     link.handlers.click();
     assert.equal(link.getAttribute('href'), '#arquitectura');
@@ -641,12 +551,12 @@ for (const lang of ['es', 'en']) {
 
 test('initial deep links open only their corresponding disclosure', () => {
   for (const hash of ['#arquitectura', '#architectureContent', '#runtime', '#runtimeUsedModel']) {
-    const p = openPage('en', new Map(), { hash });
+    const p = openPage('en', new Map(), { hash, offline:true });
     const architecture = hash === '#arquitectura' || hash === '#architectureContent';
     assert.equal(p.node('architectureContent').hidden, !architecture);
     assert.equal(p.node('runtimeContent').hidden, architecture);
   }
-  assert.doesNotThrow(() => openPage('en', new Map(), { hash: '#%ZZ' }));
+  assert.doesNotThrow(() => openPage('en', new Map(), { offline:true, hash: '#%ZZ' }));
 });
 
 test('script URLs change with their content so browsers cannot reuse outdated disclosure handlers', () => {
@@ -659,7 +569,7 @@ test('script URLs change with their content so browsers cannot reuse outdated di
 
 for (const lang of ['es', 'en']) {
   test(`${lang}: what it demonstrates opens from menu and direct links without affecting other panels`, () => {
-    const p = openPage(lang);
+    const p = openPage(lang, new Map(), {offline:true});
     const link = p.document.querySelectorAll('a').find(n => n.getAttribute('href') === '#como-funciona');
     link.handlers.click();
     assert.equal(p.node('conceptContent').hidden, false);
@@ -849,7 +759,7 @@ for (const lang of ['es', 'en']) test(`${lang}: SSE renders live phases before a
   const body = JSON.parse(p.requests.find(r => r.url.endsWith('/answers/stream')).init.body);
   assert.equal(body.question, 'Original question');
   assert.equal(body.responseLanguage, lang);
-  assert.equal(body.retrievalQuestion, lang === 'en' ? '¿Qué reformas?' : undefined);
+  assert.equal(body.retrievalQuestion, undefined);
 });
 
 test('SSE accepts byte-split UTF-8, CRLF, multiline data and comments without inventing phases', async () => {
@@ -926,5 +836,5 @@ test('known Markdown sources link to PDFs with the original basename', async () 
  const source=card.children[0].children[1];
  assert.equal(source.tagName,'a');
  assert.equal(source.getAttribute('href'),'docs/R4R_40_ALL_FAQ.pdf');
- assert.equal(source.textContent,'R4R_40_ALL_FAQ.pdf');
+ assert.equal(source.textContent,'Preguntas frecuentes · Abrir documento (PDF)');
 });

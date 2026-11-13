@@ -1,0 +1,490 @@
+{
+  "A": {
+    "es": {
+      "question": "¿Qué tipos de reformas realiza Riansares 4R? ¿Viviendas y oficinas?",
+      "answer": "Riansares 4R realiza reformas que incluyen viviendas y oficinas, según [S1]. Las reformas abarcan también pequeñas oficinas y locales, según [S1].",
+      "abstained": false,
+      "citations": [
+        {
+          "label": "[S1]",
+          "source": "R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md",
+          "headingPath": [
+            "Riansares 4R — identidad, criterios y voz editorial",
+            "2. Identidad de Riansares 4R",
+            "2.3. Servicios nucleares",
+            "Reformas"
+          ],
+          "ordinal": 6
+        }
+      ],
+      "recordedAt": "2026-11-13",
+      "model": "qwen3:8b",
+      "providerName": "PC principal",
+      "events": [
+        {
+          "stage": "REQUEST_RECEIVED"
+        },
+        {
+          "stage": "RETRIEVAL_STARTED"
+        },
+        {
+          "stage": "EMBEDDING_STARTED",
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "EMBEDDING_COMPLETED",
+          "durationMs": 1082.124637,
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "RETRIEVAL_COMPLETED",
+          "documentsFound": 5,
+          "durationMs": 1166.710238
+        },
+        {
+          "stage": "GENERATION_STARTED",
+          "provider": "PC principal",
+          "model": "qwen3:8b"
+        },
+        {
+          "stage": "GENERATION_COMPLETED",
+          "provider": "PC principal",
+          "model": "qwen3:8b",
+          "durationMs": 1672.600247
+        },
+        {
+          "stage": "VALIDATION_COMPLETED",
+          "documentsFound": 5,
+          "durationMs": 4.465037
+        }
+      ]
+    },
+    "en": {
+      "question": "What types of renovations does Riansares 4R perform? Houses and offices?",
+      "answer": "Riansares 4R performs renovations such as bathrooms, kitchens, homes, small offices and premises, prudent redistributions, habitability improvements, and partial or integral renovation of finishes and installations, as stated in [S1]. The evidence does not explicitly mention the types of renovations performed on houses and offices separately.",
+      "abstained": false,
+      "citations": [
+        {
+          "label": "[S1]",
+          "source": "R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md",
+          "headingPath": [
+            "Riansares 4R — identidad, criterios y voz editorial",
+            "2. Identidad de Riansares 4R",
+            "2.3. Servicios nucleares",
+            "Reformas"
+          ],
+          "ordinal": 6
+        }
+      ],
+      "recordedAt": "2026-11-13",
+      "model": "qwen3:8b",
+      "providerName": "PC principal",
+      "events": [
+        {
+          "stage": "REQUEST_RECEIVED"
+        },
+        {
+          "stage": "TRANSLATION_STARTED"
+        },
+        {
+          "stage": "TRANSLATION_COMPLETED",
+          "durationMs": 749.335419
+        },
+        {
+          "stage": "RETRIEVAL_STARTED"
+        },
+        {
+          "stage": "EMBEDDING_STARTED",
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "EMBEDDING_COMPLETED",
+          "durationMs": 1144.20619,
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "RETRIEVAL_COMPLETED",
+          "documentsFound": 5,
+          "durationMs": 1242.317447
+        },
+        {
+          "stage": "GENERATION_STARTED",
+          "provider": "PC principal",
+          "model": "qwen3:8b"
+        },
+        {
+          "stage": "GENERATION_COMPLETED",
+          "provider": "PC principal",
+          "model": "qwen3:8b",
+          "durationMs": 2030.495604
+        },
+        {
+          "stage": "VALIDATION_COMPLETED",
+          "documentsFound": 5,
+          "durationMs": 1.829886
+        }
+      ]
+    }
+  },
+  "B": {
+    "es": {
+      "question": "¿Qué información hace falta para una primera valoración de una reforma?",
+      "answer": "Para una primera valoración de una reforma, se requiere la ubicación, fotografías, medidas aproximadas, uso del espacio, problema, resultado esperado y plazo. Esta información es necesaria para una orientación inicial, que no sustituye la visita ni medición. [S1]",
+      "abstained": false,
+      "citations": [
+        {
+          "label": "[S1]",
+          "source": "faqs/R4R_40_ALL_FAQ.md",
+          "headingPath": [
+            "Riansares 4R — todas las preguntas frecuentes",
+            "Presupuesto",
+            "FAQ-001 — ¿Qué información hace falta para una primera orientación?"
+          ],
+          "ordinal": 4
+        }
+      ],
+      "recordedAt": "2026-11-13",
+      "model": "qwen3:8b",
+      "providerName": "PC principal",
+      "events": [
+        {
+          "stage": "REQUEST_RECEIVED"
+        },
+        {
+          "stage": "RETRIEVAL_STARTED"
+        },
+        {
+          "stage": "EMBEDDING_STARTED",
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "EMBEDDING_COMPLETED",
+          "durationMs": 1168.003483,
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "RETRIEVAL_COMPLETED",
+          "documentsFound": 5,
+          "durationMs": 1186.32615
+        },
+        {
+          "stage": "GENERATION_STARTED",
+          "provider": "PC principal",
+          "model": "qwen3:8b"
+        },
+        {
+          "stage": "GENERATION_COMPLETED",
+          "provider": "PC principal",
+          "model": "qwen3:8b",
+          "durationMs": 1879.824635
+        },
+        {
+          "stage": "VALIDATION_COMPLETED",
+          "documentsFound": 5,
+          "durationMs": 0.970989
+        }
+      ]
+    },
+    "en": {
+      "question": "What information is needed for an initial assessment of a renovation?",
+      "answer": "For an initial assessment of a renovation, the following information is needed: location, photographs, approximate measurements, space usage, problem description, expected outcome, and deadline. This is required for the initial guidance, which does not replace a visit or measurement. [S1]",
+      "abstained": false,
+      "citations": [
+        {
+          "label": "[S1]",
+          "source": "faqs/R4R_40_ALL_FAQ.md",
+          "headingPath": [
+            "Riansares 4R — todas las preguntas frecuentes",
+            "Presupuesto",
+            "FAQ-001 — ¿Qué información hace falta para una primera orientación?"
+          ],
+          "ordinal": 4
+        }
+      ],
+      "recordedAt": "2026-11-13",
+      "model": "qwen3:8b",
+      "providerName": "PC principal",
+      "events": [
+        {
+          "stage": "REQUEST_RECEIVED"
+        },
+        {
+          "stage": "TRANSLATION_STARTED"
+        },
+        {
+          "stage": "TRANSLATION_COMPLETED",
+          "durationMs": 571.022957
+        },
+        {
+          "stage": "RETRIEVAL_STARTED"
+        },
+        {
+          "stage": "EMBEDDING_STARTED",
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "EMBEDDING_COMPLETED",
+          "durationMs": 1089.863719,
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "RETRIEVAL_COMPLETED",
+          "documentsFound": 5,
+          "durationMs": 1107.022702
+        },
+        {
+          "stage": "GENERATION_STARTED",
+          "provider": "PC principal",
+          "model": "qwen3:8b"
+        },
+        {
+          "stage": "GENERATION_COMPLETED",
+          "provider": "PC principal",
+          "model": "qwen3:8b",
+          "durationMs": 1383.816711
+        },
+        {
+          "stage": "VALIDATION_COMPLETED",
+          "documentsFound": 5,
+          "durationMs": 0.890234
+        }
+      ]
+    }
+  },
+  "C": {
+    "es": {
+      "question": "¿Cuál es la diferencia entre solera y solado?",
+      "answer": "La solera es la base de hormigón o mortero estructurada para recibir el pavimento, con preparación, espesores, armadura, pendientes y juntas, según [S2]. El solado es la colocación del pavimento final sobre una base apta, según [S2].",
+      "abstained": false,
+      "citations": [
+        {
+          "label": "[S2]",
+          "source": "R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+          "headingPath": [
+            "Riansares 4R — casos de patios, viviendas, humedades y reparaciones",
+            "6. Caso A — Patio, solera, pavimento y drenaje",
+            "6.3. Distinción entre solera y solado"
+          ],
+          "ordinal": 5
+        }
+      ],
+      "recordedAt": "2026-11-13",
+      "model": "qwen3:8b",
+      "providerName": "PC principal",
+      "events": [
+        {
+          "stage": "REQUEST_RECEIVED"
+        },
+        {
+          "stage": "RETRIEVAL_STARTED"
+        },
+        {
+          "stage": "EMBEDDING_STARTED",
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "EMBEDDING_COMPLETED",
+          "durationMs": 1150.736936,
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "RETRIEVAL_COMPLETED",
+          "documentsFound": 5,
+          "durationMs": 1169.580568
+        },
+        {
+          "stage": "GENERATION_STARTED",
+          "provider": "PC principal",
+          "model": "qwen3:8b"
+        },
+        {
+          "stage": "GENERATION_COMPLETED",
+          "provider": "PC principal",
+          "model": "qwen3:8b",
+          "durationMs": 1711.804246
+        },
+        {
+          "stage": "VALIDATION_COMPLETED",
+          "documentsFound": 5,
+          "durationMs": 1.387772
+        }
+      ]
+    },
+    "en": {
+      "question": "What is the difference between a concrete slab base and floor finishing?",
+      "answer": "The **solera** refers to the concrete or mortar base structured to receive the final flooring, including preparation, thickness, reinforcement, slopes, and joints. The **solado** is the placement of the final flooring on an appropriate base. According to [S1], a budget may include less square meters of solera than solado, and the two are distinct in their construction and cost considerations. [S2] confirms that the solera is the structural base, while the solado is the final flooring.",
+      "abstained": false,
+      "citations": [
+        {
+          "label": "[S1]",
+          "source": "R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+          "headingPath": [
+            "Riansares 4R — casos de patios, viviendas, humedades y reparaciones",
+            "6. Caso A — Patio, solera, pavimento y drenaje",
+            "6.3. Distinción entre solera y solado"
+          ],
+          "ordinal": 5
+        },
+        {
+          "label": "[S2]",
+          "source": "faqs/R4R_40_ALL_FAQ.md",
+          "headingPath": [
+            "Riansares 4R — todas las preguntas frecuentes",
+            "Suelos",
+            "FAQ-041 — ¿Qué diferencia hay entre solera y solado?"
+          ],
+          "ordinal": 51
+        }
+      ],
+      "recordedAt": "2026-11-13",
+      "model": "qwen3:8b",
+      "providerName": "PC principal",
+      "events": [
+        {
+          "stage": "REQUEST_RECEIVED"
+        },
+        {
+          "stage": "TRANSLATION_STARTED"
+        },
+        {
+          "stage": "TRANSLATION_COMPLETED",
+          "durationMs": 686.273393
+        },
+        {
+          "stage": "RETRIEVAL_STARTED"
+        },
+        {
+          "stage": "EMBEDDING_STARTED",
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "EMBEDDING_COMPLETED",
+          "durationMs": 1199.99542,
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "RETRIEVAL_COMPLETED",
+          "documentsFound": 4,
+          "durationMs": 1219.148955
+        },
+        {
+          "stage": "GENERATION_STARTED",
+          "provider": "PC principal",
+          "model": "qwen3:8b"
+        },
+        {
+          "stage": "GENERATION_COMPLETED",
+          "provider": "PC principal",
+          "model": "qwen3:8b",
+          "durationMs": 2781.382386
+        },
+        {
+          "stage": "VALIDATION_COMPLETED",
+          "documentsFound": 4,
+          "durationMs": 1.968494
+        }
+      ]
+    }
+  },
+  "D": {
+    "es": {
+      "question": "Explica la fotosíntesis de las plantas y la función de los cloroplastos.",
+      "answer": "",
+      "abstained": true,
+      "citations": [],
+      "recordedAt": "2026-11-13",
+      "model": "qwen3:8b",
+      "providerName": "PC principal",
+      "events": [
+        {
+          "stage": "REQUEST_RECEIVED"
+        },
+        {
+          "stage": "RETRIEVAL_STARTED"
+        },
+        {
+          "stage": "EMBEDDING_STARTED",
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "EMBEDDING_COMPLETED",
+          "durationMs": 1089.782455,
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "RETRIEVAL_COMPLETED",
+          "documentsFound": 4,
+          "durationMs": 1101.070845
+        },
+        {
+          "stage": "GENERATION_STARTED",
+          "provider": "PC principal",
+          "model": "qwen3:8b"
+        },
+        {
+          "stage": "GENERATION_COMPLETED",
+          "provider": "PC principal",
+          "model": "qwen3:8b",
+          "durationMs": 641.018824
+        },
+        {
+          "stage": "VALIDATION_COMPLETED",
+          "documentsFound": 4
+        }
+      ]
+    },
+    "en": {
+      "question": "Explain plant photosynthesis and the role of chloroplasts.",
+      "answer": "",
+      "abstained": true,
+      "citations": [],
+      "recordedAt": "2026-11-13",
+      "model": "qwen3:8b",
+      "providerName": "PC principal",
+      "events": [
+        {
+          "stage": "REQUEST_RECEIVED"
+        },
+        {
+          "stage": "TRANSLATION_STARTED"
+        },
+        {
+          "stage": "TRANSLATION_COMPLETED",
+          "durationMs": 678.29346
+        },
+        {
+          "stage": "RETRIEVAL_STARTED"
+        },
+        {
+          "stage": "EMBEDDING_STARTED",
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "EMBEDDING_COMPLETED",
+          "durationMs": 1120.772427,
+          "model": "nomic-embed-text:latest"
+        },
+        {
+          "stage": "RETRIEVAL_COMPLETED",
+          "documentsFound": 3,
+          "durationMs": 1141.915231
+        },
+        {
+          "stage": "GENERATION_STARTED",
+          "provider": "PC principal",
+          "model": "qwen3:8b"
+        },
+        {
+          "stage": "GENERATION_COMPLETED",
+          "provider": "PC principal",
+          "model": "qwen3:8b",
+          "durationMs": 589.269533
+        },
+        {
+          "stage": "VALIDATION_COMPLETED",
+          "documentsFound": 3
+        }
+      ]
+    }
+  }
+}

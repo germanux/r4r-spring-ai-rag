@@ -40,6 +40,7 @@
   function setExpanded(disclosure, expanded) {
     disclosure.panel.hidden = !expanded;
     disclosure.button.setAttribute("aria-expanded", String(expanded));
+    if (expanded && disclosure.anchor === "runtime") setTimeout(() => loadRuntimeInfo(), 0);
   }
   for (const disclosure of disclosures) {
     disclosure.button.addEventListener("click", () => setExpanded(disclosure, disclosure.panel.hidden));
@@ -60,6 +61,8 @@
   window.addEventListener("hashchange", () => revealSection(window.location.hash));
   revealSection(window.location.hash);
 
+  const developerMode = new URLSearchParams(window.location.search || "").get("dev") === "1";
+  $("endpointSettings").hidden = !developerMode;
   const question = $("question");
   const sendButton = $("sendButton");
   const sendLabel = $("sendLabel");
@@ -131,6 +134,8 @@
   let phase = "idle";
   let apiStatus = "ready";
   let copyStatus = "copy";
+  let displayedRecording = false;
+  let lastRecordedKey = "C";
   function changeLanguage(language) {
     isEnglish = language === "en";
     R4RI18n.setLanguage(language);
@@ -154,10 +159,11 @@
   if (savedQuestion === null) question.value = t("demoQuestion");
   languageSelect.addEventListener("change", () => {
     if (["es", "en"].includes(languageSelect.value)) {
-      const hadPreview = !$("previewNotice").hidden;
+      const hadPreview = displayedRecording || preview;
       engage();
       if (hadPreview) { question.value = ""; lastPayload = null; phase = "idle"; renderEmpty(); $("previewNotice").hidden = true; }
       changeLanguage(languageSelect.value);
+      if (hadPreview && recording(lastRecordedKey)) recordedResult(lastRecordedKey);
     }
   });
   endpointPreset.addEventListener("change", () => {
@@ -173,6 +179,21 @@
 
   updateCounter();
 
+  const recordings = JSON.parse($("recordedExamples").textContent);
+  const recording = key => recordings[key]?.[isEnglish ? "en" : "es"];
+  function recordedResult(key) {
+    const data = recording(key);
+    if (!data) return false;
+    engage(); displayedRecording = true; lastRecordedKey = key;
+    question.value = data.question; updateCounter();
+    phase = "success"; lastPayload = data; progressRows = [];
+    data.events.forEach(receiveProgress);
+    setLoading(false); renderResult(data);
+    $("previewNotice").hidden = false; $("previewNotice").textContent = t("recorded");
+    $("answerProvider").textContent = [data.providerName, data.model, data.recordedAt].filter(Boolean).join(" · ");
+    resultMode.textContent = t("result");
+    return true;
+  }
   const tryDemoButton = $("tryDemoButton");
   let preview = false;
   let previewTimer;
@@ -205,18 +226,20 @@
     });
   }
   async function runPreview() {
-    if (activeQueryController) return;
+    if (activeQueryController || !recording("C")) return;
     cancelPreview();
     preview = true;
+    displayedRecording = true; lastRecordedKey = "C";
     renderEmpty();
     previewSeen = true;
     previewObserver?.disconnect();
     try { sessionStorage.setItem(previewKey, "1"); } catch { /* Optional storage. */ }
     const notice = $("previewNotice");
     notice.hidden = false;
-    notice.textContent = isEnglish ? "Scripted preview · no API request" : "Vista previa guionizada · sin conexión a la API";
+    notice.textContent = t("recorded");
     question.value = "";
-    const text = t("demoQuestion");
+    const data = recording("C");
+    const text = data.question;
     if (reducedMotion()) question.value = text;
     else for (const char of text) {
       question.value += char;
@@ -238,16 +261,12 @@
     sendButton.disabled = false;
     loadingState.hidden = false;
     resultMode.textContent = t("inProgress");
-    for (const stage of ["REQUEST_RECEIVED", "EMBEDDING_STARTED", "EMBEDDING_COMPLETED", "RETRIEVAL_STARTED", "RETRIEVAL_COMPLETED", "GENERATION_STARTED", "GENERATION_COMPLETED", "VALIDATION_COMPLETED"]) {
-      receiveProgress({ stage, documentsFound: 1 });
-      if (!await pausePreview(reducedMotion() ? 80 : 450)) return;
+    for (const event of data.events) {
+      receiveProgress(event);
+      if (!await pausePreview(reducedMotion() ? 40 : 260)) return;
     }
-    // Grounded in the knowledge-base description already published above the input.
-    // This is an illustrative fixture, not a claimed recording of a live model run.
-    const answer = isEnglish
-      ? "The four Rs stand for Reformas (renovations), Rehabilitación (rehabilitation), Revestimientos (coverings) and Reparaciones (repairs). [S1]"
-      : "Las cuatro R significan Reformas, Rehabilitación, Revestimientos y Reparaciones. [S1]";
-    const payload = { answer, abstained: false, citations: [{ label: "[S1]", source: "R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md", headingPath: [isEnglish ? "Knowledge base description" : "Descripción de la base de conocimiento"], ordinal: 1 }] };
+    const payload = data;
+    const answer = data.answer;
     setLoading(false);
     renderResult({ ...payload, answer: " " });
     answerText.setAttribute("aria-live", "off");
@@ -259,6 +278,7 @@
     phase = "success";
     renderResult(payload);
     resultMode.textContent = t("result");
+    $("answerProvider").textContent = [data.providerName, data.model, data.recordedAt].filter(Boolean).join(" · ");
     preview = false;
   }
   function engage() {
@@ -424,9 +444,9 @@
     const states = t("modelStates");
     $("runtimeModelStatus").textContent = !failed && states[info.modelStatus] || t("informationUnavailable");
     $("runtimeEmbeddingModel").textContent = info.embeddingModel || unavailable;
-    $("runtimeEmbeddings").textContent = `${info.embeddingDimensions || "—"} ${t("dimensions")}`;
-    $("runtimeRetrieval").textContent = `Top-K ${info.topK} · ${t("minimumScore")} ${info.minScore}`;
-    $("runtimeVersions").textContent = `Java ${info.javaVersion || "—"} · Spring Boot ${info.springBootVersion || "—"} · Spring AI ${info.springAiVersion || "—"}`;
+    $("runtimeEmbeddings").textContent = `${info.embeddingDimensions || unavailable} ${t("dimensions")}`;
+    $("runtimeRetrieval").textContent = `Top-K ${info.topK ?? unavailable} · ${t("minimumScore")} ${info.minScore ?? unavailable}`;
+    $("runtimeVersions").textContent = `Java ${info.javaVersion || unavailable} · Spring Boot ${info.springBootVersion || unavailable} · Spring AI ${info.springAiVersion || unavailable}`;
     const loaded = Array.isArray(info.loadedModels) ? info.loadedModels : [];
     $("runtimeMemoryScope").hidden = remote;
     $("runtimeModelStatus").hidden = remote;
@@ -454,6 +474,7 @@
   function errorMessage(error) {
     if (error?.kind === "stream") return t("streamError");
     if (error?.kind === "timeout") return t("timeout");
+    if (error?.status === 429) return t("rateLimited") + (error.retryAfter ? ` (${error.retryAfter} s)` : "");
     if (error?.kind === "http") {
       const message = error.status === 403 ? t("forbidden") : t("httpError", error.status);
       return `${message}${error.detail ? `\n${error.detail}` : ""}`;
@@ -465,11 +486,13 @@
 
   document.querySelectorAll(".sample").forEach((button) => {
     button.addEventListener("click", async () => {
+      if (activeQueryController) return;
+      if (recordedResult(button.getAttribute("data-example"))) return;
       engage();
       if (sendButton.disabled) return;
       question.value = button.dataset.question || "";
       updateCounter();
-      await sendQuestion();
+      // Unrecorded examples only fill the input; submit remains an explicit live action.
     });
   });
 
@@ -531,6 +554,9 @@
   function receiveProgress(event) {
     if (!event || typeof event.stage !== "string") return;
     if (event.stage === "ANSWER_READY") return;
+    if (!preview && ["GENERATION_STARTED", "GENERATION_COMPLETED"].includes(event.stage))
+      $("answerProvider").textContent = [event.provider, event.model].filter(Boolean).join(" · ");
+    $("simpleProgress").textContent = t(event.stage === "GENERATION_STARTED" ? "generating" : ["GENERATION_COMPLETED", "VALIDATION_COMPLETED"].includes(event.stage) ? "done" : "searching");
     const known = ["REQUEST_RECEIVED", "TRANSLATION_STARTED", "TRANSLATION_COMPLETED", "TRANSLATION_FALLBACK",
       "EMBEDDING_STARTED", "EMBEDDING_COMPLETED", "RETRIEVAL_STARTED", "RETRIEVAL_COMPLETED", "GENERATION_STARTED",
       "PROVIDER_FAILED", "FAILOVER_STARTED", "GENERATION_COMPLETED", "VALIDATION_COMPLETED", "ERROR"];
@@ -612,7 +638,11 @@
 
   async function sendQuestion() {
     engage();
-    $("previewNotice").hidden = true;
+    displayedRecording = false;
+    $("previewNotice").hidden = false;
+    $("previewNotice").textContent = t("live");
+    $("answerProvider").textContent = "";
+    answerText.setAttribute("aria-live", "polite");
     if (sendButton.disabled) return;
 
     const text = question.value.trim();
@@ -662,18 +692,6 @@
 
     try {
       const requestBody = { question: text, responseLanguage: requestLanguage };
-      if (requestLanguage === "en") {
-        const translationStarted = performance.now();
-        receiveProgress({ stage: "TRANSLATION_STARTED" });
-        try {
-          requestBody.retrievalQuestion = await translateToSpanish(text, controller.signal);
-          receiveProgress({ stage: "TRANSLATION_COMPLETED", durationMs: performance.now() - translationStarted });
-        } catch (error) {
-          // An absent translation activates the backend's local fallback. Never send raw English.
-          if (controller.signal.aborted) throw error;
-          receiveProgress({ stage: "TRANSLATION_FALLBACK" });
-        }
-      }
       const init = {
         method: "POST",
         headers: {
@@ -695,7 +713,7 @@
       if (!response.ok || legacy) {
         try { payload = await response.json(); }
         catch { if (response.ok) throw { kind: "json", status: response.status }; }
-        if (!response.ok) throw { kind: "http", status: response.status, detail: payload?.message || payload?.error || "" };
+        if (!response.ok) throw { kind: "http", status: response.status, detail: developerMode ? payload?.message || payload?.error || "" : "", retryAfter: /^\d+$/.test(response.headers?.get("Retry-After") || "") ? response.headers.get("Retry-After") : null };
       } else payload = await readAnswerStream(response);
       elapsed.textContent = `${Math.round(performance.now() - started)} ms`;
 
@@ -720,7 +738,7 @@
       clearTimeout(timeout);
       activeQueryController = null;
       setLoading(false);
-      await loadRuntimeInfo();
+      if (!$("runtimeContent").hidden) await loadRuntimeInfo();
     }
   }
 
@@ -740,7 +758,7 @@
     resultContent.hidden = true;
     errorBox.hidden = true;
     if (loadingState) loadingState.hidden = true;
-    httpStatus.textContent = "—";
+    httpStatus.textContent = "";
     resultMode.textContent = t("waiting");
     elapsed.textContent = "";
   }
@@ -767,7 +785,14 @@
       ? t("noEvidence")
       : t("evidence");
 
-    answerText.textContent = answer || (abstained ? t("abstained") : t("emptyAnswer"));
+    // Render emphasis without interpreting model output as HTML.
+    answerText.replaceChildren();
+    const parts = (answer || (abstained ? t("abstained") : t("emptyAnswer"))).split(/(\*\*[^*]+\*\*)/g);
+    for (const part of parts) {
+      const node = document.createElement(part.startsWith("**") && part.endsWith("**") ? "strong" : "span");
+      node.textContent = node.tagName.toLowerCase() === "strong" ? part.slice(2, -2) : part;
+      answerText.appendChild(node);
+    }
 
     citationCount.textContent = t("sources", sourceList.length);
     citations.replaceChildren();
@@ -807,7 +832,14 @@
         source.setAttribute("rel", "noopener");
       }
       source.className = "citation-source";
-      source.textContent = publicSources.has(documentName) ? documentName.replace(/\.md$/, ".pdf") : citation?.source || t("unknownSource");
+      const titles = {
+        "R4R_00": ["Identidad y servicios", "Identity and services"], "R4R_10": ["Patios, viviendas y reparaciones", "Patios, homes and repairs"],
+        "R4R_20": ["Oficinas, cuevas y baños", "Offices, caves and bathrooms"], "R4R_30": ["Método y presupuestos", "Methods and estimates"],
+        "R4R_40": ["Preguntas frecuentes", "Frequently asked questions"], "R4R_50": ["Datos de referencia", "Reference data"],
+        "R4R_60": ["Cobertura territorial", "Service area"], "R4R_70": ["Fuentes consultadas", "Source bibliography"]
+      };
+      const title = titles[documentName?.slice(0, 6)];
+      source.textContent = title ? `${title[isEnglish ? 1 : 0]} · ${t("openDocument")} (PDF)` : citation?.source || t("unknownSource");
 
       top.append(label, source);
 
@@ -822,7 +854,8 @@
         ? `${t("ordinal")}: ${citation.ordinal}`
         : `${t("ordinal")}: —`;
 
-      card.append(top, path, ordinal);
+      card.append(top, path);
+      if (developerMode) card.appendChild(ordinal);
       citations.appendChild(card);
     });
   }
@@ -832,32 +865,4 @@
     questionCount.textContent = `${question.value.length} / 700`;
   }
 
-  async function translateToSpanish(text, signal) {
-    // MyMemory's anonymous GET API accepts at most 500 UTF-8 bytes per segment.
-    // Longer questions use the existing local fallback, without truncation or extra calls.
-    if (new TextEncoder().encode(text).length > 500) throw new Error(t("translationError"));
-    const translationController = new AbortController();
-    const abort = () => translationController.abort();
-    signal.addEventListener("abort", abort, { once: true });
-    if (signal.aborted) abort();
-    const timeout = setTimeout(abort, 5000);
-    try {
-      const params = new URLSearchParams({ q: text, langpair: "en|es" });
-      const response = await fetch(`https://api.mymemory.translated.net/get?${params}`, {
-        signal: translationController.signal
-      });
-      if (!response.ok) throw new Error(t("translationError"));
-      const data = await response.json();
-      const translated = data.responseData?.translatedText?.trim();
-      if (Number(data.responseStatus) !== 200 || data.quotaFinished || !translated
-          || translated.length > 2000
-          || translated.replace(/\s+/g, " ").toLowerCase() === text.trim().replace(/\s+/g, " ").toLowerCase()) {
-        throw new Error(t("translationError"));
-      }
-      return translated;
-    } finally {
-      clearTimeout(timeout);
-      signal.removeEventListener("abort", abort);
-    }
-  }
 })();
