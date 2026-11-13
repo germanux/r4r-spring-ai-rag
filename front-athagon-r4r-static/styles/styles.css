@@ -767,7 +767,7 @@ textarea:focus,
   padding-top:16px;
   border-top:1px dashed #c7d1db;
 }
-.config-details summary {
+.config-details > summary {
   cursor:pointer;
   color:#405166;
   font-weight:900;
@@ -967,10 +967,10 @@ kbd {
 .citations-head { padding:8px 12px; border:1px solid #bac8d6; border-radius:10px; background:white; box-shadow:var(--shadow-soft); }
 .citations-block[open] .citations-head { margin-bottom:12px; }
 .citations-block:not([open]) .citations-head { margin-bottom:0; }
-.citations-head::after,.endpoint-settings summary::after,.config-details summary::after { content:"⌄"; margin-left:auto; color:#46617e; font-size:1.1rem; }
-.citations-block[open] .citations-head::after,.endpoint-settings[open] summary::after,.config-details[open] summary::after { content:"⌃"; }
-.endpoint-settings summary,.config-details summary { display:flex; align-items:center; width:fit-content; min-width:210px; padding:9px 12px; border:1px solid #bac8d6; border-radius:10px; background:white; box-shadow:var(--shadow-soft); cursor:pointer; list-style:none; }
-.endpoint-settings summary::-webkit-details-marker,.config-details summary::-webkit-details-marker { display:none; }
+.citations-head::after,.endpoint-settings summary::after,.config-details > summary::after { content:"⌄"; margin-left:auto; color:#46617e; font-size:1.1rem; }
+.citations-block[open] .citations-head::after,.endpoint-settings[open] summary::after,.config-details[open] > summary::after { content:"⌃"; }
+.endpoint-settings summary,.config-details > summary { display:flex; align-items:center; width:fit-content; min-width:210px; padding:9px 12px; border:1px solid #bac8d6; border-radius:10px; background:white; box-shadow:var(--shadow-soft); cursor:pointer; list-style:none; }
+.endpoint-settings summary::-webkit-details-marker,.config-details > summary::-webkit-details-marker { display:none; }
 .elapsed { margin-left:auto; padding:5px 9px; border-radius:8px; background:#edf3f8; color:#586d84; font-size:.78rem; }
 @media(max-width:760px){.arch-steps,.config-grid{grid-template-columns:1fr}.elapsed{margin-left:0}}
 .runtime-host-info small { display:block; margin-top:7px; color:#718198; font-size:.78rem; line-height:1.4; }
@@ -1015,7 +1015,7 @@ kbd {
 .api-state, .http-status { flex-shrink:0; }
 .answer-text, .error-box, .citation-path, .runtime-last-used,
 .runtime-grid strong, .arch-step, .endpoint-settings p { overflow-wrap:anywhere; }
-.endpoint-settings summary, .config-details summary { min-width:0; max-width:100%; }
+.endpoint-settings summary, .config-details > summary { min-width:0; max-width:100%; }
 .citations-head { flex-wrap:wrap; }
 .result-content, .citations { grid-template-columns:minmax(0, 1fr); }
 .citation, .citations-block, .answer-box { min-width:0; }
@@ -1194,3 +1194,13 @@ a:focus-visible,button:focus-visible,textarea:focus-visible,select:focus-visible
 .citation-source { font-family:inherit; font-size:.95rem; line-height:1.4; }
 
 .architecture-diagram { display:block; width:100%; max-width:400px; height:auto; margin:20px auto; }
+
+/* Nested architecture summaries must not inherit the outer disclosure's flex layout. */
+.architecture-route { grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); }
+.arch-step summary { display:grid; grid-template-columns:minmax(0,1fr) auto; width:auto; min-width:0; }
+.arch-step summary .node-id { grid-row:1; grid-column:1; }
+.arch-step summary strong { grid-row:2; grid-column:1 / -1; }
+.arch-step summary small { grid-row:3; grid-column:1 / -1; }
+.arch-step summary::after { grid-row:1; grid-column:2; }
+.architecture-route > .arch-step::after { display:none; }
+@media(max-width:760px) { .architecture-route { grid-template-columns:minmax(0,1fr); } }
