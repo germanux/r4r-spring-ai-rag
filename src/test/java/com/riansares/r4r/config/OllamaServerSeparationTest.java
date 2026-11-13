@@ -81,6 +81,30 @@ class OllamaServerSeparationTest {
                 });
     }
 
+    @Test void disabledRemoteKeepsOnlyLocalsInConfiguredOrder() {
+        runner().withPropertyValues("r4r.rag.openai.enabled=false").run(context -> {
+            assertThat(context).hasNotFailed();
+            var targets = (List<GenerationRouter.Target>) context.getBean("generationTargets");
+            assertThat(targets).extracting(t -> t.provider().baseUrl())
+                    .containsExactlyElementsOf(context.getBean(GenerationProviderProperties.class).providers().stream()
+                            .map(GenerationProviderProperties.Provider::baseUrl).toList());
+            assertThat(targets).noneMatch(t -> t.model() instanceof com.riansares.r4r.rag.OpenAiResponsesModel);
+        });
+    }
+
+    @Test void primaryRemoteIsFirstAndLocalOrderIsPreserved() {
+        runner().withPropertyValues("r4r.rag.openai.enabled=primary", "OPENAI_API_KEY=TEST_ONLY")
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    var router = context.getBean(GenerationRouter.class);
+                    assertThat(router.preferred().name()).isEqualTo("OpenAI");
+                    var targets = (List<GenerationRouter.Target>) context.getBean("generationTargets");
+                    assertThat(targets.subList(1, targets.size())).extracting(t -> t.provider().baseUrl())
+                            .containsExactlyElementsOf(context.getBean(GenerationProviderProperties.class).providers().stream()
+                                    .map(GenerationProviderProperties.Provider::baseUrl).toList());
+                });
+    }
+
     @Test void orderedDefaultsIgnoreRemovedAliases() {
         runner().withPropertyValues("RAG_EMBEDDING_BASE_URL=http://legacy:11434",
                 "RAG_EMBEDDING_LP_BASE_URL=http://legacy-lp:11434", "RAG_EMBEDDING_PC_BASE_URL=http://legacy-pc:11434",

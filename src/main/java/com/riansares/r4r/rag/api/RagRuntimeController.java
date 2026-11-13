@@ -24,7 +24,7 @@ public class RagRuntimeController {
     private final String databaseName;
     private final OllamaModelPreloader preloader;
     private final GenerationRouter router;
-    @Value("${r4r.rag.openai.enabled:false}") private boolean remoteEnabled;
+    @Value("${r4r.rag.openai.enabled:false}") private String remoteEnabled = "false";
     @Value("${r4r.rag.openai.model:gpt-6-luna}") private String remoteModel = "gpt-6-luna";
     public record RemoteFallback(boolean enabled, String model) { }
 
@@ -76,7 +76,7 @@ public class RagRuntimeController {
                 SpringBootVersion.getVersion(), versionOf(ChatModel.class), databaseName,
                 "Docker Compose", memory.models(), router.preferred().model(), status,
                 execution.failed() ? null : remote ? new InferenceHost.Details("cloud", null, null, null, null) : InferenceHost.identify(selected.baseUrl(), selected.model()), providerInfo(router.preferred()),
-                last == null ? null : providerInfo(last), execution.failed() ? "failed" : last == null ? "idle" : "success", new RemoteFallback(remoteEnabled, remoteModel), states);
+                last == null ? null : providerInfo(last), execution.failed() ? "failed" : last == null ? "idle" : "success", new RemoteFallback(com.riansares.r4r.rag.OpenAiMode.parse(remoteEnabled) != com.riansares.r4r.rag.OpenAiMode.DISABLED, remoteModel), states);
     }
 
     private static String canonical(String name) { return name.contains(":") ? name : name + ":latest"; }

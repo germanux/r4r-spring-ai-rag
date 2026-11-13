@@ -136,7 +136,9 @@ class RagRuntimeControllerTest {
         var cloudRouter=new GenerationRouter(java.util.List.of(remote));
         cloudRouter.call(new Prompt("question"));
         var cloud=new RagRuntimeController(new RagRetrievalProperties(3,.63),"nomic-embed-text", "768","jdbc:postgresql://db/rag",preloader,cloudRouter);
+        org.springframework.test.util.ReflectionTestUtils.setField(cloud, "remoteEnabled", "primary");
         var info=cloud.runtime();
+        assertThat(info.remoteFallback().enabled()).isTrue();
         assertThat(info.lastUsedProvider().name()).isEqualTo("OpenAI");
         assertThat(info.lastUsedProvider().inferenceHost().type()).isEqualTo("cloud");
         assertThat(info.inferenceHost().cpu()).isNull();assertThat(info.loadedModels()).isEmpty();

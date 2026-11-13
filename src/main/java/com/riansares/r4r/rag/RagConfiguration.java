@@ -27,24 +27,27 @@ public class RagConfiguration {
     @Bean
     List<GenerationRouter.Target> generationTargets(OllamaChatProperties properties,
             GenerationProviderProperties local,
-            @Value("${r4r.rag.openai.enabled:false}") boolean remoteEnabled,
+            @Value("${r4r.rag.openai.enabled:false}") String remoteEnabled,
             @Value("${r4r.rag.openai.model:gpt-6-luna}") String remoteModel,
             @Value("${r4r.rag.openai.read-timeout:35s}") Duration remoteReadTimeout,
             @Value("${r4r.rag.openai.max-calls-per-day:20}") int remoteDailyCallLimit,
             @Value("${OPENAI_API_KEY:}") String apiKey) {
+        var mode = OpenAiMode.parse(remoteEnabled);
         if (local.providers()==null || local.providers().isEmpty())
             throw new IllegalArgumentException("At least one local generation provider required");
         var targets = new java.util.ArrayList<GenerationRouter.Target>();
         for (var provider:local.providers()) targets.add(target(provider.name(), provider.baseUrl(), provider.model(),
                 properties.getOptions(),local.connectTimeout(),local.probeTimeout(),provider.readTimeout()));
-        if (remoteEnabled) {
+        if (mode != OpenAiMode.DISABLED) {
             if (apiKey.isBlank()) throw new IllegalStateException("OPENAI_API_KEY required when remote generation is enabled");
             SimpleClientHttpRequestFactory http = new SimpleClientHttpRequestFactory();
             http.setConnectTimeout(Duration.ofSeconds(3));
             http.setReadTimeout(remoteReadTimeout);
             var remote = new OpenAiResponsesModel(RestClient.builder().baseUrl("https://api.openai.com/v1")
                     .requestFactory(http).build(), apiKey, remoteModel, remoteDailyCallLimit);
-            targets.add(new GenerationRouter.Target(new GenerationRouter.Provider("OpenAI", "https://api.openai.com/v1", remoteModel), remote, () -> true));
+            var target = new GenerationRouter.Target(new GenerationRouter.Provider("OpenAI", "https://api.openai.com/v1", remoteModel), remote, () -> true);
+            if (mode == OpenAiMode.PRIMARY) targets.addFirst(target);
+            else targets.add(target);
         }
         return List.copyOf(targets);
     }

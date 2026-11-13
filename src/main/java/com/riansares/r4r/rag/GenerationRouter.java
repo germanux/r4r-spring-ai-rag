@@ -77,6 +77,8 @@ public class GenerationRouter implements ChatModel {
             try {
                 if (!target.available().getAsBoolean()) {
                     failedProvider = true;
+                    log.warn("Generation {} failed at provider={} model={} reason=provider_unavailable", requestId,
+                            provider.name(), provider.model());
                     progress.emit("PROVIDER_FAILED", provider, null, null, "provider_unavailable");
                     continue;
                 }
@@ -94,13 +96,24 @@ public class GenerationRouter implements ChatModel {
                 progress.checkCancelled();
                 failedProvider = true;
                 progress.emit("PROVIDER_FAILED", provider, null, null, "provider_failed");
-                log.warn("Generation {} failed at provider={} model={} error={}", requestId,
-                        provider.name(), provider.model(), ex.getClass().getSimpleName());
+                log.warn("Generation {} failed at provider={} model={} reason={} error={}", requestId,
+                        provider.name(), provider.model(), failureReason(ex), ex.getClass().getSimpleName());
             }
         }
         execution.set(new Execution(null, true));
         requestExecution.set(new Execution(null, true));
         throw unavailable();
+    }
+
+    static String failureReason(Throwable failure) {
+        if (failure instanceof OpenAiResponsesModel.RemoteFailure remote) return remote.reason();
+        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+            if (cause instanceof java.net.SocketTimeoutException
+                    || cause instanceof java.net.http.HttpTimeoutException
+                    || cause instanceof java.util.concurrent.TimeoutException) return "timeout";
+            if (cause instanceof java.net.ConnectException) return "provider_unavailable";
+        }
+        return "provider_failed";
     }
 
     private ResponseStatusException unavailable() {

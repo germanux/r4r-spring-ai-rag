@@ -21,6 +21,8 @@ public final class OpenAiResponsesModel implements ChatModel {
     // One call at a time: guarded by inFlight, reset on UTC date rollover.
     private LocalDate callDay = LocalDate.now(ZoneOffset.UTC);
     private int callsOnDay;
+    // Fast rejection only; the authoritative reservation remains guarded by inFlight.
+    private volatile LocalDate exhaustedDay;
     public record Usage(long inputTokens, long outputTokens) { }
     private final AtomicReference<Usage> usage = new AtomicReference<>();
     public OpenAiResponsesModel(RestClient client, String key, String model) {
@@ -33,6 +35,7 @@ public final class OpenAiResponsesModel implements ChatModel {
     }
     public Usage lastUsage() { return usage.get(); }
     @Override public ChatResponse call(Prompt prompt) {
+        if (LocalDate.now(ZoneOffset.UTC).equals(exhaustedDay)) throw new RemoteFailure("quota_exhausted");
         if (key == null || key.isBlank() || !inFlight.tryAcquire()) throw failure();
         try {
             if (prompt.getContents().length() > 32000) throw failure();
@@ -41,10 +44,11 @@ public final class OpenAiResponsesModel implements ChatModel {
             if (callsOnDay >= maxCallsPerDay) {
                 org.slf4j.LoggerFactory.getLogger(OpenAiResponsesModel.class)
                         .warn("Remote generation stopped: daily API call limit reached");
-                throw failure();
+                throw new RemoteFailure("quota_exhausted");
             }
             // Count attempts, including unsuccessful HTTP responses, to bound spending.
             callsOnDay++;
+            if (callsOnDay >= maxCallsPerDay) exhaustedDay = today;
             var messages = prompt.getInstructions().stream().map(m -> Map.of(
                     "role", m.getMessageType().getValue(), "content", m.getText())).toList();
             JsonNode response = client.post().uri("/responses")
@@ -67,8 +71,17 @@ public final class OpenAiResponsesModel implements ChatModel {
             return new ChatResponse(List.of(new Generation(new AssistantMessage(text.toString()))));
         } catch (RuntimeException ex) {
             // Do not propagate provider bodies, headers or causes containing credentials/content.
-            throw failure();
+            if (ex instanceof RemoteFailure safe) throw safe;
+            throw new RemoteFailure(GenerationRouter.failureReason(ex));
         } finally { inFlight.release(); }
     }
-    private static IllegalStateException failure() { return new IllegalStateException("Remote generation unavailable"); }
+    public static final class RemoteFailure extends IllegalStateException {
+        private final String reason;
+        private RemoteFailure(String reason) {
+            super("Remote generation unavailable");
+            this.reason = reason;
+        }
+        public String reason() { return reason; }
+    }
+    private static RemoteFailure failure() { return new RemoteFailure("provider_unavailable"); }
 }

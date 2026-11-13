@@ -116,4 +116,89 @@ class OpenAiFallbackTest {
         }
     }
 
+    @Test void modesRemainBackwardCompatibleAndRejectInvalidConfiguration() {
+        assertThat(OpenAiMode.parse("false")).isEqualTo(OpenAiMode.DISABLED);
+        assertThat(OpenAiMode.parse("true")).isEqualTo(OpenAiMode.FALLBACK);
+        assertThat(OpenAiMode.parse("primary")).isEqualTo(OpenAiMode.PRIMARY);
+        assertThat(OpenAiMode.parse("TRUE")).isEqualTo(OpenAiMode.FALLBACK);
+        assertThatThrownBy(() -> OpenAiMode.parse("unknown")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @org.junit.jupiter.api.extension.ExtendWith(org.springframework.boot.test.system.OutputCaptureExtension.class)
+    void primarySkipsLocalProbesUntilQuotaExhaustionAndPreservesTrace(org.springframework.boot.test.system.CapturedOutput output) {
+        var builder = RestClient.builder().baseUrl("https://api.openai.com/v1");
+        var server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo("https://api.openai.com/v1/responses"))
+                .andRespond(withSuccess("{\"status\":\"completed\",\"output\":[{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"OK\"}]}]}", MediaType.APPLICATION_JSON));
+        var remote = new OpenAiResponsesModel(builder.build(), "TEST_ONLY", "gpt-6-luna", 1);
+        var local = mock(ChatModel.class);
+        var available = mock(java.util.function.BooleanSupplier.class);
+        when(available.getAsBoolean()).thenReturn(true);
+        var router = new GenerationRouter(List.of(
+                new GenerationRouter.Target(new GenerationRouter.Provider("OpenAI", "https://api.openai.com/v1", "gpt-6-luna"), remote, () -> true),
+                new GenerationRouter.Target(new GenerationRouter.Provider("PC", "http://pc", "local"), local, available)));
+        router.call(new Prompt("first"));
+        verifyNoInteractions(local, available);
+        assertThat(router.requestExecution().provider().name()).isEqualTo("OpenAI");
+        router.call(new Prompt("second"));
+        verify(local).call(any(Prompt.class));
+        assertThat(router.requestExecution().provider().name()).isEqualTo("PC");
+        assertThat(router.requestExecution().failed()).isFalse();
+        assertThatThrownBy(() -> remote.call(new Prompt("quota")))
+                .isInstanceOfSatisfying(OpenAiResponsesModel.RemoteFailure.class,
+                        ex -> assertThat(ex.reason()).isEqualTo("quota_exhausted"));
+        when(available.getAsBoolean()).thenReturn(false);
+        assertThatThrownBy(() -> router.call(new Prompt("third")))
+                .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
+                        ex -> assertThat(ex.getStatusCode().value()).isEqualTo(503));
+        assertThat(router.requestExecution().failed()).isTrue();
+        assertThat(router.requestExecution().provider()).isNull();
+        assertThat(output).contains("reason=quota_exhausted", "reason=provider_unavailable");
+        server.verify();
+    }
+
+    @Test void failureDiagnosticsAreSanitizedAndDistinct() {
+        assertThat(GenerationRouter.failureReason(new IllegalStateException("private",
+                new java.net.SocketTimeoutException("secret")))).isEqualTo("timeout");
+        assertThat(GenerationRouter.failureReason(new java.net.ConnectException("secret")))
+                .isEqualTo("provider_unavailable");
+        assertThat(GenerationRouter.failureReason(new IllegalStateException("secret")))
+                .isEqualTo("provider_failed");
+    }
+
+    @Test void concurrentCallsCannotExceedTheDailyBudget() throws Exception {
+        var builder = RestClient.builder().baseUrl("https://api.openai.com/v1");
+        var server = MockRestServiceServer.bindTo(builder).build();
+        var entered = new java.util.concurrent.CountDownLatch(1);
+        var release = new java.util.concurrent.CountDownLatch(1);
+        server.expect(requestTo("https://api.openai.com/v1/responses")).andRespond(request -> {
+            entered.countDown();
+            try {
+                if (!release.await(5, java.util.concurrent.TimeUnit.SECONDS)) throw new java.io.IOException("test timeout");
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                throw new java.io.IOException("interrupted");
+            }
+            return withSuccess("{\"status\":\"completed\",\"output\":[{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"OK\"}]}]}", MediaType.APPLICATION_JSON).createResponse(request);
+        });
+        var model = new OpenAiResponsesModel(builder.build(), "TEST_ONLY", "gpt-6-luna", 1);
+        try (var pool = java.util.concurrent.Executors.newFixedThreadPool(4)) {
+            var first = pool.submit(() -> model.call(new Prompt("first")));
+            try {
+                assertThat(entered.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                assertThatThrownBy(() -> model.call(new Prompt("concurrent")))
+                        .isInstanceOf(OpenAiResponsesModel.RemoteFailure.class);
+            } finally { release.countDown(); }
+            assertThat(first.get(5, java.util.concurrent.TimeUnit.SECONDS)).isNotNull();
+            var attempts = new ArrayList<java.util.concurrent.Future<?>>();
+            for (int i = 0; i < 8; i++) attempts.add(pool.submit(() ->
+                    assertThatThrownBy(() -> model.call(new Prompt("over quota")))
+                            .isInstanceOfSatisfying(OpenAiResponsesModel.RemoteFailure.class,
+                                    ex -> assertThat(ex.reason()).isEqualTo("quota_exhausted"))));
+            for (var attempt : attempts) attempt.get(5, java.util.concurrent.TimeUnit.SECONDS);
+        }
+        server.verify();
+    }
+
 }
