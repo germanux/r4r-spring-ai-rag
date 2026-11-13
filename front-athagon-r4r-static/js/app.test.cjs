@@ -950,3 +950,26 @@ test('the updated three-term example has an exact real saved fallback in both la
   assert.ok(p.node('answerText').textContent.includes('suelo'));assert.ok(saved.citations.length>0);
  }
 });
+
+test('public progress is a visible numbered history with no raw SSE jargon',async()=>{
+ const events=[{stage:'REQUEST_RECEIVED'},{stage:'RETRIEVAL_STARTED'},{stage:'EMBEDDING_STARTED'},{stage:'EMBEDDING_COMPLETED'},{stage:'RETRIEVAL_COMPLETED',documentsFound:2},{stage:'GENERATION_STARTED'},{stage:'GENERATION_COMPLETED'},{stage:'VALIDATION_COMPLETED'},{stage:'ANSWER_READY',answer:'Answer',abstained:false,citations:[]}];
+ for(const lang of ['es','en']) {
+  const p=openPage(lang,new Map(),{offline:true,stream:async()=>sseResponse(events)});
+  p.node('question').value='Question';await p.node('sendButton').handlers.click();
+  const list=p.node('simpleProgressSteps');assert.equal(list.hidden,false);assert.equal(list.children.length,5);
+  ['preparing','searching','generating','verifying','done'].forEach((key,index)=>{
+   assert.ok(list.children[index].textContent.includes(p.t(key)));assert.equal(list.children[index].children[0].textContent,String(index+1));assert.equal(list.children[index].getAttribute('data-state'),'complete');
+  });
+  assert.ok(!list.textContent.includes('EMBEDDING'));assert.equal(p.node('progressDetails').open,false);
+  p.changeLanguage(lang==='es'?'en':'es');assert.ok(list.textContent.includes(p.t('searching')));
+ }
+});
+test('public progress does not invent generation for a live abstention',async()=>{
+ const p=openPage('es',new Map(),{offline:true,stream:async()=>sseResponse([{stage:'REQUEST_RECEIVED'},{stage:'RETRIEVAL_COMPLETED',documentsFound:0},{stage:'VALIDATION_COMPLETED'},{stage:'ANSWER_READY',answer:'',abstained:true,citations:[]}])});
+ p.node('question').value='Question';await p.node('sendButton').handlers.click();
+ assert.equal(p.node('simpleProgressSteps').children.length,4);assert.ok(!p.node('simpleProgressSteps').textContent.includes(p.t('generating')));
+});
+test('query technical details follow the answer and source disclosure',()=>{
+ assert.ok(html.indexOf('id="simpleProgressSteps"')<html.indexOf('id="resultContent"'));
+ assert.ok(html.indexOf('id="sourcesDetails"')<html.indexOf('id="progressDetails"'));
+});

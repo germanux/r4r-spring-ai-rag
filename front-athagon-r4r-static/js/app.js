@@ -141,6 +141,7 @@
   question.value = savedQuestion || "";
   let lastPayload = null;
   let progressRows = [];
+  let simpleStages = [];
   let lastFailedProvider = null;
   let activeQueryController = null;
   let lastError = null;
@@ -168,6 +169,7 @@
     if (phase === "success" && lastPayload) renderResult(lastPayload);
     if (phase === "error" && lastError) renderError(errorMessage(lastError));
     renderProgress();
+    renderSimpleProgress();
     if (runtimeInfo) renderRuntimeInfo(runtimeInfo);
     else if (runtimeError) renderRuntimeUnavailable();
     if (apiBaseUrl.validationMessage) apiBaseUrl.setCustomValidity(t("invalidUrl"));
@@ -280,7 +282,7 @@
       $("progressDetails").hidden = false;
       $("ragProgress").textContent = t("noRecordedTimeline");
       for (const stage of ["preparing", "searching", "generating", "verifying"]) {
-        $("simpleProgress").textContent = t(stage);
+        showSimpleStage(stage);
         if (!await pausePreview(reducedMotion() ? 30 : 350)) return;
       }
     }
@@ -291,7 +293,7 @@
     const payload = data;
     const answer = data.answer;
     setLoading(false);
-    $("simpleProgress").textContent = t("done");
+    showSimpleStage("done", true);
     renderResult({ ...payload, answer: " " });
     answerText.setAttribute("aria-live", "off");
     if (!reducedMotion()) for (let i = 0; i < answer.length; i += 6) {
@@ -585,19 +587,52 @@
 
   window.addEventListener("pagehide", () => activeQueryController?.abort());
 
+  function showSimpleStage(stage, complete = false) {
+    let row = simpleStages.find(item => item.stage === stage);
+    if (!row) {
+      for (const previous of simpleStages) if (!previous.failed) previous.complete = true;
+      row = { stage, complete, failed: false };
+      simpleStages.push(row);
+    } else {
+      row.complete = complete;
+      row.failed = false;
+    }
+    $("simpleProgress").textContent = t(stage);
+    renderSimpleProgress();
+  }
+  function renderSimpleProgress() {
+    const list = $("simpleProgressSteps");
+    list.replaceChildren();list.hidden = simpleStages.length === 0;
+    simpleStages.forEach((row, index) => {
+      const item = document.createElement("li");
+      const state = row.failed ? "failed" : row.complete ? "complete" : "current";
+      item.setAttribute("data-state", state);
+      item.setAttribute("aria-current", state === "current" ? "step" : "false");
+      const number = document.createElement("span");number.className = "step-number";number.textContent = String(index + 1);
+      const label = document.createElement("span");label.className = "step-label";label.textContent = t(row.stage);
+      const mark = document.createElement("span");mark.className = "step-state";mark.setAttribute("aria-hidden", "true");mark.textContent = row.failed ? "!" : row.complete ? "✓" : "…";
+      item.append(number, label, mark);list.appendChild(item);
+    });
+  }
+
   function receiveProgress(event) {
     if (!event || typeof event.stage !== "string") return;
     if (event.provider && typeof event.provider === "object") event = { ...event, model: event.model || event.provider.model, provider: event.provider.name };
-    if (event.stage === "ANSWER_READY") $("simpleProgress").textContent = t("done");
     if (!preview && ["GENERATION_STARTED", "GENERATION_COMPLETED"].includes(event.stage))
       $("answerProvider").textContent = [event.provider, event.model].filter(Boolean).join(" · ");
-    const simpleStage = event.stage === "ANSWER_READY" ? "done" : event.stage.startsWith("VALIDATION") ? "verifying" : event.stage.startsWith("GENERATION") ? "generating"
-      : /^(REQUEST|TRANSLATION)/.test(event.stage) ? "preparing" : "searching";
-    $("simpleProgress").textContent = t(simpleStage);
     const known = ["REQUEST_RECEIVED", "TRANSLATION_STARTED", "TRANSLATION_COMPLETED", "TRANSLATION_FALLBACK",
       "EMBEDDING_STARTED", "EMBEDDING_COMPLETED", "RETRIEVAL_STARTED", "RETRIEVAL_COMPLETED", "GENERATION_STARTED",
       "PROVIDER_FAILED", "FAILOVER_STARTED", "GENERATION_COMPLETED", "VALIDATION_COMPLETED", "ANSWER_READY", "ERROR"];
     if (!known.includes(event.stage)) return;
+    const stage = event.stage === "ANSWER_READY" ? "done" : event.stage.startsWith("VALIDATION") ? "verifying"
+      : /^(GENERATION|PROVIDER_FAILED|FAILOVER)/.test(event.stage) ? "generating"
+      : /^(REQUEST|TRANSLATION)/.test(event.stage) ? "preparing" : "searching";
+    if (event.stage === "ERROR") {
+      if (simpleStages.length) { simpleStages[simpleStages.length-1].failed = true; renderSimpleProgress(); }
+      $("simpleProgress").textContent = t("progressStages").ERROR;
+    } else {
+      showSimpleStage(stage, ["TRANSLATION_COMPLETED", "RETRIEVAL_COMPLETED", "GENERATION_COMPLETED", "VALIDATION_COMPLETED", "ANSWER_READY"].includes(event.stage));
+    }
     if (event.stage === "PROVIDER_FAILED") lastFailedProvider = event.provider;
     if (event.stage === "FAILOVER_STARTED") event = { ...event, previousProvider: lastFailedProvider };
     const key = `${event.stage}:${event.stage === "FAILOVER_STARTED" ? event.previousProvider || "" : event.provider || ""}`;
@@ -811,6 +846,8 @@
   }
 
   function renderEmpty() {
+    simpleStages = [];
+    renderSimpleProgress();
     cancelSourcesPress();
     sourcesDetails.open = false;
     $("progressDetails").hidden = true;

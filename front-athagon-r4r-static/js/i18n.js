@@ -3,6 +3,7 @@ const R4RI18n = (() => {
   "use strict";
   const dictionary = {
     "es": {
+      "page.query_steps": "Pasos de la consulta",
       "busyPublic": "El servicio está ocupado temporalmente. Inténtalo más tarde.",
       "recordedDuration": "Captura",
       "noRecordedTimeline": "Reproducción visual: no se capturó la secuencia SSE original.",
@@ -20,7 +21,7 @@ const R4RI18n = (() => {
       "page.how_summary": "La consulta busca documentación pertinente y genera una respuesta con citas. Puedes abrir las fuentes y revisar los detalles de cada ejecución.",
       "notQueried": "No consultado: abre Detalles técnicos para consultar el estado.",
       "rateLimited": "El servicio está ocupado o ha alcanzado su límite de consultas. Inténtalo más tarde.",
-      "done": "Listo",
+      "done": "Respuesta lista",
       "generating": "Generando respuesta",
       "searching": "Buscando documentos",
       "recorded": "Demostración grabada",
@@ -217,6 +218,7 @@ const R4RI18n = (() => {
       "page.embedding_dimensions": "Dimensiones de embeddings"
     },
     "en": {
+      "page.query_steps": "Query progress",
       "busyPublic": "The service is temporarily busy. Please try again later.",
       "recordedDuration": "Recorded",
       "noRecordedTimeline": "Visual playback: the original SSE timeline was not captured.",
@@ -234,7 +236,7 @@ const R4RI18n = (() => {
       "page.how_summary": "Your question retrieves relevant documents and generates an answer with citations. You can open the sources and inspect each execution.",
       "notQueried": "Not checked: open Technical details to query the status.",
       "rateLimited": "The service is busy or has reached its request limit. Please try again later.",
-      "done": "Done",
+      "done": "Answer ready",
       "generating": "Generating answer",
       "searching": "Searching documents",
       "recorded": "Recorded demo",

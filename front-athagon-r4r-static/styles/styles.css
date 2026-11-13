@@ -1209,3 +1209,15 @@ a:focus-visible,button:focus-visible,textarea:focus-visible,select:focus-visible
 .query-telemetry > summary { cursor:pointer; min-height:44px; padding:12px 0; }
 
 .citations-head.is-preview-pressed { background:#ffd35a; color:#172d42; box-shadow:0 0 0 4px rgba(255,211,90,.3); transform:translateY(2px); }
+
+/* Public progress stays visible; low-level SSE remains below the sources. */
+.simple-progress-steps { list-style:none; margin:12px 0 18px; padding:0; }
+.simple-progress-steps li { display:flex; align-items:center; gap:10px; padding:7px 10px; margin:4px 0; border:1px solid #d4dfe8; border-radius:8px; background:#f4f8fb; color:#334357; font-size:.92rem; }
+.step-number { display:inline-flex; align-items:center; justify-content:center; flex:0 0 24px; height:24px; border-radius:50%; background:#334357; color:white; font-size:.8rem; font-weight:700; }
+.step-label { flex:1; }
+.step-state { font-weight:700; }
+.simple-progress-steps li[data-state="current"] { border-color:#71869a; background:#e4edf5; font-weight:700; }
+.simple-progress-steps li[data-state="complete"] .step-state { color:#216341; }
+.simple-progress-steps li[data-state="failed"] .step-state { color:#9f2b29; }
+.loading-state { min-height:0; }
+.loading-state .loading-icon { width:48px; height:48px; margin:12px auto; font-size:1.5rem; }
