@@ -1,0 +1,19 @@
+id,category,description,unit,low,central,high,source_id,source_date,caution
+P-001,Reforma integral,"Vivienda, rango medio orientativo",EUR/m2,400,525,650,SRC-HAB-VIVIENDA,2026,"Estado, alcance, materiales, permisos e impuestos pueden alterar el rango."
+P-002,Casa antigua,Integral sin estructura ni redistribución,EUR/m2,350,416.66,450,SRC-HAB-ANTIGUA,2024,"No aplica si hay estructura, cubierta, cimentación o cambio amplio de distribución."
+P-003,Casa antigua,Integral con refuerzo de estructura,EUR/m2,533.33,533.33,533.33,SRC-HAB-ANTIGUA,2024,"Referencia publicada, no tarifa."
+P-004,Casa antigua,Integral con cambio de distribución,EUR/m2,600,600,600,SRC-HAB-ANTIGUA,2024,Referencia publicada; comprobar proyecto y licencias.
+P-005,Cocina,Reforma de cocina 4 m2,EUR/project,3850,3850,5000,SRC-HAB-COCINA,2025,Calidad y mobiliario pueden ampliar el total.
+P-006,Cocina,Reforma de cocina 7 m2,EUR/project,5600,6000,9000,SRC-HAB-COCINA,2025,"La fuente indica demolición, residuos, revestimientos, mobiliario básico e instalaciones."
+P-007,Cocina,Reforma de cocina 10 m2,EUR/project,7000,8100,11000,SRC-HAB-COCINA,2025,"Depende de mobiliario, carpinterías y cambios de instalaciones."
+P-008,Cocina,Reforma de cocina 12 m2,EUR/project,7800,8500,12000,SRC-HAB-COCINA,2025,Revestimientos y desplazamiento de instalaciones alteran el precio.
+P-009,Baño,Baño pequeño 2 m2,EUR/project,1560,1560,1560,SRC-HAB-BANO,2026,"Ejemplo de guía, alcance no universal."
+P-010,Baño,Baño sin obras 4 m2,EUR/project,2000,2000,2000,SRC-HAB-BANO,2026,No equivale a reforma completa.
+P-011,Baño,Baño sin quitar azulejos 4 m2,EUR/project,2900,2900,2900,SRC-HAB-BANO,2026,Comprobar soporte e impermeabilización.
+P-012,Baño,Baño calidades medias 5 m2,EUR/project,4250,4250,4250,SRC-HAB-BANO,2026,Mover sanitarios o bajantes puede elevarlo.
+P-013,Baño,Baño calidades altas 6 m2,EUR/project,4860,4860,4860,SRC-HAB-BANO,2026,La alta gama real puede superar la referencia.
+P-014,Suelo laminado,Calidad media con mano de obra,EUR/m2,25,30,30,SRC-HAB-LAMINADO,2024,"Nivelación, retirada, rodapié y puertas se valoran aparte."
+P-015,Suelo laminado,Rango general publicado,EUR/m2,20,30,65,SRC-HAB-LAMINADO,2024,Incluye situaciones y calidades heterogéneas.
+P-016,Pintura,Pintura blanca de piso,EUR/m2,10,11,12,SRC-HAB-PINTURA,2024,"Color, grietas, gotelé, humedades y protección pueden incrementar el precio."
+P-017,Pintura,Pintar piso 100 m2,EUR/project,1300,1300,1300,SRC-HAB-PINTURA,2024,Referencia para pintura blanca sin preparación extraordinaria.
+P-018,Demolición,Demolición manual de alicatado DRA010,EUR/m2,8.9,8.9,8.9,SRC-CYPE-DEMO-ALIC,2026 snapshot,"Unidad técnica concreta; adaptar logística, residuos, protección, margen e impuestos."

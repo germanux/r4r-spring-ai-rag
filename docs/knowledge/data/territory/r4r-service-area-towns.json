@@ -1,0 +1,1238 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-07-27",
+  "title": "Área territorial Riansares 4R extraída de la captura",
+  "interpretation": "Se incluyen por defecto los núcleos cuyo rótulo o centro aparente queda claramente dentro de la línea oscura. Los situados sobre o muy cerca del trazo se conservan como borderline hasta contrastar el mapa original.",
+  "geographic_rule": "visual_label_or_centroid_inside_dark_line",
+  "not_a_legal_boundary": true,
+  "exactness_note": "La captura no contiene coordenadas ni límites municipales vectoriales. Para una intersección geométrica exacta hace falta el mapa original, KML, GeoJSON o una captura de mayor resolución sin reescalado.",
+  "province_reference": {
+    "publisher": "Instituto Nacional de Estadística",
+    "reference_date": "2026-01-01",
+    "url": "https://www.ine.es/dyngs/INEbase/es/operacion.htm?c=Estadistica_C&cid=1254736177031&idp=1254734710990&menu=ultiDatos"
+  },
+  "summary": {
+    "included_by_default": 86,
+    "borderline": 35,
+    "included_by_province": {
+      "Cuenca": 42,
+      "Guadalajara": 12,
+      "Madrid": 23,
+      "Toledo": 9
+    },
+    "total_records": 121
+  },
+  "places": [
+    {
+      "name": "Alcázar del Rey",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Almendros",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Almonacid del Marquesado",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Barajas de Melo",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Belinchón",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Belmonte",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Buendía",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Campos del Paraíso",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Carrascosa del Campo",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "locality",
+      "parent_municipality": "Campos del Paraíso",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Cervera del Llano",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "El Acebrón",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "El Hito",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "El Pedernoso",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Fuente de Pedro Naharro",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Fuentelespino de Haro",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Hontanaya",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Horcajo de Santiago",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Huelves",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Huete",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "La Almarcha",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Las Pedroñeras",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Leganiel",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Los Hinojosos",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Monreal del Llano",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Montalbo",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Mota del Cuervo",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Osa de la Vega",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Palomares del Campo",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Paredes",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Portalrubio de Guadamejud",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Pozorrubio de Santiago",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Puebla de Almenara",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Rozalén del Monte",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Saceda-Trasierra",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Saelices",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Santa María de los Llanos",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Tarancón",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Tinajas",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Torrubia del Campo",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Tresjuncos",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Tribaldos",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Uclés",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Vellisca",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Villaescusa de Haro",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Villamayor de Santiago",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Villar de Cañas",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Villarejo de Fuentes",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Villares del Saz",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Villarrubio",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Zafra de Záncara",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Zarza de Tajo",
+      "province": "Cuenca",
+      "province_ine_code": "16",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Albares",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Alhóndiga",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Almoguera",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Almonacid de Zorita",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Aranzueque",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Auñón",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Berninches",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Driebes",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Escariche",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Fuentelencina",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Hontoba",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Hueva",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Illana",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Loranca de Tajuña",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Mazuecos",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Mondéjar",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Moratilla de los Meleros",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Pastrana",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Peñalver",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Pozo de Almoguera",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Renera",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Sacedón",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Sayatón",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Tendilla",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Valdarachas",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Yebra",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Zorita de los Canes",
+      "province": "Guadalajara",
+      "province_ine_code": "19",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Ambite",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Arganda del Rey",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Belmonte de Tajo",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Brea de Tajo",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Campo Real",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Carabaña",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Chinchón",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Colmenar de Oreja",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Estremera",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Fuentidueña de Tajo",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Loeches",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Morata de Tajuña",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Nuevo Baztán",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Olmeda de las Fuentes",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Orusco de Tajuña",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Perales de Tajuña",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Pozuelo del Rey",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Tielmes",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Valdaracete",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Valdelaguna",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Valdilecha",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Villaconejos",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Villamanrique de Tajo",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Villar del Olmo",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Villarejo de Salvanés",
+      "province": "Madrid",
+      "province_ine_code": "28",
+      "autonomous_community": "Comunidad de Madrid",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Cabezamesada",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Corral de Almaguer",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Dosbarrios",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "El Toboso",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "La Guardia",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "La Puebla de Almoradiel",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "La Villa de Don Fadrique",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Lillo",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Miguel Esteban",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Noblejas",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Ocaña",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Quintanar de la Orden",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Santa Cruz de la Zarza",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Tembleque",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Villacañas",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "borderline",
+      "included_by_default": false,
+      "confidence": "medium"
+    },
+    {
+      "name": "Villanueva de Alcardete",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Villarrubia de Santiago",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    },
+    {
+      "name": "Villatobas",
+      "province": "Toledo",
+      "province_ine_code": "45",
+      "autonomous_community": "Castilla-La Mancha",
+      "place_type": "municipality",
+      "map_status": "clear_inside",
+      "included_by_default": true,
+      "confidence": "high"
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "version": "1.0",
+  "sources": [
+    {
+      "id": "SRC-INE-2026",
+      "title": "Relación de municipios y sus códigos por provincias, 1 de enero de 2026",
+      "publisher": "Instituto Nacional de Estadística",
+      "url": "https://www.ine.es/dyngs/INEbase/es/operacion.htm?c=Estadistica_C&cid=1254736177031&idp=1254734710990&menu=ultiDatos",
+      "retrieved_at": "2026-07-27",
+      "use": "Denominaciones y códigos provinciales oficiales."
+    },
+    {
+      "id": "SRC-AEAT-IVA",
+      "title": "¿Qué tipo se aplica a las obras en viviendas?",
+      "publisher": "Agencia Tributaria",
+      "url": "https://sede.agenciatributaria.gob.es/Sede/iva/iva-operaciones-inmobiliarias/que-tipo-se-aplica-obras-viviendas.html",
+      "retrieved_at": "2026-07-27",
+      "use": "Regla general del 21% y requisitos del 10%."
+    },
+    {
+      "id": "SRC-AEAT-FAQ",
+      "title": "Preguntas frecuentes sobre obras y reparaciones en inmuebles",
+      "publisher": "Agencia Tributaria",
+      "url": "https://sede.agenciatributaria.gob.es/Sede/iva/iva-operaciones-inmobiliarias/preguntas-frecuentes-sobre-obras-reparaciones-inmuebles.html",
+      "retrieved_at": "2026-07-27",
+      "use": "Mantenimiento, seguros, piscinas y límite del 40% de materiales."
+    },
+    {
+      "id": "SRC-CM-REFORMAS",
+      "title": "Reformas del hogar",
+      "publisher": "Comunidad de Madrid — Consumo",
+      "url": "https://www.comunidad.madrid/consumo/reformas-hogar",
+      "retrieved_at": "2026-07-27",
+      "use": "Presupuesto previo, orden de trabajo, factura y garantía."
+    },
+    {
+      "id": "SRC-CM-GARANTIA",
+      "title": "Preguntas frecuentes: reformas del hogar",
+      "publisher": "Comunidad de Madrid — Consumo",
+      "url": "https://www.comunidad.madrid/consumo/preguntas-frecuentes-reformas-hogar",
+      "retrieved_at": "2026-07-27",
+      "use": "Garantía de servicios y materiales."
+    },
+    {
+      "id": "SRC-TARANCON-LIC",
+      "title": "Licencias",
+      "publisher": "Ayuntamiento de Tarancón",
+      "url": "https://nuevaweb.tarancon.es/ciudadano/tramites/licencias/",
+      "retrieved_at": "2026-07-27",
+      "use": "Acceso a trámites y sede electrónica municipal."
+    },
+    {
+      "id": "SRC-HAB-VIVIENDA",
+      "title": "¿Cuánto cuesta reformar una casa? Precios 2026",
+      "publisher": "Habitissimo",
+      "url": "https://www.habitissimo.es/presupuestos/reformas-viviendas",
+      "retrieved_at": "2026-07-27",
+      "use": "Rango orientativo de 400–650 €/m² y ejemplo de vivienda de 80 m²."
+    },
+    {
+      "id": "SRC-HAB-ANTIGUA",
+      "title": "Reforma integral de casa antigua",
+      "publisher": "Habitissimo",
+      "url": "https://www.habitissimo.es/presupuestos/reformar-casa-antigua",
+      "retrieved_at": "2026-07-27",
+      "use": "Rangos por m², estructura y ejemplo desglosado de 120 m²."
+    },
+    {
+      "id": "SRC-HAB-COCINA",
+      "title": "¿Cuánto cuesta reformar una cocina?",
+      "publisher": "Habitissimo",
+      "url": "https://www.habitissimo.es/presupuestos/reformas-cocinas",
+      "retrieved_at": "2026-07-27",
+      "use": "Tabla por superficie y factores de coste."
+    },
+    {
+      "id": "SRC-HAB-BANO",
+      "title": "¿Cuánto cuesta reformar un baño? Precios 2026",
+      "publisher": "Habitissimo",
+      "url": "https://www.habitissimo.es/presupuestos/reformas-banos",
+      "retrieved_at": "2026-07-27",
+      "use": "Ejemplos de baños de 2–6 m²."
+    },
+    {
+      "id": "SRC-HAB-LAMINADO",
+      "title": "Instalación de suelo laminado",
+      "publisher": "Habitissimo",
+      "url": "https://www.habitissimo.es/presupuestos/poner-suelo-laminado",
+      "retrieved_at": "2026-07-27",
+      "use": "Precio medio de 30 €/m² y rango de 20–65 €/m²."
+    },
+    {
+      "id": "SRC-HAB-PINTURA",
+      "title": "¿Cuánto cuesta pintar un piso?",
+      "publisher": "Habitissimo",
+      "url": "https://www.habitissimo.es/presupuestos/pintar-piso",
+      "retrieved_at": "2026-07-27",
+      "use": "10–12 €/m², ejemplos por superficie y efecto de preparación."
+    },
+    {
+      "id": "SRC-CYPE-DEMO-ALIC",
+      "title": "DRA010 — Demolición de alicatado",
+      "publisher": "CYPE Ingenieros",
+      "url": "https://generadordeprecios.info/obra_nueva/Demoliciones/Revestimientos_y_trasdosados/Alicatados/Demolicion_de_alicatado.html",
+      "retrieved_at": "2026-07-27",
+      "use": "Unidad técnica consultada: 8,90 €/m² para configuración manual concreta."
+    }
+  ]
+}
