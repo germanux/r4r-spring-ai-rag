@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export the eight public knowledge documents. Requires reportlab, markdown, bs4."""
+"""Export bilingual public knowledge documents. Requires reportlab, markdown, bs4."""
 from pathlib import Path
 import re
 from xml.sax.saxutils import escape
@@ -85,7 +85,8 @@ if __name__=='__main__':
         raw=re.sub(r'\A---\n.*?\n---\s*\n','',raw,flags=re.S)
         soup=BeautifulSoup(markdown.markdown(raw,extensions=['tables','fenced_code']),'html.parser')
         story=[];blocks(soup.children,story)
-        target=OUT/(source.stem+'.pdf')
+        target=OUT/source.relative_to(ROOT/'knowledge').with_suffix('.pdf')
+        target.parent.mkdir(parents=True,exist_ok=True)
         doc=SimpleDocTemplate(str(target),pagesize=(595.28,841.89),leftMargin=44,rightMargin=44,topMargin=116,bottomMargin=54,title=soup.h1.get_text() if soup.h1 else source.stem,author='Riansares 4R')
         doc.build(story,onFirstPage=header,onLaterPages=header)
         print(target.relative_to(ROOT))

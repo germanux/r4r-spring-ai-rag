@@ -1179,3 +1179,18 @@ a:focus-visible,button:focus-visible,textarea:focus-visible,select:focus-visible
 .concept-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
 [hidden] { display:none !important; }
 @media(max-width:760px) { .concept-grid { grid-template-columns:1fr; } .hero { padding-top:20px; } .nav-shell { gap:8px; } .site-header nav { gap:10px; } .hero h1 { font-size:2rem; } .sample-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+.is-demo-typing { caret-color:#203445; box-shadow:inset 3px 0 #d49a00; }
+.answer-text p { margin:0 0 .8em; }
+.answer-text ul,.answer-text ol { padding-left:1.5em; }
+.citation details { margin-top:10px; overflow-wrap:anywhere; }
+
+.demo-caret { display:none; color:#203445; animation:demo-caret-blink .8s steps(2,start) infinite; }
+.query-panel:has(.is-demo-typing) .demo-caret { display:inline; }
+@keyframes demo-caret-blink { to { opacity:0; } }
+@media(prefers-reduced-motion:reduce) { .demo-caret { animation:none; } }
+.rag-progress pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+
+.citation-source { font-family:inherit; font-size:.95rem; line-height:1.4; }
+
+.architecture-diagram { display:block; width:100%; max-width:400px; height:auto; margin:20px auto; }

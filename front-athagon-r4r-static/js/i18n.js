@@ -3,6 +3,21 @@ const R4RI18n = (() => {
   "use strict";
   const dictionary = {
     "es": {
+      "busyPublic": "El servicio está ocupado temporalmente. Inténtalo más tarde.",
+      "recordedDuration": "Captura",
+      "noRecordedTimeline": "Reproducción visual: no se capturó la secuencia SSE original.",
+      "networkPublic": "No se ha podido conectar con el servicio. Comprueba tu conexión o inténtalo más tarde.",
+      "backendUnavailable": "El servicio no está disponible temporalmente. Inténtalo más tarde.",
+      "originalSource": "Fuente original",
+      "savedResponse": "Respuesta guardada",
+      "verifying": "Verificando fuentes",
+      "preparing": "Preparando consulta",
+      "page.engineering_observability": "SSE muestra las etapas y los proveedores reales. Pruebas automatizadas verifican contratos e interacción.",
+      "page.engineering_generation": "Ollama utiliza PC, portátil y OpenAI como respaldo configurado. El NAS y su conexión siguen siendo dependencias.",
+      "page.engineering_retrieval": "Nomic embeddings y PostgreSQL/pgvector recuperan documentación; AWS Lambda Java 21 y S3 Vectors ofrecen respaldo.",
+      "page.engineering_stack": "Java 21, Spring Boot y Spring AI coordinan el RAG bilingüe.",
+      "page.engineering_architecture": "Ingeniería y arquitectura",
+      "page.how_summary": "La consulta busca documentación pertinente y genera una respuesta con citas. Puedes abrir las fuentes y revisar los detalles de cada ejecución.",
       "notQueried": "No consultado: abre Detalles técnicos para consultar el estado.",
       "rateLimited": "El servicio está ocupado o ha alcanzado su límite de consultas. Inténtalo más tarde.",
       "done": "Listo",
@@ -35,7 +50,7 @@ const R4RI18n = (() => {
       "page.riansares_4r_knowledge_base": "Riansares 4R · Reformas, rehabilitación, revestimientos y reparaciones",
       "page.ready": "listo",
       "page.enter_a_question": "Escribe una pregunta",
-      "page.ctrl_enter_to_submit": "Ctrl + Enter para enviar",
+      "page.ctrl_enter_to_submit": "Enter para enviar · Mayús + Enter para nueva línea",
       "page.ask": "Obtener respuesta",
       "page.clear": "Limpiar",
       "page.more_quick_examples": "Más ejemplos rápidos",
@@ -143,8 +158,8 @@ const R4RI18n = (() => {
       "page.gpu_acceleration": "La NVIDIA GeForce RTX 4060 es la tarjeta gráfica del equipo principal utilizada para acelerar la IA.",
       "page.public_frontend_scope": "El servidor prepara las consultas inglesas para buscar en la documentación española. El navegador no envía tu pregunta a servicios de traducción externos.",
       "page.embedding_description": "Los embeddings representan el texto mediante números para buscar fragmentos con significado similar.",
-      "page.hero_title": "Tu asistente de IA para reformas",
-      "page.hero_subtitle": "Pregunta sobre materiales, técnicas y obras. Obtén respuestas claras y consulta las fuentes utilizadas.",
+      "page.hero_title": "Asistente de IA para reformas",
+      "page.hero_subtitle": "Pregunta sobre materiales, técnicas y obras. Obtén respuestas claras y comprueba las fuentes utilizadas.",
       "page.architecture_flow": "Flujo de una consulta: interfaz web, Spring Boot y Spring AI, recuperación vectorial e inferencia local.",
       "page.topology_note": "Varios ordenadores coordinan búsqueda y generación. El NAS y su conexión siguen siendo necesarios: el respaldo de recuperación no sustituye al backend.",
       "page.primary_pc": "PC de sobremesa",
@@ -202,6 +217,21 @@ const R4RI18n = (() => {
       "page.embedding_dimensions": "Dimensiones de embeddings"
     },
     "en": {
+      "busyPublic": "The service is temporarily busy. Please try again later.",
+      "recordedDuration": "Recorded",
+      "noRecordedTimeline": "Visual playback: the original SSE timeline was not captured.",
+      "networkPublic": "Could not connect to the service. Check your connection or try again later.",
+      "backendUnavailable": "The service is temporarily unavailable. Please try again later.",
+      "originalSource": "Original source",
+      "savedResponse": "Saved response",
+      "verifying": "Checking sources",
+      "preparing": "Preparing query",
+      "page.engineering_observability": "SSE exposes actual stages and providers. Automated tests verify contracts and interaction.",
+      "page.engineering_generation": "Ollama uses the PC, laptop and configured OpenAI fallback. The NAS and its connection remain dependencies.",
+      "page.engineering_retrieval": "Nomic embeddings and PostgreSQL/pgvector retrieve documents; AWS Lambda Java 21 and S3 Vectors provide backup.",
+      "page.engineering_stack": "Java 21, Spring Boot and Spring AI coordinate bilingual RAG.",
+      "page.engineering_architecture": "Engineering & Architecture",
+      "page.how_summary": "Your question retrieves relevant documents and generates an answer with citations. You can open the sources and inspect each execution.",
       "notQueried": "Not checked: open Technical details to query the status.",
       "rateLimited": "The service is busy or has reached its request limit. Please try again later.",
       "done": "Done",
@@ -225,7 +255,7 @@ const R4RI18n = (() => {
       "page.what_it_demonstrates_nav": "What's special about it?",
       "page.what_it_demonstrates": "WHY YOU CAN CHECK IT",
       "page.local_ai": "AI on my own computers",
-      "page.citations": "AI with sources (RAG)",
+      "page.citations": "Source-backed AI (RAG)",
       "page.rag_with": "RAG with",
       "page.verifiable_answers": "verifiable answers",
       "page.answers_based_on_real_documentation_with_citations_and_abstentions": "Answers based on real documentation, with citations and abstentions.",
@@ -234,7 +264,7 @@ const R4RI18n = (() => {
       "page.riansares_4r_knowledge_base": "Riansares 4R · Renovation, Refurbishment, Resurfacing & Repairs",
       "page.ready": "ready",
       "page.enter_a_question": "Enter a question",
-      "page.ctrl_enter_to_submit": "Ctrl + Enter to submit",
+      "page.ctrl_enter_to_submit": "Enter to send · Shift + Enter for a new line",
       "page.ask": "Get an answer",
       "page.clear": "Clear",
       "page.more_quick_examples": "More quick examples",
@@ -343,7 +373,7 @@ const R4RI18n = (() => {
       "page.public_frontend_scope": "The server prepares English questions for searching Spanish documents. The browser does not send your question to external translation services.",
       "page.embedding_description": "Embeddings represent text as numbers to find passages with similar meaning.",
       "page.hero_title": "Your AI assistant for renovations",
-      "page.hero_subtitle": "Ask about renovation materials, methods and projects. Get clear answers and check the sources behind them.",
+      "page.hero_subtitle": "Ask about renovation materials, methods and projects. Get clear answers backed by sources you can check.",
       "page.architecture_flow": "Query flow: Web UI, Spring Boot and Spring AI, vector retrieval and local inference.",
       "page.topology_note": "Several computers coordinate retrieval and generation. The NAS and its connection are still required: retrieval backup does not replace the backend.",
       "page.primary_pc": "PC-Desktop",
@@ -412,7 +442,7 @@ const R4RI18n = (() => {
     noCitationsAbstained: "No citations are returned because the system abstained.",
     noCitations: "No citations were returned.", unknownSource: "unknown source",
     noHeading: "No heading path", ordinal: "Chunk ordinal",
-    timeout: "The query exceeded the 120 second time limit.",
+    timeout: "The query exceeded the 180 second time limit.",
     invalidJson: (status) => `HTTP ${status}: the response is not valid JSON.`,
     httpError: (status) => `Request failed (HTTP ${status}).`,
     forbidden: "HTTP 403: access denied by the server. Check the allowed origin and API access rules.",
@@ -430,7 +460,7 @@ const R4RI18n = (() => {
     noCitationsAbstained: "No se devuelven citas porque el sistema se ha abstenido.",
     noCitations: "No se han devuelto citas.", unknownSource: "fuente desconocida",
     noHeading: "Sin ruta de encabezados", ordinal: "Ordinal del fragmento",
-    timeout: "La consulta ha superado el tiempo máximo de 120 segundos.",
+    timeout: "La consulta ha superado el tiempo máximo de 180 segundos.",
     invalidJson: (status) => `HTTP ${status}: la respuesta no es JSON válido.`,
     httpError: (status) => `HTTP ${status}`,
     forbidden: "HTTP 403: el servidor ha denegado el acceso. Revisa el origen permitido y las reglas de acceso de la API.",
@@ -446,7 +476,7 @@ const R4RI18n = (() => {
   function setLanguage(value) {
     language = value === "es" ? "es" : "en";
     document.documentElement.lang = language;
-    for (const attribute of ["", "placeholder", "aria-label", "data-question", "content"]) {
+    for (const attribute of ["", "placeholder", "aria-label", "data-question", "content", "alt"]) {
       const marker = `data-i18n${attribute ? `-${attribute}` : ""}`;
       document.querySelectorAll(`[${marker}]`).forEach(node => {
         const text = t(node.getAttribute(marker));
