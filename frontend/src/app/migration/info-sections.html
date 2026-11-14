@@ -1,0 +1,111 @@
+  <section class="section concept-section" id="como-funciona">
+    <div class="shell">
+      <h2 class="section-heading"><button id="conceptToggle" (click)="toggle('concept')" class="section-toggle" type="button" [attr.aria-expanded]="opened['concept']" aria-controls="conceptContent"><span>{{ i.t('page.what_it_demonstrates') }}</span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
+      <div id="conceptContent" [hidden]="!opened['concept']">
+      <div class="concept-grid">
+        <article class="concept-card panel">
+          <span class="concept-number">01</span>
+          <h3>{{ i.t('page.cites_its_sources') }}</h3>
+          <p>{{ i.t('page.answers_include_traceable_references_to_retrieved_documents_sections_and_passages') }}</p>
+        </article>
+        <article class="concept-card panel">
+          <span class="concept-number">02</span>
+          <h3>{{ i.t('page.self_hosted_title') }}</h3>
+          <p>{{ i.t('page.self_hosted_description') }}</p>
+        </article>
+        <article class="concept-card panel">
+          <span class="concept-number">03</span>
+          <h3>{{ i.t('page.automatic_failover_title') }}</h3>
+          <p>{{ i.t('page.automatic_failover_description') }}</p>
+        </article>
+
+      </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <section class="section architecture-section" id="arquitectura">
+    <div class="shell">
+      <h2 class="section-heading"><button id="architectureToggle" (click)="toggle('architecture')" class="section-toggle" type="button" [attr.aria-expanded]="opened['architecture']" aria-controls="architectureContent"><span>{{ i.t('page.architecture') }}</span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
+      <div class="architecture panel" id="architectureContent" [hidden]="!opened['architecture']">
+        <p>{{ i.t('page.how_summary') }}</p>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="section technical-section" id="runtime">
+    <div class="shell">
+      <div class="runtime-disclosure">
+        <h2 class="section-heading"><button id="runtimeToggle" (click)="toggle('runtime')" class="section-toggle" type="button" [attr.aria-expanded]="opened['runtime']" aria-controls="runtimeContent"><span>{{ i.t('page.technical_details') }}</span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
+        <div id="runtimeContent" class="runtime-panel panel" [hidden]="!opened['runtime']">
+        <p class="architecture-caption">{{ i.t('page.technical_intro') }}</p>
+        <div class="runtime-observed" aria-live="polite">
+          <span class="eyebrow">{{ i.t('page.observed_generation') }}</span>
+          <strong id="runtimeUsed">{{ s.provider() || i.t('notQueried') }}</strong>
+          <p id="runtimeUsedHardware"></p>
+          <p id="runtimeFailover"></p>
+        </div>
+        <p class="architecture-caption">{{ i.t('page.generation_note') }}</p>
+        <p id="modelReadiness" class="model-readiness" role="status" aria-live="polite">{{ s.runtime.readiness() || i.t('notQueried') }}</p>
+<details class="config-details" id="engineeringDetails"><summary>{{ i.t('page.engineering_architecture') }}</summary><img class="architecture-diagram" src="assets/architecture.svg" [attr.alt]="i.t('page.architecture_flow')"/><ul><li>{{ i.t('page.engineering_stack') }}</li><li>{{ i.t('page.engineering_retrieval') }}</li><li>{{ i.t('page.engineering_generation') }}</li><li>{{ i.t('page.engineering_observability') }}</li></ul></details>
+        <details class="config-details" id="flowDetails"><summary>{{ i.t('page.execution_flow') }}</summary>
+        <div class="arch-flow arch-steps architecture-route" [attr.aria-label]="i.t('page.architecture_flow')">
+          <details class="arch-step"><summary><span class="node-id">01</span><strong>{{ i.t('page.demo_website') }}</strong><small>{{ i.t('page.web_interface') }}</small></summary><p>{{ i.t('page.your_question_starts_in_the_web_interface') }}</p></details>
+          <details class="arch-step accent"><summary><span class="node-id">02</span><strong>{{ i.t('page.rag_api') }}</strong><small>Spring Boot · Spring AI</small></summary><p>{{ i.t('page.validates_the_query_retrieves_context_and_requests_an_answer_from_the_model') }}</p></details>
+          <details class="arch-step"><summary><span class="node-id">03</span><strong>{{ i.t('page.vector_database') }}</strong><small>NAS Synology · pgvector</small></summary><p>{{ i.t('page.searches_relevant_passages_in_riansares_4r_documentation') }}</p></details>
+          <details class="arch-step"><summary><span class="node-id">03b</span><strong>AWS Lambda · Java 21</strong><small>S3 Vectors</small></summary><p>{{ i.t('page.aws_backup') }}</p></details>
+          <details class="arch-step llm"><summary><span class="node-id">04</span><strong>{{ i.t('page.generation_role') }}</strong><small>{{ i.t('page.generation_servers') }}</small></summary><p>{{ i.t('page.generates_an_answer_grounded_in_the_retrieved_context') }}</p></details>
+          <details class="arch-step"><summary><span class="node-id">04b</span><strong>OpenAI · GPT-6 Luna</strong><small>{{ i.t('page.generation_backup') }}</small></summary><p>{{ i.t('page.remote_topology') }}</p></details>
+        </div>
+        <p class="architecture-caption">{{ i.t('page.aws_backup') }}</p><p class="architecture-caption">{{ i.t('page.topology_note') }}</p>
+        <p id="localFallbackStatus" class="architecture-caption" role="status" hidden></p>
+        <div class="inference-hosts">
+          <article class="inference-host primary-host" data-local-provider="desktop">
+            <small>{{ i.t('page.preferred_connection') }}</small>
+            <h3>{{ i.t('page.primary_pc') }}</h3>
+            <p class="local-provider-status" hidden>Modelo local no disponible en la última respuesta</p>
+            <p>{{ i.t('page.primary_gpu') }}</p>
+          </article>
+          <article class="inference-host backup-host" data-local-provider="laptop">
+            <small>{{ i.t('page.fallback_connection') }}</small>
+            <h3>{{ i.t('page.backup_laptop') }}</h3>
+            <p class="local-provider-status" hidden>Modelo local no disponible en la última respuesta</p>
+            <p>{{ i.t('page.backup_gpu') }}</p>
+          </article>
+          <article class="inference-host embedding-host">
+            <small>Ollama · nomic-embed-text</small>
+            <h3>NAS Synology</h3>
+            <p>{{ i.t('page.document_search') }}</p>
+          </article>
+        </div>
+        </details>
+        <details class="config-details">
+          <summary>{{ i.t('page.view_runtime_configuration') }}</summary>
+        <dl class="runtime-summary">
+          <div><dt>{{ i.t('page.used_model_identifier') }}</dt><dd id="runtimeUsedModel">{{ s.response()?.provider?.model || s.response()?.model || i.t('notQueried') }}</dd></div>
+          <div><dt>{{ i.t('page.configured_preferred') }}</dt><dd><span id="runtimePreferred">{{ s.runtime.info()?.preferredProvider?.name || i.t('notQueried') }}</span></dd></div>
+        </dl>
+      <p class="translation-note">{{ i.t('page.public_frontend_scope') }}</p>
+          <div class="config-grid" id="runtimeConfig">
+            <div><span>Backend</span><strong id="runtimeVersions">{{ runtimeField('runtimeVersions') }}</strong></div>
+            <div><span>Frontend</span><strong>Angular · TypeScript · CSS</strong></div>
+            <div><span>{{ i.t('page.database_search') }}</span><strong>{{ i.t('page.database_search_details') }}</strong></div>
+            <div><span>{{ i.t('page.platform_containers') }}</span><strong>Linux · Docker · Docker Compose</strong></div>
+            <div><span>{{ i.t('page.local_models') }}</span><strong><span>{{ i.t('page.local_models_details') }}</span> <span id="runtimeEmbeddingModel">{{ runtimeField('runtimeEmbeddingModel') }}</span> · <span id="runtimeEmbeddings">{{ runtimeField('runtimeEmbeddings') }}</span></strong></div>
+            <div><span>{{ i.t('page.remote_fallback') }}</span><strong id="runtimeRemote">{{ runtimeField('runtimeRemote') }}</strong></div>
+            <div><span>{{ i.t('page.backup_details') }}</span><strong>{{ i.t('page.backup_implementation') }}</strong></div>
+            <div data-local-provider="desktop"><p class="local-provider-status" hidden>Modelo local no disponible en la última respuesta</p><span>{{ i.t('page.hardware_desktop') }}</span><strong>NVIDIA GeForce RTX 4060 · 8 GB VRAM · Intel i9-14900KF · 64 GB DDR5 RAM</strong></div>
+            <div data-local-provider="laptop"><p class="local-provider-status" hidden>Modelo local no disponible en la última respuesta</p><span>{{ i.t('page.hardware_laptop') }}</span><strong>NVIDIA GeForce GTX 1050 · 4 GB VRAM · Intel i7-7700HQ · 32 GB RAM</strong></div>
+            <div><span>{{ i.t('page.retrieval') }}</span><strong id="runtimeRetrieval">{{ runtimeField('runtimeRetrieval') }}</strong></div>
+            <div class="runtime-host-info"><span>{{ i.t('page.memory_details') }}</span><strong id="runtimeModelStatus">{{ s.runtime.info()?.modelStatus || i.t('notQueried') }}</strong><small id="runtimeMemoryScope" class="host-hardware"></small><strong id="runtimeOllama">{{ runtimeField('runtimeOllama') }}</strong></div>
+          </div>
+        </details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+

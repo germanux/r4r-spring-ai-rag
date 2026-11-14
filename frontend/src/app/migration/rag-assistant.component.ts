@@ -1,0 +1,19 @@
+import { Component, ChangeDetectionStrategy, inject, AfterViewInit, OnDestroy } from '@angular/core';
+import { AssistantState } from './assistant-state.service';
+import { QuestionFormComponent } from './question-form.component';
+import { AnswerPanelComponent } from './answer-panel.component';
+@Component({ selector: 'app-rag-assistant', standalone: true, imports: [QuestionFormComponent, AnswerPanelComponent], changeDetection: ChangeDetectionStrategy.OnPush, styleUrl: './rag-assistant.scss', template: `<section class="section demo-section" id="demo"><div class="shell"><div class="demo-grid"><app-question-form/><app-answer-panel/></div></div></section>` })
+export class RagAssistantComponent implements AfterViewInit, OnDestroy {
+    readonly s = inject(AssistantState);
+    private observer?: IntersectionObserver;
+    private engaged = false;
+    private engage = () => { this.engaged = true; this.observer?.disconnect(); };
+    ngAfterViewInit() { if (new URLSearchParams(location.search).has('prerender'))
+        return; this.s.runtime.warmup(); window.addEventListener('pointerdown', this.engage, { once: true }); window.addEventListener('keydown', this.engage, { once: true }); this.observer = new IntersectionObserver(entries => { if (entries.some(e => e.isIntersecting) && !this.engaged) {
+        this.observer?.disconnect();
+        setTimeout(() => { if (!this.engaged)
+            this.s.play(); }, 700);
+    } }, { threshold: .2 }); const el = document.getElementById('demo'); if (el)
+        this.observer.observe(el); }
+    ngOnDestroy() { this.observer?.disconnect(); this.s.clear(); window.removeEventListener('pointerdown', this.engage); window.removeEventListener('keydown', this.engage); }
+}

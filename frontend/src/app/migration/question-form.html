@@ -1,0 +1,65 @@
+        <article class="query-panel panel">
+          <div class="panel-head">
+            <div>
+              <span class="mini-label">{{ i.t('page.question') }}</span>
+              <span>{{ i.t('page.riansares_4r_knowledge_base') }}</span>
+            </div>
+            <span class="api-state" id="apiState" hidden>{{ i.t('page.ready') }}</span>
+          </div>
+
+          <label for="question" class="visually-hidden">{{ i.t('page.enter_a_question') }}</label>
+          <textarea
+            id="question" [disabled]="s.loading() && !s.demo.active()" [class.is-demo-typing]="s.demo.active()" [value]="s.question()" (focus)="s.stopDemo()" (input)="s.edit($any($event.target).value)" (keydown.control.enter)="s.send()"
+            rows="6"
+            maxlength="700"
+           
+           [attr.placeholder]="i.t('page.e_g_what_information_is_needed_for_an_initial_assessment_of_a_renovation_in_an_older_house')"></textarea>
+
+          <p id="previewNotice" role="status" [hidden]="!s.recorded() || !s.error()">{{ i.t("recorded") }}</p>
+          <div class="query-meta">
+            <span class="demo-caret" aria-hidden="true">▍</span><span id="questionCount" class="question-count">{{ s.question().length }} / 700</span>
+          </div>
+
+          <div class="query-actions main-actions">
+            <button id="sendButton" (click)="s.send()" [disabled]="s.loading() && !s.demo.active()" type="button" class="btn primary submit-btn" [class.is-loading]="s.loading()">
+              <span id="sendLabel">{{ i.t('page.ask') }}</span>
+              <span id="spinner" [class.is-active]="s.loading()" class="spinner" aria-hidden="true"></span>
+            </button>
+            <button id="clearButton" (click)="s.clear()" type="button" class="btn ghost">{{ i.t('page.clear') }}</button>
+
+          </div>
+
+          <div class="examples-box">
+            <div class="examples-head">
+              <div class="examples-title">{{ i.t('page.more_quick_examples') }}</div>
+            </div>
+            <div class="sample-grid" [attr.aria-label]="i.t('page.example_questions')">
+              <button (click)="s.example('A')" data-example="A" class="sample-card sample" type="button" [attr.data-question]="i.t('page.renovation_question')">
+                <span class="sample-title">{{ i.t('page.renovations') }}</span>
+              </button>
+              <button (click)="s.example('B')" data-example="B" class="sample-card sample" type="button" [attr.data-question]="i.t('page.what_information_is_needed_for_an_initial_assessment_of_a_renovation')">
+                <span class="sample-title">{{ i.t('page.initial_assessment') }}</span>
+              </button>
+              <button (click)="s.example('C')" data-example="C" class="sample-card sample" type="button" [attr.data-question]="i.t('page.what_is_the_difference_between_a_concrete_subfloor_solera_and_floor_tiling_solado')">
+                <span class="sample-title">{{ i.t('page.subfloor_vs_flooring') }}</span>
+              </button>
+              <button (click)="s.example('D')" data-example="D" class="sample-card sample" type="button" [attr.data-question]="i.t('page.explain_photosynthesis_in_plants_and_the_role_of_chloroplasts')">
+                <span class="sample-title">{{ i.t('page.out_of_scope') }}</span>
+              </button>
+            </div>
+          </div>
+
+          <details class="endpoint-settings" id="endpointSettings" [hidden]="!s.developer">
+            <summary>{{ i.t('page.demo_api_endpoint') }}</summary>
+            <div class="endpoint-row">
+              <select (change)="s.api.setBase($any($event.target).value)" id="endpointPreset" [attr.aria-label]="i.t('page.api_endpoint')"><option value="https://r4r-api.athagon.tech">Production</option><option value="http://127.0.0.1:8080">Local</option><option value="http://192.168.1.203:18080">Synology</option></select>
+              <input id="apiBaseUrl" [value]="s.api.base()" (input)="$any($event.target).setCustomValidity('')" (change)="endpoint($any($event.target))" type="url" spellcheck="false" [attr.aria-label]="i.t('page.api_base_url')"/>
+              <button id="saveEndpoint" (click)="s.runtime.load()" type="button" class="small-btn">{{ i.t('page.save') }}</button>
+            </div>
+            <p  >
+              {{ i.t('page.default') }} <code id="defaultApiBaseUrl">https://r4r-api.athagon.tech</code>.
+              {{ i.t('page.this_setting_changes_the_endpoint_only_in_this_browser') }}
+            </p>
+          </details>
+        </article>
+
