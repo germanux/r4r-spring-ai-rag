@@ -157,3 +157,14 @@ Only explicit submit sends a live query. English translation belongs to the serv
 Runtime loads on opening Technical details; endpoint controls require ?dev=1.
 Deploy assets/ alongside index.html, js/, styles/ and docs/.
 See docs/validation/final-public-ux/README.md from the repository root.
+
+MVP PARTIAL — 2026-11-14
+-----------------------
+PARTIAL has an informational amber heading and a short ES/EN explanation.
+The useful answer, citations and source links remain available, including SSE
+responses and subsequent audit downgrades. No automatic PARTIAL -> ABSTAINED rule.
+The auditor prompt is unchanged. Browser check with prepared API/audit responses:
+  node front-athagon-r4r-static/js/partial.browser.test.cjs
+PLAYWRIGHT_MODULE/CHROMIUM_PATH work as in the existing browser checks.
+Publish index.html, js/app.js, js/i18n.js and styles/styles.css together (content hashes
+are updated). scripts/deploy-synology.sh deploys the backend, not these static files.

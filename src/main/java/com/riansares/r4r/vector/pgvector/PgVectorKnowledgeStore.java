@@ -23,7 +23,7 @@ public class PgVectorKnowledgeStore implements KnowledgeVectorStore {
     static final String ORDINAL_METADATA = "ordinal";
 
     private static final String DELETE_SOURCE_SQL =
-            "DELETE FROM vector_store WHERE metadata->>'source' = ?";
+            "DELETE FROM vector_store WHERE metadata->>'source' = ? AND metadata->>'r4r_experiment' IS DISTINCT FROM 'triple-even-v1'";
 
     private final VectorStore vectorStore;
     private final JdbcTemplate jdbcTemplate;
@@ -162,8 +162,14 @@ public class PgVectorKnowledgeStore implements KnowledgeVectorStore {
                     if (!nonzero) throw new IllegalStateException("Zero stored embedding");
                     boolean headingOnly = document.getText().strip().matches("#{1,6}\\s+[^\\r\\n]+");
                     var chunk = fromDocument(expandSectionHeading(document));
+                    var exportedMetadata = new LinkedHashMap<String, Object>(mapper.toMetadata(chunk, headingOnly));
+                    if ("triple-even-v1".equals(metadata.get("r4r_experiment"))) {
+                        exportedMetadata.put("r4r_experiment", metadata.get("r4r_experiment"));
+                        exportedMetadata.put("coveredOrdinals", metadata.get("coveredOrdinals"));
+                    }
+                    mapper.fromMetadata(exportedMetadata);
                     output.writeObject(Map.of("key", document.getId(), "data", Map.of("float32", vector),
-                            "metadata", mapper.toMetadata(chunk, headingOnly)));
+                            "metadata", exportedMetadata));
                     count++;
                 }
                 output.writeEndArray(); output.writeEndObject();

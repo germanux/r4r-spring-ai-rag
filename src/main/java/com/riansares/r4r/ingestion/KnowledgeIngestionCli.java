@@ -64,6 +64,16 @@ public class KnowledgeIngestionCli {
                     var result = context.getBean(KnowledgeIngestionService.class).ingestIndexed(
                             context.getEnvironment().getProperty("r4r.ingestion.check-only", Boolean.class, false),
                             context.getEnvironment().getProperty("r4r.ingestion.replace-all", Boolean.class, false));
+                    if (!context.getEnvironment().getProperty("r4r.ingestion.check-only", Boolean.class, false)) {
+                        // ingestIndexed is a proxied service: its transaction is committed before returning.
+                        var windows = new org.springframework.transaction.support.TransactionTemplate(
+                                context.getBean(org.springframework.transaction.PlatformTransactionManager.class))
+                                .execute(status -> ExperimentalTripleWindowIndexer.synchronize(
+                                        context.getBean(org.springframework.jdbc.core.JdbcTemplate.class),
+                                        context.getBean(org.springframework.ai.embedding.EmbeddingModel.class)));
+                        result.put("tripleWindow", windows);
+                        result.put("tripleWindowVectors", windows.get("total"));
+                    }
                     System.out.println("R4R_INGESTION_RESULT=" + new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(result));
                     return EXIT_CODE_SUCCESS;
                 } catch (Exception failure) {

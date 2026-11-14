@@ -152,20 +152,19 @@ public class KnowledgeIngestionService {
         }
         // One writer and atomic publication across the three existing tables. No DDL or TRUNCATE.
         jdbcTemplate.execute("LOCK TABLE knowledge_sources, knowledge_chunks, vector_store IN EXCLUSIVE MODE");
-        var existing = new java.util.HashSet<>(jdbcTemplate.queryForList(
+        var existing = new java.util.LinkedHashSet<>(jdbcTemplate.queryForList(
                 "SELECT source_path FROM knowledge_sources", String.class));
         existing.addAll(jdbcTemplate.queryForList("SELECT DISTINCT metadata->>'source' FROM vector_store", String.class));
         existing.removeAll(chunks.keySet());
         existing.removeAll(corpus.excludedSources());
-        if (!existing.isEmpty() && !replaceAll)
-            throw new IllegalStateException("Obsolete sources present; explicit --r4r.ingestion.replace-all=true required");
         int deletedSources = 0;
         if (replaceAll) {
             jdbcTemplate.update("DELETE FROM vector_store");
             jdbcTemplate.update("DELETE FROM knowledge_chunks");
             jdbcTemplate.update("DELETE FROM knowledge_sources");
         } else {
-            for (String source : corpus.excludedSources()) deletedSources += deleteExcludedSource(source);
+            existing.addAll(corpus.excludedSources());
+            for (String source : existing) deletedSources += deleteExcludedSource(source);
         }
         int unchangedSources = 0;
         var store = indexedStore.getObject();
@@ -190,7 +189,8 @@ public class KnowledgeIngestionService {
             throw new IllegalStateException("Source/chunk/vector counts disagree");
         Long mismatches = jdbcTemplate.queryForObject("""
                 SELECT count(*) FROM knowledge_chunks c JOIN knowledge_sources s ON s.id=c.source_id
-                FULL JOIN vector_store v ON v.metadata->>'source'=s.source_path
+                FULL JOIN (SELECT * FROM vector_store WHERE metadata->>'r4r_experiment'
+                    IS DISTINCT FROM 'triple-even-v1') v ON v.metadata->>'source'=s.source_path
                     AND (v.metadata->>'ordinal')::integer=c.ordinal
                 WHERE c.id IS NULL OR v.id IS NULL OR c.content IS DISTINCT FROM v.content
                     OR to_jsonb(c.heading_path) IS DISTINCT FROM v.metadata->'headingPath'
@@ -216,10 +216,12 @@ public class KnowledgeIngestionService {
     private boolean isSourceIndexed(long sourceId, String source, int expectedChunks) {
         return Boolean.TRUE.equals(jdbcTemplate.queryForObject("""
                 SELECT (SELECT count(*) FROM knowledge_chunks WHERE source_id = ?) = ?
-                   AND (SELECT count(*) FROM vector_store WHERE metadata->>'source' = ?) = ?
+                   AND (SELECT count(*) FROM vector_store WHERE metadata->>'source' = ?
+                       AND metadata->>'r4r_experiment' IS DISTINCT FROM 'triple-even-v1') = ?
                    AND NOT EXISTS (
                        SELECT 1 FROM knowledge_chunks c
                        LEFT JOIN vector_store v ON v.metadata->>'source' = ?
+                           AND v.metadata->>'r4r_experiment' IS DISTINCT FROM 'triple-even-v1'
                            AND (v.metadata->>'ordinal')::integer = c.ordinal
                        WHERE c.source_id = ? AND (v.id IS NULL OR c.content IS DISTINCT FROM v.content
                            OR to_jsonb(c.heading_path) IS DISTINCT FROM v.metadata->'headingPath'))
@@ -229,7 +231,8 @@ public class KnowledgeIngestionService {
     private void addCounts(java.util.Map<String, Object> result) {
         result.put("sources", jdbcTemplate.queryForObject("SELECT count(*) FROM knowledge_sources", Long.class));
         result.put("chunks", jdbcTemplate.queryForObject("SELECT count(*) FROM knowledge_chunks", Long.class));
-        result.put("vectors", jdbcTemplate.queryForObject("SELECT count(*) FROM vector_store", Long.class));
+        result.put("vectors", jdbcTemplate.queryForObject("SELECT count(*) FROM vector_store WHERE metadata->>'r4r_experiment' IS DISTINCT FROM 'triple-even-v1'", Long.class));
+        result.put("tripleWindowVectors", jdbcTemplate.queryForObject("SELECT count(*) FROM vector_store WHERE metadata->>'r4r_experiment'='triple-even-v1'", Long.class));
     }
 
     @Transactional

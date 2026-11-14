@@ -46,6 +46,24 @@ class PgVectorS3ExportTest {
         assertThat(metadata.path("r4r_context").asText()).isEqualTo("pgvector-heading-v1");
         verifyNoInteractions(vectors);
     }
+    @Test void exportsOriginalAndTripleWindowWithoutRegeneratingOrDroppingMetadata() throws Exception {
+        var original = row("Original evidence", List.of("Guide"), 1024);
+        var window = new HashMap<String, Object>(row("Original evidence\n\nAdjacent evidence", List.of("Guide"), 1024));
+        window.put("id", "00000000-0000-0000-0000-000000000002");
+        window.put("metadata", json.writeValueAsString(Map.of("source", "en/guide.md", "headingPath", List.of("Guide"),
+                "ordinal", 1000000, "r4r_experiment", "triple-even-v1", "coveredOrdinals", List.of(0, 1))));
+        when(jdbc.queryForList(anyString())).thenReturn(List.of(original, window));
+        var out = directory.resolve("both.json");
+        assertThat(store.exportS3Vectors(out)).isEqualTo(2);
+        var rows = json.readTree(out.toFile()).path("vectors");
+        assertThat(rows.get(0).path("metadata").has("r4r_experiment")).isFalse();
+        assertThat(rows.get(1).path("metadata").path("r4r_experiment").asText()).isEqualTo("triple-even-v1");
+        assertThat(rows.get(1).path("metadata").path("coveredOrdinals").toString()).isEqualTo("[0,1]");
+        assertThat(rows.get(1).path("metadata").path("ordinal").asInt()).isEqualTo(1000000);
+        assertThat(rows.get(1).path("data")).isEqualTo(rows.get(0).path("data"));
+        verifyNoInteractions(vectors);
+    }
+
     @Test void refusesOldVectorsAndRemovesIncompleteExports() throws Exception {
         when(jdbc.queryForList(anyString())).thenReturn(List.of(row("Old evidence", List.of(), 768)));
         assertThatThrownBy(() -> store.exportS3Vectors(directory.resolve("vectors.json"))).hasMessageContaining("1024");

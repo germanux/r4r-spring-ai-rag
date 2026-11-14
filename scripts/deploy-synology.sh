@@ -222,7 +222,7 @@ ssh "${SSH_OPTIONS[@]}" -tt "$REMOTE" "
   done
 
   # Limpiar únicamente los archivos temporales de este despliegue.
-  rm '$STAGE/docker-compose.yml'
+  rm '$STAGE/docker-compose.yml' '$STAGE/.env.base'
   rmdir '$STAGE'
 
   # Estado final.

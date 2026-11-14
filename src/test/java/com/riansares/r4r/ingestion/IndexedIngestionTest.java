@@ -47,10 +47,12 @@ class IndexedIngestionTest {
         verify(jdbc, never()).execute(anyString());
         verifyNoInteractions(vectors);
     }
-    @Test void staleSourcesRequireExplicitReplacement() {
+    @Test void deletedSourcesAreRemovedWithoutRebuildingTheCorpus() throws Exception {
         when(jdbc.queryForList(contains("SELECT source_path"), eq(String.class))).thenReturn(List.of("old.md"));
-        assertThatThrownBy(() -> service.ingestIndexed(false, false)).hasMessageContaining("replace-all");
-        verify(jdbc, never()).update(anyString()); verifyNoInteractions(vectors);
+        assertThat(service.ingestIndexed(false, false)).containsEntry("success", true);
+        verify(jdbc).update("DELETE FROM vector_store WHERE metadata->>'source' = ?", "old.md");
+        verify(jdbc).update("DELETE FROM knowledge_sources WHERE source_path = ?", "old.md");
+        verify(jdbc, never()).update("DELETE FROM vector_store");
     }
     @Test void completeWorkflowIndexesActualChunksWithoutFrontmatter() throws Exception {
         assertThat(service.ingestIndexed(false, false)).containsEntry("success", true).containsEntry("vectors", 1L);
@@ -135,12 +137,15 @@ class IndexedIngestionTest {
         verifyNoInteractions(vectors);
     }
 
-    @Test void unrelatedObsoleteSourceStillRequiresExplicitReplacementBeforeSelectiveCleanup() throws Exception {
+    @Test void deletedAndExcludedSourcesAreCleanedSelectively() throws Exception {
         excludeReferences();
         when(jdbc.queryForList(contains("SELECT source_path"), eq(String.class)))
                 .thenReturn(List.of(EXCLUDED.getFirst(), "unrelated-old.md"));
-        assertThatThrownBy(() -> service.ingestIndexed(false, false)).hasMessageContaining("replace-all");
-        verify(jdbc, never()).update(anyString(), anyString());
+        unchangedSource(true);
+        assertThat(service.ingestIndexed(false, false)).containsEntry("success", true);
+        for (String source : List.of(EXCLUDED.getFirst(), EXCLUDED.getLast(), "unrelated-old.md"))
+            verify(jdbc).update("DELETE FROM vector_store WHERE metadata->>'source' = ?", source);
+        verify(jdbc, never()).update("DELETE FROM vector_store");
         verifyNoInteractions(vectors);
     }
 
@@ -167,7 +172,8 @@ class IndexedIngestionTest {
     @Test void inconsistentVectorCountsCannotReportSuccessfulSelectiveCleanup() throws Exception {
         excludeReferences();
         unchangedSource(true);
-        when(jdbc.queryForObject("SELECT count(*) FROM vector_store", Long.class)).thenReturn(2L);
+        when(jdbc.queryForObject(contains("IS DISTINCT FROM 'triple-even-v1'"), eq(Long.class))).thenReturn(2L);
+        when(jdbc.queryForObject(contains("FULL JOIN"), eq(Long.class))).thenReturn(0L);
         assertThatThrownBy(() -> service.ingestIndexed(false, false))
                 .hasMessage("Source/chunk/vector counts disagree");
     }

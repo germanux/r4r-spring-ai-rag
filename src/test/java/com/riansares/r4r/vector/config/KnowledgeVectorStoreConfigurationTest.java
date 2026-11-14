@@ -99,7 +99,7 @@ class KnowledgeVectorStoreConfigurationTest {
             context.getBean(KnowledgeVectorStore.class).index(List.of(chunk("one.md", 0, "Evidence.")));
             var order = inOrder(transactions, jdbc, vectors);
             order.verify(transactions).getTransaction(any());
-            order.verify(jdbc).update("DELETE FROM vector_store WHERE metadata->>'source' = ?", "one.md");
+            order.verify(jdbc).update("DELETE FROM vector_store WHERE metadata->>'source' = ? AND metadata->>'r4r_experiment' IS DISTINCT FROM 'triple-even-v1'", "one.md");
             order.verify(vectors).add(anyList());
             order.verify(transactions).commit(any());
             verify(transactions, never()).rollback(any());
@@ -117,7 +117,7 @@ class KnowledgeVectorStoreConfigurationTest {
                     .isSameAs(failure);
             var order = inOrder(transactions, jdbc, vectors);
             order.verify(transactions).getTransaction(any());
-            order.verify(jdbc).update("DELETE FROM vector_store WHERE metadata->>'source' = ?", "one.md");
+            order.verify(jdbc).update("DELETE FROM vector_store WHERE metadata->>'source' = ? AND metadata->>'r4r_experiment' IS DISTINCT FROM 'triple-even-v1'", "one.md");
             order.verify(vectors).add(anyList());
             order.verify(transactions).rollback(any());
             verify(transactions, never()).commit(any());

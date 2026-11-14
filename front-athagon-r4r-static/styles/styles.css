@@ -1237,3 +1237,5 @@ a:focus-visible,button:focus-visible,textarea:focus-visible,select:focus-visible
 .concept-section, .architecture-section, .technical-section { padding:8px 0; }
 .concept-section .section-heading, .architecture-section .section-heading, .technical-section .section-heading { margin-bottom:10px; }
 @media(prefers-reduced-motion:reduce) { .simple-progress-steps { transition:none; } }
+
+.response-status.is-partial, .decision-pill.partial { color:#77520b; background:#fffaf0; border-color:#c49434; }

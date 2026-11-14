@@ -18,7 +18,7 @@ import java.util.HashSet;
 import java.util.UUID;
 
 /**
- * One-off additive PGVector experiment. No changes to the original 1,375 chunks/vectors.
+ * Incremental PGVector Triple Window layer. Original chunks/vectors are never modified.
  *
  * Each even, zero-based ordinal is a centre; the new embedding uses its previous,
  * current and next chunks, but never crosses a source/document boundary.
@@ -64,50 +64,85 @@ public final class ExperimentalTripleWindowIndexer {
                             w.source(), w.ordinal(), w.coveredOrdinals(), w.content().length()));
             if ("--dry-run".equals(mode)) return;
 
-            verifyDimensions(jdbc);
-            var completed = new HashSet<>(jdbc.queryForList("""
-                    SELECT id::text FROM vector_store
-                    WHERE metadata->>'r4r_experiment' = ?
-                    """, String.class, EXPERIMENT));
-            EmbeddingModel embeddingModel = context.getBean(EmbeddingModel.class);
-            int added = 0, skipped = 0;
-            for (Window window : windows) {
-                if (completed.contains(window.id().toString())) {
-                    skipped++;
-                    continue;
-                }
-                float[] vector = embeddingModel.embed(window.content()); // Document: NO retrieval-query prefix.
-                if (vector == null || vector.length != DIMENSIONS) {
-                    throw new IllegalStateException("Expected Qwen3 vector of " + DIMENSIONS + " dimensions");
-                }
-                double normSquared = 0;
-                for (float value : vector) {
-                    if (!Float.isFinite(value)) throw new IllegalStateException("Non-finite vector");
-                    normSquared += (double) value * value;
-                }
-                if (normSquared == 0) throw new IllegalStateException("Zero embedding");
-
-                String metadata = json(Map.of(
-                        "source", window.source(),
-                        "headingPath", window.headings(),
-                        "ordinal", EXPERIMENT_ORDINAL_OFFSET + window.ordinal(),
-                        "r4r_experiment", EXPERIMENT,
-                        "coveredOrdinals", window.coveredOrdinals()));
-                String pgVector = toPgVector(vector);
-                int inserted = jdbc.update("""
-                        INSERT INTO vector_store(id, content, metadata, embedding)
-                        VALUES (?::uuid, ?, ?::jsonb, ?::vector)
-                        ON CONFLICT (id) DO NOTHING
-                        """, window.id().toString(), window.content(), metadata, pgVector);
-                if (inserted != 1) {
-                    throw new IllegalStateException("Unexpected vector ID conflict: " + window.id());
-                }
-                added++;
-                if (added % 25 == 0) System.out.printf("Progress: added=%d skipped=%d%n", added, skipped);
-            }
-            System.out.printf("DONE added=%d skipped=%d candidate_windows=%d%n",
-                    added, skipped, windows.size());
+            new org.springframework.transaction.support.TransactionTemplate(
+                    context.getBean(org.springframework.transaction.PlatformTransactionManager.class))
+                    .execute(status -> synchronize(jdbc, context.getBean(EmbeddingModel.class)));
         }
+    }
+
+    /** Called only by explicit indexed ingestion, after its original transaction has committed. */
+    public static Map<String, Integer> synchronize(JdbcTemplate jdbc, EmbeddingModel embeddingModel) {
+        if (!org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive())
+            throw new IllegalStateException("Triple Window synchronization requires a transaction");
+        jdbc.execute("LOCK TABLE knowledge_sources, knowledge_chunks, vector_store IN EXCLUSIVE MODE");
+        verifyDimensions(jdbc);
+        var windows = generateWindows(readOriginalChunks(jdbc));
+        var completed = new HashSet<>(jdbc.queryForList("""
+                SELECT id::text FROM vector_store WHERE metadata->>'r4r_experiment' = ?
+                """, String.class, EXPERIMENT));
+        var expected = new LinkedHashMap<String, Window>();
+        int added = 0, skipped = 0;
+        for (Window window : windows) {
+            String id = window.id().toString();
+            expected.put(id, window);
+            String metadata = json(Map.of("source", window.source(), "headingPath", window.headings(),
+                    "ordinal", EXPERIMENT_ORDINAL_OFFSET + window.ordinal(),
+                    "r4r_experiment", EXPERIMENT, "coveredOrdinals", window.coveredOrdinals()));
+            if (completed.contains(id)) {
+                // Heading-only changes do not require another embedding; content is part of the ID.
+                jdbc.update("""
+                        UPDATE vector_store SET metadata=?::jsonb WHERE id=?::uuid
+                        AND metadata IS DISTINCT FROM ?::jsonb AND metadata->>'r4r_experiment'=?
+                        """, metadata, id, metadata, EXPERIMENT);
+                skipped++;
+                continue;
+            }
+            float[] vector = embeddingModel.embed(window.content());
+            if (vector == null || vector.length != DIMENSIONS)
+                throw new IllegalStateException("Expected Qwen3 vector of " + DIMENSIONS + " dimensions");
+            double normSquared = 0;
+            for (float value : vector) {
+                if (!Float.isFinite(value)) throw new IllegalStateException("Non-finite vector");
+                normSquared += (double) value * value;
+            }
+            if (normSquared == 0) throw new IllegalStateException("Zero embedding");
+            int inserted = jdbc.update("""
+                    INSERT INTO vector_store(id, content, metadata, embedding)
+                    VALUES (?::uuid, ?, ?::jsonb, ?::vector) ON CONFLICT (id) DO NOTHING
+                    """, id, window.content(), metadata, toPgVector(vector));
+            if (inserted != 1) throw new IllegalStateException("Unexpected vector ID conflict: " + id);
+            added++;
+        }
+        completed.removeAll(expected.keySet());
+        for (String obsolete : completed)
+            jdbc.update("DELETE FROM vector_store WHERE id=?::uuid AND metadata->>'r4r_experiment'=?", obsolete, EXPERIMENT);
+        var actual = jdbc.queryForList("""
+                SELECT id::text AS id, content, metadata::text AS metadata,
+                       vector_dims(embedding) AS dimensions, vector_norm(embedding) AS norm
+                FROM vector_store WHERE metadata->>'r4r_experiment' = ?
+                """, EXPERIMENT);
+        if (actual.size() != expected.size()) throw new IllegalStateException("Triple Window identities disagree");
+        for (var row : actual) {
+            var window = expected.remove((String) row.get("id"));
+            Map<String, Object> metadata;
+            try {
+                metadata = JSON.readValue((String) row.get("metadata"), new TypeReference<Map<String, Object>>() { });
+            } catch (Exception failure) {
+                throw new IllegalStateException("Invalid Triple Window metadata", failure);
+            }
+            if (window == null || !window.content().equals(row.get("content"))
+                    || !window.source().equals(metadata.get("source"))
+                    || !window.headings().equals(metadata.get("headingPath"))
+                    || !Integer.valueOf(EXPERIMENT_ORDINAL_OFFSET + window.ordinal()).equals(metadata.get("ordinal"))
+                    || !window.coveredOrdinals().equals(metadata.get("coveredOrdinals"))
+                    || !EXPERIMENT.equals(metadata.get("r4r_experiment"))
+                    || !(row.get("dimensions") instanceof Number dimensions) || dimensions.intValue() != DIMENSIONS
+                    || !(row.get("norm") instanceof Number norm) || !Double.isFinite(norm.doubleValue()) || norm.doubleValue() <= 0)
+                throw new IllegalStateException("Triple Window content/metadata/embedding mismatch");
+        }
+        if (!expected.isEmpty()) throw new IllegalStateException("Missing Triple Window identities");
+        System.out.printf("TRIPLE_WINDOW added=%d skipped=%d removed=%d total=%d%n", added, skipped, completed.size(), windows.size());
+        return Map.of("added", added, "skipped", skipped, "removed", completed.size(), "total", windows.size());
     }
 
     private static List<Chunk> readOriginalChunks(JdbcTemplate jdbc) {

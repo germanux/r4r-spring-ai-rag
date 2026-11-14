@@ -37,6 +37,41 @@ class RagAuditServiceTest {
     }
     private RagAuditService service(Duration timeout) { return new RagAuditService(true, model, "Ollama", "qwen3:8b", timeout, json); }
 
+    static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> controlledAnswers() {
+        return java.util.stream.Stream.of(
+                org.junit.jupiter.params.provider.Arguments.of("The slab is the base; tiles are the finish [S1].", "ANSWERED", "PASS", "", true),
+                org.junit.jupiter.params.provider.Arguments.of("This slab carries exactly 900 kg per square metre [S1].", "PARTIAL", "FAIL", "The load capacity is not established by the documentation.", true),
+                org.junit.jupiter.params.provider.Arguments.of("Your existing slab is definitely safe for new tiles [S1].", "PARTIAL", "FAIL", "The suitability of your slab needs a site assessment.", true),
+                org.junit.jupiter.params.provider.Arguments.of("This document may support a load-bearing conclusion [S1].", "ANSWERED", "INCONCLUSIVE", "", false),
+                org.junit.jupiter.params.provider.Arguments.of("Since tiles are the finish, changing tiles need not mean replacing the base, if it remains suitable [S1].", "ANSWERED", "PASS", "", true));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.MethodSource("controlledAnswers")
+    void controlledEvidenceReviewRetainsUsefulContentAndAppliesPreparedVerdicts(
+            String answer, String recommended, String verdict, String note, boolean conclusive) throws Exception {
+        String evidence = "The slab is the base and tiles are the finish. Check the existing base before installing tiles.";
+        var input = new RagEvidenceSnapshot(Instant.now(), "Can I change the floor finish?", "en", answer,
+                AnswerStatus.ANSWERED, false, List.of(new Citation("[S1]", "en/floors.md", List.of("Floors"), 0)),
+                null, true, "", "answered", 1,
+                List.of(new RagEvidenceSnapshot.Evidence("[S1]", "en/floors.md", List.of("Floors"), 0, evidence, true, true)),
+                Map.of(), new RagEvidenceSnapshot.Configuration(5, .49, "direct"));
+        when(model.call(any(Prompt.class))).thenReturn(reply(json.writeValueAsString(Map.of(
+                "originalStatus", "ANSWERED", "recommendedStatus", recommended,
+                "verdict", verdict, "reason", "Review scoped to the requested floor decision and the cited evidence.", "note", note))));
+        try (var audit = service(Duration.ofSeconds(2))) {
+            var review = audit.start(audit.prepare(input)).get(2, TimeUnit.SECONDS);
+            assertThat(review.conclusive()).isEqualTo(conclusive);
+            assertThat(review.effectiveStatus()).isEqualTo(AnswerStatus.valueOf(recommended));
+            assertThat(review.metadata().verdict()).isEqualTo(verdict);
+            assertThat(input.answer()).isEqualTo(answer);
+            var prompt = ArgumentCaptor.forClass(Prompt.class);
+            verify(model).call(prompt.capture());
+            var instructions = prompt.getValue().getInstructions().getLast().getText();
+            assertThat(instructions).contains(answer, evidence);
+        }
+    }
+
     @Test void validatesEveryTransitionWithoutEverUpgradingOriginalState() throws Exception {
         try (var service = service(Duration.ofSeconds(2))) {
             for (var original : AnswerStatus.values()) for (var recommended : AnswerStatus.values()) {

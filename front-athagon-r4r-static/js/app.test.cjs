@@ -758,6 +758,7 @@ test('audit uses a separate channel only after SSE answer is rendered and form i
   assert.equal(p.node('resultMode').textContent, p.t('partialAnswer'));
   assert.equal(p.node('resultMode').classList.contains('is-verified'), false);
   assert.equal(p.node('decisionPill').textContent, p.t('partialAnswer'));
+  assert.equal(p.node('decisionText').textContent, p.t('partialExplanation'));
   assert.equal(p.node('answerText').textContent, original);
   assert.equal(p.node('citations').textContent, sources);
 });
@@ -1101,6 +1102,7 @@ for (const lang of ['es', 'en']) {
         p.changeLanguage(language);
         assert.equal(p.node('decisionRow').hidden, false);
         assert.equal(p.node('decisionPill').textContent, p.t('partialAnswer'));
+  assert.equal(p.node('decisionText').textContent, p.t('partialExplanation'));
         assert.equal(p.node('resultMode').textContent, p.t('partialAnswer'));
         assert.equal(p.node('resultMode').classList.contains('is-verified'), false);
         assert.ok(p.node('answerText').textContent.includes('Reforma'));

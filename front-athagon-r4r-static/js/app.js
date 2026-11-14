@@ -191,7 +191,8 @@
       $("decisionRow").hidden = false;
       decisionPill.textContent = t(effective === "PARTIAL" ? "partialAnswer" : "auditInsufficientLabel");
       decisionPill.classList.toggle("abstain", effective === "ABSTAINED");
-      decisionText.textContent = "";
+      decisionPill.classList.toggle("partial", effective === "PARTIAL");
+      decisionText.textContent = effective === "PARTIAL" ? t("partialExplanation") : "";
     }
   }
   async function startAudit(payload, baseUrl, cycle) {
@@ -241,6 +242,7 @@
     const verified = !payload?.abstained && status === "ANSWERED";
     resultMode.textContent = t(verified ? "verified" : status === "PARTIAL" ? "partialAnswer" : "abstention");
     resultMode.classList.toggle("is-verified", verified);
+    resultMode.classList.toggle("is-partial", status === "PARTIAL");
   }
   function renderDynamicText() {
     apiState.textContent = t(apiStatus);
@@ -938,6 +940,7 @@
     simpleStages = [];
     responseDuration = null;
     resultMode.classList.toggle("is-verified", false);
+    resultMode.classList.toggle("is-partial", false);
     $("simpleProgressSteps").classList.toggle("is-complete", false);
     $("simpleProgressSteps").setAttribute("aria-hidden", "false");
     renderSimpleProgress();
@@ -977,9 +980,10 @@
     $("decisionRow").hidden = !abstained && originalStatus(payload) !== "PARTIAL";
     decisionPill.textContent = abstained ? t("abstention") : originalStatus(payload) === "PARTIAL" ? t("partialAnswer") : t("answer");
     decisionPill.classList.toggle("abstain", abstained);
+    decisionPill.classList.toggle("partial", originalStatus(payload) === "PARTIAL");
     decisionText.textContent = abstained
       ? t("noEvidence")
-      : "";
+      : originalStatus(payload) === "PARTIAL" ? t("partialExplanation") : "";
 
     renderMarkdown(answerText, answer || (abstained ? t("abstained") : t("emptyAnswer")));
     renderAudit();

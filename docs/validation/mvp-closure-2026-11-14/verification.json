@@ -1,0 +1,81 @@
+{
+  "configuration": {
+    "topK": 5,
+    "minScore": 0.49
+  },
+  "postgres": {
+    "after": {
+      "total": 2070,
+      "originals": 1375,
+      "windows": 695,
+      "fingerprint": "ad3af7e448803a9f1d3fc27456e1b742"
+    },
+    "before": {
+      "total": 2070,
+      "originals": 1375,
+      "windows": 695,
+      "fingerprint": "ad3af7e448803a9f1d3fc27456e1b742"
+    },
+    "runs": [
+      {
+        "total": 695,
+        "added": 0,
+        "skipped": 695,
+        "removed": 0
+      },
+      {
+        "total": 695,
+        "added": 0,
+        "skipped": 695,
+        "removed": 0
+      }
+    ],
+    "embeddingsRequested": 0
+  },
+  "originalFingerprintBefore": "fbf227e5ebaec7728449f989fc765ca6",
+  "s3": {
+    "uniqueVectors": 2070,
+    "originals": 1375,
+    "tripleWindow": 695,
+    "dimensions": 1024,
+    "exactExportMatch": true,
+    "lambdaChecks": [
+      {
+        "language": "es",
+        "returned": 5,
+        "expectedWindowFound": true
+      },
+      {
+        "language": "en",
+        "returned": 5,
+        "expectedWindowFound": true
+      }
+    ],
+    "exportSha256": "ae186ade54570567bc1b3b41d9dbc19bc86d800fc0d70d4978dc51ddb54105a8"
+  },
+  "frontend": {
+    "unitTests": 105,
+    "passed": 105,
+    "chromiumPartialScenarios": [
+      "es initial PARTIAL",
+      "es ANSWERED -> audit PARTIAL",
+      "en initial PARTIAL",
+      "en ANSWERED -> audit PARTIAL"
+    ]
+  },
+  "audit": {
+    "preparedScenarios": 5,
+    "liveModelCalls": 0,
+    "promptChanged": false
+  },
+  "productionDeployment": "User reported backend deployment 0.3.4; final changes require user deployment. No SSH or service stops during resumed work.",
+  "maven": {
+    "command": "mvn verify",
+    "buildSuccess": true,
+    "unitTests": 565,
+    "offlineIntegrationExecuted": 86,
+    "integrationSkipped": 27,
+    "failures": 0,
+    "errors": 0
+  }
+}
