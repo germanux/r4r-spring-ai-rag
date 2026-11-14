@@ -182,10 +182,11 @@ public class CitedRagService {
         }
         long generated = System.nanoTime();
         progress.generationMs((generated - contextBuilt) / 1_000_000.0);
-        String answer = extractAnswer(response);
+        var parsed = parseGeneration(extractAnswer(response), chunks);
+        String answer = parsed.answer();
         progress.emit("GENERATION_COMPLETED", progress.usedProvider(), null, (generated - contextBuilt) / 1_000_000.0, null);
 
-        if (answer == null
+        if (parsed.status() == AnswerStatus.ABSTAINED || answer == null
                 || answer.isBlank()
                 || ABSTAIN_TOKEN.matcher(answer).find()
                 || isNaturalAbstention(answer)) {
@@ -207,9 +208,98 @@ public class CitedRagService {
             return RagResult.abstain();
         }
 
-        trace("answered", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
-        progress.emit("VALIDATION_COMPLETED", null, chunks.size(), (System.nanoTime() - generated) / 1_000_000.0, "answered");
-        return RagResult.ofAnswer(answer, citations);
+        if (parsed.status() == AnswerStatus.PARTIAL) {
+            var citedChunks = new ArrayList<MarkdownChunk>();
+            for (int i = 0; i < chunks.size(); i++) if (answer.contains("[S" + (i + 1) + "]")) citedChunks.add(chunks.get(i));
+            // Exact word overlap cannot judge translated evidence: preserve cross-language fallback.
+            boolean crossLanguage = responseLanguage != null && citedChunks.stream().anyMatch(chunk ->
+                    chunk.source().matches("(?:es|en)/.*") && !chunk.source().startsWith(responseLanguage.toLowerCase(java.util.Locale.ROOT) + "/"));
+            if (!crossLanguage && citedChunks.stream().noneMatch(chunk ->
+                    com.riansares.r4r.vector.NomicCandidateReranker.supportsPartialTopic(question, chunk))) {
+                trace("irrelevant_partial", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
+                progress.emit("VALIDATION_COMPLETED", null, chunks.size(), null, "abstained");
+                return RagResult.abstain();
+            }
+        }
+
+        String outcome = parsed.status() == AnswerStatus.PARTIAL ? "partial" : "answered";
+        trace(outcome, chunks.size(), started, normalized, retrieved, contextBuilt, generated);
+        progress.emit("VALIDATION_COMPLETED", null, chunks.size(), (System.nanoTime() - generated) / 1_000_000.0, outcome);
+        return new RagResult(answer, false, citations, parsed.status());
+    }
+
+    private record GeneratedAnswer(AnswerStatus status, String answer) { }
+
+    /** Validate the single generation's evidence anchors, without a second model call. */
+    private GeneratedAnswer parseGeneration(String raw, List<MarkdownChunk> chunks) {
+        if (raw == null) return new GeneratedAnswer(AnswerStatus.ABSTAINED, "");
+        String text = raw.strip();
+        if (text.startsWith("```")) text = text.replaceFirst("^```(?:json)?\\s*", "").replaceFirst("\\s*```$", "").strip();
+        // Compatibility with existing text-only clients/models and regression fixtures.
+        if (!text.startsWith("{")) return new GeneratedAnswer(AnswerStatus.ANSWERED, raw);
+        try {
+            var json = new com.fasterxml.jackson.databind.ObjectMapper().readTree(text);
+            var status = AnswerStatus.valueOf(json.path("status").asText());
+            if (status == AnswerStatus.ABSTAINED) return new GeneratedAnswer(status, "");
+            String answer = json.path("answer").asText("").strip();
+            String limitation = json.path("limitation").asText("").strip();
+            if (status == AnswerStatus.PARTIAL && (limitation.isBlank() || ONLY_CITATIONS.matcher(limitation).matches()))
+                return new GeneratedAnswer(AnswerStatus.ABSTAINED, "");
+            if (status == AnswerStatus.ANSWERED && !limitation.isBlank())
+                return new GeneratedAnswer(AnswerStatus.ABSTAINED, "");
+            var supported = new java.util.HashSet<String>();
+            for (var item : json.path("support")) {
+                String label = item.path("label").asText();
+                var match = Pattern.compile("\\[S([1-9][0-9]*)\\]").matcher(label);
+                String quote = quoteText(item.path("quote").asText());
+                if (!match.matches() || quote.length() < 20) return new GeneratedAnswer(AnswerStatus.ABSTAINED, "");
+                int index = Integer.parseInt(match.group(1)) - 1;
+                if (index >= chunks.size() || !quoteText(chunks.get(index).content()).contains(quote))
+                    return new GeneratedAnswer(AnswerStatus.ABSTAINED, "");
+                supported.add(label);
+            }
+            answer = normalizeReferences(answer, chunks);
+            if (answer == null || !paragraphsHaveTrailingEvidence(answer, status)) {
+                log.info("RAG structured output rejected reason=uncited_claim");
+                return new GeneratedAnswer(AnswerStatus.ABSTAINED, "");
+            }
+            String combined = answer + (status == AnswerStatus.PARTIAL && !answer.contains(limitation) ? " " + limitation : "");
+            var refs = Pattern.compile("\\[S[0-9]+\\]").matcher(combined);
+            boolean cited = false;
+            while (refs.find()) {
+                cited = true;
+                if (json.has("support") && !supported.contains(refs.group())) return new GeneratedAnswer(AnswerStatus.ABSTAINED, "");
+            }
+            if (!cited || answer.isBlank() || ONLY_CITATIONS.matcher(answer).matches() || isNaturalAbstention(answer)) return new GeneratedAnswer(AnswerStatus.ABSTAINED, "");
+            return new GeneratedAnswer(status, combined);
+        } catch (Exception invalid) {
+            return new GeneratedAnswer(AnswerStatus.ABSTAINED, "");
+        }
+    }
+
+    private boolean paragraphsHaveTrailingEvidence(String answer, AnswerStatus status) {
+        // A paragraph-final citation may support several documented sentences; a citation
+        // before a new, unsupported final conclusion must not launder that conclusion.
+        String text = answer.replaceAll("([.!?])\\s*((?:\\[S[0-9]+\\]\\s*)+)", " $2$1 ")
+                .replaceAll("(?i)\\b(e\\.g|i\\.e|etc|approx)\\.(?=\\s)", "$1");
+        for (String paragraph : text.split("\\n\\s*\\n")) {
+            paragraph = paragraph.replaceFirst("(?iu)^(?:sí|si|no|yes)\\s*[.!]\\s+", "");
+            boolean hasFacts = false, endsWithEvidence = false;
+            for (String sentence : paragraph.split("(?<=[.!?])\\s+")) {
+                if (sentence.isBlank()) continue;
+                if (status == AnswerStatus.PARTIAL && isNaturalAbstention(sentence)) continue;
+                hasFacts = true;
+                endsWithEvidence = REFERENCE_GROUP.matcher(sentence).find();
+            }
+            if (hasFacts && !endsWithEvidence) return false;
+        }
+        return true;
+    }
+
+    private static String quoteText(String value) {
+        // Verbatim rendered text may omit Markdown emphasis, never words or measurements.
+        return value.replaceAll("(?s)\\*\\*([^*]+)\\*\\*", "$1")
+                .replaceAll("(?s)__([^_]+)__", "$1").replaceAll("\\s+", " ").strip();
     }
 
     private record TranslatedQuery(String question, boolean remote) { }
@@ -248,6 +338,7 @@ public class CitedRagService {
         if (text.isEmpty() || CONTRAST.matcher(text).find()) {
             return false;
         }
+        text = text.replaceFirst("(?iu)^(?:sí|si|no|yes)\\s*[.!]\\s+", "");
         for (String sentence : text.split("(?<=[.!?])\\s+")) {
             String trimmed = sentence.trim();
             if (!NATURAL_ABSTENTION.matcher(trimmed).matches()
@@ -375,10 +466,25 @@ public class CitedRagService {
                     Put exact [S1], [S2], etc. labels next to the claims they actually support.
                     Do not use general knowledge to infer economic, scheduling or other consequences.
                     If asked why and the evidence only lists a requirement without explaining the reason,
-                    the requested explanation is unsupported: output exactly __R4R_ABSTAIN__.
+                    the requested explanation is unsupported: return an ABSTAINED JSON object.
                     For other partially supported questions, cite the documented facts and state the limitation.
-                    If no relevant fact is documented, output exactly __R4R_ABSTAIN__.
-                    Return either a supported, cited answer or that abstention token alone, never both.
+                    If no relevant fact is documented, return an ABSTAINED JSON object.
+                    Return one JSON object only, with keys status, answer, limitation.
+                    status must be ANSWERED, PARTIAL or ABSTAINED. Classify coverage against the actual request.
+                    General definitions, indicative ranges, documented steps and preliminary checklists can fully
+                    answer a general question. Do not demand a site-specific assessment when it was not requested.
+                    ANSWERED requires sufficient relevant evidence to resolve what was asked; limitation must be empty.
+                    PARTIAL requires useful directly relevant documented facts, plus a specific explanation in limitation
+                    of what the evidence cannot establish. Do not invent the missing project-specific decision.
+                    Unrelated evidence or only a statement of ignorance requires ABSTAINED, never PARTIAL.
+                    A shared room or building type does not establish relevance. For a technical-system question,
+                    the supported facts must address that system or the requested performance/property itself.
+                    Generic renovation planning does not answer a question about the performance of a specific system.
+                    CRITICAL: put exact [S1], [S2], etc. citation labels INSIDE answer, next to each supported claim.
+                    Example of JSON syntax only (never copy these placeholder facts):
+                    {"status":"PARTIAL","answer":"A documented fact [S1].","limitation":"The requested decision is not established."}
+                    For ABSTAINED use answer="", limitation="".
+                    Do not put the abstention token in an otherwise supported answer.
                     Do not append the abstention token to an answer supported by the evidence.
                     Preserve the requested response language and use only the supplied [S1], [S2], etc. labels.
                     """ + ("en".equalsIgnoreCase(responseLanguage)

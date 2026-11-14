@@ -43,4 +43,13 @@ class NomicCandidateRerankerTest {
         assertThat(ranker.select("how can you inspect the cracks",List.of(englishFunctionWords,englishSubject),1))
                 .containsExactly(englishSubject.chunk());
     }
+    @Test void partialTopicSupportRejectsSuperficialSharedWordsButRetainsSpecificChecks() {
+        assertThat(NomicCandidateReranker.supportsPartialTopic("Tengo un pasillo largo y oscuro. ¿Cómo gano luz y aprovecho el espacio?",
+                candidate("El extractor del baño debe asegurar ventilación adecuada. Puede conectarse a la luz.", .8).chunk())).isFalse();
+        assertThat(NomicCandidateReranker.supportsPartialTopic("Our office has hot and cold areas. Can climate control be renovated?",
+                candidate("Office renovation requires planning phases, access, and working hours.", .8).chunk())).isFalse();
+        assertThat(NomicCandidateReranker.supportsPartialTopic("Las vigas de madera de mi casa están combadas. ¿Se refuerzan?",
+                candidate("Revisar las vigas y los apoyos de madera antes de tomar decisiones estructurales.", .8).chunk())).isTrue();
+    }
+
 }

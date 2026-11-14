@@ -80,7 +80,7 @@ class CitedRagServiceTest {
         assertThat(promptCaptor.getValue().getContents())
                 .containsSubsequence("[S1]\nSource: doc1.md\nScope: Section\nFirst content", "[S2]\nSource: doc2.md\nScope: Other\nSecond content", "Question: test question")
                 .contains("/no_think")
-                .contains("__R4R_ABSTAIN__", "1–3 concise sentences", "only facts supported");
+                .contains("ABSTAINED", "1–3 concise sentences", "only facts supported");
         assertThat(result.answer()).isEqualTo("Combined answer [S1][S2]");
         assertThat(result.abstention()).isFalse();
         assertThat(result.citations()).extracting(Citation::label)
@@ -131,7 +131,7 @@ class CitedRagServiceTest {
         assertThat(prompt.getValue().getContents()).contains("How much does a bathroom renovation cost?", "Reforma del baño", "Respond in English.");
         assertThat(prompt.getValue().getInstructions().getFirst().getText())
                 .contains("Write the entire answer in English", "every explanatory list item and technical term", "citation labels unchanged",
-                        "Return either a supported, cited answer or that abstention token alone, never both");
+                        "Return one JSON object only, with keys status, answer, limitation.");
         assertThat(prompt.getValue().getContents()).doesNotContain("¿Cuánto cuesta reformar el baño?");
         assertThat(prompt.getValue().getInstructions().getLast().getText()).doesNotContain("__R4R_ABSTAIN__");
         assertThat(result.citations()).containsExactly(new Citation("[S1]", "fuente.md", List.of("Baño"), 2));
@@ -183,4 +183,113 @@ class CitedRagServiceTest {
     private static ChatResponse chatResponse(String text) {
         return new ChatResponse(List.of(new Generation(new AssistantMessage(text))));
     }
+    private RagResult structured(String status, String answer, String limitation, String quote) throws Exception {
+        var chunk = new MarkdownChunk("guide.md", List.of("Assessment"), 0,
+                "Inspect the **existing installations** before planning any renovation work.");
+        when(knowledgeStore.search(anyString(), anyInt(), anyDouble())).thenReturn(List.of(chunk));
+        String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(java.util.Map.of(
+                "status", status, "answer", answer, "limitation", limitation,
+                "support", List.of(java.util.Map.of("label", "[S1]", "quote", quote))));
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(json)))));
+        return service.answer("What should I inspect and is my project feasible?");
+    }
+
+    @Test void partialRequiresVerbatimSupportAndAnExplicitLimitationInTheSameGeneration() throws Exception {
+        var result = structured("PARTIAL", "Inspect the existing installations [S1].",
+                "The evidence cannot establish whether this project is feasible.",
+                "Inspect the existing installations before planning any renovation work.");
+        assertThat(result.status()).isEqualTo(AnswerStatus.PARTIAL);
+        assertThat(result.abstention()).isFalse();
+        assertThat(result.answer()).contains("cannot establish");
+        assertThat(result.citations()).hasSize(1);
+        verify(chatModel, times(1)).call(any(Prompt.class));
+    }
+
+    @Test void answeredWithEvidencePreservesItsStatus() throws Exception {
+        var result = structured("ANSWERED", "Inspect the existing installations [S1].", "",
+                "Inspect the existing installations before planning any renovation work.");
+        assertThat(result.status()).isEqualTo(AnswerStatus.ANSWERED);
+        assertThat(result.abstention()).isFalse();
+    }
+
+    @Test void declaringPartialWithoutEvidenceOrLimitationsCannotBypassValidation() throws Exception {
+        for (var fields : List.of(
+                List.of("PARTIAL", "A documented fact [S1].", "", "Inspect the existing installations before planning any renovation work."),
+                List.of("PARTIAL", "A documented fact [S1].", "Cannot determine feasibility.", "An invented extract unrelated to the source."),
+                List.of("PARTIAL", "A documented fact [S99].", "Cannot determine feasibility.", "Inspect the existing installations before planning any renovation work."),
+                List.of("PARTIAL", "[S1]", "Cannot determine feasibility.", "Inspect the existing installations before planning any renovation work."),
+                List.of("ANSWERED", "A documented fact [S1].", "Cannot determine feasibility.", "Inspect the existing installations before planning any renovation work."))) {
+            var result = structured(fields.get(0), fields.get(1), fields.get(2), fields.get(3));
+            assertThat(result.status()).isEqualTo(AnswerStatus.ABSTAINED);
+            assertThat(result.answer()).isEmpty();
+            assertThat(result.citations()).isEmpty();
+        }
+    }
+
+    @Test void abstainedDiscardsGeneratedTextAndCitations() throws Exception {
+        var result = structured("ABSTAINED", "Unsupported text [S1]", "", "irrelevant");
+        assertThat(result.status()).isEqualTo(AnswerStatus.ABSTAINED);
+        assertThat(result.abstention()).isTrue();
+        assertThat(result.answer()).isEmpty();
+        assertThat(result.citations()).isEmpty();
+    }
+
+    @Test void minimalStructuredAnswerUsesTheExistingCitationValidation() {
+        when(knowledgeStore.search(anyString(), anyInt(), anyDouble())).thenReturn(List.of(
+                new MarkdownChunk("guide.md", List.of("Checks"), 0, "Inspect the installations before renovation.")));
+        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse(
+                "{\"status\":\"PARTIAL\",\"answer\":\"Inspect the installations [S1].\","
+                + "\"limitation\":\"The evidence cannot establish feasibility.\"}"));
+        var result = service.answer("What should I inspect and is it feasible?");
+        assertThat(result.status()).isEqualTo(AnswerStatus.PARTIAL);
+        assertThat(result.citations()).hasSize(1);
+        verify(chatModel, times(1)).call(any(Prompt.class));
+    }
+
+    @Test void aCitedButUnrelatedPartialAnswerIsNotAcceptedAsUsefulEvidence() {
+        when(knowledgeStore.search(anyString(), anyInt(), anyDouble())).thenReturn(List.of(
+                new MarkdownChunk("es/bathroom.md", List.of("Extractor y luz"), 0, "Ventilación del baño adecuada al uso y normativa aplicables.")));
+        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse(
+                "{\"status\":\"PARTIAL\",\"answer\":\"Debe revisarse la ventilación [S1].\","
+                + "\"limitation\":\"No se documenta cómo iluminar el pasillo.\"}"));
+        var result = service.answer("Tengo un pasillo largo y oscuro. ¿Cómo gano luz y aprovecho el espacio?", null, "es");
+        assertThat(result.status()).isEqualTo(AnswerStatus.ABSTAINED);
+        assertThat(result.answer()).isEmpty();
+        assertThat(result.citations()).isEmpty();
+        verify(chatModel, times(1)).call(any(Prompt.class));
+    }
+
+    @Test void aCitedDefinitionCannotLaunderAnAdditionalUncitedTechnicalConclusion() throws Exception {
+        var result = structured("ANSWERED",
+                "The installations should be inspected [S1]. The entire project is therefore feasible.", "",
+                "Inspect the existing installations before planning any renovation work.");
+        assertThat(result.status()).isEqualTo(AnswerStatus.ABSTAINED);
+        assertThat(result.answer()).isEmpty();
+        assertThat(result.citations()).isEmpty();
+    }
+
+    @Test void citationsAfterSentencePunctuationRemainCompatible() throws Exception {
+        var result = structured("ANSWERED", "Inspect the existing installations. [S1]", "",
+                "Inspect the existing installations before planning any renovation work.");
+        assertThat(result.status()).isEqualTo(AnswerStatus.ANSWERED);
+    }
+
+    @Test void postposedCitationsDoNotHideTheNextUncitedSentence() throws Exception {
+        var result = structured("ANSWERED", "Inspect the installations. [S1] The project is therefore feasible.", "",
+                "Inspect the existing installations before planning any renovation work.");
+        assertThat(result.status()).isEqualTo(AnswerStatus.ABSTAINED);
+    }
+
+    @Test void aShortYesOrNoCanReferToTheFollowingCitedExplanation() throws Exception {
+        var result = structured("ANSWERED", "Yes. Inspect the existing installations [S1].", "",
+                "Inspect the existing installations before planning any renovation work.");
+        assertThat(result.status()).isEqualTo(AnswerStatus.ANSWERED);
+    }
+
+    @Test void aParagraphFinalCitationMaySupportTwoDocumentedSentences() throws Exception {
+        var result = structured("ANSWERED", "Inspect the existing installations. Do this before planning renovation work [S1].", "",
+                "Inspect the existing installations before planning any renovation work.");
+        assertThat(result.status()).isEqualTo(AnswerStatus.ANSWERED);
+    }
+
 }

@@ -46,7 +46,7 @@ public class RagQueryController {
         return new RagQueryResponse(result.answer(), result.abstention(), convertCitations(result.citations()),
                 provider == null ? null : new RagQueryResponse.Provider(provider.name(), provider.model(),
                         "OpenAI".equals(provider.name()) ? new InferenceHost.Details("cloud", null, null, null, null)
-                                : InferenceHost.identify(provider.baseUrl(), provider.model())));
+                                : InferenceHost.identify(provider.baseUrl(), provider.model())), result.status());
     }
 
     private static List<RagQueryResponse.Citation> convertCitations(java.util.List<com.riansares.r4r.rag.Citation> citations) {

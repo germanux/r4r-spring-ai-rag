@@ -84,6 +84,7 @@ public class RagStreamController implements AutoCloseable {
                 var response = RagQueryController.response(result, router.requestExecution());
                 var event = session.progress.event("ANSWER_READY", null, session.progress.documentsFound(), null,
                         response.abstained() ? "abstained" : "answered");
+                event.put("status", response.status());
                 event.put("answer", response.answer()); event.put("abstained", response.abstained());
                 event.put("citations", response.citations()); event.put("provider", response.provider());
                 event.put("metrics", session.progress.metrics());

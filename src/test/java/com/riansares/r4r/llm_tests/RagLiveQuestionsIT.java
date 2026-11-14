@@ -65,6 +65,8 @@ class RagLiveQuestionsIT {
         for (int i = 0; i < CASES.size(); i++) {
             final int number = i + 1;
             final QuestionCase testCase = CASES.get(i);
+            String selected = System.getProperty("r4r.test.case-ids", "");
+            if (!selected.isBlank() && !java.util.Arrays.asList(selected.split(",")).contains(testCase.caseId())) continue;
             tests.add(DynamicTest.dynamicTest(
                     "%02d - %s".formatted(number, testCase.name()),
                     () -> verifyAnswer(number, testCase)));
@@ -116,7 +118,11 @@ class RagLiveQuestionsIT {
         boolean abstained = result.path("abstained").asBoolean();
         JsonNode citations = result.path("citations");
 
-        if (!testCase.expectsEvidence() || (allowAbstention && abstained)) {
+        var status = com.riansares.r4r.rag.AnswerStatus.valueOf(result.path("status").asText());
+        assertThat(abstained).isEqualTo(status == com.riansares.r4r.rag.AnswerStatus.ABSTAINED);
+        assertThat((allowAbstention && abstained) || testCase.acceptsStatus(status))
+                .as("Unexpected status for %s: %s", testCase.caseId(), status).isTrue();
+        if (abstained) {
             assertThat(abstained).as("Debe abstenerse fuera del dominio R4R").isTrue();
             assertThat(answer).isBlank();
             assertThat(citations.size()).isZero();

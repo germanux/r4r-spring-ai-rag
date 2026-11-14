@@ -16,7 +16,9 @@ class EvaluationCasesTest(unittest.TestCase):
             self.assertEqual([row['number'] for row in rows], list(range(1, 36)))
             bank = json.loads((ROOT / 'src/test/resources/evaluation' / f'questions-{language}.json').read_text())
             self.assertEqual([row['evidence'] for row in rows], [True] * 24 + [False] * 11)
+            self.assertEqual([row['expectedStatus'] for row in rows], ['ANSWERED'] * 24 + ['PARTIAL'] * 6 + ['ABSTAINED'] * 5)
             self.assertEqual(len({row['caseId'] for row in bank['cases']}), 35)
+            self.assertEqual([row['caseId'] for row in rows], [row['caseId'] for row in bank['cases']])
             by_id = {row['caseId']: row for row in bank['cases']}
             first, second, third = [by_id[f'case-{n}']['question'] for n in (31, 32, 33)]
             self.assertTrue(second.startswith(first + '\n'))

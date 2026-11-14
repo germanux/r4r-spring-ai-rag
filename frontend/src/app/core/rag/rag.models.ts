@@ -12,5 +12,6 @@ export interface RAGCitation {
 export interface RAGAnswerResult {
   answer: string;
   abstained: boolean;
+  status?: 'ANSWERED' | 'PARTIAL' | 'ABSTAINED';
   citations: RAGCitation[];
 }

@@ -58,6 +58,7 @@ class RagQueryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.answer", is("Generated answer")))
                 .andExpect(jsonPath("$.abstained", is(false)))
+                .andExpect(jsonPath("$.status", is("ANSWERED")))
                 .andExpect(jsonPath("$.citations", hasSize(2)))
                 .andExpect(jsonPath("$.citations[0].source", is("doc1.md")))
                 .andExpect(jsonPath("$.citations[0].headingPath", hasSize(1)))
@@ -84,6 +85,7 @@ class RagQueryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.answer", is("")))
                 .andExpect(jsonPath("$.abstained", is(true)))
+                .andExpect(jsonPath("$.status", is("ABSTAINED")))
                 .andExpect(jsonPath("$.citations", hasSize(0)));
     }
 
@@ -98,6 +100,7 @@ class RagQueryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.answer", is("It depends. [S1]")))
                 .andExpect(jsonPath("$.abstained", is(false)))
+                .andExpect(jsonPath("$.status", is("ANSWERED")))
                 .andExpect(jsonPath("$.citations[0].source", is("baño.md")))
                 .andExpect(jsonPath("$.citations[0].headingPath[0]", is("Reformas")))
                 .andExpect(jsonPath("$.citations[0].ordinal", is(1)));
@@ -139,7 +142,7 @@ class RagQueryControllerTest {
                 .andExpect(status().isBadRequest());
     }
     @Test void returnsRequestProviderWithoutChangingAnswerAndCitations() throws Exception {
-        when(citedRagService.answer("question")).thenReturn(com.riansares.r4r.rag.RagResult.ofAnswer("Answer [S1]", List.of()));
+        when(citedRagService.answer("question")).thenReturn(com.riansares.r4r.rag.RagResult.ofAnswer("Answer [S1]", List.of(new com.riansares.r4r.rag.Citation("[S1]", "guide.md", List.of("Guide"), 0))));
         when(router.requestExecution()).thenReturn(new com.riansares.r4r.rag.GenerationRouter.Execution(
                 new com.riansares.r4r.rag.GenerationRouter.Provider("OpenAI","https://api.openai.com/v1","gpt-6-luna"),false));
         mockMvc.perform(post("/api/rag/answers").contentType(MediaType.APPLICATION_JSON).content("{\"question\":\"question\"}"))

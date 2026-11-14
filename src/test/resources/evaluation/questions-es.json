@@ -6,245 +6,280 @@
       "number": 1,
       "name": "Primera orientación",
       "question": "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-02",
       "number": 2,
       "name": "Solera frente a solado",
       "question": "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-03",
       "number": 3,
       "name": "Precio por acceso",
       "question": "¿Por qué el acceso cambia el precio de una solera?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-04",
       "number": 4,
       "name": "Casa antigua",
       "question": "¿Cuánto orienta una reforma integral de una casa antigua?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-05",
       "number": 5,
       "name": "Visita previa",
       "question": "¿Una primera orientación económica sustituye una visita técnica?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-06",
       "number": 6,
       "name": "Patio",
       "question": "¿Qué debe revisarse antes de pavimentar un patio?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-07",
       "number": 7,
       "name": "Hormigón de camión",
       "question": "¿Cuándo conviene usar hormigón de camión en una solera?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-08",
       "number": 8,
       "name": "Pasillo estrecho",
       "question": "¿Cómo afecta un pasillo estrecho a la ejecución de una solera?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-09",
       "number": 9,
       "name": "Humedades",
       "question": "¿Qué causas de humedad pueden aparecer en una vivienda antigua?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-10",
       "number": 10,
       "name": "Plazos",
       "question": "¿Debe incluir el presupuesto de una reforma los plazos de ejecución?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-11",
       "number": 11,
       "name": "Presupuesto",
       "question": "¿Qué datos debe aportar el cliente para solicitar un presupuesto?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-12",
       "number": 12,
       "name": "Baño",
       "question": "¿Qué datos hacen falta para orientar una reforma de baño?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-13",
       "number": 13,
       "name": "Servicios de la empresa",
       "question": "¿Qué tipos de reformas realiza esta empresa? ¿Trabaja en viviendas y oficinas?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-14",
       "number": 14,
       "name": "Cal aérea y cal hidráulica",
       "question": "¿Qué diferencias hay entre la cal aérea y la cal hidráulica natural para trabajar sobre muros antiguos?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-15",
       "number": 15,
       "name": "Baldosa sobre pavimento existente",
       "question": "¿Qué precauciones hay que tomar antes de colocar baldosa nueva sobre un pavimento existente?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-16",
       "number": 16,
       "name": "Independiente 1",
       "question": "Estoy pensando en comprar un piso bastante antiguo, pero tiene grietas en algunas paredes. ¿Cómo puedo saber si es algo superficial o si me voy a meter en un problema serio?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-17",
       "number": 17,
       "name": "Independiente 2",
       "question": "Los muebles de la cocina están bien. ¿Cómo la renuevo sin desmontarlo todo?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-19",
       "number": 18,
       "name": "Independiente 4",
       "question": "Cuando llueve fuerte, mi terraza cala al piso de abajo. ¿Por dónde empiezo?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-22",
       "number": 19,
       "name": "Independiente 7",
       "question": "Acabamos de comprar un piso y queremos reformarlo antes de mudarnos. ¿En qué orden conviene hacer los trabajos para evitar tener que romper cosas que ya están terminadas?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-31",
       "number": 20,
       "name": "Tuberías rotas en cocina",
       "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-32",
       "number": 21,
       "name": "Fuga y reforma de cocina",
       "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago?\nAdemás, quiero reformar la cocina. ¿Qué me recomiendas?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-33",
       "number": 22,
       "name": "Fuga, reforma y azulejos de cocina",
       "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago?\nAdemás, quiero reformar la cocina. ¿Qué me recomiendas?\n¿Puedo cambiar también los azulejos?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-34",
       "number": 23,
       "name": "Piscina con fugas y revestimiento desprendido",
       "question": "Tengo una piscina que pierde agua y algunas piezas del revestimiento se desprenden. ¿Basta con volver a pegarlas?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-35",
       "number": 24,
       "name": "Vestuarios públicos y obra por fases",
       "question": "Quiero reformar los vestuarios de un polideportivo abierto al público. ¿Qué debo revisar para ejecutar la obra por fases?",
-      "evidence": true
+      "evidence": true,
+      "expectedStatus": "ANSWERED"
     },
     {
       "caseId": "case-18",
       "number": 25,
       "name": "Independiente 3",
       "question": "En mi casa se oye absolutamente todo lo que hacen los vecinos de arriba. ¿Se puede mejorar el aislamiento acústico sin perder demasiada altura en las habitaciones?",
-      "evidence": false
+      "evidence": false,
+      "expectedStatus": "PARTIAL"
     },
     {
       "caseId": "case-20",
       "number": 26,
       "name": "Independiente 5",
       "question": "Quiero cambiar las ventanas de mi casa, pero no sé si realmente merece la pena instalar triple acristalamiento o si con doble es suficiente.",
-      "evidence": false
+      "evidence": false,
+      "expectedStatus": "PARTIAL"
     },
     {
       "caseId": "case-21",
       "number": 27,
       "name": "Independiente 6",
       "question": "Tengo un pasillo largo y oscuro. ¿Cómo gano luz y aprovecho el espacio?",
-      "evidence": false
+      "evidence": false,
+      "expectedStatus": "PARTIAL"
     },
     {
       "caseId": "case-23",
       "number": 28,
       "name": "Independiente 8",
       "question": "Las vigas de madera de mi casa vieja están combadas. ¿Se refuerzan o se cambian?",
-      "evidence": false
+      "evidence": false,
+      "expectedStatus": "PARTIAL"
     },
     {
       "caseId": "case-24",
       "number": 29,
       "name": "Independiente 9",
       "question": "Tenemos una oficina donde hace mucho calor en unas zonas y frío en otras. ¿Se puede solucionar con una reforma de la climatización sin cambiar todo el sistema?",
-      "evidence": false
+      "evidence": false,
+      "expectedStatus": "PARTIAL"
     },
     {
       "caseId": "case-25",
       "number": 30,
       "name": "Independiente 10",
       "question": "Quiero pasar de tienda a cafetería. ¿Qué obras necesito para abrir?",
-      "evidence": false
+      "evidence": false,
+      "expectedStatus": "PARTIAL"
     },
     {
       "caseId": "case-26",
       "number": 31,
       "name": "Fuera de corpus: geotermia",
       "question": "¿Qué potencia y qué número de captadores geotérmicos necesito para climatizar una vivienda de 180 m²?",
-      "evidence": false
+      "evidence": false,
+      "expectedStatus": "ABSTAINED"
     },
     {
       "caseId": "case-27",
       "number": 32,
       "name": "Fuera de corpus: cargador eléctrico",
       "question": "¿Qué sección exacta de cable y qué magnetotérmico exige el REBT para instalar un cargador de coche eléctrico de 11 kW en mi garaje?",
-      "evidence": false
+      "evidence": false,
+      "expectedStatus": "ABSTAINED"
     },
     {
       "caseId": "case-28",
       "number": 33,
       "name": "Fuera de dominio: fotosíntesis",
       "question": "¿De qué manera producen alimento las plantas mediante la fotosíntesis?",
-      "evidence": false
+      "evidence": false,
+      "expectedStatus": "ABSTAINED"
     },
     {
       "caseId": "case-29",
       "number": 34,
       "name": "Fuera de dominio: astronomía",
       "question": "¿Cuál es la masa de Júpiter en kilogramos?",
-      "evidence": false
+      "evidence": false,
+      "expectedStatus": "ABSTAINED"
     },
     {
       "caseId": "case-30",
       "number": 35,
       "name": "Fuera de dominio: literatura",
       "question": "¿Quién escribió la novela Cien años de soledad?",
-      "evidence": false
+      "evidence": false,
+      "expectedStatus": "ABSTAINED"
     }
   ],
   "regressions": {

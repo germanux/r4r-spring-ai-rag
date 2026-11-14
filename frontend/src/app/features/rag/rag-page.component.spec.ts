@@ -82,6 +82,16 @@ expect(loadingElement?.textContent).toContain('Processing your question...');
       component.onSubmit();
     });
 
+  it('labels partial answers while retaining their answer and citations', () => {
+    submit();
+    querySubject.next({ ...successResponse, status: 'PARTIAL' });
+    fixture.detectChanges();
+    expect(component.currentState).toBe('success');
+    expect(fixture.nativeElement.textContent).toContain('Respuesta parcial');
+    expect(fixture.nativeElement.querySelector('.answer-content').textContent).toContain('A grounded answer');
+    expect(fixture.nativeElement.querySelectorAll('.citation-item').length).toBe(2);
+  });
+
   it('renders an answer as escaped text and citations in ordinal order', () => {
     submit();
     querySubject.next({

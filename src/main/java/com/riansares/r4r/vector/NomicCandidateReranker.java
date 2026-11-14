@@ -64,6 +64,18 @@ public final class NomicCandidateReranker {
                 .thenComparingInt(i -> i));
         return positions.stream().limit(topK).map(i -> candidates.get(i).chunk()).toList();
     }
+    /** Conservative topic check for partial answers, not a semantic-entailment score. */
+    public static boolean supportsPartialTopic(String query, MarkdownChunk cited) {
+        var terms = new HashSet<>(tokens(query));
+        terms.removeAll(Set.of(("quiero tengo puedo puede pueden necesito hacer hago mejorar cambiar "
+                + "obra obras reforma reformas reformar casa vivienda piso oficina zonas sin todo mucho "
+                + "i project proyecto want need could should may must work works renovation renovate home house flat office areas").split(" ")));
+        if (terms.size() < 3) return true; // No lexical basis for rejecting a generic/short request.
+        var evidence = new HashSet<>(tokens(String.join(" ", cited.headingPath()) + " " + cited.content()));
+        terms.retainAll(evidence);
+        return terms.size() >= 2;
+    }
+
     private static List<String> tokens(String value) {
         String normalized = MARKS.matcher(Normalizer.normalize(value.toLowerCase(Locale.ROOT), Normalizer.Form.NFD)).replaceAll("");
         var matcher = TERM.matcher(normalized); var result = new ArrayList<String>();

@@ -18,6 +18,6 @@ def load_cases(root=ROOT):
         for number, row in enumerate(entries, 1):
             if row['number'] != number or row['caseId'] != spanish[number - 1]['caseId']:
                 raise ValueError('Mismatched bilingual order in ' + filename)
-            result.append(dict(source=filename, number=number, name=row['name'], question=row['question'],
-                               retrievalQuestion=retrieval[row['caseId']], lang=lang, evidence=row['evidence']))
+            result.append(dict(source=filename, caseId=row['caseId'], number=number, name=row['name'], question=row['question'],
+                               retrievalQuestion=retrieval[row['caseId']], lang=lang, evidence=row['evidence'], expectedStatus=row['expectedStatus']))
     return result

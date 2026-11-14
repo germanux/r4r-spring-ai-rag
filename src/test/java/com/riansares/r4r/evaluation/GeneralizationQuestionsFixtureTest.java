@@ -20,6 +20,13 @@ class GeneralizationQuestionsFixtureTest {
                 assertThat(cases.get(i).question()).isNotBlank();
                 assertThat(cases.get(i).retrievalQuestion()).isEqualTo(es.get(i).question());
                 assertThat(cases.get(i).expectsEvidence()).isEqualTo(i < 24);
+                var status = com.riansares.r4r.rag.AnswerStatus.valueOf(i < 24 ? "ANSWERED" : i < 30 ? "PARTIAL" : "ABSTAINED");
+                assertThat(cases.get(i).expectedStatus()).isEqualTo(status).isEqualTo(en.get(i).expectedStatus());
+                if (i >= 24 && i < 30) {
+                    assertThat(cases.get(i).acceptsStatus(com.riansares.r4r.rag.AnswerStatus.PARTIAL)).isTrue();
+                    assertThat(cases.get(i).acceptsStatus(com.riansares.r4r.rag.AnswerStatus.ABSTAINED)).isTrue();
+                    assertThat(cases.get(i).acceptsStatus(com.riansares.r4r.rag.AnswerStatus.ANSWERED)).isFalse();
+                }
             }
             assertThat(EvaluationQuestions.timeline(language).question()).isNotBlank();
         }

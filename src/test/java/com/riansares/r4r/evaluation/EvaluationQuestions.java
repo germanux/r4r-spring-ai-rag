@@ -11,7 +11,14 @@ public final class EvaluationQuestions {
     private EvaluationQuestions() { }
 
     public record QuestionCase(String caseId, int number, String name, String question,
-                               String retrievalQuestion, boolean expectsEvidence) { }
+                               String retrievalQuestion, boolean expectsEvidence,
+                               com.riansares.r4r.rag.AnswerStatus expectedStatus) {
+        public boolean acceptsStatus(com.riansares.r4r.rag.AnswerStatus actual) {
+            return expectedStatus == com.riansares.r4r.rag.AnswerStatus.PARTIAL
+                    ? actual == com.riansares.r4r.rag.AnswerStatus.PARTIAL || actual == com.riansares.r4r.rag.AnswerStatus.ABSTAINED
+                    : actual == expectedStatus;
+        }
+    }
 
     public static JsonNode document(String language) {
         if (!List.of("es", "en").contains(language)) throw new IllegalArgumentException("Unsupported evaluation language");
@@ -33,7 +40,7 @@ public final class EvaluationQuestions {
             }
             if (retrieval == null) throw new IllegalStateException("Unpaired evaluation question");
             result.add(new QuestionCase(row.path("caseId").asText(), row.path("number").asInt(),
-                    row.path("name").asText(), row.path("question").asText(), retrieval, row.path("evidence").asBoolean()));
+                    row.path("name").asText(), row.path("question").asText(), retrieval, row.path("evidence").asBoolean(), com.riansares.r4r.rag.AnswerStatus.valueOf(row.path("expectedStatus").asText())));
         }
         return List.copyOf(result);
     }
@@ -46,6 +53,6 @@ public final class EvaluationQuestions {
     public static QuestionCase timeline(String language) {
         var row = document(language).path("regressions").path("timeline");
         return new QuestionCase("timeline-reason", 36, row.path("name").asText(), row.path("question").asText(),
-                document("es").path("regressions").path("timeline").path("question").asText(), row.path("evidence").asBoolean());
+                document("es").path("regressions").path("timeline").path("question").asText(), row.path("evidence").asBoolean(), row.path("evidence").asBoolean() ? com.riansares.r4r.rag.AnswerStatus.ANSWERED : com.riansares.r4r.rag.AnswerStatus.ABSTAINED);
     }
 }

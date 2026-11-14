@@ -160,7 +160,11 @@ def serve(block_openai=False):
 def validate(case,payload):
  errors=[]
  answer=payload.get('answer','');citations=payload.get('citations',[])
- if not case['evidence']:
+ expected=case.get('expectedStatus','ANSWERED' if case['evidence'] else 'ABSTAINED')
+ status=payload.get('status')
+ allowed=('PARTIAL','ABSTAINED') if expected=='PARTIAL' else (expected,)
+ if status not in allowed:errors.append('Unexpected response status: '+str(status))
+ if status=='ABSTAINED':
   if payload.get('abstained') is not True or answer.strip() or citations:errors.append('Expected blank-answer abstention without citations')
  else:
   if payload.get('abstained') is not False:errors.append('Unexpected abstention')
