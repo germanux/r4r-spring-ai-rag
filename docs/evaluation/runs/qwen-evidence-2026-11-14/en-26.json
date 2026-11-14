@@ -1,0 +1,50 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "caseId": "case-20",
+  "number": 26,
+  "language": "en",
+  "question": "I want to replace my home's windows, but I don't know whether triple glazing is really worthwhile or whether double glazing is enough.",
+  "request": {
+    "question": "I want to replace my home's windows, but I don't know whether triple glazing is really worthwhile or whether double glazing is enough.",
+    "responseLanguage": "en"
+  },
+  "endpoint": "http://192.168.1.207:8080/api/rag/answers",
+  "httpStatus": 200,
+  "httpLatencyMs": 2169.9095750000197,
+  "attempts": 2,
+  "httpResponse": {
+    "answer": "",
+    "abstained": true,
+    "citations": [],
+    "provider": null,
+    "status": "ABSTAINED"
+  },
+  "capture": {
+    "capturedAt": "2026-11-14T08:44:15.193905048Z",
+    "question": "I want to replace my home's windows, but I don't know whether triple glazing is really worthwhile or whether double glazing is enough.",
+    "responseLanguage": "en",
+    "answer": "",
+    "status": "ABSTAINED",
+    "abstained": true,
+    "citations": [],
+    "provider": null,
+    "generationInvoked": false,
+    "generatedOutput": null,
+    "outcome": "no_evidence",
+    "retrievedChunkCount": 0,
+    "chunks": [],
+    "metrics": {
+      "embeddingMs": 132.311184,
+      "vectorSearchMs": null,
+      "lambdaInvokeMs": null,
+      "retrievalIncludingEmbeddingMs": 165.86036,
+      "generationMs": null,
+      "totalMs": 165.950323
+    },
+    "configuration": {
+      "topK": 5,
+      "minScore": 0.63,
+      "translationMode": "NEVER"
+    }
+  }
+}

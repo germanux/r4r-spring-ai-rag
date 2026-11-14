@@ -1,0 +1,223 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "cases": [
+    {
+      "caseId": "case-01",
+      "number": 1,
+      "language": "es",
+      "status": "ANSWERED",
+      "generationInvoked": true,
+      "chunks": 5,
+      "citedChunks": 1,
+      "provider": {
+        "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+        "model": "qwen3:8b"
+      },
+      "httpLatencyMs": 2405.3686520001065
+    },
+    {
+      "caseId": "case-17",
+      "number": 17,
+      "language": "es",
+      "status": "ANSWERED",
+      "generationInvoked": true,
+      "chunks": 5,
+      "citedChunks": 2,
+      "provider": {
+        "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+        "model": "qwen3:8b"
+      },
+      "httpLatencyMs": 5426.122719999512
+    },
+    {
+      "caseId": "case-18",
+      "number": 25,
+      "language": "es",
+      "status": "PARTIAL",
+      "generationInvoked": true,
+      "chunks": 5,
+      "citedChunks": 2,
+      "provider": {
+        "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+        "model": "qwen3:8b"
+      },
+      "httpLatencyMs": 4748.783302000447
+    },
+    {
+      "caseId": "case-20",
+      "number": 26,
+      "language": "es",
+      "status": "PARTIAL",
+      "generationInvoked": true,
+      "chunks": 5,
+      "citedChunks": 2,
+      "provider": {
+        "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+        "model": "qwen3:8b"
+      },
+      "httpLatencyMs": 3124.2940729998736
+    },
+    {
+      "caseId": "case-21",
+      "number": 27,
+      "language": "es",
+      "status": "ABSTAINED",
+      "generationInvoked": true,
+      "chunks": 5,
+      "citedChunks": 0,
+      "provider": {
+        "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+        "model": "qwen3:8b"
+      },
+      "httpLatencyMs": 4250.1581119995535
+    },
+    {
+      "caseId": "case-23",
+      "number": 28,
+      "language": "es",
+      "status": "PARTIAL",
+      "generationInvoked": true,
+      "chunks": 5,
+      "citedChunks": 1,
+      "provider": {
+        "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+        "model": "qwen3:8b"
+      },
+      "httpLatencyMs": 2372.649664000164
+    },
+    {
+      "caseId": "case-24",
+      "number": 29,
+      "language": "es",
+      "status": "ABSTAINED",
+      "generationInvoked": true,
+      "chunks": 5,
+      "citedChunks": 0,
+      "provider": {
+        "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+        "model": "qwen3:8b"
+      },
+      "httpLatencyMs": 5820.171189000575
+    },
+    {
+      "caseId": "case-25",
+      "number": 30,
+      "language": "es",
+      "status": "ABSTAINED",
+      "generationInvoked": true,
+      "chunks": 5,
+      "citedChunks": 0,
+      "provider": {
+        "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+        "model": "qwen3:8b"
+      },
+      "httpLatencyMs": 2948.6597689992777
+    },
+    {
+      "caseId": "case-02",
+      "number": 2,
+      "language": "en",
+      "status": "ANSWERED",
+      "generationInvoked": true,
+      "chunks": 5,
+      "citedChunks": 2,
+      "provider": {
+        "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+        "model": "qwen3:8b"
+      },
+      "httpLatencyMs": 4652.627921000203
+    },
+    {
+      "caseId": "case-17",
+      "number": 17,
+      "language": "en",
+      "status": "ANSWERED",
+      "generationInvoked": true,
+      "chunks": 5,
+      "citedChunks": 2,
+      "provider": {
+        "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+        "model": "qwen3:8b"
+      },
+      "httpLatencyMs": 4166.341529999954
+    },
+    {
+      "caseId": "case-18",
+      "number": 25,
+      "language": "en",
+      "status": "ABSTAINED",
+      "generationInvoked": true,
+      "chunks": 5,
+      "citedChunks": 0,
+      "provider": {
+        "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+        "model": "qwen3:8b"
+      },
+      "httpLatencyMs": 3963.209212000038
+    },
+    {
+      "caseId": "case-20",
+      "number": 26,
+      "language": "en",
+      "status": "ABSTAINED",
+      "generationInvoked": false,
+      "chunks": 0,
+      "citedChunks": 0,
+      "provider": null,
+      "httpLatencyMs": 2169.9095750000197
+    },
+    {
+      "caseId": "case-21",
+      "number": 27,
+      "language": "en",
+      "status": "ABSTAINED",
+      "generationInvoked": false,
+      "chunks": 0,
+      "citedChunks": 0,
+      "provider": null,
+      "httpLatencyMs": 3444.9213699999746
+    },
+    {
+      "caseId": "case-23",
+      "number": 28,
+      "language": "en",
+      "status": "PARTIAL",
+      "generationInvoked": true,
+      "chunks": 5,
+      "citedChunks": 2,
+      "provider": {
+        "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+        "model": "qwen3:8b"
+      },
+      "httpLatencyMs": 5399.047230000178
+    },
+    {
+      "caseId": "case-24",
+      "number": 29,
+      "language": "en",
+      "status": "ABSTAINED",
+      "generationInvoked": true,
+      "chunks": 5,
+      "citedChunks": 0,
+      "provider": {
+        "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+        "model": "qwen3:8b"
+      },
+      "httpLatencyMs": 4665.990846000568
+    },
+    {
+      "caseId": "case-25",
+      "number": 30,
+      "language": "en",
+      "status": "PARTIAL",
+      "generationInvoked": true,
+      "chunks": 5,
+      "citedChunks": 1,
+      "provider": {
+        "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+        "model": "qwen3:8b"
+      },
+      "httpLatencyMs": 3738.3313520003867
+    }
+  ]
+}

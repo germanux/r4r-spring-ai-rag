@@ -1,0 +1,162 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "caseId": "case-20",
+  "number": 26,
+  "language": "es",
+  "question": "Quiero cambiar las ventanas de mi casa, pero no sé si realmente merece la pena instalar triple acristalamiento o si con doble es suficiente.",
+  "request": {
+    "question": "Quiero cambiar las ventanas de mi casa, pero no sé si realmente merece la pena instalar triple acristalamiento o si con doble es suficiente.",
+    "responseLanguage": "es"
+  },
+  "endpoint": "http://192.168.1.207:8080/api/rag/answers",
+  "httpStatus": 200,
+  "httpLatencyMs": 3124.2940729998736,
+  "attempts": 1,
+  "httpResponse": {
+    "answer": "Cambiar ventanas puede afectar el equilibrio entre infiltración de aire y ventilación, lo cual puede influir en la humedad interior [S1]. Si al mejorar la estanqueidad disminuye la renovación de aire y no se revisa la ventilación, puede cambiar el equilibrio de humedad interior [S2]. No se establece una comparación directa entre doble y triple acristalamiento para decidir cuál es más adecuado en este contexto.",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S1]",
+        "source": "es/guides/R4R_106_HUMEDADES_CAPILARIDAD_CONDENSACION_FILTRACION.md",
+        "headingPath": [
+          "Humedades — identificación del origen y decisiones de reparación",
+          "¿Qué pasa si aparece moho tras cambiar ventanas?"
+        ],
+        "ordinal": 8
+      },
+      {
+        "label": "[S2]",
+        "source": "es/guides/R4R_87_AISLAMIENTO_VENTILACION_Y_REHABILITACION_ENERGETICA.md",
+        "headingPath": [
+          "Riansares 4R — eficiencia energética, aislamiento y ventilación",
+          "¿Cambiar ventanas puede aumentar la condensación?"
+        ],
+        "ordinal": 2
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b",
+      "inferenceHost": {
+        "type": "desktop",
+        "hostname": "PC-GIGA-ZORUX",
+        "cpu": "Intel i9-14900KF",
+        "ram": "64 GB DDR5",
+        "gpu": "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status": "PARTIAL"
+  },
+  "capture": {
+    "capturedAt": "2026-11-14T08:43:28.844331152Z",
+    "question": "Quiero cambiar las ventanas de mi casa, pero no sé si realmente merece la pena instalar triple acristalamiento o si con doble es suficiente.",
+    "responseLanguage": "es",
+    "answer": "Cambiar ventanas puede afectar el equilibrio entre infiltración de aire y ventilación, lo cual puede influir en la humedad interior [S1]. Si al mejorar la estanqueidad disminuye la renovación de aire y no se revisa la ventilación, puede cambiar el equilibrio de humedad interior [S2]. No se establece una comparación directa entre doble y triple acristalamiento para decidir cuál es más adecuado en este contexto.",
+    "status": "PARTIAL",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S1]",
+        "source": "es/guides/R4R_106_HUMEDADES_CAPILARIDAD_CONDENSACION_FILTRACION.md",
+        "headingPath": [
+          "Humedades — identificación del origen y decisiones de reparación",
+          "¿Qué pasa si aparece moho tras cambiar ventanas?"
+        ],
+        "ordinal": 8
+      },
+      {
+        "label": "[S2]",
+        "source": "es/guides/R4R_87_AISLAMIENTO_VENTILACION_Y_REHABILITACION_ENERGETICA.md",
+        "headingPath": [
+          "Riansares 4R — eficiencia energética, aislamiento y ventilación",
+          "¿Cambiar ventanas puede aumentar la condensación?"
+        ],
+        "ordinal": 2
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b"
+    },
+    "generationInvoked": true,
+    "generatedOutput": "{\"status\":\"PARTIAL\",\"limitation\":\"No se establece una comparación directa entre doble y triple acristalamiento para decidir cuál es más adecuado en este contexto.\",\"answer\":\"Cambiar ventanas puede afectar el equilibrio entre infiltración de aire y ventilación, lo cual puede influir en la humedad interior [S1]. Si al mejorar la estanqueidad disminuye la renovación de aire y no se revisa la ventilación, puede cambiar el equilibrio de humedad interior [S2].\"}",
+    "outcome": "partial",
+    "retrievedChunkCount": 5,
+    "chunks": [
+      {
+        "label": "[S1]",
+        "source": "es/guides/R4R_106_HUMEDADES_CAPILARIDAD_CONDENSACION_FILTRACION.md",
+        "headingPath": [
+          "Humedades — identificación del origen y decisiones de reparación",
+          "¿Qué pasa si aparece moho tras cambiar ventanas?"
+        ],
+        "ordinal": 8,
+        "content": "## ¿Qué pasa si aparece moho tras cambiar ventanas?\n\nPuede haber cambiado el equilibrio entre infiltración de aire y ventilación. Evaluar ventilación, puentes térmicos y uso, sin concluir automáticamente que las ventanas están defectuosas.",
+        "cited": true,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S2]",
+        "source": "es/guides/R4R_87_AISLAMIENTO_VENTILACION_Y_REHABILITACION_ENERGETICA.md",
+        "headingPath": [
+          "Riansares 4R — eficiencia energética, aislamiento y ventilación",
+          "¿Cambiar ventanas puede aumentar la condensación?"
+        ],
+        "ordinal": 2,
+        "content": "## ¿Cambiar ventanas puede aumentar la condensación?\n\nSi al mejorar la estanqueidad disminuye la renovación de aire y no se revisa la ventilación, puede cambiar el equilibrio de humedad interior. No significa que las ventanas nuevas sean defectuosas por definición: deben analizarse puentes térmicos, temperatura y ventilación. [CTE DB HS](https://www.codigotecnico.org/pdf/Documentos/HS/DBHS.pdf) regula aspectos de salubridad en los supuestos aplicables.",
+        "cited": true,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S3]",
+        "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+        "headingPath": [
+          "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma",
+          "Pregunta — ¿Hay que cambiar todas las tuberías o solo la parte averiada?"
+        ],
+        "ordinal": 2,
+        "content": "## Pregunta — ¿Hay que cambiar todas las tuberías o solo la parte averiada?\n\nDepende del material, antigüedad, corrosión, número y ubicación de fugas, accesibilidad y estado del resto de tramos. Una reparación localizada puede ser suficiente si el sistema restante está en buen estado; varias roturas o tuberías muy degradadas justifican evaluar una sustitución más amplia. No decidirlo solo por una fotografía. Antes de cerrar los paramentos, realizar pruebas de estanqueidad adecuadas a la instalación.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S4]",
+        "source": "es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.md",
+        "headingPath": [
+          "Cómo expresar dudas de reformas — ejemplos de consultas reales y ambiguas",
+          "La casa es muy vieja. ¿Se puede reformar sin tirarlo todo?"
+        ],
+        "ordinal": 8,
+        "content": "## La casa es muy vieja. ¿Se puede reformar sin tirarlo todo?\n\nA menudo se pueden plantear actuaciones selectivas, pero la viabilidad depende de estabilidad, humedad, instalaciones y exigencias. Conservación y seguridad deben evaluarse juntas.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S5]",
+        "source": "es/guides/R4R_82_HUMEDADES_FUGAS_CONDENSACION_Y_MOHO.md",
+        "headingPath": [
+          "Riansares 4R — humedades: diagnóstico diferencial y reparación",
+          "Caso hipotético H-01 — Humedad junto a ventana tras cambiar carpinterías"
+        ],
+        "ordinal": 8,
+        "content": "## Caso hipotético H-01 — Humedad junto a ventana tras cambiar carpinterías\n\n**Ejemplo hipotético.** Después de sustituir ventanas aparecen gotas en paredes frías. Evaluar ventilación real, puentes térmicos, uso de calefacción y posibles filtraciones de carpintería. La solución podría exigir ventilación y tratamiento térmico; no afirmar automáticamente capilaridad.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      }
+    ],
+    "metrics": {
+      "embeddingMs": 102.548246,
+      "vectorSearchMs": null,
+      "lambdaInvokeMs": null,
+      "retrievalIncludingEmbeddingMs": 220.603915,
+      "generationMs": 2900.553334,
+      "totalMs": 3121.956131
+    },
+    "configuration": {
+      "topK": 5,
+      "minScore": 0.63,
+      "translationMode": "NEVER"
+    }
+  }
+}

@@ -1,0 +1,162 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "caseId": "case-18",
+  "number": 25,
+  "language": "es",
+  "question": "En mi casa se oye absolutamente todo lo que hacen los vecinos de arriba. ¿Se puede mejorar el aislamiento acústico sin perder demasiada altura en las habitaciones?",
+  "request": {
+    "question": "En mi casa se oye absolutamente todo lo que hacen los vecinos de arriba. ¿Se puede mejorar el aislamiento acústico sin perder demasiada altura en las habitaciones?",
+    "responseLanguage": "es"
+  },
+  "endpoint": "http://192.168.1.207:8080/api/rag/answers",
+  "httpStatus": 200,
+  "httpLatencyMs": 4748.783302000447,
+  "attempts": 1,
+  "httpResponse": {
+    "answer": "El aislamiento acústico busca controlar la transmisión del sonido, pero la elección depende del objetivo, soporte y exigencias aplicables [S1]. Existen estrategias interiores o exteriores con impactos distintos sobre humedad, puentes térmicos y superficie útil [S4]. No se establece comparación entre alternativas de aislamiento acústico ni se menciona si la solución propuesta afecta la altura de las habitaciones.",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S1]",
+        "source": "es/guides/R4R_87_AISLAMIENTO_VENTILACION_Y_REHABILITACION_ENERGETICA.md",
+        "headingPath": [
+          "Riansares 4R — eficiencia energética, aislamiento y ventilación",
+          "¿Qué diferencia hay entre aislamiento térmico y acústico?"
+        ],
+        "ordinal": 5
+      },
+      {
+        "label": "[S4]",
+        "source": "es/guides/R4R_107_FACHADAS_CUBIERTAS_Y_REHABILITACION_PRUDENTE.md",
+        "headingPath": [
+          "Rehabilitación — fachadas, cubiertas y edificios existentes",
+          "¿La fachada puede aislarse sin alterar su apariencia?"
+        ],
+        "ordinal": 5
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b",
+      "inferenceHost": {
+        "type": "desktop",
+        "hostname": "PC-GIGA-ZORUX",
+        "cpu": "Intel i9-14900KF",
+        "ram": "64 GB DDR5",
+        "gpu": "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status": "PARTIAL"
+  },
+  "capture": {
+    "capturedAt": "2026-11-14T08:43:23.719317100Z",
+    "question": "En mi casa se oye absolutamente todo lo que hacen los vecinos de arriba. ¿Se puede mejorar el aislamiento acústico sin perder demasiada altura en las habitaciones?",
+    "responseLanguage": "es",
+    "answer": "El aislamiento acústico busca controlar la transmisión del sonido, pero la elección depende del objetivo, soporte y exigencias aplicables [S1]. Existen estrategias interiores o exteriores con impactos distintos sobre humedad, puentes térmicos y superficie útil [S4]. No se establece comparación entre alternativas de aislamiento acústico ni se menciona si la solución propuesta afecta la altura de las habitaciones.",
+    "status": "PARTIAL",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S1]",
+        "source": "es/guides/R4R_87_AISLAMIENTO_VENTILACION_Y_REHABILITACION_ENERGETICA.md",
+        "headingPath": [
+          "Riansares 4R — eficiencia energética, aislamiento y ventilación",
+          "¿Qué diferencia hay entre aislamiento térmico y acústico?"
+        ],
+        "ordinal": 5
+      },
+      {
+        "label": "[S4]",
+        "source": "es/guides/R4R_107_FACHADAS_CUBIERTAS_Y_REHABILITACION_PRUDENTE.md",
+        "headingPath": [
+          "Rehabilitación — fachadas, cubiertas y edificios existentes",
+          "¿La fachada puede aislarse sin alterar su apariencia?"
+        ],
+        "ordinal": 5
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b"
+    },
+    "generationInvoked": true,
+    "generatedOutput": "{\"status\":\"PARTIAL\",\"limitation\":\"No se establece comparación entre alternativas de aislamiento acústico ni se menciona si la solución propuesta afecta la altura de las habitaciones.\",\"answer\":\"El aislamiento acústico busca controlar la transmisión del sonido, pero la elección depende del objetivo, soporte y exigencias aplicables [S1]. Existen estrategias interiores o exteriores con impactos distintos sobre humedad, puentes térmicos y superficie útil [S4].\"}",
+    "outcome": "partial",
+    "retrievedChunkCount": 5,
+    "chunks": [
+      {
+        "label": "[S1]",
+        "source": "es/guides/R4R_87_AISLAMIENTO_VENTILACION_Y_REHABILITACION_ENERGETICA.md",
+        "headingPath": [
+          "Riansares 4R — eficiencia energética, aislamiento y ventilación",
+          "¿Qué diferencia hay entre aislamiento térmico y acústico?"
+        ],
+        "ordinal": 5,
+        "content": "## ¿Qué diferencia hay entre aislamiento térmico y acústico?\n\nEl aislamiento térmico reduce intercambio de calor; el acústico busca controlar transmisión del sonido. Los sistemas y prestaciones no son intercambiables automáticamente, aunque algunas soluciones aportan ambas. La elección depende del objetivo, soporte y exigencias aplicables.",
+        "cited": true,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S2]",
+        "source": "es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.md",
+        "headingPath": [
+          "Cómo expresar dudas de reformas — ejemplos de consultas reales y ambiguas",
+          "La casa es muy vieja. ¿Se puede reformar sin tirarlo todo?"
+        ],
+        "ordinal": 8,
+        "content": "## La casa es muy vieja. ¿Se puede reformar sin tirarlo todo?\n\nA menudo se pueden plantear actuaciones selectivas, pero la viabilidad depende de estabilidad, humedad, instalaciones y exigencias. Conservación y seguridad deben evaluarse juntas.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S3]",
+        "source": "es/guides/R4R_108_VIVIENDA_HABITADA_REFORMAS_POR_FASES.md",
+        "headingPath": [
+          "Obras con vivienda ocupada — fases, seguridad y coordinación",
+          "¿Puedo vivir en casa durante una reforma?"
+        ],
+        "ordinal": 1,
+        "content": "## ¿Puedo vivir en casa durante una reforma?\n\nDepende del alcance, instalaciones disponibles, polvo, ruido, accesos y riesgos. Si la obra afecta a único baño o cocina, puede exigir solución temporal o abandonar ciertas zonas. No prometer habitabilidad sin evaluar las fases.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S4]",
+        "source": "es/guides/R4R_107_FACHADAS_CUBIERTAS_Y_REHABILITACION_PRUDENTE.md",
+        "headingPath": [
+          "Rehabilitación — fachadas, cubiertas y edificios existentes",
+          "¿La fachada puede aislarse sin alterar su apariencia?"
+        ],
+        "ordinal": 5,
+        "content": "## ¿La fachada puede aislarse sin alterar su apariencia?\n\nExisten estrategias interiores o exteriores con impactos distintos sobre humedad, puentes térmicos y superficie útil. En edificios protegidos pueden existir restricciones patrimoniales; evaluar conjunto antes de elegir.",
+        "cited": true,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S5]",
+        "source": "es/guides/R4R_87_AISLAMIENTO_VENTILACION_Y_REHABILITACION_ENERGETICA.md",
+        "headingPath": [
+          "Riansares 4R — eficiencia energética, aislamiento y ventilación",
+          "Caso hipotético E-01 — Dormitorio muy frío con ventanas renovadas"
+        ],
+        "ordinal": 6,
+        "content": "## Caso hipotético E-01 — Dormitorio muy frío con ventanas renovadas\n\n**Ejemplo ficticio.** La vivienda conserva muros sin aislamiento y aparecen puntos fríos. Evaluar infiltraciones, puentes térmicos, ventilación, posibilidad de mejorar envolvente y compatibilidad con humedad existente antes de recomendar un producto.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      }
+    ],
+    "metrics": {
+      "embeddingMs": 120.569794,
+      "vectorSearchMs": null,
+      "lambdaInvokeMs": null,
+      "retrievalIncludingEmbeddingMs": 1323.380728,
+      "generationMs": 3421.321516,
+      "totalMs": 4745.955731
+    },
+    "configuration": {
+      "topK": 5,
+      "minScore": 0.63,
+      "translationMode": "NEVER"
+    }
+  }
+}

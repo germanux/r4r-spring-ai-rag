@@ -1,0 +1,167 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "caseId": "case-23",
+  "number": 28,
+  "language": "en",
+  "question": "The wooden beams in my old house are bowed. Can they be reinforced or do they need replacing?",
+  "request": {
+    "question": "The wooden beams in my old house are bowed. Can they be reinforced or do they need replacing?",
+    "responseLanguage": "en"
+  },
+  "endpoint": "http://192.168.1.207:8080/api/rag/answers",
+  "httpStatus": 200,
+  "httpLatencyMs": 5399.047230000178,
+  "attempts": 2,
+  "httpResponse": {
+    "answer": "Wooden beams that are bowed should not be fully sealed with impermeable coatings or rigidly sealed joints [S1]. Reinforcement may be considered, but the decision requires assessment of stability, moisture, and structural integrity, which are not documented here [S2]. The feasibility of reinforcement versus replacement is not established.",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S1]",
+        "source": "en/R4R_20_OFFICE_CELLAR_BATHROOM_AND_CLIENT_SCREENING_CASES.md",
+        "headingPath": [
+          "Riansares 4R — Office, Cave, Bathroom and Client Screening Cases",
+          "13. Case H — Two Adjacent Bathrooms in an Old and Narrow House",
+          "13.8. Wooden Beams"
+        ],
+        "ordinal": 26
+      },
+      {
+        "label": "[S2]",
+        "source": "en/guides/R4R_122_REAL_VISITOR_WORDING.md",
+        "headingPath": [
+          "How to express renovation concerns — examples of real-world and ambiguous queries",
+          "The house is very old. Can it be renovated without demolishing everything?"
+        ],
+        "ordinal": 8
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b",
+      "inferenceHost": {
+        "type": "desktop",
+        "hostname": "PC-GIGA-ZORUX",
+        "cpu": "Intel i9-14900KF",
+        "ram": "64 GB DDR5",
+        "gpu": "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status": "PARTIAL"
+  },
+  "capture": {
+    "capturedAt": "2026-11-14T08:44:28.038992879Z",
+    "question": "The wooden beams in my old house are bowed. Can they be reinforced or do they need replacing?",
+    "responseLanguage": "en",
+    "answer": "Wooden beams that are bowed should not be fully sealed with impermeable coatings or rigidly sealed joints [S1]. Reinforcement may be considered, but the decision requires assessment of stability, moisture, and structural integrity, which are not documented here [S2]. The feasibility of reinforcement versus replacement is not established.",
+    "status": "PARTIAL",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S1]",
+        "source": "en/R4R_20_OFFICE_CELLAR_BATHROOM_AND_CLIENT_SCREENING_CASES.md",
+        "headingPath": [
+          "Riansares 4R — Office, Cave, Bathroom and Client Screening Cases",
+          "13. Case H — Two Adjacent Bathrooms in an Old and Narrow House",
+          "13.8. Wooden Beams"
+        ],
+        "ordinal": 26
+      },
+      {
+        "label": "[S2]",
+        "source": "en/guides/R4R_122_REAL_VISITOR_WORDING.md",
+        "headingPath": [
+          "How to express renovation concerns — examples of real-world and ambiguous queries",
+          "The house is very old. Can it be renovated without demolishing everything?"
+        ],
+        "ordinal": 8
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b"
+    },
+    "generationInvoked": true,
+    "generatedOutput": "{\"status\":\"PARTIAL\",\"limitation\":\"The feasibility of reinforcement versus replacement is not established.\",\"answer\":\"Wooden beams that are bowed should not be fully sealed with impermeable coatings or rigidly sealed joints [S1]. Reinforcement may be considered, but the decision requires assessment of stability, moisture, and structural integrity, which are not documented here [S2].\"}",
+    "outcome": "partial",
+    "retrievedChunkCount": 5,
+    "chunks": [
+      {
+        "label": "[S1]",
+        "source": "en/R4R_20_OFFICE_CELLAR_BATHROOM_AND_CLIENT_SCREENING_CASES.md",
+        "headingPath": [
+          "Riansares 4R — Office, Cave, Bathroom and Client Screening Cases",
+          "13. Case H — Two Adjacent Bathrooms in an Old and Narrow House",
+          "13.8. Wooden Beams"
+        ],
+        "ordinal": 26,
+        "content": "### 13.8. Wooden Beams\n\nThe beams were partially embedded and it was not possible to treat their entire surface. The criterion was to allow the visible face to continue drying.\n\nAvoid:\n\n- impermeable enamel coatings;\n- glossy polyurethane finishes;\n- fully wrapping the wood with cement, silicone, or waterproof membrane;\n- rigidly sealing the wood-lime joint.\n\nPrefer:\n\n- cleaning and vacuuming;\n- checking for dryness and condition;\n- open-pore wood stain when applicable;\n- ventilation via extractor;\n- flexible joint or non-rigid junction.",
+        "cited": true,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S2]",
+        "source": "en/guides/R4R_122_REAL_VISITOR_WORDING.md",
+        "headingPath": [
+          "How to express renovation concerns — examples of real-world and ambiguous queries",
+          "The house is very old. Can it be renovated without demolishing everything?"
+        ],
+        "ordinal": 8,
+        "content": "## The house is very old. Can it be renovated without demolishing everything?\n\nSelective interventions can often be proposed, but feasibility depends on stability, moisture, services and requirements. Conservation and safety must be assessed together.",
+        "cited": true,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S3]",
+        "source": "en/guides/R4R_83_OLD_HOMES_AND_REHABILITATION.md",
+        "headingPath": [
+          "Riansares 4R — old homes: sound and safe rehabilitation",
+          "How is renovation planned around old timber and walls?"
+        ],
+        "ordinal": 2,
+        "content": "## How is renovation planned around old timber and walls?\n\nSeparate maintenance, defects, services and finishes. Check beams, bearings, damp, biological attack and loads where appropriate; do not cover damaged elements merely to hide them. Maintain material compatibility, ventilation and drying capacity. Seek structural assessment for significant deflection, cracks or deformation.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S4]",
+        "source": "en/R4R_00_IDENTITY_CRITERIA_AND_EDITORIAL_VOICE.md",
+        "headingPath": [
+          "Riansares 4R — identity, criteria, and editorial voice",
+          "2. Riansares 4R identity",
+          "2.3. Core services",
+          "Rehabilitation"
+        ],
+        "ordinal": 6,
+        "content": "#### Rehabilitation\n\n- old houses;\n- inherited or closed homes;\n- walls with deteriorated finishes;\n- walls with moisture or salts;\n- conservation and recovery of compatible substrates;\n- selective actions to avoid unnecessary demolitions.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S5]",
+        "source": "en/guides/R4R_107_FACADES_ROOFS_AND_CAUTIOUS_REHABILITATION.md",
+        "headingPath": [
+          "Rehabilitation — façades, roofs and existing buildings",
+          "What should be done if deteriorated roof timber is discovered?"
+        ],
+        "ordinal": 4,
+        "content": "## What should be done if deteriorated roof timber is discovered?\n\nStop work that may compromise stability, assess the cause of deterioration and request review by a competent professional where structural doubt exists. Do not replace a load-bearing member with an improvised substitute.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      }
+    ],
+    "metrics": {
+      "embeddingMs": 88.09534,
+      "vectorSearchMs": null,
+      "lambdaInvokeMs": null,
+      "retrievalIncludingEmbeddingMs": 151.374549,
+      "generationMs": 2244.33669,
+      "totalMs": 2396.194244
+    },
+    "configuration": {
+      "topK": 5,
+      "minScore": 0.63,
+      "translationMode": "NEVER"
+    }
+  }
+}

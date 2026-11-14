@@ -1,0 +1,125 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "caseId": "case-21",
+  "number": 27,
+  "language": "es",
+  "question": "Tengo un pasillo largo y oscuro. ¿Cómo gano luz y aprovecho el espacio?",
+  "request": {
+    "question": "Tengo un pasillo largo y oscuro. ¿Cómo gano luz y aprovecho el espacio?",
+    "responseLanguage": "es"
+  },
+  "endpoint": "http://192.168.1.207:8080/api/rag/answers",
+  "httpStatus": 200,
+  "httpLatencyMs": 4250.1581119995535,
+  "attempts": 1,
+  "httpResponse": {
+    "answer": "",
+    "abstained": true,
+    "citations": [],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b",
+      "inferenceHost": {
+        "type": "desktop",
+        "hostname": "PC-GIGA-ZORUX",
+        "cpu": "Intel i9-14900KF",
+        "ram": "64 GB DDR5",
+        "gpu": "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status": "ABSTAINED"
+  },
+  "capture": {
+    "capturedAt": "2026-11-14T08:43:35.094677235Z",
+    "question": "Tengo un pasillo largo y oscuro. ¿Cómo gano luz y aprovecho el espacio?",
+    "responseLanguage": "es",
+    "answer": "",
+    "status": "ABSTAINED",
+    "abstained": true,
+    "citations": [],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b"
+    },
+    "generationInvoked": true,
+    "generatedOutput": "{\"status\":\"PARTIAL\",\"limitation\":\"La documentación no establece directamente cómo mejorar la iluminación o aprovechar el espacio en un pasillo largo y oscuro, aunque se mencionan aspectos relacionados con accesibilidad y ejecución de pavimentos en espacios estrechos.\",\"answer\":\"Para mejorar la iluminación en un pasillo estrecho, se puede considerar la instalación de luces colgantes o de tiras LED que ofrezcan una distribución uniforme de luz [S2]. Además, en espacios estrechos, la ejecución manual de la solera y el pavimento puede requerir más mano de obra y atención a los detalles para aprovechar el espacio de manera eficiente [S3].\"}",
+    "outcome": "irrelevant_partial",
+    "retrievedChunkCount": 5,
+    "chunks": [
+      {
+        "label": "[S1]",
+        "source": "es/guides/R4R_84_PATIOS_SOLERAS_SOLADOS_Y_DRENAJE.md",
+        "headingPath": [
+          "Riansares 4R — patios y pavimentos: solera, solado y drenaje",
+          "Caso hipotético P-02 — Pasillo estrecho con acceso manual"
+        ],
+        "ordinal": 7,
+        "content": "## Caso hipotético P-02 — Pasillo estrecho con acceso manual\n\n**Ejemplo ficticio.** Hay poco espacio para carretillas o maquinaria; comparar materiales y tiempos de suministro manual. La diferencia de coste procede de logística y preparación, no necesariamente del precio del hormigón.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S2]",
+        "source": "es/guides/R4R_104_DUCHAS_PENDIENTES_IMPERMEABILIZACION_Y_BANOS.md",
+        "headingPath": [
+          "Baños — duchas, pendientes, impermeabilización y accesibilidad",
+          "¿El extractor debe encenderse con la luz?"
+        ],
+        "ordinal": 5,
+        "content": "## ¿El extractor debe encenderse con la luz?\n\nExisten distintas soluciones de mando y temporización; lo relevante es garantizar ventilación adecuada a uso y normativa aplicables. No confundir el encendido con el cumplimiento de caudal.",
+        "cited": false,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S3]",
+        "source": "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+        "headingPath": [
+          "Riansares 4R — casos de patios, viviendas, humedades y reparaciones",
+          "6. Caso A — Patio, solera, pavimento y drenaje",
+          "6.4. Hormigón de camión y ejecución manual",
+          "Patio interior o pasillo estrecho"
+        ],
+        "ordinal": 7,
+        "content": "#### Patio interior o pasillo estrecho\n\nDificultades:\n\n- acceso indirecto;\n- transporte con carretillas;\n- mezcla en obra o vertido por fases;\n- calor y pérdida de tiempo útil;\n- mallazo y separadores por fases;\n- encuentros y pendientes;\n- más mano de obra;\n- mayor riesgo de mala ejecución si se intenta correr demasiado.\n\nConclusión reutilizable:\n\n> El solado puede cambiar poco de una zona a otra; la gran diferencia suele estar en cómo se ejecuta la solera.",
+        "cited": false,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S4]",
+        "source": "es/guides/R4R_113_OTROS_ESPACIOS_GARAJES_PISCINAS_POLIDEPORTIVOS.md",
+        "headingPath": [
+          "Otros espacios — garajes, piscinas, zonas deportivas y naves"
+        ],
+        "ordinal": 0,
+        "content": "# Otros espacios — garajes, piscinas, zonas deportivas y naves\n\n## ¿Se puede reformar un garaje húmedo como si fuera una habitación?\n\nNo sin examinar ventilación, agua, seguridad contra incendios, compatibilidad con el uso y posibles requisitos administrativos. Un pavimento decorativo no convierte un garaje en espacio habitable.\n\n## ¿Qué revisar antes de cambiar el suelo de un polideportivo?\n\nUso, fricción, impactos, planeidad, humedad del soporte, mantenimiento, seguridad y normativa deportiva aplicable. No equiparar suelo de pista con gres doméstico.\n\n## ¿Cómo empezar una reparación de piscina con pérdida de agua?\n\nDeterminar si se debe a evaporación, tuberías, vaso o elementos de conexión mediante comprobaciones apropiadas. No afirmar impermeabilización defectuosa sin localizar origen.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S5]",
+        "source": "es/guides/R4R_81_BANOS_DUCHAS_Y_SANEAMIENTO.md",
+        "headingPath": [
+          "Riansares 4R — baños: fugas, duchas, saneamiento e impermeabilización",
+          "Caso hipotético B-02 — Ducha accesible y poco espacio"
+        ],
+        "ordinal": 9,
+        "content": "## Caso hipotético B-02 — Ducha accesible y poco espacio\n\n**Ejemplo hipotético, no obra ejecutada.** Se plantea sustituir una bañera por ducha con acceso cómodo. Comprobar pendientes, cotas, puerta, radio de giro necesario y normativa de accesibilidad que corresponda a esa vivienda. Sin medidas ni situación del usuario no recomendar una distribución exacta.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      }
+    ],
+    "metrics": {
+      "embeddingMs": 271.912082,
+      "vectorSearchMs": null,
+      "lambdaInvokeMs": null,
+      "retrievalIncludingEmbeddingMs": 354.223589,
+      "generationMs": 3892.141714,
+      "totalMs": 4247.320343
+    },
+    "configuration": {
+      "topK": 5,
+      "minScore": 0.63,
+      "translationMode": "NEVER"
+    }
+  }
+}

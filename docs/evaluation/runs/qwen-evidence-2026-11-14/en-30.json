@@ -1,0 +1,144 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "caseId": "case-25",
+  "number": 30,
+  "language": "en",
+  "question": "I want to turn a shop into a café. What building work do I need before opening?",
+  "request": {
+    "question": "I want to turn a shop into a café. What building work do I need before opening?",
+    "responseLanguage": "en"
+  },
+  "endpoint": "http://192.168.1.207:8080/api/rag/answers",
+  "httpStatus": 200,
+  "httpLatencyMs": 3738.3313520003867,
+  "attempts": 2,
+  "httpResponse": {
+    "answer": "Before opening, check use and occupancy, extraction, drainage, fire safety, accessibility, electricity, hygiene and possible gas installations [S2]. The requested decision is not established.",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S2]",
+        "source": "en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.md",
+        "headingPath": [
+          "Riansares 4R — other works: pools, industrial buildings, terraces and facilities",
+          "What should be checked before renovating hospitality premises?"
+        ],
+        "ordinal": 3
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b",
+      "inferenceHost": {
+        "type": "desktop",
+        "hostname": "PC-GIGA-ZORUX",
+        "cpu": "Intel i9-14900KF",
+        "ram": "64 GB DDR5",
+        "gpu": "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status": "PARTIAL"
+  },
+  "capture": {
+    "capturedAt": "2026-11-14T08:44:40.444270380Z",
+    "question": "I want to turn a shop into a café. What building work do I need before opening?",
+    "responseLanguage": "en",
+    "answer": "Before opening, check use and occupancy, extraction, drainage, fire safety, accessibility, electricity, hygiene and possible gas installations [S2]. The requested decision is not established.",
+    "status": "PARTIAL",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S2]",
+        "source": "en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.md",
+        "headingPath": [
+          "Riansares 4R — other works: pools, industrial buildings, terraces and facilities",
+          "What should be checked before renovating hospitality premises?"
+        ],
+        "ordinal": 3
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b"
+    },
+    "generationInvoked": true,
+    "generatedOutput": "{\"status\":\"PARTIAL\",\"limitation\":\"The requested decision is not established.\",\"answer\":\"Before opening, check use and occupancy, extraction, drainage, fire safety, accessibility, electricity, hygiene and possible gas installations [S2].\"}",
+    "outcome": "partial",
+    "retrievedChunkCount": 5,
+    "chunks": [
+      {
+        "label": "[S1]",
+        "source": "en/guides/R4R_122_REAL_VISITOR_WORDING.md",
+        "headingPath": [
+          "How to express renovation concerns — examples of real-world and ambiguous queries",
+          "I want a new-looking kitchen while fixing a fault. Should I start with cabinets?"
+        ],
+        "ordinal": 4,
+        "content": "## I want a new-looking kitchen while fixing a fault. Should I start with cabinets?\n\nFirst assess leaks and concealed pipework and define layout; then coordinate cabinets and finishes. Do not install final furniture before checking services that may require opening up.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S2]",
+        "source": "en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.md",
+        "headingPath": [
+          "Riansares 4R — other works: pools, industrial buildings, terraces and facilities",
+          "What should be checked before renovating hospitality premises?"
+        ],
+        "ordinal": 3,
+        "content": "## What should be checked before renovating hospitality premises?\n\nUse and occupancy, extraction, drainage, fire safety, accessibility, electricity, hygiene and possible gas installations. Specific regulations and specialist professionals are required. This corpus provides general guidance, not an offer of hospitality renovation work.",
+        "cited": true,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S3]",
+        "source": "en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.md",
+        "headingPath": [
+          "Riansares 4R — other works: pools, industrial buildings, terraces and facilities",
+          "How should an industrial building renovation be approached?"
+        ],
+        "ordinal": 4,
+        "content": "## How should an industrial building renovation be approached?\n\nFirst define activity, imposed loads, access, structure, roof, electrical installation, fire protection, occupational safety and permits. Do not recommend structural solutions or assume qualification for large projects.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S4]",
+        "source": "en/cases/R4R_91_VARIED_HYPOTHETICAL_CASES.md",
+        "headingPath": [
+          "Riansares 4R — hypothetical consultation cases to broaden coverage",
+          "C-09 — Commercial premises with a partition to remove (hypothetical)"
+        ],
+        "ordinal": 10,
+        "content": "## C-09 — Commercial premises with a partition to remove (hypothetical)\n\nQuestion: “I want to remove a wall to enlarge my shop.”\n\nGuidance: First assess stability, services, escape routes, licensing and accessibility. Do not determine load-bearing status from a verbal description.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S5]",
+        "source": "en/guides/R4R_85_OFFICES_COMMERCIAL_PREMISES_AND_OWNERS_ASSOCIATIONS.md",
+        "headingPath": [
+          "Riansares 4R — offices, commercial premises and owners’ associations: scope and coordination",
+          "Hypothetical case O-02 — Shop seeking to create an opening"
+        ],
+        "ordinal": 7,
+        "content": "## Hypothetical case O-02 — Shop seeking to create an opening\n\n**Fictional example.** Removing a partition may affect structure, services, fire compartmentation or escape routes. Prior technical checking is necessary; do not promise feasibility based on a schematic plan.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      }
+    ],
+    "metrics": {
+      "embeddingMs": 124.7732,
+      "vectorSearchMs": null,
+      "lambdaInvokeMs": null,
+      "retrievalIncludingEmbeddingMs": 205.020109,
+      "generationMs": 1529.103404,
+      "totalMs": 1734.890678
+    },
+    "configuration": {
+      "topK": 5,
+      "minScore": 0.63,
+      "translationMode": "NEVER"
+    }
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "caseId": "case-23",
+  "number": 28,
+  "language": "es",
+  "question": "Las vigas de madera de mi casa vieja están combadas. ¿Se refuerzan o se cambian?",
+  "request": {
+    "question": "Las vigas de madera de mi casa vieja están combadas. ¿Se refuerzan o se cambian?",
+    "responseLanguage": "es"
+  },
+  "endpoint": "http://192.168.1.207:8080/api/rag/answers",
+  "httpStatus": 200,
+  "httpLatencyMs": 2372.649664000164,
+  "attempts": 1,
+  "httpResponse": {
+    "answer": "Se debe revisar la estabilidad, humedad, instalaciones y exigencias de la vivienda, y solicitar evaluación estructural ante flechas, grietas o deformaciones relevantes [S3]. No se establece si el refuerzo o el cambio de las vigas es necesario sin una evaluación estructural previa.",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S3]",
+        "source": "es/guides/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.md",
+        "headingPath": [
+          "Riansares 4R — viviendas antiguas: rehabilitar con criterio y seguridad",
+          "¿Cómo se planifica una reforma con madera y muros antiguos?"
+        ],
+        "ordinal": 2
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b",
+      "inferenceHost": {
+        "type": "desktop",
+        "hostname": "PC-GIGA-ZORUX",
+        "cpu": "Intel i9-14900KF",
+        "ram": "64 GB DDR5",
+        "gpu": "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status": "PARTIAL"
+  },
+  "capture": {
+    "capturedAt": "2026-11-14T08:43:39.467905264Z",
+    "question": "Las vigas de madera de mi casa vieja están combadas. ¿Se refuerzan o se cambian?",
+    "responseLanguage": "es",
+    "answer": "Se debe revisar la estabilidad, humedad, instalaciones y exigencias de la vivienda, y solicitar evaluación estructural ante flechas, grietas o deformaciones relevantes [S3]. No se establece si el refuerzo o el cambio de las vigas es necesario sin una evaluación estructural previa.",
+    "status": "PARTIAL",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S3]",
+        "source": "es/guides/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.md",
+        "headingPath": [
+          "Riansares 4R — viviendas antiguas: rehabilitar con criterio y seguridad",
+          "¿Cómo se planifica una reforma con madera y muros antiguos?"
+        ],
+        "ordinal": 2
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b"
+    },
+    "generationInvoked": true,
+    "generatedOutput": "{\"status\":\"PARTIAL\",\"limitation\":\"No se establece si el refuerzo o el cambio de las vigas es necesario sin una evaluación estructural previa.\",\"answer\":\"Se debe revisar la estabilidad, humedad, instalaciones y exigencias de la vivienda, y solicitar evaluación estructural ante flechas, grietas o deformaciones relevantes [S3].\"}",
+    "outcome": "partial",
+    "retrievedChunkCount": 5,
+    "chunks": [
+      {
+        "label": "[S1]",
+        "source": "es/R4R_20_CASOS_OFICINAS_CUEVAS_BANOS_Y_FILTROS.md",
+        "headingPath": [
+          "Riansares 4R — casos de oficinas, cuevas, baños y filtros comerciales",
+          "13. Caso H — Dos baños contiguos en una vivienda antigua y estrecha",
+          "13.8. Vigas de madera"
+        ],
+        "ordinal": 26,
+        "content": "### 13.8. Vigas de madera\n\nLas vigas estaban parcialmente empotradas y no era posible tratar toda su superficie. El criterio fue permitir que la cara visible siguiera secando.\n\nEvitar:\n\n- esmaltes cerrados;\n- barnices de poliuretano brillantes;\n- envolver totalmente la madera con cemento, silicona o membrana impermeable;\n- sellar rígidamente la unión madera-cal.\n\nPreferir:\n\n- limpieza y aspirado;\n- comprobación de sequedad y estado;\n- lasur de poro abierto cuando proceda;\n- ventilación mediante extractor;\n- junta flexible o encuentro no rígido.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S2]",
+        "source": "es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.md",
+        "headingPath": [
+          "Cómo expresar dudas de reformas — ejemplos de consultas reales y ambiguas",
+          "La casa es muy vieja. ¿Se puede reformar sin tirarlo todo?"
+        ],
+        "ordinal": 8,
+        "content": "## La casa es muy vieja. ¿Se puede reformar sin tirarlo todo?\n\nA menudo se pueden plantear actuaciones selectivas, pero la viabilidad depende de estabilidad, humedad, instalaciones y exigencias. Conservación y seguridad deben evaluarse juntas.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S3]",
+        "source": "es/guides/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.md",
+        "headingPath": [
+          "Riansares 4R — viviendas antiguas: rehabilitar con criterio y seguridad",
+          "¿Cómo se planifica una reforma con madera y muros antiguos?"
+        ],
+        "ordinal": 2,
+        "content": "## ¿Cómo se planifica una reforma con madera y muros antiguos?\n\nSeparar mantenimiento, patología, instalaciones y acabados. Revisar vigas, apoyos, humedades, ataques biológicos y cargas cuando proceda; no cubrir elementos dañados para que dejen de verse. Mantener compatibilidad de materiales, ventilación y capacidad de secado. Solicitar evaluación estructural ante flechas, grietas o deformaciones relevantes.",
+        "cited": true,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S4]",
+        "source": "es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.md",
+        "headingPath": [
+          "Cómo expresar dudas de reformas — ejemplos de consultas reales y ambiguas",
+          "Las cañerías de la cocina están hechas polvo. ¿Me toca cambiarlo todo?"
+        ],
+        "ordinal": 2,
+        "content": "## Las cañerías de la cocina están hechas polvo. ¿Me toca cambiarlo todo?\n\nNo afirmar que toda la instalación debe cambiarse sin inspección. La antigüedad y las averías repetidas justifican evaluación, pero pueden existir soluciones por tramos.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S5]",
+        "source": "es/guides/R4R_106_HUMEDADES_CAPILARIDAD_CONDENSACION_FILTRACION.md",
+        "headingPath": [
+          "Humedades — identificación del origen y decisiones de reparación",
+          "¿Qué pasa si aparece moho tras cambiar ventanas?"
+        ],
+        "ordinal": 8,
+        "content": "## ¿Qué pasa si aparece moho tras cambiar ventanas?\n\nPuede haber cambiado el equilibrio entre infiltración de aire y ventilación. Evaluar ventilación, puentes térmicos y uso, sin concluir automáticamente que las ventanas están defectuosas.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      }
+    ],
+    "metrics": {
+      "embeddingMs": 125.313014,
+      "vectorSearchMs": null,
+      "lambdaInvokeMs": null,
+      "retrievalIncludingEmbeddingMs": 266.51078,
+      "generationMs": 2102.303176,
+      "totalMs": 2369.763031
+    },
+    "configuration": {
+      "topK": 5,
+      "minScore": 0.63,
+      "translationMode": "NEVER"
+    }
+  }
+}

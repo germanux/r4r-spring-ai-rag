@@ -1,0 +1,163 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "caseId": "case-17",
+  "number": 17,
+  "language": "es",
+  "question": "Los muebles de la cocina están bien. ¿Cómo la renuevo sin desmontarlo todo?",
+  "request": {
+    "question": "Los muebles de la cocina están bien. ¿Cómo la renuevo sin desmontarlo todo?",
+    "responseLanguage": "es"
+  },
+  "endpoint": "http://192.168.1.207:8080/api/rag/answers",
+  "httpStatus": 200,
+  "httpLatencyMs": 5426.122719999512,
+  "attempts": 2,
+  "httpResponse": {
+    "answer": "Si los muebles de la cocina están en buen estado, se puede renovar sin desmontarlos completamente. Primero, valorar fugas y redes ocultas y definir la distribución; después coordinar muebles y acabados [S1]. Además, se puede sustituir también los azulejos de la cocina después de reparar fugas y comprobar que el soporte esté firme y seco [S4].",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S1]",
+        "source": "es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.md",
+        "headingPath": [
+          "Cómo expresar dudas de reformas — ejemplos de consultas reales y ambiguas",
+          "Quiero dejar la cocina nueva aprovechando que hay una avería. ¿Empiezo por muebles?"
+        ],
+        "ordinal": 4
+      },
+      {
+        "label": "[S4]",
+        "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+        "headingPath": [
+          "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma",
+          "Pregunta — ¿Puedo sustituir también los azulejos de la cocina?"
+        ],
+        "ordinal": 4
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b",
+      "inferenceHost": {
+        "type": "desktop",
+        "hostname": "PC-GIGA-ZORUX",
+        "cpu": "Intel i9-14900KF",
+        "ram": "64 GB DDR5",
+        "gpu": "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status": "ANSWERED"
+  },
+  "capture": {
+    "capturedAt": "2026-11-14T08:43:16.969597597Z",
+    "question": "Los muebles de la cocina están bien. ¿Cómo la renuevo sin desmontarlo todo?",
+    "responseLanguage": "es",
+    "answer": "Si los muebles de la cocina están en buen estado, se puede renovar sin desmontarlos completamente. Primero, valorar fugas y redes ocultas y definir la distribución; después coordinar muebles y acabados [S1]. Además, se puede sustituir también los azulejos de la cocina después de reparar fugas y comprobar que el soporte esté firme y seco [S4].",
+    "status": "ANSWERED",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S1]",
+        "source": "es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.md",
+        "headingPath": [
+          "Cómo expresar dudas de reformas — ejemplos de consultas reales y ambiguas",
+          "Quiero dejar la cocina nueva aprovechando que hay una avería. ¿Empiezo por muebles?"
+        ],
+        "ordinal": 4
+      },
+      {
+        "label": "[S4]",
+        "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+        "headingPath": [
+          "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma",
+          "Pregunta — ¿Puedo sustituir también los azulejos de la cocina?"
+        ],
+        "ordinal": 4
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b"
+    },
+    "generationInvoked": true,
+    "generatedOutput": "{\"status\":\"ANSWERED\",\"limitation\":\"\",\"answer\":\"Si los muebles de la cocina están en buen estado, se puede renovar sin desmontarlos completamente. Primero, valorar fugas y redes ocultas y definir la distribución; después coordinar muebles y acabados [S1]. Además, se puede sustituir también los azulejos de la cocina después de reparar fugas y comprobar que el soporte esté firme y seco [S4].\" }",
+    "outcome": "answered",
+    "retrievedChunkCount": 5,
+    "chunks": [
+      {
+        "label": "[S1]",
+        "source": "es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.md",
+        "headingPath": [
+          "Cómo expresar dudas de reformas — ejemplos de consultas reales y ambiguas",
+          "Quiero dejar la cocina nueva aprovechando que hay una avería. ¿Empiezo por muebles?"
+        ],
+        "ordinal": 4,
+        "content": "## Quiero dejar la cocina nueva aprovechando que hay una avería. ¿Empiezo por muebles?\n\nPrimero valorar fugas y redes ocultas y definir distribución; después coordinar muebles y acabados. No montar mobiliario final antes de comprobar instalaciones que puedan requerir apertura.",
+        "cited": true,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S2]",
+        "source": "es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.md",
+        "headingPath": [
+          "Cómo expresar dudas de reformas — ejemplos de consultas reales y ambiguas",
+          "Las cañerías de la cocina están hechas polvo. ¿Me toca cambiarlo todo?"
+        ],
+        "ordinal": 2,
+        "content": "## Las cañerías de la cocina están hechas polvo. ¿Me toca cambiarlo todo?\n\nNo afirmar que toda la instalación debe cambiarse sin inspección. La antigüedad y las averías repetidas justifican evaluación, pero pueden existir soluciones por tramos.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S3]",
+        "source": "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+        "headingPath": [
+          "Riansares 4R — casos de patios, viviendas, humedades y reparaciones",
+          "7. Caso B — Vivienda antigua: rehabilitar sin demoler de más",
+          "7.6. Cocina"
+        ],
+        "ordinal": 17,
+        "content": "### 7.6. Cocina\n\nLa cocina fue considerada la estancia que más valor aportaba:\n\n- gama económica o media-baja bien elegida;\n- muebles altos hasta techo;\n- almacenamiento cerrado;\n- encimera sencilla;\n- adaptación de enchufes e iluminación;\n- conservar posiciones de agua y desagüe si son viables;\n- electrodomésticos separados salvo acuerdo.\n\nMensaje comercial:\n\n> No se venden solo muebles; se resuelve una cocina desordenada, difícil de limpiar y poco funcional.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S4]",
+        "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+        "headingPath": [
+          "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma",
+          "Pregunta — ¿Puedo sustituir también los azulejos de la cocina?"
+        ],
+        "ordinal": 4,
+        "content": "## Pregunta — ¿Puedo sustituir también los azulejos de la cocina?\n\nSí, **es posible incluir nuevos azulejos en una reforma de cocina**, después de reparar fugas y comprobar que el soporte esté firme y seco. Hay que determinar si retirar el revestimiento antiguo, regularizar paredes y tratar encuentros; no alicatar encima de superficies sueltas o húmedas sin diagnóstico. Revestir no sustituye la reparación de tuberías. El cambio de azulejos se presupuestará como partida diferente de fontanería y muebles, según superficie, preparación y remates.",
+        "cited": true,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S5]",
+        "source": "es/cases/R4R_91_CASOS_HIPOTETICOS_VARIADOS.md",
+        "headingPath": [
+          "Riansares 4R — casos hipotéticos de consulta para ampliar cobertura",
+          "C-01 — Cocina con fuga y muebles dañados (hipotético)"
+        ],
+        "ordinal": 2,
+        "content": "## C-01 — Cocina con fuga y muebles dañados (hipotético)\n\nPregunta: «Se ha roto una tubería detrás de los muebles de la cocina; ¿debo cambiarlos todos?»\n\nOrientación: cortar aporte de agua, valorar seguridad, reparar y verificar tubería, inspeccionar humedad y estado del mobiliario. Sustituir únicamente elementos dañados o los que el propietario decida renovar; no hay obligación técnica general de cambiar todos los muebles. Documentar daños para seguro si procede.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      }
+    ],
+    "metrics": {
+      "embeddingMs": 150.484148,
+      "vectorSearchMs": null,
+      "lambdaInvokeMs": null,
+      "retrievalIncludingEmbeddingMs": 286.859682,
+      "generationMs": 3132.733644,
+      "totalMs": 3420.350259
+    },
+    "configuration": {
+      "topK": 5,
+      "minScore": 0.63,
+      "translationMode": "NEVER"
+    }
+  }
+}

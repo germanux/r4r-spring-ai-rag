@@ -1,0 +1,124 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "caseId": "case-24",
+  "number": 29,
+  "language": "es",
+  "question": "Tenemos una oficina donde hace mucho calor en unas zonas y frío en otras. ¿Se puede solucionar con una reforma de la climatización sin cambiar todo el sistema?",
+  "request": {
+    "question": "Tenemos una oficina donde hace mucho calor en unas zonas y frío en otras. ¿Se puede solucionar con una reforma de la climatización sin cambiar todo el sistema?",
+    "responseLanguage": "es"
+  },
+  "endpoint": "http://192.168.1.207:8080/api/rag/answers",
+  "httpStatus": 200,
+  "httpLatencyMs": 5820.171189000575,
+  "attempts": 2,
+  "httpResponse": {
+    "answer": "",
+    "abstained": true,
+    "citations": [],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b",
+      "inferenceHost": {
+        "type": "desktop",
+        "hostname": "PC-GIGA-ZORUX",
+        "cpu": "Intel i9-14900KF",
+        "ram": "64 GB DDR5",
+        "gpu": "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status": "ABSTAINED"
+  },
+  "capture": {
+    "capturedAt": "2026-11-14T08:43:47.289518043Z",
+    "question": "Tenemos una oficina donde hace mucho calor en unas zonas y frío en otras. ¿Se puede solucionar con una reforma de la climatización sin cambiar todo el sistema?",
+    "responseLanguage": "es",
+    "answer": "",
+    "status": "ABSTAINED",
+    "abstained": true,
+    "citations": [],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b"
+    },
+    "generationInvoked": true,
+    "generatedOutput": "{\"status\":\"PARTIAL\",\"limitation\":\"No se establece si la reforma de la climatización puede resolver específicamente las desigualdades de temperatura sin cambiar todo el sistema.\",\"answer\":\"La calificación energética puede mejorar con actuaciones que reduzcan la demanda y consumo, según metodología de certificación aplicable [S3]. Los puentes térmicos, que pueden influir en pérdidas y condensaciones, requieren solución compatible con el edificio [S5].\"}",
+    "outcome": "irrelevant_partial",
+    "retrievedChunkCount": 5,
+    "chunks": [
+      {
+        "label": "[S1]",
+        "source": "es/guides/R4R_85_OFICINAS_LOCALES_Y_COMUNIDADES.md",
+        "headingPath": [
+          "Riansares 4R — oficinas, locales y comunidades: alcance y coordinación",
+          "¿Qué cambia al reformar una oficina ocupada?"
+        ],
+        "ordinal": 1,
+        "content": "## ¿Qué cambia al reformar una oficina ocupada?\n\nSe necesita acordar fases, horarios, ruido, polvo, accesos, señalización, seguridad, continuidad de uso y zonas de trabajo. Antes de presupuestar, definir superficie, número de puestos, instalaciones, protección contra incendios y otras exigencias según actividad y local. No asumir que los requisitos son iguales a los de una vivienda.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S2]",
+        "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+        "headingPath": [
+          "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma",
+          "Pregunta — ¿Se puede usar la cocina mientras se hace la reforma?"
+        ],
+        "ordinal": 7,
+        "content": "## Pregunta — ¿Se puede usar la cocina mientras se hace la reforma?\n\nDependerá de la extensión de la obra y de si existen cortes de agua, electricidad, polvo o zonas sin condiciones de seguridad. Antes de iniciar, acordar días sin suministro, protección del mobiliario, accesos de obra, retirada de residuos y un posible espacio temporal para preparar comidas. No utilizar instalaciones desconectadas o sin verificar. [NAHB: convivencia con una reforma](https://www.nahb.org/Other/Consumer-Resources/How-to-Live-with-Your-Remodeling-Project).",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S3]",
+        "source": "es/guides/R4R_111_AISLAMIENTO_VENTANAS_Y_REHABILITACION_ENERGETICA.md",
+        "headingPath": [
+          "Aislamiento y rehabilitación energética — decisiones fundamentadas",
+          "¿Puede cambiar la calificación energética tras una reforma?"
+        ],
+        "ordinal": 7,
+        "content": "## ¿Puede cambiar la calificación energética tras una reforma?\n\nPuede mejorar si las actuaciones reducen la demanda y/o consumo según metodología de certificación aplicable. La mejora concreta requiere cálculo y verificación profesional.",
+        "cited": false,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S4]",
+        "source": "es/guides/R4R_118_PREGUNTAS_INICIALES_Y_SEGUIMIENTO_DE_OBRA.md",
+        "headingPath": [
+          "Atención al cliente — preguntas de entrada, entregas y mantenimiento",
+          "¿Qué pedir para una reforma de oficina?"
+        ],
+        "ordinal": 4,
+        "content": "## ¿Qué pedir para una reforma de oficina?\n\nPlano o medidas, actividad y horarios, aforo previsto si aplica, instalaciones, accesos, usuarios con necesidades de accesibilidad, urgencia y trabajos que deben mantenerse operativos.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S5]",
+        "source": "es/guides/R4R_111_AISLAMIENTO_VENTANAS_Y_REHABILITACION_ENERGETICA.md",
+        "headingPath": [
+          "Aislamiento y rehabilitación energética — decisiones fundamentadas",
+          "¿Qué son puentes térmicos?"
+        ],
+        "ordinal": 8,
+        "content": "## ¿Qué son puentes térmicos?\n\nZonas donde el flujo de calor difiere del resto de la envolvente, como encuentros estructurales o contornos de huecos. Pueden influir en pérdidas y condensaciones; requieren solución compatible con el edificio.",
+        "cited": false,
+        "referencedInGeneratedOutput": true
+      }
+    ],
+    "metrics": {
+      "embeddingMs": 477.571643,
+      "vectorSearchMs": null,
+      "lambdaInvokeMs": null,
+      "retrievalIncludingEmbeddingMs": 712.178774,
+      "generationMs": 3103.367947,
+      "totalMs": 3816.211797
+    },
+    "configuration": {
+      "topK": 5,
+      "minScore": 0.63,
+      "translationMode": "NEVER"
+    }
+  }
+}

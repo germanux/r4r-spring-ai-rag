@@ -1,0 +1,162 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "caseId": "case-17",
+  "number": 17,
+  "language": "en",
+  "question": "The kitchen cabinets are fine. How can I refresh it without taking everything apart?",
+  "request": {
+    "question": "The kitchen cabinets are fine. How can I refresh it without taking everything apart?",
+    "responseLanguage": "en"
+  },
+  "endpoint": "http://192.168.1.207:8080/api/rag/answers",
+  "httpStatus": 200,
+  "httpLatencyMs": 4166.341529999954,
+  "attempts": 2,
+  "httpResponse": {
+    "answer": "You can refresh the kitchen without taking everything apart by coordinating cabinet and appliance replacements with water supplies, drainage, electrical circuits and ventilation [S5]. Verify that appliances retain adequate ventilation and accessible connections before dismantling [S1].",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S1]",
+        "source": "en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.md",
+        "headingPath": [
+          "Kitchens — scope, materials and trade coordination",
+          "Can I keep the cabinets while the plumbing is replaced?"
+        ],
+        "ordinal": 2
+      },
+      {
+        "label": "[S5]",
+        "source": "en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.md",
+        "headingPath": [
+          "Kitchens — scope, materials and trade coordination",
+          "What if I also want to replace cabinets and appliances?"
+        ],
+        "ordinal": 3
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b",
+      "inferenceHost": {
+        "type": "desktop",
+        "hostname": "PC-GIGA-ZORUX",
+        "cpu": "Intel i9-14900KF",
+        "ram": "64 GB DDR5",
+        "gpu": "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status": "ANSWERED"
+  },
+  "capture": {
+    "capturedAt": "2026-11-14T08:44:05.059125698Z",
+    "question": "The kitchen cabinets are fine. How can I refresh it without taking everything apart?",
+    "responseLanguage": "en",
+    "answer": "You can refresh the kitchen without taking everything apart by coordinating cabinet and appliance replacements with water supplies, drainage, electrical circuits and ventilation [S5]. Verify that appliances retain adequate ventilation and accessible connections before dismantling [S1].",
+    "status": "ANSWERED",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S1]",
+        "source": "en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.md",
+        "headingPath": [
+          "Kitchens — scope, materials and trade coordination",
+          "Can I keep the cabinets while the plumbing is replaced?"
+        ],
+        "ordinal": 2
+      },
+      {
+        "label": "[S5]",
+        "source": "en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.md",
+        "headingPath": [
+          "Kitchens — scope, materials and trade coordination",
+          "What if I also want to replace cabinets and appliances?"
+        ],
+        "ordinal": 3
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b"
+    },
+    "generationInvoked": true,
+    "generatedOutput": "{\"status\":\"ANSWERED\",\"limitation\":\"\",\"answer\":\"You can refresh the kitchen without taking everything apart by coordinating cabinet and appliance replacements with water supplies, drainage, electrical circuits and ventilation [S5]. Verify that appliances retain adequate ventilation and accessible connections before dismantling [S1].\"}",
+    "outcome": "answered",
+    "retrievedChunkCount": 5,
+    "chunks": [
+      {
+        "label": "[S1]",
+        "source": "en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.md",
+        "headingPath": [
+          "Kitchens — scope, materials and trade coordination",
+          "Can I keep the cabinets while the plumbing is replaced?"
+        ],
+        "ordinal": 2,
+        "content": "## Can I keep the cabinets while the plumbing is replaced?\n\nThat depends on access to the affected pipe, the cabinets' condition, water damage and whether they can be removed and reinstalled. Photograph them before dismantling, and verify that appliances retain adequate ventilation and accessible connections.",
+        "cited": true,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S2]",
+        "source": "en/guides/R4R_122_REAL_VISITOR_WORDING.md",
+        "headingPath": [
+          "How to express renovation concerns — examples of real-world and ambiguous queries",
+          "I want a new-looking kitchen while fixing a fault. Should I start with cabinets?"
+        ],
+        "ordinal": 4,
+        "content": "## I want a new-looking kitchen while fixing a fault. Should I start with cabinets?\n\nFirst assess leaks and concealed pipework and define layout; then coordinate cabinets and finishes. Do not install final furniture before checking services that may require opening up.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S3]",
+        "source": "en/guides/R4R_108_OCCUPIED_HOMES_AND_PHASED_RENOVATIONS.md",
+        "headingPath": [
+          "Work in occupied homes — phases, safety and coordination",
+          "How is a kitchen renovation planned without an alternative kitchen?"
+        ],
+        "ordinal": 2,
+        "content": "## How is a kitchen renovation planned without an alternative kitchen?\n\nAgree interruption dates, safe food and equipment storage, waste removal and personnel access. A realistic schedule indicates periods without water, electricity or a sink.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S4]",
+        "source": "en/guides/R4R_122_REAL_VISITOR_WORDING.md",
+        "headingPath": [
+          "How to express renovation concerns — examples of real-world and ambiguous queries",
+          "The kitchen pipes are in terrible shape. Must I replace everything?"
+        ],
+        "ordinal": 2,
+        "content": "## The kitchen pipes are in terrible shape. Must I replace everything?\n\nDo not assert that the whole installation needs replacement without inspection. Age and repeated faults justify assessment, but section-by-section solutions may exist.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S5]",
+        "source": "en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.md",
+        "headingPath": [
+          "Kitchens — scope, materials and trade coordination",
+          "What if I also want to replace cabinets and appliances?"
+        ],
+        "ordinal": 3,
+        "content": "## What if I also want to replace cabinets and appliances?\n\nThis can be part of the project, but cabinet and appliance dimensions must be coordinated with water supplies, drainage, electrical circuits and ventilation. Replacing cabinets does not necessarily mean relocating all services.",
+        "cited": true,
+        "referencedInGeneratedOutput": true
+      }
+    ],
+    "metrics": {
+      "embeddingMs": 370.477582,
+      "vectorSearchMs": null,
+      "lambdaInvokeMs": null,
+      "retrievalIncludingEmbeddingMs": 427.05449,
+      "generationMs": 1735.381866,
+      "totalMs": 2163.011342
+    },
+    "configuration": {
+      "topK": 5,
+      "minScore": 0.63,
+      "translationMode": "NEVER"
+    }
+  }
+}

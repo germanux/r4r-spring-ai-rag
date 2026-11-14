@@ -1,0 +1,167 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "caseId": "case-02",
+  "number": 2,
+  "language": "en",
+  "question": "In construction, how does the concrete base differ from the finished flooring?",
+  "request": {
+    "question": "In construction, how does the concrete base differ from the finished flooring?",
+    "responseLanguage": "en"
+  },
+  "endpoint": "http://192.168.1.207:8080/api/rag/answers",
+  "httpStatus": 200,
+  "httpLatencyMs": 4652.627921000203,
+  "attempts": 2,
+  "httpResponse": {
+    "answer": "A concrete floor base is the structural or levelling base that carries loads and provides support according to the construction system [S4]. The floor finish is the final walkable surface, such as tiles or stone, laid on a suitable substrate [S2].",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S2]",
+        "source": "en/guides/R4R_84_PATIOS_CONCRETE_BASES_FLOOR_FINISHES_AND_DRAINAGE.md",
+        "headingPath": [
+          "Riansares 4R — patios and paving: concrete base, floor finish and drainage",
+          "What is the difference between a concrete floor base and a floor finish?"
+        ],
+        "ordinal": 1
+      },
+      {
+        "label": "[S4]",
+        "source": "en/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath": [
+          "Riansares 4R — all frequently asked questions",
+          "Floors",
+          "FAQ-041 — What is the difference between a concrete floor base and a floor finish?"
+        ],
+        "ordinal": 50
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b",
+      "inferenceHost": {
+        "type": "desktop",
+        "hostname": "PC-GIGA-ZORUX",
+        "cpu": "Intel i9-14900KF",
+        "ram": "64 GB DDR5",
+        "gpu": "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status": "ANSWERED"
+  },
+  "capture": {
+    "capturedAt": "2026-11-14T08:43:58.891994063Z",
+    "question": "In construction, how does the concrete base differ from the finished flooring?",
+    "responseLanguage": "en",
+    "answer": "A concrete floor base is the structural or levelling base that carries loads and provides support according to the construction system [S4]. The floor finish is the final walkable surface, such as tiles or stone, laid on a suitable substrate [S2].",
+    "status": "ANSWERED",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S2]",
+        "source": "en/guides/R4R_84_PATIOS_CONCRETE_BASES_FLOOR_FINISHES_AND_DRAINAGE.md",
+        "headingPath": [
+          "Riansares 4R — patios and paving: concrete base, floor finish and drainage",
+          "What is the difference between a concrete floor base and a floor finish?"
+        ],
+        "ordinal": 1
+      },
+      {
+        "label": "[S4]",
+        "source": "en/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath": [
+          "Riansares 4R — all frequently asked questions",
+          "Floors",
+          "FAQ-041 — What is the difference between a concrete floor base and a floor finish?"
+        ],
+        "ordinal": 50
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b"
+    },
+    "generationInvoked": true,
+    "generatedOutput": "{\"status\":\"ANSWERED\",\"limitation\":\"\",\"answer\":\"A concrete floor base is the structural or levelling base that carries loads and provides support according to the construction system [S4]. The floor finish is the final walkable surface, such as tiles or stone, laid on a suitable substrate [S2].\"}",
+    "outcome": "answered",
+    "retrievedChunkCount": 5,
+    "chunks": [
+      {
+        "label": "[S1]",
+        "source": "en/guides/R4R_105_FLOOR_SLAB_FLOOR_FINISH_PATIOS_DRAINAGE_AND_GRADIENTS.md",
+        "headingPath": [
+          "Patios and flooring — slab base, floor finish, damp and drainage",
+          "What is the difference between a concrete floor base and a floor finish?"
+        ],
+        "ordinal": 1,
+        "content": "## What is the difference between a concrete floor base and a floor finish?\n\nA **concrete floor base** is a base layer or supporting element on which flooring may be laid. A **floor finish** is the walkable floor finish, such as tiles or another suitable material. They are not synonyms; the construction system and intended use determine the appropriate build-up.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S2]",
+        "source": "en/guides/R4R_84_PATIOS_CONCRETE_BASES_FLOOR_FINISHES_AND_DRAINAGE.md",
+        "headingPath": [
+          "Riansares 4R — patios and paving: concrete base, floor finish and drainage",
+          "What is the difference between a concrete floor base and a floor finish?"
+        ],
+        "ordinal": 1,
+        "content": "## What is the difference between a concrete floor base and a floor finish?\n\nThe **concrete floor base** is a layer or base element that carries loads and provides support according to the construction system. The **floor finish** is the final walkable surface, such as tiles or stone laid on a suitable substrate. They are not synonyms: a floor finish can be renewed while retaining a sound concrete base, or a new base may be needed before paving.",
+        "cited": true,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S3]",
+        "source": "en/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath": [
+          "Riansares 4R — all frequently asked questions",
+          "Extended practical queries — November 2026",
+          "FAQ-067 — Are a concrete floor base and a floor finish the same?"
+        ],
+        "ordinal": 83,
+        "content": "### FAQ-067 — Are a concrete floor base and a floor finish the same?\n\nNo. The base is part of the supporting construction; the floor finish is the finished flooring. Either can be renewed without changing the other if the substrate is suitable.\n\n**Category:** Patios. **Base:** BASE-CANONICA.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S4]",
+        "source": "en/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath": [
+          "Riansares 4R — all frequently asked questions",
+          "Floors",
+          "FAQ-041 — What is the difference between a concrete floor base and a floor finish?"
+        ],
+        "ordinal": 50,
+        "content": "### FAQ-041 — What is the difference between a concrete floor base and a floor finish?\n\nThe concrete floor base is the structural or levelling base; the floor finish is the final flooring.\n\n**Base:** BASE-CANONICA",
+        "cited": true,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S5]",
+        "source": "en/R4R_10_PATIO_HOME_DAMP_AND_REPAIR_CASES.md",
+        "headingPath": [
+          "Riansares 4R — Patio, Home, Damp and Repair Cases",
+          "6. Case A — Courtyard, Base, Paving and Drainage",
+          "6.3. Distinction Between Concrete Floor Base and Floor Finish"
+        ],
+        "ordinal": 4,
+        "content": "### 6.3. Distinction Between Concrete Floor Base and Floor Finish\n\n**Concrete floor base**: prepared concrete or mortar base to receive the paving, with preparation, thicknesses, reinforcement, slopes, and joints.\n\n**Floor tiling**: placement of the final paving on an appropriate base.\n\nA budget may have:\n\n- fewer m² of base than paving;\n- different concreting methods;\n- the same type of tile on different supports;\n- non-comparable costs per m² if mixed items are combined.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      }
+    ],
+    "metrics": {
+      "embeddingMs": 421.142609,
+      "vectorSearchMs": null,
+      "lambdaInvokeMs": null,
+      "retrievalIncludingEmbeddingMs": 526.002732,
+      "generationMs": 2122.018595,
+      "totalMs": 2648.662765
+    },
+    "configuration": {
+      "topK": 5,
+      "minScore": 0.63,
+      "translationMode": "NEVER"
+    }
+  }
+}

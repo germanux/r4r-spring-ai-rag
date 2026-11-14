@@ -1,0 +1,143 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "caseId": "case-01",
+  "number": 1,
+  "language": "es",
+  "question": "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?",
+  "request": {
+    "question": "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?",
+    "responseLanguage": "es"
+  },
+  "endpoint": "http://192.168.1.207:8080/api/rag/answers",
+  "httpStatus": 200,
+  "httpLatencyMs": 2405.3686520001065,
+  "attempts": 1,
+  "httpResponse": {
+    "answer": "Para una orientación inicial, debes facilitar fotos, ubicación, superficie aproximada, problema, resultado esperado, distribución, materiales deseados, acceso, uso actual, plazos y prioridades [S2].",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S2]",
+        "source": "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
+        "headingPath": [
+          "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance",
+          "¿Qué necesito para pedir presupuesto de reforma?"
+        ],
+        "ordinal": 1
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b",
+      "inferenceHost": {
+        "type": "desktop",
+        "hostname": "PC-GIGA-ZORUX",
+        "cpu": "Intel i9-14900KF",
+        "ram": "64 GB DDR5",
+        "gpu": "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status": "ANSWERED"
+  },
+  "capture": {
+    "capturedAt": "2026-11-14T08:43:09.538465353Z",
+    "question": "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?",
+    "responseLanguage": "es",
+    "answer": "Para una orientación inicial, debes facilitar fotos, ubicación, superficie aproximada, problema, resultado esperado, distribución, materiales deseados, acceso, uso actual, plazos y prioridades [S2].",
+    "status": "ANSWERED",
+    "abstained": false,
+    "citations": [
+      {
+        "label": "[S2]",
+        "source": "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
+        "headingPath": [
+          "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance",
+          "¿Qué necesito para pedir presupuesto de reforma?"
+        ],
+        "ordinal": 1
+      }
+    ],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b"
+    },
+    "generationInvoked": true,
+    "generatedOutput": "{\"status\":\"ANSWERED\",\"limitation\":\"\",\"answer\":\"Para una orientación inicial, debes facilitar fotos, ubicación, superficie aproximada, problema, resultado esperado, distribución, materiales deseados, acceso, uso actual, plazos y prioridades [S2].\"}",
+    "outcome": "answered",
+    "retrievedChunkCount": 5,
+    "chunks": [
+      {
+        "label": "[S1]",
+        "source": "es/guides/R4R_114_GUIA_DE_RESPUESTAS_PRUDENTES_Y_LIMITES_DEL_ASESORAMIENTO.md",
+        "headingPath": [
+          "Orientación al visitante — qué puede responder un asistente de reformas"
+        ],
+        "ordinal": 0,
+        "content": "# Orientación al visitante — qué puede responder un asistente de reformas\n\n## ¿Qué significa una primera orientación?\n\nEs una explicación inicial basada en documentos disponibles. No sustituye visita a obra, medición, proyecto, informe de un técnico competente ni presupuestos con alcance confirmado.\n\n## ¿Por qué a veces no se puede responder?\n\nLa documentación puede no abarcar un material, instalación, zona o requisito concreto. Es preferible identificar los datos que faltan que inventar precios, marcas, plazos o conclusiones.\n\n## ¿Una fotografía basta para decir cuánto cuesta?\n\nNo. Una fotografía aporta contexto, pero faltan medidas, soportes, accesos, nivel de acabado, residuos y posibles instalaciones ocultas. Para estimar se necesitan datos de alcance y mercado.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S2]",
+        "source": "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
+        "headingPath": [
+          "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance",
+          "¿Qué necesito para pedir presupuesto de reforma?"
+        ],
+        "ordinal": 1,
+        "content": "## ¿Qué necesito para pedir presupuesto de reforma?\n\nFotos, ubicación, superficie aproximada, problema, resultado esperado, distribución, materiales deseados, acceso, uso actual, plazos y prioridades. La información permite una primera orientación, pero no sustituye la visita, las mediciones ni el diagnóstico de instalaciones ocultas. Para cocina y baño, indicar si se mantienen posiciones de agua y desagüe.",
+        "cited": true,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S3]",
+        "source": "es/guides/R4R_103_PRESUPUESTO_COCINA_MEDICIONES_Y_VARIACIONES.md",
+        "headingPath": [
+          "Cocinas — presupuesto por partidas y control de cambios",
+          "¿Por qué conviene distinguir reparación de reforma?"
+        ],
+        "ordinal": 2,
+        "content": "## ¿Por qué conviene distinguir reparación de reforma?\n\nLa reparación atiende una necesidad funcional o de seguridad; la reforma puede incorporar mejoras voluntarias. Separarlas permite al propietario identificar qué partidas son urgentes y cuáles puede posponer.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S4]",
+        "source": "es/guides/R4R_118_PREGUNTAS_INICIALES_Y_SEGUIMIENTO_DE_OBRA.md",
+        "headingPath": [
+          "Atención al cliente — preguntas de entrada, entregas y mantenimiento",
+          "¿Qué pedir para una reforma de oficina?"
+        ],
+        "ordinal": 4,
+        "content": "## ¿Qué pedir para una reforma de oficina?\n\nPlano o medidas, actividad y horarios, aforo previsto si aplica, instalaciones, accesos, usuarios con necesidades de accesibilidad, urgencia y trabajos que deben mantenerse operativos.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S5]",
+        "source": "es/guides/R4R_114_GUIA_DE_RESPUESTAS_PRUDENTES_Y_LIMITES_DEL_ASESORAMIENTO.md",
+        "headingPath": [
+          "Orientación al visitante — qué puede responder un asistente de reformas",
+          "¿Qué hacer si la consulta mezcla fuga y reforma estética?"
+        ],
+        "ordinal": 8,
+        "content": "## ¿Qué hacer si la consulta mezcla fuga y reforma estética?\n\nResponder primero al problema funcional o de seguridad y después a mejoras voluntarias. Indicar que cambiar azulejos, muebles o electrodomésticos no es una consecuencia obligatoria de reparar tuberías.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      }
+    ],
+    "metrics": {
+      "embeddingMs": 118.806245,
+      "vectorSearchMs": null,
+      "lambdaInvokeMs": null,
+      "retrievalIncludingEmbeddingMs": 273.909659,
+      "generationMs": 2111.094698,
+      "totalMs": 2387.787922
+    },
+    "configuration": {
+      "topK": 5,
+      "minScore": 0.63,
+      "translationMode": "NEVER"
+    }
+  }
+}

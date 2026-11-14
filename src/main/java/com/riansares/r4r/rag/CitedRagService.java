@@ -26,6 +26,7 @@ public class CitedRagService {
     private final LocalRetrievalQueryTranslator translator;
     private final EvidenceRelevanceFilter relevanceFilter;
     private final RetrievalTranslationMode translationMode;
+    private final java.util.function.Consumer<RagEvidenceSnapshot> evidenceCapture;
     // MyMemory's literal construction term differs from the corpus vocabulary; preserve its meaning.
     private static final Pattern RENOVATION_WORK = Pattern.compile("(?iu)\\btrabajos?\\s+de\\s+renovaci[oó]n\\b");
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CitedRagService.class);
@@ -88,6 +89,14 @@ public class CitedRagService {
     public CitedRagService(KnowledgeVectorStore knowledgeStore, ChatModel chatModel,
                           int retrievalTopK, double minScore, LocalRetrievalQueryTranslator translator,
                           EvidenceRelevanceFilter relevanceFilter, RetrievalTranslationMode translationMode) {
+        this(knowledgeStore, chatModel, retrievalTopK, minScore, translator, relevanceFilter, translationMode, null);
+    }
+
+    public CitedRagService(KnowledgeVectorStore knowledgeStore, ChatModel chatModel,
+                          int retrievalTopK, double minScore, LocalRetrievalQueryTranslator translator,
+                          EvidenceRelevanceFilter relevanceFilter, RetrievalTranslationMode translationMode,
+                          java.util.function.Consumer<RagEvidenceSnapshot> evidenceCapture) {
+        this.evidenceCapture = evidenceCapture;
         this.translationMode = Objects.requireNonNull(translationMode, "translationMode");
         this.relevanceFilter = relevanceFilter;
         this.translator = translator;
@@ -129,6 +138,7 @@ public class CitedRagService {
         }
         long normalized = System.nanoTime();
         List<MarkdownChunk> chunks;
+        int retrievedChunkCount;
         boolean partialEvidence = false;
         progress.emit("RETRIEVAL_STARTED");
         String finalSearchQuestion = searchQuestion;
@@ -142,6 +152,7 @@ public class CitedRagService {
                 progress.emit("RETRIEVAL_STARTED");
                 chunks = progress.duringRetrieval(() -> retrieveEvidence(translated.question()));
             }
+            retrievedChunkCount = chunks.size();
             if (relevanceFilter != null) {
                 progress.checkCancelled();
                 var selection = relevanceFilter.select(question, chunks, translatedRemotely);
@@ -162,9 +173,11 @@ public class CitedRagService {
         if (chunks.isEmpty()) {
             trace("no_evidence", 0, started, normalized, retrieved, retrieved, retrieved);
             progress.emit("VALIDATION_COMPLETED", null, chunks.size(), null, "abstained");
-            return RagResult.abstain();
+            return capture(RagResult.abstain(), question, responseLanguage, chunks, null, progress,
+                    retrievedChunkCount == 0 ? "no_evidence" : "evidence_rejected_before_generation", retrievedChunkCount);
         }
 
+        chunks = List.copyOf(chunks); // Freeze the exact ordered context used by this generation and its capture.
         Prompt prompt = buildPrompt(question + "\n/no_think", chunks, responseLanguage, partialEvidence);
         long contextBuilt = System.nanoTime();
         ChatResponse response;
@@ -182,7 +195,8 @@ public class CitedRagService {
         }
         long generated = System.nanoTime();
         progress.generationMs((generated - contextBuilt) / 1_000_000.0);
-        var parsed = parseGeneration(extractAnswer(response), chunks);
+        String generatedOutput = extractAnswer(response);
+        var parsed = parseGeneration(generatedOutput, chunks);
         String answer = parsed.answer();
         progress.emit("GENERATION_COMPLETED", progress.usedProvider(), null, (generated - contextBuilt) / 1_000_000.0, null);
 
@@ -192,20 +206,23 @@ public class CitedRagService {
                 || isNaturalAbstention(answer)) {
             trace("model_abstention", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
             progress.emit("VALIDATION_COMPLETED", null, chunks.size(), null, "abstained");
-            return RagResult.abstain();
+            return capture(RagResult.abstain(), question, responseLanguage, chunks, generatedOutput,
+                    progress, "model_abstention", retrievedChunkCount);
         }
         answer = normalizeReferences(answer, chunks);
         if (answer == null || answer.isBlank() || ONLY_CITATIONS.matcher(answer.trim()).matches()) {
             trace("invalid_answer", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
             progress.emit("VALIDATION_COMPLETED", null, chunks.size(), null, "abstained");
-            return RagResult.abstain();
+            return capture(RagResult.abstain(), question, responseLanguage, chunks, generatedOutput,
+                    progress, "invalid_answer", retrievedChunkCount);
         }
         List<Citation> citations = buildCitations(chunks, answer);
         if (citations.isEmpty()) {
             // A factual answer with no traceable evidence is not a verifiable RAG answer.
             trace("missing_citations", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
             progress.emit("VALIDATION_COMPLETED", null, chunks.size(), null, "abstained");
-            return RagResult.abstain();
+            return capture(RagResult.abstain(), question, responseLanguage, chunks, generatedOutput,
+                    progress, "missing_citations", retrievedChunkCount);
         }
 
         if (parsed.status() == AnswerStatus.PARTIAL) {
@@ -218,14 +235,23 @@ public class CitedRagService {
                     com.riansares.r4r.vector.NomicCandidateReranker.supportsPartialTopic(question, chunk))) {
                 trace("irrelevant_partial", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
                 progress.emit("VALIDATION_COMPLETED", null, chunks.size(), null, "abstained");
-                return RagResult.abstain();
+                return capture(RagResult.abstain(), question, responseLanguage, chunks, generatedOutput,
+                        progress, "irrelevant_partial", retrievedChunkCount);
             }
         }
 
         String outcome = parsed.status() == AnswerStatus.PARTIAL ? "partial" : "answered";
         trace(outcome, chunks.size(), started, normalized, retrieved, contextBuilt, generated);
         progress.emit("VALIDATION_COMPLETED", null, chunks.size(), (System.nanoTime() - generated) / 1_000_000.0, outcome);
-        return new RagResult(answer, false, citations, parsed.status());
+        return capture(new RagResult(answer, false, citations, parsed.status()), question, responseLanguage,
+                chunks, generatedOutput, progress, outcome, retrievedChunkCount);
+    }
+
+    private RagResult capture(RagResult result, String question, String language, List<MarkdownChunk> delivered,
+                              String generatedOutput, RagProgress progress, String reason, int retrievedCount) {
+        if (evidenceCapture != null) evidenceCapture.accept(RagEvidenceSnapshot.capture(question, language,
+                result, delivered, generatedOutput, progress, reason, retrievedCount, retrievalTopK, minScore, translationMode));
+        return result;
     }
 
     private record GeneratedAnswer(AnswerStatus status, String answer) { }

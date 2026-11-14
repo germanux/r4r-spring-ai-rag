@@ -1,0 +1,124 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "caseId": "case-18",
+  "number": 25,
+  "language": "en",
+  "question": "In my home, we can hear absolutely everything the upstairs neighbours do. Can the sound insulation be improved without losing too much ceiling height in the rooms?",
+  "request": {
+    "question": "In my home, we can hear absolutely everything the upstairs neighbours do. Can the sound insulation be improved without losing too much ceiling height in the rooms?",
+    "responseLanguage": "en"
+  },
+  "endpoint": "http://192.168.1.207:8080/api/rag/answers",
+  "httpStatus": 200,
+  "httpLatencyMs": 3963.209212000038,
+  "attempts": 2,
+  "httpResponse": {
+    "answer": "",
+    "abstained": true,
+    "citations": [],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b",
+      "inferenceHost": {
+        "type": "desktop",
+        "hostname": "PC-GIGA-ZORUX",
+        "cpu": "Intel i9-14900KF",
+        "ram": "64 GB DDR5",
+        "gpu": "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status": "ABSTAINED"
+  },
+  "capture": {
+    "capturedAt": "2026-11-14T08:44:11.022808249Z",
+    "question": "In my home, we can hear absolutely everything the upstairs neighbours do. Can the sound insulation be improved without losing too much ceiling height in the rooms?",
+    "responseLanguage": "en",
+    "answer": "",
+    "status": "ABSTAINED",
+    "abstained": true,
+    "citations": [],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b"
+    },
+    "generationInvoked": true,
+    "generatedOutput": "{\"status\":\"ANSWERED\",\"limitation\":\"\",\"answer\":\"Thermal insulation reduces heat transfer, while acoustic insulation aims to control sound transmission [S3]. To improve sound insulation without losing too much ceiling height, consider acoustic insulation solutions that are compatible with the existing structure and ventilation requirements.\"}",
+    "outcome": "model_abstention",
+    "retrievedChunkCount": 5,
+    "chunks": [
+      {
+        "label": "[S1]",
+        "source": "en/guides/R4R_111_INSULATION_WINDOWS_AND_ENERGY_RENOVATION.md",
+        "headingPath": [
+          "Insulation and energy renovation — informed decisions",
+          "Can internal insulation be installed without losing ventilation?"
+        ],
+        "ordinal": 2,
+        "content": "## Can internal insulation be installed without losing ventilation?\n\nYes, with appropriate design, but it changes hygrothermal behaviour and reduces usable floor area. Vapour barriers must be assessed according to the solution and condensation risk, while maintaining adequate ventilation.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S2]",
+        "source": "en/guides/R4R_105_FLOOR_SLAB_FLOOR_FINISH_PATIOS_DRAINAGE_AND_GRADIENTS.md",
+        "headingPath": [
+          "Patios and flooring — slab base, floor finish, damp and drainage",
+          "Can new patio tiles be laid over existing ones?"
+        ],
+        "ordinal": 5,
+        "content": "## Can new patio tiles be laid over existing ones?\n\nOnly if the existing build-up is sound and compatible and the added height, door clearance, falls and drainage remain acceptable. Adding layers can conceal damp problems and raise the floor enough to obstruct a door.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S3]",
+        "source": "en/guides/R4R_87_INSULATION_VENTILATION_AND_ENERGY_RENOVATION.md",
+        "headingPath": [
+          "Riansares 4R — energy efficiency, insulation and ventilation",
+          "What is the difference between thermal and acoustic insulation?"
+        ],
+        "ordinal": 5,
+        "content": "## What is the difference between thermal and acoustic insulation?\n\nThermal insulation reduces heat transfer; acoustic insulation aims to control sound transmission. Systems and performance are not automatically interchangeable, although some solutions provide both. Selection depends on the objective, substrate and applicable requirements.",
+        "cited": false,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S4]",
+        "source": "en/guides/R4R_87_INSULATION_VENTILATION_AND_ENERGY_RENOVATION.md",
+        "headingPath": [
+          "Riansares 4R — energy efficiency, insulation and ventilation",
+          "Which energy improvements should be considered when renovating a home?"
+        ],
+        "ordinal": 1,
+        "content": "## Which energy improvements should be considered when renovating a home?\n\nDepending on the diagnosis, work on the roof, external walls, openings, windows and doors, heating and cooling systems and ventilation may be appropriate. First review air leakage, damp and the building envelope’s condition. Measures must be designed together and sized for applicable conditions and regulations. [IDAE, practical renovation guide](https://www.idae.es/tecnologias/eficiencia-energetica/edificacion/aislamiento-en-edificacion/guia-practica-de-la-energia).",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S5]",
+        "source": "en/guides/R4R_82_DAMP_LEAKS_CONDENSATION_AND_MOULD.md",
+        "headingPath": [
+          "Riansares 4R — damp: differential diagnosis and repair",
+          "What should be done about longstanding damp in a house with thick walls?"
+        ],
+        "ordinal": 6,
+        "content": "## What should be done about longstanding damp in a house with thick walls?\n\nReview the ground and external levels, downpipes, water ingress, salts, ventilation and previous waterproof treatments. Use compatible materials and carry out local tests before stripping back everything. Do not recommend injections, membranes or barriers as universal solutions without evidence.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      }
+    ],
+    "metrics": {
+      "embeddingMs": 105.412009,
+      "vectorSearchMs": null,
+      "lambdaInvokeMs": null,
+      "retrievalIncludingEmbeddingMs": 162.878531,
+      "generationMs": 1796.146649,
+      "totalMs": 1959.403382
+    },
+    "configuration": {
+      "topK": 5,
+      "minScore": 0.63,
+      "translationMode": "NEVER"
+    }
+  }
+}

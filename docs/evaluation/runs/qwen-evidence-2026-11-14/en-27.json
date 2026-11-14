@@ -1,0 +1,50 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "caseId": "case-21",
+  "number": 27,
+  "language": "en",
+  "question": "I have a long, dark corridor. How can I get more light and make better use of the space?",
+  "request": {
+    "question": "I have a long, dark corridor. How can I get more light and make better use of the space?",
+    "responseLanguage": "en"
+  },
+  "endpoint": "http://192.168.1.207:8080/api/rag/answers",
+  "httpStatus": 200,
+  "httpLatencyMs": 3444.9213699999746,
+  "attempts": 2,
+  "httpResponse": {
+    "answer": "",
+    "abstained": true,
+    "citations": [],
+    "provider": null,
+    "status": "ABSTAINED"
+  },
+  "capture": {
+    "capturedAt": "2026-11-14T08:44:20.639409204Z",
+    "question": "I have a long, dark corridor. How can I get more light and make better use of the space?",
+    "responseLanguage": "en",
+    "answer": "",
+    "status": "ABSTAINED",
+    "abstained": true,
+    "citations": [],
+    "provider": null,
+    "generationInvoked": false,
+    "generatedOutput": null,
+    "outcome": "no_evidence",
+    "retrievedChunkCount": 0,
+    "chunks": [],
+    "metrics": {
+      "embeddingMs": 407.8424,
+      "vectorSearchMs": null,
+      "lambdaInvokeMs": null,
+      "retrievalIncludingEmbeddingMs": 441.325073,
+      "generationMs": null,
+      "totalMs": 441.418954
+    },
+    "configuration": {
+      "topK": 5,
+      "minScore": 0.63,
+      "translationMode": "NEVER"
+    }
+  }
+}

@@ -103,13 +103,17 @@ public class RagConfiguration {
             RagRetrievalProperties properties,
             LocalRetrievalQueryTranslator translator,
             @Value("${r4r.rag.evidence-relevance.enabled:false}") boolean relevanceEnabled,
-            @Value("${retrieval.translation.mode:never}") String translationMode) {
+            @Value("${retrieval.translation.mode:never}") String translationMode,
+            @Value("${r4r.rag.evaluation.capture-directory:}") String captureDirectory,
+            org.springframework.beans.factory.ObjectProvider<com.fasterxml.jackson.databind.ObjectMapper> json) {
 
         return new CitedRagService(
                 knowledgeStore,
                 chatModel,
                 properties.topK(),
                 properties.minScore(), translator, relevanceEnabled ? new EvidenceRelevanceFilter(chatModel) : null,
-                com.riansares.r4r.config.RetrievalTranslationMode.parse(translationMode));
+                com.riansares.r4r.config.RetrievalTranslationMode.parse(translationMode),
+                captureDirectory.isBlank() ? null : new RagEvidenceExporter(java.nio.file.Path.of(captureDirectory),
+                        json.getIfAvailable(() -> new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules())));
     }
 }

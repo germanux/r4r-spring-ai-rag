@@ -1,0 +1,124 @@
+{
+  "runId": "qwen-evidence-2026-11-14",
+  "caseId": "case-25",
+  "number": 30,
+  "language": "es",
+  "question": "Quiero pasar de tienda a cafetería. ¿Qué obras necesito para abrir?",
+  "request": {
+    "question": "Quiero pasar de tienda a cafetería. ¿Qué obras necesito para abrir?",
+    "responseLanguage": "es"
+  },
+  "endpoint": "http://192.168.1.207:8080/api/rag/answers",
+  "httpStatus": 200,
+  "httpLatencyMs": 2948.6597689992777,
+  "attempts": 1,
+  "httpResponse": {
+    "answer": "",
+    "abstained": true,
+    "citations": [],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b",
+      "inferenceHost": {
+        "type": "desktop",
+        "hostname": "PC-GIGA-ZORUX",
+        "cpu": "Intel i9-14900KF",
+        "ram": "64 GB DDR5",
+        "gpu": "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status": "ABSTAINED"
+  },
+  "capture": {
+    "capturedAt": "2026-11-14T08:43:52.238356505Z",
+    "question": "Quiero pasar de tienda a cafetería. ¿Qué obras necesito para abrir?",
+    "responseLanguage": "es",
+    "answer": "",
+    "status": "ABSTAINED",
+    "abstained": true,
+    "citations": [],
+    "provider": {
+      "name": "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model": "qwen3:8b"
+    },
+    "generationInvoked": true,
+    "generatedOutput": "{\"status\":\"PARTIAL\",\"limitation\":\"No se establece si la obra afecta al ascensor ni si se puede trabajar con la tienda abierta.\",\"answer\":\"Para pasar de tienda a cafetería, es necesario estudiar la estabilidad del muro a retirar [S1]. Además, se debe comprobar la resistencia y estado del soporte antes de cambiar el suelo [S3].\"}",
+    "outcome": "irrelevant_partial",
+    "retrievedChunkCount": 5,
+    "chunks": [
+      {
+        "label": "[S1]",
+        "source": "es/cases/R4R_91_CASOS_HIPOTETICOS_VARIADOS.md",
+        "headingPath": [
+          "Riansares 4R — casos hipotéticos de consulta para ampliar cobertura",
+          "C-09 — Local con tabique a retirar (hipotético)"
+        ],
+        "ordinal": 10,
+        "content": "## C-09 — Local con tabique a retirar (hipotético)\n\nPregunta: «Quiero quitar un muro para agrandar mi tienda».\n\nOrientación: primero estudio de estabilidad, instalaciones, evacuación, licencia y accesibilidad. No determinar si es portante por descripción verbal.",
+        "cited": false,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S2]",
+        "source": "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
+        "headingPath": [
+          "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance",
+          "¿Qué necesito para pedir presupuesto de reforma?"
+        ],
+        "ordinal": 1,
+        "content": "## ¿Qué necesito para pedir presupuesto de reforma?\n\nFotos, ubicación, superficie aproximada, problema, resultado esperado, distribución, materiales deseados, acceso, uso actual, plazos y prioridades. La información permite una primera orientación, pero no sustituye la visita, las mediciones ni el diagnóstico de instalaciones ocultas. Para cocina y baño, indicar si se mantienen posiciones de agua y desagüe.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S3]",
+        "source": "es/guides/R4R_109_OFICINAS_COMERCIOS_Y_LOCAL_CON_ACTIVIDAD.md",
+        "headingPath": [
+          "Oficinas y locales — reforma mientras continúa la actividad",
+          "¿Qué comprobar antes de cambiar el suelo de una tienda?"
+        ],
+        "ordinal": 3,
+        "content": "## ¿Qué comprobar antes de cambiar el suelo de una tienda?\n\nResistencia y estado del soporte, tránsito previsto, resbaladicidad, umbrales, rampas, accesibilidad y horarios comerciales. El acabado debe elegirse para las cargas y condiciones reales.",
+        "cited": false,
+        "referencedInGeneratedOutput": true
+      },
+      {
+        "label": "[S4]",
+        "source": "es/guides/R4R_110_COMUNIDADES_PATIOS_CUBIERTAS_Y_ZONAS_COMUNES.md",
+        "headingPath": [
+          "Comunidades de vecinos — reparaciones y obras en elementos comunes",
+          "¿Puede la obra bloquear el ascensor?"
+        ],
+        "ordinal": 6,
+        "content": "## ¿Puede la obra bloquear el ascensor?\n\nNo debería hacerse sin coordinación y alternativa compatible con accesibilidad y seguridad. Informar de restricciones y proteger bienes comunes.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      },
+      {
+        "label": "[S5]",
+        "source": "es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.md",
+        "headingPath": [
+          "Cómo expresar dudas de reformas — ejemplos de consultas reales y ambiguas",
+          "Mi tienda no puede cerrar, ¿podéis trabajar con gente dentro?"
+        ],
+        "ordinal": 11,
+        "content": "## Mi tienda no puede cerrar, ¿podéis trabajar con gente dentro?\n\nHay que estudiar fases, separación de zona, evacuación, servicios y riesgos. No garantizar actividad continua sin un plan seguro.",
+        "cited": false,
+        "referencedInGeneratedOutput": false
+      }
+    ],
+    "metrics": {
+      "embeddingMs": 167.274556,
+      "vectorSearchMs": null,
+      "lambdaInvokeMs": null,
+      "retrievalIncludingEmbeddingMs": 238.631953,
+      "generationMs": 2706.265479,
+      "totalMs": 2946.1634
+    },
+    "configuration": {
+      "topK": 5,
+      "minScore": 0.63,
+      "translationMode": "NEVER"
+    }
+  }
+}
