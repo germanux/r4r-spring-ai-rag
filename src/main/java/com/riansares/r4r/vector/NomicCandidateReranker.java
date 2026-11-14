@@ -16,10 +16,10 @@ public final class NomicCandidateReranker {
             "a al algo algunas algunos ante asi aun cada como con cual cuando de del desde donde "
             + "el ella en entre era es esa esas ese eso esos esta estas este esto estos ha hay la las le les lo los "
             + "mas me mi mis muy nos o para pero por porque que quien se ser si sobre su sus te tiene "
-            + "tu un una unas unos y ya "
+            + "tu un una unas unos y ya bien todo "
             + "an and are as at be been but by can do does for from had has have how if in into is it its "
             + "more my of on or our so some than that the their them there these they this those "
-            + "to too us was we were what when where which who why will with would you your").split(" "));
+            + "to too us was we were what when where which who why will with would you your fine everything").split(" "));
     private static final double K1 = 1.2, B = .75;
     private final NomicRerankProperties config;
     public record Candidate(MarkdownChunk chunk, double similarity) { }
@@ -27,7 +27,7 @@ public final class NomicCandidateReranker {
     public int candidateCount(int topK) { return (int)Math.min(10_000L, (long)topK * config.candidateMultiplier()); }
     public List<MarkdownChunk> select(String query, List<Candidate> candidates, int topK) {
         if (candidates.size() <= topK || config.lexicalWeight() == 0)
-            return candidates.stream().limit(topK).map(Candidate::chunk).toList();
+            return distinctEvidence(candidates.stream().map(Candidate::chunk).toList(), topK);
         var terms = new HashSet<>(tokens(query));
         var frequencies = new ArrayList<Map<String, Integer>>();
         var documentFrequency = new HashMap<String, Integer>();
@@ -55,15 +55,28 @@ public final class NomicCandidateReranker {
             }
             maximum = Math.max(maximum, lexical[i]);
         }
-        if (maximum == 0) return candidates.stream().limit(topK).map(Candidate::chunk).toList();
+        if (maximum == 0) return distinctEvidence(candidates.stream().map(Candidate::chunk).toList(), topK);
         final double normalizer = maximum;
         var positions = new ArrayList<Integer>(); for (int i = 0; i < candidates.size(); i++) positions.add(i);
         // Keep raw cosine separate: this fused ranking value is never used as a confidence threshold.
         positions.sort(Comparator.<Integer>comparingDouble(i ->
                 candidates.get(i).similarity() + config.lexicalWeight() * lexical[i] / normalizer).reversed()
                 .thenComparingInt(i -> i));
-        return positions.stream().limit(topK).map(i -> candidates.get(i).chunk()).toList();
+        return distinctEvidence(positions.stream().map(i -> candidates.get(i).chunk()).toList(), topK);
     }
+    private static List<MarkdownChunk> distinctEvidence(List<MarkdownChunk> ranked, int topK) {
+        var selected = new ArrayList<MarkdownChunk>();
+        for (var chunk : ranked) {
+            boolean covered = selected.stream().anyMatch(parent -> parent.source().equals(chunk.source())
+                    && parent.headingPath().size() <= chunk.headingPath().size()
+                    && chunk.headingPath().subList(0, parent.headingPath().size()).equals(parent.headingPath())
+                    && parent.content().replaceAll("\\s+", " ").contains(chunk.content().replaceAll("\\s+", " ")));
+            if (!covered) selected.add(chunk);
+            if (selected.size() == topK) break;
+        }
+        return List.copyOf(selected);
+    }
+
     /** Conservative topic check for partial answers, not a semantic-entailment score. */
     public static boolean supportsPartialTopic(String query, MarkdownChunk cited) {
         var terms = new HashSet<>(tokens(query));
@@ -72,12 +85,17 @@ public final class NomicCandidateReranker {
                 + "i project proyecto want need could should may must work works renovation renovate home house flat office areas").split(" ")));
         if (terms.size() < 3) return true; // No lexical basis for rejecting a generic/short request.
         var evidence = new HashSet<>(tokens(String.join(" ", cited.headingPath()) + " " + cited.content()));
+        // Same activity expressed differently across the question and hospitality guidance.
+        // This is a topic match only, never proof of feasibility or specific required works.
+        var hospitality = Set.of("cafe", "cafeteria", "hosteleria", "hospitality");
+        if (terms.stream().anyMatch(hospitality::contains) && evidence.stream().anyMatch(hospitality::contains)) return true;
         terms.retainAll(evidence);
         return terms.size() >= 2;
     }
 
     private static List<String> tokens(String value) {
         String normalized = MARKS.matcher(Normalizer.normalize(value.toLowerCase(Locale.ROOT), Normalizer.Form.NFD)).replaceAll("");
+        normalized = normalized.replaceAll("\\bprimera\\s+orientacion\\b", "orientacion inicial");
         var matcher = TERM.matcher(normalized); var result = new ArrayList<String>();
         while (matcher.find()) {
             String term = matcher.group();

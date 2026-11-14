@@ -80,7 +80,7 @@ class CitedRagServiceTest {
         assertThat(promptCaptor.getValue().getContents())
                 .containsSubsequence("[S1]\nSource: doc1.md\nScope: Section\nFirst content", "[S2]\nSource: doc2.md\nScope: Other\nSecond content", "Question: test question")
                 .contains("/no_think")
-                .contains("ABSTAINED", "1–3 concise sentences", "only facts supported");
+                .contains("ABSTAINED", "1–3 concise sentences", "Ground factual claims");
         assertThat(result.answer()).isEqualTo("Combined answer [S1][S2]");
         assertThat(result.abstention()).isFalse();
         assertThat(result.citations()).extracting(Citation::label)
@@ -290,6 +290,17 @@ class CitedRagServiceTest {
         var result = structured("ANSWERED", "Inspect the existing installations. Do this before planning renovation work [S1].", "",
                 "Inspect the existing installations before planning any renovation work.");
         assertThat(result.status()).isEqualTo(AnswerStatus.ANSWERED);
+    }
+
+    @Test void promptDistinguishesDocumentedFactsTentativeReasoningAndSpecificFeasibility() {
+        when(knowledgeStore.search(anyString(), anyInt(), anyDouble())).thenReturn(List.of(
+                new MarkdownChunk("guide.md",List.of("Cabinets"),0,"Retention depends on access, condition and removability.")));
+        when(chatModel.call(any(Prompt.class))).thenReturn(chatResponse("Check access and condition [S1]."));
+        service.answer("Can I keep my kitchen cabinets?");
+        var prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(prompt.capture());
+        assertThat(prompt.getValue().getContents()).contains("tentative reasoning", "not a climate-control installation's performance",
+                "Good condition alone does not establish access", "selection criterion between alternatives", "work sequence does not prove", "exact", "general intake information");
     }
 
 }
