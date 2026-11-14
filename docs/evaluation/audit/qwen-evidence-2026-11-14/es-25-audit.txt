@@ -1,0 +1,115 @@
+Thinking...
+Okay, let's tackle this query. The user is asking if they can improve their[5D[K
+their home's acoustic insulation without losing too much height in the room[4D[K
+rooms. The original answer provided by the system is marked as PARTIAL, and[3D[K
+and I need to evaluate it based on the given data.
+
+First, I'll look at the answer's content. It mentions that acoustic insulat[7D[K
+insulation aims to control sound transmission and that the choice depends o[1D[K
+on the objective, support, and applicable requirements, citing [S1]. Then i[1D[K
+it talks about strategies inside or outside affecting humidity, thermal bri[3D[K
+bridges, and surface area, citing [S4]. However, it states that there's no [K
+comparison between alternatives or mention of whether the solution affects [K
+room height.
+
+Now, checking the chunks. [S1] discusses the difference between thermal and[3D[K
+and acoustic insulation, noting they aren't automatically interchangeable. [K
+[S4] talks about strategies for insulating facades without altering appeara[7D[K
+appearance, affecting humidity, thermal bridges, and surface area. 
+
+The user's question is about acoustic insulation and room height. The answe[5D[K
+answer doesn't directly address how to improve acoustic insulation without [K
+losing height. It mentions strategies but doesn't specify methods that pres[4D[K
+preserve height. The answer also doesn't provide solutions or recommendatio[13D[K
+recommendations, just general information. 
+
+The answer's PARTIAL status makes sense because it doesn't fully answer the[3D[K
+the question. It touches on some aspects but doesn't offer actionable advic[5D[K
+advice. The user needs specific methods, like materials or techniques that [K
+don't reduce room height. Since the answer doesn't provide that, it's parti[5D[K
+partial. No incorrect or irrelevant info is present, but it's insufficient.[13D[K
+insufficient. The recommendation to correct by adding specific methods woul[4D[K
+would be helpful.
+...done thinking.
+
+**AUDITORÍA INDEPENDIENTE DE LA RESPUESTA RAG**
+
+---
+
+### **1. Afirmaciones directamente respaldadas**
+- **[S1]**: "El aislamiento térmico reduce intercambio de calor; el acústic[7D[K
+acústico busca controlar transmisión del sonido. Los sistemas y prestacione[11D[K
+prestaciones no son intercambiables automáticamente, aunque algunas solucio[7D[K
+soluciones aportan ambas. La elección depende del objetivo, soporte y exige[5D[K
+exigencias aplicables."  
+  - **Relevancia**: La respuesta menciona que la elección del aislamiento d[1D[K
+depende del objetivo y exigencias, lo cual es directamente respaldado por [[1D[K
+[S1].  
+- **[S4]**: "Existen estrategias interiores o exteriores con impactos disti[5D[K
+distintos sobre humedad, puentes térmicos y superficie útil."  
+  - **Relevancia**: La respuesta cita [S4] al referirse a estrategias de ai[2D[K
+aislamiento con impactos en humedad y superficie útil, aunque no vincula ex[2D[K
+explícitamente con la altura de las habitaciones.
+
+---
+
+### **2. Inferencias razonables a partir de premisas documentadas**
+- **Posible inferencia**: Las estrategias de aislamiento interno (como pane[4D[K
+paneles acústicos) podrían preservar la altura de las habitaciones, mientra[7D[K
+mientras que soluciones externas (como aislamiento de fachadas) podrían afe[3D[K
+afectarla.  
+  - **Cierta incertidumbre**: La respuesta no especifica si las estrategias[11D[K
+estrategias internas o externas afectan la altura, pero [S4] menciona que l[1D[K
+las soluciones "tienen impactos distintos sobre superficie útil", lo que su[2D[K
+sugiere que algunos métodos podrían influir en el espacio disponible. Sin e[1D[K
+embargo, no se da un ejemplo concreto ni una conclusión clara.
+
+---
+
+### **3. Afirmaciones incorrectas, contradictorias, irrelevantes o injustif[8D[K
+injustificadas**
+- **Falta de respuesta directa**: La pregunta es específica sobre mejorar e[1D[K
+el aislamiento acústico sin perder altura, pero la respuesta no ofrece solu[4D[K
+soluciones prácticas (como materiales, técnicas o métodos) ni explica cómo [K
+lograrlo.  
+- **No se menciona la altura de las habitaciones**: Aunque [S4] habla de "s[2D[K
+"superficie útil", no se vincula explícitamente con la altura, lo que deja [K
+la pregunta sin respuesta concreta.  
+- **No se evalúa la viabilidad de soluciones que preserven la altura**: La [K
+respuesta menciona que no se establece comparación entre alternativas, lo q[1D[K
+que deja abierta la posibilidad de que existan soluciones específicas para [K
+el caso del usuario.
+
+---
+
+### **Clasificación: PARTIAL**
+- **Justificación**: La respuesta aborda aspectos generales del aislamiento[11D[K
+aislamiento acústico (diferencias entre térmico y acústico, estrategias de [K
+instalación) y cita documentos relevantes ([S1], [S4]). Sin embargo, **no r[1D[K
+responde directamente a la pregunta específica** del usuario sobre mejorar [K
+el aislamiento sin perder altura. No se ofrecen soluciones prácticas, ni se[2D[K
+se vinculan las estrategias mencionadas con la preservación de la altura. P[1D[K
+Por lo tanto, **no se puede considerar una respuesta completa**.
+
+---
+
+### **Recomendación de corrección**
+- **Sugerencia**: Agregar una explicación sobre técnicas de aislamiento acú[3D[K
+acústico que no reduzcan la altura, como "paneles acústicos interiores" o "[1D[K
+"aislamiento de techos sin alterar el espacio vertical", citando [S4] para [K
+respaldar que ciertas soluciones tienen impactos limitados en la superficie[10D[K
+superficie útil.  
+  - **Ejemplo de corrección**: "Para mejorar el aislamiento acústico sin pe[2D[K
+perder altura, se pueden usar paneles acústicos interiores o aislamiento de[2D[K
+de techos que no requieran reducir el espacio vertical. Estas soluciones, c[1D[K
+como menciona [S4], tienen impactos distintos sobre la superficie útil, per[3D[K
+permitiendo preservar la altura de las habitaciones."
+
+---
+
+### **Conclusión**
+La respuesta es **PARTIAL** porque aborda aspectos relevantes del aislamien[9D[K
+aislamiento acústico pero **no responde directamente a la pregunta específi[8D[K
+específica del usuario**. La corrección propuesta incluiría soluciones prác[4D[K
+prácticas que vinculen el aislamiento con la preservación de la altura.
+
