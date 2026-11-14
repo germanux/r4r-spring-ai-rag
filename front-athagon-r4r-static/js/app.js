@@ -381,7 +381,7 @@
     if (!data.events.length) {
       $("progressDetails").hidden = false;
       $("ragProgress").textContent = t("noRecordedTimeline");
-      for (const stage of data.capture ? [] : ["preparing", "searching", "generating", "verifying"]) {
+      for (const stage of ["preparing", "searching", "generating", "verifying"]) {
         showSimpleStage(stage);
         if (!await pausePreview(reducedMotion() ? 30 : 350)) return;
       }
@@ -964,7 +964,7 @@
     errorBox.hidden = true;
     if (loadingState) loadingState.hidden = true;
     resultMode.textContent = t("waiting");
-    elapsed.textContent = preview ? t("recordedDuration") : "";
+    elapsed.textContent = "";
   }
 
   function renderError(message) {

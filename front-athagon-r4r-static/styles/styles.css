@@ -1226,13 +1226,15 @@ a:focus-visible,button:focus-visible,textarea:focus-visible,select:focus-visible
 
 .runtime-panel > .config-details + .config-details { margin-top:12px; }
 /* Post-answer review is informative and never blocks the form. */
-.response-heading { display:flex; flex-direction:column; align-items:flex-start; gap:10px; min-width:0; }
-.audit-note { margin:0; font-size:1rem; line-height:1.5; overflow-wrap:anywhere; }
+.response-panel .response-heading { display:flex; flex-direction:row; flex-wrap:nowrap; align-items:center; gap:10px; min-width:0; }
+.response-heading > #resultMode { flex-shrink:0; }
+.response-heading > .audit-note { min-width:0; }
+.audit-note { margin:0; overflow-wrap:anywhere; }
 .audit-note[data-level="neutral"] { color:#166534; background:#f0fdf4; border-color:#86b99a; }
 .audit-note[data-state="pending"] { color:#365a82; background:#eff6ff; border-color:#b5c9df; }
 .audit-note[data-level="warning"], .audit-note[data-level="insufficient"] { color:#77520b; background:#fffaf0; border-color:#c49434; }
 
-.response-status { display:inline-block; padding:6px 12px; border:1px solid var(--line-soft); border-radius:8px; font-weight:700; }
+.response-status { display:inline-block; padding:6px 12px; border:1px solid var(--line-soft); border-radius:8px; font-size:.84rem; line-height:1.5; font-weight:700; }
 .response-status.is-verified { color:#166534; background:#f0fdf4; border-color:#86b99a; }
 .simple-progress-steps { max-height:420px; overflow:hidden; opacity:1; transition:max-height .55s ease, opacity .3s ease, margin .55s ease; }
 .simple-progress-steps.is-complete { max-height:0; opacity:0; margin:0; pointer-events:none; }

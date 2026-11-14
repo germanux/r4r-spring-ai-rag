@@ -342,7 +342,7 @@ const R4RI18n = (() => {
       "local": "Local",
       "custom": "Custom",
       "invalidUrl": "Enter a valid HTTP/HTTPS API URL.",
-      "demoQuestion": "What do the four Rs in Riansares 4R stand for? Please translate them into English too.",
+      "demoQuestion": "What do the four Rs in Riansares 4R stand for?",
       "unavailable": "Unavailable",
       "providerUnavailable": "Provider unavailable",
       "generationFailed": "The answer could not be generated",

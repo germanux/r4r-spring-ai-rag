@@ -37,6 +37,8 @@ class OllamaServerSeparationTest {
         HttpServer backup = server("backup", "qwen2.5:7b", operations);
         try {
             runner().withPropertyValues(embeddingEndpoints(embedding,embedding,embedding)).withPropertyValues(
+                    // This scenario isolates the two simulated local servers; remote routing has separate tests.
+                    "r4r.rag.openai.enabled=false",
                     "RAG_GENERATION_PROVIDERS="+url(pc)+"|qwen3:8b|20s,"+url(backup)+"|qwen2.5:7b|30s",
                     // A legacy global URL must never capture either operation.
                     "spring.ai.ollama.base-url=http://127.0.0.1:1")

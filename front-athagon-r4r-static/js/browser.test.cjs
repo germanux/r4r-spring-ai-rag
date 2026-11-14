@@ -18,7 +18,7 @@ const response={stage:'ANSWER_READY',answer:'Safe **answer** [S1]',abstained:fal
    addEventListener('DOMContentLoaded',()=>new MutationObserver(()=>{
     const button=document.querySelector('#sendButton');if(button?.classList.contains('is-preview-pressed'))window.playback.pressed=true;
     if(document.querySelector('.citations-head')?.classList.contains('is-preview-pressed'))window.playback.sourcesPressed=true;
-    const text=document.querySelector('#answerText')?.textContent;if(text) {window.playback.answers.push(text);window.playback.frames.push({answer:text,heading:document.querySelector('#resultMode').textContent,auditor:document.querySelector('#auditText').textContent,elapsed:document.querySelector('#elapsed').textContent,provider:document.querySelector('#answerProvider').textContent,sources:document.querySelector('#citations').textContent});}
+    const text=document.querySelector('#answerText')?.textContent;if(text) {window.playback.answers.push(text);window.playback.frames.push({answer:text,heading:document.querySelector('#resultMode').textContent,auditor:document.querySelector('#auditText').textContent,elapsed:document.querySelector('#elapsed').textContent,provider:document.querySelector('#answerProvider').textContent,sources:document.querySelector('#citations').textContent,links:[...document.querySelectorAll('#citations a')].map(a=>a.getAttribute('href'))});}
    }).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true}));
   });
   await page.route('**/*',async route=>{
@@ -45,6 +45,8 @@ const response={stage:'ANSWER_READY',answer:'Safe **answer** [S1]',abstained:fal
    assert(frame, data.capture.id);assert.equal(frame.elapsed,data.capture.duration || '');
    assert.equal(frame.heading,data.capture.display || (lang==='es'?'Respuesta guardada':'Saved response'));
    for(const citation of data.citations) assert(frame.sources.includes(citation.section));
+   assert.equal(frame.links.length,data.citations.length);
+   for(const link of frame.links) {assert(link.startsWith('docs/'+lang+'/'));assert(fs.existsSync(path.join(root,link.split('#')[0])));}
   }
   assert(playback.questions.some(q=>q.length>0 && q.length<fixtures.kitchen[lang][0].question.length));
   assert(playback.pressed);assert(playback.sourcesPressed);assert.equal(requests.length,0);

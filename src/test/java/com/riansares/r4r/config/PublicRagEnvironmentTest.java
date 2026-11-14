@@ -47,8 +47,19 @@ class PublicRagEnvironmentTest {
         ConfigDataEnvironmentPostProcessor.applyTo(env);
         PublicRagEnvironment.apply(env);
         assertThat(env.getProperty("r4r.rag.embedding.providers[0].base-url")).isEqualTo("http://192.168.1.209:11434");
-        assertThat(env.getProperty("RAG_OPENAI_ENABLED")).isEqualTo("false");
-        assertThat(env.getProperty("RAG_S3_VECTORS_ENABLED")).isEqualTo("false");
+        assertThat(env.getProperty("RAG_OPENAI_ENABLED")).isEqualTo("true");
+        assertThat(env.getProperty("RAG_S3_VECTORS_ENABLED")).isEqualTo("true");
+        assertThat(env.getProperty("RAG_VECTOR_FAILOVER_ENABLED")).isEqualTo("true");
+        assertThat(env.getProperty("RAG_VECTOR_PRIMARY")).isEqualTo("pgvector");
+        assertThat(env.getProperty("RAG_S3_VECTORS_TRANSPORT")).isEqualTo("lambda");
+        assertThat(env.getProperty("RAG_S3_LAMBDA_FUNCTION")).isEqualTo("r4r-s3-vectors-retrieval");
+        assertThat(env.getProperty("RAG_S3_LAMBDA_REGION")).isEqualTo("eu-north-1");
+        assertThat(env.getProperty("RAG_S3_LAMBDA_TIMEOUT")).isEqualTo("10s");
+        assertThat(env.getProperty("RAG_AUDIT_ENABLED")).isEqualTo("true");
+        assertThat(env.getProperty("RAG_TOP_K")).isEqualTo("5");
+        assertThat(env.getProperty("RAG_MIN_SCORE")).isEqualTo("0.49");
+        assertThat(env.getProperty("RAG_EMBEDDING_DIMENSIONS")).isEqualTo("1024");
+        assertThat(env.getProperty("RAG_TITAN_ENABLED")).isEqualTo("false");
     }
     @org.springframework.context.annotation.Configuration(proxyBeanMethods=false)
     static class EmptyApplication { }

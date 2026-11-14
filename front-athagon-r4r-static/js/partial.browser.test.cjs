@@ -4,8 +4,8 @@ const root=path.resolve(__dirname,'..');
 (async()=>{
  const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:['--no-sandbox']});
  try {
-  for(const lang of ['es','en']) for(const [initial,recommended] of [['PARTIAL','PARTIAL'],['ANSWERED','PARTIAL'],['ANSWERED','ANSWERED']]) {
-   const context=await browser.newContext({viewport:{width:390,height:844},locale:lang,reducedMotion:'reduce'});
+  for(const width of [390,1280]) for(const lang of ['es','en']) for(const [initial,recommended] of [['PARTIAL','PARTIAL'],['ANSWERED','PARTIAL'],['ANSWERED','ANSWERED']]) {
+   const context=await browser.newContext({viewport:{width,height:844},locale:lang,reducedMotion:'reduce'});
    const page=await context.newPage(), errors=[];let auditCalls=0;
    page.on('pageerror',error=>errors.push(error.message));
    await page.route('**/*',async route=>{
@@ -39,7 +39,14 @@ const root=path.resolve(__dirname,'..');
    if(initial==='ANSWERED') {
     await page.locator('#auditNote[data-state=reviewed]').waitFor({state:'visible'});
     assert(await page.locator('.panel-head #auditNote').isVisible());
-    assert(await page.locator('#auditNote').evaluate(el=>parseFloat(getComputedStyle(el).fontSize)>=16));
+    const boxes=await page.locator('.response-heading').evaluate(el=>[...el.children].map(child=>child.getBoundingClientRect()).map(r=>({top:r.top,bottom:r.bottom})));
+    assert(Math.max(...boxes.map(r=>r.top)) < Math.min(...boxes.map(r=>r.bottom)), 'status and audit share one row');
+    const typography=await page.locator('.response-heading').evaluate(el=>[...el.children].map(child=>{const s=getComputedStyle(child);return [s.fontSize,s.lineHeight,s.fontWeight,s.padding,s.borderRadius]}));
+    assert.deepEqual(typography[0],typography[1], 'matching status and audit typography');
+    if(width===1280 && recommended==='ANSWERED') {
+     const heights=await page.locator('.response-heading').evaluate(el=>[...el.children].map(child=>child.getBoundingClientRect().height));
+     assert.equal(heights[0],heights[1]);
+    }
    }
    assert.equal(await page.locator('#httpStatus').count(),0);
    assert.equal(await page.locator('#previewNotice').isVisible(),false);
@@ -49,8 +56,8 @@ const root=path.resolve(__dirname,'..');
    await page.locator('#citations a').first().waitFor({state:'visible'});
    assert.equal(auditCalls,1);assert.equal(errors.length,0,errors.join('\n'));
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-   await page.screenshot({path:`/tmp/r4r-partial-${lang}-${initial}-${recommended}.png`,fullPage:true});
-   console.log('PASS response heading/SSE/audit',lang,initial,recommended);await context.close();
+   await page.screenshot({path:`/tmp/r4r-partial-${lang}-${initial}-${recommended}-${width}.png`,fullPage:true});
+   console.log('PASS response heading/SSE/audit',width,lang,initial,recommended);await context.close();
   }
  } finally {await browser.close()}
 })().catch(error=>{console.error(error);process.exit(1)});
