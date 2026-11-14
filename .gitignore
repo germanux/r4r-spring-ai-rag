@@ -95,3 +95,4 @@ config/r4r-agents.json.**
 !/docker-spring/.env.base
 /docker-spring/app.jar
 .r4r-translation-cache*/
+/docs/evaluation.zip
