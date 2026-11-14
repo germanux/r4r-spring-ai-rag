@@ -14,7 +14,11 @@ class Node {
     this.tagName = tag; this.nodeType = tag ? 1 : 3; this._text = text;
     this.attributes = {}; this.childNodes = []; this.handlers = {}; this.value = '';
     this.hidden = false; this.disabled = false; this.open = false; this.validationMessage = '';
-    this.classList = { toggle() {} };
+    const classes = new Set();
+    this.classList = {
+      toggle(name, force) { const add = force === undefined ? !classes.has(name) : force; if (add) classes.add(name); else classes.delete(name); return add; },
+      contains(name) { return classes.has(name); }
+    };
   }
   querySelector(selector) {
     const match = n => (n.getAttribute('class') || '').split(' ').includes(selector.slice(1));
@@ -222,7 +226,7 @@ for (const lang of ['es', 'en']) {
     assert.equal(p.node('sourcesDetails').open, true);
     assert.equal(p.node('resultContent').hidden, false);
     assert.equal(p.node('httpStatus').textContent, status);
-    assert.equal(p.node('elapsed').textContent, elapsed);
+    assert.equal(p.node('elapsed').textContent, elapsed.replace(lang === 'es' ? ',' : '.', lang === 'es' ? '.' : ','));
     assert.equal(p.node('apiBaseUrl').value, 'https://r4r-api.athagon.tech');
     assert.equal(p.requests.length, before);
     const restored = openPage(lang, p.storage);
@@ -316,7 +320,7 @@ test('switching language during an in-flight request retains query language and 
   resolveAnswer({ ok: true, status: 200, json: async () => ({ answer: 'English answer', citations: [] }) });
   await pending;
   assert.equal(p.node('answerText').textContent, 'English answer');
-  assert.equal(p.node('resultMode').textContent, p.t('result'));
+  assert.equal(p.node('resultMode').textContent, p.t('verified'));
   assert.equal(p.node('sendLabel').textContent, 'Obtener respuesta');
 });
 
@@ -417,7 +421,8 @@ for (const lang of ['es', 'en']) {
       assert.equal(p.node('runtimeUsed').textContent, p.t('forbidden'));
       p.node('question').value = 'Question';
       await p.node('sendButton').handlers.click();
-      assert.equal(p.node('httpStatus').textContent, '403');
+      assert.equal(p.node('httpStatus').textContent, p.t('httpFailure'));
+      assert.equal(p.node('httpStatus').title, 'HTTP 403');
       assert.ok(p.node('errorBox').textContent.startsWith(p.t('forbidden')));
       assert.ok(!p.node('errorBox').textContent.includes(p.t('networkPublic')));
       assert.ok(!p.node('errorBox').textContent.includes(p.t('invalidJson', 403)));
@@ -1034,6 +1039,11 @@ test('public progress is a visible numbered history with no raw SSE jargon',asyn
   const p=openPage(lang,new Map(),{offline:true,stream:async()=>sseResponse(events)});
   p.node('question').value='Question';await p.node('sendButton').handlers.click();
   const list=p.node('simpleProgressSteps');assert.equal(list.hidden,false);assert.equal(list.children.length,5);
+  assert.ok(list.classList.contains('is-complete'));
+  assert.equal(p.node('resultMode').textContent,p.t('verified'));
+  assert.ok(p.node('resultMode').classList.contains('is-verified'));
+  assert.equal(p.node('httpStatus').textContent,p.t('httpOk'));
+  assert.match(p.node('elapsed').textContent,lang==='es'? /^\d+,\d s$/ : /^\d+\.\d s$/);
   ['preparing','searching','generating','verifying','done'].forEach((key,index)=>{
    assert.ok(list.children[index].textContent.includes(p.t(key)));assert.equal(list.children[index].children[0].textContent,String(index+1));assert.equal(list.children[index].getAttribute('data-state'),'complete');
   });

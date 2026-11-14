@@ -1210,7 +1210,7 @@ a:focus-visible,button:focus-visible,textarea:focus-visible,select:focus-visible
 
 .citations-head.is-preview-pressed { background:#ffd35a; color:#172d42; box-shadow:0 0 0 4px rgba(255,211,90,.3); transform:translateY(2px); }
 
-/* Public progress stays visible; low-level SSE remains below the sources. */
+/* Progress folds away after completion; technical details remain available. */
 .simple-progress-steps { list-style: none; padding: 0; margin: 16px 0; text-align: left; font-size: .9rem; line-height: 1.6; overflow-wrap: anywhere; }
 .simple-progress-steps li { padding: 4px 0; }
 .step-number { margin-right:.35em; }
@@ -1229,3 +1229,11 @@ a:focus-visible,button:focus-visible,textarea:focus-visible,select:focus-visible
 .audit-note { font-size: .85rem; line-height: 1.5; color: #64748b; margin: .35rem 0 .9rem; }
 .audit-note[data-level="warning"] { color: #77520b; background: #fffaf0; border-left: 2px solid #c49434; padding: .45rem .65rem; }
 .audit-note[data-level="insufficient"] { color: #704b12; background: #fff7e8; border-left: 2px solid #ad7b25; padding: .55rem .65rem; }
+
+.response-status { display:inline-block; padding:6px 12px; border:1px solid var(--line-soft); border-radius:8px; font-weight:700; }
+.response-status.is-verified { color:#166534; background:#f0fdf4; border-color:#86b99a; }
+.simple-progress-steps { max-height:420px; overflow:hidden; opacity:1; transition:max-height .55s ease, opacity .3s ease, margin .55s ease; }
+.simple-progress-steps.is-complete { max-height:0; opacity:0; margin:0; pointer-events:none; }
+.concept-section, .architecture-section, .technical-section { padding:8px 0; }
+.concept-section .section-heading, .architecture-section .section-heading, .technical-section .section-heading { margin-bottom:10px; }
+@media(prefers-reduced-motion:reduce) { .simple-progress-steps { transition:none; } }

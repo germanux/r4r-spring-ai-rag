@@ -186,6 +186,7 @@
     $("auditIcon").textContent = auditState.pending ? "◌" : downgrade ? "⚠" : "·";
     const note = !auditState.pending && !related ? auditState.result?.note?.trim() : "";
     $("auditText").textContent = t(key) + (note && !lastPayload?.answer?.includes(note) ? " " + note : "");
+    renderResponseHeading(lastPayload);
     if (downgrade) {
       $("decisionRow").hidden = false;
       decisionPill.textContent = t(effective === "PARTIAL" ? "partialAnswer" : "auditInsufficientLabel");
@@ -231,8 +232,19 @@
     writePreference("language", language);
     renderDynamicText();
   }
+  let responseDuration = null;
+  function formatDuration(ms) {
+    return `${(ms / 1000).toFixed(1).replace(".", isEnglish ? "." : ",")} s`;
+  }
+  function renderResponseHeading(payload) {
+    const status = auditState?.result?.effectiveStatus || originalStatus(payload);
+    const verified = !payload?.abstained && status === "ANSWERED";
+    resultMode.textContent = t(verified ? "verified" : status === "PARTIAL" ? "partialAnswer" : "abstention");
+    resultMode.classList.toggle("is-verified", verified);
+  }
   function renderDynamicText() {
     apiState.textContent = t(apiStatus);
+    if (responseDuration !== null) elapsed.textContent = formatDuration(responseDuration);
     if (replyMode) { $("previewNotice").textContent = replyMode === "recorded" ? "" : t(replyMode); $("previewNotice").hidden = replyMode === "recorded"; }
     sendLabel.textContent = t(sendButton.disabled ? "loading" : "send");
     copyAnswerButton.textContent = t(copyStatus);
@@ -375,9 +387,9 @@
     phase = "success";
     renderResult(payload);
     revealSources();
-    resultMode.textContent = t("result");
+    renderResponseHeading(lastPayload);
     $("answerProvider").textContent = [data.providerName, data.model, data.recordedAt].filter(Boolean).join(" · ");
-    elapsed.textContent = Number.isFinite(data.durationMs) ? `${t("recordedDuration")}: ${data.durationMs} ms` : "";
+    elapsed.textContent = Number.isFinite(data.durationMs) ? formatDuration(responseDuration = data.durationMs) : "";
     if (!await pausePreview(reducedMotion() ? 200 : 3000)) return;
     }
     preview = false;
@@ -861,14 +873,15 @@
         try { await response.body?.cancel(); } catch { /* Unsupported endpoint body already closed. */ }
         response = await fetch(url, { ...init, headers: { ...init.headers, Accept: "application/json" } });
       }
-      httpStatus.textContent = `${response.status}`;
+      httpStatus.textContent = t(response.ok ? "httpOk" : "httpFailure");
+      httpStatus.title = `HTTP ${response.status}`;
       let payload;
       if (!response.ok || legacy) {
         try { payload = await response.json(); }
         catch { if (response.ok) throw { kind: "json", status: response.status }; }
         if (!response.ok) throw { kind: "http", status: response.status, detail: developerMode ? payload?.message || payload?.error || "" : "", retryAfter: /^\d+$/.test(response.headers?.get("Retry-After") || "") ? response.headers.get("Retry-After") : null };
       } else payload = await readAnswerStream(response);
-      elapsed.textContent = `${Math.round(performance.now() - started)} ms`;
+      elapsed.textContent = formatDuration(responseDuration = performance.now() - started);
 
       phase = "success";
       lastPayload = payload;
@@ -876,11 +889,11 @@
       renderResult(payload);
       revealSources();
       apiState.textContent = t(apiStatus);
-      resultMode.textContent = t("result");
+      renderResponseHeading(lastPayload);
 
     } catch (error) {
       const duration = Math.round(performance.now() - started);
-      elapsed.textContent = `${duration} ms`;
+      elapsed.textContent = formatDuration(responseDuration = duration);
       phase = "error";
       apiStatus = "error";
       lastError = error?.name === "AbortError" ? { kind: "timeout" } : error;
@@ -923,6 +936,10 @@
   function renderEmpty() {
     clearAudit();
     simpleStages = [];
+    responseDuration = null;
+    resultMode.classList.toggle("is-verified", false);
+    $("simpleProgressSteps").classList.toggle("is-complete", false);
+    $("simpleProgressSteps").setAttribute("aria-hidden", "false");
     renderSimpleProgress();
     cancelSourcesPress();
     sourcesDetails.open = false;
@@ -966,6 +983,9 @@
 
     renderMarkdown(answerText, answer || (abstained ? t("abstained") : t("emptyAnswer")));
     renderAudit();
+    renderResponseHeading(payload);
+    $("simpleProgressSteps").classList.toggle("is-complete", true);
+    $("simpleProgressSteps").setAttribute("aria-hidden", "true");
 
     citationCount.textContent = t("sources", sourceList.length);
     citations.replaceChildren();

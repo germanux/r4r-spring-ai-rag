@@ -438,6 +438,7 @@ const R4RI18n = (() => {
     }
   };
   Object.assign(dictionary.en, {
+    verified: "Answer verified", httpOk: "OK", httpFailure: "Error",
     partialAnswer: "PARTIAL ANSWER",
     auditChecking: "Checking sources…",
     auditReviewed: "Sources reviewed.",
@@ -464,6 +465,7 @@ const R4RI18n = (() => {
     sources: (count) => `${count} source${count === 1 ? "" : "s"}`
   });
   Object.assign(dictionary.es, {
+    verified: "Respuesta verificada", httpOk: "OK", httpFailure: "Error",
     partialAnswer: "RESPUESTA PARCIAL",
     auditChecking: "Revisando referencias…",
     auditReviewed: "Referencias revisadas.",
