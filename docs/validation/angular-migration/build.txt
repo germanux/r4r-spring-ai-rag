@@ -1,0 +1,13 @@
+- Building...
+
+Initial chunk files   | Names         |  Raw size | Estimated transfer size
+main-PU3S3EON.js      | main          | 283.60 kB |                73.45 kB
+polyfills-FFHMD2TL.js | polyfills     |  33.71 kB |                11.02 kB
+styles-37IX6BG3.css   | styles        |  31.05 kB |                 6.56 kB
+
+                      | Initial total | 348.37 kB |                91.03 kB
+
+Output location: /home/german/Desarrollo/R4R/r4r-spring-ai-rag.git/frontend/dist/r4r-frontend
+
+Application bundle generation complete. [1.724 seconds]
+

@@ -1,0 +1,11 @@
+{
+  "v1Unchanged": true,
+  "v1Files": 188,
+  "idempotentBuild": true,
+  "rootEntries": [
+    "v1",
+    "v2-ng"
+  ],
+  "outputFiles": 176,
+  "runtimeNodeRequired": false
+}

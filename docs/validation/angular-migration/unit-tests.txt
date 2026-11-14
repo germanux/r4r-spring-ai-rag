@@ -1,0 +1,42 @@
+
+> r4r-frontend@0.0.0 test:ci
+> ng test --watch=false --browsers=ChromeHeadless
+
+- Generating browser application bundles (phase: setup)...
+✔ Browser application bundle generation complete.
+14 11 2026 22:26:18.469:INFO [karma-server]: Karma v6.4.4 server started at http://localhost:9876/
+14 11 2026 22:26:18.470:INFO [launcher]: Launching browsers ChromeHeadless with concurrency unlimited
+14 11 2026 22:26:18.472:INFO [launcher]: Starting browser ChromeHeadless
+14 11 2026 22:26:18.715:INFO [Chrome Headless 151.0.0.0 (Linux 0.0.0)]: Connected on socket qBmwfDZarX6Q_IB5AAAB with id 72873068
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 0 of 26 SUCCESS (0 secs / 0 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 1 of 26 SUCCESS (0 secs / 0.005 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 2 of 26 SUCCESS (0 secs / 0.008 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 3 of 26 SUCCESS (0 secs / 0.009 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 4 of 26 SUCCESS (0 secs / 0.01 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 5 of 26 SUCCESS (0 secs / 0.01 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 6 of 26 SUCCESS (0 secs / 0.01 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 7 of 26 SUCCESS (0 secs / 0.078 secs)
+14 11 2026 22:26:19.294:WARN [web-server]: 404: /_karma_webpack_/assets/architecture.svg
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 8 of 26 SUCCESS (0 secs / 0.081 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 9 of 26 SUCCESS (0 secs / 0.083 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 10 of 26 SUCCESS (0 secs / 0.084 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 11 of 26 SUCCESS (0 secs / 0.085 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 12 of 26 SUCCESS (0 secs / 0.085 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 13 of 26 SUCCESS (0 secs / 0.086 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 14 of 26 SUCCESS (0 secs / 0.094 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 15 of 26 SUCCESS (0 secs / 0.096 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 16 of 26 SUCCESS (0 secs / 0.097 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 17 of 26 SUCCESS (0 secs / 0.099 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 18 of 26 SUCCESS (0 secs / 0.1 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 19 of 26 SUCCESS (0 secs / 0.102 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 20 of 26 SUCCESS (0 secs / 0.103 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 21 of 26 SUCCESS (0 secs / 0.105 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 22 of 26 SUCCESS (0 secs / 0.106 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 23 of 26 SUCCESS (0 secs / 0.107 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 24 of 26 SUCCESS (0 secs / 0.108 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 25 of 26 SUCCESS (0 secs / 0.11 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 26 of 26 SUCCESS (0 secs / 0.111 secs)
+Chrome Headless 151.0.0.0 (Linux 0.0.0): Executed 26 of 26 SUCCESS (0.121 secs / 0.111 secs)
+TOTAL: 26 SUCCESS
+✔ Browser application bundle generation complete.
+✔ Browser application bundle generation complete.

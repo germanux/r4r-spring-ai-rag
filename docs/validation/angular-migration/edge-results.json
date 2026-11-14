@@ -1,0 +1,8 @@
+[
+  "Malformed SSE never replays inference through REST",
+  "Clear aborts in-flight query and ignores late response",
+  "Native PARTIAL preserves answer and citations",
+  "ABSTAINED with no citations",
+  "Language changes reset previous query state",
+  "Initial HTML renders with JavaScript disabled"
+]
