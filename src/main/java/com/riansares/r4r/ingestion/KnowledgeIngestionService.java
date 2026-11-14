@@ -137,10 +137,10 @@ public class KnowledgeIngestionService {
                 SELECT format_type(atttypid, atttypmod) FROM pg_attribute
                 WHERE attrelid = 'vector_store'::regclass AND attname = 'embedding'
                 """, String.class);
-        if (!"vector(768)".equals(type)) throw new IllegalStateException("Expected vector(768)");
-        // Uses the existing router: model name, digest, batch shape and finite 768-D vectors are checked there.
-        float[] probe = embeddingModel.getObject().embed("search_document: R4R ingestion compatibility check");
-        if (probe.length != 768) throw new IllegalStateException("Expected 768 embedding dimensions");
+        if (!"vector(1024)".equals(type)) throw new IllegalStateException("Expected vector(1024)");
+        // Uses the existing router: model name, digest, batch shape and finite 1024-D vectors are checked there.
+        float[] probe = embeddingModel.getObject().embed("R4R ingestion compatibility check");
+        if (probe.length != 1024) throw new IllegalStateException("Expected 1024 embedding dimensions");
         var result = new java.util.LinkedHashMap<String, Object>(identity);
         result.put("targetHost", configuredHost);
         result.put("documents", documents.size());

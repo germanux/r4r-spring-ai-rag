@@ -35,7 +35,7 @@ class S3VectorsKnowledgeStoreTest {
             new S3VectorMetadataMapper(), new S3VectorScoreMapper());
 
     @BeforeEach void embedding() {
-        float[] vector = new float[768]; vector[0] = 1;
+        float[] vector = new float[1024]; vector[0] = 1;
         when(embedding.embed(anyString())).thenReturn(vector);
     }
 
@@ -55,11 +55,11 @@ class S3VectorsKnowledgeStoreTest {
         assertThat(first.indexName()).isEqualTo("test-vector-index");
         assertThat(first.returnDistance()).isTrue(); assertThat(first.returnMetadata()).isTrue();
         assertThat(first.topK()).isEqualTo(12); // Four candidates per requested result, same raw cosine threshold.
-        assertThat(first.queryVector().float32()).hasSize(768);
+        assertThat(first.queryVector().float32()).hasSize(1024);
         assertThat(first.nextToken()).isNull(); assertThat(second.nextToken()).isEqualTo("next");
         assertThat(second.queryVector()).isEqualTo(first.queryVector());
         assertThat(second.toBuilder().nextToken((String) null).build()).isEqualTo(first);
-        verify(embedding, times(1)).embed("pregunta original");
+        verify(embedding, times(1)).embed(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery("pregunta original"));
         verifyNoMoreInteractions(client);
     }
 
@@ -67,7 +67,7 @@ class S3VectorsKnowledgeStoreTest {
         when(client.queryVectors(any(QueryVectorsRequest.class))).thenReturn(page(null), page(null, hit("low", 1f)));
         assertThat(store.search("q", 5, .63)).isEmpty();
         assertThat(store.search("q", 5, .63)).isEmpty();
-        verify(embedding, times(2)).embed("q");
+        verify(embedding, times(2)).embed(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery("q"));
     }
 
     @Test void invalidInputsDoNotInvokeEmbeddingOrAws() {
@@ -84,10 +84,10 @@ class S3VectorsKnowledgeStoreTest {
     }
 
     @Test void wrongDimensionNonFiniteAndZeroEmbeddingsAreErrorsBeforeAws() {
-        float[] nan = new float[768]; nan[0] = Float.NaN;
-        float[] infinite = new float[768]; infinite[0] = Float.POSITIVE_INFINITY;
-        for (float[] value : new float[][]{null, new float[767], new float[768], nan, infinite}) {
-            when(embedding.embed("q")).thenReturn(value);
+        float[] nan = new float[1024]; nan[0] = Float.NaN;
+        float[] infinite = new float[1024]; infinite[0] = Float.POSITIVE_INFINITY;
+        for (float[] value : new float[][]{null, new float[767], new float[1024], nan, infinite}) {
+            when(embedding.embed(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery("q"))).thenReturn(value);
             assertThatThrownBy(() -> store.search("q", 5, .63)).isInstanceOf(IllegalStateException.class);
         }
         verifyNoInteractions(client);
@@ -97,10 +97,10 @@ class S3VectorsKnowledgeStoreTest {
         var failure = ServiceUnavailableException.builder().message("simulated").build();
         when(client.queryVectors(any(QueryVectorsRequest.class))).thenReturn(page("next", hit("a", .1f))).thenThrow(failure);
         assertThatThrownBy(() -> store.search("q", 5, .63)).isSameAs(failure);
-        verify(embedding).embed("q");
+        verify(embedding).embed(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery("q"));
         reset(client);
         var embeddingFailure = new IllegalStateException("embedding unavailable");
-        when(embedding.embed("q")).thenThrow(embeddingFailure);
+        when(embedding.embed(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery("q"))).thenThrow(embeddingFailure);
         assertThatThrownBy(() -> store.search("q", 5, .63)).isSameAs(embeddingFailure);
         verifyNoInteractions(client);
     }
@@ -181,7 +181,7 @@ class S3VectorsKnowledgeStoreTest {
             assertThat(event.getThrowableProxy()).isNull();
         });
         verify(client).queryVectors(any(QueryVectorsRequest.class));
-        verify(embedding).embed("PRIVATE_QUERY_SENTINEL");
+        verify(embedding).embed(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery("PRIVATE_QUERY_SENTINEL"));
     }
 
     @Test void distinguishesInvalidResponseAndEmbeddingFailureFromAwsQueryFailure() {
@@ -193,7 +193,7 @@ class S3VectorsKnowledgeStoreTest {
                 .contains("stage=response_validation", "reason=invalid_response").doesNotContain(PRIVATE_DETAIL));
         reset(client);
         var failure = new IllegalStateException(PRIVATE_DETAIL);
-        when(embedding.embed("q")).thenThrow(failure);
+        when(embedding.embed(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery("q"))).thenThrow(failure);
         var embeddingLogs = captureFailures(() -> assertThatThrownBy(() -> store.search("q", 5, .63)).isSameAs(failure));
         assertThat(embeddingLogs).singleElement().satisfies(event -> assertThat(event.getFormattedMessage())
                 .contains("stage=embedding").doesNotContain(PRIVATE_DETAIL));

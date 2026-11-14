@@ -1,0 +1,48 @@
+{
+  "caseId" : "case-11",
+  "number" : 11,
+  "language" : "en",
+  "question" : "What information should a customer provide to request an estimate?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 5116.919192,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "To request an estimate, a customer should provide location, photos, approximate measurements, space use, problem, expected result, and timeframe. This information is needed for initial guidance [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — all frequently asked questions", "Quotations", "FAQ-001 — What information is needed for initial guidance?" ],
+      "ordinal" : 3
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

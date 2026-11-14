@@ -1,0 +1,33 @@
+{
+  "caseId" : "case-10",
+  "number" : 10,
+  "language" : "en",
+  "question" : "Should a renovation estimate include the execution timeline?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2833.000456,
+  "ragOutcome" : "FAIL",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "",
+    "abstained" : true,
+    "citations" : [ ],
+    "provider" : null,
+    "status" : "ABSTAINED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ABSTAINED",
+    "effectiveStatus" : "ABSTAINED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

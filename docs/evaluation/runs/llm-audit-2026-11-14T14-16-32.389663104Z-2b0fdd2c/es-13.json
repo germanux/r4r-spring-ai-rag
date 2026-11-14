@@ -1,0 +1,53 @@
+{
+  "caseId" : "case-13",
+  "number" : 13,
+  "language" : "es",
+  "question" : "¿Qué tipos de reformas realiza esta empresa? ¿Trabaja en viviendas y oficinas?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 4709.331408999999,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "La empresa realiza reformas en baños, cocinas, viviendas, pequeñas oficinas y locales, según [S1] y [S2]. Trabaja en viviendas y oficinas, como se menciona en [S1] y [S2].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md",
+      "headingPath" : [ "Riansares 4R — identidad, criterios y voz editorial", "2. Identidad de Riansares 4R", "2.3. Servicios nucleares", "Reformas" ],
+      "ordinal" : 5
+    }, {
+      "label" : "[S2]",
+      "source" : "en/R4R_00_IDENTITY_CRITERIA_AND_EDITORIAL_VOICE.md",
+      "headingPath" : [ "Riansares 4R — identity, criteria, and editorial voice", "2. Riansares 4R identity", "2.3. Core services", "Renovations" ],
+      "ordinal" : 5
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

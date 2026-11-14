@@ -30,10 +30,10 @@ class RagStreamingTest {
     private final RagProgress progress = new RagProgress(events::add);
 
     private CitedRagService service(List<Document> documents, boolean pcAvailable, boolean laptopAvailable) {
-        when(embeddings.embed(any())).thenReturn(new org.springframework.ai.ollama.api.OllamaApi.EmbeddingsResponse("nomic-embed-text:latest", List.of(new float[768]), 0L, 0L, 1));
+        when(embeddings.embed(any())).thenReturn(new org.springframework.ai.ollama.api.OllamaApi.EmbeddingsResponse("qwen3-embedding:0.6b", List.of(new float[1024]), 0L, 0L, 1));
         when(jdbc.query(anyString(), any(RowMapper.class), any(Object[].class))).thenReturn(documents);
-        var vector = PgVectorStore.builder(jdbc, new ObservedEmbeddingModel(embeddings, org.springframework.ai.ollama.api.OllamaOptions.builder().model("nomic-embed-text:latest").build()))
-                .dimensions(768).initializeSchema(false).build();
+        var vector = PgVectorStore.builder(jdbc, new ObservedEmbeddingModel(embeddings, org.springframework.ai.ollama.api.OllamaOptions.builder().model("qwen3-embedding:0.6b").build()))
+                .dimensions(1024).initializeSchema(false).build();
         var knowledge = new PgVectorKnowledgeStore(vector, jdbc);
         var router = new GenerationRouter(List.of(
                 new GenerationRouter.Target(new GenerationRouter.Provider("PC principal", "http://private-pc", "qwen3:8b"), pc, () -> pcAvailable),
@@ -108,7 +108,7 @@ class RagStreamingTest {
         assertThat(stages()).filteredOn(s -> s.equals("PROVIDER_FAILED")).hasSize(3);
         assertThat(stages()).doesNotContain("GENERATION_COMPLETED", "VALIDATION_COMPLETED");
         int count = events.size();
-        new ObservedEmbeddingModel(embeddings, org.springframework.ai.ollama.api.OllamaOptions.builder().model("nomic-embed-text:latest").build()).embed("Unrelated ingestion");
+        new ObservedEmbeddingModel(embeddings, org.springframework.ai.ollama.api.OllamaOptions.builder().model("qwen3-embedding:0.6b").build()).embed("Unrelated ingestion");
         assertThat(events).hasSize(count); // The scoped ThreadLocal is removed on the same worker.
     }
 

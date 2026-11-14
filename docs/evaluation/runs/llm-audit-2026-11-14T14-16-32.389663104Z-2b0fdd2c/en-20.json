@@ -1,0 +1,48 @@
+{
+  "caseId" : "case-31",
+  "number" : 20,
+  "language" : "en",
+  "question" : "I have broken pipes in my kitchen. What should I do?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 3089.748974,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "If there is an active leak, shut off the accessible supply using an accessible stop valve if it can be done safely, avoid wet electrical installations, and contact a competent professional. [S3]",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S3]",
+      "source" : "en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.md",
+      "headingPath" : [ "Riansares 4R — kitchens: broken pipes, leaks and pre-renovation decisions", "Question — I have broken pipes in the kitchen. What should I do first?" ],
+      "ordinal" : 1
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

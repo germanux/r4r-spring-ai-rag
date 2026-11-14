@@ -61,9 +61,9 @@ public final class RetrievalThresholdDiagnostic {
                     public float[] embed(String ignored) { return vector; }
                     public float[] embed(org.springframework.ai.document.Document ignored) { throw new UnsupportedOperationException(); }
                     public EmbeddingResponse call(EmbeddingRequest ignored) { return new EmbeddingResponse(List.of(new Embedding(vector, 0))); }
-                    public int dimensions() { return 768; }
+                    public int dimensions() { return 1024; }
                 };
-                var nativeStore = PgVectorStore.builder(jdbc, fixed).dimensions(768).initializeSchema(false)
+                var nativeStore = PgVectorStore.builder(jdbc, fixed).dimensions(1024).initializeSchema(false)
                         .vectorTableValidationsEnabled(true).build();
                 var store = new PgVectorKnowledgeStore(nativeStore, jdbc, rerank);
                 for (double threshold : List.of(.63, .65, .70)) {

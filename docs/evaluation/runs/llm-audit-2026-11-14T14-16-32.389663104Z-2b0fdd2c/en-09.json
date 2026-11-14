@@ -1,0 +1,48 @@
+{
+  "caseId" : "case-09",
+  "number" : 9,
+  "language" : "en",
+  "question" : "What causes of damp can occur in an old home?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 5050.458166,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "Damp in an old home can be caused by water use, rain, or seasonal factors. These causes should be investigated to determine their relationship with the damp issue. [S1]",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/guides/R4R_118_INITIAL_QUESTIONS_AND_WORK_FOLLOW_UP.md",
+      "headingPath" : [ "Customer service — initial questions, handover and maintenance", "What should be asked about damp?" ],
+      "ordinal" : 3
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

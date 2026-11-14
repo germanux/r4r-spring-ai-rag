@@ -29,7 +29,7 @@ class PgVectorSectionContextTest {
         assertThat(results.getFirst().source()).isEqualTo("faq.md");
         assertThat(results.getFirst().headingPath()).containsExactly("FAQ", "Presupuesto");
         verify(vectors, times(1)).similaritySearch(argThat((SearchRequest r) ->
-                r.getTopK() == 20 && r.getSimilarityThreshold() == .63 && r.getQuery().equals("datos")));
+                r.getTopK() == 20 && r.getSimilarityThreshold() == .63 && r.getQuery().equals(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery("datos"))));
         verify(jdbc).queryForList(contains("metadata->>'source' = ?"), eq(String.class),
                 eq("section"), eq("faq.md"), eq("[\"FAQ\",\"Presupuesto\"]"), eq(2));
         verifyNoMoreInteractions(jdbc, vectors);

@@ -38,14 +38,16 @@ public final class EmbeddingProviderRouter {
     private final Duration streamTimeout;
     private final String model;
 
+    public int dimensions() { return config.dimensions(); }
+
     public EmbeddingProviderRouter(EmbeddingFailoverProperties config, OllamaOptions options, Duration streamTimeout) {
         this.config = config;
         this.options = OllamaOptions.fromOptions(options);
         this.model = canonical(options.getModel());
         this.streamTimeout = streamTimeout;
-        if (!model.startsWith("nomic-embed-text:") || config.dimensions() != 768
+        if (!model.equals("qwen3-embedding:0.6b") || config.dimensions() != 1024
                 || config.expectedDigest() == null || !config.expectedDigest().matches("[a-fA-F0-9]{64}"))
-            throw new EmbeddingConfigurationException("Compatible nomic model, SHA-256 digest and 768 dimensions required");
+            throw new EmbeddingConfigurationException("Compatible Qwen3 embedding model, SHA-256 digest and 1024 dimensions required");
         if (config.providers() == null || config.providers().isEmpty())
             throw new EmbeddingConfigurationException("At least one embedding provider required");
         targets = List.copyOf(config.providers());
@@ -74,7 +76,7 @@ public final class EmbeddingProviderRouter {
             throw new IllegalArgumentException("Non-empty embedding input required");
         if (request.getOptions() != null) {
             if (request.getOptions().getModel() != null && !model.equals(canonical(request.getOptions().getModel()))
-                    || request.getOptions().getDimensions() != null && request.getOptions().getDimensions() != 768)
+                    || request.getOptions().getDimensions() != null && request.getOptions().getDimensions() != config.dimensions())
                 throw new EmbeddingConfigurationException("Incompatible embedding request options");
         }
         long started = System.nanoTime();
@@ -139,7 +141,7 @@ public final class EmbeddingProviderRouter {
         for (int i = 0; i < count; i++) {
             var result = response.getResults().get(i);
             float[] vector = result.getOutput();
-            if (result.getIndex() != i || vector == null || vector.length != 768)
+            if (result.getIndex() != i || vector == null || vector.length != config.dimensions())
                 throw new EmbeddingConfigurationException("Invalid embedding dimensions or batch order");
             boolean nonzero = false;
             for (float value : vector) {

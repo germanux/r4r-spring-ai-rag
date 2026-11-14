@@ -17,10 +17,15 @@ public final class S3VectorMetadataMapper {
     public static final String HEADING_CONTEXT_VERSION = "pgvector-heading-v1";
 
     public Map<String, Object> toMetadata(MarkdownChunk chunk) {
+        return toMetadata(chunk, false);
+    }
+
+    public Map<String, Object> toMetadata(MarkdownChunk chunk, boolean verifiedPgHeadingContext) {
         if (chunk == null) throw new IllegalArgumentException("chunk must not be null");
         Map<String, Object> metadata = new LinkedHashMap<>(Map.of("source", chunk.source(),
                 "ordinal", chunk.index(), "source_text", chunk.content()));
         if (!chunk.headingPath().isEmpty()) metadata.put("headingPath", chunk.headingPath());
+        if (verifiedPgHeadingContext) metadata.put("r4r_context", HEADING_CONTEXT_VERSION);
         fromMetadata(metadata); // Same validation on both directions; never truncate evidence.
         return Map.copyOf(metadata);
     }

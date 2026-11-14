@@ -1,0 +1,48 @@
+{
+  "caseId" : "case-14",
+  "number" : 14,
+  "language" : "es",
+  "question" : "¿Qué diferencias hay entre la cal aérea y la cal hidráulica natural para trabajar sobre muros antiguos?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 17399.008021,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "La cal aérea es muy transpirable y tradicional, pero lenta y menos apropiada para cargas gruesas sobre soporte húmedo o débil [S1]. La cal hidráulica natural NHL 2 o NHL 3.5 es técnicamente más compatible con piedra, tierra y fábricas antiguas, fragua también con humedad ambiental y mantiene una rigidez moderada [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/R4R_20_CASOS_OFICINAS_CUEVAS_BANOS_Y_FILTROS.md",
+      "headingPath" : [ "Riansares 4R — casos de oficinas, cuevas, baños y filtros comerciales", "12. Caso G — Cueva o bodega antigua: estabilización con mortero de cal y malla", "12.2. Cal aérea, NHL y morteros híbridos" ],
+      "ordinal" : 11
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

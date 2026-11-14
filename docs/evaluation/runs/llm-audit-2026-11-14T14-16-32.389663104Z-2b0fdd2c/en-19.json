@@ -1,0 +1,48 @@
+{
+  "caseId" : "case-22",
+  "number" : 19,
+  "language" : "en",
+  "question" : "We've just bought a flat and want to renovate it before moving in. In what order should the work be done to avoid having to break things that are already finished?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 5242.284729999999,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "To avoid breaking finished work, plan the renovation sequence by first reviewing the layout, services, falls, ventilation, and substrate condition. Then proceed with removal, plumbing, drains, waterproofing, tests, tiling, sanitary fittings, and finishing. Ensure that closing walls or tiling is not done before testing services to prevent the need for reopening them later [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/guides/R4R_81_BATHROOMS_SHOWERS_DRAINAGE_AND_WATERPROOFING.md",
+      "headingPath" : [ "Riansares 4R — bathrooms: leaks, showers, drainage and waterproofing", "In what order should a bathroom be renovated?" ],
+      "ordinal" : 1
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

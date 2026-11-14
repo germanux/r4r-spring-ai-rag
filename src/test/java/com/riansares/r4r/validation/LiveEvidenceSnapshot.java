@@ -31,7 +31,7 @@ public final class LiveEvidenceSnapshot {
                                     org.springframework.ai.ollama.api.OllamaOptions.builder().model(env.getRequiredProperty("RAG_EMBEDDING_MODEL")).build());
                             var jdbc=new org.springframework.jdbc.core.JdbcTemplate(new org.springframework.jdbc.datasource.SingleConnectionDataSource(connection,true));
                             var vectors=org.springframework.ai.vectorstore.pgvector.PgVectorStore.builder(jdbc,embeddings)
-                                    .dimensions(768).initializeSchema(false).build();
+                                    .dimensions(1024).initializeSchema(false).build();
                             var store=new com.riansares.r4r.vector.pgvector.PgVectorKnowledgeStore(vectors,jdbc);
                             var chunks=store.search(args[1],5,.63);
                             result.put("retrieved",chunks.stream().map(chunk -> Map.of("source",chunk.source(),

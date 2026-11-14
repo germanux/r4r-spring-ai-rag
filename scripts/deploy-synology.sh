@@ -20,6 +20,10 @@ COMPOSE="$ROOT/docker-spring/docker-compose.yml"
 
 cd "$ROOT"
 
+# Public configuration is deployed separately from the existing private .env.
+[[ "$(sed -n 's/^RAG_EMBEDDING_MODEL=//p' docker-spring/.env.base)" == qwen3-embedding:0.6b ]]
+[[ "$(sed -n 's/^RAG_EMBEDDING_DIMENSIONS=//p' docker-spring/.env.base)" == 1024 ]]
+
 echo "=========================================="
 echo " R4R - Despliegue Spring Boot en Synology"
 echo "=========================================="
@@ -116,7 +120,7 @@ STAGE="$(ssh "${SSH_OPTIONS[@]}" "$REMOTE" \
 echo "Destino: $REMOTE"
 echo "Temporal: $STAGE"
 
-scp -O "${SSH_OPTIONS[@]}" "$TAR" "$COMPOSE" "$REMOTE:$STAGE/"
+scp -O "${SSH_OPTIONS[@]}" "$TAR" "$COMPOSE" "$ROOT/docker-spring/.env.base" "$REMOTE:$STAGE/"
 
 # ============================================================
 # 5. IMPORTAR Y DESPLEGAR POR SSH
@@ -155,11 +159,14 @@ ssh "${SSH_OPTIONS[@]}" -tt "$REMOTE" "
   # Actualizar Compose.
   sudo cp '$STAGE/docker-compose.yml' docker-compose.yml
 
+  # Deploy public defaults; never modify or back up the private .env.
+  sudo cp '$STAGE/.env.base' .env.base
+
   # Validar antes de desplegar el proyecto.
   echo '==> Validando Compose...'
 
   if ! sudo \"\$COMPOSE_BIN\" \
-    --env-file .env \
+    --env-file .env.base --env-file .env \
     -f docker-compose.yml \
     config --quiet; then
 
@@ -176,14 +183,14 @@ ssh "${SSH_OPTIONS[@]}" -tt "$REMOTE" "
   echo '==> Desplegando proyecto R4R...'
 
   sudo \"\$COMPOSE_BIN\" \
-    --env-file .env \
+    --env-file .env.base --env-file .env \
     -f docker-compose.yml \
     up -d
 
   # La etiqueta Maven se reutiliza (0.3.2); garantizar que la API toma la
   # imagen recién importada, sin recrear PostgreSQL ni Ollama.
   sudo \"\$COMPOSE_BIN\" \
-    --env-file .env \
+    --env-file .env.base --env-file .env \
     -f docker-compose.yml \
     up -d --no-deps --force-recreate api
 
@@ -221,7 +228,7 @@ ssh "${SSH_OPTIONS[@]}" -tt "$REMOTE" "
   # Estado final.
   echo
   echo '==> Estado de los contenedores R4R:'
-  sudo \"\$COMPOSE_BIN\" --env-file .env -f docker-compose.yml ps
+  sudo \"\$COMPOSE_BIN\" --env-file .env.base --env-file .env -f docker-compose.yml ps
 
   echo
   echo '==> Últimos logs:'

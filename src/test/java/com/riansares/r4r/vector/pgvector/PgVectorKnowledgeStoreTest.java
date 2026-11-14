@@ -22,16 +22,16 @@ class PgVectorKnowledgeStoreTest {
     @AfterEach void neverUsesInfrastructure() { verifyNoInteractions(vectors, jdbc); }
 
     @Test
-    void deterministicEmbeddingModelProducesExact768DimensionalVectors() {
+    void deterministicEmbeddingModelProducesExact1024DimensionalVectors() {
         DeterministicEmbeddingModel model =
                 (DeterministicEmbeddingModel) embeddingModel;
 
-        // Test dimensions() returns 768
-        assertThat(model.dimensions()).isEqualTo(768);
+        // Test dimensions() returns 1024
+        assertThat(model.dimensions()).isEqualTo(1024);
 
-        // Test produced vector length is exactly 768
+        // Test produced vector length is exactly 1024
         float[] vector = model.embed(document("test"));
-        assertThat(vector).hasSize(768);
+        assertThat(vector).hasSize(1024);
 
         // Test equal text produces identical vectors
         float[] v1 = model.embed(document("identical content"));

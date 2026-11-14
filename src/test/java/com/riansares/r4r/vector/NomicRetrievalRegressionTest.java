@@ -33,21 +33,23 @@ class NomicRetrievalRegressionTest {
         String question = current.question();
         // Recorded vectors are a transport/scoring fixture only. They are NOT embeddings of
         // the current question and this test makes no semantic-relevance assertion.
-        var vector=corpus.query("cave");var ranked=corpus.ranked(vector);
+        var recorded=corpus.query("cave");var ranked=corpus.ranked(recorded);
+        // Synthetic Qwen-sized wire vector; historical Nomic ranking fixtures remain unchanged.
+        float[] vector=new float[1024];vector[0]=1;
         var vectors=mock(VectorStore.class);var jdbc=mock(JdbcTemplate.class);var aws=mock(S3VectorsClient.class);var embedding=mock(EmbeddingModel.class);
         when(vectors.similaritySearch(any(SearchRequest.class))).thenAnswer(call->{
             SearchRequest request=call.getArgument(0);
-            assertThat(request.getQuery()).isEqualTo(question);assertThat(request.getTopK()).isEqualTo(20);
+            assertThat(request.getQuery()).isEqualTo(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery(question));assertThat(request.getTopK()).isEqualTo(20);
             assertThat(request.getSimilarityThreshold()).isEqualTo(.63);
             return ranked.stream().filter(r->r.similarity()>.63).limit(request.getTopK()).map(r->
                     org.springframework.ai.document.Document.builder().id(r.row().id()).text(r.row().chunk().content())
                             .metadata(r.row().metadata()).score(r.similarity()).build()).toList();
         });
-        when(embedding.embed(question)).thenReturn(vector);
+        when(embedding.embed(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery(question))).thenReturn(vector);
         when(aws.queryVectors(any(QueryVectorsRequest.class))).thenAnswer(call->{
             QueryVectorsRequest request=call.getArgument(0);assertThat(request.topK()).isEqualTo(20);
-            assertThat(request.indexName()).isEqualTo("amzn-r4r-vector-index");assertThat(request.queryVector().float32()).hasSize(768);
-            for(int i=0;i<768;i++)assertThat(request.queryVector().float32().get(i)).isEqualTo(vector[i]);
+            assertThat(request.indexName()).isEqualTo("amzn-r4r-vector-index");assertThat(request.queryVector().float32()).hasSize(1024);
+            for(int i=0;i<1024;i++)assertThat(request.queryVector().float32().get(i)).isEqualTo(vector[i]);
             return QueryVectorsResponse.builder().distanceMetric(DistanceMetric.COSINE).vectors(ranked.stream().limit(request.topK())
                     .map(r->QueryOutputVector.builder().key(r.row().id()).metadata(NomicRegressionCorpus.document(r.row().metadata()))
                             .distance((float)(1-r.similarity())).build()).toList()).build();
@@ -66,6 +68,6 @@ class NomicRetrievalRegressionTest {
                 row.row().chunk(), row.similarity())).toList();
         assertThat(pgResults).containsExactlyElementsOf(new NomicCandidateReranker(
                 NomicRerankProperties.defaults()).select(question, candidates, 5));
-        verify(embedding,times(1)).embed(question);verifyNoInteractions(jdbc);
+        verify(embedding,times(1)).embed(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery(question));verifyNoInteractions(jdbc);
     }
 }

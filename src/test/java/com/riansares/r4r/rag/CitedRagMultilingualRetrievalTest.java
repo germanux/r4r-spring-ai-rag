@@ -32,7 +32,7 @@ class CitedRagMultilingualRetrievalTest {
         public EmbeddingResponse call(EmbeddingRequest request) {
             return new EmbeddingResponse(request.getInstructions().stream().map(text -> {
                 embedded.add(text);
-                float[] vector = new float[768];
+                float[] vector = new float[1024];
                 vector[text.contains("photosynthesis") || text.contains("fotosíntesis") ? 1 : 0] = 1;
                 return new Embedding(vector, 0);
             }).toList());
@@ -60,7 +60,7 @@ class CitedRagMultilingualRetrievalTest {
         assertThat(english.citations()).isEqualTo(spanish.citations());
         assertThat(english.citations()).extracting(Citation::source).containsExactly("servicios.md");
         assertThat(english.answer()).startsWith("It renovates");
-        assertThat(embedded.getLast()).isEqualTo(EN);
+        assertThat(embedded.getLast()).isEqualTo(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery(EN));
         var prompts = org.mockito.ArgumentCaptor.forClass(Prompt.class);
         verify(generation, times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues().get(0).getContents()).contains("Respond in Spanish.");
@@ -74,7 +74,7 @@ class CitedRagMultilingualRetrievalTest {
         var service = service();
         when(generation.call(any(Prompt.class))).thenReturn(response("It renovates homes [S1]."));
         assertThat(service.answer(EN, ES, "en").abstention()).isFalse();
-        assertThat(embedded.getLast()).isEqualTo(ES); // Only Spanish is embedded, never a concatenation.
+        assertThat(embedded.getLast()).isEqualTo(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery(ES)); // Only Spanish is embedded, never a concatenation.
         var prompt = org.mockito.ArgumentCaptor.forClass(Prompt.class);
         verify(generation).call(prompt.capture());
         assertThat(prompt.getValue().getContents()).contains(EN, "Respond in English.");
@@ -86,7 +86,7 @@ class CitedRagMultilingualRetrievalTest {
         when(generation.call(any(Prompt.class))).thenReturn(response("It renovates homes and offices [S1]."));
         String external = "¿Qué tipo de trabajos de renovación realiza esta empresa? ¿Funciona en casas y oficinas?";
         assertThat(service.answer(EN, external, "en").abstention()).isFalse();
-        assertThat(embedded.getLast()).isEqualTo("¿Qué tipo de reformas realiza esta empresa? ¿Funciona en casas y oficinas?");
+        assertThat(embedded.getLast()).isEqualTo(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery("¿Qué tipo de reformas realiza esta empresa? ¿Funciona en casas y oficinas?"));
         var prompt = org.mockito.ArgumentCaptor.forClass(Prompt.class);
         verify(generation).call(prompt.capture());
         assertThat(prompt.getValue().getContents()).contains(EN, "Respond in English.");
@@ -96,7 +96,7 @@ class CitedRagMultilingualRetrievalTest {
     void outOfDomainEnglishDirectlyAbstainsWithoutGenerationOrTranslation() {
         var service = service();
         assertThat(service.answer("Explain photosynthesis.", null, "en").abstention()).isTrue();
-        assertThat(embedded.getLast()).isEqualTo("Explain photosynthesis.");
+        assertThat(embedded.getLast()).isEqualTo(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery("Explain photosynthesis."));
         verifyNoInteractions(generation);
     }
 

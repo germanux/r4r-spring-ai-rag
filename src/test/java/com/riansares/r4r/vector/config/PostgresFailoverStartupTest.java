@@ -41,14 +41,14 @@ class PostgresFailoverStartupTest {
                 .withBean("s3VectorsClient", S3VectorsClient.class, () -> aws)
                 .withPropertyValues("r4r.rag.vector.primary=pgvector", "r4r.rag.vector.failover-enabled=true",
                         "r4r.rag.vector.s3vectors.enabled=true", "r4r.rag.vector.s3vectors.bucket=amzn-r4r-vectors",
-                        "r4r.rag.vector.s3vectors.index=amzn-r4r-vector-index", "spring.ai.vectorstore.pgvector.dimensions=768",
+                        "r4r.rag.vector.s3vectors.index=amzn-r4r-vector-index", "spring.ai.vectorstore.pgvector.dimensions=1024",
                         "spring.ai.vectorstore.pgvector.initialize-schema=false", "spring.sql.init.mode=never",
                         "spring.flyway.enabled=true", "spring.ai.vectorstore.pgvector.schema-validation=true");
     }
     @Test void actualFlywayInitializationDefersUnknownHostAndActualPgVectorBeanStaysLazy() throws Exception {
         when(db.getConnection()).thenThrow(new SQLException("unreachable", "08001", new java.net.UnknownHostException("postgres")));
-        float[] vector = new float[768]; vector[0] = 1;
-        when(embeddings.embed("question")).thenReturn(vector);
+        float[] vector = new float[1024]; vector[0] = 1;
+        when(embeddings.embed(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery("question"))).thenReturn(vector);
         when(aws.queryVectors(any(QueryVectorsRequest.class))).thenReturn(QueryVectorsResponse.builder().distanceMetric(DistanceMetric.COSINE).build());
         context().withPropertyValues("spring.flyway.validate-on-migrate=false", "spring.flyway.connect-retries=10").run(ctx -> {
             assertThat(ctx).hasNotFailed().hasSingleBean(Flyway.class).hasSingleBean(PostgresAccessGate.class);
@@ -60,7 +60,7 @@ class PostgresFailoverStartupTest {
             assertThatThrownBy(() -> ctx.getBean(KnowledgeVectorStore.class).index(List.of())).isInstanceOf(org.springframework.jdbc.CannotGetJdbcConnectionException.class);
             verify(db).getConnection(); // No connection storm from repeated reads/writes.
         });
-        verify(aws).queryVectors(argThat((QueryVectorsRequest r) -> r.queryVector().float32().size() == 768 && r.returnMetadata()));
+        verify(aws).queryVectors(argThat((QueryVectorsRequest r) -> r.queryVector().float32().size() == 1024 && r.returnMetadata()));
     }
     @Test void disabledAwsRetainsFatalTraditionalStartup() throws Exception {
         when(db.getConnection()).thenThrow(new SQLException("unreachable", "08001"));

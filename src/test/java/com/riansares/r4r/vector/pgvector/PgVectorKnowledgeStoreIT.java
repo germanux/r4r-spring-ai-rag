@@ -85,18 +85,18 @@ class PgVectorKnowledgeStoreIT {
                 LIMIT 1
                 """, String.class);
 
-        assertThat(vectorType).isEqualTo("vector(768)");
+        assertThat(vectorType).isEqualTo("vector(1024)");
         assertThat(idType).isEqualTo("uuid");
         assertThat(metadataType).isEqualTo("jsonb");
         assertThat(primaryKey).contains("PRIMARY KEY").contains("id");
         assertThat(embeddingIndex.toLowerCase())
                 .contains("using hnsw")
                 .contains("vector_cosine_ops");
-        assertThat(flywayVersion).isEqualTo("3");
+        assertThat(flywayVersion).isEqualTo("4");
     }
 
     @Test
-    void deterministicEmbeddingModelIsLocalStableAnd768Dimensional() {
+    void deterministicEmbeddingModelIsLocalStableAnd1024Dimensional() {
         assertThat(knowledgeStore).isInstanceOf(com.riansares.r4r.vector.FailoverKnowledgeVectorStore.class);
         assertThat(store).isInstanceOf(PgVectorKnowledgeStore.class);
         assertThat(knowledgeStore).isNotSameAs(store);
@@ -110,8 +110,8 @@ class PgVectorKnowledgeStoreIT {
         float[] second = model.embed(document("same text"));
         float[] different = model.embed(document("unrelated tokens"));
 
-        assertThat(model.dimensions()).isEqualTo(768);
-        assertThat(first).hasSize(768);
+        assertThat(model.dimensions()).isEqualTo(1024);
+        assertThat(first).hasSize(1024);
         assertThat(second).containsExactly(first);
         assertThat(Arrays.equals(first, different)).isFalse();
     }

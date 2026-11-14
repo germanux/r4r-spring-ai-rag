@@ -20,8 +20,8 @@ import static org.assertj.core.api.Assertions.*;
 
 /** Actual Spring AI HTTP clients, simulated Ollama servers; no physical services. */
 class EmbeddingProviderFailoverTest {
-    static final String MODEL = "nomic-embed-text:latest";
-    static final String DIGEST = "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f";
+    static final String MODEL = "qwen3-embedding:0.6b";
+    static final String DIGEST = "ac6da0dfba84a81fdbfbaf330198c33cd77c4cdfc53e8bc50eb581914a15621d";
     final List<Node> nodes = new ArrayList<>();
     final List<String> calls = new CopyOnWriteArrayList<>();
     final OllamaOptions options = OllamaOptions.builder().model(MODEL).build();
@@ -29,7 +29,7 @@ class EmbeddingProviderFailoverTest {
 
     @Test void laptopFirstAndOnly() throws Exception {
         var r = router(node("lp"), node("pc"), node("nas"));
-        assertThat(r.call(request()).getResult().getOutput()).hasSize(768);
+        assertThat(r.call(request()).getResult().getOutput()).hasSize(1024);
         assertThat(calls).containsExactly("lp /api/tags", "lp /api/embed");
     }
     @Test void desktopFallbackAndLaptopRecoveryNextRequest() throws Exception {
@@ -85,7 +85,7 @@ class EmbeddingProviderFailoverTest {
             assertThatThrownBy(() -> r.call(request())).isInstanceOf(EmbeddingConfigurationException.class);
             assertThat(calls).hasSize(2);
         }
-        a.dimensions=768; a.zero=true;
+        a.dimensions=1024; a.zero=true;
         assertThatThrownBy(() -> r.call(request())).isInstanceOf(EmbeddingConfigurationException.class);
     }
     @Test void wrongResponseModelRejected() throws Exception {
@@ -112,7 +112,7 @@ class EmbeddingProviderFailoverTest {
         Node a=node("lp"), b=node("pc"), c=node("nas"); a.status=503;
         var observed=new ObservedEmbeddingModel(OllamaApi.builder().baseUrl(a.url()).build(),options,router(a,b,c));
         List<Map<String,Object>> events=new ArrayList<>(); var progress=new RagProgress(events::add);
-        assertThat(observed.dimensions()).isEqualTo(768); assertThat(calls).isEmpty();
+        assertThat(observed.dimensions()).isEqualTo(1024); assertThat(calls).isEmpty();
         progress.duringRetrieval(() -> observed.embed("private input"));
         assertThat(events).extracting(e -> e.get("stage")).containsExactly("EMBEDDING_STARTED","EMBEDDING_COMPLETED");
         assertThat((Double)progress.metrics().get("embeddingMs")).isGreaterThan(0);
@@ -132,7 +132,7 @@ class EmbeddingProviderFailoverTest {
     @Test void elapsedSseDeadlinePreventsNetworkAndScopeIsReleased() throws Exception {
         Node a=node("lp"), b=node("pc"), c=node("nas");
         var p=new EmbeddingFailoverProperties(List.of(provider("laptop",a,10),provider("desktop",b,10),provider("nas",c,10)),
-                Duration.ofMillis(5),Duration.ofMillis(10),Duration.ofMillis(20),768,DIGEST);
+                Duration.ofMillis(5),Duration.ofMillis(10),Duration.ofMillis(20),1024,DIGEST);
         var r=new EmbeddingProviderRouter(p,options,Duration.ofMillis(20));
         var progress=RagProgress.silent(); Thread.sleep(30);
         assertThatThrownBy(() -> progress.duringRetrieval(() -> r.call(request())))
@@ -166,12 +166,12 @@ class EmbeddingProviderFailoverTest {
     @Test void routingUsesConfiguredListOrderInsteadOfHardcodedTargets() throws Exception {
         Node a=node("lp"), b=node("pc"), c=node("nas");
         var p=new EmbeddingFailoverProperties(List.of(provider("desktop",b,1000),provider("laptop",a,100),provider("nas",c,1000)),
-                Duration.ofMillis(50),Duration.ofMillis(100),Duration.ofSeconds(2),768,DIGEST);
+                Duration.ofMillis(50),Duration.ofMillis(100),Duration.ofSeconds(2),1024,DIGEST);
         new EmbeddingProviderRouter(p,options,Duration.ofSeconds(3)).call(request());
         assertThat(calls).containsExactly("pc /api/tags", "pc /api/embed");
     }
     @Test void emptyProviderListFailsBeforeNetwork() {
-        var p=new EmbeddingFailoverProperties(List.of(),Duration.ofSeconds(1),Duration.ofSeconds(1),Duration.ofSeconds(2),768,DIGEST);
+        var p=new EmbeddingFailoverProperties(List.of(),Duration.ofSeconds(1),Duration.ofSeconds(1),Duration.ofSeconds(2),1024,DIGEST);
         assertThatThrownBy(() -> new EmbeddingProviderRouter(p,options,Duration.ofSeconds(3)))
                 .isInstanceOf(EmbeddingConfigurationException.class).hasMessageContaining("provider");
         assertThat(calls).isEmpty();
@@ -181,7 +181,7 @@ class EmbeddingProviderFailoverTest {
         a.status=b.status=c.status=503;
         var p=new EmbeddingFailoverProperties(List.of(provider("a",a,1000),provider("b",b,1000),
                 provider("c",c,1000),provider("d",d,1000)),Duration.ofMillis(50),Duration.ofMillis(100),
-                Duration.ofSeconds(2),768,DIGEST);
+                Duration.ofSeconds(2),1024,DIGEST);
         var router=new EmbeddingProviderRouter(p,options,Duration.ofSeconds(3));
         router.call(request());
         assertThat(calls).containsExactly("a /api/tags","b /api/tags","c /api/tags","d /api/tags","d /api/embed");
@@ -189,7 +189,7 @@ class EmbeddingProviderFailoverTest {
         assertThat(calls).containsExactly("a /api/tags","a /api/embed");
     }
     EmbeddingProviderRouter router(Node a, Node b, Node c) {
-        return new EmbeddingProviderRouter(properties(a,b,c,768),options,Duration.ofSeconds(3));
+        return new EmbeddingProviderRouter(properties(a,b,c,1024),options,Duration.ofSeconds(3));
     }
     EmbeddingFailoverProperties properties(Node a, Node b, Node c, int dimensions) {
         return new EmbeddingFailoverProperties(List.of(provider("laptop",a,100),provider("desktop",b,1000),provider("nas",c,1000)),
@@ -202,7 +202,7 @@ class EmbeddingProviderFailoverTest {
     Node node(String name) throws Exception { var n=new Node(name); nodes.add(n); return n; }
     class Node {
         final HttpServer server;
-        volatile int status=200, dimensions=768, delay=0;
+        volatile int status=200, dimensions=1024, delay=0;
         volatile String model=MODEL, responseModel=MODEL, digest=DIGEST;
         volatile boolean zero;
         Node(String name) throws Exception {

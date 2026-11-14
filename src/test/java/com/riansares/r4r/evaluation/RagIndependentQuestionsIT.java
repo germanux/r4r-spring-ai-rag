@@ -77,7 +77,7 @@ class RagIndependentQuestionsIT {
             context.register(OllamaEmbeddingConfiguration.class,S3VectorsConfiguration.class,TitanRetrievalConfiguration.class,RagConfiguration.class);
             context.registerBean(JdbcTemplate.class,()->new JdbcTemplate(source));
             context.registerBean("independentPgVector",VectorStore.class,()->PgVectorStore.builder(context.getBean(JdbcTemplate.class),
-                    context.getBean(EmbeddingModel.class)).dimensions(768).initializeSchema(false).vectorTableValidationsEnabled(true).build(),definition->definition.setLazyInit(true));
+                    context.getBean(EmbeddingModel.class)).dimensions(1024).initializeSchema(false).vectorTableValidationsEnabled(true).build(),definition->definition.setLazyInit(true));
             context.registerBean("independentPgStore",PgVectorKnowledgeStore.class,()->new PgVectorKnowledgeStore(
                     context.getBean(VectorStore.class),context.getBean(JdbcTemplate.class),ranking),definition->{definition.setLazyInit(true);((org.springframework.beans.factory.support.AbstractBeanDefinition)definition).setDefaultCandidate(false);});
             var credentials=ProfileCredentialsProvider.builder().profileName("r4r-codex").build();

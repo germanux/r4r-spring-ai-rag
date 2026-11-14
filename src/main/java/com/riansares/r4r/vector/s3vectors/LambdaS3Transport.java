@@ -27,7 +27,7 @@ public final class LambdaS3Transport implements Function<QueryVectorsRequest,Que
             var body=JSON.readTree(response.payload().asByteArray());
             if(!body.path("schemaVersion").isIntegralNumber() || !body.path("schemaVersion").canConvertToInt() || body.path("schemaVersion").intValue()!=1
                 || !"amzn-r4r-vector-index".equals(body.path("index").asText()) || !"amzn-r4r-vectors".equals(body.path("bucket").asText())
-                || !body.path("dimensions").isIntegralNumber() || !body.path("dimensions").canConvertToInt() || body.path("dimensions").intValue()!=768
+                || !body.path("dimensions").isIntegralNumber() || !body.path("dimensions").canConvertToInt() || body.path("dimensions").intValue()!=1024
                 || !"cosine".equals(body.path("distanceMetric").asText()) || !body.path("vectors").isArray()
                 || body.path("vectors").size()>request.topK() || !body.path("vectorSearchMs").isNumber()
                 || !Double.isFinite(body.path("vectorSearchMs").doubleValue()) || body.path("vectorSearchMs").doubleValue()<0) throw new IllegalStateException("Invalid Lambda schema");

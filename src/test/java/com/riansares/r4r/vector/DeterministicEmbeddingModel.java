@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 public final class DeterministicEmbeddingModel
         implements EmbeddingModel {
 
-    public static final int DIMENSIONS = 768;
+    public static final int DIMENSIONS = 1024;
 
     private static final Pattern TOKEN =
             Pattern.compile("[\\p{L}\\p{N}]+");
@@ -49,6 +49,9 @@ public final class DeterministicEmbeddingModel
     }
 
     private static float[] vectorFor(String text) {
+        // Simulate task-aware embeddings: instructions are not document vocabulary.
+        if (text != null && text.startsWith("Instruct:") && text.contains("\nQuery:"))
+            text = text.substring(text.indexOf("\nQuery:") + "\nQuery:".length());
         float[] vector = new float[DIMENSIONS];
         Matcher matcher = TOKEN.matcher(
                 text == null ? "" : text.toLowerCase(Locale.ROOT));

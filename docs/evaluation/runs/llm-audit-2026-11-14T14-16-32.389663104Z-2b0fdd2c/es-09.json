@@ -1,0 +1,48 @@
+{
+  "caseId" : "case-09",
+  "number" : 9,
+  "language" : "es",
+  "question" : "¿Qué causas de humedad pueden aparecer en una vivienda antigua?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2583.627953,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "Las causas de humedad en una vivienda antigua pueden incluir humedad ascendente, humedad lateral por terreno o roca, condensación, filtraciones antiguas, fugas y sales [S4].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S4]",
+      "source" : "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+      "headingPath" : [ "Riansares 4R — casos de patios, viviendas, humedades y reparaciones", "7. Caso B — Vivienda antigua: rehabilitar sin demoler de más", "7.3. Humedad en muros antiguos" ],
+      "ordinal" : 14
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

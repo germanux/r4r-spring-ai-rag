@@ -6,6 +6,9 @@ con Java 21 y Maven. No necesitan PostgreSQL local ni arrancan Docker.
 Spring importa `docker-spring/.env.base` y después `docker-spring/.env`;
 no hay que copiar contraseñas a comandos ni imprimirlas.
 
+> PostgreSQL del NAS ya está migrado a Qwen3/1024 (1.375 vectores).
+> Estado de AWS y despliegue: [migración](../operations/qwen3-embedding-migration.md).
+
 ## Qué hace cada clase
 
 ```text
@@ -18,7 +21,7 @@ KnowledgeIngestionCli.execute()
     → PgVectorKnowledgeStore.index()
       → identificadores deterministas y metadatos
       → VectorStore.add() de Spring AI
-        → ObservedEmbeddingModel → EmbeddingProviderRouter → Nomic
+        → ObservedEmbeddingModel → EmbeddingProviderRouter → Qwen3
     → comprobación SQL de recuentos, contenido y metadatos
   → commit de la transacción y R4R_INGESTION_RESULT
 ```
@@ -35,7 +38,7 @@ Conserva la ruta relativa con prefijo `es/` o `en/`, la jerarquía de encabezado
 el ordinal. Cada fragmento genera un vector: no se fusionan traducciones ni se
 crean tablas separadas por idioma. El metadato `source` permite deducir el idioma.
 
-Se reutiliza el modelo `nomic-embed-text:latest`, su digest configurado, los 768
+Se utiliza el modelo `qwen3-embedding:0.6b`, su digest configurado, los 1024
 componentes y el failover existente. El router comprueba identidad y digest antes
 de cada petición, y valida dimensión, orden, valores finitos y vectores no nulos.
 Esto usa Ollama para embeddings; las traducciones inglesas se realizaron
@@ -78,7 +81,7 @@ java -Dloader.main=com.riansares.r4r.ingestion.KnowledgeIngestionCli \
 El modo completo exige un JDBC dirigido a `192.168.1.203`; PostgreSQL puede
 identificarse con una IP interna del contenedor del NAS, por ejemplo `172.20.0.5`.
 Comprueba base/usuario, sesión escribible, permisos SELECT/INSERT/UPDATE/DELETE,
-secuencias y columna `vector(768)`. Hace una petición real de embedding de prueba,
+secuencias y columna `vector(1024)`. Hace una petición real de embedding de prueba,
 pero no escribe filas. Flyway y la inicialización del esquema quedan desactivados;
 se preservan todas las migraciones. No usar `--debug` ni volcar el entorno privado. La CLI limita por defecto la conexión
 a 5 segundos y la espera de lectura JDBC a 30 segundos; una pérdida de red no

@@ -31,7 +31,7 @@ public final class Handler implements RequestStreamHandler {
         int k = input.path("topK").intValue();
         if (k < 1 || k > 10000) throw new IllegalArgumentException();
         var embedding = input.path("embedding");
-        if (!embedding.isArray() || embedding.size() != 768) throw new IllegalArgumentException();
+        if (!embedding.isArray() || embedding.size() != 1024) throw new IllegalArgumentException();
         List<Float> values = new ArrayList<>(); double norm=0;
         for (var v:embedding) {
             if (!v.isNumber() || !Float.isFinite(v.floatValue())) throw new IllegalArgumentException();
@@ -56,7 +56,7 @@ public final class Handler implements RequestStreamHandler {
             token=response.nextToken(); if(token!=null && token.isBlank()) token=null;
             if(token!=null && !tokens.add(token)) throw new IllegalStateException();
         } while(token!=null);
-        return Map.of("schemaVersion",1,"index","amzn-r4r-vector-index","bucket","amzn-r4r-vectors","dimensions",768,
+        return Map.of("schemaVersion",1,"index","amzn-r4r-vector-index","bucket","amzn-r4r-vectors","dimensions",1024,
             "distanceMetric","cosine","vectors",hits,"vectorSearchMs",(System.nanoTime()-start)/1e6);
     }
     // Document.toString is diagnostic output, not a JSON serialization contract.

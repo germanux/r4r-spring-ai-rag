@@ -10,6 +10,10 @@ import org.springframework.ai.ollama.management.ModelManagementOptions;
 
 /** Retains Ollama's bean type/autoconfiguration boundary and calls Spring AI exactly once. */
 public final class ObservedEmbeddingModel extends OllamaEmbeddingModel {
+    /** Qwen3's retrieval instruction applies to queries only; stored documents remain unprefixed. */
+    public static String retrievalQuery(String question) {
+        return "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery:" + question;
+    }
     private final String model;
     private final EmbeddingProviderRouter router;
     public ObservedEmbeddingModel(OllamaApi api, OllamaOptions options) {
@@ -23,5 +27,5 @@ public final class ObservedEmbeddingModel extends OllamaEmbeddingModel {
     @Override public EmbeddingResponse call(EmbeddingRequest request) {
         return RagProgress.observeEmbedding(model, () -> router == null ? super.call(request) : router.call(request));
     }
-    @Override public int dimensions() { return router == null ? super.dimensions() : 768; }
+    @Override public int dimensions() { return router == null ? super.dimensions() : router.dimensions(); }
 }

@@ -72,7 +72,7 @@ class KnowledgeVectorStoreConfigurationTest {
             var store = context.getBean(KnowledgeVectorStore.class);
             assertThat(store.search("consulta", 5, .63)).containsExactly(first, second);
             verify(vectors).similaritySearch(argThat((SearchRequest request) ->
-                    request.getQuery().equals("consulta")
+                    request.getQuery().equals(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery("consulta"))
                             && request.getTopK() == 20
                             && request.getSimilarityThreshold() == .63));
             verify(jdbc).afterPropertiesSet();

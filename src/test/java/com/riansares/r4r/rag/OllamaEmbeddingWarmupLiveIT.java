@@ -18,7 +18,7 @@ class OllamaEmbeddingWarmupLiveIT {
     @Test void emptyInputIsAcceptedAndConfiguredModelIsObservedInMemory() throws Exception {
         String url = System.getenv().getOrDefault("RAG_EMBEDDING_LIVE_URL", "");
         assertThat(url.isBlank()).as("RAG_EMBEDDING_LIVE_URL must explicitly select a test Ollama").isFalse();
-        String model = System.getenv().getOrDefault("RAG_EMBEDDING_MODEL", "nomic-embed-text:latest");
+        String model = System.getenv().getOrDefault("RAG_EMBEDDING_MODEL", "qwen3-embedding:0.6b");
         var factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofSeconds(2)); factory.setReadTimeout(Duration.ofSeconds(30));
         var api = OllamaApi.builder().baseUrl(url).restClientBuilder(org.springframework.web.client.RestClient.builder().requestFactory(factory)).build();

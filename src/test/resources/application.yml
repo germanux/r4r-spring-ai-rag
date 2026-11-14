@@ -16,11 +16,11 @@ spring:
     ollama:
       embedding:
         options:
-          model: nomic-embed-text:latest
+          model: qwen3-embedding:0.6b
     vectorstore:
       pgvector:
         initialize-schema: false
-        dimensions: 768
+        dimensions: 1024
         distance-type: COSINE_DISTANCE
         index-type: HNSW
         schema-name: public
@@ -46,8 +46,8 @@ r4r:
       connect-timeout: 100ms
       probe-timeout: 100ms
       total-timeout: 1s
-      dimensions: 768
-      expected-digest: 0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f
+      dimensions: 1024
+      expected-digest: ac6da0dfba84a81fdbfbaf330198c33cd77c4cdfc53e8bc50eb581914a15621d
       providers:
         - name: offline-embedding
           base-url: http://127.0.0.1:1

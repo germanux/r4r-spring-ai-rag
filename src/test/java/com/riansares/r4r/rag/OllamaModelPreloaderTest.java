@@ -30,7 +30,7 @@ class OllamaModelPreloaderTest {
         var release = new CountDownLatch(1);
         try (var pc = new Server("qwen3:8b", entered, release);
              var laptop = new Server("qwen2.5:7b", entered, release);
-             var embedding = new Server("nomic-embed-text:latest", entered, release);
+             var embedding = new Server("qwen3-embedding:0.6b", entered, release);
              var preloader = preloader(pc, laptop, embedding, Duration.ofSeconds(2), Duration.ofMinutes(1))) {
             long start = System.nanoTime();
             preloader.preloadAfterStartup();
@@ -66,7 +66,7 @@ class OllamaModelPreloaderTest {
     @org.junit.jupiter.params.provider.ValueSource(booleans = {true, false})
     void oneDisconnectedProviderNeverBlocksOtherModels(boolean desktopDown) throws Exception {
         try (var pc = new Server("qwen3:8b"); var laptop = new Server("qwen2.5:7b");
-             var embedding = new Server("nomic-embed-text:latest")) {
+             var embedding = new Server("qwen3-embedding:0.6b")) {
             if (desktopDown) pc.server.stop(0); else laptop.server.stop(0);
             try (var preloader = preloader(pc, laptop, embedding, Duration.ofSeconds(1), Duration.ofMinutes(1))) {
                 preloader.requestWarmup();
@@ -78,7 +78,7 @@ class OllamaModelPreloaderTest {
     }
 
     @Test void bothDisconnectedStillPreparesEmbeddingsAndNeverInvokesOpenAi() throws Exception {
-        try (var pc = new Server("qwen3:8b"); var laptop = new Server("qwen2.5:7b"); var embedding = new Server("nomic-embed-text:latest")) {
+        try (var pc = new Server("qwen3:8b"); var laptop = new Server("qwen2.5:7b"); var embedding = new Server("qwen3-embedding:0.6b")) {
             pc.server.stop(0); laptop.server.stop(0);
             try (var preloader = preloader(pc, laptop, embedding, Duration.ofSeconds(1), Duration.ofMinutes(1))) {
                 preloader.requestWarmup();
@@ -91,7 +91,7 @@ class OllamaModelPreloaderTest {
     @Test void timeoutIsIsolatedAndCanRetryOnlyAfterCooldown() throws Exception {
         var release = new CountDownLatch(1);
         try (var pc = new Server("qwen3:8b", new CountDownLatch(1), release);
-             var laptop = new Server("qwen2.5:7b"); var embedding = new Server("nomic-embed-text:latest");
+             var laptop = new Server("qwen2.5:7b"); var embedding = new Server("qwen3-embedding:0.6b");
              var preloader = preloader(pc, laptop, embedding, Duration.ofMillis(150), Duration.ofMillis(500))) {
             preloader.requestWarmup();
             await(() -> state(preloader, "desktop").equals("unreachable") && state(preloader, "laptop").equals("loaded"));
@@ -105,7 +105,7 @@ class OllamaModelPreloaderTest {
     }
 
     @Test void runtimeReadsObserveLoadedAndUnloadedWithoutWarmupOrModelDownloads() throws Exception {
-        try (var pc = new Server("qwen3:8b"); var laptop = new Server("qwen2.5:7b"); var embedding = new Server("nomic-embed-text:latest");
+        try (var pc = new Server("qwen3:8b"); var laptop = new Server("qwen2.5:7b"); var embedding = new Server("qwen3-embedding:0.6b");
              var preloader = preloader(pc, laptop, embedding, Duration.ofSeconds(1), Duration.ofMinutes(1))) {
             pc.loaded = true;
             assertThat(preloader.modelStates()).allMatch(s -> s.state().equals("unknown"));
@@ -119,7 +119,7 @@ class OllamaModelPreloaderTest {
     }
 
     @Test void missingModelsAndMissingTelemetryAreNotInventedAsLoadedOrZero() throws Exception {
-        try (var pc = new Server("qwen3:8b"); var laptop = new Server("qwen2.5:7b"); var embedding = new Server("nomic-embed-text:latest")) {
+        try (var pc = new Server("qwen3:8b"); var laptop = new Server("qwen2.5:7b"); var embedding = new Server("qwen3-embedding:0.6b")) {
             pc.installed = false;
             laptop.psBody = "{\"models\":[{\"name\":\"qwen2.5:7b\",\"size\":-1},{\"name\":\"zero\",\"size\":0,\"size_vram\":0}]}";
             embedding.psStatus = 503;
@@ -135,7 +135,7 @@ class OllamaModelPreloaderTest {
     }
 
     @Test void runtimeFirstPreservesOnePendingWarmupAcrossConcurrentTabs() throws Exception {
-        try (var pc = new Server("qwen3:8b"); var laptop = new Server("qwen2.5:7b"); var embedding = new Server("nomic-embed-text:latest");
+        try (var pc = new Server("qwen3:8b"); var laptop = new Server("qwen2.5:7b"); var embedding = new Server("qwen3-embedding:0.6b");
              var preloader = preloader(pc, laptop, embedding, Duration.ofSeconds(2), Duration.ofMinutes(1))) {
             pc.observing = new CountDownLatch(1);
             pc.releaseObservation = new CountDownLatch(1);
@@ -157,7 +157,7 @@ class OllamaModelPreloaderTest {
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(booleans = {false, true})
     void completedWarmupRequiresPsEvidenceBeforeReportingLoaded(boolean psAvailable) throws Exception {
-        try (var pc = new Server("qwen3:8b"); var laptop = new Server("qwen2.5:7b"); var embedding = new Server("nomic-embed-text:latest");
+        try (var pc = new Server("qwen3:8b"); var laptop = new Server("qwen2.5:7b"); var embedding = new Server("qwen3-embedding:0.6b");
              var preloader = preloader(pc, laptop, embedding, Duration.ofSeconds(1), Duration.ofMinutes(1))) {
             pc.loaded = true;
             embedding.psStatus = psAvailable ? 200 : 503;
@@ -174,7 +174,7 @@ class OllamaModelPreloaderTest {
     }
 
     @Test void sameModelOnDifferentHostsKeepsIndependentIdentityAndRecovery() throws Exception {
-        try (var pc = new Server("shared:latest"); var laptop = new Server("shared:latest"); var embedding = new Server("nomic-embed-text:latest");
+        try (var pc = new Server("shared:latest"); var laptop = new Server("shared:latest"); var embedding = new Server("qwen3-embedding:0.6b");
              var preloader = preloader(pc, laptop, embedding, Duration.ofSeconds(1), Duration.ofMillis(100))) {
             pc.loaded = true;
             laptop.tagsStatus = 503;
@@ -211,7 +211,7 @@ class OllamaModelPreloaderTest {
                 timeout,timeout);
         var embeddingConfig=new com.riansares.r4r.config.EmbeddingFailoverProperties(List.of(
                 new com.riansares.r4r.config.EmbeddingFailoverProperties.Provider("embeddings",embedding.url(),timeout)),
-                timeout,timeout,timeout,768,"test-unused");
+                timeout,timeout,timeout,1024,"test-unused");
         return new OllamaModelPreloader(mapper, properties, chat, generation,embeddingConfig,cooldown);
     }
     private static GenerationRouter.Provider provider(String name, Server server) {

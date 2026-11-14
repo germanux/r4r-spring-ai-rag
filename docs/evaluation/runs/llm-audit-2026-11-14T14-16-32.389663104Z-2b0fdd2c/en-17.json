@@ -1,0 +1,48 @@
+{
+  "caseId" : "case-17",
+  "number" : 17,
+  "language" : "en",
+  "question" : "The kitchen cabinets are fine. How can I refresh it without taking everything apart?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2964.185508,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "If the kitchen cabinets are in good condition, you can refresh the kitchen by keeping the cabinets and focusing on other elements such as tiles and appliances, as long as you ensure adequate ventilation and accessible connections for the appliances [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.md",
+      "headingPath" : [ "Kitchens — scope, materials and trade coordination", "Can I keep the cabinets while the plumbing is replaced?" ],
+      "ordinal" : 2
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

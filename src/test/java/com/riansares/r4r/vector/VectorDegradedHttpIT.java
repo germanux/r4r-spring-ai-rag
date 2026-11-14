@@ -88,9 +88,9 @@ class VectorDegradedHttpIT {
         assertThat(body.at("/citations/0/ordinal").asInt()).isEqualTo(2);
         assertThat(body.at("/citations/0/headingPath/0").asText()).isEqualTo("Servicios");
         assertThat(body.at("/provider/model").asText()).isEqualTo("qwen3:8b");
-        verify(aws).queryVectors(argThat((QueryVectorsRequest request) -> request.queryVector().float32().size() == 768
+        verify(aws).queryVectors(argThat((QueryVectorsRequest request) -> request.queryVector().float32().size() == 1024
                 && request.returnMetadata() && request.indexName().equals("amzn-r4r-vector-index")));
-        assertThat(embedding.dimensions()).isEqualTo(768);
+        assertThat(embedding.dimensions()).isEqualTo(1024);
     }
     @Test void coldStartupAlsoServesSseAndPreservesCitations() throws Exception {
         var response = post("/api/rag/answers/stream");
@@ -109,7 +109,7 @@ class VectorDegradedHttpIT {
         try (var client = HttpClient.newHttpClient()) {
             var runtime = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/rag/runtime")).GET().build(), HttpResponse.BodyHandlers.ofString());
             assertThat(runtime.statusCode()).isEqualTo(200);
-            assertThat(json.readTree(runtime.body()).path("embeddingModel").asText()).startsWith("nomic-embed-text");
+            assertThat(json.readTree(runtime.body()).path("embeddingModel").asText()).isEqualTo("qwen3-embedding:0.6b");
         }
         verify(router, never()).call(any(Prompt.class), any(RagProgress.class));
     }

@@ -51,6 +51,14 @@ public class KnowledgeIngestionCli {
                 "spring.datasource.hikari.data-source-properties.socketTimeout", "30",
                 "spring.datasource.hikari.data-source-properties.tcpKeepAlive", "true"));
         try (var context = builder.run(args)) {
+            String export = context.getEnvironment().getProperty("r4r.ingestion.export-s3", "");
+            if (export != null && !export.isBlank()) {
+                long count = context.getBean(com.riansares.r4r.vector.pgvector.PgVectorKnowledgeStore.class)
+                        .exportS3Vectors(java.nio.file.Path.of(export));
+                System.out.println("R4R_S3_EXPORT_RESULT=" + new com.fasterxml.jackson.databind.ObjectMapper()
+                        .writeValueAsString(java.util.Map.of("vectors", count, "dimensions", 1024, "file", export)));
+                return EXIT_CODE_SUCCESS;
+            }
             if (context.getEnvironment().getProperty("r4r.ingestion.index", Boolean.class, false)) {
                 try {
                     var result = context.getBean(KnowledgeIngestionService.class).ingestIndexed(

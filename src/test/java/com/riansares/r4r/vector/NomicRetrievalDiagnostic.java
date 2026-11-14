@@ -101,9 +101,9 @@ public final class NomicRetrievalDiagnostic {
                     public float[] embed(String ignored){return data;}
                     public float[] embed(org.springframework.ai.document.Document ignored){throw new UnsupportedOperationException();}
                     public EmbeddingResponse call(EmbeddingRequest ignored){return new EmbeddingResponse(List.of(new Embedding(data,0)));}
-                    public int dimensions(){return 768;}
+                    public int dimensions(){return 1024;}
                 };
-                var nativePg=PgVectorStore.builder(jdbc,fixed).dimensions(768).initializeSchema(false).vectorTableValidationsEnabled(true).build();
+                var nativePg=PgVectorStore.builder(jdbc,fixed).dimensions(1024).initializeSchema(false).vectorTableValidationsEnabled(true).build();
                 nativePg.afterPropertiesSet();
                 var beforePg=generalization?List.<MarkdownChunk>of():new PgVectorKnowledgeStore(nativePg,jdbc,legacy).search(search,topK,minScore);
                 var afterPg=new PgVectorKnowledgeStore(nativePg,jdbc,ranking).search(search,topK,minScore);

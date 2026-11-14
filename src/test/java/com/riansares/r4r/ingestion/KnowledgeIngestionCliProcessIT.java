@@ -135,7 +135,7 @@ class KnowledgeIngestionCliProcessIT {
         env.put("RAG_OLLAMA_BASE_URL", "http://localhost:11434");
         env.put("RAG_GENERATION_MODEL", "llama2");
         env.put("RAG_EMBEDDING_MODEL", "nomic-embed-text");
-        env.put("RAG_EMBEDDING_DIMENSIONS", "768");
+        env.put("RAG_EMBEDDING_DIMENSIONS", "1024");
 
         return startAndDrainProcess(processBuilder, args);
     }

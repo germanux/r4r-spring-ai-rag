@@ -1,0 +1,53 @@
+{
+  "caseId" : "case-35",
+  "number" : 24,
+  "language" : "es",
+  "question" : "Quiero reformar los vestuarios de un polideportivo abierto al público. ¿Qué debo revisar para ejecutar la obra por fases?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 4753.7340859999995,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "Debe revisar el uso público, la evacuación, la accesibilidad, la ventilación, el drenaje, la seguridad y los permisos, según [S1]. Además, debe valorar el uso intensivo, la humedad, las pendientes, el drenaje, los revestimientos antideslizantes adecuados, la accesibilidad, las instalaciones y el mantenimiento, según [S2].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Consultas prácticas ampliadas — noviembre 2026", "FAQ-075 — ¿Qué cambia en la reforma de un polideportivo?" ],
+      "ordinal" : 91
+    }, {
+      "label" : "[S2]",
+      "source" : "es/guides/R4R_89_OTROS_ESPACIOS_Y_OBRAS_ESPECIALES.md",
+      "headingPath" : [ "Riansares 4R — otras obras: piscinas, naves, terrazas y equipamientos", "¿Qué hay que valorar antes de renovar un vestuario de polideportivo?" ],
+      "ordinal" : 2
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

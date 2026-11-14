@@ -1,0 +1,33 @@
+{
+  "caseId" : "case-25",
+  "number" : 30,
+  "language" : "es",
+  "question" : "Quiero pasar de tienda a cafetería. ¿Qué obras necesito para abrir?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 3641.962597,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "",
+    "abstained" : true,
+    "citations" : [ ],
+    "provider" : null,
+    "status" : "ABSTAINED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ABSTAINED",
+    "effectiveStatus" : "ABSTAINED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

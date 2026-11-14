@@ -34,8 +34,8 @@ class IndexedIngestionTest {
         when(jdbc.execute(any(ConnectionCallback.class))).thenReturn("192.168.1.203");
         when(jdbc.queryForObject(anyString(), eq(Boolean.class), anyString())).thenReturn(true);
         when(jdbc.queryForObject(anyString(), eq(Boolean.class))).thenReturn(true);
-        when(jdbc.queryForObject(anyString(), eq(String.class))).thenReturn("vector(768)");
-        when(embeddings.embed(anyString())).thenReturn(new float[768]);
+        when(jdbc.queryForObject(anyString(), eq(String.class))).thenReturn("vector(1024)");
+        when(embeddings.embed(anyString())).thenReturn(new float[1024]);
         when(jdbc.queryForObject(anyString(), eq(Long.class))).thenAnswer(i ->
                 ((String)i.getArgument(0)).contains("FULL JOIN") ? 0L : 1L);
         when(jdbc.queryForObject(contains("RETURNING id"), eq(Long.class), anyString(), any(byte[].class))).thenReturn(1L);

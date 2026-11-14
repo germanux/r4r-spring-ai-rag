@@ -1,0 +1,48 @@
+{
+  "caseId" : "case-23",
+  "number" : 28,
+  "language" : "es",
+  "question" : "Las vigas de madera de mi casa vieja están combadas. ¿Se refuerzan o se cambian?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 5957.9676660000005,
+  "ragOutcome" : "FAIL",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "Las vigas de madera combadas deben revisarse para determinar si se refuerzan o se cambian, ya que se requiere una evaluación estructural ante deformaciones relevantes [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/guides/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.md",
+      "headingPath" : [ "Riansares 4R — viviendas antiguas: rehabilitar con criterio y seguridad", "¿Cómo se planifica una reforma con madera y muros antiguos?" ],
+      "ordinal" : 2
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

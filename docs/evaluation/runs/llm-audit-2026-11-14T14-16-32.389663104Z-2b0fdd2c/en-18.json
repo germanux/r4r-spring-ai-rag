@@ -1,0 +1,53 @@
+{
+  "caseId" : "case-19",
+  "number" : 18,
+  "language" : "en",
+  "question" : "When it rains heavily, my terrace leaks into the flat below. Where do I start?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 4898.234068,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "Check drainage, junctions, and lateral water pressure to identify the source of the leak [S1]. Confirm the source of water ingress, drainage, gradients, and junctions with parapets, doors, and downpipes [S2].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/cases/R4R_116_HYPOTHETICAL_DAMP_AND_STRUCTURE_CASES.md",
+      "headingPath" : [ "Hypothetical cases — damp, rehabilitation and structures", "H-26 — Patio leaks into a basement" ],
+      "ordinal" : 6
+    }, {
+      "label" : "[S2]",
+      "source" : "en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.md",
+      "headingPath" : [ "Riansares 4R — other works: pools, industrial buildings, terraces and facilities", "What should be checked when waterproofing a terrace above homes?" ],
+      "ordinal" : 5
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

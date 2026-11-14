@@ -1,0 +1,48 @@
+{
+  "caseId" : "case-05",
+  "number" : 5,
+  "language" : "en",
+  "question" : "Does initial cost guidance replace a technical site visit?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2048.508212,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "Initial cost guidance does not replace a technical site visit. A site visit is required for a competent technical professional to provide a report with confirmed scope, as stated in [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/guides/R4R_114_CAUTIOUS_RESPONSES_AND_LIMITS_OF_ADVICE.md",
+      "headingPath" : [ "Visitor guidance — what a renovation assistant can answer", "What does initial guidance mean?" ],
+      "ordinal" : 1
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

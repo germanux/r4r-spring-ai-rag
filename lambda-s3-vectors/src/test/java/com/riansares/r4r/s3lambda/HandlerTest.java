@@ -10,7 +10,7 @@ class HandlerTest {
  S3VectorsClient client=mock(S3VectorsClient.class); Handler handler=new Handler(client);
  com.fasterxml.jackson.databind.node.ObjectNode input() {
   var n=Handler.JSON.createObjectNode().put("schemaVersion",1).put("topK",40);var a=n.putArray("embedding");
-  for(int i=0;i<768;i++) a.add(i==0?1:0);return n;
+  for(int i=0;i<1024;i++) a.add(i==0?1:0);return n;
  }
  QueryOutputVector hit() {return QueryOutputVector.builder().key("a").distance(.2f).metadata(Document.fromMap(Map.of(
  "source",Document.fromString("a.md"),"source_text",Document.fromString("Evidence"),"ordinal",Document.fromNumber(0)))).build();}
@@ -23,7 +23,7 @@ class HandlerTest {
   assertEquals(text,result.at("/vectors/0/metadata/source_text").textValue());
   assertTrue(result.at("/vectors/0/metadata/ordinal").isIntegralNumber());
  }
- @Test void valid() throws Exception {when(client.queryVectors(any(QueryVectorsRequest.class))).thenReturn(page(null));assertEquals(768,handler.query(input()).get("dimensions"));}
+ @Test void valid() throws Exception {when(client.queryVectors(any(QueryVectorsRequest.class))).thenReturn(page(null));assertEquals(1024,handler.query(input()).get("dimensions"));}
  @Test void invalidVectors() {var n=input();n.putArray("embedding").add(1);assertThrows(IllegalArgumentException.class,()->handler.query(n));n.set("embedding",Handler.JSON.nullNode());assertThrows(IllegalArgumentException.class,()->handler.query(n));verifyNoInteractions(client);}
  @Test void zeroAndNonfinite() {for(double v:new double[]{0,Double.NaN,Double.POSITIVE_INFINITY}) {var n=input();((com.fasterxml.jackson.databind.node.ArrayNode)n.get("embedding")).set(0,Handler.JSON.getNodeFactory().numberNode(v));assertThrows(IllegalArgumentException.class,()->handler.query(n));}}
  @Test void duplicateAndPagination() {when(client.queryVectors(any(QueryVectorsRequest.class))).thenReturn(page("next"),page("next"));assertThrows(IllegalStateException.class,()->handler.query(input()));}

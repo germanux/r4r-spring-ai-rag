@@ -32,7 +32,7 @@ class OllamaServerSeparationTest {
     @Test
     void isolatesEmbeddingIngestionAndQueriesFromPreferredGenerationAndFallback() throws Exception {
         List<String> operations = new CopyOnWriteArrayList<>();
-        HttpServer embedding = server("embedding", "nomic-embed-text:latest", operations);
+        HttpServer embedding = server("embedding", "qwen3-embedding:0.6b", operations);
         HttpServer pc = server("pc", "qwen3:8b", operations);
         HttpServer backup = server("backup", "qwen2.5:7b", operations);
         try {
@@ -44,8 +44,8 @@ class OllamaServerSeparationTest {
                         assertThat(context).hasNotFailed().hasSingleBean(EmbeddingModel.class).hasSingleBean(ChatModel.class);
                         assertThat((List<?>) context.getBean("generationTargets")).hasSize(2);
                         var model = context.getBean(EmbeddingModel.class);
-                        assertThat(model.embed("Documento para ingesta")).hasSize(768);
-                        assertThat(model.embed("Consulta para recuperar documentos")).hasSize(768);
+                        assertThat(model.embed("Documento para ingesta")).hasSize(1024);
+                        assertThat(model.embed("Consulta para recuperar documentos")).hasSize(1024);
                         var router = context.getBean(GenerationRouter.class);
                         assertThat(router.lastUsed()).isNull(); // No inference during bean construction.
                         assertThat(router.call(new Prompt("Consulta")).getResult().getOutput().getText()).isEqualTo("pc answer");
@@ -54,11 +54,11 @@ class OllamaServerSeparationTest {
                         assertThat(router.call(new Prompt("Consulta de respaldo")).getResult().getOutput().getText()).isEqualTo("backup answer");
                         assertThat(router.lastUsed().baseUrl()).isEqualTo(url(backup));
                         assertThat(operations).filteredOn(s -> s.contains("/api/embed")).hasSize(2)
-                                .allMatch(s -> s.startsWith("embedding ") && s.contains("nomic-embed-text:latest"));
+                                .allMatch(s -> s.startsWith("embedding ") && s.contains("qwen3-embedding:0.6b"));
                         assertThat(operations).noneMatch(s -> s.startsWith("embedding ") && s.contains("/api/chat"));
                         assertThat(operations).anyMatch(s -> s.startsWith("pc /api/chat") && s.contains("qwen3:8b") && s.contains("\"temperature\":0.0"));
                         assertThat(operations).anyMatch(s -> s.startsWith("backup /api/chat") && s.contains("qwen2.5:7b"));
-                        assertThat(context.getEnvironment().getProperty("spring.ai.vectorstore.pgvector.dimensions")).isEqualTo("768");
+                        assertThat(context.getEnvironment().getProperty("spring.ai.vectorstore.pgvector.dimensions")).isEqualTo("1024");
                     });
         } finally { embedding.stop(0); pc.stop(0); backup.stop(0); }
     }
@@ -127,17 +127,17 @@ class OllamaServerSeparationTest {
     }
     @Test void ingestionAndQueryShareAllThreeEmbeddingTargets() throws Exception {
         List<String> operations=new CopyOnWriteArrayList<>();
-        HttpServer lp=server("lp", "nomic-embed-text:latest",operations);
-        HttpServer pc=server("embed-pc", "nomic-embed-text:latest",operations);
-        HttpServer nas=server("nas", "nomic-embed-text:latest",operations);
+        HttpServer lp=server("lp", "qwen3-embedding:0.6b",operations);
+        HttpServer pc=server("embed-pc", "qwen3-embedding:0.6b",operations);
+        HttpServer nas=server("nas", "qwen3-embedding:0.6b",operations);
         try {
             runner().withPropertyValues(embeddingEndpoints(lp,pc,nas))
                     .run(context -> {
                         assertThat(context).hasNotFailed().hasSingleBean(EmbeddingModel.class);
                         var model=context.getBean(EmbeddingModel.class);
-                        assertThat(model.embed(new org.springframework.ai.document.Document("Ingestion document"))).hasSize(768);
-                        lp.stop(0); assertThat(model.embed("Retrieval query")).hasSize(768);
-                        pc.stop(0); assertThat(model.embed("Next query")).hasSize(768);
+                        assertThat(model.embed(new org.springframework.ai.document.Document("Ingestion document"))).hasSize(1024);
+                        lp.stop(0); assertThat(model.embed("Retrieval query")).hasSize(1024);
+                        pc.stop(0); assertThat(model.embed("Next query")).hasSize(1024);
                         assertThat(operations).filteredOn(v -> v.contains("/api/embed"))
                                 .extracting(v -> v.split(" ")[0]).containsExactly("lp", "embed-pc", "nas");
                     });
@@ -242,7 +242,7 @@ class OllamaServerSeparationTest {
             operations.add(name + " " + exchange.getRequestURI().getPath() + " " + body);
             Object payload = switch (exchange.getRequestURI().getPath()) {
                 case "/api/embed" -> Map.of("model", model, "embeddings", List.of(vector()));
-                case "/api/tags" -> Map.of("models", List.of(Map.of("name", model, "digest", "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f")));
+                case "/api/tags" -> Map.of("models", List.of(Map.of("name", model, "digest", "ac6da0dfba84a81fdbfbaf330198c33cd77c4cdfc53e8bc50eb581914a15621d")));
                 case "/api/chat" -> Map.of("model", model, "message", Map.of("role", "assistant", "content", name + " answer"), "done", true);
                 default -> Map.of();
             };
@@ -256,7 +256,7 @@ class OllamaServerSeparationTest {
         return server;
     }
 
-    private static float[] vector() { float[] v = new float[768]; v[0] = 1; return v; }
+    private static float[] vector() { float[] v = new float[1024]; v[0] = 1; return v; }
 
     private static String url(HttpServer server) { return "http://127.0.0.1:" + server.getAddress().getPort(); }
 }

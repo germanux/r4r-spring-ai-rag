@@ -1,0 +1,48 @@
+{
+  "caseId" : "case-02",
+  "number" : 2,
+  "language" : "es",
+  "question" : "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 3354.9007180000003,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "La base de solera se distingue como la capa o elemento de apoyo que recibe cargas y sirve de soporte según la solución constructiva [S5]. El acabado de solado es el pavimento o acabado final transitable, como baldosa o piedra colocada sobre un soporte adecuado [S5].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S5]",
+      "source" : "es/guides/R4R_84_PATIOS_SOLERAS_SOLADOS_Y_DRENAJE.md",
+      "headingPath" : [ "Riansares 4R — patios y pavimentos: solera, solado y drenaje", "¿Qué diferencia hay entre solera y solado?" ],
+      "ordinal" : 1
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

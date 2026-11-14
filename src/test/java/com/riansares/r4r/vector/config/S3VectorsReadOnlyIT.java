@@ -21,7 +21,7 @@ class S3VectorsReadOnlyIT {
         var config = new RagVectorProperties.S3Vectors(
                 System.getenv().getOrDefault("R4R_TEST_S3_REGION", "eu-north-1"), bucket, index,
                 Duration.ofSeconds(1), Duration.ofSeconds(3), Duration.ofSeconds(4));
-        var vector = new java.util.ArrayList<>(Collections.nCopies(768, 0f));
+        var vector = new java.util.ArrayList<>(Collections.nCopies(1024, 0f));
         vector.set(0, 1f);
         try (var client = new S3VectorsConfiguration().s3VectorsClient(new RagVectorProperties("s3vectors", false, config))) {
             var response = client.queryVectors(QueryVectorsRequest.builder()

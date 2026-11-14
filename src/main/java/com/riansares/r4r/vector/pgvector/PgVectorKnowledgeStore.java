@@ -123,7 +123,7 @@ public class PgVectorKnowledgeStore implements KnowledgeVectorStore {
         }
 
         SearchRequest request = SearchRequest.builder()
-                .query(query)
+                .query(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery(query))
                 .topK(reranker.candidateCount(topK))
                 .similarityThreshold(minScore)
                 .build();
@@ -134,6 +134,44 @@ public class PgVectorKnowledgeStore implements KnowledgeVectorStore {
                         fromDocument(document), document.getScore() == null ? Double.NaN : document.getScore()))
                 .toList();
         return reranker.select(query, candidates, topK);
+    }
+
+    /** Export existing embeddings with the same section context used by PostgreSQL retrieval. */
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
+    public long exportS3Vectors(java.nio.file.Path destination) throws java.io.IOException {
+        var json = new com.fasterxml.jackson.databind.ObjectMapper();
+        var mapper = new com.riansares.r4r.vector.s3vectors.S3VectorMetadataMapper();
+        if (java.nio.file.Files.exists(destination)) throw new java.nio.file.FileAlreadyExistsException(destination.toString());
+        var temporary = destination.resolveSibling(destination.getFileName() + ".partial-" + UUID.randomUUID());
+        long count = 0;
+        try {
+            try (var output = json.getFactory().createGenerator(java.nio.file.Files.newOutputStream(temporary,
+                    java.nio.file.StandardOpenOption.CREATE_NEW))) {
+                output.writeStartObject(); output.writeArrayFieldStart("vectors");
+                for (var row : jdbcTemplate.queryForList("SELECT id::text AS id, content, metadata::text AS metadata, embedding::text AS embedding FROM vector_store ORDER BY id")) {
+                    var metadata = json.readValue((String) row.get("metadata"),
+                            new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() { });
+                    var document = Document.builder().id((String) row.get("id")).text((String) row.get("content")).metadata(metadata).build();
+                    float[] vector = json.readValue((String) row.get("embedding"), float[].class);
+                    if (vector.length != 1024) throw new IllegalStateException("S3 export requires Qwen3 1024-dimensional vectors");
+                    boolean nonzero = false;
+                    for (float value : vector) {
+                        if (!Float.isFinite(value)) throw new IllegalStateException("Invalid stored embedding");
+                        nonzero |= value != 0;
+                    }
+                    if (!nonzero) throw new IllegalStateException("Zero stored embedding");
+                    boolean headingOnly = document.getText().strip().matches("#{1,6}\\s+[^\\r\\n]+");
+                    var chunk = fromDocument(expandSectionHeading(document));
+                    output.writeObject(Map.of("key", document.getId(), "data", Map.of("float32", vector),
+                            "metadata", mapper.toMetadata(chunk, headingOnly)));
+                    count++;
+                }
+                output.writeEndArray(); output.writeEndObject();
+            }
+            if (count == 0) throw new IllegalStateException("Refusing an empty S3 export");
+            java.nio.file.Files.move(temporary, destination);
+            return count;
+        } finally { java.nio.file.Files.deleteIfExists(temporary); }
     }
 
     /** Heading-only chunks need their own section's evidence, not an invented answer. */

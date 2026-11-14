@@ -1,0 +1,48 @@
+{
+  "caseId" : "case-17",
+  "number" : 17,
+  "language" : "es",
+  "question" : "Los muebles de la cocina están bien. ¿Cómo la renuevo sin desmontarlo todo?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 6410.162679,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "Puede renovar la cocina sin desmontar todo, siempre que primero valore las fugas y redes ocultas y defina la distribución [S3]. Luego, coordine los muebles y acabados, sin montar el mobiliario final antes de comprobar las instalaciones que puedan requerir apertura [S3].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S3]",
+      "source" : "es/guides/R4R_122_FORMULACIONES_REALES_DEL_VISITANTE.md",
+      "headingPath" : [ "Cómo expresar dudas de reformas — ejemplos de consultas reales y ambiguas", "Quiero dejar la cocina nueva aprovechando que hay una avería. ¿Empiezo por muebles?" ],
+      "ordinal" : 4
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

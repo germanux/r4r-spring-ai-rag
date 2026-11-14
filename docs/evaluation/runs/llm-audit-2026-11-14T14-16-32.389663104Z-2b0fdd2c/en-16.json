@@ -1,0 +1,53 @@
+{
+  "caseId" : "case-16",
+  "number" : 16,
+  "language" : "en",
+  "question" : "I'm thinking of buying a fairly old flat, but there are cracks in some walls. How can I tell whether they are superficial or whether I'm getting into a serious problem?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 3695.226403,
+  "ragOutcome" : "FAIL",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "To assess whether cracks are superficial or indicative of a serious problem, check for possible movement and water entry [S1]. Retain evidence of supports and damage to inform repair decisions [S2]. The sources do not establish a method to determine whether cracks are superficial or structural without additional checks.",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/guides/R4R_83_OLD_HOMES_AND_REHABILITATION.md",
+      "headingPath" : [ "Riansares 4R — old homes: sound and safe rehabilitation", "Hypothetical case V-01 — Rural home with cracks and damp walls" ],
+      "ordinal" : 6
+    }, {
+      "label" : "[S2]",
+      "source" : "en/cases/R4R_115_HYPOTHETICAL_KITCHEN_AND_PLUMBING_CASES.md",
+      "headingPath" : [ "Hypothetical cases — kitchens, leaks and renovation decisions", "K-30 — Cracked worktop" ],
+      "ordinal" : 10
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "PARTIAL"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "PARTIAL",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

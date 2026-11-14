@@ -21,14 +21,14 @@ class RagRuntimeControllerTest {
             "jdbc:postgresql://test:synthetic-private@db/rag#synthetic-private/path",
             "jdbc:postgresql://db/rag?password=synthetic-private#fragment" })
     void databaseMetadataNeverIncludesUrlParametersOrCredentials(String jdbcUrl) throws Exception {
-        var info = new RagRuntimeController(new RagRetrievalProperties(3, .63), "nomic", "768",
+        var info = new RagRuntimeController(new RagRetrievalProperties(3, .63), "nomic", "1024",
                 jdbcUrl, preloader, router).runtime();
         assertThat(info.database()).isEqualTo("rag");
         assertThat(new ObjectMapper().writeValueAsString(info)).doesNotContain("synthetic-private", "password=", "user=test");
     }
 
     @Test void authorityWithoutDatabaseDoesNotExposeCredentials() {
-        var info = new RagRuntimeController(new RagRetrievalProperties(3, .63), "nomic", "768",
+        var info = new RagRuntimeController(new RagRetrievalProperties(3, .63), "nomic", "1024",
                 "jdbc:postgresql://test:synthetic-private@db?password=synthetic-private", preloader, router).runtime();
         assertThat(info.database()).isEqualTo("PostgreSQL · pgvector");
     }
@@ -43,7 +43,7 @@ class RagRuntimeControllerTest {
             new GenerationRouter.Target(new GenerationRouter.Provider("ASUS", "http://192.168.1.209:11434", "qwen2.5:7b"), mock(ChatModel.class), laptopUp::get));
     private final OllamaModelPreloader preloader = mock(OllamaModelPreloader.class);
     private final RagRuntimeController controller = new RagRuntimeController(new RagRetrievalProperties(3, .63),
-            "nomic-embed-text", "768", "", preloader, router);
+            "nomic-embed-text", "1024", "", preloader, router);
 
     private void memory(String body) throws Exception {
         // Byte parsing is exercised against real simulated Ollama HTTP in OllamaModelPreloaderTest.
@@ -135,7 +135,7 @@ class RagRuntimeControllerTest {
         var remote = new GenerationRouter.Target(new GenerationRouter.Provider("OpenAI","https://api.openai.com/v1","gpt-6-luna"), mock(ChatModel.class),()->true);
         var cloudRouter=new GenerationRouter(java.util.List.of(remote));
         cloudRouter.call(new Prompt("question"));
-        var cloud=new RagRuntimeController(new RagRetrievalProperties(3,.63),"nomic-embed-text", "768","jdbc:postgresql://db/rag",preloader,cloudRouter);
+        var cloud=new RagRuntimeController(new RagRetrievalProperties(3,.63),"nomic-embed-text", "1024","jdbc:postgresql://db/rag",preloader,cloudRouter);
         org.springframework.test.util.ReflectionTestUtils.setField(cloud, "remoteEnabled", "primary");
         var info=cloud.runtime();
         assertThat(info.remoteFallback().enabled()).isTrue();
@@ -155,7 +155,7 @@ class RagRuntimeControllerTest {
         var laptopStatus = new OllamaModelPreloader.ModelStatus("laptop", "shared:latest", "unreachable", null, null, false);
         when(preloader.modelStates()).thenReturn(java.util.List.of(pcStatus, laptopStatus));
         when(preloader.statusFor(argThat(p -> p.name().equals("ASUS")))).thenReturn(laptopStatus);
-        var sameController = new RagRuntimeController(new RagRetrievalProperties(3, .63), "nomic-embed-text", "768", "", preloader, sameRouter);
+        var sameController = new RagRuntimeController(new RagRetrievalProperties(3, .63), "nomic-embed-text", "1024", "", preloader, sameRouter);
         assertThat(sameController.runtime().modelStatus()).isEqualTo("Ollama no disponible");
         verify(preloader).statusFor(argThat(p -> p.name().equals("ASUS")));
     }

@@ -21,9 +21,9 @@ import static org.mockito.Mockito.*;
 class VectorReadOnlyStartupTest {
     @Test void recoveryProfileStartsAndServesS3WithoutAnyDatabaseConnection() throws Exception {
         var db=mock(DataSource.class); when(db.getConnection()).thenThrow(new java.sql.SQLException("offline","08006"));
-        var embedding=mock(EmbeddingModel.class); when(embedding.dimensions()).thenReturn(768);
-        float[] vector=new float[768]; vector[0]=1;
-        when(embedding.embed("question")).thenReturn(vector);
+        var embedding=mock(EmbeddingModel.class); when(embedding.dimensions()).thenReturn(1024);
+        float[] vector=new float[1024]; vector[0]=1;
+        when(embedding.embed(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery("question"))).thenReturn(vector);
         var aws=mock(S3VectorsClient.class);
         when(aws.queryVectors(any(QueryVectorsRequest.class))).thenReturn(QueryVectorsResponse.builder().distanceMetric(DistanceMetric.COSINE).build());
         new ApplicationContextRunner()
@@ -41,7 +41,7 @@ class VectorReadOnlyStartupTest {
                 .withBean("s3VectorsClient",S3VectorsClient.class,() -> aws)
                 .withPropertyValues("r4r.rag.vector.s3vectors.bucket=amzn-r4r-vectors",
                         "r4r.rag.vector.s3vectors.index=amzn-r4r-vector-index",
-                        "spring.ai.vectorstore.pgvector.dimensions=768")
+                        "spring.ai.vectorstore.pgvector.dimensions=1024")
                 .run(ctx -> {
                     assertThat(ctx).hasNotFailed().doesNotHaveBean(org.flywaydb.core.Flyway.class);
                     assertThat(ctx.getBeanFactory().containsSingleton("vectorStore")).isFalse();

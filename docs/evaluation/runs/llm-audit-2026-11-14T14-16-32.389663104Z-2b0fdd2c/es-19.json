@@ -1,0 +1,53 @@
+{
+  "caseId" : "case-22",
+  "number" : 19,
+  "language" : "es",
+  "question" : "Acabamos de comprar un piso y queremos reformarlo antes de mudarnos. ¿En qué orden conviene hacer los trabajos para evitar tener que romper cosas que ya están terminadas?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 8580.555972,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "Primero se deben revisar la distribución, instalaciones, pendientes, ventilación y estado de soportes [S2]. Luego se planifican demoliciones, fontanería y desagües, impermeabilización donde corresponda, pruebas, alicatado, sanitarios y remates [S2]. Es recomendable priorizar seguridad, fugas e instalaciones antes de abordar acabados y mobiliario [S3].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S2]",
+      "source" : "es/guides/R4R_81_BANOS_DUCHAS_Y_SANEAMIENTO.md",
+      "headingPath" : [ "Riansares 4R — baños: fugas, duchas, saneamiento e impermeabilización", "¿En qué orden se reforma un baño?" ],
+      "ordinal" : 1
+    }, {
+      "label" : "[S3]",
+      "source" : "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
+      "headingPath" : [ "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance", "¿Se pueden hacer reformas por fases?" ],
+      "ordinal" : 5
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

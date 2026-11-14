@@ -1,0 +1,53 @@
+{
+  "caseId" : "case-32",
+  "number" : 21,
+  "language" : "es",
+  "question" : "Tengo tuberías rotas en mi cocina. ¿Qué hago?\nAdemás, quiero reformar la cocina. ¿Qué me recomiendas?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 5738.524902,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "Si tienes tuberías rotas en la cocina, la prioridad es detener el suministro con la llave de paso accesible y contactar a un profesional para la reparación de la fuga [S4]. Además, si quieres reformar la cocina, conviene resolver primero la fuga y revisar la fontanería y desagües antes de colocar azulejos, muebles y acabados [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+      "headingPath" : [ "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma", "Pregunta — Tengo tuberías rotas y también quiero reformar la cocina. ¿Qué me recomiendas?" ],
+      "ordinal" : 3
+    }, {
+      "label" : "[S4]",
+      "source" : "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+      "headingPath" : [ "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma" ],
+      "ordinal" : 0
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}

@@ -10,7 +10,8 @@ RAG_EMBEDDING_PROVIDERS=http://192.168.1.209:11434|8s,http://192.168.1.207:11434
 ```
 
 `PublicRagEnvironment` adapts that list to the existing typed providers. Each new
-batch starts with laptop, then desktop, then NAS. Any positive number of entries is allowed; order defines failover priority. Model/dimensions remain `nomic-embed-text:latest` and 768.
+batch starts with laptop, then desktop, then NAS. Any positive number of entries is allowed; order defines failover priority. The prepared configuration uses `qwen3-embedding:0.6b` and 1024 dimensions.
+See [migration status and cutover commands](qwen3-embedding-migration.md) before deploying.
 Read timeouts belong to their URLs in the compact entries (8s, 8s, 30s by default);
 connection/probe limits are 1s and the total is 35s.
 The public file also pins the expected digest. Warmup/runtime use the first entry.
@@ -30,10 +31,9 @@ provider records directly; there is no duplicate internal target definition.
 The configuration record, routing class and two typed exceptions remain separate
 because they represent binding, execution and distinct failure classifications.
 
-Every candidate must advertise the configured nomic model and exact pinned SHA-256
-via `/api/tags`. The pin above comes from the existing provider benchmark; physical
-provider inventory has not been repeated for this change. Responses must contain
-one ordered, nonzero, finite 768-dimensional vector per input and the expected model.
+Every candidate must advertise the configured Qwen3 model and exact pinned SHA-256
+via `/api/tags`. The pin was verified on laptop, desktop and NAS on 2026-11-14. Responses must contain
+one ordered, nonzero, finite 1024-dimensional vector per input and the expected model.
 Changing the pin requires checking compatibility with the stored corpus, not merely
 that the servers agree. Models are never downloaded or the corpus reindexed automatically.
 
@@ -59,7 +59,9 @@ are unchanged.
 
 ## S3 integration boundary
 
-No S3 classes, vector ports, pgvector→S3 router or dependencies are changed.
+The pgvector→S3 routing and dependencies are unchanged. S3/Lambda must use the
+same 1024-dimensional index before enabling the migrated API. S3 does not generate
+embeddings: at least one laptop/desktop/NAS embedding provider is still required.
 Both vector adapters should consume the shared embedding bean. A vector-store
 failure classifier must exclude `EmbeddingUnavailableException` and
 `EmbeddingConfigurationException` before traversing transport causes: an embedding

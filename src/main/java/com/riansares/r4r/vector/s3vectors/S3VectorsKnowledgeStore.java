@@ -86,9 +86,9 @@ public final class S3VectorsKnowledgeStore implements KnowledgeVectorStore {
         checkCancelled();
         String stage = "embedding";
         try {
-            float[] vector = embeddings.embed(query); // Once per search, reused for every page.
+            float[] vector = embeddings.embed(com.riansares.r4r.rag.ObservedEmbeddingModel.retrievalQuery(query)); // Once, reused for every page.
             stage = "embedding_validation";
-            if (vector == null || vector.length != 768) throw invalid("query embedding must have 768 dimensions");
+            if (vector == null || vector.length != 1024) throw invalid("query embedding must have 1024 dimensions");
             List<Float> values = new ArrayList<>(vector.length);
             double squaredNorm = 0;
             for (float value : vector) {

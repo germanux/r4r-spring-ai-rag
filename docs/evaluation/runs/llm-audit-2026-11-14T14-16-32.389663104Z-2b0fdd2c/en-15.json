@@ -1,0 +1,63 @@
+{
+  "caseId" : "case-15",
+  "number" : 15,
+  "language" : "en",
+  "question" : "What precautions should be taken before laying new tiles over an existing floor?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 4809.4313409999995,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "Check adhesion, flatness, moisture, permissible loads, junction details and compatibility of the adhesive system [S1]. Ensure the existing build-up is sound and compatible, and that added height, door clearance, falls and drainage remain acceptable [S2]. Treat by zones: lift where loose or cracked, open where installations pass, preserve stable support, and place tile over tile only if the base is firm, clean, flat, and a compatible system is used [S3]. Verify the substrate is sound, clean, flat and well bonded; check levels, doors, moisture and hollow tiles [S4].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.md",
+      "headingPath" : [ "Kitchens — scope, materials and trade coordination", "What precautions apply when laying new tiles over existing ones?" ],
+      "ordinal" : 5
+    }, {
+      "label" : "[S2]",
+      "source" : "en/guides/R4R_105_FLOOR_SLAB_FLOOR_FINISH_PATIOS_DRAINAGE_AND_GRADIENTS.md",
+      "headingPath" : [ "Patios and flooring — slab base, floor finish, damp and drainage", "Can new patio tiles be laid over existing ones?" ],
+      "ordinal" : 5
+    }, {
+      "label" : "[S3]",
+      "source" : "en/R4R_10_PATIO_HOME_DAMP_AND_REPAIR_CASES.md",
+      "headingPath" : [ "Riansares 4R — Patio, Home, Damp and Repair Cases", "7. Case B — Old House: Rehabilitate Without Excessive Demolition", "7.8. Floors" ],
+      "ordinal" : 19
+    }, {
+      "label" : "[S4]",
+      "source" : "en/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — all frequently asked questions", "Floors", "FAQ-040 — Can tiles be laid over tiles?" ],
+      "ordinal" : 49
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-16-32.389663104Z-2b0fdd2c"
+}
