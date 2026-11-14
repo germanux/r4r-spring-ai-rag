@@ -489,3 +489,26 @@ Archivos: DEVELOPMENT.md, docs/operations/model-warmup.md, OllamaModelPreloader.
 RagRuntimeController.java y sus dos tests existentes. Nuevo archivo junto a la suite:
 src/test/java/com/riansares/r4r/rag/OllamaEmbeddingWarmupLiveIT.java (opt-in).
 Se conserva íntegro el contenido previo de memoria y el commit SSE del usuario.
+
+## Frontend Angular estático
+
+- `front-athagon-r4r-static/v1/` conserva la versión HTML/JS archivada. No editarla.
+- `frontend/src/app/migration/` contiene los componentes standalone OnPush, signals,
+  modelos y servicios de la interfaz equivalente. El CSS compartido conserva la
+  cascada responsive original; los componentes usan estilos encapsulados.
+- Los documentos y las grabaciones se conservan en `frontend/public/`; los datos
+  visibles capturados y el catálogo de citas se mantienen en los JSON del código
+  fuente. La demo no consulta al backend.
+- Compilación: `bash scripts/build-frontend-angular.sh`. Usa dependencias locales,
+  Angular CLI mediante npx y Chromium únicamente durante la compilación para
+  prerenderizar el HTML inicial sin acceso a servicios externos. Puede indicarse
+  `CHROMIUM_PATH`. Publica únicamente en `front-athagon-r4r-static/v2-ng/`, con
+  base `/v2-ng/`, sin subdirectorio browser ni servidor Node en producción.
+- `frontend/nginx-static.conf` contiene las ubicaciones para el servidor NGINX
+  existente y la redirección de `/` a `/v2-ng/`. Su aplicación al servidor público
+  es un paso de despliegue manual.
+- Validación reproducible: servir `front-athagon-r4r-static/` por HTTP local en
+  `127.0.0.1:8765`, ejecutar `node frontend/validate-migration.mjs` y
+  `node frontend/validate-edge-cases.mjs`, con `CHROMIUM_PATH` si corresponde.
+  Las pruebas interceptan la API y usan las respuestas grabadas originales.
+  Capturas y resultados: `docs/validation/angular-migration/`.
