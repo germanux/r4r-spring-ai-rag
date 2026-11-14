@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-22",
+  "number" : 19,
+  "language" : "en",
+  "question" : "We've just bought a flat and want to renovate it before moving in. In what order should the work be done to avoid having to break things that are already finished?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 3601.8853430000004,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "To avoid breaking finished work, renovate the bathroom by first reviewing the layout, services, falls, ventilation, and substrate condition. Then plan removal, plumbing, drains, waterproofing, tests, tiles, sanitary fittings, and finishing. Adapt the sequence to the project, ensuring that closing walls or tiling is not done before testing services to prevent the need for reopening them later [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/guides/R4R_81_BATHROOMS_SHOWERS_DRAINAGE_AND_WATERPROOFING.md",
+      "headingPath" : [ "Riansares 4R — bathrooms: leaks, showers, drainage and waterproofing", "In what order should a bathroom be renovated?" ],
+      "ordinal" : 1
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "The cited passage does not explicitly mention reviewing the layout, services, falls, ventilation, and substrate condition as a first step, nor does it mention adapting the sequence to the project as a key claim.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 2731.857029,
+    "httpLatencyMs" : 2734.210728,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "The answer includes additional steps not directly supported by the cited passage, leading to an overclaim of support.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "The cited passage does not explicitly mention reviewing the layout, services, falls, ventilation, and substrate condition as a first step, nor does it mention adapting the sequence to the project as a key claim.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 2731.857029,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "The answer includes additional steps not directly supported by the cited passage, leading to an overclaim of support."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-12",
+  "number" : 12,
+  "language" : "es",
+  "question" : "¿Qué datos hacen falta para orientar una reforma de baño?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 3393.8136170000002,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Para orientar una reforma de baño, se necesitan fotos, ubicación, superficie aproximada, problema, resultado esperado, distribución, materiales deseados, acceso, uso actual, plazos y prioridades [S2].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S2]",
+      "source" : "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
+      "headingPath" : [ "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance", "¿Qué necesito para pedir presupuesto de reforma?" ],
+      "ordinal" : 1
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La cita [S2] menciona los datos necesarios para pedir presupuesto, pero no especifica que estos datos son suficientes para orientar una reforma de baño, lo cual es una conclusión no respaldada por el texto citado.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 4569.631649,
+    "httpLatencyMs" : 4572.082855,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La respuesta asume que los datos mencionados en [S2] son suficientes para orientar una reforma, pero el texto no afirma esto explícitamente, por lo que la afirmación no está respaldada por la evidencia proporcionada.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La cita [S2] menciona los datos necesarios para pedir presupuesto, pero no especifica que estos datos son suficientes para orientar una reforma de baño, lo cual es una conclusión no respaldada por el texto citado.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 4569.631649,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La respuesta asume que los datos mencionados en [S2] son suficientes para orientar una reforma, pero el texto no afirma esto explícitamente, por lo que la afirmación no está respaldada por la evidencia proporcionada."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

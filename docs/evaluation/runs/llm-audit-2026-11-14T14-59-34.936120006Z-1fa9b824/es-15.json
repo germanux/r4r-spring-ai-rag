@@ -1,0 +1,69 @@
+{
+  "caseId" : "case-15",
+  "number" : 15,
+  "language" : "es",
+  "question" : "¿Qué precauciones hay que tomar antes de colocar baldosa nueva sobre un pavimento existente?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 3231.199348,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Antes de colocar baldosa nueva sobre un pavimento existente, se deben revisar las cotas, puertas, humedad y piezas huecas [S1]. Además, el sistema existente debe estar firme y compatible, con alturas, pendientes y evacuación admisibles [S2].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Suelos", "FAQ-040 — ¿Se puede colocar baldosa sobre baldosa?" ],
+      "ordinal" : 49
+    }, {
+      "label" : "[S2]",
+      "source" : "es/guides/R4R_105_SOLERA_SOLADO_PATIOS_DRENAJE_Y_PENDIENTES.md",
+      "headingPath" : [ "Patios y pavimentos — solera, solado, humedad y evacuación", "¿Se pueden colocar baldosas nuevas sobre otras en un patio?" ],
+      "ordinal" : 5
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La cita [S2] menciona que el sistema existente debe estar firme y compatible, pero no habla específicamente sobre las cotas, puertas y piezas huecas, que se mencionan en la respuesta como requisitos previos. Esto limita la evidencia que respalda la afirmación completa.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 4928.744513,
+    "httpLatencyMs" : 4931.39026,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La respuesta incluye elementos de [S1] y [S2], pero no se menciona explícitamente la revisión de las cotas, puertas y piezas huecas en [S2], lo que reduce la comprobación de la afirmación completa.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La cita [S2] menciona que el sistema existente debe estar firme y compatible, pero no habla específicamente sobre las cotas, puertas y piezas huecas, que se mencionan en la respuesta como requisitos previos. Esto limita la evidencia que respalda la afirmación completa.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 4928.744513,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La respuesta incluye elementos de [S1] y [S2], pero no se menciona explícitamente la revisión de las cotas, puertas y piezas huecas en [S2], lo que reduce la comprobación de la afirmación completa."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

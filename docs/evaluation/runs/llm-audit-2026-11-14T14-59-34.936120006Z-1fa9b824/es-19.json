@@ -1,0 +1,69 @@
+{
+  "caseId" : "case-22",
+  "number" : 19,
+  "language" : "es",
+  "question" : "Acabamos de comprar un piso y queremos reformarlo antes de mudarnos. ¿En qué orden conviene hacer los trabajos para evitar tener que romper cosas que ya están terminadas?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 7494.964363,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Primero se deben revisar la distribución, instalaciones, pendientes, ventilación y estado de soportes [S2]. Luego se planifican demoliciones, fontanería y desagües, impermeabilización donde corresponda, pruebas, alicatado, sanitarios y remates [S2]. Es recomendable priorizar seguridad, fugas e instalaciones antes de abordar acabados y mobiliario [S3].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S2]",
+      "source" : "es/guides/R4R_81_BANOS_DUCHAS_Y_SANEAMIENTO.md",
+      "headingPath" : [ "Riansares 4R — baños: fugas, duchas, saneamiento e impermeabilización", "¿En qué orden se reforma un baño?" ],
+      "ordinal" : 1
+    }, {
+      "label" : "[S3]",
+      "source" : "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
+      "headingPath" : [ "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance", "¿Se pueden hacer reformas por fases?" ],
+      "ordinal" : 5
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La cita [S3] menciona priorizar seguridad, fugas e instalaciones antes de acabados y mobiliario, pero no habla específicamente sobre el orden de reforma de un baño como lo hace [S2]. La respuesta combina información de [S2] y [S3], pero no se justifica claramente la priorización de seguridad, fugas e instalaciones antes de abordar acabados y mobiliario en el contexto de un baño.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 5946.008583,
+    "httpLatencyMs" : 5948.405298,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La respuesta combina información de dos fuentes, pero no se justifica claramente la priorización de seguridad, fugas e instalaciones antes de abordar acabados y mobiliario en el contexto de un baño.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La cita [S3] menciona priorizar seguridad, fugas e instalaciones antes de acabados y mobiliario, pero no habla específicamente sobre el orden de reforma de un baño como lo hace [S2]. La respuesta combina información de [S2] y [S3], pero no se justifica claramente la priorización de seguridad, fugas e instalaciones antes de abordar acabados y mobiliario en el contexto de un baño.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 5946.008583,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La respuesta combina información de dos fuentes, pero no se justifica claramente la priorización de seguridad, fugas e instalaciones antes de abordar acabados y mobiliario en el contexto de un baño."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

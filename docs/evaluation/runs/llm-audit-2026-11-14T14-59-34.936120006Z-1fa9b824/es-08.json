@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-08",
+  "number" : 8,
+  "language" : "es",
+  "question" : "¿Cómo afecta un pasillo estrecho a la ejecución de una solera?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 7729.430834000001,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Un pasillo estrecho afecta la ejecución de una solera debido al acceso indirecto, al transporte con carretillas, a la mezcla en obra o vertido por fases, al calor y pérdida de tiempo útil, al uso de mallazo y separadores por fases, a los encuentros y pendientes, así como a la necesidad de más mano de obra y al mayor riesgo de mala ejecución si se intenta correr demasiado [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+      "headingPath" : [ "Riansares 4R — casos de patios, viviendas, humedades y reparaciones", "6. Caso A — Patio, solera, pavimento y drenaje", "6.4. Hormigón de camión y ejecución manual", "Patio interior o pasillo estrecho" ],
+      "ordinal" : 7
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La cita [S1] menciona dificultades como acceso indirecto, transporte con carretillas, mezcla en obra o vertido por fases, calor y pérdida de tiempo útil, mallazo y separadores por fases, encuentros y pendientes, más mano de obra y mayor riesgo de mala ejecución si se intenta correr demasiado. Sin embargo, no se menciona explícitamente cómo un pasillo estrecho afecta directamente la ejecución de la solera, lo cual es una afirmación clave en la respuesta.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 5569.915521,
+    "httpLatencyMs" : 5573.26633,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La respuesta asume que un pasillo estrecho afecta la ejecución de la solera, pero la cita no proporciona evidencia directa sobre este vínculo específico.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La cita [S1] menciona dificultades como acceso indirecto, transporte con carretillas, mezcla en obra o vertido por fases, calor y pérdida de tiempo útil, mallazo y separadores por fases, encuentros y pendientes, más mano de obra y mayor riesgo de mala ejecución si se intenta correr demasiado. Sin embargo, no se menciona explícitamente cómo un pasillo estrecho afecta directamente la ejecución de la solera, lo cual es una afirmación clave en la respuesta.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 5569.915521,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La respuesta asume que un pasillo estrecho afecta la ejecución de la solera, pero la cita no proporciona evidencia directa sobre este vínculo específico."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

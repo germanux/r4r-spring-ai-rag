@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-03",
+  "number" : 3,
+  "language" : "es",
+  "question" : "¿Por qué el acceso cambia el precio de una solera?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2261.0765549999996,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "El acceso cambia el precio de una solera porque la mezcla y transporte manual aumentan jornadas, coordinación y riesgo frente a descarga directa o bombeo [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Patios", "FAQ-045 — ¿Por qué el acceso cambia el precio de una solera?" ],
+      "ordinal" : 57
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "El pasaje citado menciona que la mezcla y transporte manual aumentan jornadas, coordinación y riesgo, pero no establece directamente que el acceso cambie el precio de una solera. La relación entre acceso y precio no está explícitamente justificada en el contenido citado.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 3677.484042,
+    "httpLatencyMs" : 3681.028814,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La respuesta asume una conexión entre acceso y precio que no está claramente respaldada por el pasaje citado.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "El pasaje citado menciona que la mezcla y transporte manual aumentan jornadas, coordinación y riesgo, pero no establece directamente que el acceso cambie el precio de una solera. La relación entre acceso y precio no está explícitamente justificada en el contenido citado.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 3677.484042,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La respuesta asume una conexión entre acceso y precio que no está claramente respaldada por el pasaje citado."
+  },
+  "runId" : "llm-audit-2026-11-14T14-57-29.271203942Z-93a0c8db"
+}

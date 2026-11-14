@@ -1,0 +1,69 @@
+{
+  "caseId" : "case-01",
+  "number" : 1,
+  "language" : "en",
+  "question" : "If I want initial guidance on my renovation, what details should I provide?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 8263.775285,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "To request initial guidance on your renovation, provide location, photos, approximate measurements, space use, problem, expected result, and timeframe [S2]. Additionally, include approximate area, problem, expected result, layout, desired materials, access, current use, deadlines and priorities [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/guides/R4R_86_QUOTATIONS_MEASUREMENTS_AND_SCOPE_CHANGES.md",
+      "headingPath" : [ "Riansares 4R — quotations, measurements, extras and scope changes", "What do I need to request a renovation quotation?" ],
+      "ordinal" : 1
+    }, {
+      "label" : "[S2]",
+      "source" : "en/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — all frequently asked questions", "Quotations", "FAQ-001 — What information is needed for initial guidance?" ],
+      "ordinal" : 3
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "The answer combines details from [S1] and [S2], but [S1] mentions 'approximate area, problem, expected result, layout, desired materials, access, current use, deadlines and priorities' while [S2] specifies 'location, photos, approximate measurements, space use, problem, expected result and timeframe'. The answer merges these without clear distinction, and [S3] clarifies that initial guidance does not replace a visit or measurements, which the answer overlooks.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 5105.130912,
+    "httpLatencyMs" : 5107.342571,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "The answer assumes initial guidance can replace a visit or measurements, which is not supported by the cited evidence.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "The answer combines details from [S1] and [S2], but [S1] mentions 'approximate area, problem, expected result, layout, desired materials, access, current use, deadlines and priorities' while [S2] specifies 'location, photos, approximate measurements, space use, problem, expected result and timeframe'. The answer merges these without clear distinction, and [S3] clarifies that initial guidance does not replace a visit or measurements, which the answer overlooks.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 5105.130912,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "The answer assumes initial guidance can replace a visit or measurements, which is not supported by the cited evidence."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

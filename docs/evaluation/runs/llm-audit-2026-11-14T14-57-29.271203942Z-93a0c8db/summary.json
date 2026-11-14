@@ -1,0 +1,19 @@
+{
+  "runId" : "llm-audit-2026-11-14T14-57-29.271203942Z-93a0c8db",
+  "total" : 7,
+  "ragStatuses" : {
+    "ANSWERED" : 6,
+    "ABSTAINED" : 1
+  },
+  "ragChecks" : {
+    "PASS" : 6,
+    "FAIL" : 1
+  },
+  "proposedDowngrades" : 6,
+  "appliedDowngrades" : 6,
+  "auditFailures" : 0,
+  "auditSkipped" : 1,
+  "meanRagHttpMs" : 2893.1124435714287,
+  "meanAuditHttpMs" : 4324.8355833333335,
+  "meanAuditServiceMs" : 4320.675772333333
+}

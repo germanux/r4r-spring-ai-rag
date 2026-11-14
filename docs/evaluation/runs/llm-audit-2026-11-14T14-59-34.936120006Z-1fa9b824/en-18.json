@@ -1,0 +1,69 @@
+{
+  "caseId" : "case-19",
+  "number" : 18,
+  "language" : "en",
+  "question" : "When it rains heavily, my terrace leaks into the flat below. Where do I start?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2635.868265,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Check drainage, junctions, and lateral water pressure to identify the source of the leak [S1]. Confirm the source of water ingress, drainage, gradients, and junctions with parapets, doors, and downpipes [S2].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/cases/R4R_116_HYPOTHETICAL_DAMP_AND_STRUCTURE_CASES.md",
+      "headingPath" : [ "Hypothetical cases — damp, rehabilitation and structures", "H-26 — Patio leaks into a basement" ],
+      "ordinal" : 6
+    }, {
+      "label" : "[S2]",
+      "source" : "en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.md",
+      "headingPath" : [ "Riansares 4R — other works: pools, industrial buildings, terraces and facilities", "What should be checked when waterproofing a terrace above homes?" ],
+      "ordinal" : 5
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "The cited evidence does not support the claim that checking drainage, junctions, and lateral water pressure will identify the source of the leak in the specific context of a terrace leaking into a flat below. [S1] discusses patio leaks into a basement, not a terrace above a flat. [S2] is about waterproofing a terrace above homes, which is a different scenario. The answer combines elements from both without sufficient contextual alignment.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 4563.935539,
+    "httpLatencyMs" : 4566.145746,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "The answer assumes a general approach without addressing the specific scenario of a terrace above a flat. Further investigation into the exact cause and structural elements is needed.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "The cited evidence does not support the claim that checking drainage, junctions, and lateral water pressure will identify the source of the leak in the specific context of a terrace leaking into a flat below. [S1] discusses patio leaks into a basement, not a terrace above a flat. [S2] is about waterproofing a terrace above homes, which is a different scenario. The answer combines elements from both without sufficient contextual alignment.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 4563.935539,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "The answer assumes a general approach without addressing the specific scenario of a terrace above a flat. Further investigation into the exact cause and structural elements is needed."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

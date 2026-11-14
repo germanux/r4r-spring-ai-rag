@@ -1,0 +1,69 @@
+{
+  "caseId" : "case-02",
+  "number" : 2,
+  "language" : "es",
+  "question" : "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 4348.36903,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "La solera se distingue como la base estructural o de regularización que soporta el pavimento, mientras que el solado es el pavimento final transitable, como baldosa o material equivalente [S1]. Se pueden renovar de forma independiente, ya que el solado puede mantenerse sobre una solera adecuada [S4].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Suelos", "FAQ-041 — ¿Qué diferencia hay entre solera y solado?" ],
+      "ordinal" : 50
+    }, {
+      "label" : "[S4]",
+      "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Consultas prácticas ampliadas — noviembre 2026", "FAQ-067 — ¿Es lo mismo solera que solado?" ],
+      "ordinal" : 83
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La cita [S1] menciona que la solera es la base estructural y el solado es el pavimento final, pero no aborda la renovación independiente como se afirma en la respuesta. La cita [S4] sí menciona que se puede renovar uno sin cambiar el otro, pero no confirma que el solado pueda mantenerse sobre una solera adecuada como se afirma.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 5130.437964,
+    "httpLatencyMs" : 5134.020608,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La renovación independiente de solera y solado requiere una evaluación específica del soporte y del sistema constructivo, lo cual no se detalla en las citas proporcionadas.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La cita [S1] menciona que la solera es la base estructural y el solado es el pavimento final, pero no aborda la renovación independiente como se afirma en la respuesta. La cita [S4] sí menciona que se puede renovar uno sin cambiar el otro, pero no confirma que el solado pueda mantenerse sobre una solera adecuada como se afirma.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 5130.437964,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La renovación independiente de solera y solado requiere una evaluación específica del soporte y del sistema constructivo, lo cual no se detalla en las citas proporcionadas."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

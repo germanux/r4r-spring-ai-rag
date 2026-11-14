@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-13",
+  "number" : 13,
+  "language" : "en",
+  "question" : "What kinds of renovation work does this company do? Does it work on houses and offices?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2277.12324,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "The company undertakes renovations of bathrooms, kitchens, homes, small offices and premises, as well as carefully assessed layout changes, habitability improvements, and partial or full renovation of finishes and installations. [S1]",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/R4R_00_IDENTITY_CRITERIA_AND_EDITORIAL_VOICE.md",
+      "headingPath" : [ "Riansares 4R — identity, criteria, and editorial voice", "2. Riansares 4R identity", "2.3. Core services", "Renovations" ],
+      "ordinal" : 5
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "The cited passage lists 'homes' and 'small offices and premises' but does not explicitly confirm that the company works on houses and offices, which may be considered distinct from premises and small offices.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 3108.296481,
+    "httpLatencyMs" : 3110.38494,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "The distinction between 'houses' and 'homes' is not clarified, and 'premises' may not equate to 'offices' in the user's context.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "The cited passage lists 'homes' and 'small offices and premises' but does not explicitly confirm that the company works on houses and offices, which may be considered distinct from premises and small offices.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 3108.296481,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "The distinction between 'houses' and 'homes' is not clarified, and 'premises' may not equate to 'offices' in the user's context."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

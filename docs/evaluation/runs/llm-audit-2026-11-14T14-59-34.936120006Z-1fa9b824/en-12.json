@@ -1,0 +1,65 @@
+{
+  "caseId" : "case-12",
+  "number" : 12,
+  "language" : "en",
+  "question" : "What information is needed to estimate a bathroom renovation?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2805.967255,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "To estimate a bathroom renovation, you need photos, location, approximate area, problem, expected result, layout, desired materials, access, current use, deadlines and priorities. For kitchens and bathrooms, state whether water supply and drainage positions will be retained. [S1]",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/guides/R4R_86_QUOTATIONS_MEASUREMENTS_AND_SCOPE_CHANGES.md",
+      "headingPath" : [ "Riansares 4R — quotations, measurements, extras and scope changes", "What do I need to request a renovation quotation?" ],
+      "ordinal" : 1
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "ERROR",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : "ANSWERED",
+    "verdict" : null,
+    "reason" : null,
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 2820.769795,
+    "httpLatencyMs" : 2822.80991,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "conclusive" : false,
+      "note" : "",
+      "metadata" : {
+        "verdict" : null,
+        "reason" : null,
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 2820.769795,
+        "outcome" : "inconclusive"
+      }
+    },
+    "note" : "",
+    "error" : "audit_inconclusive_or_mismatched"
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

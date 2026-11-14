@@ -1,0 +1,60 @@
+{
+  "caseId" : "case-04",
+  "number" : 4,
+  "language" : "en",
+  "question" : "What is the approximate cost of a complete renovation of an old house?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 5146.594254,
+  "ragOutcome" : "FAIL",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "",
+    "abstained" : true,
+    "citations" : [ ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ABSTAINED"
+  },
+  "audit" : {
+    "outcome" : "ERROR",
+    "originalStatus" : "ABSTAINED",
+    "effectiveStatus" : "ABSTAINED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : "ABSTAINED",
+    "verdict" : null,
+    "reason" : null,
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 2857.612644,
+    "httpLatencyMs" : 2859.743565,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ABSTAINED",
+      "recommendedStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "conclusive" : false,
+      "note" : "",
+      "metadata" : {
+        "verdict" : null,
+        "reason" : null,
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 2857.612644,
+        "outcome" : "inconclusive"
+      }
+    },
+    "note" : "",
+    "error" : "audit_inconclusive_or_mismatched"
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

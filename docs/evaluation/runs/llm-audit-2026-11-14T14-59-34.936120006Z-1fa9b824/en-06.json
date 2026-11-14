@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-06",
+  "number" : 6,
+  "language" : "en",
+  "question" : "What should be checked before paving a patio?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 3228.901479,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Before paving a patio, the following should be checked: base [S1], compaction [S1], thickness [S1], reinforcement [S1], gradients [S1], joints [S1], inspection chambers [S1], channels [S1], junctions [S1], and access [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — all frequently asked questions", "Patios", "FAQ-046 — What should be checked before paving a patio?" ],
+      "ordinal" : 58
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "The cited evidence [S1] only mentions 'base' as a check, but the answer lists multiple items like 'base, compaction, thickness, reinforcement, gradients, joints, inspection chambers, channels, junctions, and access' without sufficient support from the cited chunk. The chunk [S1] only provides 'Base' and does not mention the other items.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 4055.266131,
+    "httpLatencyMs" : 4057.13412,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "The answer includes several checks not sufficiently supported by the cited chunk [S1], which only mentions 'Base' and lacks details on other items.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "The cited evidence [S1] only mentions 'base' as a check, but the answer lists multiple items like 'base, compaction, thickness, reinforcement, gradients, joints, inspection chambers, channels, junctions, and access' without sufficient support from the cited chunk. The chunk [S1] only provides 'Base' and does not mention the other items.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 4055.266131,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "The answer includes several checks not sufficiently supported by the cited chunk [S1], which only mentions 'Base' and lacks details on other items."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

@@ -1,0 +1,65 @@
+{
+  "caseId" : "case-34",
+  "number" : 23,
+  "language" : "es",
+  "question" : "Tengo una piscina que pierde agua y algunas piezas del revestimiento se desprenden. ¿Basta con volver a pegarlas?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 4184.379039,
+  "ragOutcome" : "FAIL",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "No basta con volver a pegar las piezas del revestimiento; primero se debe determinar si la pérdida de agua procede de evaporación, tuberías, juntas o revestimiento del vaso [S3]. No se establece si la solución de pegar las piezas resuelve la fuga de agua o si es necesario un diagnóstico de estanqueidad.",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S3]",
+      "source" : "es/cases/R4R_91_CASOS_HIPOTETICOS_VARIADOS.md",
+      "headingPath" : [ "Riansares 4R — casos hipotéticos de consulta para ampliar cobertura", "C-10 — Piscina con fuga de agua (hipotético)" ],
+      "ordinal" : 11
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "PARTIAL"
+  },
+  "audit" : {
+    "outcome" : "ERROR",
+    "originalStatus" : "PARTIAL",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : null,
+    "reason" : null,
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 4771.885681,
+    "httpLatencyMs" : 4774.134803,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "PARTIAL",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : false,
+      "note" : "",
+      "metadata" : {
+        "verdict" : null,
+        "reason" : null,
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 4771.885681,
+        "outcome" : "inconclusive"
+      }
+    },
+    "note" : "",
+    "error" : "audit_inconclusive_or_mismatched"
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

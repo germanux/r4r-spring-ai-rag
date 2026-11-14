@@ -1,0 +1,70 @@
+{
+  "caseId" : "case-35",
+  "number" : 24,
+  "language" : "en",
+  "question" : "I want to renovate changing rooms in a sports centre that remains open. What should I check to carry out the work in phases?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 4363.133541,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "To carry out the renovation in phases while the sports centre remains open, check for phased closures compatible with hygiene, access, escape routes, and users [S2]. Prioritise safety, leaks, and services in the first phase, then focus on healthy conditions, waterproofing, and substrates [S3]. Ensure that separating phases does not require repeated demolition or compromise technical solutions [S3].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S2]",
+      "source" : "en/guides/R4R_113_OTHER_SPACES_GARAGES_POOLS_AND_SPORTS_CENTRES.md",
+      "headingPath" : [ "Other spaces — garages, pools, sports areas and industrial buildings", "Can public changing rooms be renovated without closing them?" ],
+      "ordinal" : 4
+    }, {
+      "label" : "[S3]",
+      "source" : "en/guides/R4R_86_QUOTATIONS_MEASUREMENTS_AND_SCOPE_CHANGES.md",
+      "headingPath" : [ "Riansares 4R — quotations, measurements, extras and scope changes", "Can renovations be carried out in phases?" ],
+      "ordinal" : 5
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "ERROR",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "ANSWERED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : "ANSWERED",
+    "verdict" : null,
+    "reason" : null,
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 5663.80073,
+    "httpLatencyMs" : 5665.806232,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "conclusive" : false,
+      "note" : "",
+      "metadata" : {
+        "verdict" : null,
+        "reason" : null,
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 5663.80073,
+        "outcome" : "inconclusive"
+      }
+    },
+    "note" : "",
+    "error" : "audit_inconclusive_or_mismatched"
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

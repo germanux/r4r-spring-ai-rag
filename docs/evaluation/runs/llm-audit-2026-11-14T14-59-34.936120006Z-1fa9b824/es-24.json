@@ -1,0 +1,69 @@
+{
+  "caseId" : "case-35",
+  "number" : 24,
+  "language" : "es",
+  "question" : "Quiero reformar los vestuarios de un polideportivo abierto al público. ¿Qué debo revisar para ejecutar la obra por fases?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 4382.70263,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Debe revisar el uso público, la evacuación, la accesibilidad, la ventilación, el drenaje, la seguridad y los permisos, según [S1]. Además, debe valorar el uso intensivo, la humedad, las pendientes, el drenaje, los revestimientos antideslizantes adecuados, la accesibilidad, las instalaciones y el mantenimiento, según [S2].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Consultas prácticas ampliadas — noviembre 2026", "FAQ-075 — ¿Qué cambia en la reforma de un polideportivo?" ],
+      "ordinal" : 91
+    }, {
+      "label" : "[S2]",
+      "source" : "es/guides/R4R_89_OTROS_ESPACIOS_Y_OBRAS_ESPECIALES.md",
+      "headingPath" : [ "Riansares 4R — otras obras: piscinas, naves, terrazas y equipamientos", "¿Qué hay que valorar antes de renovar un vestuario de polideportivo?" ],
+      "ordinal" : 2
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La cita [S1] menciona la ejecución por fases, pero no proporciona información específica sobre cómo llevar a cabo la obra por fases en el contexto de la reforma de vestuarios. La cita [S2] habla de cierres por fases, pero no detalla cómo esto se aplica a la reforma de vestuarios. Por lo tanto, no se puede afirmar que el respaldo de las fases de ejecución es completo.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 6058.570929,
+    "httpLatencyMs" : 6060.956123,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La respuesta debe incluir información más específica sobre cómo organizar la obra por fases, ya que la información disponible es general y no aborda directamente la pregunta sobre la ejecución por fases en la reforma de vestuarios.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La cita [S1] menciona la ejecución por fases, pero no proporciona información específica sobre cómo llevar a cabo la obra por fases en el contexto de la reforma de vestuarios. La cita [S2] habla de cierres por fases, pero no detalla cómo esto se aplica a la reforma de vestuarios. Por lo tanto, no se puede afirmar que el respaldo de las fases de ejecución es completo.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 6058.570929,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La respuesta debe incluir información más específica sobre cómo organizar la obra por fases, ya que la información disponible es general y no aborda directamente la pregunta sobre la ejecución por fases en la reforma de vestuarios."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

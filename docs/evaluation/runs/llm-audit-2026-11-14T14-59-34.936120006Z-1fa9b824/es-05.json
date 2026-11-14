@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-05",
+  "number" : 5,
+  "language" : "es",
+  "question" : "¿Una primera orientación económica sustituye una visita técnica?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2105.1002639999997,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "No, una primera orientación económica no sustituye una visita técnica. [S1]",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/guides/R4R_114_GUIA_DE_RESPUESTAS_PRUDENTES_Y_LIMITES_DEL_ASESORAMIENTO.md",
+      "headingPath" : [ "Orientación al visitante — qué puede responder un asistente de reformas", "¿Qué significa una primera orientación?" ],
+      "ordinal" : 1
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La cita [S1] menciona que la primera orientación no sustituye una visita técnica, pero no proporciona información suficiente sobre si una orientación económica específica puede sustituir una visita técnica en todos los casos.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 3325.449068,
+    "httpLatencyMs" : 3328.374111,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La respuesta debe especificar que la orientación económica no sustituye una visita técnica en todos los casos, y que depende del alcance y la complejidad del proyecto.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La cita [S1] menciona que la primera orientación no sustituye una visita técnica, pero no proporciona información suficiente sobre si una orientación económica específica puede sustituir una visita técnica en todos los casos.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 3325.449068,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La respuesta debe especificar que la orientación económica no sustituye una visita técnica en todos los casos, y que depende del alcance y la complejidad del proyecto."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

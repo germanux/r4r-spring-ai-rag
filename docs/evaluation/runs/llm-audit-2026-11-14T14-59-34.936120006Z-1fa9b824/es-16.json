@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-16",
+  "number" : 16,
+  "language" : "es",
+  "question" : "Estoy pensando en comprar un piso bastante antiguo, pero tiene grietas en algunas paredes. ¿Cómo puedo saber si es algo superficial o si me voy a meter en un problema serio?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2551.581036,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Para determinar si las grietas son superficiales o indican un problema serio, es necesario documentar las grietas y comprobar posibles movimientos y entradas de agua, como se menciona en [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/guides/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.md",
+      "headingPath" : [ "Riansares 4R — viviendas antiguas: rehabilitar con criterio y seguridad", "Caso hipotético V-01 — Vivienda rural con grietas y humedad en muros" ],
+      "ordinal" : 6
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "El pasaje [S1] menciona documentar grietas y comprobar movimientos y entradas de agua, pero no proporciona un método específico para determinar si las grietas son superficiales o indican un problema estructural grave.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 3442.078895,
+    "httpLatencyMs" : 3444.214862,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La recomendación no incluye cómo identificar si las grietas son superficiales o estructurales, lo cual es crucial para el comprador.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "El pasaje [S1] menciona documentar grietas y comprobar movimientos y entradas de agua, pero no proporciona un método específico para determinar si las grietas son superficiales o indican un problema estructural grave.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 3442.078895,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La recomendación no incluye cómo identificar si las grietas son superficiales o estructurales, lo cual es crucial para el comprador."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

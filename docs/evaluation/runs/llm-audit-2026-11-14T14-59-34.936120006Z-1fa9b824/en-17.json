@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-17",
+  "number" : 17,
+  "language" : "en",
+  "question" : "The kitchen cabinets are fine. How can I refresh it without taking everything apart?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2646.341477,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "If the kitchen cabinets are in good condition, you can refresh the kitchen by keeping the cabinets and focusing on other elements such as tiles and appliances, as long as you ensure adequate ventilation and accessible connections for the appliances [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.md",
+      "headingPath" : [ "Kitchens — scope, materials and trade coordination", "Can I keep the cabinets while the plumbing is replaced?" ],
+      "ordinal" : 2
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "The cited passage discusses keeping cabinets during plumbing replacement, but does not specifically support the claim about refreshing the kitchen by focusing on tiles and appliances without taking everything apart. The passage focuses on plumbing and cabinet conditions, not on renovation strategies for refreshing the kitchen.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 3040.833221,
+    "httpLatencyMs" : 3043.072934,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "The answer assumes a strategy not directly supported by the cited passage, which focuses on plumbing and cabinet conditions rather than renovation methods.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "The cited passage discusses keeping cabinets during plumbing replacement, but does not specifically support the claim about refreshing the kitchen by focusing on tiles and appliances without taking everything apart. The passage focuses on plumbing and cabinet conditions, not on renovation strategies for refreshing the kitchen.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 3040.833221,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "The answer assumes a strategy not directly supported by the cited passage, which focuses on plumbing and cabinet conditions rather than renovation methods."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-03",
+  "number" : 3,
+  "language" : "en",
+  "question" : "Why does access affect the price of a concrete slab?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 1960.892514,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Access affects the price of a concrete slab because manual mixing and transport increase working days, coordination and risk compared with direct discharge or pumping. [S1]",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — all frequently asked questions", "Patios", "FAQ-045 — Why does access change the price of a concrete floor base?" ],
+      "ordinal" : 57
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "The cited passage only mentions manual mixing and transport increasing working days, coordination, and risk, but does not explicitly state that access affects the price of a concrete slab. The connection between access and price is inferred rather than directly supported.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 3247.02171,
+    "httpLatencyMs" : 3249.251759,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "The answer assumes a link between access and price based on increased labor and risk, but the cited source does not directly confirm this relationship.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "The cited passage only mentions manual mixing and transport increasing working days, coordination, and risk, but does not explicitly state that access affects the price of a concrete slab. The connection between access and price is inferred rather than directly supported.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 3247.02171,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "The answer assumes a link between access and price based on increased labor and risk, but the cited source does not directly confirm this relationship."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

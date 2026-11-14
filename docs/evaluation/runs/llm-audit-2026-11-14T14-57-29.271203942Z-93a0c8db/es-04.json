@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-04",
+  "number" : 4,
+  "language" : "es",
+  "question" : "¿Cuánto orienta una reforma integral de una casa antigua?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 3352.3353270000002,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Una reforma integral de una casa antigua puede oscilar entre 350–450 €/m² sin estructura ni redistribución, y puede elevarse a 533–600 €/m² o más si incluye estructura o cambios [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Casas antiguas", "FAQ-030 — ¿Cuánto orienta una reforma integral de casa antigua?" ],
+      "ordinal" : 36
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "El precio de 533–600 €/m² mencionado no se refiere a una reforma integral, sino a una reforma que incluye estructura o cambios, sin especificar si es integral o parcial.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 3569.645278,
+    "httpLatencyMs" : 3572.353866,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La reforma integral no está claramente definida en los datos proporcionados, lo que limita la precisión de la estimación del costo.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "El precio de 533–600 €/m² mencionado no se refiere a una reforma integral, sino a una reforma que incluye estructura o cambios, sin especificar si es integral o parcial.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 3569.645278,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La reforma integral no está claramente definida en los datos proporcionados, lo que limita la precisión de la estimación del costo."
+  },
+  "runId" : "llm-audit-2026-11-14T14-57-29.271203942Z-93a0c8db"
+}

@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-23",
+  "number" : 28,
+  "language" : "es",
+  "question" : "Las vigas de madera de mi casa vieja están combadas. ¿Se refuerzan o se cambian?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 5896.108897,
+  "ragOutcome" : "FAIL",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Las vigas de madera combadas deben revisarse para determinar si se refuerzan o se cambian, ya que se requiere una evaluación estructural ante deformaciones relevantes [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/guides/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.md",
+      "headingPath" : [ "Riansares 4R — viviendas antiguas: rehabilitar con criterio y seguridad", "¿Cómo se planifica una reforma con madera y muros antiguos?" ],
+      "ordinal" : 2
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La cita [S1] menciona la necesidad de una evaluación estructural ante deformaciones relevantes, pero no especifica si se refuerzan o se cambian las vigas de madera combadas.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 3336.800969,
+    "httpLatencyMs" : 3339.182419,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "El texto sugiere una evaluación estructural, pero no proporciona información directa sobre si se refuerzan o reemplazan las vigas afectadas.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La cita [S1] menciona la necesidad de una evaluación estructural ante deformaciones relevantes, pero no especifica si se refuerzan o se cambian las vigas de madera combadas.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 3336.800969,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "El texto sugiere una evaluación estructural, pero no proporciona información directa sobre si se refuerzan o reemplazan las vigas afectadas."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

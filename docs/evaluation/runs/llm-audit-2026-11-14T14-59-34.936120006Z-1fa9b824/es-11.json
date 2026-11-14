@@ -1,0 +1,69 @@
+{
+  "caseId" : "case-11",
+  "number" : 11,
+  "language" : "es",
+  "question" : "¿Qué datos debe aportar el cliente para solicitar un presupuesto?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 6624.533767,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "El cliente debe aportar ubicación, fotografías, medidas aproximadas, uso del espacio, problema, resultado esperado y plazo [S1]. Además, se requieren fotos, ubicación, superficie aproximada, problema, resultado esperado, distribución, materiales deseados, acceso, uso actual, plazos y prioridades [S2].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Presupuesto", "FAQ-001 — ¿Qué información hace falta para una primera orientación?" ],
+      "ordinal" : 3
+    }, {
+      "label" : "[S2]",
+      "source" : "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
+      "headingPath" : [ "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance", "¿Qué necesito para pedir presupuesto de reforma?" ],
+      "ordinal" : 1
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La respuesta combina información de [S1] y [S2], pero no distingue claramente entre datos necesarios para una orientación inicial y aquellos para un presupuesto detallado. Algunos datos se repiten y no se especifica si son obligatorios para el presupuesto.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 4904.804914,
+    "httpLatencyMs" : 4907.113485,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "El cliente debe aclarar si los datos mencionados son obligatorios para el presupuesto o solo para una orientación inicial, ya que algunos elementos como la distribución o los materiales deseados pueden no ser esenciales para el cálculo del presupuesto.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La respuesta combina información de [S1] y [S2], pero no distingue claramente entre datos necesarios para una orientación inicial y aquellos para un presupuesto detallado. Algunos datos se repiten y no se especifica si son obligatorios para el presupuesto.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 4904.804914,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "El cliente debe aclarar si los datos mencionados son obligatorios para el presupuesto o solo para una orientación inicial, ya que algunos elementos como la distribución o los materiales deseados pueden no ser esenciales para el cálculo del presupuesto."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

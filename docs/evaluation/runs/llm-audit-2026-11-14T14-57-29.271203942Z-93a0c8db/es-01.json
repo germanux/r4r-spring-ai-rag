@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-01",
+  "number" : 1,
+  "language" : "es",
+  "question" : "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 5918.202229,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Para una orientación inicial sobre tu reforma, deberías facilitar fotos, ubicación, superficie aproximada, problema, resultado esperado, distribución, materiales deseados, acceso, uso actual, plazos y prioridades [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
+      "headingPath" : [ "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance", "¿Qué necesito para pedir presupuesto de reforma?" ],
+      "ordinal" : 1
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La respuesta menciona detalles como fotos, ubicación, superficie aproximada, problema, resultado esperado, distribución, materiales deseados, acceso, uso actual, plazos y prioridades, pero no se mencionan aspectos como horarios, aforo previsto, instalaciones existentes, autorización del propietario o comunidad, y requisitos de licencia que son relevantes para una reforma según [S2] y [S3].",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 5183.496928,
+    "httpLatencyMs" : 5192.984951,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La respuesta no aborda completamente los requisitos legales y técnicos necesarios para una reforma, lo que limita su utilidad para el cliente.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La respuesta menciona detalles como fotos, ubicación, superficie aproximada, problema, resultado esperado, distribución, materiales deseados, acceso, uso actual, plazos y prioridades, pero no se mencionan aspectos como horarios, aforo previsto, instalaciones existentes, autorización del propietario o comunidad, y requisitos de licencia que son relevantes para una reforma según [S2] y [S3].",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 5183.496928,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La respuesta no aborda completamente los requisitos legales y técnicos necesarios para una reforma, lo que limita su utilidad para el cliente."
+  },
+  "runId" : "llm-audit-2026-11-14T14-57-29.271203942Z-93a0c8db"
+}

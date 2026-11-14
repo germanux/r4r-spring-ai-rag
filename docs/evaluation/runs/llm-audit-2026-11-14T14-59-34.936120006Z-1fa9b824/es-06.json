@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-06",
+  "number" : 6,
+  "language" : "es",
+  "question" : "¿Qué debe revisarse antes de pavimentar un patio?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2606.810863,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Debe revisarse la base, la compactación, el espesor, la armadura, los pendientes, las juntas, las arquetas, las canaletas, los encuentros y el acceso [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Patios", "FAQ-046 — ¿Qué debe revisarse antes de pavimentar un patio?" ],
+      "ordinal" : 58
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La cita [S1] menciona la base, compactación, espesor, armadura, pendientes, juntas, arquetas, canaletas, encuentros y acceso, pero no incluye la revisión del uso, fricción, impactos, planeidad, humedad del soporte, mantenimiento, seguridad y normativa deportiva aplicable que se mencionan en [S3].",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 4683.858787,
+    "httpLatencyMs" : 4686.934096,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La respuesta no abarca todos los aspectos necesarios para una revisión completa antes de pavimentar un patio, especialmente en contextos como polideportivos.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La cita [S1] menciona la base, compactación, espesor, armadura, pendientes, juntas, arquetas, canaletas, encuentros y acceso, pero no incluye la revisión del uso, fricción, impactos, planeidad, humedad del soporte, mantenimiento, seguridad y normativa deportiva aplicable que se mencionan en [S3].",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 4683.858787,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La respuesta no abarca todos los aspectos necesarios para una revisión completa antes de pavimentar un patio, especialmente en contextos como polideportivos."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

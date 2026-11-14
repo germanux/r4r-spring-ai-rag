@@ -1,0 +1,33 @@
+{
+  "caseId" : "case-27",
+  "number" : 32,
+  "language" : "es",
+  "question" : "¿Qué sección exacta de cable y qué magnetotérmico exige el REBT para instalar un cargador de coche eléctrico de 11 kW en mi garaje?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 3933.963511,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "",
+    "abstained" : true,
+    "citations" : [ ],
+    "provider" : null,
+    "status" : "ABSTAINED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ABSTAINED",
+    "effectiveStatus" : "ABSTAINED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

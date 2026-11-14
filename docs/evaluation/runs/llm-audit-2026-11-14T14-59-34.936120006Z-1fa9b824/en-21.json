@@ -1,0 +1,69 @@
+{
+  "caseId" : "case-32",
+  "number" : 21,
+  "language" : "en",
+  "question" : "I have broken pipes in my kitchen. What should I do?\nI also want to renovate my kitchen. What do you recommend?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2807.1249940000002,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Fix the leak first, then assess water supply and drainage before installing tiles, cabinets and finishes [S1]. It may be viable to retain the layout and sound components [S2].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.md",
+      "headingPath" : [ "Riansares 4R — kitchens: broken pipes, leaks and pre-renovation decisions", "Question — My pipes are broken and I also want to renovate the kitchen. What do you recommend?" ],
+      "ordinal" : 3
+    }, {
+      "label" : "[S2]",
+      "source" : "en/R4R_10_PATIO_HOME_DAMP_AND_REPAIR_CASES.md",
+      "headingPath" : [ "Riansares 4R — Patio, Home, Damp and Repair Cases", "Thematic Expansion — Kitchen Leaks and Progressive Renovations (November 2026)", "Question: \"I also want to renovate the kitchen. What do you recommend?\"" ],
+      "ordinal" : 49
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "The claim that it may be viable to retain the layout and sound components [S2] is not directly supported by the cited passage, which only mentions separating essential repairs from optional changes without explicitly endorsing retaining the layout.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 3588.82886,
+    "httpLatencyMs" : 3590.662401,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "The recommendation to retain the layout is not explicitly stated in the cited source, making it an inferred suggestion rather than a documented fact.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "The claim that it may be viable to retain the layout and sound components [S2] is not directly supported by the cited passage, which only mentions separating essential repairs from optional changes without explicitly endorsing retaining the layout.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 3588.82886,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "The recommendation to retain the layout is not explicitly stated in the cited source, making it an inferred suggestion rather than a documented fact."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

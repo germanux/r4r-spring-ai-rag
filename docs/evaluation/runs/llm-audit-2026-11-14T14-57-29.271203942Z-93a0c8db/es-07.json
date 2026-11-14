@@ -1,0 +1,33 @@
+{
+  "caseId" : "case-07",
+  "number" : 7,
+  "language" : "es",
+  "question" : "¿Cuándo conviene usar hormigón de camión en una solera?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 368.622766,
+  "ragOutcome" : "FAIL",
+  "auditIdPresent" : false,
+  "httpResponse" : {
+    "answer" : "",
+    "abstained" : true,
+    "citations" : [ ],
+    "provider" : null,
+    "status" : "ABSTAINED"
+  },
+  "audit" : {
+    "outcome" : "SKIPPED",
+    "originalStatus" : "ABSTAINED",
+    "effectiveStatus" : "ABSTAINED",
+    "proposedDowngrade" : false,
+    "appliedDowngrade" : false,
+    "recommendedStatus" : null,
+    "verdict" : null,
+    "reason" : null,
+    "provider" : null,
+    "model" : null,
+    "durationMs" : null,
+    "httpLatencyMs" : null,
+    "skipReason" : "no_audit_id"
+  },
+  "runId" : "llm-audit-2026-11-14T14-57-29.271203942Z-93a0c8db"
+}

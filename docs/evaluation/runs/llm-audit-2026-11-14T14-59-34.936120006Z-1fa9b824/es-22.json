@@ -1,0 +1,69 @@
+{
+  "caseId" : "case-33",
+  "number" : 22,
+  "language" : "es",
+  "question" : "Tengo tuberías rotas en mi cocina. ¿Qué hago?\nAdemás, quiero reformar la cocina. ¿Qué me recomiendas?\n¿Puedo cambiar también los azulejos?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 4602.8078829999995,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Conviene resolver primero la fuga y revisar **fontanería y desagües antes de colocar azulejos, muebles y acabados** [S1]. Además, puedes reformar la cocina y cambiar los azulejos, siempre que primero se resuelva la avería y se comprueben soportes y trazados [S4].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+      "headingPath" : [ "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma", "Pregunta — Tengo tuberías rotas y también quiero reformar la cocina. ¿Qué me recomiendas?" ],
+      "ordinal" : 3
+    }, {
+      "label" : "[S4]",
+      "source" : "es/guides/R4R_102_REFORMA_COCINA_MUEBLES_AZULEJOS_Y_ELECTRODOMESTICOS.md",
+      "headingPath" : [ "Cocinas — alcance, materiales y coordinación de oficios", "¿Puedo cambiar los azulejos aunque solo tenga rota una tubería?" ],
+      "ordinal" : 1
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La cita [S4] menciona que se puede cambiar los azulejos después de resolver la fuga, pero no respalda explícitamente la afirmación de que se puedan reformar la cocina y cambiar los azulejos sin resolver primero la avería. La respuesta generaliza más de lo que se afirma en los textos citados.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 5819.031572,
+    "httpLatencyMs" : 5821.410644,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La reforma de la cocina y el cambio de azulejos deben planificarse después de resolver la fuga y verificar el soporte, pero no se garantiza que se puedan realizar simultáneamente sin afectar la seguridad o la calidad de la obra.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La cita [S4] menciona que se puede cambiar los azulejos después de resolver la fuga, pero no respalda explícitamente la afirmación de que se puedan reformar la cocina y cambiar los azulejos sin resolver primero la avería. La respuesta generaliza más de lo que se afirma en los textos citados.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 5819.031572,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La reforma de la cocina y el cambio de azulejos deben planificarse después de resolver la fuga y verificar el soporte, pero no se garantiza que se puedan realizar simultáneamente sin afectar la seguridad o la calidad de la obra."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

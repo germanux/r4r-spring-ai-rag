@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-09",
+  "number" : 9,
+  "language" : "es",
+  "question" : "¿Qué causas de humedad pueden aparecer en una vivienda antigua?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2896.264906,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Las causas de humedad en una vivienda antigua pueden incluir humedad ascendente, humedad lateral por terreno o roca, condensación, filtraciones antiguas, fugas y sales [S4].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S4]",
+      "source" : "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+      "headingPath" : [ "Riansares 4R — casos de patios, viviendas, humedades y reparaciones", "7. Caso B — Vivienda antigua: rehabilitar sin demoler de más", "7.3. Humedad en muros antiguos" ],
+      "ordinal" : 14
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La cita [S4] menciona las causas de humedad como humedad ascendente, humedad lateral por terreno o roca, condensación, filtraciones antiguas, fugas y sales, pero no incluye la humedad por condensación como una causa específica en el contexto de una vivienda antigua, lo cual es una omisión importante.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 5558.073138,
+    "httpLatencyMs" : 5560.472543,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La respuesta debe mencionar explícitamente que la humedad por condensación es una causa común en viviendas antiguas, ya que se menciona en [S4] pero no se destaca como una causa específica en el contexto de la pregunta.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La cita [S4] menciona las causas de humedad como humedad ascendente, humedad lateral por terreno o roca, condensación, filtraciones antiguas, fugas y sales, pero no incluye la humedad por condensación como una causa específica en el contexto de una vivienda antigua, lo cual es una omisión importante.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 5558.073138,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La respuesta debe mencionar explícitamente que la humedad por condensación es una causa común en viviendas antiguas, ya que se menciona en [S4] pero no se destaca como una causa específica en el contexto de la pregunta."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

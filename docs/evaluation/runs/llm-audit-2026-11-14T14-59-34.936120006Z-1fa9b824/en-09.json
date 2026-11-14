@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-09",
+  "number" : 9,
+  "language" : "en",
+  "question" : "What causes of damp can occur in an old home?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 5165.90424,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Damp in an old home can be caused by water use, rain, or seasonal factors. These causes should be investigated to distinguish symptoms from underlying issues. [S1]",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/guides/R4R_118_INITIAL_QUESTIONS_AND_WORK_FOLLOW_UP.md",
+      "headingPath" : [ "Customer service — initial questions, handover and maintenance", "What should be asked about damp?" ],
+      "ordinal" : 3
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "The cited evidence does not mention water use, rain, or seasonal factors as causes of damp, but rather as factors to investigate when determining the cause.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 2331.525642,
+    "httpLatencyMs" : 2333.36538,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "The answer assumes causes not explicitly stated in the cited passage, leading to an overclaim.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "The cited evidence does not mention water use, rain, or seasonal factors as causes of damp, but rather as factors to investigate when determining the cause.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 2331.525642,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "The answer assumes causes not explicitly stated in the cited passage, leading to an overclaim."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

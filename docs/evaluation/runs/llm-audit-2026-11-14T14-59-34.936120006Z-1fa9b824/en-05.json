@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-05",
+  "number" : 5,
+  "language" : "en",
+  "question" : "Does initial cost guidance replace a technical site visit?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 1517.348999,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Initial cost guidance does not replace a technical site visit. [S1]",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/guides/R4R_114_CAUTIOUS_RESPONSES_AND_LIMITS_OF_ADVICE.md",
+      "headingPath" : [ "Visitor guidance — what a renovation assistant can answer", "What does initial guidance mean?" ],
+      "ordinal" : 1
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "The cited passage states that initial guidance does not replace a site visit, but the answer does not explicitly mention the need for a technical site visit as a replacement, leading to an incomplete support of the claim.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 2955.413478,
+    "httpLatencyMs" : 2957.450602,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "The answer should clarify that initial cost guidance does not replace a technical site visit, as per the cited passage.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "The cited passage states that initial guidance does not replace a site visit, but the answer does not explicitly mention the need for a technical site visit as a replacement, leading to an incomplete support of the claim.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 2955.413478,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "The answer should clarify that initial cost guidance does not replace a technical site visit, as per the cited passage."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

@@ -1,0 +1,69 @@
+{
+  "caseId" : "case-33",
+  "number" : 22,
+  "language" : "en",
+  "question" : "I have broken pipes in my kitchen. What should I do?\nI also want to renovate my kitchen. What do you recommend?\nCan I replace the tiles too?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2760.736682,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Fix the leak first, then assess water supply and drainage before installing tiles, cabinets and finishes [S1]. You may also replace the tiles as an optional part of the renovation, provided the substrate is stable and dry [S2].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.md",
+      "headingPath" : [ "Riansares 4R — kitchens: broken pipes, leaks and pre-renovation decisions", "Question — My pipes are broken and I also want to renovate the kitchen. What do you recommend?" ],
+      "ordinal" : 3
+    }, {
+      "label" : "[S2]",
+      "source" : "en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.md",
+      "headingPath" : [ "Riansares 4R — kitchens: broken pipes, leaks and pre-renovation decisions", "Question — May I replace the kitchen wall tiles too?" ],
+      "ordinal" : 4
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "The claim that tiles may be replaced as an optional part of the renovation is supported by [S2] and [S3], but the answer does not clearly distinguish between the mandatory plumbing repairs and optional tile replacement, potentially overclaiming support for tile replacement without sufficient emphasis on the necessity of prior leak resolution.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 4105.098165,
+    "httpLatencyMs" : 4107.042809,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "The answer should explicitly clarify that tile replacement is optional only after ensuring the substrate is stable and dry, and that plumbing repairs are a mandatory prerequisite.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "The claim that tiles may be replaced as an optional part of the renovation is supported by [S2] and [S3], but the answer does not clearly distinguish between the mandatory plumbing repairs and optional tile replacement, potentially overclaiming support for tile replacement without sufficient emphasis on the necessity of prior leak resolution.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 4105.098165,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "The answer should explicitly clarify that tile replacement is optional only after ensuring the substrate is stable and dry, and that plumbing repairs are a mandatory prerequisite."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

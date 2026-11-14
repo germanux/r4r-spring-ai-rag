@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-14",
+  "number" : 14,
+  "language" : "en",
+  "question" : "What are the differences between air lime and natural hydraulic lime when working on old walls?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 3429.9206130000002,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Air lime is highly breathable and traditional but slow-setting and less suitable for thick applications over damp or weak substrates [S1]. Natural hydraulic lime NHL 2 or NHL 3.5 is technically the most compatible option with stone, earth, and ancient buildings, as it sets with ambient humidity and maintains moderate stiffness [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/R4R_20_OFFICE_CELLAR_BATHROOM_AND_CLIENT_SCREENING_CASES.md",
+      "headingPath" : [ "Riansares 4R — Office, Cave, Bathroom and Client Screening Cases", "12. Case G — Cave or old cellar: stabilization with lime mortar and mesh", "12.2. Air Lime, NHL and Hybrid Mortars" ],
+      "ordinal" : 11
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "The cited evidence does not support the claim that natural hydraulic lime NHL 2 or NHL 3.5 is technically the most compatible option with stone, earth, and ancient buildings. The passage only states that it is 'technically the most compatible option' without providing specific technical justification or evidence for this claim.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 3472.553289,
+    "httpLatencyMs" : 3474.604953,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "The claim about NHL compatibility lacks detailed technical support from the cited passage, limiting the reliability of the assertion.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "The cited evidence does not support the claim that natural hydraulic lime NHL 2 or NHL 3.5 is technically the most compatible option with stone, earth, and ancient buildings. The passage only states that it is 'technically the most compatible option' without providing specific technical justification or evidence for this claim.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 3472.553289,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "The claim about NHL compatibility lacks detailed technical support from the cited passage, limiting the reliability of the assertion."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

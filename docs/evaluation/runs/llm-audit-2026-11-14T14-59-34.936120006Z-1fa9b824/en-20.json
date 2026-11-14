@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-31",
+  "number" : 20,
+  "language" : "en",
+  "question" : "I have broken pipes in my kitchen. What should I do?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2712.074637,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "If there is an active leak, shut off the accessible supply using an accessible stop valve if it can be done safely, avoid wet electrical installations, and contact a competent professional. [S3]",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S3]",
+      "source" : "en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.md",
+      "headingPath" : [ "Riansares 4R — kitchens: broken pipes, leaks and pre-renovation decisions", "Question — I have broken pipes in the kitchen. What should I do first?" ],
+      "ordinal" : 1
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "The cited [S3] passage does not explicitly support the claim about shutting off the supply using an accessible stop valve as the first action, as it is more general guidance and not a direct recommendation for the first step.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 3641.465835,
+    "httpLatencyMs" : 3643.481803,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "The answer should clarify that shutting off the supply is a recommended first step, but the cited passage does not explicitly state this as the first action.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "The cited [S3] passage does not explicitly support the claim about shutting off the supply using an accessible stop valve as the first action, as it is more general guidance and not a direct recommendation for the first step.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 3641.465835,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "The answer should clarify that shutting off the supply is a recommended first step, but the cited passage does not explicitly state this as the first action."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

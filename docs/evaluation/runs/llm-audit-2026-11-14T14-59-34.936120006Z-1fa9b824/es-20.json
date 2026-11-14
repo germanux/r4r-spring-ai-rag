@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-31",
+  "number" : 20,
+  "language" : "es",
+  "question" : "Tengo tuberías rotas en mi cocina. ¿Qué hago?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 4877.6859,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Si hay salida activa de agua, la prioridad es detener el suministro con la llave de paso accesible, evitar usar esa instalación y solicitar a un profesional la localización y reparación de la fuga [S3]. Antes de volver a cerrar paredes o colocar muebles, comprobar reparación, estanqueidad y secado [S3].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S3]",
+      "source" : "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+      "headingPath" : [ "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma", "Pregunta — Tengo tuberías rotas en la cocina, ¿qué hago primero?" ],
+      "ordinal" : 1
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La respuesta menciona comprobar reparación, estanqueidad y secado antes de cerrar paredes o colocar muebles, pero no se cita directamente en [S3] ni en otros documentos. La información sobre la inspección y la necesidad de un profesional no está suficientemente respaldada por los pasajes citados.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 5892.693609,
+    "httpLatencyMs" : 5895.20864,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La recomendación de comprobar estanqueidad y secado antes de cerrar paredes o colocar muebles no está claramente respaldada por los pasajes citados en [S3] o en otros documentos.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La respuesta menciona comprobar reparación, estanqueidad y secado antes de cerrar paredes o colocar muebles, pero no se cita directamente en [S3] ni en otros documentos. La información sobre la inspección y la necesidad de un profesional no está suficientemente respaldada por los pasajes citados.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 5892.693609,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La recomendación de comprobar estanqueidad y secado antes de cerrar paredes o colocar muebles no está claramente respaldada por los pasajes citados en [S3] o en otros documentos."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

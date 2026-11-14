@@ -1,0 +1,69 @@
+{
+  "caseId" : "case-16",
+  "number" : 16,
+  "language" : "en",
+  "question" : "I'm thinking of buying a fairly old flat, but there are cracks in some walls. How can I tell whether they are superficial or whether I'm getting into a serious problem?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 2671.142841,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "To determine if cracks are superficial or indicative of a serious problem, check for possible movement and water entry, as documented in [S1]. Additionally, assess the supports and joints to identify the source of movement, as outlined in [S2].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "en/guides/R4R_83_OLD_HOMES_AND_REHABILITATION.md",
+      "headingPath" : [ "Riansares 4R — old homes: sound and safe rehabilitation", "Hypothetical case V-01 — Rural home with cracks and damp walls" ],
+      "ordinal" : 6
+    }, {
+      "label" : "[S2]",
+      "source" : "en/cases/R4R_115_HYPOTHETICAL_KITCHEN_AND_PLUMBING_CASES.md",
+      "headingPath" : [ "Hypothetical cases — kitchens, leaks and renovation decisions", "K-30 — Cracked worktop" ],
+      "ordinal" : 10
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "The cited evidence does not support the claim that assessing supports and joints can identify the source of movement, as [S2] only mentions checking supports, joints, and movement source without confirming this method's effectiveness.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 3444.726528,
+    "httpLatencyMs" : 3446.875991,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "The answer assumes that assessing supports and joints identifies the source of movement, but [S2] only states that these checks are part of the process without confirming their efficacy in determining the source.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "The cited evidence does not support the claim that assessing supports and joints can identify the source of movement, as [S2] only mentions checking supports, joints, and movement source without confirming this method's effectiveness.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 3444.726528,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "The answer assumes that assessing supports and joints identifies the source of movement, but [S2] only states that these checks are part of the process without confirming their efficacy in determining the source."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

@@ -1,0 +1,74 @@
+{
+  "caseId" : "case-02",
+  "number" : 2,
+  "language" : "en",
+  "question" : "In construction, how does the concrete base differ from the finished flooring?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 3495.3264860000004,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "The concrete base is a structural or levelling layer that supports the flooring [S3]. The finished flooring is the final walkable surface, such as tiles or stone, laid on a suitable substrate [S2]. They are distinct components of a construction system, with the base providing support and the finish serving as the surface layer [S4].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S2]",
+      "source" : "en/guides/R4R_105_FLOOR_SLAB_FLOOR_FINISH_PATIOS_DRAINAGE_AND_GRADIENTS.md",
+      "headingPath" : [ "Patios and flooring — slab base, floor finish, damp and drainage", "What is the difference between a concrete floor base and a floor finish?" ],
+      "ordinal" : 1
+    }, {
+      "label" : "[S3]",
+      "source" : "en/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — all frequently asked questions", "Floors", "FAQ-041 — What is the difference between a concrete floor base and a floor finish?" ],
+      "ordinal" : 50
+    }, {
+      "label" : "[S4]",
+      "source" : "en/guides/R4R_84_PATIOS_CONCRETE_BASES_FLOOR_FINISHES_AND_DRAINAGE.md",
+      "headingPath" : [ "Riansares 4R — patios and paving: concrete base, floor finish and drainage", "What is the difference between a concrete floor base and a floor finish?" ],
+      "ordinal" : 1
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "The claim that the base provides support and the finish serves as the surface layer is supported, but the answer overclaims by implying that the base is structural or levelling without citing specific passages that define these roles.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 4255.558336,
+    "httpLatencyMs" : 4257.894976,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "The answer should clarify that the base's structural role is defined in [S4], and the finish's surface role is defined in [S2], but the answer does not explicitly attribute these roles to the cited sources.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "The claim that the base provides support and the finish serves as the surface layer is supported, but the answer overclaims by implying that the base is structural or levelling without citing specific passages that define these roles.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 4255.558336,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "The answer should clarify that the base's structural role is defined in [S4], and the finish's surface role is defined in [S2], but the answer does not explicitly attribute these roles to the cited sources."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-04",
+  "number" : 4,
+  "language" : "es",
+  "question" : "¿Cuánto orienta una reforma integral de una casa antigua?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 3372.528656,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Una reforma integral de una casa antigua puede oscilar entre 350–450 €/m² sin estructura ni redistribución, y puede elevarse a 533–600 €/m² o más si incluye estructura o cambios [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+      "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Casas antiguas", "FAQ-030 — ¿Cuánto orienta una reforma integral de casa antigua?" ],
+      "ordinal" : 36
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La cita [S1] menciona un rango de precios, pero no proporciona una orientación clara sobre el costo total de una reforma integral, sino solo un rango por metro cuadrado. La respuesta asume que estos valores son orientativos para toda la reforma, lo cual no se especifica en el texto citado.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 4435.177042,
+    "httpLatencyMs" : 4437.930541,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La información proporcionada es parcial y no aborda el costo total de la reforma, solo el costo por metro cuadrado, lo que limita su utilidad para una estimación general.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La cita [S1] menciona un rango de precios, pero no proporciona una orientación clara sobre el costo total de una reforma integral, sino solo un rango por metro cuadrado. La respuesta asume que estos valores son orientativos para toda la reforma, lo cual no se especifica en el texto citado.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 4435.177042,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La información proporcionada es parcial y no aborda el costo total de la reforma, solo el costo por metro cuadrado, lo que limita su utilidad para una estimación general."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

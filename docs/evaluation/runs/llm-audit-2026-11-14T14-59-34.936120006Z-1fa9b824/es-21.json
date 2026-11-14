@@ -1,0 +1,69 @@
+{
+  "caseId" : "case-32",
+  "number" : 21,
+  "language" : "es",
+  "question" : "Tengo tuberías rotas en mi cocina. ¿Qué hago?\nAdemás, quiero reformar la cocina. ¿Qué me recomiendas?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 5077.022834,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "Si tienes tuberías rotas en la cocina, la prioridad es detener el suministro con la llave de paso accesible y contactar a un profesional para la reparación de la fuga [S4]. Además, si quieres reformar la cocina, conviene resolver primero la fuga y revisar la fontanería y desagües antes de colocar azulejos, muebles y acabados [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+      "headingPath" : [ "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma", "Pregunta — Tengo tuberías rotas y también quiero reformar la cocina. ¿Qué me recomiendas?" ],
+      "ordinal" : 3
+    }, {
+      "label" : "[S4]",
+      "source" : "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+      "headingPath" : [ "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma" ],
+      "ordinal" : 0
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La respuesta menciona revisar fontanería y desagües antes de colocar azulejos, muebles y acabados [S1], pero no se cita explícitamente que esta revisión debe realizarse antes de reformar la cocina, lo cual es una suposición no respaldada por el texto citado.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 5967.664108,
+    "httpLatencyMs" : 5969.945065,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La recomendación de revisar fontanería y desagües antes de reformar la cocina no está claramente respaldada por el contenido de [S1], lo que limita la certeza de la respuesta.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La respuesta menciona revisar fontanería y desagües antes de colocar azulejos, muebles y acabados [S1], pero no se cita explícitamente que esta revisión debe realizarse antes de reformar la cocina, lo cual es una suposición no respaldada por el texto citado.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 5967.664108,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La recomendación de revisar fontanería y desagües antes de reformar la cocina no está claramente respaldada por el contenido de [S1], lo que limita la certeza de la respuesta."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}

@@ -1,0 +1,64 @@
+{
+  "caseId" : "case-14",
+  "number" : 14,
+  "language" : "es",
+  "question" : "¿Qué diferencias hay entre la cal aérea y la cal hidráulica natural para trabajar sobre muros antiguos?",
+  "httpStatus" : 200,
+  "httpLatencyMs" : 4235.179931000001,
+  "ragOutcome" : "PASS",
+  "auditIdPresent" : true,
+  "httpResponse" : {
+    "answer" : "La cal aérea es muy transpirable y tradicional, pero menos apropiada para cargas gruesas sobre soporte húmedo o débil [S1]. La cal hidráulica natural NHL 2 o NHL 3.5 es técnicamente más compatible con piedra, tierra y fábricas antiguas, fragua también con humedad ambiental y mantiene una rigidez moderada [S1].",
+    "abstained" : false,
+    "citations" : [ {
+      "label" : "[S1]",
+      "source" : "es/R4R_20_CASOS_OFICINAS_CUEVAS_BANOS_Y_FILTROS.md",
+      "headingPath" : [ "Riansares 4R — casos de oficinas, cuevas, baños y filtros comerciales", "12. Caso G — Cueva o bodega antigua: estabilización con mortero de cal y malla", "12.2. Cal aérea, NHL y morteros híbridos" ],
+      "ordinal" : 11
+    } ],
+    "provider" : {
+      "name" : "ollama-84fbb955-da72-32ae-b1f8-895120bd9cd8",
+      "model" : "qwen3:8b",
+      "inferenceHost" : {
+        "type" : "desktop",
+        "hostname" : "PC-GIGA-ZORUX",
+        "cpu" : "Intel i9-14900KF",
+        "ram" : "64 GB DDR5",
+        "gpu" : "NVIDIA RTX 4060 · 8 GB"
+      }
+    },
+    "status" : "ANSWERED"
+  },
+  "audit" : {
+    "outcome" : "COMPLETED",
+    "originalStatus" : "ANSWERED",
+    "effectiveStatus" : "PARTIAL",
+    "proposedDowngrade" : true,
+    "appliedDowngrade" : true,
+    "recommendedStatus" : "PARTIAL",
+    "verdict" : "FAIL",
+    "reason" : "La cal hidráulica natural NHL 2 o NHL 3.5 no se menciona explícitamente como más compatible con muros antiguos, sino con piedra, tierra y fábricas antiguas. La cal aérea se describe como menos apropiada para cargas gruesas sobre soporte húmedo o débil, pero no se afirma que sea inadecuada para muros antiguos.",
+    "provider" : "Ollama",
+    "model" : "qwen3:8b",
+    "durationMs" : 5715.432095,
+    "httpLatencyMs" : 5717.627305,
+    "httpStatus" : 200,
+    "response" : {
+      "originalStatus" : "ANSWERED",
+      "recommendedStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "conclusive" : true,
+      "note" : "La respuesta debe especificar que la cal hidráulica natural NHL 2 o NHL 3.5 es más compatible con piedra, tierra y fábricas antiguas, no necesariamente con muros antiguos en general.",
+      "metadata" : {
+        "verdict" : "FAIL",
+        "reason" : "La cal hidráulica natural NHL 2 o NHL 3.5 no se menciona explícitamente como más compatible con muros antiguos, sino con piedra, tierra y fábricas antiguas. La cal aérea se describe como menos apropiada para cargas gruesas sobre soporte húmedo o débil, pero no se afirma que sea inadecuada para muros antiguos.",
+        "provider" : "Ollama",
+        "model" : "qwen3:8b",
+        "durationMs" : 5715.432095,
+        "outcome" : "completed"
+      }
+    },
+    "note" : "La respuesta debe especificar que la cal hidráulica natural NHL 2 o NHL 3.5 es más compatible con piedra, tierra y fábricas antiguas, no necesariamente con muros antiguos en general."
+  },
+  "runId" : "llm-audit-2026-11-14T14-59-34.936120006Z-1fa9b824"
+}
