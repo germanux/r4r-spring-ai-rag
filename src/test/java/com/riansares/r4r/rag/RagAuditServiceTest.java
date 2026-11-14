@@ -83,6 +83,11 @@ class RagAuditServiceTest {
             assertThat(token).isNotNull(); verifyNoInteractions(model);
             var result = audit.start(token).get(2, TimeUnit.SECONDS);
             assertThat(result.effectiveStatus()).isEqualTo(AnswerStatus.PARTIAL);
+            assertThat(result.metadata().verdict()).isEqualTo("FAIL");
+            assertThat(result.metadata().reason()).isEqualTo("The cited passage does not establish site feasibility.");
+            assertThat(result.metadata().provider()).isEqualTo("Ollama");
+            assertThat(result.metadata().model()).isEqualTo("qwen3:8b");
+            assertThat(result.metadata().durationMs()).isGreaterThanOrEqualTo(0);
             assertThat(original.answer()).isEqualTo("Original answer [S1].");
             assertThat(audit.start(token)).isNull();
             var prompt = ArgumentCaptor.forClass(Prompt.class);

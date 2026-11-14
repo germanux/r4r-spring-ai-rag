@@ -5,6 +5,9 @@ PostgreSQL or reconstructs evidence with another vector search.
 """
 import argparse
 import json
+import math
+import re
+from collections import Counter
 import os
 import time
 import urllib.error
@@ -13,7 +16,7 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
-from r4r_evaluation_cases import ROOT, load_cases
+from r4r_evaluation_cases import ROOT, select_cases, validate_response
 
 
 def validate_capture(response, capture):
@@ -92,75 +95,183 @@ def retry_seconds(value):
         return max(2, (parsedate_to_datetime(value) - datetime.now(timezone.utc)).total_seconds())
 
 
+def post_json(request, timeout):
+    # Only explicit 429 rejections can safely be replayed for one-shot audit tokens.
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as http:
+                body = http.read()
+                return json.loads(body) if body else None, http.status, attempt + 1
+        except urllib.error.HTTPError as error:
+            if error.code != 429 or attempt == 3:
+                raise
+            wait = retry_seconds(error.headers.get("Retry-After", "5"))
+            print(f"HTTP 429: reintento en {wait:.1f}s", flush=True)
+            time.sleep(wait)
+
+
+def run_audit(base, rag):
+    original = rag.get("status")
+    result = dict(outcome="SKIPPED", originalStatus=original, recommendedStatus=None,
+                  effectiveStatus=original, verdict=None, reason=None, model=None, provider=None,
+                  durationMs=None, httpLatencyMs=None, proposedDowngrade=False, appliedDowngrade=False)
+    token = rag.get("auditId")
+    if token is None:
+        return {**result, 'skipReason': 'no_audit_id'}
+    if not isinstance(token, str) or not re.fullmatch(r'[a-f0-9-]{36}', token):
+        return {**result, 'outcome': 'ERROR', 'error': 'invalid_audit_id'}
+    started = time.perf_counter()
+    try:
+        request = urllib.request.Request(base + '/api/rag/audits/' + token, data=b'',
+                                         headers={'Accept': 'application/json', 'Origin': 'https://athagon.tech'})
+        review, status, attempts = post_json(request, 100)
+        result.update(httpStatus=status, attempts=attempts, response=review)
+        if status == 404:
+            result['skipReason'] = 'audit_unavailable_or_expired'
+            return result
+        if status != 200:
+            result.update(outcome='ERROR', error='audit_http_' + str(status))
+            return result
+        if not isinstance(review, dict):
+            raise ValueError('invalid_audit_json')
+        metadata = review.get('metadata') or {}
+        if not isinstance(metadata, dict):
+            raise ValueError('invalid_audit_metadata')
+        result.update(recommendedStatus=review.get('recommendedStatus'), note=review.get('note'),
+                      **{key: metadata.get(key) for key in ('verdict', 'reason', 'model', 'provider')},
+                      durationMs=metadata.get('durationMs'))
+        rank = {'ABSTAINED': 0, 'PARTIAL': 1, 'ANSWERED': 2}
+        recommended = review.get('recommendedStatus')
+        if original not in rank or recommended not in rank:
+            result.update(outcome='ERROR', error='invalid_audit_status')
+            return result
+        downgrade = rank[recommended] < rank[original]
+        result['proposedDowngrade'] = downgrade
+        if review.get('originalStatus') != original or review.get('conclusive') is not True:
+            result.update(outcome='ERROR', error='audit_inconclusive_or_mismatched')
+            return result
+        expected = recommended if downgrade else original
+        if (review.get('effectiveStatus') != expected or metadata.get('verdict') != ('FAIL' if downgrade else 'PASS')
+                or not isinstance(metadata.get('reason'), str) or not metadata['reason'].strip()
+                or not isinstance(metadata.get('model'), str) or not metadata['model'].strip()
+                or not isinstance(metadata.get('durationMs'), (int, float)) or isinstance(metadata.get('durationMs'), bool)
+                or not math.isfinite(metadata['durationMs']) or metadata['durationMs'] < 0):
+            result.update(outcome='ERROR', error='audit_policy_or_metadata_invalid')
+            return result
+        result.update(outcome='COMPLETED', effectiveStatus=expected, appliedDowngrade=downgrade)
+    except urllib.error.HTTPError as error:
+        result['httpStatus'] = error.code
+        if error.code == 404:
+            result['skipReason'] = 'audit_unavailable_or_expired'
+        else:
+            result.update(outcome='ERROR', error='audit_http_' + str(error.code))
+    except Exception as error:
+        # Never store exception messages which could contain a URL, token or provider content.
+        result.update(outcome='ERROR', error=type(error).__name__)
+    finally:
+        result['httpLatencyMs'] = (time.perf_counter() - started) * 1000
+    return result
+
+
+def evaluation_summary(rows):
+    def mean(values):
+        values = [v for v in values if isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)]
+        return sum(values) / len(values) if values else 0
+    return dict(total=len(rows), ragStatuses=dict(Counter(r['status'] for r in rows)),
+                ragChecks=dict(Counter(r['ragOutcome'] for r in rows)),
+                proposedDowngrades=sum(r['audit']['proposedDowngrade'] for r in rows),
+                appliedDowngrades=sum(r['audit']['appliedDowngrade'] for r in rows),
+                auditFailures=sum(r['audit']['outcome'] == 'ERROR' for r in rows),
+                auditSkipped=sum(r['audit']['outcome'] == 'SKIPPED' for r in rows),
+                meanRagHttpMs=mean(r['httpLatencyMs'] for r in rows),
+                meanAuditHttpMs=mean(r['audit']['httpLatencyMs'] for r in rows),
+                meanAuditServiceMs=mean(r['audit']['durationMs'] for r in rows))
+
+
 def collect(args):
-    for flag in ("RAG_LIVE_TEST", "RAG_LIVE_EN_TEST"):
-        if os.getenv(flag, "").lower() != "true":
-            raise ValueError(flag + "=true is required for real calls")
-    if os.getenv("RAG_OPENAI_ENABLED", "").lower() != "false":
-        raise ValueError("RAG_OPENAI_ENABLED=false is required; also disable it on the running API")
-    base = os.environ["RAG_TEST_BASE_URL"].rstrip("/")
-    captures = Path(args.capture_dir).resolve()
-    run = ROOT / "docs/evaluation/runs" / args.run_id
+    languages = tuple(value.strip() for value in getattr(args, 'languages', 'es,en').split(','))
+    selected = select_cases(getattr(args, 'case_ids', ''), languages, getattr(args, 'all_cases', False), args.include_controls)
+    for lang in languages:
+        flag = 'RAG_LIVE_TEST' if lang == 'es' else 'RAG_LIVE_EN_TEST'
+        if os.getenv(flag, '').lower() != 'true':
+            raise ValueError(flag + '=true is required for real calls')
+    if os.getenv('RAG_OPENAI_ENABLED', '').lower() != 'false' and not getattr(args, 'allow_openai', False):
+        raise ValueError('RAG_OPENAI_ENABLED=false is required, or explicitly opt in with --allow-openai')
+    base = os.environ['RAG_TEST_BASE_URL'].rstrip('/')
+    captures = Path(args.capture_dir).resolve() if args.capture_dir else None
+    run = ROOT / 'docs/evaluation/runs' / args.run_id
     run.mkdir(parents=True, exist_ok=False)
-    audit = ROOT / "docs/evaluation/audit" / args.run_id
-    audit.mkdir(parents=True, exist_ok=False)
-    selected = [c for c in load_cases() if 25 <= c["number"] <= 30 or args.include_controls and
-                (c["number"] == 17 or (c["lang"], c["number"]) in (("es", 1), ("en", 2)))]
-    summary = []
+    audit_dir = ROOT / 'docs/evaluation/audit' / args.run_id
+    if captures:
+        audit_dir.mkdir(parents=True, exist_ok=False)
+    rows = []
     for index, case in enumerate(selected):
         if index:
             time.sleep(2)
-        before = set(captures.glob("*.json"))
-        request_body = {"question": case["question"], "responseLanguage": case["lang"]}
-        request = urllib.request.Request(base + "/api/rag/answers", data=json.dumps(request_body, ensure_ascii=False).encode(),
-                                         headers={"Content-Type": "application/json", "Origin": "https://athagon.tech"})
+        before = set(captures.glob('*.json')) if captures else set()
+        request_body = {'question': case['question'], 'responseLanguage': case['lang']}
+        request = urllib.request.Request(base + '/api/rag/answers', data=json.dumps(request_body, ensure_ascii=False).encode(),
+                                         headers={'Content-Type': 'application/json', 'Origin': 'https://athagon.tech'})
         print(f"\n{case['lang']}-{case['number']:02d} ({case['caseId']})\nPregunta: {case['question']}", flush=True)
         started = time.perf_counter()
-        for attempt in range(4):
-            try:
-                with urllib.request.urlopen(request, timeout=180) as http:
-                    response = json.load(http)
-                    status = http.status
-                break
-            except urllib.error.HTTPError as error:
-                if error.code != 429 or attempt == 3:
-                    raise
-                wait = retry_seconds(error.headers.get("Retry-After", "5"))
-                print(f"HTTP 429: reintento en {wait:.1f}s", flush=True)
-                time.sleep(wait)
+        response, status, attempts = post_json(request, 180)
         elapsed = (time.perf_counter() - started) * 1000
-        matching = []
-        for path in set(captures.glob("*.json")) - before:
-            snapshot = json.loads(path.read_text())
-            if snapshot["question"] == case["question"] and snapshot["responseLanguage"] == case["lang"]:
-                matching.append(snapshot)
-        if len(matching) != 1:
-            raise ValueError(f"Expected exactly one same-request capture, found {len(matching)}")
-        capture = matching[0]
-        validate_capture(response, capture)
-        if capture["provider"] and capture["provider"]["model"] != "qwen3:8b":
-            raise ValueError("Unexpected actual model: evidence kept in capture directory; do not label it Qwen3")
-        record = dict(runId=args.run_id, caseId=case["caseId"], number=case["number"], language=case["lang"],
-                      question=case["question"], request=request_body, endpoint=base + "/api/rag/answers",
-                      httpStatus=status, httpLatencyMs=elapsed, attempts=attempt + 1, httpResponse=response, capture=capture)
+        if not isinstance(response, dict):
+            raise ValueError('Expected RAG JSON object')
+        # This optional step never changes or throws away the original RAG result.
+        review = run_audit(base, response)
+        capture = None
+        if captures:
+            matching = []
+            for path in set(captures.glob('*.json')) - before:
+                snapshot = json.loads(path.read_text())
+                if snapshot['question'] == case['question'] and snapshot['responseLanguage'] == case['lang']:
+                    matching.append(snapshot)
+            if len(matching) != 1:
+                raise ValueError(f'Expected exactly one same-request capture, found {len(matching)}')
+            capture = matching[0]
+            validate_capture(response, capture)
+            if capture['provider'] and capture['provider']['model'] != 'qwen3:8b':
+                raise ValueError('Unexpected actual model: evidence kept in capture directory; do not label it Qwen3')
+        errors = validate_response(case, response)
+        safe_response = {key: value for key, value in response.items() if key != 'auditId'}
+        record = dict(runId=args.run_id, caseId=case['caseId'], number=case['number'], language=case['lang'],
+                      question=case['question'], request=request_body, endpoint=base + '/api/rag/answers',
+                      httpStatus=status, httpLatencyMs=elapsed, attempts=attempts, httpResponse=safe_response,
+                      auditIdPresent=response.get('auditId') is not None, audit=review,
+                      ragOutcome='FAIL' if errors else 'PASS', ragErrors=errors)
+        if capture is not None:
+            record['capture'] = capture
         filename = f"{case['lang']}-{case['number']:02d}"
-        (run / (filename + ".json")).write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
-        (audit / (filename + ".txt")).write_text(audit_text(record))
-        summary.append(dict(caseId=case["caseId"], number=case["number"], language=case["lang"],
-                            status=response["status"], generationInvoked=capture["generationInvoked"],
-                            chunks=len(capture["chunks"]), citedChunks=sum(c["cited"] for c in capture["chunks"]),
-                            provider=capture["provider"], httpLatencyMs=elapsed))
-        print(f"Respuesta: {response['answer'] or '(vacía)'}\nEstado: {response['status']} | "
-              f"Chunks: {len(capture['chunks'])} | HTTP: {elapsed:.0f}ms | Proveedor: {capture['provider']}", flush=True)
-    (run / "summary.json").write_text(json.dumps(dict(runId=args.run_id, cases=summary), ensure_ascii=False, indent=2) + "\n")
-    print(f"\nGuardadas {len(summary)} preguntas y {sum(r['chunks'] for r in summary)} chunks en {run}", flush=True)
+        (run / (filename + '.json')).write_text(json.dumps(record, ensure_ascii=False, indent=2) + '\n')
+        if capture is not None:
+            (audit_dir / (filename + '.txt')).write_text(audit_text(record))
+        rows.append(dict(caseId=case['caseId'], number=case['number'], language=case['lang'],
+                         status=response.get('status', 'ERROR'), generationInvoked=capture['generationInvoked'] if capture else None,
+                         chunks=len(capture['chunks']) if capture else None,
+                         citedChunks=sum(c['cited'] for c in capture['chunks']) if capture else None,
+                         provider=response.get('provider'), httpLatencyMs=elapsed, ragOutcome=record['ragOutcome'],
+                         audit={key: value for key, value in review.items() if key != 'response'}))
+        totals = evaluation_summary(rows)
+        (run / 'summary.json').write_text(json.dumps(dict(runId=args.run_id, cases=rows, **totals), ensure_ascii=False, indent=2) + '\n')
+        print(f"Respuesta: {response['answer'] or '(vacía)'}\nEstado RAG: {response['status']} | HTTP: {elapsed:.0f}ms", flush=True)
+        print('AUDIT: ' + json.dumps(rows[-1]['audit'], ensure_ascii=False), flush=True)
+    print('RAG + AUDIT SUMMARY: ' + json.dumps(evaluation_summary(rows), ensure_ascii=False), flush=True)
+    print(f'Guardadas {len(rows)} preguntas en {run}', flush=True)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--capture-dir", required=True, help="Explicit capture directory of the dedicated API on this PC")
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--capture-dir", help="Explicit capture directory of the dedicated API on this PC")
+    mode.add_argument("--http-only", action="store_true", help="Collect RAG + audit without filesystem chunk capture")
     parser.add_argument("--run-id", required=True, help="New run directory name, e.g. qwen-evidence-2026-11-14")
     parser.add_argument("--include-controls", action="store_true", help="Also collect 01 ES, 02 EN and 17 ES/EN")
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument("--case-ids", default="", help="Comma-separated canonical caseId values, not question positions")
+    selection.add_argument("--all-cases", action="store_true", help="All 35 questions in each selected language")
+    parser.add_argument("--languages", default="es,en", help="es, en or es,en")
+    parser.add_argument("--allow-openai", action="store_true", help="Explicit consent to an API configured to use OpenAI; never changes server configuration")
     args = parser.parse_args()
     if Path(args.run_id).name != args.run_id or args.run_id in (".", ".."):
         parser.error("run-id must be a single directory name")

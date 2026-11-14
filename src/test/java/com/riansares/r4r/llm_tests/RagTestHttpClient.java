@@ -22,10 +22,19 @@ final class RagTestHttpClient {
 
     static HttpResponse<String> send(HttpClient client, HttpRequest request, Sleeper sleeper, Clock clock)
             throws Exception {
+        return send(client, request, sleeper, clock, true);
+    }
+
+    static HttpResponse<String> sendAudit(HttpClient client, HttpRequest request) throws Exception {
+        return send(client, request, Thread::sleep, Clock.systemUTC(), false);
+    }
+
+    static HttpResponse<String> send(HttpClient client, HttpRequest request, Sleeper sleeper, Clock clock, boolean retry503)
+            throws Exception {
         for (int attempt = 1; ; attempt++) {
             var response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             int status = response.statusCode();
-            if ((status != 429 && status != 503) || attempt == 4) return response;
+            if ((status != 429 && !(retry503 && status == 503)) || attempt == 4) return response;
             long delay = retryDelay(response.headers().firstValue("Retry-After").orElse("2"), clock);
             System.out.printf("HTTP %d: retry %d/3 in %.1f seconds%n", status, attempt, delay / 1000.0);
             sleeper.sleep(delay);

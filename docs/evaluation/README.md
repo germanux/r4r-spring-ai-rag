@@ -35,7 +35,7 @@ los conserva `py-scripts/r4r_capture_evaluation.py` bajo `runs/` tras comprobar 
 coinciden con la respuesta HTTP. Una discrepancia o un error de exportación falla
 explícitamente; no se reconstruyen evidencias a posteriori.
 
-Cada resultado incluye `httpResponse` íntegro y `capture`: pregunta, idioma solicitado,
+En modo captura, cada resultado incluye `httpResponse` (sin el token temporal `auditId`) y `capture`: pregunta, idioma solicitado,
 respuesta validada, estado, citas, proveedor/modelo reales, salida original del modelo,
 motivo del resultado, configuración `topK`/`minScore`/traducción y métricas disponibles.
 `chunks` conserva `label`, `source`, `headingPath`, `ordinal`, `content` sin recortar,
@@ -85,7 +85,8 @@ python3 py-scripts/r4r_capture_evaluation.py \
 
 Se ejecutan 25–30 ES/EN; `--include-controls` añade 01 ES, 02 EN y 17 ES/EN.
 Usar un `run-id` nuevo: no se sobrescriben ejecuciones anteriores. El script no
-traduce preguntas, no consulta PostgreSQL ni invoca a otro LLM. Espera dos segundos
+traduce preguntas ni consulta PostgreSQL. Si recibe `auditId`, solicita la auditoría
+ya implementada en la API. Espera dos segundos
 entre preguntas y respeta `Retry-After` en 429. No reintenta generaciones fallidas.
 Exige `minScore=0.63` y comprueba el proveedor real: no etiqueta un fallback como
 Qwen3. Las opciones del proceso, no las variables del cliente HTTP, determinan la
@@ -97,8 +98,9 @@ configuración efectiva de la API. Terminar la instancia con captura al finaliza
 ollama run qwen3:8b < docs/evaluation/audit/qwen-evidence-2026-11-14/es-28.txt
 ```
 
-Este comando **sí realiza una nueva inferencia**. Los prompts se han preparado,
-pero el exportador y la ejecución de captura no ejecutan la auditoría. Las respuestas
+Este comando **sí realiza una nueva inferencia**, independiente del POST de auditoría
+que puede ejecutar el exportador si la API ofrece `auditId`. Los archivos `.txt` no
+se ejecutan automáticamente. Las respuestas
 guardadas son observaciones del RAG, no respuestas semánticamente aprobadas.
 
 ## Comprobaciones sin LLM
@@ -111,3 +113,58 @@ python3 -m unittest discover -s py-scripts -p test_r4r_capture_evaluation.py -v
 Los tests comprueban contenido/etiquetas exactos frente al prompt, chunks no citados,
 estados parciales y abstenciones, proveedor de la petición, exportación sin sobrescribir,
 ausencia de evidencias en la respuesta pública y ausencia de juicios previos en auditoría.
+
+## Suites existentes con auditoría posterior
+
+`RagLiveQuestionsIT` y `RagLiveEnglishQuestionsIT` mantienen sus comprobaciones RAG.
+Después de cada consulta llaman al auditor sólo si existe `auditId`. Guardan el par
+RAG/auditoría y un `summary.json` en `runs/<run-id>/`. Un fallo del auditor no falla
+el test RAG; un fallo de las comprobaciones RAG sigue fallando como antes.
+
+Selección por **caseId**, no por posición (por ejemplo, `case-23` ocupa la posición 28):
+
+```bash
+RAG_LIVE_TEST=true RAG_LIVE_EN_TEST=true \
+RAG_TEST_BASE_URL=http://192.168.1.207:8080 \
+mvn verify -Pllm-it -Dr4r.test.llm.enabled=true \
+  -Dit.test=RagLiveQuestionsIT,RagLiveEnglishQuestionsIT \
+  -Dr4r.test.case-ids=case-23 -Dr4r.test.run-id=audit-seleccion-nueva
+```
+
+Omitir `r4r.test.case-ids` ejecuta los 70 casos. `r4r.test.run-id` es opcional:
+por defecto se crea un nombre único. `r4r.test.results-dir` permite cambiar el
+directorio raíz de resultados. Las regresiones opt-in existentes se mantienen.
+
+El exportador Python reutiliza los mismos bancos. Su modo original `--capture-dir`
+mantiene la validación de contexto completo; `--http-only` no requiere captura de
+chunks a disco en el servidor. Para los 70 casos:
+
+```bash
+RAG_LIVE_TEST=true RAG_LIVE_EN_TEST=true RAG_OPENAI_ENABLED=false \
+RAG_TEST_BASE_URL=http://192.168.1.207:8080 \
+python3 py-scripts/r4r_capture_evaluation.py --http-only \
+  --all-cases --run-id audit-70-nuevo
+```
+
+Sustituir `--all-cases` por `--case-ids case-23,case-24` limita la selección;
+`--languages es` o `en` limita el idioma. Sin selector se conservan 25–30 ES/EN,
+y `--include-controls` añade los cuatro controles anteriores. Para una API con
+OpenAI autorizado, usar `--allow-openai` expresamente. Ninguna variable del cliente
+ni esa opción cambia la configuración de la API en ejecución. La auditoría debe
+estar habilitada en el servidor; si no hay token se registra `SKIPPED` sin otra llamada.
+
+Cada par conserva `httpResponse.status` original y `audit.recommendedStatus`,
+`effectiveStatus`, `verdict`, `reason`, proveedor/modelo, duración interna y latencia
+HTTP. Sólo se aplica una degradación coherente, concluyente y con motivo/veredicto
+válidos. Nunca se transforma una recomendación de ascenso en un ascenso efectivo.
+No se infieren metadatos ausentes: una API antigua que no los exponga queda señalada
+como `ERROR`, conservando el RAG. Los tokens no se guardan en los archivos.
+
+`summary.json` y la consola muestran resultados/contratos RAG, degradaciones propuestas
+y aplicadas, auditorías fallidas/omitidas y tiempos medios separados. Un `PASS` RAG
+significa las comprobaciones existentes, no una certificación semántica; el veredicto
+del auditor permanece separado. Un `FAIL` del auditor no cambia las expectativas del test.
+
+Las esperas de dos segundos y el `Retry-After` se conservan. El POST de auditoría sólo
+se reintenta ante 429, nunca ante 503, timeout o transporte ambiguo: el token es de un
+solo uso. La política anterior de reintentos de las consultas JUnit RAG no cambia.

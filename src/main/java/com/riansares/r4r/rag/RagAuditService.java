@@ -79,16 +79,21 @@ public final class RagAuditService implements AutoCloseable {
         if (!enabled() || entry == null) return null;
         var input = entry.snapshot();
         var result = new CompletableFuture<RagAuditResult>();
+        long requested = System.nanoTime();
+        var invoked = new java.util.concurrent.atomic.AtomicBoolean();
         var task = new FutureTask<Void>(() -> {
             long started = System.nanoTime();
             String technical = "invalid";
             RagAuditResult review = RagAuditResult.inconclusive(input.status());
             try {
-                var response = model.call(prompt(input));
+                var auditPrompt = prompt(input);
+                invoked.set(true);
+                var response = model.call(auditPrompt);
                 review = validate(response.getResult().getOutput().getText(), input.status());
                 technical = review.conclusive() ? "completed" : "inconclusive";
             } catch (RuntimeException ignored) { technical = "unavailable"; }
             finally {
+                review = metadata(review, technical, requested, invoked.get());
                 if (!result.complete(review)) technical = result.isCancelled() ? "cancelled" : "discarded";
                 log.info("RAG audit provider={} model={} durationMs={} effectiveStatus={} result={}",
                         provider, modelName, (System.nanoTime() - started) / 1_000_000.0,
@@ -99,7 +104,7 @@ public final class RagAuditService implements AutoCloseable {
         active.add(result);
         try {
             var deadline = timer.schedule(() -> {
-                if (result.complete(RagAuditResult.inconclusive(input.status()))) {
+                if (result.complete(metadata(RagAuditResult.inconclusive(input.status()), "timeout", requested, invoked.get()))) {
                     task.cancel(true);
                     log.info("RAG audit provider={} model={} durationMs={} effectiveStatus={} result=timeout", provider, modelName, timeout.toMillis(), input.status());
                 }
@@ -111,10 +116,17 @@ public final class RagAuditService implements AutoCloseable {
             worker.execute(task);
         } catch (RejectedExecutionException busy) {
             active.remove(result);
-            result.complete(RagAuditResult.inconclusive(input.status()));
+            result.complete(metadata(RagAuditResult.inconclusive(input.status()), "busy", requested, false));
             log.info("RAG audit provider={} model={} durationMs=0 effectiveStatus={} result=busy", provider, modelName, input.status());
         }
         return result;
+    }
+
+    private RagAuditResult metadata(RagAuditResult result, String outcome, long started, boolean invoked) {
+        var validated = result.metadata();
+        return result.withMetadata(new RagAuditResult.Metadata(validated == null ? null : validated.verdict(),
+                validated == null ? null : validated.reason(), invoked ? provider : null, invoked ? modelName : null,
+                (System.nanoTime() - started) / 1_000_000.0, outcome));
     }
 
     Prompt prompt(RagEvidenceSnapshot input) {
@@ -169,7 +181,8 @@ public final class RagAuditService implements AutoCloseable {
             boolean downgrade = rank(recommended) < rank(original);
             if (!(downgrade ? verdict.equals("FAIL") && !note.isEmpty() : verdict.equals("PASS")))
                 return RagAuditResult.inconclusive(original);
-            return new RagAuditResult(original, recommended, downgrade ? recommended : original, true, note);
+            return new RagAuditResult(original, recommended, downgrade ? recommended : original, true, note,
+                    new RagAuditResult.Metadata(verdict, reason, null, null, null, "validated"));
         } catch (java.io.IOException | IllegalArgumentException invalid) { return RagAuditResult.inconclusive(original); }
     }
     private static int rank(AnswerStatus status) { return switch (status) { case ABSTAINED -> 0; case PARTIAL -> 1; case ANSWERED -> 2; }; }

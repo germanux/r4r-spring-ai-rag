@@ -67,4 +67,18 @@ class RagTestHttpClientTest {
         }
         assertThat(RagLiveQuestionsIT.SLEEP_WAIT).isEqualTo(2000);
     }
+
+    @Test void auditRetriesOnly429AndNeverReplaysA503WithAConsumedToken() throws Exception {
+        var busy = response(503, "5");
+        when(client.send(eq(request), any(HttpResponse.BodyHandler.class))).thenReturn(busy);
+        assertThat(RagTestHttpClient.send(client, request, delay -> fail("Do not replay an audit on 503"), clock, false)).isSameAs(busy);
+        verify(client, times(1)).send(eq(request), any(HttpResponse.BodyHandler.class));
+        clearInvocations(client);
+        var limited = response(429, "3"); var success = response(200, null);
+        when(client.send(eq(request), any(HttpResponse.BodyHandler.class))).thenReturn(limited, success);
+        var delays = new ArrayList<Long>();
+        assertThat(RagTestHttpClient.send(client, request, delays::add, clock, false)).isSameAs(success);
+        assertThat(delays).containsExactly(3000L);
+        verify(client, times(2)).send(eq(request), any(HttpResponse.BodyHandler.class));
+    }
 }

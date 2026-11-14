@@ -53,8 +53,9 @@ class RagLiveEnglishQuestionsIT {
     private static final List<QuestionCase> CASES = EvaluationQuestions.cases("en");
 
     @org.junit.jupiter.api.BeforeAll
-    static void requireDedicatedTestEndpoint() {
+    static void requireDedicatedTestEndpoint() throws java.io.IOException {
         assertThat(BASE_URL.isBlank()).as("RAG_TEST_BASE_URL must explicitly select a dedicated test API").isFalse();
+        RagAuditEvaluation.prepare();
     }
 
     @TestFactory
@@ -104,8 +105,10 @@ class RagLiveEnglishQuestionsIT {
 
         System.out.printf("%n[%02d/35] %s%nPregunta: %s%nHTTP: %d | Tiempo: %.2f s%n",
                 number, testCase.name(), testCase.question(), httpResponse.statusCode(), seconds);
-        System.out.println("JSON: " + httpResponse.body());
+        System.out.println("JSON: " + RagAuditEvaluation.safeResponse(httpResponse.body()));
 
+        boolean passed = false;
+        try {
         assertThat(httpResponse.statusCode())
                 .as("HTTP de %s: %s", testCase.name(), httpResponse.body())
                 .isEqualTo(200);
@@ -127,6 +130,7 @@ class RagLiveEnglishQuestionsIT {
             assertThat(abstained).as("Debe abstenerse fuera del dominio R4R").isTrue();
             assertThat(answer).isBlank();
             assertThat(citations.size()).isZero();
+            passed = true;
             return;
         }
 
@@ -154,7 +158,14 @@ class RagLiveEnglishQuestionsIT {
         }
         assertThat(mentioned).as("La respuesta debe citar la evidencia").isNotEmpty();
         assertThat(labels).containsAll(mentioned);
+        passed = true;
+        } finally {
+            RagAuditEvaluation.record(HTTP, BASE_URL, "en", number, testCase, httpResponse, seconds * 1000, passed);
+        }
     }
+
+    @org.junit.jupiter.api.AfterAll
+    static void summarizeRagAndAudit() { RagAuditEvaluation.summary(); }
 
     private record QuestionRequest(String question, String retrievalQuestion, String responseLanguage) { }
 }
