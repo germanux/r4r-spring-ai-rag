@@ -1129,7 +1129,7 @@ kbd {
 
 /* Progressive presentation: the demo and benefits lead; technical detail follows. */
 .hero-stack { margin-top:12px; font-size:clamp(.9rem, 1.5vw, 1.05rem); font-weight:600; }
-.hero-lede { max-width:78ch; color:var(--text); }
+.hero-lede { max-width:none; color:var(--text); text-wrap:pretty; }
 .concept-section { padding:12px 0 18px; }
 .architecture-section, .technical-section { padding:8px 0; }
 .architecture-section .section-heading, .technical-section .section-heading { margin-bottom:10px; }

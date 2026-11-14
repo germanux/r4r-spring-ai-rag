@@ -417,7 +417,7 @@
       if (entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= 0.5)) {
         previewTimer = setTimeout(() => {
           if (!userEngaged && !previewSeen && document.activeElement !== question) runPreview();
-        }, 400);
+        }, 4000);
       }
     }, { threshold: 0.5 });
     previewObserver.observe(question);

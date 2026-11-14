@@ -755,6 +755,8 @@ test('audit uses a separate channel only after SSE answer is rendered and form i
   finish({ ok: true, json: async () => ({ conclusive: true, originalStatus: 'ANSWERED', recommendedStatus: 'PARTIAL', effectiveStatus: 'PARTIAL', note: 'La conservación requiere comprobación.' }) });
   await tick();
   assert.match(p.node('auditText').textContent, /debe considerarse parcial/);
+  assert.equal(p.node('resultMode').textContent, p.t('partialAnswer'));
+  assert.equal(p.node('resultMode').classList.contains('is-verified'), false);
   assert.equal(p.node('decisionPill').textContent, p.t('partialAnswer'));
   assert.equal(p.node('answerText').textContent, original);
   assert.equal(p.node('citations').textContent, sources);
@@ -1084,3 +1086,26 @@ test('technical subsections separate diagram, execution flow and configuration i
   assert.ok(backup.textContent.includes('GPT-6 Luna'));assert.ok(backup.textContent.includes(p.t('page.remote_topology')));
  }
 });
+
+for (const lang of ['es', 'en']) {
+  for (const transport of ['REST', 'SSE']) {
+    test(`${lang}: ${transport} PARTIAL response shows a partial heading instead of verified`, async () => {
+      const payload = { ...readyEvent, status: 'PARTIAL' };
+      const options = transport === 'SSE'
+        ? { offline: true, stream: async () => sseResponse([payload]) }
+        : { offline: true, payload };
+      const p = openPage(lang, new Map(), options);
+      p.node('question').value = 'Question';
+      await p.node('sendButton').handlers.click();
+      for (const language of [lang, lang === 'es' ? 'en' : 'es']) {
+        p.changeLanguage(language);
+        assert.equal(p.node('decisionRow').hidden, false);
+        assert.equal(p.node('decisionPill').textContent, p.t('partialAnswer'));
+        assert.equal(p.node('resultMode').textContent, p.t('partialAnswer'));
+        assert.equal(p.node('resultMode').classList.contains('is-verified'), false);
+        assert.ok(p.node('answerText').textContent.includes('Reforma'));
+        assert.ok(p.node('citations').textContent.includes('baño.md'));
+      }
+    });
+  }
+}
