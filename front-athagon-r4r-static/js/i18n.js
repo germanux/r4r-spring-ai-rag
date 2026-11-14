@@ -438,6 +438,14 @@ const R4RI18n = (() => {
     }
   };
   Object.assign(dictionary.en, {
+    partialAnswer: "PARTIAL ANSWER",
+    auditChecking: "Checking sources…",
+    auditReviewed: "Sources reviewed.",
+    auditPartial: "Source review: this answer should be treated as partial.",
+    auditInsufficient: "Source review: the documentation does not sufficiently support this answer. The original text remains visible.",
+    auditPartialInsufficient: "Source review: even the partial information is not sufficiently supported. The original text remains visible.",
+    auditRelated: "There may be related information, but it does not confirm an answer.",
+    auditInsufficientLabel: "INSUFFICIENT SOURCE SUPPORT",
     saved: "endpoint saved", copied: "Copied", copy: "Copy", querying: "querying",
     inProgress: "query in progress", result: "Answer ready", failed: "the query failed",
     loading: "Querying…", send: "Get an answer", waiting: "waiting for a query",
@@ -456,6 +464,14 @@ const R4RI18n = (() => {
     sources: (count) => `${count} source${count === 1 ? "" : "s"}`
   });
   Object.assign(dictionary.es, {
+    partialAnswer: "RESPUESTA PARCIAL",
+    auditChecking: "Revisando referencias…",
+    auditReviewed: "Referencias revisadas.",
+    auditPartial: "Revisión de referencias: la respuesta debe considerarse parcial.",
+    auditInsufficient: "Revisión de referencias: la documentación no respalda suficientemente esta respuesta. El texto original sigue visible.",
+    auditPartialInsufficient: "Revisión de referencias: incluso la información parcial carece de respaldo suficiente. El texto original sigue visible.",
+    auditRelated: "Puede haber información relacionada, pero no permite confirmar una respuesta.",
+    auditInsufficientLabel: "RESPALDO DOCUMENTAL INSUFICIENTE",
     saved: "endpoint guardado", copied: "Copiado", copy: "Copiar", querying: "consultando",
     inProgress: "consulta en curso", result: "Respuesta lista", failed: "la consulta ha fallado",
     loading: "Consultando…", send: "Obtener respuesta", waiting: "esperando una consulta",

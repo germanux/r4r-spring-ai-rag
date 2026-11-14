@@ -1,7 +1,6 @@
 package com.riansares.r4r.rag;
 
 import com.riansares.r4r.chunking.MarkdownChunk;
-import com.riansares.r4r.config.RetrievalTranslationMode;
 import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -23,11 +22,9 @@ public class CitedRagService {
     private final ChatModel chatModel;
     private final int retrievalTopK;
     private final double minScore;
-    private final LocalRetrievalQueryTranslator translator;
     private final EvidenceRelevanceFilter relevanceFilter;
-    private final RetrievalTranslationMode translationMode;
     private final java.util.function.Consumer<RagEvidenceSnapshot> evidenceCapture;
-    // MyMemory's literal construction term differs from the corpus vocabulary; preserve its meaning.
+    // Preserve the existing terminology normalization for an explicitly supplied retrievalQuestion.
     private static final Pattern RENOVATION_WORK = Pattern.compile("(?iu)\\btrabajos?\\s+de\\s+renovaci[oó]n\\b");
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CitedRagService.class);
     private static final Pattern ABSTAIN_TOKEN = Pattern.compile("(?i)(?<![a-z0-9_])_*R4R_ABST(?:AIN|INERSE|INENT)_*(?![a-z0-9_])");
@@ -66,40 +63,14 @@ public class CitedRagService {
      * @param knowledgeStore the vector store for evidence retrieval
      * @param chatModel      the chat model for answer generation
      */
-    public CitedRagService(
-            KnowledgeVectorStore knowledgeStore,
-            ChatModel chatModel,
-            int retrievalTopK,
-            double minScore) {
-        this(knowledgeStore, chatModel, retrievalTopK, minScore, null);
+    public CitedRagService(KnowledgeVectorStore knowledgeStore, ChatModel chatModel, int retrievalTopK, double minScore) {
+        this(knowledgeStore, chatModel, retrievalTopK, minScore, null, null);
     }
 
-    public CitedRagService(KnowledgeVectorStore knowledgeStore, ChatModel chatModel,
-                          int retrievalTopK, double minScore, LocalRetrievalQueryTranslator translator) {
-        this(knowledgeStore, chatModel, retrievalTopK, minScore, translator, null);
-    }
-
-    public CitedRagService(KnowledgeVectorStore knowledgeStore, ChatModel chatModel,
-                          int retrievalTopK, double minScore, LocalRetrievalQueryTranslator translator,
-                          EvidenceRelevanceFilter relevanceFilter) {
-        this(knowledgeStore, chatModel, retrievalTopK, minScore, translator, relevanceFilter,
-                RetrievalTranslationMode.NEVER);
-    }
-
-    public CitedRagService(KnowledgeVectorStore knowledgeStore, ChatModel chatModel,
-                          int retrievalTopK, double minScore, LocalRetrievalQueryTranslator translator,
-                          EvidenceRelevanceFilter relevanceFilter, RetrievalTranslationMode translationMode) {
-        this(knowledgeStore, chatModel, retrievalTopK, minScore, translator, relevanceFilter, translationMode, null);
-    }
-
-    public CitedRagService(KnowledgeVectorStore knowledgeStore, ChatModel chatModel,
-                          int retrievalTopK, double minScore, LocalRetrievalQueryTranslator translator,
-                          EvidenceRelevanceFilter relevanceFilter, RetrievalTranslationMode translationMode,
-                          java.util.function.Consumer<RagEvidenceSnapshot> evidenceCapture) {
+    public CitedRagService(KnowledgeVectorStore knowledgeStore, ChatModel chatModel, int retrievalTopK, double minScore,
+                          EvidenceRelevanceFilter relevanceFilter, java.util.function.Consumer<RagEvidenceSnapshot> evidenceCapture) {
         this.evidenceCapture = evidenceCapture;
-        this.translationMode = Objects.requireNonNull(translationMode, "translationMode");
         this.relevanceFilter = relevanceFilter;
-        this.translator = translator;
         this.knowledgeStore = Objects.requireNonNull(knowledgeStore, "knowledgeStore");
         this.chatModel = Objects.requireNonNull(chatModel, "chatModel");
         this.retrievalTopK = retrievalTopK;
@@ -121,21 +92,17 @@ public class CitedRagService {
     }
 
     public RagResult answer(String question, String retrievalQuestion, String responseLanguage, RagProgress progress) {
+        return answer(question, retrievalQuestion, responseLanguage, progress, null);
+    }
+
+    public RagResult answer(String question, String retrievalQuestion, String responseLanguage, RagProgress progress,
+                            java.util.function.Consumer<RagEvidenceSnapshot> requestCapture) {
         progress.checkCancelled();
         long started = System.nanoTime();
         validateQuestion(question);
         boolean explicitRetrieval = retrievalQuestion != null && !retrievalQuestion.isBlank();
         String searchQuestion = explicitRetrieval ? retrievalQuestion : question;
-        boolean canTranslate = !explicitRetrieval && "en".equalsIgnoreCase(responseLanguage) && translator != null;
-        boolean translatedRemotely = false;
-        if (canTranslate && translationMode == RetrievalTranslationMode.ALWAYS) {
-            var translated = translateForRetrieval(question, progress, started);
-            searchQuestion = translated.question();
-            translatedRemotely = translated.remote();
-        } else if (explicitRetrieval) {
-            // Retain the existing caller-supplied retrievalQuestion contract.
-            searchQuestion = RENOVATION_WORK.matcher(searchQuestion).replaceAll("reformas");
-        }
+        if (explicitRetrieval) searchQuestion = RENOVATION_WORK.matcher(searchQuestion).replaceAll("reformas");
         long normalized = System.nanoTime();
         List<MarkdownChunk> chunks;
         int retrievedChunkCount;
@@ -144,18 +111,10 @@ public class CitedRagService {
         String finalSearchQuestion = searchQuestion;
         try {
             chunks = progress.duringRetrieval(() -> retrieveEvidence(finalSearchQuestion));
-            if (chunks.isEmpty() && canTranslate && translationMode == RetrievalTranslationMode.AUTO) {
-                progress.emit("RETRIEVAL_COMPLETED", null, 0,
-                        (System.nanoTime() - normalized) / 1_000_000.0, "no_evidence");
-                var translated = translateForRetrieval(question, progress, started);
-                translatedRemotely = translated.remote();
-                progress.emit("RETRIEVAL_STARTED");
-                chunks = progress.duringRetrieval(() -> retrieveEvidence(translated.question()));
-            }
             retrievedChunkCount = chunks.size();
             if (relevanceFilter != null) {
                 progress.checkCancelled();
-                var selection = relevanceFilter.select(question, chunks, translatedRemotely);
+                var selection = relevanceFilter.select(question, chunks);
                 progress.checkCancelled();
                 chunks = selection.chunks();
                 partialEvidence = selection.partial();
@@ -174,7 +133,7 @@ public class CitedRagService {
             trace("no_evidence", 0, started, normalized, retrieved, retrieved, retrieved);
             progress.emit("VALIDATION_COMPLETED", null, chunks.size(), null, "abstained");
             return capture(RagResult.abstain(), question, responseLanguage, chunks, null, progress,
-                    retrievedChunkCount == 0 ? "no_evidence" : "evidence_rejected_before_generation", retrievedChunkCount);
+                    retrievedChunkCount == 0 ? "no_evidence" : "evidence_rejected_before_generation", retrievedChunkCount, requestCapture);
         }
 
         chunks = List.copyOf(chunks); // Freeze the exact ordered context used by this generation and its capture.
@@ -183,7 +142,7 @@ public class CitedRagService {
         ChatResponse response;
         try {
             if (chatModel instanceof GenerationRouter router) {
-                response = translatedRemotely ? router.callRemoteOnly(prompt, progress) : router.call(prompt, progress);
+                response = router.call(prompt, progress);
             } else {
                 progress.emit("GENERATION_STARTED");
                 response = chatModel.call(prompt);
@@ -207,14 +166,14 @@ public class CitedRagService {
             trace("model_abstention", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
             progress.emit("VALIDATION_COMPLETED", null, chunks.size(), null, "abstained");
             return capture(RagResult.abstain(), question, responseLanguage, chunks, generatedOutput,
-                    progress, "model_abstention", retrievedChunkCount);
+                    progress, "model_abstention", retrievedChunkCount, requestCapture);
         }
         answer = normalizeReferences(answer, chunks);
         if (answer == null || answer.isBlank() || ONLY_CITATIONS.matcher(answer.trim()).matches()) {
             trace("invalid_answer", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
             progress.emit("VALIDATION_COMPLETED", null, chunks.size(), null, "abstained");
             return capture(RagResult.abstain(), question, responseLanguage, chunks, generatedOutput,
-                    progress, "invalid_answer", retrievedChunkCount);
+                    progress, "invalid_answer", retrievedChunkCount, requestCapture);
         }
         List<Citation> citations = buildCitations(chunks, answer);
         if (citations.isEmpty()) {
@@ -222,7 +181,7 @@ public class CitedRagService {
             trace("missing_citations", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
             progress.emit("VALIDATION_COMPLETED", null, chunks.size(), null, "abstained");
             return capture(RagResult.abstain(), question, responseLanguage, chunks, generatedOutput,
-                    progress, "missing_citations", retrievedChunkCount);
+                    progress, "missing_citations", retrievedChunkCount, requestCapture);
         }
 
         if (parsed.status() == AnswerStatus.PARTIAL) {
@@ -236,7 +195,7 @@ public class CitedRagService {
                 trace("irrelevant_partial", chunks.size(), started, normalized, retrieved, contextBuilt, generated);
                 progress.emit("VALIDATION_COMPLETED", null, chunks.size(), null, "abstained");
                 return capture(RagResult.abstain(), question, responseLanguage, chunks, generatedOutput,
-                        progress, "irrelevant_partial", retrievedChunkCount);
+                        progress, "irrelevant_partial", retrievedChunkCount, requestCapture);
             }
         }
 
@@ -244,13 +203,18 @@ public class CitedRagService {
         trace(outcome, chunks.size(), started, normalized, retrieved, contextBuilt, generated);
         progress.emit("VALIDATION_COMPLETED", null, chunks.size(), (System.nanoTime() - generated) / 1_000_000.0, outcome);
         return capture(new RagResult(answer, false, citations, parsed.status()), question, responseLanguage,
-                chunks, generatedOutput, progress, outcome, retrievedChunkCount);
+                chunks, generatedOutput, progress, outcome, retrievedChunkCount, requestCapture);
     }
 
     private RagResult capture(RagResult result, String question, String language, List<MarkdownChunk> delivered,
-                              String generatedOutput, RagProgress progress, String reason, int retrievedCount) {
-        if (evidenceCapture != null) evidenceCapture.accept(RagEvidenceSnapshot.capture(question, language,
-                result, delivered, generatedOutput, progress, reason, retrievedCount, retrievalTopK, minScore, translationMode));
+                              String generatedOutput, RagProgress progress, String reason, int retrievedCount,
+                              java.util.function.Consumer<RagEvidenceSnapshot> requestCapture) {
+        if (evidenceCapture != null || requestCapture != null) {
+            var snapshot = RagEvidenceSnapshot.capture(question, language, result, delivered, generatedOutput,
+                    progress, reason, retrievedCount, retrievalTopK, minScore);
+            if (evidenceCapture != null) evidenceCapture.accept(snapshot);
+            if (requestCapture != null) requestCapture.accept(snapshot);
+        }
         return result;
     }
 
@@ -326,23 +290,6 @@ public class CitedRagService {
         // Verbatim rendered text may omit Markdown emphasis, never words or measurements.
         return value.replaceAll("(?s)\\*\\*([^*]+)\\*\\*", "$1")
                 .replaceAll("(?s)__([^_]+)__", "$1").replaceAll("\\s+", " ").strip();
-    }
-
-    private record TranslatedQuery(String question, boolean remote) { }
-
-    private TranslatedQuery translateForRetrieval(String question, RagProgress progress, long requestStarted) {
-        progress.emit("TRANSLATION_STARTED");
-        long translating = System.nanoTime();
-        try {
-            String translated = translator.translate(question);
-            boolean remote = translator.lastTranslationUsedRemote();
-            progress.emit("TRANSLATION_COMPLETED", null, null,
-                    (System.nanoTime() - translating) / 1_000_000.0, null);
-            return new TranslatedQuery(RENOVATION_WORK.matcher(translated).replaceAll("reformas"), remote);
-        } catch (RuntimeException failure) {
-            traceFailure("normalization", requestStarted, failure);
-            throw failure;
-        } finally { translator.clearRequestExecution(); }
     }
 
     private void trace(String result, int chunks, long started, long normalized,

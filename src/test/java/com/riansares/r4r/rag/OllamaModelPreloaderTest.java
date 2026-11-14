@@ -208,7 +208,7 @@ class OllamaModelPreloaderTest {
         var generation=new com.riansares.r4r.config.GenerationProviderProperties(List.of(
                 new com.riansares.r4r.config.GenerationProviderProperties.Provider("desktop",pc.url(),pc.model,timeout),
                 new com.riansares.r4r.config.GenerationProviderProperties.Provider("laptop",laptop.url(),laptop.model,timeout)),
-                timeout,timeout,timeout);
+                timeout,timeout);
         var embeddingConfig=new com.riansares.r4r.config.EmbeddingFailoverProperties(List.of(
                 new com.riansares.r4r.config.EmbeddingFailoverProperties.Provider("embeddings",embedding.url(),timeout)),
                 timeout,timeout,timeout,768,"test-unused");

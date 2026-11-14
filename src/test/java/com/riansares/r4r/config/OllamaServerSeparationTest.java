@@ -47,8 +47,7 @@ class OllamaServerSeparationTest {
                         assertThat(model.embed("Documento para ingesta")).hasSize(768);
                         assertThat(model.embed("Consulta para recuperar documentos")).hasSize(768);
                         var router = context.getBean(GenerationRouter.class);
-                        context.getBean(com.riansares.r4r.rag.LocalRetrievalQueryTranslator.class).translate("What renovations?");
-                        assertThat(router.lastUsed()).isNull(); // Translation is not a final answer in runtime.
+                        assertThat(router.lastUsed()).isNull(); // No inference during bean construction.
                         assertThat(router.call(new Prompt("Consulta")).getResult().getOutput().getText()).isEqualTo("pc answer");
                         assertThat(router.lastUsed().baseUrl()).isEqualTo(url(pc));
                         pc.stop(0);
@@ -168,8 +167,7 @@ class OllamaServerSeparationTest {
                         var router=context.getBean(GenerationRouter.class);
                         assertThat(router.call(new Prompt("Consulta")).getResult().getOutput().getText()).isEqualTo("d answer");
                         assertThat(router.lastUsed().baseUrl()).isEqualTo(url(d));
-                        context.getBean(com.riansares.r4r.rag.LocalRetrievalQueryTranslator.class).translate("Test question");
-                        assertThat(operations).filteredOn(op -> op.contains("/api/chat")).hasSize(2)
+                        assertThat(operations).filteredOn(op -> op.contains("/api/chat")).hasSize(1)
                                 .allMatch(op -> op.startsWith("d "));
                     });
         } finally { a.stop(0); b.stop(0); c.stop(0); d.stop(0); }
@@ -183,6 +181,36 @@ class OllamaServerSeparationTest {
                 "r4r.rag.embedding.providers[1].read-timeout=8s",
                 "r4r.rag.embedding.providers[2].name=nas", "r4r.rag.embedding.providers[2].base-url="+url(nas),
                 "r4r.rag.embedding.providers[2].read-timeout=30s" };
+    }
+
+    @Test void independentLocalAuditorIsCreatedWithoutCallingOrPreloadingAnyModel() throws Exception {
+        var operations = new CopyOnWriteArrayList<String>();
+        var local = server("audit", "larger-audit-model", operations);
+        try {
+            runner().withPropertyValues("r4r.rag.audit.enabled=true",
+                    "r4r.rag.audit.provider=" + url(local) + "|larger-audit-model|2s")
+                    .run(context -> {
+                        assertThat(context).hasNotFailed();
+                        var audit = context.getBean(com.riansares.r4r.rag.RagAuditService.class);
+                        assertThat(audit.enabled()).isTrue();
+                        assertThat(org.springframework.test.util.ReflectionTestUtils.getField(audit, "modelName")).isEqualTo("larger-audit-model");
+                        assertThat(context.getBean(GenerationRouter.class).preferred().model()).isEqualTo("qwen3:8b");
+                        assertThat(operations).isEmpty();
+                    });
+        } finally { local.stop(0); }
+    }
+
+    @Test void openAiAuditorRequiresExplicitRemoteEnablementAndSharesTheConfiguredClient() {
+        runner().withPropertyValues("r4r.rag.audit.enabled=true", "r4r.rag.audit.provider=openai|audit-model",
+                "r4r.rag.openai.enabled=false").run(context -> assertThat(context).hasFailed());
+        runner().withPropertyValues("r4r.rag.audit.enabled=true", "r4r.rag.audit.provider=openai|audit-model",
+                "r4r.rag.openai.enabled=true", "OPENAI_API_KEY=TEST_ONLY").run(context -> {
+                    assertThat(context).hasNotFailed();
+                    var audit = context.getBean(com.riansares.r4r.rag.RagAuditService.class);
+                    assertThat(audit.enabled()).isTrue();
+                    assertThat(org.springframework.test.util.ReflectionTestUtils.getField(audit, "modelName")).isEqualTo("audit-model");
+                    assertThat(context.getBean(GenerationRouter.class).preferred().model()).isEqualTo("qwen3:8b");
+                });
     }
 
     private ApplicationContextRunner runner() {

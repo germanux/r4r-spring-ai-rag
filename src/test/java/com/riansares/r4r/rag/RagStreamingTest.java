@@ -112,18 +112,15 @@ class RagStreamingTest {
         assertThat(events).hasSize(count); // The scoped ThreadLocal is removed on the same worker.
     }
 
-    @Test void translationEventsOnlyWhenBackendActuallyTranslates() {
+    @Test void directBilingualRetrievalNeverEmitsTranslationEvents() {
         var store = mock(KnowledgeVectorStore.class);
         when(store.search(anyString(), anyInt(), anyDouble())).thenReturn(List.of());
-        var translator = mock(LocalRetrievalQueryTranslator.class);
-        when(translator.translate("Question")).thenReturn("Pregunta");
-        var service = new CitedRagService(store, pc, 3, .63, translator, null, com.riansares.r4r.config.RetrievalTranslationMode.ALWAYS);
+        var service = new CitedRagService(store, pc, 3, .63);
         service.answer("Question", "Pregunta externa", "en", progress);
-        verify(translator, never()).translate(anyString());
-        assertThat(stages()).doesNotContain("TRANSLATION_STARTED", "TRANSLATION_COMPLETED", "EMBEDDING_STARTED");
-        events.clear();
+        verify(store).search("Pregunta externa", 3, .63);
         service.answer("Question", null, "en", progress);
-        assertThat(stages()).startsWith("TRANSLATION_STARTED", "TRANSLATION_COMPLETED", "RETRIEVAL_STARTED");
-        verify(translator).clearRequestExecution();
+        verify(store).search("Question", 3, .63);
+        assertThat(stages()).doesNotContain("TRANSLATION_STARTED", "TRANSLATION_COMPLETED");
+        verifyNoInteractions(pc);
     }
 }

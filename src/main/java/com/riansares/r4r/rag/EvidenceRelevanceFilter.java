@@ -15,7 +15,7 @@ public final class EvidenceRelevanceFilter {
     public record Selection(List<MarkdownChunk> chunks, boolean partial) { }
     public EvidenceRelevanceFilter(ChatModel model) { this.model = Objects.requireNonNull(model); }
 
-    public Selection select(String question, List<MarkdownChunk> chunks, boolean remoteOnly) {
+    public Selection select(String question, List<MarkdownChunk> chunks) {
         if (chunks.isEmpty()) return new Selection(List.of(), false);
         StringBuilder input = new StringBuilder("Question: ").append(question).append("\n\n");
         for (int i=0;i<chunks.size();i++) {
@@ -34,8 +34,7 @@ public final class EvidenceRelevanceFilter {
                 facts with no useful answer; then return an empty sources array. Never add sources or facts.
                 Keep only original source numbers, not citations, answers, explanations or Markdown.
                 """),new UserMessage(input+"\n/no_think")));
-        var response=model instanceof GenerationRouter router && remoteOnly
-                ? router.callRemoteOnly(prompt) : model.call(prompt);
+        var response=model.call(prompt);
         try {
             String text=response.getResult().getOutput().getText().strip();
             if (text.startsWith("```")) text=text.replaceFirst("^```(?:json)?\\s*", "").replaceFirst("\\s*```$", "");

@@ -1,7 +1,6 @@
 package com.riansares.r4r.rag;
 
 import com.riansares.r4r.chunking.MarkdownChunk;
-import com.riansares.r4r.config.RetrievalTranslationMode;
 
 import java.time.Instant;
 import java.util.List;
@@ -16,13 +15,13 @@ public record RagEvidenceSnapshot(
         int retrievedChunkCount, List<Evidence> chunks, Map<String, Object> metrics, Configuration configuration) {
 
     public record Provider(String name, String model) { }
-    public record Configuration(int topK, double minScore, RetrievalTranslationMode translationMode) { }
+    public record Configuration(int topK, double minScore, String retrievalQueryMode) { }
     public record Evidence(String label, String source, List<String> headingPath, int ordinal,
                            String content, boolean cited, boolean referencedInGeneratedOutput) { }
 
     static RagEvidenceSnapshot capture(String question, String language, RagResult result,
             List<MarkdownChunk> delivered, String generatedOutput, RagProgress progress,
-            String outcome, int retrievedCount, int topK, double minScore, RetrievalTranslationMode mode) {
+            String outcome, int retrievedCount, int topK, double minScore) {
         var used = progress.usedProvider();
         var cited = result.citations().stream().map(Citation::label).collect(java.util.stream.Collectors.toSet());
         var chunks = IntStream.range(0, delivered.size()).mapToObj(i -> {
@@ -35,6 +34,6 @@ public record RagEvidenceSnapshot(
                 result.abstention(), result.citations(), used == null ? null : new Provider(used.name(), used.model()),
                 !delivered.isEmpty(), generatedOutput, outcome, retrievedCount, chunks,
                 java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(progress.metrics())),
-                new Configuration(topK, minScore, mode));
+                new Configuration(topK, minScore, "direct"));
     }
 }

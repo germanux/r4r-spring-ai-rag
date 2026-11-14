@@ -37,7 +37,6 @@ r4r:
     generation:
       connect-timeout: 100ms
       probe-timeout: 100ms
-      translation-read-timeout: 100ms
       providers:
         - name: offline-generation
           base-url: http://127.0.0.1:1

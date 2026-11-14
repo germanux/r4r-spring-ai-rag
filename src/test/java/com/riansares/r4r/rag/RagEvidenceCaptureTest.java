@@ -2,7 +2,6 @@ package com.riansares.r4r.rag;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.riansares.r4r.chunking.MarkdownChunk;
-import com.riansares.r4r.config.RetrievalTranslationMode;
 import com.riansares.r4r.vector.port.KnowledgeVectorStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -29,8 +28,7 @@ class RagEvidenceCaptureTest {
     private final List<RagEvidenceSnapshot> captures = new ArrayList<>();
 
     private CitedRagService service(EvidenceRelevanceFilter filter) {
-        return new CitedRagService(store, model, 5, .63, null, filter,
-                RetrievalTranslationMode.NEVER, captures::add);
+        return new CitedRagService(store, model, 5, .63, filter, captures::add);
     }
 
     private ChatResponse response(String text) {
@@ -108,7 +106,7 @@ class RagEvidenceCaptureTest {
     @Test void distinguishesEvidenceRejectedBeforeGeneration() {
         when(store.search(anyString(), eq(5), eq(.63))).thenReturn(List.of(new MarkdownChunk("source.md", List.of(), 0, "Unrelated")));
         var filter = mock(EvidenceRelevanceFilter.class);
-        when(filter.select(anyString(), anyList(), eq(false))).thenReturn(new EvidenceRelevanceFilter.Selection(List.of(), false));
+        when(filter.select(anyString(), anyList())).thenReturn(new EvidenceRelevanceFilter.Selection(List.of(), false));
         service(filter).answer("Question?", null, "en");
         var snapshot = captures.getFirst();
         assertThat(snapshot.retrievedChunkCount()).isEqualTo(1);
@@ -123,7 +121,7 @@ class RagEvidenceCaptureTest {
         var delivered = new MarkdownChunk("delivered.md", List.of("Relevant"), 8, "Delivered text.");
         when(store.search(anyString(), eq(5), eq(.63))).thenReturn(List.of(discarded, delivered));
         var filter = mock(EvidenceRelevanceFilter.class);
-        when(filter.select(anyString(), anyList(), eq(false)))
+        when(filter.select(anyString(), anyList()))
                 .thenReturn(new EvidenceRelevanceFilter.Selection(List.of(delivered), false));
         when(model.call(any(Prompt.class))).thenReturn(response("Answer [S1]."));
         service(filter).answer("Question?", null, "en");
@@ -155,7 +153,7 @@ class RagEvidenceCaptureTest {
         when(model.call(any(Prompt.class))).thenReturn(response("Answer [S1]."));
         var router = new GenerationRouter(List.of(new GenerationRouter.Target(
                 new GenerationRouter.Provider("test-provider", "http://private-host", "qwen3:8b"), model, () -> true)));
-        var service = new CitedRagService(store, router, 5, .63, null, null, RetrievalTranslationMode.NEVER, captures::add);
+        var service = new CitedRagService(store, router, 5, .63, null, captures::add);
         service.answer("First?", null, "en");
         service.answer("Second?", null, "en");
         assertThat(captures.getFirst().provider()).isEqualTo(new RagEvidenceSnapshot.Provider("test-provider", "qwen3:8b"));

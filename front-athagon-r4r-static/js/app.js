@@ -157,6 +157,73 @@
   let displayedRecording = false;
   let lastRecordedKey = "C";
   let replyMode = "";
+  let auditController = null;
+  let auditCycle = 0;
+  let auditState = null;
+  const statusRank = { ABSTAINED: 0, PARTIAL: 1, ANSWERED: 2 };
+  function clearAudit() {
+    ++auditCycle;
+    auditController?.abort();
+    auditController = null;
+    auditState = null;
+    $("auditNote").hidden = true;
+  }
+  function originalStatus(payload) {
+    return payload?.status || (payload?.abstained ? "ABSTAINED" : "ANSWERED");
+  }
+  function renderAudit() {
+    const box = $("auditNote");
+    box.hidden = !auditState;
+    if (!auditState) return;
+    const original = originalStatus(lastPayload);
+    const effective = auditState.result?.effectiveStatus || original;
+    const downgrade = statusRank[effective] < statusRank[original];
+    const related = original === "ABSTAINED" && auditState.result?.recommendedStatus !== "ABSTAINED";
+    const key = auditState.pending ? "auditChecking" : downgrade
+      ? effective === "ABSTAINED" ? original === "PARTIAL" ? "auditPartialInsufficient" : "auditInsufficient" : "auditPartial"
+      : related ? "auditRelated" : "auditReviewed";
+    box.setAttribute("data-level", downgrade ? effective === "ABSTAINED" ? "insufficient" : "warning" : "neutral");
+    $("auditIcon").textContent = auditState.pending ? "◌" : downgrade ? "⚠" : "·";
+    const note = !auditState.pending && !related ? auditState.result?.note?.trim() : "";
+    $("auditText").textContent = t(key) + (note && !lastPayload?.answer?.includes(note) ? " " + note : "");
+    if (downgrade) {
+      $("decisionRow").hidden = false;
+      decisionPill.textContent = t(effective === "PARTIAL" ? "partialAnswer" : "auditInsufficientLabel");
+      decisionPill.classList.toggle("abstain", effective === "ABSTAINED");
+      decisionText.textContent = "";
+    }
+  }
+  async function startAudit(payload, baseUrl, cycle) {
+    if (cycle !== auditCycle || displayedRecording || preview || !/^[a-f0-9-]{36}$/.test(payload?.auditId || "")) return;
+    const controller = new AbortController();
+    auditController = controller;
+    auditState = { pending: true };renderAudit();
+    const timeout = setTimeout(() => controller.abort(), 90000);
+    try {
+      const response = await fetch(`${baseUrl}/api/rag/audits/${encodeURIComponent(payload.auditId)}`, {
+        method: "POST", headers: { Accept: "application/json" }, signal: controller.signal
+      });
+      if (!response.ok) throw Error("audit unavailable");
+      const result = await response.json();
+      if (cycle !== auditCycle || controller.signal.aborted) return;
+      const original = originalStatus(payload);
+      const valid = result.conclusive === true && result.originalStatus === original
+        && Object.hasOwn(statusRank, result.recommendedStatus) && Object.hasOwn(statusRank, result.effectiveStatus)
+        && result.effectiveStatus === (statusRank[result.recommendedStatus] < statusRank[original] ? result.recommendedStatus : original)
+        && typeof result.note === "string" && result.note.length <= 400;
+      if (!valid) throw Error("inconclusive audit");
+      const silent = original === "ABSTAINED" && result.recommendedStatus === "ABSTAINED"
+        || original === "PARTIAL" && result.recommendedStatus === "ANSWERED"
+        || original === "PARTIAL" && result.recommendedStatus === "PARTIAL"
+          && (!result.note.trim() || payload.answer.includes(result.note.trim()));
+      auditState = silent ? null : { result };renderAudit();
+    } catch {
+      if (cycle === auditCycle) { auditState = null;renderAudit(); }
+    } finally {
+      clearTimeout(timeout);
+      if (auditController === controller) auditController = null;
+    }
+  }
   function changeLanguage(language) {
     isEnglish = language === "en";
     R4RI18n.setLanguage(language);
@@ -343,7 +410,7 @@
     }, { threshold: 0.5 });
     previewObserver.observe(question);
   }
-  window.addEventListener("pagehide", () => { cancelPreview(); previewObserver?.disconnect(); clearTimeout(runtimePoll); });
+  window.addEventListener("pagehide", () => { clearAudit(); cancelPreview(); previewObserver?.disconnect(); clearTimeout(runtimePoll); });
 
   let runtimePoll;
   let runtimeRequest = 0;
@@ -834,6 +901,10 @@
       clearTimeout(timeout);
       activeQueryController = null;
       setLoading(false);
+      if (phase === "success" && !displayedRecording && !preview && lastPayload?.auditId) {
+        const payload = lastPayload, cycle = auditCycle;
+        setTimeout(() => { void startAudit(payload, baseUrl, cycle); }, 0);
+      }
       if (!$("runtimeContent").hidden) await loadRuntimeInfo();
     }
   }
@@ -850,6 +921,7 @@
   }
 
   function renderEmpty() {
+    clearAudit();
     simpleStages = [];
     renderSimpleProgress();
     cancelSourcesPress();
@@ -885,14 +957,15 @@
     errorBox.hidden = true;
     resultContent.hidden = false;
 
-    $("decisionRow").hidden = !abstained;
-    decisionPill.textContent = abstained ? t("abstention") : t("answer");
+    $("decisionRow").hidden = !abstained && originalStatus(payload) !== "PARTIAL";
+    decisionPill.textContent = abstained ? t("abstention") : originalStatus(payload) === "PARTIAL" ? t("partialAnswer") : t("answer");
     decisionPill.classList.toggle("abstain", abstained);
     decisionText.textContent = abstained
       ? t("noEvidence")
       : "";
 
     renderMarkdown(answerText, answer || (abstained ? t("abstained") : t("emptyAnswer")));
+    renderAudit();
 
     citationCount.textContent = t("sources", sourceList.length);
     citations.replaceChildren();

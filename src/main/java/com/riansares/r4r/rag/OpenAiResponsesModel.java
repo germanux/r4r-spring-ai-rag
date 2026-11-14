@@ -34,7 +34,13 @@ public final class OpenAiResponsesModel implements ChatModel {
         this.maxCallsPerDay = maxCallsPerDay;
     }
     public Usage lastUsage() { return usage.get(); }
-    @Override public ChatResponse call(Prompt prompt) {
+    /** Audit models share this exact client's quota and in-flight reservation with generation. */
+    public ChatModel forModel(String selectedModel) {
+        if (selectedModel == null || selectedModel.isBlank()) throw new IllegalArgumentException("Model required");
+        return prompt -> call(prompt, selectedModel);
+    }
+    @Override public ChatResponse call(Prompt prompt) { return call(prompt, model); }
+    private ChatResponse call(Prompt prompt, String selectedModel) {
         if (LocalDate.now(ZoneOffset.UTC).equals(exhaustedDay)) throw new RemoteFailure("quota_exhausted");
         if (key == null || key.isBlank() || !inFlight.tryAcquire()) throw failure();
         try {
@@ -53,7 +59,7 @@ public final class OpenAiResponsesModel implements ChatModel {
                     "role", m.getMessageType().getValue(), "content", m.getText())).toList();
             JsonNode response = client.post().uri("/responses")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + key)
-                    .body(Map.of("model", model, "input", messages, "store", false,
+                    .body(Map.of("model", selectedModel, "input", messages, "store", false,
                             "max_output_tokens", 2048)).retrieve().body(JsonNode.class);
             if (response == null) throw failure();
             usage.set(new Usage(response.path("usage").path("input_tokens").asLong(),

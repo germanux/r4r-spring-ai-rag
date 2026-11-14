@@ -26,6 +26,7 @@ public class RagStreamController implements AutoCloseable {
     private static final int MAX_STREAMS = 4;
     private final CitedRagService service;
     private final GenerationRouter router;
+    @Autowired(required = false) private com.riansares.r4r.rag.RagAuditService audits;
     private final Duration timeout;
     private final Duration heartbeatInterval;
     private final Semaphore admission = new Semaphore(MAX_STREAMS);
@@ -79,7 +80,11 @@ public class RagStreamController implements AutoCloseable {
             router.clearRequestExecution();
             try {
                 session.progress.emit("REQUEST_RECEIVED");
-                var result = service.answer(request.question(), request.retrievalQuestion(), request.responseLanguage(), session.progress);
+                var captured = new java.util.concurrent.atomic.AtomicReference<com.riansares.r4r.rag.RagEvidenceSnapshot>();
+                boolean auditEnabled = audits != null && audits.enabled();
+                var result = auditEnabled
+                        ? service.answer(request.question(), request.retrievalQuestion(), request.responseLanguage(), session.progress, captured::set)
+                        : service.answer(request.question(), request.retrievalQuestion(), request.responseLanguage(), session.progress);
                 session.progress.checkCancelled();
                 var response = RagQueryController.response(result, router.requestExecution());
                 var event = session.progress.event("ANSWER_READY", null, session.progress.documentsFound(), null,
@@ -88,6 +93,10 @@ public class RagStreamController implements AutoCloseable {
                 event.put("answer", response.answer()); event.put("abstained", response.abstained());
                 event.put("citations", response.citations()); event.put("provider", response.provider());
                 event.put("metrics", session.progress.metrics());
+                if (auditEnabled) {
+                    String id = audits.prepare(captured.get());
+                    if (id != null) event.put("auditId", id);
+                }
                 session.terminal(event);
             } catch (CancellationException ex) {
                 if (!session.terminalQueued.get()) session.abort();

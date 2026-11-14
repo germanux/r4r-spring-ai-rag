@@ -1225,3 +1225,7 @@ a:focus-visible,button:focus-visible,textarea:focus-visible,select:focus-visible
 .answer-box .block-head { justify-content:flex-end; }
 
 .runtime-panel > .config-details + .config-details { margin-top:12px; }
+/* Post-answer review is informative and never blocks the form. */
+.audit-note { font-size: .85rem; line-height: 1.5; color: #64748b; margin: .35rem 0 .9rem; }
+.audit-note[data-level="warning"] { color: #77520b; background: #fffaf0; border-left: 2px solid #c49434; padding: .45rem .65rem; }
+.audit-note[data-level="insufficient"] { color: #704b12; background: #fff7e8; border-left: 2px solid #ad7b25; padding: .55rem .65rem; }

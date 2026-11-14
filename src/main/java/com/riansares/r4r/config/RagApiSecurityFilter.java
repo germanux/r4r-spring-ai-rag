@@ -57,7 +57,7 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
         }
 
         String path = protectedPath(request);
-        return !ANSWER_PATHS.contains(path) && !WARMUP_PATH.equals(path);
+        return !ANSWER_PATHS.contains(path) && !WARMUP_PATH.equals(path) && !path.startsWith("/api/rag/audits/");
     }
 
     private static String protectedPath(HttpServletRequest request) {
@@ -76,7 +76,9 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
         }
 
         // Warmup has its own per-model concurrency/cooldown, independent of answer quotas.
-        if (WARMUP_PATH.equals(protectedPath(request))) {
+        // Audits require an allowed Origin and a one-shot token from an admitted answer.
+        // Their own TTL/concurrency bounds avoid consuming a second answer quota.
+        if (WARMUP_PATH.equals(protectedPath(request)) || protectedPath(request).startsWith("/api/rag/audits/")) {
             filterChain.doFilter(request, response);
             return;
         }

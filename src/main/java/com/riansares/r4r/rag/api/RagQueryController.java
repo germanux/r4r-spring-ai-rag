@@ -16,6 +16,8 @@ public class RagQueryController {
     private final CitedRagService citedRagService;
     @org.springframework.beans.factory.annotation.Autowired
     private org.springframework.beans.factory.ObjectProvider<com.riansares.r4r.rag.GenerationRouter> routers;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.riansares.r4r.rag.RagAuditService audits;
 
     public RagQueryController(CitedRagService citedRagService) {
         this.citedRagService = citedRagService;
@@ -30,12 +32,18 @@ public class RagQueryController {
         var router = routers == null ? null : routers.getIfAvailable();
         if (router != null) router.clearRequestExecution();
         try {
-        com.riansares.r4r.rag.RagResult result = request.retrievalQuestion() == null
+        var captured = new java.util.concurrent.atomic.AtomicReference<com.riansares.r4r.rag.RagEvidenceSnapshot>();
+        boolean auditEnabled = audits != null && audits.enabled();
+        com.riansares.r4r.rag.RagResult result = auditEnabled
+                ? citedRagService.answer(request.question(), request.retrievalQuestion(), request.responseLanguage(),
+                    com.riansares.r4r.rag.RagProgress.silent(), captured::set)
+                : request.retrievalQuestion() == null
                 && request.responseLanguage() == null
                 ? citedRagService.answer(request.question())
                 : citedRagService.answer(request.question(), request.retrievalQuestion(), request.responseLanguage());
 
         RagQueryResponse response = response(result, router == null ? null : router.requestExecution());
+        if (auditEnabled) response = response.withAuditId(audits.prepare(captured.get()));
 
         return ResponseEntity.ok(response);
         } finally { if (router != null) router.clearRequestExecution(); }

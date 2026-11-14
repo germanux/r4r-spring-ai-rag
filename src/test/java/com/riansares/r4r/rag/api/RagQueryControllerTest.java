@@ -60,6 +60,7 @@ class RagQueryControllerTest {
                 .andExpect(jsonPath("$.abstained", is(false)))
                 .andExpect(jsonPath("$.status", is("ANSWERED")))
                 .andExpect(jsonPath("$.chunks").doesNotExist())
+                .andExpect(jsonPath("$.auditId").doesNotExist())
                 .andExpect(jsonPath("$.generatedOutput").doesNotExist())
                 .andExpect(jsonPath("$.citations", hasSize(2)))
                 .andExpect(jsonPath("$.citations[0].source", is("doc1.md")))

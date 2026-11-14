@@ -68,6 +68,20 @@ class RagStreamControllerTest {
             verifyNoInteractions(pc, laptop);
         }
     }
+
+    @Test void answerReadyOffersOneShotAuditOnlyAfterMainGenerationAndNeverInvokesAuditModel() throws Exception {
+        evidence();
+        var auditModel = mock(ChatModel.class);
+        try (var audits = new RagAuditService(true, auditModel, "Ollama", "audit-model", Duration.ofSeconds(2),
+                new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules());
+             var controller = new RagStreamController(service, router, Duration.ofSeconds(3))) {
+            org.springframework.test.util.ReflectionTestUtils.setField(controller, "audits", audits);
+            String body = request(mvc(controller)).getResponse().getContentAsString();
+            assertThat(body).contains("event:ANSWER_READY", "\"auditId\":").doesNotContain("\"content\":", "\"chunks\":");
+            verify(pc, times(1)).call(any(Prompt.class));
+            verifyNoInteractions(auditModel);
+        }
+    }
     @Test void allProvidersFailWithSanitizedErrorAndNoAnswerReady() throws Exception {
         evidence();
         when(pc.call(any(Prompt.class))).thenThrow(new IllegalStateException("http://192.168.1.207 secret prompt"));

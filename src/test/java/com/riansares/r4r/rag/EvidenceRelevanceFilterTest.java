@@ -18,7 +18,7 @@ class EvidenceRelevanceFilterTest {
     void reply(String text){when(model.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(text)))));}
     @Test void onlySelectsExistingEvidenceAndPreservesOriginalOrder(){
         reply("{\"sources\":[2],\"coverage\":\"partial\"}");
-        var result=new EvidenceRelevanceFilter(model).select("Are wall cracks structural?",chunks,false);
+        var result=new EvidenceRelevanceFilter(model).select("Are wall cracks structural?",chunks);
         assertThat(result.chunks()).containsExactly(chunks.getLast());assertThat(result.partial()).isTrue();
     }
     @Test void unrelatedEvidenceCanBeRejectedWithoutGeneratingAnAnswer(){
@@ -28,16 +28,16 @@ class EvidenceRelevanceFilterTest {
             public void index(List<MarkdownChunk>x){throw new UnsupportedOperationException();}
             public void replaceSource(String s,List<MarkdownChunk>x){throw new UnsupportedOperationException();}
             public List<MarkdownChunk> search(String q,int k,double score){return chunks;}
-        },model,5,.63,null,filter);
+        },model,5,.63,filter,null);
         assertThat(service.answer("How do I light a corridor?",null,"en").abstention()).isTrue();
         verify(model,times(1)).call(any(Prompt.class));
     }
     @Test void malformedOrInventedEvidenceIsAnErrorNotSuccessfulAbstention(){
         for(String text:List.of("not JSON","{\"sources\":[3],\"coverage\":\"full\"}","{\"sources\":[],\"coverage\":\"full\"}","{\"sources\":[1],\"coverage\":\"none\"}")){
-            reply(text);assertThatThrownBy(()->new EvidenceRelevanceFilter(model).select("Question",chunks,false)).isInstanceOf(IllegalStateException.class);
+            reply(text);assertThatThrownBy(()->new EvidenceRelevanceFilter(model).select("Question",chunks)).isInstanceOf(IllegalStateException.class);
         }
     }
     @Test void emptyRetrievalDoesNotCallTheModel(){
-        assertThat(new EvidenceRelevanceFilter(model).select("Question",List.of(),false).chunks()).isEmpty();verifyNoInteractions(model);
+        assertThat(new EvidenceRelevanceFilter(model).select("Question",List.of()).chunks()).isEmpty();verifyNoInteractions(model);
     }
 }

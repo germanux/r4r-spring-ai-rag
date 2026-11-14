@@ -96,7 +96,6 @@ public final class NomicRetrievalDiagnostic {
             var results=new ArrayList<Map<String,Object>>();report.put("queries",results);
             for(var row:rows){
                 String question=row.path("question").asText(),search=row.path("retrievalQuestion").asText(question),language=row.path("lang").asText("es");
-                if(generalization && language.equals("en"))search=generation.getBean(LocalRetrievalQueryTranslator.class).translate(question);
                 long start=System.nanoTime();float[] data=embedding.embed(search);double embeddingMs=(System.nanoTime()-start)/1_000_000.0;
                 EmbeddingModel fixed=new EmbeddingModel(){
                     public float[] embed(String ignored){return data;}

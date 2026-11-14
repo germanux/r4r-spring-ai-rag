@@ -16,6 +16,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RagApiSecurityFilterTest {
 
+    @Test void auditRequiresAllowedOriginWithoutConsumingASecondAnswerInterval() throws Exception {
+        var filter = new RagApiSecurityFilter(properties(true, false));
+        assertEquals(200, execute(filter, "/api/rag/answers", "10.0.0.8", "http://localhost:63342").getStatus());
+        assertEquals(403, execute(filter, "/api/rag/audits/123", "10.0.0.8", "https://untrusted.example").getStatus());
+        assertEquals(200, execute(filter, "/api/rag/audits/123", "10.0.0.8", "http://localhost:63342").getStatus());
+        assertEquals(429, execute(filter, "/api/rag/answers", "10.0.0.8", "http://localhost:63342").getStatus());
+    }
+
     private static final List<String> ALLOWED_ORIGINS = List.of(
             "https://athagon.tech",
             "http://localhost:63342",

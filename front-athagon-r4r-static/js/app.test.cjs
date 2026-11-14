@@ -78,6 +78,10 @@ function openPage(lang = 'es', storage = new Map(), options = {}) {
     clearTimeout: id => timers.delete(id),
     fetch: async (url, init = {}) => {
       requests.push({ url, init });
+      if (url.includes('/api/rag/audits/')) {
+        if (options.audit) return options.audit(url, init);
+        return { ok: false, status: 404 };
+      }
       if (url.startsWith('https://api.mymemory.translated.net/get?')) {
         if (options.translation) return options.translation(url, init);
         return { ok: true, json: async () => ({ responseStatus: 200, responseData: { translatedText: '¿Qué reformas?' } }) };
@@ -723,6 +727,79 @@ const readyEvent = { stage: 'ANSWER_READY', answer: 'Reforma baños y oficinas. 
   citations: [{ label: '[S1]', source: 'baño.md', headingPath: ['Reformas'], ordinal: 0 }],
   provider: { name: 'PC principal', model: 'qwen3:8b', inferenceHost: { type: 'desktop' } },
   metrics: { embeddingMs: 15, retrievalIncludingEmbeddingMs: 20, vectorSearchMs: null, generationMs: 30, totalMs: 60 } };
+
+const auditId = '12345678-1234-1234-1234-123456789abc';
+const auditPayload = status => ({ ...readyEvent, status, auditId, abstained: status === 'ABSTAINED',
+  answer: status === 'ABSTAINED' ? '' : readyEvent.answer, citations: status === 'ABSTAINED' ? [] : readyEvent.citations });
+async function startPendingAudit(page) {
+  const [id, timer] = [...page.timers].find(([, timer]) => timer.delay === 0);
+  page.timers.delete(id);timer.fn();await tick();
+}
+test('audit uses a separate channel only after SSE answer is rendered and form is available', async () => {
+  let finish;
+  const p = openPage('es', new Map(), { offline: true,
+    stream: async () => sseResponse([auditPayload('ANSWERED')]),
+    audit: async () => new Promise(resolve => { finish = resolve; }) });
+  p.node('question').value = 'Question';await p.node('sendButton').handlers.click();
+  assert.equal(p.node('answerText').textContent.includes('Reforma'), true);
+  assert.equal(p.node('sendButton').disabled, false);
+  assert.equal(p.requests.filter(r => r.url.includes('/audits/')).length, 0);
+  await startPendingAudit(p);
+  assert.match(p.node('auditText').textContent, /Revisando referencias/);
+  const original = p.node('answerText').textContent, sources = p.node('citations').textContent;
+  finish({ ok: true, json: async () => ({ conclusive: true, originalStatus: 'ANSWERED', recommendedStatus: 'PARTIAL', effectiveStatus: 'PARTIAL', note: 'La conservación requiere comprobación.' }) });
+  await tick();
+  assert.match(p.node('auditText').textContent, /debe considerarse parcial/);
+  assert.equal(p.node('decisionPill').textContent, p.t('partialAnswer'));
+  assert.equal(p.node('answerText').textContent, original);
+  assert.equal(p.node('citations').textContent, sources);
+});
+for (const [original, recommended, effective] of [
+  ['ANSWERED','ANSWERED','ANSWERED'], ['ANSWERED','ABSTAINED','ABSTAINED'],
+  ['PARTIAL','ABSTAINED','ABSTAINED'], ['PARTIAL','PARTIAL','PARTIAL'],
+  ['PARTIAL','ANSWERED','PARTIAL'], ['ABSTAINED','ANSWERED','ABSTAINED'],
+  ['ABSTAINED','PARTIAL','ABSTAINED'], ['ABSTAINED','ABSTAINED','ABSTAINED']
+]) test(`audit REST policy ${original} -> ${recommended} keeps original content and never upgrades`, async () => {
+  const p = openPage('en', new Map(), { offline: true, payload: auditPayload(original),
+    audit: async () => ({ ok: true, json: async () => ({ conclusive: true, originalStatus: original,
+      recommendedStatus: recommended, effectiveStatus: effective, note: 'A documented limitation.' }) }) });
+  p.node('question').value = 'Question';await p.node('sendButton').handlers.click();
+  const text = p.node('answerText').textContent;
+  await startPendingAudit(p);
+  assert.equal(p.node('answerText').textContent, text);
+  if (original === 'PARTIAL' && recommended === 'ANSWERED' || original === 'ABSTAINED' && recommended === 'ABSTAINED')
+    assert.equal(p.node('auditNote').hidden, true);
+  else assert.equal(p.node('auditNote').hidden, false);
+  if (original === 'ABSTAINED' && recommended !== 'ABSTAINED') assert.match(p.node('auditText').textContent, /related information/);
+  if (original === 'PARTIAL' && recommended === 'ABSTAINED') assert.match(p.node('auditText').textContent, /even the partial information/);
+});
+test('old audit cannot update a subsequent answer even when its transport ignores cancellation', async () => {
+  let finish, signal, count = 0;
+  const p = openPage('es', new Map(), { offline: true,
+    answer: async () => ({ ok: true, status: 200, json: async () => ++count === 1 ? auditPayload('ANSWERED') : { ...readyEvent, answer: 'Nueva respuesta [S1].' } }),
+    audit: async (url, init) => { signal = init.signal;return new Promise(resolve => { finish = resolve; }); } });
+  p.node('question').value = 'First';await p.node('sendButton').handlers.click();await startPendingAudit(p);
+  p.node('question').value = 'Second';await p.node('sendButton').handlers.click();
+  assert.equal(signal.aborted, true);
+  finish({ ok: true, json: async () => ({ conclusive: true, originalStatus: 'ANSWERED', recommendedStatus: 'ABSTAINED', effectiveStatus: 'ABSTAINED', note: 'Old warning' }) });
+  await tick();
+  assert.equal(p.node('answerText').textContent, 'Nueva respuesta [S1].');
+  assert.equal(p.node('auditNote').hidden, true);
+});
+for (const kind of ['disabled', 'failed', 'invalid', 'timeout']) test(`audit ${kind} preserves the working UI`, async () => {
+  const p = openPage('es', new Map(), { offline: true, payload: kind === 'disabled' ? readyEvent : auditPayload('ANSWERED'),
+    audit: async (url, init) => {
+      if (kind === 'failed') throw Error('technical detail');
+      if (kind === 'timeout') return new Promise((resolve, reject) => init.signal.addEventListener('abort', () => reject(Error('timeout'))));
+      return { ok: true, json: async () => ({ conclusive: false, note: 'invalid' }) };
+    } });
+  p.node('question').value = 'Question';await p.node('sendButton').handlers.click();
+  if (kind !== 'disabled') await startPendingAudit(p);
+  if (kind === 'timeout') { [...p.timers.values()].find(t => t.delay === 90000).fn();await tick(); }
+  assert.equal(p.node('auditNote').hidden, true);
+  assert.equal(p.node('sendButton').disabled, false);
+  assert.match(p.node('answerText').textContent, /Reforma/);
+});
 
 for (const lang of ['es', 'en']) test(`${lang}: SSE renders live phases before answer, then keeps citations and original request fields`, async () => {
   let channel;

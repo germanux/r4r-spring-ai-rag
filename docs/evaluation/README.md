@@ -1,5 +1,8 @@
 # Evidencias RAG y auditoría independiente
 
+La auditoría pública opcional se describe en [Auditoría posterior del RAG](../operations/rag-audit.md).
+La captura a disco de este documento sigue siendo explícita e independiente de esa funcionalidad.
+
 - `runs/<run-id>/`: JSON de cada petición seleccionada y `summary.json`.
 - `audit/<run-id>/`: un `.txt` por caso, listo para Ollama. Incluye pregunta,
   respuesta entregada, estado y **todos** los chunks suministrados al generador.

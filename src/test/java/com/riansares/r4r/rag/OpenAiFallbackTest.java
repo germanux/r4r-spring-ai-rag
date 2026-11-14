@@ -14,11 +14,10 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 class OpenAiFallbackTest {
-    @Test void englishSearchAndAnswerUseRemoteWhenMyMemoryAndBothLocalsAreUnavailable() {
+    @Test void englishRetrievalIsDirectAndOnlyGenerationUsesRemoteFallback() {
         var store = mock(com.riansares.r4r.vector.port.KnowledgeVectorStore.class);
         String english = "Does Riansares 4R renovate offices?";
-        String spanish = "¿Riansares 4R reforma oficinas?";
-        when(store.search(eq(spanish), eq(3), eq(.63)))
+        when(store.search(eq(english), eq(3), eq(.63)))
                 .thenReturn(List.of(new com.riansares.r4r.chunking.MarkdownChunk(
                         "services.md", List.of("Services"), 0, "Se reforman pequeñas oficinas.")));
         var calls = new java.util.concurrent.atomic.AtomicInteger();
@@ -28,25 +27,23 @@ class OpenAiFallbackTest {
             throw new IllegalStateException("simulated local generation failure");
         };
         ChatModel remote = prompt -> {
-            boolean translating = prompt.getContents().contains("Translate the user's question into Spanish");
             calls.incrementAndGet();
             return new ChatResponse(List.of(new Generation(new AssistantMessage(
-                    translating ? spanish : "Yes, the company renovates small offices [S1]."))));
+                    "Yes, the company renovates small offices [S1]."))));
         };
         var down = new GenerationRouter.Target(
                 new GenerationRouter.Provider("offline", "http://offline", "offline"), failingLocal, () -> true);
         var targets = List.of(down, down, new GenerationRouter.Target(
                 new GenerationRouter.Provider("OpenAI", "https://api.openai.com/v1", "gpt-6-luna"), remote, () -> true));
-        var translator = new LocalRetrievalQueryTranslator(new GenerationRouter(targets));
-        var service = new CitedRagService(store, new GenerationRouter(targets), 3, .63, translator, null, com.riansares.r4r.config.RetrievalTranslationMode.ALWAYS);
+        var service = new CitedRagService(store, new GenerationRouter(targets), 3, .63);
 
         var answer = service.answer(english, null, "en");
         assertThat(answer.abstention()).isFalse();
         assertThat(answer.citations()).hasSize(1);
         assertThat(answer.answer()).contains("offices", "[S1]");
-        assertThat(calls.get()).isEqualTo(2); // remote translation + remote answer
-        assertThat(localCalls.get()).isEqualTo(2); // do not retry these hosts during generation
-        verify(store).search(spanish, 3, .63);
+        assertThat(calls.get()).isEqualTo(1); // Only final generation.
+        assertThat(localCalls.get()).isEqualTo(2); // The two configured local generation attempts.
+        verify(store).search(english, 3, .63);
     }
 
     @Test void remoteDailyBudgetRejectsTheNextCallWithoutAnotherHttpRequest() {
@@ -58,6 +55,19 @@ class OpenAiFallbackTest {
         assertThat(model.call(new Prompt("Question")).getResult().getOutput().getText()).isEqualTo("OK [S1]");
         assertThatThrownBy(() -> model.call(new Prompt("Question")))
                 .hasMessage("Remote generation unavailable");
+        server.verify();
+    }
+
+    @Test void independentAuditModelSharesGenerationQuotaWithoutCreatingAnotherRemoteBudget() {
+        var builder = RestClient.builder().baseUrl("https://api.openai.com/v1");
+        var server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo("https://api.openai.com/v1/responses"))
+                .andExpect(jsonPath("$.model").value("audit-model"))
+                .andRespond(withSuccess("{\"status\":\"completed\",\"output\":[{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"audit result\"}]}]}", MediaType.APPLICATION_JSON));
+        var shared = new OpenAiResponsesModel(builder.build(), "TEST_ONLY", "generation-model", 1);
+        assertThat(shared.forModel("audit-model").call(new Prompt("Audit")).getResult().getOutput().getText()).isEqualTo("audit result");
+        assertThatThrownBy(() -> shared.call(new Prompt("Generate")))
+                .isInstanceOfSatisfying(OpenAiResponsesModel.RemoteFailure.class, failure -> assertThat(failure.reason()).isEqualTo("quota_exhausted"));
         server.verify();
     }
 

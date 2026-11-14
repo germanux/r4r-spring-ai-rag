@@ -54,25 +54,18 @@ public class GenerationRouter implements ChatModel {
 
     @Override
     public ChatResponse call(Prompt prompt) {
-        return route(prompt, false, RagProgress.silent());
+        return route(prompt, RagProgress.silent());
     }
 
-    /** Avoid retrying known-failed local hosts after remote translation in the same request. */
-    public ChatResponse callRemoteOnly(Prompt prompt) {
-        return route(prompt, true, RagProgress.silent());
-    }
+    public ChatResponse call(Prompt prompt, RagProgress progress) { return route(prompt, progress); }
 
-    public ChatResponse call(Prompt prompt, RagProgress progress) { return route(prompt, false, progress); }
-    public ChatResponse callRemoteOnly(Prompt prompt, RagProgress progress) { return route(prompt, true, progress); }
-
-    private ChatResponse route(Prompt prompt, boolean remoteOnly, RagProgress progress) {
+    private ChatResponse route(Prompt prompt, RagProgress progress) {
         clearRequestExecution();
         String requestId = UUID.randomUUID().toString();
         boolean failedProvider = false;
         for (Target target : targets) {
             progress.checkCancelled();
             Provider provider = target.provider();
-            if (remoteOnly && !"OpenAI".equals(provider.name())) continue;
             if (failedProvider) progress.emit("FAILOVER_STARTED", provider, null, null, null);
             try {
                 if (!target.available().getAsBoolean()) {
