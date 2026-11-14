@@ -168,3 +168,17 @@ The auditor prompt is unchanged. Browser check with prepared API/audit responses
 PLAYWRIGHT_MODULE/CHROMIUM_PATH work as in the existing browser checks.
 Publish index.html, js/app.js, js/i18n.js and styles/styles.css together (content hashes
 are updated). scripts/deploy-synology.sh deploys the backend, not these static files.
+
+Kitchen recordings — UI capture transcriptions, 2026-11-14
+--------------------------------------------------------
+Only kitchen fixtures were replaced: six distinct responses from seven UI captures.
+ES-2a/ES-2b are one response; the final captured review is displayed and both review
+observations remain in capture.auditorObservations. EN-1 retains its Spanish query.
+EN-2 has no captured duration/status: duration stays blank and the generic Saved
+response heading makes no verification claim. Pending audit text stays pending.
+Visible citations retain labels, document titles and sections; PDF links are resolved
+through the existing catalogue. No backend source path, chunk ordinal, auditId,
+SSE timeline or uncaptured backend status is fabricated. Other fixture groups are
+unchanged. The source transcription JSON was removed after exact-match validation.
+Autoplay performs no inference or audit request; captured provider/review/timing text
+is rendered verbatim. Data is mirrored in index.html for offline playback.

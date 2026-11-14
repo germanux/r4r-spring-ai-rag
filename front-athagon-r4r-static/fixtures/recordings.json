@@ -492,172 +492,197 @@
       {
         "language": "es",
         "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago?",
-        "answer": "Si existe una fuga activa, cerrar el suministro accesible cuando pueda hacerse con seguridad, proteger la zona y contactar con un profesional competente. [S1]",
-        "abstained": false,
+        "answer": "Si hay salida activa de agua, la prioridad es detener el suministro con la llave de paso accesible, evitar usar esa instalación y solicitar a un profesional la localización y reparación de la fuga [S2]. Antes de volver a cerrar paredes o colocar muebles, comprobar reparación, estanqueidad y secado [S2].",
         "citations": [
           {
-            "label": "[S1]",
-            "source": "R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.pdf",
-            "headingPath": [
-              "Ampliación temática: fugas de cocina y reformas progresivas. Pregunta: «Tengo tuberías rotas en mi cocina. ¿Qué hago?»."
-            ],
-            "ordinal": 48
+            "label": "[S2]",
+            "document": "cocinas: tuberías rotas, fugas y decisiones previas a la reforma",
+            "link": "Abrir documento (PDF · ES)",
+            "section": "Pregunta — Tengo tuberías rotas en la cocina, ¿qué hago primero?"
           }
         ],
-        "durationMs": 3013,
-        "recordedAt": "2026-11-13",
         "events": [],
-        "provenance": "User-supplied verified backend results; original SSE timeline and model/provider metadata were not supplied."
+        "capture": {
+          "id": "ES-1",
+          "image": "image(20261114-201319).png",
+          "query_lang": "es",
+          "duration": "9,6 s",
+          "provider": "PC principal · qwen3:8b",
+          "display": "Respuesta verificada",
+          "auditor": "Referencias revisadas.",
+          "date": "2026-11-14"
+        },
+        "provenance": "User-provided UI screenshot transcription, not original backend JSON. SSE events, auditId and chunk ordinals were not captured."
       },
       {
         "language": "es",
-        "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago?\nAdemás, quiero reformar la cocina. ¿Qué me recomiendas?",
-        "answer": "Si tienes tuberías rotas en tu cocina, la prioridad es detener el suministro con la llave de paso accesible, evitar usar esa instalación y solicitar a un profesional la localización y reparación de la fuga [S3]. Además, si quieres reformar la cocina, conviene resolver primero la fuga y revisar fontanería y desagües antes de colocar azulejos, muebles y acabados [S3].",
-        "abstained": false,
-        "citations": [
-          {
-            "label": "[S3]",
-            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
-            "headingPath": [
-              "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma."
-            ],
-            "ordinal": 0
-          }
-        ],
-        "durationMs": 4413,
-        "recordedAt": "2026-11-13",
-        "events": [],
-        "provenance": "User-supplied verified backend results; original SSE timeline and model/provider metadata were not supplied."
-      },
-      {
-        "language": "es",
-        "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago?\nAdemás, quiero reformar la cocina. ¿Qué me recomiendas?\n¿Puedo cambiar también los azulejos?",
-        "answer": "Si tienes tuberías rotas en tu cocina, primero debes cerrar el suministro de agua con seguridad, proteger la zona y contactar a un profesional para reparar la fuga y verificar la estanqueidad [S3]. Además, si quieres reformar la cocina, conviene resolver primero la fuga y revisar la fontanería y desagües antes de colocar azulejos, muebles y acabados [S1]. También puedes cambiar los azulejos, siempre que primero se resuelva la avería y se comprueben los soportes y trazados [S4].",
-        "abstained": false,
+        "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago? Además, quiero reformar la cocina. ¿Qué me recomiendas?",
+        "answer": "Si tienes tuberías rotas en tu cocina, la prioridad es detener el suministro de agua con la llave de paso accesible y contactar a un profesional para la reparación de la fuga [S3]. Una vez resuelta la avería, es recomendable revisar la fontanería y desagües antes de colocar azulejos, muebles y acabados, y separar las reparaciones imprescindibles de las opciones [S1].",
         "citations": [
           {
             "label": "[S1]",
-            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
-            "headingPath": [
-              "Pregunta sobre tuberías rotas y reforma."
-            ],
-            "ordinal": 3
+            "document": "cocinas: tuberías rotas, fugas y decisiones previas a la reforma",
+            "link": "Abrir documento (PDF · ES)",
+            "section": "Pregunta — Tengo tuberías rotas y también quiero reformar la cocina. ¿Qué me recomiendas?"
           },
           {
             "label": "[S3]",
-            "source": "R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.pdf",
-            "headingPath": [
-              "Ampliación temática sobre fugas de cocina."
-            ],
-            "ordinal": 48
-          },
-          {
-            "label": "[S4]",
-            "source": "es/guides/R4R_102_REFORMA_COCINA_MUEBLES_AZULEJOS_Y_ELECTRODOMESTICOS.md",
-            "headingPath": [
-              "Pregunta sobre sustitución de azulejos con tuberías rotas."
-            ],
-            "ordinal": 1
+            "document": "cocinas: tuberías rotas, fugas y decisiones previas a la reforma",
+            "link": "Abrir documento (PDF · ES)",
+            "section": "Pregunta — ¿Hay que cambiar todas las tuberías o solo la parte averiada?"
           }
         ],
-        "durationMs": 4852,
-        "recordedAt": "2026-11-13",
         "events": [],
-        "provenance": "User-supplied verified backend results; original SSE timeline and model/provider metadata were not supplied."
+        "capture": {
+          "id": "ES-2b",
+          "image": "image(20261114-201348).png",
+          "query_lang": "es",
+          "duration": "5,6 s",
+          "provider": "PC principal · qwen3:8b",
+          "display": "Respuesta verificada",
+          "auditor": "Referencias revisadas. Es importante verificar el estado de la instalación antes de proceder con la reforma para evitar riesgos adicionales.",
+          "date": "2026-11-14",
+          "notes": "Misma pregunta, respuesta y citas que ES-2a; distinta fase visible del auditor.",
+          "auditorObservations": [
+            {
+              "image": "image(20261114-201345).png",
+              "auditor": "Revisando referencias..."
+            },
+            {
+              "image": "image(20261114-201348).png",
+              "auditor": "Referencias revisadas. Es importante verificar el estado de la instalación antes de proceder con la reforma para evitar riesgos adicionales."
+            }
+          ]
+        },
+        "provenance": "User-provided UI screenshot transcription, not original backend JSON. SSE events, auditId and chunk ordinals were not captured."
+      },
+      {
+        "language": "es",
+        "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago? Además, quiero reformar la cocina. ¿Qué me recomiendas? ¿Puedo cambiar también los azulejos?",
+        "answer": "Conviene resolver primero la fuga y revisar fontanería y desagües antes de colocar azulejos, muebles y acabados [S1]. Es posible incluir nuevos azulejos en una reforma de cocina, después de reparar fugas y comprobar que el soporte esté firme y seco [S2].",
+        "citations": [
+          {
+            "label": "[S1]",
+            "document": "cocinas: tuberías rotas, fugas y decisiones previas a la reforma",
+            "link": "Abrir documento (PDF · ES)",
+            "section": "Pregunta — Tengo tuberías rotas y también quiero reformar la cocina. ¿Qué me recomiendas?"
+          },
+          {
+            "label": "[S2]",
+            "document": "cocinas: tuberías rotas, fugas y decisiones previas a la reforma",
+            "link": "Abrir documento (PDF · ES)",
+            "section": "Pregunta — ¿Puedo sustituir también los azulejos de la cocina?"
+          }
+        ],
+        "events": [],
+        "capture": {
+          "id": "ES-3",
+          "image": "image(20261114-201410).png",
+          "query_lang": "es",
+          "duration": "5,0 s",
+          "provider": "PC principal · qwen3:8b",
+          "display": "Respuesta verificada",
+          "auditor": "Referencias revisadas.",
+          "date": "2026-11-14"
+        },
+        "provenance": "User-provided UI screenshot transcription, not original backend JSON. SSE events, auditId and chunk ordinals were not captured."
       }
     ],
     "en": [
       {
         "language": "en",
         "question": "I have broken pipes in my kitchen. What should I do?",
-        "answer": "If you have broken pipes in your kitchen, the first step is to stop the water supply using the accessible shut-off valve, avoid using the affected installation, and contact a professional for locating and repairing the leak. [S2] If there is proximity of water and electricity, avoid manipulating hazardous elements and do not touch electrical outlets or wiring affected by water; electrical intervention should be handled by a qualified professional. [S4]",
-        "abstained": false,
+        "answer": "If water is actively escaping, shut off the supply using an accessible stop valve [S3]. Avoid using that installation and ask a professional to locate and repair the leak [S3]. Do not touch wet sockets, equipment or wiring, or work on energized components; an electrical professional must assess the risk [S3].",
         "citations": [
           {
-            "label": "[S2]",
-            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
-            "headingPath": [
-              "Question about broken kitchen pipes."
-            ],
-            "ordinal": 1
-          },
-          {
-            "label": "[S4]",
-            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
-            "headingPath": [
-              "General kitchen plumbing and leak guidance."
-            ],
-            "ordinal": 0
+            "label": "[S3]",
+            "document": "kitchens: broken pipes, leaks and pre-renovation decisions",
+            "link": "Open document (PDF · EN)",
+            "section": "Question — Must all the pipes be replaced or only the broken section?"
           }
         ],
-        "durationMs": 6427,
-        "recordedAt": "2026-11-13",
         "events": [],
-        "provenance": "User-supplied verified backend results; original SSE timeline and model/provider metadata were not supplied."
+        "capture": {
+          "id": "EN-3",
+          "image": "image(20261114-202142).png",
+          "query_lang": "en",
+          "duration": "4.0 s",
+          "provider": "PC principal · qwen3:8b",
+          "display": "Answer verified",
+          "auditor": "Checking sources...",
+          "date": "2026-11-14"
+        },
+        "provenance": "User-provided UI screenshot transcription, not original backend JSON. SSE events, auditId and chunk ordinals were not captured."
       },
       {
         "language": "en",
         "question": "I have broken pipes in my kitchen. What should I do?\nI also want to renovate my kitchen. What do you recommend?",
-        "answer": "First, address the broken pipes by stopping the water supply with the accessible shut-off valve, avoiding use of the affected installation, and contacting a professional for repair. Ensure the area is protected, document damage, and notify your insurance or landlord if necessary. After repairs, check for leaks, dryness, and structural integrity before proceeding with renovations. [S3]\nBefore renovating, prioritize fixing the plumbing and checking drains before installing tiles, appliances, and finishes. Define the scope of work, separating essential repairs from optional upgrades, and budget separately for each part. [S1]",
-        "abstained": false,
+        "answer": "If there is an active leak, shut off the accessible supply using a stop valve and contact a competent professional to repair the leak [S3]. Once the fault is repaired, check for watertightness and possible moisture damage before restoring finishes [S2]. Fix the leak first, then assess water supply and drainage before installing tiles, cabinets and finishes. Define whether the sink and appliances will remain or move, adapt sockets and lighting, select finishes and cabinetry. Separate essential work from optional changes [S1].",
         "citations": [
           {
             "label": "[S1]",
-            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
-            "headingPath": [
-              "Question about broken pipes and renovating a kitchen."
-            ],
-            "ordinal": 3
-          },
-          {
-            "label": "[S3]",
-            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
-            "headingPath": [
-              "General kitchen plumbing and leak guidance."
-            ],
-            "ordinal": 0
-          }
-        ],
-        "durationMs": 5727,
-        "recordedAt": "2026-11-13",
-        "events": [],
-        "provenance": "User-supplied verified backend results; original SSE timeline and model/provider metadata were not supplied."
-      },
-      {
-        "language": "en",
-        "question": "I have broken pipes in my kitchen. What should I do?\nI also want to renovate my kitchen. What do you recommend?\nCan I replace the tiles too?",
-        "answer": "If you have broken pipes in your kitchen, you should first repair the leak and check for secure supports and dry conditions before proceeding with any renovations. [S4]\nYou can renovate your kitchen alongside the pipe repair, but it is recommended to address the plumbing and drainage issues first before installing tiles, countertops, and finishes. [S2]\nYou can replace the tiles as part of the renovation, provided the pipes are repaired, the area is dry, and the support is secure. [S1]",
-        "abstained": false,
-        "citations": [
-          {
-            "label": "[S1]",
-            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
-            "headingPath": [
-              "Question about replacing kitchen tiles."
-            ],
-            "ordinal": 4
+            "document": "kitchens: broken pipes, leaks and pre-renovation decisions",
+            "link": "Open document (PDF · EN)",
+            "section": "Question — My pipes are broken and I also want to renovate the kitchen. What do you recommend?"
           },
           {
             "label": "[S2]",
-            "source": "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
-            "headingPath": [
-              "Question about renovation after broken pipes."
-            ],
-            "ordinal": 3
+            "document": "Patio, Home, Damp and Repair Cases",
+            "link": "Open document (PDF · EN)",
+            "section": "Thematic Expansion — Kitchen Leaks and Progressive Renovations (November 2026) › Question: “I have broken pipes in my kitchen. What should I do?”"
           },
           {
-            "label": "[S4]",
-            "source": "R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.pdf",
-            "headingPath": [
-              "Kitchen leak case."
-            ],
-            "ordinal": 48
+            "label": "[S3]",
+            "document": "kitchens: broken pipes, leaks and pre-renovation decisions",
+            "link": "Open document (PDF · EN)",
+            "section": "Question — Must all the pipes be replaced or only the broken section?"
           }
         ],
-        "durationMs": 4722,
-        "recordedAt": "2026-11-13",
         "events": [],
-        "provenance": "User-supplied verified backend results; original SSE timeline and model/provider metadata were not supplied."
+        "capture": {
+          "id": "EN-2",
+          "image": "image(20261114-202131).png",
+          "query_lang": "en",
+          "duration": null,
+          "provider": "PC principal · qwen3:8b",
+          "display": null,
+          "auditor": "Sources reviewed.",
+          "date": "2026-11-14",
+          "notes": "La captura está recortada; no se ve duración ni cabecera de estado."
+        },
+        "provenance": "User-provided UI screenshot transcription, not original backend JSON. SSE events, auditId and chunk ordinals were not captured."
+      },
+      {
+        "language": "en",
+        "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago? Además, quiero reformar la cocina. ¿Qué me recomiendas? ¿Puedo cambiar también los azulejos?",
+        "answer": "If you have broken pipes in your kitchen, it is recommended to address the leak first and inspect the plumbing and drains before installing tiles, furniture, and finishes [S1]. You can also reform your kitchen, including replacing tiles, after resolving the leak and ensuring the support is firm and dry [S2]. The renovation can be coordinated to avoid multiple openings, but it is not mandatory to renovate the entire kitchen for a localized leak [S1].",
+        "citations": [
+          {
+            "label": "[S1]",
+            "document": "kitchens: broken pipes, leaks and pre-renovation decisions",
+            "link": "Open document (PDF · EN)",
+            "section": "Pregunta — Tengo tuberías rotas y también quiero reformar la cocina. ¿Qué me recomiendas?"
+          },
+          {
+            "label": "[S2]",
+            "document": "kitchens: broken pipes, leaks and pre-renovation decisions",
+            "link": "Open document (PDF · EN)",
+            "section": "Pregunta — ¿Puedo sustituir también los azulejos de la cocina?"
+          }
+        ],
+        "events": [],
+        "capture": {
+          "id": "EN-1",
+          "image": "image(20261114-201448).png",
+          "query_lang": "es",
+          "duration": "4.9 s",
+          "provider": "PC principal · qwen3:8b",
+          "display": "Answer verified",
+          "auditor": "Checking sources...",
+          "date": "2026-11-14",
+          "notes": "Interfaz y respuesta en inglés, pero la pregunta visible permanece en español."
+        },
+        "provenance": "User-provided UI screenshot transcription, not original backend JSON. SSE events, auditId and chunk ordinals were not captured."
       }
     ]
   },

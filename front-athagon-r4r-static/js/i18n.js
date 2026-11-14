@@ -439,6 +439,7 @@ const R4RI18n = (() => {
   };
   Object.assign(dictionary.en, {
     verified: "Answer verified", httpOk: "OK", httpFailure: "Error",
+    showJson: "Show JSON",
     partialExplanation: "The documentation answers part of your question. Check the stated limits and sources.",
     partialAnswer: "PARTIAL ANSWER",
     auditChecking: "Checking sources…",
@@ -467,6 +468,7 @@ const R4RI18n = (() => {
   });
   Object.assign(dictionary.es, {
     verified: "Respuesta verificada", httpOk: "OK", httpFailure: "Error",
+    showJson: "Ver JSON",
     partialExplanation: "La documentación responde a parte de tu pregunta. Revisa los límites indicados y las fuentes.",
     partialAnswer: "RESPUESTA PARCIAL",
     auditChecking: "Revisando referencias…",

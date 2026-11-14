@@ -12,13 +12,13 @@ const response={stage:'ANSWER_READY',answer:'Safe **answer** [S1]',abstained:fal
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{
    const original=window.setTimeout;window.setTimeout=(fn,delay,...args)=>original(fn,delay===3000?30:delay<10000?Math.min(delay,3):delay,...args);
-   window.playback={questions:[],answers:[],pressed:false,sourcesPressed:false};
+   window.playback={questions:[],answers:[],frames:[],pressed:false,sourcesPressed:false};
    const value=Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value');
    Object.defineProperty(HTMLTextAreaElement.prototype,'value',{...value,set(v){window.playback.questions.push(v);value.set.call(this,v)}});
    addEventListener('DOMContentLoaded',()=>new MutationObserver(()=>{
     const button=document.querySelector('#sendButton');if(button?.classList.contains('is-preview-pressed'))window.playback.pressed=true;
     if(document.querySelector('.citations-head')?.classList.contains('is-preview-pressed'))window.playback.sourcesPressed=true;
-    const text=document.querySelector('#answerText')?.textContent;if(text)window.playback.answers.push(text);
+    const text=document.querySelector('#answerText')?.textContent;if(text) {window.playback.answers.push(text);window.playback.frames.push({answer:text,heading:document.querySelector('#resultMode').textContent,auditor:document.querySelector('#auditText').textContent,elapsed:document.querySelector('#elapsed').textContent,provider:document.querySelector('#answerProvider').textContent,sources:document.querySelector('#citations').textContent});}
    }).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true}));
   });
   await page.route('**/*',async route=>{
@@ -37,9 +37,15 @@ const response={stage:'ANSWER_READY',answer:'Safe **answer** [S1]',abstained:fal
    return route.fulfill({status,headers,contentType:status===200?'text/event-stream':'application/json',body:status===200?stages.map(e=>'data: '+JSON.stringify(e)+'\n\n').join(''):'{}'});
   });
   await page.goto('http://preview.test/');await page.locator('#question').scrollIntoViewIfNeeded();
-  await page.waitForFunction(last=>window.playback.answers.includes(last),fixtures.kitchen[lang][2].answer);
+  await page.waitForFunction(last=>window.playback.frames.some(frame=>frame.answer===last.answer && frame.auditor===last.capture.auditor && frame.provider===last.capture.provider && frame.elapsed===(last.capture.duration || '')),fixtures.kitchen[lang][2]);
   const playback=await page.evaluate(()=>window.playback);
-  for(const data of fixtures.kitchen[lang]) {assert(playback.questions.includes(data.question));assert(playback.answers.includes(data.answer));}
+  for(const data of fixtures.kitchen[lang]) {
+   assert(playback.questions.includes(data.question));assert(playback.answers.includes(data.answer));
+   const frame=playback.frames.find(frame=>frame.answer===data.answer && frame.auditor===data.capture.auditor && frame.provider===data.capture.provider);
+   assert(frame, data.capture.id);assert.equal(frame.elapsed,data.capture.duration || '');
+   assert.equal(frame.heading,data.capture.display || (lang==='es'?'Respuesta guardada':'Saved response'));
+   for(const citation of data.citations) assert(frame.sources.includes(citation.section));
+  }
   assert(playback.questions.some(q=>q.length>0 && q.length<fixtures.kitchen[lang][0].question.length));
   assert(playback.pressed);assert(playback.sourcesPressed);assert.equal(requests.length,0);
   assert.equal(await page.locator('#endpointSettings').isVisible(),false);

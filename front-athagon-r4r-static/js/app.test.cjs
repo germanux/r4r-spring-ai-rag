@@ -217,7 +217,7 @@ for (const lang of ['es', 'en']) {
     assert.equal(p.storage.get('r4r.lastQuestion'), 'Last question');
     p.node('sourcesDetails').open = true;
     const answer = p.node('answerText').textContent, citations = p.node('citations').textContent;
-    const status = p.node('httpStatus').textContent, elapsed = p.node('elapsed').textContent;
+    const elapsed = p.node('elapsed').textContent;
     const before = p.requests.length;
     p.changeLanguage(lang === 'es' ? 'en' : 'es');
     assert.equal(p.node('answerText').textContent, answer);
@@ -225,7 +225,6 @@ for (const lang of ['es', 'en']) {
     assert.match(citations, /Renovation.*manual.pdf/);
     assert.equal(p.node('sourcesDetails').open, true);
     assert.equal(p.node('resultContent').hidden, false);
-    assert.equal(p.node('httpStatus').textContent, status);
     assert.equal(p.node('elapsed').textContent, elapsed.replace(lang === 'es' ? ',' : '.', lang === 'es' ? '.' : ','));
     assert.equal(p.node('apiBaseUrl').value, 'https://r4r-api.athagon.tech');
     assert.equal(p.requests.length, before);
@@ -421,8 +420,6 @@ for (const lang of ['es', 'en']) {
       assert.equal(p.node('runtimeUsed').textContent, p.t('forbidden'));
       p.node('question').value = 'Question';
       await p.node('sendButton').handlers.click();
-      assert.equal(p.node('httpStatus').textContent, p.t('httpFailure'));
-      assert.equal(p.node('httpStatus').title, 'HTTP 403');
       assert.ok(p.node('errorBox').textContent.startsWith(p.t('forbidden')));
       assert.ok(!p.node('errorBox').textContent.includes(p.t('networkPublic')));
       assert.ok(!p.node('errorBox').textContent.includes(p.t('invalidJson', 403)));
@@ -751,6 +748,7 @@ test('audit uses a separate channel only after SSE answer is rendered and form i
   assert.equal(p.requests.filter(r => r.url.includes('/audits/')).length, 0);
   await startPendingAudit(p);
   assert.match(p.node('auditText').textContent, /Revisando referencias/);
+  assert.ok(p.document.querySelectorAll('.panel-head').some(node=>node.contains(p.node('auditNote'))));
   const original = p.node('answerText').textContent, sources = p.node('citations').textContent;
   finish({ ok: true, json: async () => ({ conclusive: true, originalStatus: 'ANSWERED', recommendedStatus: 'PARTIAL', effectiveStatus: 'PARTIAL', note: 'La conservación requiere comprobación.' }) });
   await tick();
@@ -929,9 +927,12 @@ test('recordings match embedded fixtures and every citation has a published docu
  const catalogue=JSON.parse(fs.readFileSync(path.join(root,'docs/catalogue.json'),'utf8'));
  const p=openPage('es',new Map(),{offline:true});assert.deepEqual(JSON.parse(p.node('recordedExamples').textContent),fixtures);
  for(const pair of Object.values(fixtures)) for(const lang of ['es','en']) for(const data of [].concat(pair[lang] || [])) {
-  assert.ok(data.question);assert.equal(typeof data.abstained,'boolean');
+  assert.ok(data.question);if(!data.capture) assert.equal(typeof data.abstained,'boolean');
   for(const citation of data.citations) {
-   const id=/R4R_\d+/.exec(citation.source)[0];const doc=catalogue[id][lang];
+   const doc=citation.document
+    ? Object.values(catalogue).map(pair=>pair[lang]).find(doc=>doc.title.replace(/^Riansares 4R\s*[—-]\s*/, '').toLowerCase()===citation.document.toLowerCase())
+    : catalogue[/R4R_\d+/.exec(citation.source)[0]][lang];
+   assert.ok(doc, citation.document || citation.source);
    assert.ok(fs.existsSync(path.join(root,doc.url)));
   }
  }
@@ -969,11 +970,24 @@ test('English sources use the verified English counterpart and preserve original
  const card=p.node('citations').children[0];assert.ok(card.children[0].children[1].getAttribute('href').startsWith('docs/en/'));
  assert.ok(card.textContent.includes(original));assert.ok(card.textContent.includes('Original heading'));
 });
-test('six supplied kitchen recordings retain exact timings and no invented model or SSE',()=>{
+test('kitchen screenshot transcriptions preserve captured fields without backend metadata',()=>{
  const fixtures=JSON.parse(fs.readFileSync(path.join(root,'fixtures/recordings.json'),'utf8'));
- assert.deepEqual(fixtures.kitchen.es.map(r=>r.durationMs),[3013,4413,4852]);
- assert.deepEqual(fixtures.kitchen.en.map(r=>r.durationMs),[6427,5727,4722]);
- for(const lang of ['es','en']) for(const r of fixtures.kitchen[lang]) {assert.equal(r.events.length,0);assert.equal(r.model,undefined);assert.equal(r.providerName,undefined);}
+ assert.deepEqual(fixtures.kitchen.es.map(r=>r.capture.duration),['9,6 s','5,6 s','5,0 s']);
+ assert.deepEqual(fixtures.kitchen.en.map(r=>r.capture.duration),['4.0 s',null,'4.9 s']);
+ assert.equal(fixtures.kitchen.en[1].capture.display,null);
+ assert.equal(fixtures.kitchen.en[2].capture.query_lang,'es');
+ assert.equal(fixtures.kitchen.en[2].question,fixtures.kitchen.es[2].question);
+ assert.equal(fixtures.kitchen.es[1].capture.auditorObservations.length,2);
+ for(const lang of ['es','en']) for(const r of fixtures.kitchen[lang]) {
+  assert.deepEqual(r.events,[]);
+  for(const key of ['auditId','status','abstained','durationMs','model','providerName']) assert.equal(r[key],undefined);
+  assert.equal(r.capture.provider,'PC principal · qwen3:8b');
+  assert.match(r.provenance,/UI screenshot transcription/);
+  for(const citation of r.citations) {
+   assert.ok(citation.document && citation.section && citation.link);
+   for(const key of ['source','ordinal','headingPath']) assert.equal(citation[key],undefined);
+  }
+ }
 });
 
 test('saved answers are exact-match fallback for example buttons only', async () => {
@@ -981,14 +995,13 @@ test('saved answers are exact-match fallback for example buttons only', async ()
  await p.node('tryDemoButton').handlers.click({preventDefault(){}});
  assert.equal(p.node('previewNotice').textContent,p.t('savedResponse'));
  assert.equal(p.node('errorBox').hidden,false);
- assert.equal(p.node('httpStatus').textContent==='200',false);
  const free=openPage('es',new Map(),{offline:true,networkFails:true});free.node('question').value=free.t('demoQuestion');
  await free.node('sendButton').handlers.click();assert.equal(free.node('resultContent').hidden,true);
 });
 test('valid live abstentions and 429 never become automatic saved answers', async () => {
  const abstain=openPage('es',new Map(),{offline:true,payload:{answer:'Not enough evidence',abstained:true,citations:[]}});
  await abstain.node('tryDemoButton').handlers.click({preventDefault(){}});
- assert.equal(abstain.node('previewNotice').textContent,abstain.t('live'));
+ assert.equal(abstain.node('previewNotice').hidden,true);
  assert.equal(abstain.node('decisionPill').textContent,abstain.t('abstention'));
  const limited=openPage('es',new Map(),{offline:true,stream:async()=>({ok:false,status:429,headers:{get:k=>k==='Retry-After'?'25':null},json:async()=>({})})});
  await limited.node('tryDemoButton').handlers.click({preventDefault(){}});
@@ -1045,7 +1058,6 @@ test('public progress is a visible numbered history with no raw SSE jargon',asyn
   assert.ok(list.classList.contains('is-complete'));
   assert.equal(p.node('resultMode').textContent,p.t('verified'));
   assert.ok(p.node('resultMode').classList.contains('is-verified'));
-  assert.equal(p.node('httpStatus').textContent,p.t('httpOk'));
   assert.match(p.node('elapsed').textContent,lang==='es'? /^\d+,\d s$/ : /^\d+\.\d s$/);
   ['preparing','searching','generating','verifying','done'].forEach((key,index)=>{
    assert.ok(list.children[index].textContent.includes(p.t(key)));assert.equal(list.children[index].children[0].textContent,String(index+1));assert.equal(list.children[index].getAttribute('data-state'),'complete');
@@ -1111,3 +1123,16 @@ for (const lang of ['es', 'en']) {
     });
   }
 }
+
+test('response chrome removes redundant labels and names event disclosures Show JSON', async () => {
+ for (const lang of ['es','en']) {
+  const p=openPage(lang,new Map(),{offline:true,stream:async()=>sseResponse([readyEvent])});
+  p.node('question').value='Question';await p.node('sendButton').handlers.click();
+  assert.equal(p.node('previewNotice').hidden,true);
+  const rows=p.node('ragProgress').children;
+  assert.ok(rows.length>0);
+  for(const row of rows) assert.equal(row.children[0].children[0].textContent,p.t('showJson'));
+ }
+ assert.ok(!html.includes('id="httpStatus"'));
+ assert.ok(!html.includes('data-i18n="page.citations"'));
+});

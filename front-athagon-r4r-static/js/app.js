@@ -78,7 +78,6 @@
   const emptyState = $("emptyState");
   const resultContent = $("resultContent");
   const errorBox = $("errorBox");
-  const httpStatus = $("httpStatus");
   const resultMode = $("resultMode");
   const decisionPill = $("decisionPill");
   const decisionText = $("decisionText");
@@ -173,8 +172,17 @@
   }
   function renderAudit() {
     const box = $("auditNote");
-    box.hidden = !auditState;
-    if (!auditState) return;
+    const capturedReview = lastPayload?.capture?.auditor;
+    box.hidden = !auditState && !capturedReview;
+    if (!auditState) {
+      if (capturedReview) {
+        box.setAttribute("data-level", "neutral");
+        box.setAttribute("data-state", /(?:\.\.\.|…)$/.test(capturedReview) ? "pending" : "reviewed");
+        $("auditIcon").textContent = "";
+        $("auditText").textContent = capturedReview;
+      }
+      return;
+    }
     const original = originalStatus(lastPayload);
     const effective = auditState.result?.effectiveStatus || original;
     const downgrade = statusRank[effective] < statusRank[original];
@@ -183,7 +191,8 @@
       ? effective === "ABSTAINED" ? original === "PARTIAL" ? "auditPartialInsufficient" : "auditInsufficient" : "auditPartial"
       : related ? "auditRelated" : "auditReviewed";
     box.setAttribute("data-level", downgrade ? effective === "ABSTAINED" ? "insufficient" : "warning" : "neutral");
-    $("auditIcon").textContent = auditState.pending ? "◌" : downgrade ? "⚠" : "·";
+    box.setAttribute("data-state", auditState.pending ? "pending" : "reviewed");
+    $("auditIcon").textContent = auditState.pending ? "◌" : downgrade ? "⚠" : "✓";
     const note = !auditState.pending && !related ? auditState.result?.note?.trim() : "";
     $("auditText").textContent = t(key) + (note && !lastPayload?.answer?.includes(note) ? " " + note : "");
     renderResponseHeading(lastPayload);
@@ -238,6 +247,12 @@
     return `${(ms / 1000).toFixed(1).replace(".", isEnglish ? "." : ",")} s`;
   }
   function renderResponseHeading(payload) {
+    if (payload?.capture) {
+      resultMode.textContent = payload.capture.display || t("savedResponse");
+      resultMode.classList.toggle("is-verified", ["Respuesta verificada", "Answer verified"].includes(payload.capture.display));
+      resultMode.classList.toggle("is-partial", false);
+      return;
+    }
     const status = auditState?.result?.effectiveStatus || originalStatus(payload);
     const verified = !payload?.abstained && status === "ANSWERED";
     resultMode.textContent = t(verified ? "verified" : status === "PARTIAL" ? "partialAnswer" : "abstention");
@@ -247,7 +262,7 @@
   function renderDynamicText() {
     apiState.textContent = t(apiStatus);
     if (responseDuration !== null) elapsed.textContent = formatDuration(responseDuration);
-    if (replyMode) { $("previewNotice").textContent = replyMode === "recorded" ? "" : t(replyMode); $("previewNotice").hidden = replyMode === "recorded"; }
+    if (replyMode) { $("previewNotice").textContent = replyMode === "recorded" ? "" : t(replyMode); $("previewNotice").hidden = replyMode === "recorded" || replyMode === "live"; }
     sendLabel.textContent = t(sendButton.disabled ? "loading" : "send");
     copyAnswerButton.textContent = t(copyStatus);
     resultMode.textContent = t({ idle: "waiting", loading: "inProgress", success: "result", error: "failed" }[phase]);
@@ -366,7 +381,7 @@
     if (!data.events.length) {
       $("progressDetails").hidden = false;
       $("ragProgress").textContent = t("noRecordedTimeline");
-      for (const stage of ["preparing", "searching", "generating", "verifying"]) {
+      for (const stage of data.capture ? [] : ["preparing", "searching", "generating", "verifying"]) {
         showSimpleStage(stage);
         if (!await pausePreview(reducedMotion() ? 30 : 350)) return;
       }
@@ -390,8 +405,8 @@
     renderResult(payload);
     revealSources();
     renderResponseHeading(lastPayload);
-    $("answerProvider").textContent = [data.providerName, data.model, data.recordedAt].filter(Boolean).join(" · ");
-    elapsed.textContent = Number.isFinite(data.durationMs) ? formatDuration(responseDuration = data.durationMs) : "";
+    $("answerProvider").textContent = data.capture?.provider || [data.providerName, data.model, data.recordedAt].filter(Boolean).join(" · ");
+    elapsed.textContent = data.capture ? data.capture.duration || "" : Number.isFinite(data.durationMs) ? formatDuration(responseDuration = data.durationMs) : "";
     if (!await pausePreview(reducedMotion() ? 200 : 3000)) return;
     }
     preview = false;
@@ -748,7 +763,7 @@
       const telemetry = [event.stage, Number.isFinite(event.elapsedMs) ? `${event.elapsedMs} ms` : null, event.model, event.provider, Number.isFinite(event.documentsFound) ? `${event.documentsFound} docs` : null].filter(Boolean).join(" · ");
       li.textContent = telemetry + " — " + `${row.failed ? "!" : row.pending ? "⟳" : "✓"} ${message}${duration}`;
       const details = document.createElement("details");
-      const summary = document.createElement("summary");summary.textContent = t("page.technical_details");
+      const summary = document.createElement("summary");summary.textContent = t("showJson");
       const raw = document.createElement("pre");
       const allowed = Object.fromEntries(Object.entries(event).filter(([key]) => /^(stage|elapsedMs|durationMs|model|provider|documentsFound|embeddingModel|embeddingProvider|message)$/.test(key)));
       raw.textContent = JSON.stringify(allowed, null, 2);details.append(summary, raw);li.appendChild(details);
@@ -804,7 +819,7 @@
     if (activeQueryController || (sendButton.disabled && !preview)) return;
     engage();
     displayedRecording = false;
-    $("previewNotice").hidden = false;
+    $("previewNotice").hidden = true;
     replyMode = "live";$("previewNotice").textContent = t(replyMode);
     $("answerProvider").textContent = "";
     answerText.setAttribute("aria-live", "polite");
@@ -843,7 +858,6 @@
     }
     apiState.textContent = t("querying");
     resultMode.textContent = t("inProgress");
-    httpStatus.textContent = "…";
     // Position once, before the request. Never move the reader at completion.
     const panel = document.querySelector(".response-panel");
     const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect?.().height || 80;
@@ -875,8 +889,6 @@
         try { await response.body?.cancel(); } catch { /* Unsupported endpoint body already closed. */ }
         response = await fetch(url, { ...init, headers: { ...init.headers, Accept: "application/json" } });
       }
-      httpStatus.textContent = t(response.ok ? "httpOk" : "httpFailure");
-      httpStatus.title = `HTTP ${response.status}`;
       let payload;
       if (!response.ok || legacy) {
         try { payload = await response.json(); }
@@ -908,7 +920,7 @@
       if (saved && failedService && approvedExample && allowSaved) {
         displayedRecording = true;phase = "success";lastPayload = saved;renderResult(saved);revealSources();
         errorBox.hidden = false;errorBox.textContent = errorMessage(lastError);
-        replyMode = "savedResponse";$("previewNotice").textContent = t(replyMode);
+        replyMode = "savedResponse";$("previewNotice").textContent = t(replyMode);$("previewNotice").hidden = false;
         $("answerProvider").textContent = [saved.providerName,saved.model,saved.recordedAt].filter(Boolean).join(" · ");
         elapsed.textContent = "";
       } else renderError(errorMessage(lastError));
@@ -951,7 +963,6 @@
     resultContent.hidden = true;
     errorBox.hidden = true;
     if (loadingState) loadingState.hidden = true;
-    httpStatus.textContent = "";
     resultMode.textContent = t("waiting");
     elapsed.textContent = preview ? t("recordedDuration") : "";
   }
@@ -1020,7 +1031,11 @@
       const stableId = /^R4R_\d+/.exec(documentName || "")?.[0];
       const documents = documentSources[stableId];
       const sourceLanguage = sourceName.startsWith("en/") ? "en" : "es";
-      const selected = documents?.[isEnglish ? "en" : "es"] || documents?.[sourceLanguage];
+      // Screenshot citations contain visible titles/sections, not backend source paths or ordinals.
+      const capturedDocument = typeof citation?.document === "string" ? Object.values(documentSources)
+        .flatMap(variants => Object.values(variants))
+        .find(doc => doc.title.replace(/^Riansares 4R\s*[—-]\s*/, "").toLowerCase() === citation.document.toLowerCase()) : null;
+      const selected = capturedDocument || documents?.[isEnglish ? "en" : "es"] || documents?.[sourceLanguage];
       const source = document.createElement(selected ? "a" : "span");
       if (selected) {
         const section = (citation.headingPath || []).map(heading => /^(\d+(?:\.\d+)*)/.exec(heading)?.[1]).filter(Boolean).reverse()
@@ -1029,7 +1044,7 @@
         source.setAttribute("target", "_blank"); source.setAttribute("rel", "noopener");
       }
       source.className = "citation-source";
-      source.textContent = selected ? `${selected.title.replace(/^Riansares 4R\s*[—-]\s*/, "")} · ${t("openDocument")} (PDF · ${selected.source.startsWith("en/") ? "EN" : "ES"})` : t("unknownSource");
+      source.textContent = capturedDocument ? `${citation.document} · ${citation.link}` : selected ? `${selected.title.replace(/^Riansares 4R\s*[—-]\s*/, "")} · ${t("openDocument")} (PDF · ${selected.source.startsWith("en/") ? "EN" : "ES"})` : t("unknownSource");
       const trace = document.createElement("details");
       const traceLabel = document.createElement("summary");traceLabel.textContent = t("originalSource");
       const traceText = document.createElement("p");traceText.textContent = sourceName;
@@ -1039,7 +1054,7 @@
       const path = document.createElement("div");
       path.className = "citation-path";
       const headingPath = Array.isArray(citation?.headingPath) ? citation.headingPath : [];
-      path.textContent = headingPath.length ? headingPath.join(" › ") : t("noHeading");
+      path.textContent = citation.section || (headingPath.length ? headingPath.join(" › ") : t("noHeading"));
 
       const ordinal = document.createElement("div");
       ordinal.className = "citation-ordinal";
@@ -1047,8 +1062,9 @@
         ? `${t("ordinal")}: ${citation.ordinal}`
         : `${t("ordinal")}: —`;
 
-      card.append(top, path, trace);
-      if (developerMode) card.appendChild(ordinal);
+      card.append(top, path);
+      if (sourceName) card.appendChild(trace);
+      if (developerMode && !citation.document) card.appendChild(ordinal);
       citations.appendChild(card);
     });
   }
