@@ -21,7 +21,9 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 /** Explicit read-only diagnostic. One query embedding per case, no generation, indexing or AWS. */
 public final class RetrievalThresholdDiagnostic {
     public static void main(String[] args) throws Exception {
-        if (args.length != 1 || !args[0].equals("--run")) throw new IllegalArgumentException("Requires --run");
+        boolean focused = args.length == 2 && args[1].equals("--cases-07-10");
+        if (args.length < 1 || !args[0].equals("--run") || (args.length != 1 && !focused))
+            throw new IllegalArgumentException("Requires --run [--cases-07-10]");
         var env = new StandardEnvironment();
         env.getPropertySources().addFirst(new MapPropertySource("diagnostic", Map.of(
                 "spring.config.location", "file:./src/main/resources/application.yml")));
@@ -40,10 +42,10 @@ public final class RetrievalThresholdDiagnostic {
         credentials.setProperty("connectTimeout", "5");
         credentials.setProperty("socketTimeout", "60");
         var json = new ObjectMapper();
-        var output = Path.of("target/evaluation/retrieval-thresholds.json");
+        var output = Path.of(focused ? "target/evaluation/retrieval-cases-07-10.json" : "target/evaluation/retrieval-thresholds.json");
         Files.createDirectories(output.getParent());
         var results = new ArrayList<Map<String,Object>>();
-        if (Files.exists(output)) results.addAll(json.convertValue(json.readTree(output.toFile()).path("results"),
+        if (!focused && Files.exists(output)) results.addAll(json.convertValue(json.readTree(output.toFile()).path("results"),
                 new com.fasterxml.jackson.core.type.TypeReference<List<Map<String,Object>>>() { }));
         try (var connection = DriverManager.getConnection(env.getRequiredProperty("spring.datasource.url"), credentials)) {
             var jdbc = new JdbcTemplate(new SingleConnectionDataSource(connection, true));
@@ -52,10 +54,11 @@ public final class RetrievalThresholdDiagnostic {
             long count = jdbc.queryForObject("SELECT count(*) FROM vector_store", Long.class);
             if (count != 1375) throw new IllegalStateException("Expected the fixed 1375-vector corpus");
             for (String language : List.of("es", "en")) for (var question : EvaluationQuestions.cases(language)) {
+                if (focused && !List.of("case-07", "case-10").contains(question.caseId())) continue;
                 if (results.stream().filter(row -> language.equals(row.get("language"))
                         && question.caseId().equals(row.get("caseId"))).count() == 3) continue;
                 long start = System.nanoTime();
-                float[] vector = embedding.embed(question.question());
+                float[] vector = embedding.embed(focused ? ObservedEmbeddingModel.retrievalQuery(question.question()) : question.question());
                 double embedMs = (System.nanoTime() - start) / 1e6;
                 EmbeddingModel fixed = new EmbeddingModel() {
                     public float[] embed(String ignored) { return vector; }
@@ -66,7 +69,35 @@ public final class RetrievalThresholdDiagnostic {
                 var nativeStore = PgVectorStore.builder(jdbc, fixed).dimensions(1024).initializeSchema(false)
                         .vectorTableValidationsEnabled(true).build();
                 var store = new PgVectorKnowledgeStore(nativeStore, jdbc, rerank);
-                for (double threshold : List.of(.63, .65, .70)) {
+                if (focused) {
+                    var raw = nativeStore.similaritySearch(org.springframework.ai.vectorstore.SearchRequest.builder()
+                            .query(ObservedEmbeddingModel.retrievalQuery(question.question()))
+                            .topK(10).similarityThresholdAll().build());
+                    var qualified = nativeStore.similaritySearch(org.springframework.ai.vectorstore.SearchRequest.builder()
+                            .query(ObservedEmbeddingModel.retrievalQuery(question.question()))
+                            .topK(new NomicCandidateReranker(rerank).candidateCount(config.topK()))
+                            .similarityThreshold(.63).build());
+                    var selected = store.search(question.question(), config.topK(), .63);
+                    var candidates = new ArrayList<Map<String, Object>>();
+                    for (var document : raw) {
+                        var metadata = document.getMetadata();
+                        candidates.add(Map.of("rank", candidates.size() + 1, "id", document.getId(),
+                                "cosine", document.getScore(), "source", metadata.get("source"),
+                                "heading", metadata.get("headingPath"), "ordinal", metadata.get("ordinal"),
+                                "passesThreshold", qualified.stream().anyMatch(d -> d.getId().equals(document.getId())),
+                                "keptByReranker", selected.stream().anyMatch(c -> c.source().equals(metadata.get("source"))
+                                        && c.headingPath().equals(metadata.get("headingPath"))
+                                        && c.index() == ((Number) metadata.get("ordinal")).intValue())));
+                    }
+                    var row = new LinkedHashMap<String, Object>();
+                    row.put("language", language); row.put("caseId", question.caseId());
+                    row.put("question", question.question()); row.put("threshold", .63);
+                    row.put("embeddingMs", embedMs); row.put("candidates", candidates);
+                    row.put("qualifiedCount", qualified.size()); row.put("selected", selected);
+                    results.add(row);
+                    System.out.println(json.writerWithDefaultPrettyPrinter().writeValueAsString(row));
+                }
+                for (double threshold : focused ? List.<Double>of() : List.of(.63, .65, .70)) {
                     long searchStart = System.nanoTime();
                     var selected = store.search(question.question(), config.topK(), threshold);
                     results.add(Map.of("language", language, "caseId", question.caseId(), "number", question.number(),
