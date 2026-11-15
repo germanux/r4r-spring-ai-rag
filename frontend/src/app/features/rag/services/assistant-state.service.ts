@@ -77,7 +77,7 @@ export class AssistantState {
             return;
         const q = this.question().trim();
         try {
-            if (new URLSearchParams(location.search).get('embed') !== '1') localStorage.setItem('r4r.lastQuestion', q);
+            localStorage.removeItem('r4r.lastQuestion');
         }
         catch { }
         if (!q) {

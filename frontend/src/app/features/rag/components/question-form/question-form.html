@@ -7,6 +7,11 @@
             <span class="api-state" id="apiState" hidden>{{ i.t('page.ready') }}</span>
           </div>
 
+          <p class="privacy-notice">{{ i.language()==='es' ? 'Con tu autorización opcional, conservamos preguntas, respuestas y auditorías para evaluar y mejorar el asistente. IP y país pueden registrarse para seguridad. No introduzcas datos sensibles ni datos personales innecesarios.' : 'With your optional permission, we save questions, answers and audits to evaluate and improve the assistant. IP and country may be recorded for security. Do not submit sensitive or unnecessary personal data.' }}
+            <a [href]="privacy.policy()" target="_blank" rel="noopener">{{i.language()==='es'?'Política de privacidad':'Privacy policy'}}</a> ·
+            <button type="button" (click)="privacy.open()">{{i.language()==='es'?'Cambiar o retirar consentimiento':'Change or withdraw consent'}}</button>
+          </p>
+          @if (s.api.requestId()) {<p class="privacy-reference">{{i.language()==='es'?'Referencia de consulta:':'Query reference:'}} <code>{{s.api.requestId()}}</code></p>}
           <label for="question" class="visually-hidden">{{ i.t('page.enter_a_question') }}</label>
           <textarea
             id="question" [disabled]="s.loading() && !s.demo.active()" [class.is-demo-typing]="s.demo.active()" [value]="s.question()" (focus)="s.stopDemo()" (input)="s.edit($any($event.target).value)" (keydown.control.enter)="s.send()"

@@ -1,3 +1,4 @@
+import { PrivacyService } from './privacy.service';
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Observable, timeout } from 'rxjs';
@@ -5,6 +6,8 @@ import { ProgressEvent, RAGAnswerResult, RAGQuestionRequest, validResponse } fro
 @Injectable({ providedIn: 'root' })
 export class RagApiService {
     readonly http = inject(HttpClient);
+    readonly privacy = inject(PrivacyService);
+    readonly requestId = signal('');
     readonly base = signal('https://r4r-api.athagon.tech');
     constructor() { if (new URLSearchParams(location.search).get('embed') === '1') return; try {
         this.setBase(localStorage.getItem('r4r.apiBaseUrl') || this.base());
@@ -18,16 +21,19 @@ export class RagApiService {
         try { localStorage.setItem('r4r.apiBaseUrl', this.base()); } catch {}
         return true;
     }
-    query(request: RAGQuestionRequest): Observable<RAGAnswerResult> {
-        return this.http.post<RAGAnswerResult>(this.base() + '/api/rag/answers', request, {headers:{Accept:'application/json'}});
+    query(request: RAGQuestionRequest, context = this.privacy.headers()): Observable<RAGAnswerResult> {
+        return this.http.post<RAGAnswerResult>(this.base() + '/api/rag/answers', request, {headers:{Accept:'application/json',...context}});
     }
     async ask(question: string, language: 'es' | 'en', signal: AbortSignal, progress: (e: ProgressEvent) => void): Promise<RAGAnswerResult> {
         const url = this.base() + '/api/rag/answers';
         const body = { question, responseLanguage: language };
-        let response = await fetch(url + '/stream', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' }, body: JSON.stringify(body), signal });
+        this.requestId.set(crypto.randomUUID());
+        window.r4rPrivacy?.noteQuery(this.requestId());
+        const context = {...this.privacy.headers(), 'X-R4R-Request-Id':this.requestId()};
+        let response = await fetch(url + '/stream', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream', ...context }, body: JSON.stringify(body), signal });
         if ([404, 405, 406, 501].includes(response.status)) {
             await response.body?.cancel();
-            return new Promise((resolve, reject) => { const sub = this.query(body).pipe(timeout(180000)).subscribe({ next: r => validResponse(r) ? resolve(r) : reject(new Error('invalidJson')), error: reject }); const abort = () => { sub.unsubscribe(); reject(new DOMException('Cancelled', 'AbortError')); }; signal.addEventListener('abort', abort, { once: true }); sub.add(() => signal.removeEventListener('abort', abort)); if (signal.aborted)
+            return new Promise((resolve, reject) => { const sub = this.query(body, context).pipe(timeout(180000)).subscribe({ next: r => validResponse(r) ? resolve(r) : reject(new Error('invalidJson')), error: reject }); const abort = () => { sub.unsubscribe(); reject(new DOMException('Cancelled', 'AbortError')); }; signal.addEventListener('abort', abort, { once: true }); sub.add(() => signal.removeEventListener('abort', abort)); if (signal.aborted)
                 abort(); });
         }
         if (!response.ok)

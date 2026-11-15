@@ -8,14 +8,22 @@ export class RagAssistantComponent implements AfterViewInit, OnDestroy {
     private observer?: IntersectionObserver;
     private usageObserver?: IntersectionObserver;
     private engaged = false;
+    private viewId = crypto.randomUUID();
+    private visible = false;
+    private trackView = () => {
+        if (this.visible) this.s.api.http.post(this.s.api.base() + '/api/rag/usage/views', null,
+            {headers:{...this.s.api.privacy.headers(),'X-R4R-Request-Id':this.viewId}}).subscribe({error:()=>{}});
+    };
     private engage = () => { this.engaged = true; this.observer?.disconnect(); };
     ngAfterViewInit() {
         if (!new URLSearchParams(location.search).has('prerender')) {
             this.usageObserver = new IntersectionObserver(entries => {
                 if (!entries.some(e => e.isIntersecting)) return;
                 this.usageObserver?.disconnect();
-                this.s.api.http.post(this.s.api.base() + '/api/rag/usage/views', null).subscribe({error:()=>{}});
+                this.visible = true; this.trackView();
             }, {threshold:.1});
+            window.addEventListener('r4r:privacy-change', this.trackView);
+            try { if (parent !== window && parent.location.origin === location.origin) parent.addEventListener('r4r:privacy-change', this.trackView); } catch {}
             const demo = document.getElementById('demo'); if (demo) this.usageObserver.observe(demo);
         }
         if (new URLSearchParams(location.search).has('prerender') || new URLSearchParams(location.search).get('embed') === '1')
@@ -25,5 +33,5 @@ export class RagAssistantComponent implements AfterViewInit, OnDestroy {
             this.s.play(); }, 700);
     } }, { threshold: .2 }); const el = document.getElementById('demo'); if (el)
         this.observer.observe(el); }
-    ngOnDestroy() { this.usageObserver?.disconnect(); this.observer?.disconnect(); this.s.clear(); window.removeEventListener('pointerdown', this.engage); window.removeEventListener('keydown', this.engage); }
+    ngOnDestroy() { window.removeEventListener('r4r:privacy-change', this.trackView); try { if (parent !== window) parent.removeEventListener('r4r:privacy-change', this.trackView); } catch {} this.usageObserver?.disconnect(); this.observer?.disconnect(); this.s.clear(); window.removeEventListener('pointerdown', this.engage); window.removeEventListener('keydown', this.engage); }
 }

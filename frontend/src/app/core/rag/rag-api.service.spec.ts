@@ -72,7 +72,7 @@ describe('RagApiService', () => {
     await Promise.resolve();
     await Promise.resolve();
     const request = httpMock.expectOne(`${mockBackendUrl}/api/rag/answers`);
-    expect(query).toHaveBeenCalledOnceWith({question:'A renovation question',responseLanguage:'en'});
+    expect(query).toHaveBeenCalledOnceWith({question:'A renovation question',responseLanguage:'en'}, jasmine.objectContaining({'X-R4R-Request-Id':jasmine.any(String)}));
     expect(request.request.body).toEqual({question:'A renovation question',responseLanguage:'en'});
     request.flush(mockAnswerResult);
     expect(await answer).toEqual(mockAnswerResult);

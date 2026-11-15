@@ -49,6 +49,8 @@ async function main() {
       await page.goto('http://127.0.0.1:' + server.address().port);
       const frame = page.frameLocator('#r4r-assistant');
       await frame.locator('#question').waitFor();
+      const reject=page.getByRole('button',{name:/Reject both|Rechazar ambas/});
+      if(await reject.count()) await reject.click();
       assert.equal(await frame.locator('app-header').count(), 0);
       await page.waitForTimeout(100);
       assert.equal(calls, 0, 'Embed must never start inference automatically');
