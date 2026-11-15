@@ -8,8 +8,9 @@ export class RagApiService {
     readonly http = inject(HttpClient);
     readonly privacy = inject(PrivacyService);
     readonly requestId = signal('');
+    readonly viewId = crypto.randomUUID();
     readonly base = signal('https://r4r-api.athagon.tech');
-    constructor() { if (new URLSearchParams(location.search).get('embed') === '1') return; try {
+    constructor() { this.privacy.noteView(this.viewId); if (new URLSearchParams(location.search).get('embed') === '1') return; try {
         this.setBase(localStorage.getItem('r4r.apiBaseUrl') || this.base());
     }
     catch { } }
@@ -28,8 +29,8 @@ export class RagApiService {
         const url = this.base() + '/api/rag/answers';
         const body = { question, responseLanguage: language };
         this.requestId.set(crypto.randomUUID());
-        window.r4rPrivacy?.noteQuery(this.requestId());
-        const context = {...this.privacy.headers(), 'X-R4R-Request-Id':this.requestId()};
+        this.privacy.noteQuery(this.requestId());
+        const context = {...this.privacy.headers(), 'X-R4R-Request-Id':this.requestId(), 'X-R4R-View-Id':this.viewId};
         let response = await fetch(url + '/stream', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream', ...context }, body: JSON.stringify(body), signal });
         if ([404, 405, 406, 501].includes(response.status)) {
             await response.body?.cancel();

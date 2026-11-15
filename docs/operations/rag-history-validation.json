@@ -1,90 +1,94 @@
 {
   "date": "2026-11-15",
+  "policy": "legitimate-interest-v1; no proprietary visitor tracking",
   "backend": [
     {
       "name": "com.riansares.r4r.rag.api.RagAuditControllerTest",
       "tests": "3",
-      "errors": "0",
-      "failures": "0"
+      "failures": "0",
+      "errors": "0"
     },
     {
       "name": "com.riansares.r4r.rag.api.RagStreamControllerTest",
       "tests": "10",
-      "errors": "0",
-      "failures": "0"
+      "failures": "0",
+      "errors": "0"
     },
     {
       "name": "com.riansares.r4r.config.RagApiSecurityFilterTest",
       "tests": "22",
-      "errors": "0",
-      "failures": "0"
+      "failures": "0",
+      "errors": "0"
     },
     {
       "name": "com.riansares.r4r.config.ClientNetworkTest",
       "tests": "3",
-      "errors": "0",
-      "failures": "0"
+      "failures": "0",
+      "errors": "0"
     },
     {
       "name": "com.riansares.r4r.rag.api.RagQueryControllerTest",
       "tests": "8",
-      "errors": "0",
-      "failures": "0"
+      "failures": "0",
+      "errors": "0"
     },
     {
       "name": "com.riansares.r4r.usage.AssistantUsageTest",
-      "tests": "11",
-      "errors": "0",
-      "failures": "0"
+      "tests": "12",
+      "failures": "0",
+      "errors": "0"
     }
   ],
-  "backendTotal": 57,
-  "angularTests": 16,
+  "backendTotal": 58,
+  "angularTests": 18,
   "browserPrivacy": "PASS",
   "commercialWidths": [
     1440,
     900,
     390
   ],
-  "postgres": "temporary schema, V5+V6, prepared SQL, idempotence, audit downgrade, withdrawal tombstone, unlink, ROLLBACK",
-  "manualErasure": "DELETE 0, ROLLBACK",
-  "consentAssetSha256": "81e8f6e30dbb479bb8bf9771e53292094ad310035f21c820aca4e0b500bad562",
+  "flyway": "V5/V6 byte-identical; V7 tested on fresh chain and legacy text in temporary schema",
+  "postgres": "prepared inserts, idempotence, audit downgrade, query/view objection, analysis/review/private export, DELETE 0 and ROLLBACK",
+  "deploymentExecuted": false,
+  "smbCopyExecuted": false,
+  "artifact": "/tmp/r4r-final-release-verified",
+  "consentAssetSha256": "5187c94667ec6f035fd3d71acc6df3d98c05dbaf53461f3341924ae018f995ed",
   "files": {
     "/home/german/Desarrollo/R4R/r4r-spring-ai-rag.git": [
-      " M docs/operations/assistant-integration-report.md",
-      " D docs/operations/sql/assistant-usage-retention.sql",
+      " M docs/operations/rag-history-privacy-report.md",
+      " M docs/operations/sql/assistant-usage-manual-erasure.sql",
       " M docs/operations/sql/assistant-usage.sql",
-      " M frontend/src/app/core/rag/rag-api.service.spec.ts",
+      " M front-athagon-r4r-static/index.html",
+      " D front-athagon-r4r-static/main-V43RWWHS.js",
+      " M front-athagon-r4r-static/privacy-consent.js",
+      " M frontend/public/privacy-consent.js",
+      " M frontend/src/app/core/rag/privacy.service.ts",
       " M frontend/src/app/core/rag/rag-api.service.ts",
-      " M frontend/src/app/features/rag/components/question-form/question-form.component.ts",
       " M frontend/src/app/features/rag/components/question-form/question-form.html",
-      " M frontend/src/app/features/rag/components/question-form/question-form.scss",
       " M frontend/src/app/features/rag/components/rag-assistant/rag-assistant.component.ts",
-      " M frontend/src/app/features/rag/services/assistant-state.service.ts",
-      " M frontend/src/app/layout/footer/footer.component.ts",
-      " M frontend/src/app/layout/footer/footer.html",
-      " M frontend/src/index.html",
       " M frontend/validate-commercial.cjs",
-      " M scripts/prepare-commercial-release.py",
+      " M frontend/validate-privacy.cjs",
       " M src/main/java/com/riansares/r4r/config/RagApiSecurityFilter.java",
       " M src/main/java/com/riansares/r4r/config/WebConfiguration.java",
-      " M src/main/java/com/riansares/r4r/rag/api/RagAuditController.java",
-      " M src/main/java/com/riansares/r4r/rag/api/RagQueryController.java",
       " M src/main/java/com/riansares/r4r/rag/api/RagStreamController.java",
       " M src/main/java/com/riansares/r4r/usage/AssistantUsage.java",
       " M src/main/java/com/riansares/r4r/usage/AssistantViewController.java",
-      " M src/main/resources/application.yml",
-      " M src/test/java/com/riansares/r4r/config/RagApiSecurityFilterTest.java",
       " M src/test/java/com/riansares/r4r/usage/AssistantUsageTest.java",
-      "?? docs/operations/rag-history-privacy-report.md",
-      "?? docs/operations/sql/assistant-usage-manual-erasure.sql",
-      "?? frontend/public/privacy-consent.js",
-      "?? frontend/src/app/core/rag/privacy.service.ts",
-      "?? frontend/validate-privacy.cjs",
-      "?? scripts/sync-privacy-assets.py",
-      "?? src/main/java/com/riansares/r4r/config/ClientNetwork.java",
-      "?? src/main/resources/db/migration/V6__assistant_history.sql",
-      "?? src/test/java/com/riansares/r4r/config/ClientNetworkTest.java"
+      "?? docs/operations/sql/assistant-usage-manual-export.sql",
+      "?? docs/operations/sql/assistant-usage-manual-review.sql",
+      "?? front-athagon-r4r-static/main-SFG6MMDP.js",
+      "?? frontend/src/app/core/rag/privacy.service.spec.ts",
+      "?? src/main/java/com/riansares/r4r/usage/HistoryContentPolicy.java",
+      "?? src/main/resources/db/migration/V7__technical_usage_without_tracking.sql"
+    ],
+    "/home/german/Desarrollo/athagon-web.git": [
+      " M html-static/index.html",
+      " M html-static/r4r-rag/index.html",
+      "?? html-static/privacy-consent.js",
+      "?? html-static/privacy.html",
+      "?? html-static/r4r-rag/main-SFG6MMDP.js",
+      "?? html-static/r4r-rag/privacy-consent.js",
+      "?? html-static/r4r-rag/styles-QU2SZYEV.css"
     ],
     "/home/german/Desarrollo/R4R/R4R.git": [
       " M dist/404.html",
@@ -100,12 +104,6 @@
       " M dist/politica-privacidad.html",
       " M dist/presupuesto/index.html",
       "?? dist/privacy-consent.js"
-    ],
-    "/home/german/Desarrollo/athagon-web.git": [
-      " M html-static/index.html",
-      "?? html-static/privacy-consent.js",
-      "?? html-static/privacy.html"
     ]
-  },
-  "published": false
+  }
 }
