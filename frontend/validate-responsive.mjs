@@ -2,7 +2,7 @@ import {chromium} from 'playwright';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const out=new URL('../docs/validation/angular-migration/'+(process.env.R4R_RESPONSIVE_OUTPUT||'responsive/'),import.meta.url);await mkdir(out,{recursive:true});
-const recordings=JSON.parse(await readFile(new URL('./src/app/migration/recordedExamples.json',import.meta.url)));
+const recordings=JSON.parse(await readFile(new URL('./src/app/features/rag/data/recordedExamples.json',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']});const report=[];
 const origin='http://127.0.0.1:8765';
 async function setup(version,width,lang){

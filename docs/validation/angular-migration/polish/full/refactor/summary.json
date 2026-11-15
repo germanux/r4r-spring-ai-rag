@@ -1,0 +1,22 @@
+{
+  "build": "PASSED",
+  "unitTests": {
+    "passed": 16,
+    "note": "Tests for the retired prototype page/config removed; active contract coverage retained and REST fallback reuse added."
+  },
+  "browserScenarios": 58,
+  "codeMigrationDirectoryRemoved": true,
+  "ragApiImplementations": 1,
+  "canonicalModels": "frontend/src/app/core/rag/rag.models.ts",
+  "templatesStylesAndDataPreserved": 17,
+  "v1Modified": false,
+  "endpointAndPreferencesUnchanged": true,
+  "backendModified": false,
+  "obsoleteRemoved": [
+    "RagPageComponent and its tests",
+    "ApiService /test prototype",
+    "unused root template, stylesheet and routes",
+    "unused prototype environment/config token"
+  ],
+  "productionDeployment": "NOT RUN"
+}

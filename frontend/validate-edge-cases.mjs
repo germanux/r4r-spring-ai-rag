@@ -2,7 +2,7 @@ import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']});
-const saved=JSON.parse(await readFile(new URL('./src/app/migration/recordedExamples.json',import.meta.url)));
+const saved=JSON.parse(await readFile(new URL('./src/app/features/rag/data/recordedExamples.json',import.meta.url)));
 const report=[];
 try {
 const page=await browser.newPage({locale:'es'});let mode='broken',requests=[];

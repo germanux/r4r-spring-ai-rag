@@ -79,9 +79,9 @@ NODE
 
 rag_ui_gate() {
   clean_diff_gate
-  require_file "$FRONTEND/src/app/features/rag/rag-page.component.ts"
-  require_file "$FRONTEND/src/app/features/rag/rag-page.component.html"
-  require_file "$FRONTEND/src/app/features/rag/rag-page.component.spec.ts"
+  require_file "$FRONTEND/src/app/features/rag/components/rag-assistant/rag-assistant.component.ts"
+  require_file "$FRONTEND/src/app/features/rag/components/question-form/question-form.html"
+  require_file "$FRONTEND/src/app/app.component.spec.ts"
   build_gate
   unit_gate
 }

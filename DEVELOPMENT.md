@@ -493,8 +493,8 @@ Se conserva íntegro el contenido previo de memoria y el commit SSE del usuario.
 ## Frontend Angular estático
 
 - `front-athagon-r4r-static/v1/` conserva la versión HTML/JS archivada. No editarla.
-- `frontend/src/app/migration/` contiene los componentes standalone OnPush, signals,
-  modelos y servicios de la interfaz equivalente. El CSS compartido conserva la
+- `frontend/src/app/` organiza los componentes standalone OnPush y signals en
+  `layout/` y `features/`; servicios y modelos compartidos están en `core/`. El CSS compartido conserva la
   cascada responsive original; los componentes usan estilos encapsulados.
 - Los documentos y las grabaciones se conservan en `frontend/public/`; los datos
   visibles capturados y el catálogo de citas se mantienen en los JSON del código
@@ -552,3 +552,22 @@ Se conserva íntegro el contenido previo de memoria y el commit SSE del usuario.
   permanecen locales e ignoradas. Se seleccionan doce capturas de 390 px en
   `polish/selected/`; informes JSON y scripts permiten reproducir el conjunto.
   No se eliminan imágenes históricas ya versionadas ni se utiliza Git LFS.
+
+
+## Organización Angular por responsabilidad
+
+- `layout/header` y `layout/footer`: estructura común. `features/home/components`:
+  presentación e información. `features/rag/components`: los seis componentes del
+  asistente; `services`, `pipes` y `data` contienen su estado, demo y grabaciones.
+- Se reutilizan los archivos canónicos `core/rag/rag-api.service.ts` y
+  `core/rag/rag.models.ts`. El cliente combina SSE con `query()` REST reutilizado
+  como fallback; los modelos conservan los nombres RAGQuestionRequest,
+  RAGAnswerResult y RAGCitation, ampliados al contrato activo.
+- Auditoría, runtime y catálogo se encuentran en `core/rag`; traducciones y servicio
+  de idioma, en `core/i18n`. Los tests están junto al código que verifican.
+- Se retiran la página RAG del prototipo, el servicio de prueba `/test`, sus restos
+  de plantilla/rutas y la configuración de entorno que no usaba la interfaz activa.
+  No se activa ninguna configuración de ejemplo: URL predeterminada, selector de
+  endpoint y preferencias del navegador conservan el comportamiento existente.
+- No queda carpeta `migration/` en el código Angular. Las rutas de evidencias
+  históricas `docs/validation/angular-migration/` mantienen su nombre.
