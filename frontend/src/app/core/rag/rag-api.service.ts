@@ -6,7 +6,7 @@ import { ProgressEvent, RAGAnswerResult, RAGQuestionRequest, validResponse } fro
 export class RagApiService {
     readonly http = inject(HttpClient);
     readonly base = signal('https://r4r-api.athagon.tech');
-    constructor() { try {
+    constructor() { if (new URLSearchParams(location.search).get('embed') === '1') return; try {
         this.setBase(localStorage.getItem('r4r.apiBaseUrl') || this.base());
     }
     catch { } }

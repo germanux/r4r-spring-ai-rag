@@ -29,9 +29,11 @@ public class WebConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    FilterRegistrationBean<RagApiSecurityFilter> ragApiSecurityFilter() {
+    FilterRegistrationBean<RagApiSecurityFilter> ragApiSecurityFilter(org.springframework.beans.factory.ObjectProvider<com.riansares.r4r.usage.AssistantUsage> usage) {
+        var filter = new RagApiSecurityFilter(securityProperties);
+        filter.setUsage(usage.getIfAvailable());
         FilterRegistrationBean<RagApiSecurityFilter> registration =
-                new FilterRegistrationBean<>(new RagApiSecurityFilter(securityProperties));
+                new FilterRegistrationBean<>(filter);
         registration.addUrlPatterns("/api/rag/*");
         registration.setAsyncSupported(true);
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 20);

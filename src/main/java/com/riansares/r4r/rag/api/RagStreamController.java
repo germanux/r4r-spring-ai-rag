@@ -27,6 +27,7 @@ public class RagStreamController implements AutoCloseable {
     private final CitedRagService service;
     private final GenerationRouter router;
     @Autowired(required = false) private com.riansares.r4r.rag.RagAuditService audits;
+    @Autowired(required = false) private com.riansares.r4r.usage.AssistantUsage usage;
     private final Duration timeout;
     private final Duration heartbeatInterval;
     private final Semaphore admission = new Semaphore(MAX_STREAMS);
@@ -65,10 +66,14 @@ public class RagStreamController implements AutoCloseable {
         if (!RagQueryRequest.isValid(request)) {
             return ResponseEntity.badRequest().build();
         }
-        if (stopping.get() || !admission.tryAcquire()) return busy();
+        var ticket = usage == null ? null : usage.begin();
+        if (stopping.get() || !admission.tryAcquire()) {
+            if (ticket != null) ticket.finish("ERROR");
+            return busy();
+        }
         Session session;
-        try { session = new Session(createEmitter()); }
-        catch (RuntimeException ex) { admission.release(); throw ex; }
+        try { session = new Session(createEmitter(), ticket); }
+        catch (RuntimeException ex) { if (ticket != null) ticket.finish("ERROR"); admission.release(); throw ex; }
         sessions.add(session);
         // Create ownership before registering callbacks: a connection may already have closed.
         session.delivery = new FutureTask<>(session::deliver, null) {
@@ -126,6 +131,7 @@ public class RagStreamController implements AutoCloseable {
 
     private record Packet(Map<String, Object> event, boolean terminal) { }
     private final class Session {
+        final com.riansares.r4r.usage.AssistantUsage.Ticket ticket;
         final SseEmitter emitter;
         final AtomicBoolean closed = new AtomicBoolean(), released = new AtomicBoolean();
         final AtomicBoolean deliveryStarted = new AtomicBoolean(), terminalQueued = new AtomicBoolean();
@@ -133,7 +139,7 @@ public class RagStreamController implements AutoCloseable {
         final RagProgress progress = new RagProgress(this::send);
         volatile FutureTask<Void> task, delivery;
         volatile ScheduledFuture<?> heartbeat, deadline, forcedClose;
-        Session(SseEmitter emitter) { this.emitter = emitter; }
+        Session(SseEmitter emitter, com.riansares.r4r.usage.AssistantUsage.Ticket ticket) { this.emitter = emitter; this.ticket = ticket; }
         void send(Map<String, Object> event) {
             progress.checkCancelled();
             if (closed.get() || terminalQueued.get() || !output.offer(new Packet(event, false))) {
@@ -142,6 +148,7 @@ public class RagStreamController implements AutoCloseable {
         }
         void terminal(Map<String, Object> event) {
             if (!closed.get() && terminalQueued.compareAndSet(false, true)) {
+                if (ticket != null) ticket.finish("ANSWER_READY".equals(event.get("stage")) ? String.valueOf(event.get("status")) : "ERROR");
                 if (!output.offer(new Packet(event, true))) abort();
             }
         }
@@ -189,6 +196,7 @@ public class RagStreamController implements AutoCloseable {
             if (forcedClose != null) forcedClose.cancel(false);
         }
         void abort() {
+            if (ticket != null) ticket.finish("ERROR");
             closed.set(true);
             progress.cancel();
             cancelTimers(); // Repeatable: also removes timers assigned after an early callback.

@@ -24,6 +24,8 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
     private static final String WARMUP_PATH = "/api/rag/warmup";
     private static final Set<String> ANSWER_PATHS = Set.of(RAG_ANSWERS_PATH, RAG_ANSWERS_PATH + "/stream");
 
+    private com.riansares.r4r.usage.AssistantUsage usage;
+    void setUsage(com.riansares.r4r.usage.AssistantUsage usage) { this.usage = usage; }
     private final RagApiSecurityProperties properties;
     private final Set<String> allowedOrigins;
     private final ConcurrentHashMap<String, Long> lastAcceptedRequestNanos = new ConcurrentHashMap<>();
@@ -71,6 +73,17 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
+        var ticket = usage != null && ANSWER_PATHS.contains(protectedPath(request))
+                && allowedOrigins.contains(request.getHeader("Origin")) ? usage.begin() : null;
+        try { filterRequest(request, response, filterChain); }
+        finally {
+            // Validation/quota rejections never enter a controller ticket.
+            if (ticket != null && (response.getStatus() == 400 || response.getStatus() == 429)) ticket.finish("ERROR");
+        }
+    }
+
+    private void filterRequest(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
         if (!originAllowed(request, response)) {
             return;
         }

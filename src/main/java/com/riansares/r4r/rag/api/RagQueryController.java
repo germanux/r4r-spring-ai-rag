@@ -13,6 +13,9 @@ import java.util.List;
 @RequestMapping("/api/rag")
 public class RagQueryController {
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.riansares.r4r.usage.AssistantUsage usage;
+
     private final CitedRagService citedRagService;
     @org.springframework.beans.factory.annotation.Autowired
     private org.springframework.beans.factory.ObjectProvider<com.riansares.r4r.rag.GenerationRouter> routers;
@@ -29,6 +32,7 @@ public class RagQueryController {
             return ResponseEntity.badRequest().build();
         }
 
+        var ticket = usage == null ? null : usage.begin();
         var router = routers == null ? null : routers.getIfAvailable();
         if (router != null) router.clearRequestExecution();
         try {
@@ -45,8 +49,9 @@ public class RagQueryController {
         RagQueryResponse response = response(result, router == null ? null : router.requestExecution());
         if (auditEnabled) response = response.withAuditId(audits.prepare(captured.get()));
 
+        if (ticket != null) ticket.finish(response.status().name());
         return ResponseEntity.ok(response);
-        } finally { if (router != null) router.clearRequestExecution(); }
+        } finally { if (ticket != null) ticket.finish("ERROR"); if (router != null) router.clearRequestExecution(); }
     }
 
     static RagQueryResponse response(com.riansares.r4r.rag.RagResult result, com.riansares.r4r.rag.GenerationRouter.Execution execution) {

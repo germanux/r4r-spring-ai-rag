@@ -97,6 +97,8 @@ r4r:
         connect-timeout: ${RAG_S3_VECTORS_CONNECT_TIMEOUT}
         api-call-attempt-timeout: ${RAG_S3_VECTORS_ATTEMPT_TIMEOUT}
         api-call-timeout: ${RAG_S3_VECTORS_CALL_TIMEOUT}
+  usage:
+    enabled: ${RAG_USAGE_ENABLED:false}
   api-security:
     # Protección ligera para la demo pública. No sustituye autenticación real.
     enabled: ${RAG_API_SECURITY_ENABLED}

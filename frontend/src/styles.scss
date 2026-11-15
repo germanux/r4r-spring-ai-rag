@@ -1247,3 +1247,14 @@ a:focus-visible,button:focus-visible,textarea:focus-visible,select:focus-visible
 app-header,app-hero,app-rag-assistant,app-info-sections,app-footer {display:contents} app-question-form,app-answer-panel {display:contents} app-citations,app-audit-status,app-rag-progress {display:contents}
 
 @import './responsive-ux';
+
+/* Commercial embed: reuse the assistant, with natural page flow and no site chrome. */
+html.embedded-assistant { scroll-behavior: auto; }
+.embedded-assistant body { background: #f5f1e8; }
+.embedded-assistant .shell { width: 100%; }
+.embedded-assistant .demo-section { padding: 8px 0; }
+.embedded-assistant .examples-box, .embedded-assistant .samples, .embedded-assistant .endpoint-settings { display: none; }
+.embedded-assistant .panel { border-radius: 10px; }
+.embedded-assistant .demo-grid { grid-template-columns: 1fr; }
+.embedded-assistant .response-panel { min-height: 0; }
+.embedded-assistant .answer-text, .embedded-assistant .result-content { max-height: none; overflow: visible; }

@@ -1,0 +1,36 @@
+{
+  "backend": [
+    {
+      "name": "com.riansares.r4r.rag.api.RagStreamControllerTest",
+      "tests": "10",
+      "errors": "0",
+      "failures": "0"
+    },
+    {
+      "name": "com.riansares.r4r.config.RagApiSecurityFilterTest",
+      "tests": "21",
+      "errors": "0",
+      "failures": "0"
+    },
+    {
+      "name": "com.riansares.r4r.rag.api.RagQueryControllerTest",
+      "tests": "8",
+      "errors": "0",
+      "failures": "0"
+    },
+    {
+      "name": "com.riansares.r4r.usage.AssistantUsageTest",
+      "tests": "4",
+      "errors": "0",
+      "failures": "0"
+    }
+  ],
+  "angularTests": 16,
+  "browserWidths": [
+    1440,
+    900,
+    390
+  ],
+  "sourcePdfLinks": 82,
+  "publicDeploymentVerified": false
+}

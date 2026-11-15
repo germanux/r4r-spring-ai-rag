@@ -51,6 +51,7 @@ export class AssistantState {
         requestAnimationFrame(() => { const input = document.getElementById('question'); input?.focus({preventScroll:true}); input?.scrollIntoView({behavior:'instant',block:'center'}); });
     }
     private revealResult() {
+        if (new URLSearchParams(location.search).get('embed') === '1') return;
         this.mobileResult.set(true);
         if (!matchMedia('(max-width:760px)').matches) return;
         (document.activeElement as HTMLElement | null)?.blur();
@@ -76,7 +77,7 @@ export class AssistantState {
             return;
         const q = this.question().trim();
         try {
-            localStorage.setItem('r4r.lastQuestion', q);
+            if (new URLSearchParams(location.search).get('embed') !== '1') localStorage.setItem('r4r.lastQuestion', q);
         }
         catch { }
         if (!q) {
