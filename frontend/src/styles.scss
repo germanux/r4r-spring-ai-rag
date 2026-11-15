@@ -1245,3 +1245,5 @@ a:focus-visible,button:focus-visible,textarea:focus-visible,select:focus-visible
 .response-status.is-partial, .decision-pill.partial { color:#77520b; background:#fffaf0; border-color:#c49434; }
 
 app-header,app-hero,app-rag-assistant,app-info-sections,app-footer {display:contents} app-question-form,app-answer-panel {display:contents} app-citations,app-audit-status,app-rag-progress {display:contents}
+
+@import './responsive-ux';

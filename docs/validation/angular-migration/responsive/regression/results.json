@@ -1,0 +1,164 @@
+[
+  {
+    "version": "v1",
+    "width": 1440,
+    "lang": "es",
+    "errors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 1440,
+    "lang": "es",
+    "errors": []
+  },
+  {
+    "version": "v1",
+    "width": 1440,
+    "lang": "en",
+    "errors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 1440,
+    "lang": "en",
+    "errors": []
+  },
+  {
+    "version": "v1",
+    "width": 390,
+    "lang": "es",
+    "errors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 390,
+    "lang": "es",
+    "errors": []
+  },
+  {
+    "version": "v1",
+    "width": 390,
+    "lang": "en",
+    "errors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 390,
+    "lang": "en",
+    "errors": []
+  },
+  {
+    "test": "automatic playback",
+    "version": "v1",
+    "lang": "es",
+    "width": 1440,
+    "questions": 3,
+    "liveRequests": 0
+  },
+  {
+    "test": "automatic playback",
+    "version": "v1",
+    "lang": "es",
+    "width": 390,
+    "questions": 3,
+    "liveRequests": 0
+  },
+  {
+    "test": "automatic playback",
+    "version": "v2-ng",
+    "lang": "es",
+    "width": 1440,
+    "questions": 3,
+    "liveRequests": 0
+  },
+  {
+    "test": "automatic playback",
+    "version": "v2-ng",
+    "lang": "es",
+    "width": 390,
+    "questions": 3,
+    "liveRequests": 0
+  },
+  {
+    "test": "automatic playback",
+    "version": "v1",
+    "lang": "en",
+    "width": 1440,
+    "questions": 3,
+    "liveRequests": 0
+  },
+  {
+    "test": "automatic playback",
+    "version": "v1",
+    "lang": "en",
+    "width": 390,
+    "questions": 3,
+    "liveRequests": 0
+  },
+  {
+    "test": "automatic playback",
+    "version": "v2-ng",
+    "lang": "en",
+    "width": 1440,
+    "questions": 3,
+    "liveRequests": 0
+  },
+  {
+    "test": "automatic playback",
+    "version": "v2-ng",
+    "lang": "en",
+    "width": 390,
+    "questions": 3,
+    "liveRequests": 0
+  },
+  {
+    "test": "SSE, REST, audit downgrade, 429, 503, documents, clear, navigation",
+    "errors": [],
+    "calls": [
+      {
+        "path": "/api/rag/answers/stream",
+        "method": "POST",
+        "body": "{\"question\":\"Consulta de validación\",\"responseLanguage\":\"es\"}"
+      },
+      {
+        "path": "/api/rag/audits/12345678-1234-1234-1234-123456789abc",
+        "method": "POST",
+        "body": null
+      },
+      {
+        "path": "/api/rag/answers/stream",
+        "method": "POST",
+        "body": "{\"question\":\"Fallback REST\",\"responseLanguage\":\"es\"}"
+      },
+      {
+        "path": "/api/rag/answers",
+        "method": "POST",
+        "body": "{\"question\":\"Fallback REST\",\"responseLanguage\":\"es\"}"
+      },
+      {
+        "path": "/api/rag/audits/12345678-1234-1234-1234-123456789abc",
+        "method": "POST",
+        "body": null
+      },
+      {
+        "path": "/api/rag/answers/stream",
+        "method": "POST",
+        "body": "{\"question\":\"Error 429\",\"responseLanguage\":\"es\"}"
+      },
+      {
+        "path": "/api/rag/answers/stream",
+        "method": "POST",
+        "body": "{\"question\":\"Error 503\",\"responseLanguage\":\"es\"}"
+      },
+      {
+        "path": "/api/rag/warmup",
+        "method": "POST",
+        "body": null
+      }
+    ]
+  },
+  {
+    "test": "prerendered HTML",
+    "passed": true
+  }
+]

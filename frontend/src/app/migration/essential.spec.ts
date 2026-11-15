@@ -26,3 +26,34 @@ describe('SSE protocol', () => {
  it('rejects truncated streams without issuing a second request',async()=>{mock(['data: {"stage":"GENERATION_STARTED"}\n\n']);await expectAsync(api.ask('Pregunta','es',new AbortController().signal,()=>{})).toBeRejected();expect(window.fetch).toHaveBeenCalledTimes(1);});
  it('rejects invalid final answer contracts',async()=>{mock(['data: {"stage":"ANSWER_READY","answer":"x"}\n\n']);await expectAsync(api.ask('Pregunta','es',new AbortController().signal,()=>{})).toBeRejected();});
 });
+
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { RagAuditService } from './rag-audit.service';
+describe('Asynchronous review outcomes', () => {
+    let service: RagAuditService;
+    let http: HttpTestingController;
+    const id = '12345678-1234-1234-1234-123456789abc';
+    beforeEach(() => {
+        TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+        service = TestBed.inject(RagAuditService);
+        http = TestBed.inject(HttpTestingController);
+    });
+    afterEach(() => http.verify());
+    it('keeps inconclusive separate from a successful review', async () => {
+        const pending = service.review(id, 'ANSWERED');
+        http.expectOne(r => r.url.endsWith(id)).flush({originalStatus:'ANSWERED',recommendedStatus:'ANSWERED',effectiveStatus:'ANSWERED',conclusive:false,note:''});
+        expect(await pending).toEqual({state:'inconclusive',result:null});
+    });
+    it('keeps transport failure separate from a successful review', async () => {
+        const pending = service.review(id, 'ANSWERED');
+        http.expectOne(r => r.url.endsWith(id)).flush({}, {status:503,statusText:'Unavailable'});
+        expect(await pending).toEqual({state:'unavailable',result:null});
+    });
+    it('returns only a validated downgrade', async () => {
+        const result = {originalStatus:'ANSWERED',recommendedStatus:'PARTIAL',effectiveStatus:'PARTIAL',conclusive:true,note:'Limits'};
+        const pending = service.review(id, 'ANSWERED');
+        const request = http.expectOne(r => r.url.endsWith(id));
+        expect(request.request.method).toBe('POST');request.flush(result);
+        expect(await pending).toEqual({state:'reviewed',result:result as any});
+    });
+});

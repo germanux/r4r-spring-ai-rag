@@ -1,0 +1,69 @@
+{
+  "build": "PASSED",
+  "angularUnitTests": {
+    "passed": 29
+  },
+  "legacyUnitTests": {
+    "passed": 106
+  },
+  "responsiveScenarios": {
+    "passed": 58,
+    "widths": [
+      320,
+      360,
+      390,
+      430,
+      768,
+      1024,
+      1440
+    ],
+    "languages": [
+      "es",
+      "en"
+    ],
+    "fontSizeIncrease": "125%",
+    "auditLayoutShiftTolerancePx": 2
+  },
+  "regressionGroups": 18,
+  "edgeCases": 6,
+  "API": "mocked; no LLM calls",
+  "documentsAndRecordings": "unchanged",
+  "legacyPDFSuite": {
+    "passed": 2,
+    "failed": 2,
+    "classification": "pre-existing",
+    "reason": "Test resolves knowledge relative to pre-archive location; legacy flat PDF paths do not exist in HEAD. Canonical 82 PDFs and 82 HTML documents per version verified separately."
+  },
+  "productionDeployment": "NOT RUN",
+  "backendChanges": false,
+  "modifiedTrackedFiles": [
+    "DEVELOPMENT.md",
+    "front-athagon-r4r-static/v1/index.html",
+    "front-athagon-r4r-static/v1/js/app.js",
+    "front-athagon-r4r-static/v1/js/app.test.cjs",
+    "front-athagon-r4r-static/v1/js/i18n.js",
+    "front-athagon-r4r-static/v2-ng/index.html",
+    "front-athagon-r4r-static/v2-ng/main-PU3S3EON.js",
+    "front-athagon-r4r-static/v2-ng/styles-37IX6BG3.css",
+    "frontend/angular.json",
+    "frontend/src/app/migration/answer-panel.component.ts",
+    "frontend/src/app/migration/assistant-state.service.ts",
+    "frontend/src/app/migration/audit-status.component.ts",
+    "frontend/src/app/migration/audit-status.scss",
+    "frontend/src/app/migration/essential.spec.ts",
+    "frontend/src/app/migration/header.component.ts",
+    "frontend/src/app/migration/header.html",
+    "frontend/src/app/migration/rag-assistant.component.ts",
+    "frontend/src/app/migration/rag-audit.service.ts",
+    "frontend/src/app/migration/translations.ts",
+    "frontend/src/styles.scss",
+    "frontend/validate-edge-cases.mjs",
+    "frontend/validate-migration.mjs"
+  ],
+  "newSources": [
+    "frontend/src/responsive-ux.scss",
+    "front-athagon-r4r-static/v1/styles/responsive-ux.css",
+    "frontend/validate-responsive.mjs"
+  ],
+  "maxObservedAuditShiftPx": 0
+}

@@ -512,3 +512,25 @@ Se conserva íntegro el contenido previo de memoria y el commit SSE del usuario.
   `node frontend/validate-edge-cases.mjs`, con `CHROMIUM_PATH` si corresponde.
   Las pruebas interceptan la API y usan las respuestas grabadas originales.
   Capturas y resultados: `docs/validation/angular-migration/`.
+
+## Cierre responsive y auditoría del frontend
+
+- Este encargo pide sincronizar primero v1 y después Angular. Es una autorización
+  puntual para actualizar la presentación legacy; documentos y grabaciones se
+  conservan sin cambios. El snapshot original sigue disponible en Git.
+- Al enviar desde móvil, se conserva el formulario y su pregunta completa, se
+  presenta un resumen con «Editar pregunta» y se enfoca/posiciona ese resumen una
+  sola vez al inicio. Los eventos SSE y la revisión no vuelven a desplazar la página.
+- La cabecera se pliega a menú accesible hasta 960 px; el flujo compacto de
+  pregunta/resultado se aplica hasta 760 px. En escritorio siguen las dos columnas.
+- Clasificación, revisión y duración tienen áreas independientes; la revisión
+  inconclusa o no disponible conserva la clasificación original y nunca aparenta
+  aprobación. Notas extensas quedan en los detalles posteriores a la respuesta.
+- El mensaje PARTIAL tiene un único título y la explicación breve acordada ES/EN.
+  Se reserva su espacio adaptable durante la auditoría para evitar saltos al degradar.
+- CSS responsive sincronizado: `frontend/src/responsive-ux.scss` y
+  `front-athagon-r4r-static/v1/styles/responsive-ux.css`. El build Angular no lee v1.
+- Prueba reproducible adicional: `node frontend/validate-responsive.mjs`, con el
+  servidor estático local anterior. Evidencias nuevas bajo
+  `docs/validation/angular-migration/responsive/`; las evidencias de la migración
+  original se mantienen como registro histórico.

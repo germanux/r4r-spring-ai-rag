@@ -1,0 +1,13 @@
+- Building...
+
+Initial chunk files   | Names         |  Raw size | Estimated transfer size
+main-RJHLQG3Y.js      | main          | 298.86 kB |                77.47 kB
+styles-QUOMDF74.css   | styles        |  35.87 kB |                 7.34 kB
+polyfills-FFHMD2TL.js | polyfills     |  33.71 kB |                11.02 kB
+
+                      | Initial total | 368.43 kB |                95.83 kB
+
+Output location: /home/german/Desarrollo/R4R/r4r-spring-ai-rag.git/frontend/dist/r4r-frontend
+
+Application bundle generation complete. [1.748 seconds]
+

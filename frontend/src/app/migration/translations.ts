@@ -493,3 +493,7 @@ Object.assign(dictionary['es'], {
     cors: "Revisa la conectividad, DNS, contenido mixto HTTP/HTTPS y que la API permita el origen de esta página mediante CORS.",
     sources: (count: number) => `${count} fuente${count === 1 ? "" : "s"}`
 });
+
+  Object.assign(dictionary['es'], {'partialAnswer': 'Respuesta parcial', 'partialExplanation': 'Las fuentes solo permiten responder parte de la pregunta.', 'editQuestion': 'Editar pregunta', 'menu': 'Abrir o cerrar menú', 'auditInconclusive': 'Revisión inconclusa.', 'auditUnavailable': 'Revisión no disponible.', 'auditDowngraded': 'Revisión: clasificación ajustada.', 'auditDetails': 'Detalles de la revisión'});
+
+  Object.assign(dictionary['en'], {'partialAnswer': 'Partial answer', 'partialExplanation': 'The sources only cover part of your question.', 'editQuestion': 'Edit question', 'menu': 'Open or close menu', 'auditInconclusive': 'Review inconclusive.', 'auditUnavailable': 'Review unavailable.', 'auditDowngraded': 'Review: classification adjusted.', 'auditDetails': 'Review details'});

@@ -390,13 +390,13 @@ test('single entry point has valid assets, anchors, unique IDs and no legacy fil
   assert.doesNotMatch(scripts, /location\.(?:assign|replace|reload)/);
 });
 
-test('both languages keep the single shared stylesheet after language changes', () => {
+test('both languages keep the shared base and responsive stylesheets after language changes', () => {
   for (const language of ['es', 'en']) {
     const p = openPage(language);
     for (const next of ['es', 'en']) {
       p.changeLanguage(next);
       const sheets = p.document.querySelectorAll('link').filter(n => n.getAttribute('rel') === 'stylesheet');
-      assert.equal(sheets.length, 1);
+      assert.equal(sheets.length, 2);
       assert.match(sheets[0].getAttribute('href'), /^styles\/styles\.css\?v=[a-f0-9]+$/);
       assert.ok(fs.existsSync(path.join(root, sheets[0].getAttribute('href').split('?')[0])));
     }
@@ -752,7 +752,7 @@ test('audit uses a separate channel only after SSE answer is rendered and form i
   const original = p.node('answerText').textContent, sources = p.node('citations').textContent;
   finish({ ok: true, json: async () => ({ conclusive: true, originalStatus: 'ANSWERED', recommendedStatus: 'PARTIAL', effectiveStatus: 'PARTIAL', note: 'La conservación requiere comprobación.' }) });
   await tick();
-  assert.match(p.node('auditText').textContent, /debe considerarse parcial/);
+  assert.match(p.node('auditText').textContent, /clasificación ajustada/);
   assert.equal(p.node('resultMode').textContent, p.t('partialAnswer'));
   assert.equal(p.node('resultMode').classList.contains('is-verified'), false);
   assert.equal(p.node('decisionPill').textContent, p.t('partialAnswer'));
@@ -773,11 +773,9 @@ for (const [original, recommended, effective] of [
   const text = p.node('answerText').textContent;
   await startPendingAudit(p);
   assert.equal(p.node('answerText').textContent, text);
-  if (original === 'PARTIAL' && recommended === 'ANSWERED' || original === 'ABSTAINED' && recommended === 'ABSTAINED')
-    assert.equal(p.node('auditNote').hidden, true);
-  else assert.equal(p.node('auditNote').hidden, false);
+  assert.equal(p.node('auditNote').hidden, false);
   if (original === 'ABSTAINED' && recommended !== 'ABSTAINED') assert.match(p.node('auditText').textContent, /related information/);
-  if (original === 'PARTIAL' && recommended === 'ABSTAINED') assert.match(p.node('auditText').textContent, /even the partial information/);
+  if (original === 'PARTIAL' && recommended === 'ABSTAINED') assert.match(p.node('auditText').textContent, /classification adjusted/);
 });
 test('old audit cannot update a subsequent answer even when its transport ignores cancellation', async () => {
   let finish, signal, count = 0;
@@ -802,7 +800,8 @@ for (const kind of ['disabled', 'failed', 'invalid', 'timeout']) test(`audit ${k
   p.node('question').value = 'Question';await p.node('sendButton').handlers.click();
   if (kind !== 'disabled') await startPendingAudit(p);
   if (kind === 'timeout') { [...p.timers.values()].find(t => t.delay === 90000).fn();await tick(); }
-  assert.equal(p.node('auditNote').hidden, true);
+  assert.equal(p.node('auditNote').hidden, kind === 'disabled');
+  if(kind !== 'disabled') assert.equal(p.node('auditNote').getAttribute('data-state'),kind === 'invalid'?'inconclusive':'unavailable');
   assert.equal(p.node('sendButton').disabled, false);
   assert.match(p.node('answerText').textContent, /Reforma/);
 });

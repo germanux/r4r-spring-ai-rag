@@ -5,8 +5,9 @@
       <span class="brand-name">ATHAGON</span>
       <span class="brand-labs">LABS</span>
     </a>
-    <select [value]="i.language()" (change)="s.language($any($event.target).value)" id="languageSelect" [attr.aria-label]="i.t('page.language')"><option value="es">🇪🇸 Español</option><option value="en">🇬🇧 English</option></select>
-    <nav class="nav" [attr.aria-label]="i.t('page.main_navigation')">
+    <select [value]="i.language()" (change)="s.language($any($event.target).value); closeMenu()" id="languageSelect" [attr.aria-label]="i.t('page.language')"><option value="es">🇪🇸 Español</option><option value="en">🇬🇧 English</option></select>
+    <button #menuButton id="menuToggle" class="menu-toggle" type="button" [attr.aria-expanded]="menuOpen()" aria-controls="mainNavigation" [attr.aria-label]="i.t('menu')" (click)="menuOpen.set(!menuOpen())">☰</button>
+    <nav id="mainNavigation" class="nav" [class.is-open]="menuOpen()" (click)="closeMenu()" [attr.aria-label]="i.t('page.main_navigation')">
       <a href="#demo">Demo</a>
       <a href="#como-funciona">{{ i.t('page.what_it_demonstrates_nav') }}</a>
       <a href="#arquitectura">{{ i.t('page.architecture_nav') }}</a>

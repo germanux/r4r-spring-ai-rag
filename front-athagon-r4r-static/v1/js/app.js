@@ -32,6 +32,21 @@
 
   const $ = (id) => document.getElementById(id);
 
+
+  const menuButton = $("menuToggle");
+  const navigation = $("mainNavigation");
+  function closeMenu() { navigation.classList.toggle("is-open", false); menuButton.setAttribute("aria-expanded", "false"); }
+  menuButton.addEventListener("click", () => { const open = menuButton.getAttribute("aria-expanded") !== "true"; navigation.classList.toggle("is-open", open); menuButton.setAttribute("aria-expanded", String(open)); });
+  navigation.addEventListener("click", event => { if (event.target.closest("a")) closeMenu(); });
+  document.addEventListener("keydown", event => { if (event.key === "Escape" && menuButton.getAttribute("aria-expanded") === "true") { closeMenu(); menuButton.focus(); } });
+  function showMobileResult() {
+    $("summaryQuestion").textContent = question.value;
+    $("demo").classList.toggle("has-query", true); closeMenu();
+    if (!window.matchMedia?.("(max-width:760px)")?.matches) return;
+    question.blur();
+    requestAnimationFrame(() => { const summary = $("querySummary"); summary.style.scrollMarginTop = `${document.querySelector(".site-header").getBoundingClientRect().height + 12}px`; summary.focus({preventScroll:true}); summary.scrollIntoView({behavior:"instant", block:"start"}); });
+  }
+  $("editQuestion").addEventListener("click", () => { if (activeQueryController) { activeQueryController.abort(); activeQueryController = null; phase = "idle"; lastPayload = null; renderEmpty(); setLoading(false); } $("demo").classList.toggle("has-query", false); question.focus({preventScroll:true}); question.scrollIntoView({behavior:"instant",block:"center"}); });
   const disclosures = [
     { button: $("architectureToggle"), panel: $("architectureContent"), anchor: "arquitectura" },
     { button: $("runtimeToggle"), panel: $("runtimeContent"), anchor: "runtime" },
@@ -166,6 +181,7 @@
     auditController = null;
     auditState = null;
     $("auditNote").hidden = true;
+    $("auditDetails").hidden = true;
   }
   function originalStatus(payload) {
     return payload?.status || (payload?.abstained ? "ABSTAINED" : "ANSWERED");
@@ -179,9 +195,14 @@
         box.setAttribute("data-level", "neutral");
         box.setAttribute("data-state", /(?:\.\.\.|…)$/.test(capturedReview) ? "pending" : "reviewed");
         $("auditIcon").textContent = "";
-        $("auditText").textContent = capturedReview;
+        $("auditText").textContent = capturedReview.split(/(?<=\.)\s/)[0];
+        $("auditDetailText").textContent = capturedReview; $("auditDetails").hidden = capturedReview.length < 80;
       }
       return;
+    }
+    if (auditState.unavailable || auditState.inconclusive) {
+      box.setAttribute("data-level", "warning"); box.setAttribute("data-state", auditState.inconclusive ? "inconclusive" : "unavailable");
+      $("auditIcon").textContent = "⚠"; $("auditText").textContent = t(auditState.inconclusive ? "auditInconclusive" : "auditUnavailable"); return;
     }
     const original = originalStatus(lastPayload);
     const effective = auditState.result?.effectiveStatus || original;
@@ -194,7 +215,8 @@
     box.setAttribute("data-state", auditState.pending ? "pending" : "reviewed");
     $("auditIcon").textContent = auditState.pending ? "◌" : downgrade ? "⚠" : "✓";
     const note = !auditState.pending && !related ? auditState.result?.note?.trim() : "";
-    $("auditText").textContent = t(key) + (note && !lastPayload?.answer?.includes(note) ? " " + note : "");
+    $("auditText").textContent = t(downgrade ? "auditDowngraded" : key);
+    $("auditDetailText").textContent = note; $("auditDetails").hidden = !note;
     renderResponseHeading(lastPayload);
     if (downgrade) {
       $("decisionRow").hidden = false;
@@ -222,14 +244,14 @@
         && Object.hasOwn(statusRank, result.recommendedStatus) && Object.hasOwn(statusRank, result.effectiveStatus)
         && result.effectiveStatus === (statusRank[result.recommendedStatus] < statusRank[original] ? result.recommendedStatus : original)
         && typeof result.note === "string" && result.note.length <= 400;
-      if (!valid) throw Error("inconclusive audit");
+      if (!valid) { auditState = { inconclusive: true }; renderAudit(); return; }
       const silent = original === "ABSTAINED" && result.recommendedStatus === "ABSTAINED"
         || original === "PARTIAL" && result.recommendedStatus === "ANSWERED"
         || original === "PARTIAL" && result.recommendedStatus === "PARTIAL"
           && (!result.note.trim() || payload.answer.includes(result.note.trim()));
-      auditState = silent ? null : { result };renderAudit();
+      auditState = { result };renderAudit();
     } catch {
-      if (cycle === auditCycle) { auditState = null;renderAudit(); }
+      if (cycle === auditCycle) { auditState = { unavailable: true };renderAudit(); }
     } finally {
       clearTimeout(timeout);
       if (auditController === controller) auditController = null;
@@ -277,6 +299,7 @@
   changeLanguage(initialLanguage);
   if (savedQuestion === null) question.value = t("demoQuestion");
   languageSelect.addEventListener("change", () => {
+    closeMenu();
     if (["es", "en"].includes(languageSelect.value)) {
       const hadPreview = displayedRecording || preview;
       engage();
@@ -641,6 +664,8 @@
 
   clearButton.addEventListener("click", () => {
     engage();
+    activeQueryController?.abort(); activeQueryController = null; setLoading(false);
+    $("demo").classList.toggle("has-query", false);
     $("previewNotice").hidden = true;
     question.value = "";
     phase = "idle";
@@ -822,7 +847,7 @@
     $("previewNotice").hidden = true;
     replyMode = "live";$("previewNotice").textContent = t(replyMode);
     $("answerProvider").textContent = "";
-    answerText.setAttribute("aria-live", "polite");
+    answerText.setAttribute("aria-live", "off");
     if (sendButton.disabled) return;
 
     const text = question.value.trim();
@@ -858,18 +883,20 @@
     }
     apiState.textContent = t("querying");
     resultMode.textContent = t("inProgress");
+    showMobileResult();
     // Position once, before the request. Never move the reader at completion.
     const panel = document.querySelector(".response-panel");
     const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect?.().height || 80;
     if (panel?.style) panel.style.scrollMarginTop = `${headerHeight + 12}px`;
     const bounds = panel?.getBoundingClientRect?.();
-    if (bounds && (bounds.top < headerHeight || bounds.top > window.innerHeight - 120))
+    if (!window.matchMedia?.("(max-width:760px)")?.matches && bounds && (bounds.top < headerHeight || bounds.top > window.innerHeight - 120))
       panel.scrollIntoView({ behavior: reducedMotion() ? "instant" : "smooth", block: "start" });
 
     const controller = new AbortController();
     activeQueryController = controller;
     const timeout = setTimeout(() => controller.abort(), 180000);
     const started = performance.now();
+    const queryCycle = auditCycle;
 
     try {
       const requestBody = { question: text, responseLanguage: requestLanguage };
@@ -895,6 +922,7 @@
         catch { if (response.ok) throw { kind: "json", status: response.status }; }
         if (!response.ok) throw { kind: "http", status: response.status, detail: developerMode ? payload?.message || payload?.error || "" : "", retryAfter: /^\d+$/.test(response.headers?.get("Retry-After") || "") ? response.headers.get("Retry-After") : null };
       } else payload = await readAnswerStream(response);
+      if (queryCycle !== auditCycle) return;
       elapsed.textContent = formatDuration(responseDuration = performance.now() - started);
 
       phase = "success";
@@ -906,6 +934,7 @@
       renderResponseHeading(lastPayload);
 
     } catch (error) {
+      if (queryCycle !== auditCycle) return;
       const duration = Math.round(performance.now() - started);
       elapsed.textContent = formatDuration(responseDuration = duration);
       phase = "error";
@@ -926,6 +955,7 @@
       } else renderError(errorMessage(lastError));
     } finally {
       clearTimeout(timeout);
+      if (queryCycle !== auditCycle) return;
       activeQueryController = null;
       setLoading(false);
       if (phase === "success" && !displayedRecording && !preview && lastPayload?.auditId) {
@@ -939,7 +969,7 @@
   function setLoading(loading) {
     sendButton.disabled = loading;
     if (loadingState) {
-      clearButton.disabled = loading;
+      clearButton.disabled = false;
       if (!loading) loadingState.hidden = true;
     }
     sendButton.classList.toggle("is-loading", loading);
@@ -948,6 +978,7 @@
   }
 
   function renderEmpty() {
+    $("responsePanel").classList.toggle("has-audit", false);
     clearAudit();
     simpleStages = [];
     responseDuration = null;
@@ -975,6 +1006,7 @@
   }
 
   function renderResult(payload) {
+    $("responsePanel").classList.toggle("has-audit", !!payload?.auditId && !displayedRecording);
     const abstained = Boolean(payload?.abstained);
     const answer = typeof payload?.answer === "string" ? payload.answer : "";
     const sourceList = Array.isArray(payload?.citations) ? payload.citations : [];

@@ -1,0 +1,49 @@
+✖ 41 stable IDs have matching ES/EN PDF sources, valid content and real page targets (1.339543ms)
+✖ legacy public PDFs are unchanged (0.098676ms)
+✔ broken, HTML and truncated PDF links are rejected (0.603552ms)
+✔ HTTP error pages and misleading PDF MIME types are rejected (9.52219ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 2
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15.090665
+
+✖ failing tests:
+
+test at front-athagon-r4r-static/v1/js/pdf-links.test.cjs:29:1
+✖ 41 stable IDs have matching ES/EN PDF sources, valid content and real page targets (1.339543ms)
+  Error: ENOENT: no such file or directory, open '/home/german/Desarrollo/R4R/r4r-spring-ai-rag.git/front-athagon-r4r-static/knowledge/en/R4R_00_IDENTITY_CRITERIA_AND_EDITORIAL_VOICE.md'
+      at Object.openSync (node:fs:621:18)
+      at Object.readFileSync (node:fs:487:35)
+      at checkLocal (/home/german/Desarrollo/R4R/r4r-spring-ai-rag.git/front-athagon-r4r-static/v1/js/pdf-links.test.cjs:18:23)
+      at TestContext.<anonymous> (/home/german/Desarrollo/R4R/r4r-spring-ai-rag.git/front-athagon-r4r-static/v1/js/pdf-links.test.cjs:35:55)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/home/german/Desarrollo/R4R/r4r-spring-ai-rag.git/front-athagon-r4r-static/knowledge/en/R4R_00_IDENTITY_CRITERIA_AND_EDITORIAL_VOICE.md'
+  }
+
+test at front-athagon-r4r-static/v1/js/pdf-links.test.cjs:42:1
+✖ legacy public PDFs are unchanged (0.098676ms)
+  Error: ENOENT: no such file or directory, open '/home/german/Desarrollo/R4R/r4r-spring-ai-rag.git/front-athagon-r4r-static/v1/docs/R4R_40_ALL_FAQ.pdf'
+      at Object.openSync (node:fs:621:18)
+      at Object.readFileSync (node:fs:487:35)
+      at TestContext.<anonymous> (/home/german/Desarrollo/R4R/r4r-spring-ai-rag.git/front-athagon-r4r-static/v1/js/pdf-links.test.cjs:44:67)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/home/german/Desarrollo/R4R/r4r-spring-ai-rag.git/front-athagon-r4r-static/v1/docs/R4R_40_ALL_FAQ.pdf'
+  }

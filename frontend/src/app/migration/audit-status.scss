@@ -1,5 +1,5 @@
 :host { display: contents; }
-.audit-note { margin: 0; min-width: 0; overflow-wrap: anywhere; }
-.audit-note[data-level="neutral"] { color: #166534; background: #f0fdf4; border-color: #86b99a; }
+.audit-note { margin: 0; min-width: 0; overflow-wrap: normal; }
+.audit-note[data-level="neutral"] { color: #365a82; background: #eff6ff; border-color: #b5c9df; }
 .audit-note[data-state="pending"] { color: #365a82; background: #eff6ff; border-color: #b5c9df; }
 .audit-note[data-level="warning"] { color: #77520b; background: #fffaf0; border-color: #c49434; }

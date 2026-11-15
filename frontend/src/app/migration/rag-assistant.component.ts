@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, AfterViewInit, OnDestroy } 
 import { AssistantState } from './assistant-state.service';
 import { QuestionFormComponent } from './question-form.component';
 import { AnswerPanelComponent } from './answer-panel.component';
-@Component({ selector: 'app-rag-assistant', standalone: true, imports: [QuestionFormComponent, AnswerPanelComponent], changeDetection: ChangeDetectionStrategy.OnPush, styleUrl: './rag-assistant.scss', template: `<section class="section demo-section" id="demo"><div class="shell"><div class="demo-grid"><app-question-form/><app-answer-panel/></div></div></section>` })
+@Component({ selector: 'app-rag-assistant', standalone: true, imports: [QuestionFormComponent, AnswerPanelComponent], changeDetection: ChangeDetectionStrategy.OnPush, styleUrl: './rag-assistant.scss', template: `<section class="section demo-section" id="demo" [class.has-query]="s.mobileResult()"><div class="shell"><div class="mobile-query-summary" id="querySummary" tabindex="-1"><p>{{s.question()}}</p><button id="editQuestion" class="small-btn" type="button" (click)="s.editQuestion()">{{s.i.t('editQuestion')}}</button></div><div class="demo-grid"><app-question-form/><app-answer-panel/></div></div></section>` })
 export class RagAssistantComponent implements AfterViewInit, OnDestroy {
     readonly s = inject(AssistantState);
     private observer?: IntersectionObserver;
