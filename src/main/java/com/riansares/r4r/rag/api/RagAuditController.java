@@ -9,6 +9,8 @@ import org.springframework.web.context.request.async.DeferredResult;
 /** The browser starts this only after rendering ANSWER_READY. Accepts no client-supplied evidence. */
 @RestController
 public class RagAuditController {
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private com.riansares.r4r.usage.AssistantUsage usage;
     private final RagAuditService audits;
     public RagAuditController(RagAuditService audits) { this.audits = audits; }
 
@@ -20,7 +22,7 @@ public class RagAuditController {
         if (future == null) { http.setStatus(404); return null; }
         var response = new DeferredResult<RagAuditResult>(95_000L);
         future.whenComplete((review, failure) -> {
-            if (failure == null) response.setResult(review);
+            if (failure == null) { if (usage != null) usage.audit(id, review); response.setResult(review); }
             else response.setErrorResult(ResponseEntity.noContent().build());
         });
         response.onTimeout(() -> { future.cancel(true); response.setErrorResult(ResponseEntity.noContent().build()); });

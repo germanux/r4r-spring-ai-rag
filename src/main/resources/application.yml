@@ -99,6 +99,9 @@ r4r:
         api-call-timeout: ${RAG_S3_VECTORS_CALL_TIMEOUT}
   usage:
     enabled: ${RAG_USAGE_ENABLED:false}
+    privacy-ready: ${RAG_USAGE_PRIVACY_READY:false}
+    content-enabled: ${RAG_USAGE_CONTENT_ENABLED:false}
+    security-enabled: ${RAG_USAGE_SECURITY_ENABLED:false}
   api-security:
     # Protección ligera para la demo pública. No sustituye autenticación real.
     enabled: ${RAG_API_SECURITY_ENABLED}
@@ -111,6 +114,7 @@ r4r:
     # Activar solo detrás de Cloudflare/reverse proxy de confianza; entonces se usa
     # CF-Connecting-IP y, como fallback, X-Forwarded-For para limitar por IP real.
     trust-proxy-headers: ${RAG_API_TRUST_PROXY_HEADERS}
+    trusted-proxy-addresses: ${RAG_API_TRUSTED_PROXY_ADDRESSES:}
     # Cota de memoria para IP activas dentro de la ventana del rate limit.
     max-tracked-ips: ${RAG_API_MAX_TRACKED_IPS}
   catalog-on-startup: ${RAG_CATALOG_ON_STARTUP}

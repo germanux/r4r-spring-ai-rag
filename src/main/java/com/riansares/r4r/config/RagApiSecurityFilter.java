@@ -24,6 +24,10 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
     private static final String WARMUP_PATH = "/api/rag/warmup";
     private static final Set<String> ANSWER_PATHS = Set.of(RAG_ANSWERS_PATH, RAG_ANSWERS_PATH + "/stream");
 
+    private ClientNetwork clientNetwork;
+    void setTrustedProxyAddresses(String addresses) {
+        clientNetwork = new ClientNetwork(addresses, properties.trustProxyHeaders());
+    }
     private com.riansares.r4r.usage.AssistantUsage usage;
     void setUsage(com.riansares.r4r.usage.AssistantUsage usage) { this.usage = usage; }
     private final RagApiSecurityProperties properties;
@@ -40,6 +44,7 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
 
     RagApiSecurityFilter(RagApiSecurityProperties properties, LongSupplier nanoTime) {
         this.properties = properties;
+        this.clientNetwork = new ClientNetwork("", properties.trustProxyHeaders());
         this.allowedOrigins = new HashSet<>(properties.allowedOrigins());
         this.nanoTime = nanoTime;
     }
@@ -205,31 +210,8 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
-        if (properties.trustProxyHeaders()) {
-            String cloudflareIp = firstHeaderValue(request, "CF-Connecting-IP");
-            if (cloudflareIp != null) {
-                return cloudflareIp;
-            }
-
-            String forwardedFor = firstHeaderValue(request, "X-Forwarded-For");
-            if (forwardedFor != null) {
-                int comma = forwardedFor.indexOf(',');
-                return comma >= 0 ? forwardedFor.substring(0, comma).trim() : forwardedFor;
-            }
-        }
-
-        String remoteAddress = request.getRemoteAddr();
-        return remoteAddress == null || remoteAddress.isBlank() ? "unknown" : remoteAddress;
-    }
-
-    private static String firstHeaderValue(HttpServletRequest request, String headerName) {
-        String value = request.getHeader(headerName);
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-
-        value = value.trim();
-        return value.length() > 128 ? value.substring(0, 128) : value;
+        String address = clientNetwork.resolve(request).address();
+        return address == null ? "unknown" : address;
     }
 
     private void pruneExpiredEntriesIfNeeded(long now, long intervalNanos) {

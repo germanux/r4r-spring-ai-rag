@@ -23,15 +23,17 @@ public class WebConfiguration implements WebMvcConfigurer {
         registry.addMapping("/api/**")
                 .allowedOrigins(securityProperties.allowedOrigins().toArray(String[]::new))
                 .allowedMethods("GET", "POST", "OPTIONS")
-                .allowedHeaders("Content-Type", "Accept")
+                .allowedHeaders("Content-Type", "Accept", "X-R4R-Visitor", "X-R4R-Session", "X-R4R-Analytics-Consent", "X-R4R-History-Consent", "X-R4R-Request-Id")
                 .exposedHeaders("Retry-After", "X-R4R-RateLimit-Min-Interval-Seconds")
                 .maxAge(3600);
     }
 
     @Bean
-    FilterRegistrationBean<RagApiSecurityFilter> ragApiSecurityFilter(org.springframework.beans.factory.ObjectProvider<com.riansares.r4r.usage.AssistantUsage> usage) {
+    FilterRegistrationBean<RagApiSecurityFilter> ragApiSecurityFilter(org.springframework.beans.factory.ObjectProvider<com.riansares.r4r.usage.AssistantUsage> usage,
+            @org.springframework.beans.factory.annotation.Value("${r4r.api-security.trusted-proxy-addresses:}") String trustedProxies) {
         var filter = new RagApiSecurityFilter(securityProperties);
         filter.setUsage(usage.getIfAvailable());
+        filter.setTrustedProxyAddresses(trustedProxies);
         FilterRegistrationBean<RagApiSecurityFilter> registration =
                 new FilterRegistrationBean<>(filter);
         registration.addUrlPatterns("/api/rag/*");

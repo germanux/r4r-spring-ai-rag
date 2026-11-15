@@ -18,7 +18,19 @@ public class AssistantViewController {
         long now = System.nanoTime();
         if (now-window > 60_000_000_000L) { window=now; accepted=0; }
         if (++accepted > 120) return ResponseEntity.status(429).build();
-        usage.view(source);
+        usage.view(request);
+        return ResponseEntity.accepted().build();
+    }
+
+    public record Withdrawal(java.util.List<String> references, boolean analytics, boolean history) {}
+    @PostMapping("/api/rag/usage/withdraw")
+    public synchronized ResponseEntity<Void> withdraw(HttpServletRequest request, @RequestBody Withdrawal body) {
+        if ("UNKNOWN".equals(AssistantUsage.origin(request.getHeader("Origin")))) return ResponseEntity.status(403).build();
+        if (body == null || body.references() == null || body.references().size()>100
+                || body.references().stream().anyMatch(s -> s==null || !s.matches("[a-fA-F0-9-]{36}"))) return ResponseEntity.badRequest().build();
+        long now=System.nanoTime();if(now-window>60_000_000_000L){window=now;accepted=0;}
+        if(++accepted>120)return ResponseEntity.status(429).build();
+        usage.withdraw(request,body.references(),body.analytics(),body.history());
         return ResponseEntity.accepted().build();
     }
 }

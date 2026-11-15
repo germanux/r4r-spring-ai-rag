@@ -67,6 +67,7 @@ public class RagStreamController implements AutoCloseable {
             return ResponseEntity.badRequest().build();
         }
         var ticket = usage == null ? null : usage.begin();
+        if (ticket != null) ticket.question(request.question());
         if (stopping.get() || !admission.tryAcquire()) {
             if (ticket != null) ticket.finish("ERROR");
             return busy();
@@ -102,6 +103,7 @@ public class RagStreamController implements AutoCloseable {
                     String id = audits.prepare(captured.get());
                     if (id != null) event.put("auditId", id);
                 }
+                if (ticket != null) ticket.response(response.withAuditId((String)event.get("auditId")), (Double)session.progress.metrics().get("generationMs"));
                 session.terminal(event);
             } catch (CancellationException ex) {
                 if (!session.terminalQueued.get()) session.abort();

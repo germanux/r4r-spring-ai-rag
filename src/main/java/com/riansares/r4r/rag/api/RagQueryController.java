@@ -33,14 +33,17 @@ public class RagQueryController {
         }
 
         var ticket = usage == null ? null : usage.begin();
+        if (ticket != null) ticket.question(request.question());
         var router = routers == null ? null : routers.getIfAvailable();
         if (router != null) router.clearRequestExecution();
         try {
         var captured = new java.util.concurrent.atomic.AtomicReference<com.riansares.r4r.rag.RagEvidenceSnapshot>();
         boolean auditEnabled = audits != null && audits.enabled();
+        var progress = com.riansares.r4r.rag.RagProgress.silent();
         com.riansares.r4r.rag.RagResult result = auditEnabled
                 ? citedRagService.answer(request.question(), request.retrievalQuestion(), request.responseLanguage(),
-                    com.riansares.r4r.rag.RagProgress.silent(), captured::set)
+                    progress, captured::set)
+                : ticket != null ? citedRagService.answer(request.question(), request.retrievalQuestion(), request.responseLanguage(), progress)
                 : request.retrievalQuestion() == null
                 && request.responseLanguage() == null
                 ? citedRagService.answer(request.question())
@@ -49,7 +52,7 @@ public class RagQueryController {
         RagQueryResponse response = response(result, router == null ? null : router.requestExecution());
         if (auditEnabled) response = response.withAuditId(audits.prepare(captured.get()));
 
-        if (ticket != null) ticket.finish(response.status().name());
+        if (ticket != null) ticket.response(response, (Double)progress.metrics().get("generationMs"));
         return ResponseEntity.ok(response);
         } finally { if (ticket != null) ticket.finish("ERROR"); if (router != null) router.clearRequestExecution(); }
     }

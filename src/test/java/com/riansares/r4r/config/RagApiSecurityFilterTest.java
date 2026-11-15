@@ -96,6 +96,7 @@ class RagApiSecurityFilterTest {
     void trustsCloudflareIpOnlyWhenProxyHeadersAreEnabled(String path) throws Exception {
         AtomicLong clock = new AtomicLong(1_000_000_000L);
         RagApiSecurityFilter filter = new RagApiSecurityFilter(properties(true, true), clock::get);
+        filter.setTrustedProxyAddresses("10.0.0.2");
 
         MockHttpServletRequest first = request(path, "10.0.0.2", "http://localhost:63342");
         first.addHeader("CF-Connecting-IP", "203.0.113.10");
@@ -108,6 +109,19 @@ class RagApiSecurityFilterTest {
         MockHttpServletResponse secondResponse = new MockHttpServletResponse();
         filter.doFilter(second, secondResponse, new MockFilterChain());
         assertEquals(200, secondResponse.getStatus());
+    }
+
+    @org.junit.jupiter.api.Test
+    void untrustedPeerCannotRotateForwardedIpsToBypassQuota() throws Exception {
+        var filter=new RagApiSecurityFilter(properties(true,true));
+        filter.setTrustedProxyAddresses("10.0.0.2");
+        for (int i=0;i<2;i++) {
+            var request=request("/api/rag/answers","10.0.0.99","http://localhost:63342");
+            request.addHeader("CF-Connecting-IP","203.0.113."+(10+i));
+            request.addHeader("X-Forwarded-For","203.0.113."+(20+i));
+            var response=new MockHttpServletResponse();filter.doFilter(request,response,new MockFilterChain());
+            assertEquals(i==0?200:429,response.getStatus());
+        }
     }
 
     @ParameterizedTest
