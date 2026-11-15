@@ -492,7 +492,8 @@ Se conserva íntegro el contenido previo de memoria y el commit SSE del usuario.
 
 ## Frontend Angular estático
 
-- `front-athagon-r4r-static/v1/` conserva la versión HTML/JS archivada. No editarla.
+- `front-athagon-r4r-static/` publica Angular; `v1/` conserva la interfaz HTML/JS.
+  Ambas versiones utilizan el único directorio documental de la raíz: `docs/`.
 - `frontend/src/app/` organiza los componentes standalone OnPush y signals en
   `layout/` y `features/`; servicios y modelos compartidos están en `core/`. El CSS compartido conserva la
   cascada responsive original; los componentes usan estilos encapsulados.
@@ -502,11 +503,10 @@ Se conserva íntegro el contenido previo de memoria y el commit SSE del usuario.
 - Compilación: `bash scripts/build-frontend-angular.sh`. Usa dependencias locales,
   Angular CLI mediante npx y Chromium únicamente durante la compilación para
   prerenderizar el HTML inicial sin acceso a servicios externos. Puede indicarse
-  `CHROMIUM_PATH`. Publica únicamente en `front-athagon-r4r-static/v2-ng/`, con
-  base `/v2-ng/`, sin subdirectorio browser ni servidor Node en producción.
-- `frontend/nginx-static.conf` contiene las ubicaciones para el servidor NGINX
-  existente y la redirección de `/` a `/v2-ng/`. Su aplicación al servidor público
-  es un paso de despliegue manual.
+  `CHROMIUM_PATH`. Publica en la raíz de `front-athagon-r4r-static/`, con
+  base relativa `./`, sin subdirectorio browser ni servidor Node en producción.
+- `frontend/nginx-static.conf` sirve `/r4r-rag/` y su versión legacy `/r4r-rag/v1/`
+  como contenido estático, sin redirección a un directorio v2-ng.
 - Validación reproducible: servir `front-athagon-r4r-static/` por HTTP local en
   `127.0.0.1:8765`, ejecutar `node frontend/validate-migration.mjs` y
   `node frontend/validate-edge-cases.mjs`, con `CHROMIUM_PATH` si corresponde.
@@ -589,3 +589,22 @@ Se conserva íntegro el contenido previo de memoria y el commit SSE del usuario.
   informes JSON están bajo `docs/validation/angular-migration/closure/`.
 - La estructura Angular por funcionalidades, los servicios, los contratos y el
   comportamiento RAG permanecen sin cambios por este cierre visual.
+
+
+## Publicación conjunta en la raíz y documentos compartidos
+
+- Angular se publica en `front-athagon-r4r-static/index.html`, con base relativa
+  `./`, compatible con `/r4r-rag/`. No existe directorio público `v2-ng/`.
+- `front-athagon-r4r-static/docs/` es el único origen de los 82 PDF y sus 82 HTML.
+  Se retiran las copias de `frontend/public/docs/` y `v1/docs/`; el build conserva
+  la documentación canónica y no la duplica en su salida temporal.
+- v1 conserva recursos propios y enlaza los documentos con `../docs/`.
+- La denominación «v2-ng» y el stack Angular, TypeScript y SCSS solo se muestran
+  en el diagrama y los listados técnicos de la versión Angular.
+- `frontend/validate-publication.mjs` hace tres renders y comprueba los enlaces
+  compartidos, los recursos y los 82 pares PDF/HTML. Puede configurarse
+  R4R_PUBLICATION_BASE y CHROMIUM_PATH; por defecto usa
+  `http://127.0.0.1:8767/r4r-rag/`.
+- La copia de publicación se mantiene en el repositorio independiente athagon-web,
+  bajo `html-static/r4r-rag/`. Los resultados de copia, commit y push se registran
+  en `docs/validation/angular-migration/publication/`.

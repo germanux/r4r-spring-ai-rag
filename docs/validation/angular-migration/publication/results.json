@@ -1,0 +1,51 @@
+{
+  "base": "http://127.0.0.1:8767/r4r-rag/",
+  "renders": [
+    {
+      "name": "angular-technical-es",
+      "lang": "es",
+      "width": 1440,
+      "legacy": false,
+      "technical": true,
+      "passed": true,
+      "missingAssets": []
+    },
+    {
+      "name": "angular-mobile-en",
+      "lang": "en",
+      "width": 390,
+      "legacy": false,
+      "passed": true,
+      "missingAssets": []
+    },
+    {
+      "name": "legacy-shared-docs-es",
+      "lang": "es",
+      "width": 390,
+      "legacy": true,
+      "passed": true,
+      "missingAssets": []
+    }
+  ],
+  "documents": 82,
+  "consoleErrors": [],
+  "publicationRepository": "/home/german/Desarrollo/athagon-web.git",
+  "publicationPath": "html-static/r4r-rag/",
+  "localCommit": "616ec765ec7bc65827dc4adbd5d20e3d131054d4",
+  "push": {
+    "status": "FAILED",
+    "reason": "GitLab HTTPS credentials unavailable; terminal could not read Username",
+    "remoteUpdated": false
+  },
+  "legacyUnitTests": 106,
+  "canonicalDocumentTree": {
+    "path": "docs/",
+    "pdfCount": 82,
+    "duplicatedPDFs": 0,
+    "bytesUnchanged": true
+  },
+  "historicalPDFCrossCorpusTest": {
+    "status": "FAILED",
+    "reason": "References knowledge/en/sources/R4R_71_INTERNATIONAL_TECHNICAL_REFERENCES_2026.md, absent from the current corpus; published PDFs independently validated."
+  }
+}

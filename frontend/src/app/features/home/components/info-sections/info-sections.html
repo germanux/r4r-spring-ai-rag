@@ -50,7 +50,7 @@
         </div>
         <p class="architecture-caption">{{ i.t('page.generation_note') }}</p>
         <p id="modelReadiness" class="model-readiness" role="status" aria-live="polite">{{ s.runtime.readiness() || i.t('notQueried') }}</p>
-<details class="config-details" id="engineeringDetails"><summary>{{ i.t('page.engineering_architecture') }}</summary><img class="architecture-diagram" src="assets/architecture.svg" [attr.alt]="i.t('page.architecture_flow')"/><ul><li>{{ i.t('page.engineering_stack') }}</li><li>{{ i.t('page.engineering_retrieval') }}</li><li>{{ i.t('page.engineering_generation') }}</li><li>{{ i.t('page.engineering_observability') }}</li></ul></details>
+<details class="config-details" id="engineeringDetails"><summary>{{ i.t('page.engineering_architecture') }}</summary><img class="architecture-diagram" src="assets/architecture.svg" [attr.alt]="i.t('page.architecture_flow')"/><ul><li>{{ i.t('page.frontend_stack') }}</li><li>{{ i.t('page.engineering_stack') }}</li><li>{{ i.t('page.engineering_retrieval') }}</li><li>{{ i.t('page.engineering_generation') }}</li><li>{{ i.t('page.engineering_observability') }}</li></ul></details>
         <details class="config-details" id="flowDetails"><summary>{{ i.t('page.execution_flow') }}</summary>
         <div class="arch-flow arch-steps architecture-route" [attr.aria-label]="i.t('page.architecture_flow')">
           <details class="arch-step"><summary><span class="node-id">01</span><strong>{{ i.t('page.demo_website') }}</strong><small>{{ i.t('page.web_interface') }}</small></summary><p>{{ i.t('page.your_question_starts_in_the_web_interface') }}</p></details>
@@ -91,7 +91,7 @@
       <p class="translation-note">{{ i.t('page.public_frontend_scope') }}</p>
           <div class="config-grid" id="runtimeConfig">
             <div><span>Backend</span><strong id="runtimeVersions">{{ runtimeField('runtimeVersions') }}</strong></div>
-            <div><span>Frontend</span><strong>Angular · TypeScript · CSS</strong></div>
+            <div><span>Frontend</span><strong>{{ i.t('page.frontend_stack') }}</strong></div>
             <div><span>{{ i.t('page.database_search') }}</span><strong>{{ i.t('page.database_search_details') }}</strong></div>
             <div><span>{{ i.t('page.platform_containers') }}</span><strong>Linux · Docker · Docker Compose</strong></div>
             <div><span>{{ i.t('page.local_models') }}</span><strong><span>{{ i.t('page.local_models_details') }}</span> <span id="runtimeEmbeddingModel">{{ runtimeField('runtimeEmbeddingModel') }}</span> · <span id="runtimeEmbeddings">{{ runtimeField('runtimeEmbeddings') }}</span></strong></div>

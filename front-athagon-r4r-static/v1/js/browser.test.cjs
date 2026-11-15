@@ -46,7 +46,7 @@ const response={stage:'ANSWER_READY',answer:'Safe **answer** [S1]',abstained:fal
    assert.equal(frame.heading,data.capture.display || (lang==='es'?'Respuesta guardada':'Saved response'));
    for(const citation of data.citations) assert(frame.sources.includes(citation.section));
    assert.equal(frame.links.length,data.citations.length);
-   for(const link of frame.links) {assert(link.startsWith('docs/'+lang+'/'));assert(fs.existsSync(path.join(root,link.split('#')[0])));}
+   for(const link of frame.links) {assert(link.startsWith('../docs/'+lang+'/'));assert(fs.existsSync(path.join(root,link.split('#')[0])));}
   }
   assert(playback.questions.some(q=>q.length>0 && q.length<fixtures.kitchen[lang][0].question.length));
   assert(playback.pressed);assert(playback.sourcesPressed);assert.equal(requests.length,0);

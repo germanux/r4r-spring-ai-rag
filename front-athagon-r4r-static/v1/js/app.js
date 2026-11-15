@@ -1072,7 +1072,7 @@
       if (selected) {
         const section = (citation.headingPath || []).map(heading => /^(\d+(?:\.\d+)*)/.exec(heading)?.[1]).filter(Boolean).reverse()
           .map(number => "section-" + number.replace(/\./g, "-")).find(anchor => selected.sectionPages?.[anchor]);
-        source.setAttribute("href", selected.url + (section ? "#page=" + selected.sectionPages[section] : ""));
+        source.setAttribute("href", "../" + selected.url + (section ? "#page=" + selected.sectionPages[section] : ""));
         source.setAttribute("target", "_blank"); source.setAttribute("rel", "noopener");
       }
       source.className = "citation-source";

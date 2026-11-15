@@ -917,13 +917,13 @@ test('known Markdown sources link to PDFs with the original basename', async () 
  const card = p.node('citations').children[0];
  const source=card.children[0].children[1];
  assert.equal(source.tagName,'a');
- assert.equal(source.getAttribute('href'),'docs/es/faqs/R4R_40_ALL_FAQ.pdf');
+ assert.equal(source.getAttribute('href'),'../docs/es/faqs/R4R_40_ALL_FAQ.pdf');
  assert.ok(source.textContent.includes('preguntas frecuentes'));assert.ok(source.textContent.includes('Abrir documento'));
 });
 
 test('recordings match embedded fixtures and every citation has a published document', () => {
  const fixtures = JSON.parse(fs.readFileSync(path.join(root,'fixtures/recordings.json'),'utf8'));
- const catalogue=JSON.parse(fs.readFileSync(path.join(root,'docs/catalogue.json'),'utf8'));
+ const catalogue=JSON.parse(fs.readFileSync(path.join(root,'../docs/catalogue.json'),'utf8'));
  const p=openPage('es',new Map(),{offline:true});assert.deepEqual(JSON.parse(p.node('recordedExamples').textContent),fixtures);
  for(const pair of Object.values(fixtures)) for(const lang of ['es','en']) for(const data of [].concat(pair[lang] || [])) {
   assert.ok(data.question);if(!data.capture) assert.equal(typeof data.abstained,'boolean');
@@ -932,7 +932,7 @@ test('recordings match embedded fixtures and every citation has a published docu
     ? Object.values(catalogue).map(pair=>pair[lang]).find(doc=>doc.title.replace(/^Riansares 4R\s*[—-]\s*/, '').toLowerCase()===citation.document.toLowerCase())
     : catalogue[/R4R_\d+/.exec(citation.source)[0]][lang];
    assert.ok(doc, citation.document || citation.source);
-   assert.ok(fs.existsSync(path.join(root,doc.url)));
+   assert.ok(fs.existsSync(path.join(root,'..',doc.url)));
   }
  }
 });
@@ -966,7 +966,7 @@ test('English sources use the verified English counterpart and preserve original
  const original='es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md';
  const p=openPage('en',new Map(),{offline:true,payload:{answer:'Answer [S1]',abstained:false,citations:[{label:'[S1]',source:original,headingPath:['Original heading'],ordinal:48}]}});
  p.node('question').value='Question';await p.node('sendButton').handlers.click();
- const card=p.node('citations').children[0];assert.ok(card.children[0].children[1].getAttribute('href').startsWith('docs/en/'));
+ const card=p.node('citations').children[0];assert.ok(card.children[0].children[1].getAttribute('href').startsWith('../docs/en/'));
  assert.ok(card.textContent.includes(original));assert.ok(card.textContent.includes('Original heading'));
 });
 test('kitchen screenshot transcriptions preserve captured fields without backend metadata',()=>{
@@ -1016,12 +1016,12 @@ test('completed SSE history remains inspectable outside the hidden loading block
 });
 
 test('numeric source sections use actual PDF page targets and preserve evidence trace',async()=>{
- const catalogue=JSON.parse(fs.readFileSync(path.join(root,'docs/catalogue.json'),'utf8'));
+ const catalogue=JSON.parse(fs.readFileSync(path.join(root,'../docs/catalogue.json'),'utf8'));
  const source='es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md';
  const p=openPage('en',new Map(),{offline:true,payload:{answer:'Evidence [S1]',abstained:false,citations:[{label:'[S1]',source,headingPath:['6.3. Distinción entre solera y solado'],ordinal:5}]}});
  p.node('question').value='Question';await p.node('sendButton').handlers.click();
  const link=p.node('citations').children[0].children[0].children[1];
- assert.equal(link.getAttribute('href'),catalogue.R4R_10.en.url+'#page='+catalogue.R4R_10.en.sectionPages['section-6-3']);
+ assert.equal(link.getAttribute('href'),'../'+catalogue.R4R_10.en.url+'#page='+catalogue.R4R_10.en.sectionPages['section-6-3']);
  assert.ok(link.textContent.includes('PDF'));assert.ok(p.node('citations').textContent.includes(source));
 });
 

@@ -12,7 +12,7 @@ async function setup(version,width,lang){
  await page.addInitScript(({lang})=>{
  localStorage.setItem('r4r.language',lang);const nativeFetch=window.fetch;window.testMode='sse';window.fetch=async(url,init)=>{if(String(url).endsWith('/api/rag/answers/stream')){if(window.testMode==='rest')return new Response('',{status:404});if(window.testMode==='network')throw new TypeError('Failed to fetch');if(['429','503'].includes(window.testMode))return new Response('{}',{status:Number(window.testMode)});return new Response(new ReadableStream({start(c){window.testStream=c;const enc=new TextEncoder();c.enqueue(enc.encode('data: {"stage":"REQUEST_RECEIVED","elapsedMs":0}\n\ndata: {"stage":"RETRIEVAL_STARTED","elapsedMs":1}\n\n'));init.signal.addEventListener('abort',()=>c.error(new DOMException('Aborted','AbortError')));}}),{headers:{'Content-Type':'text/event-stream'}});}return nativeFetch(url,init);};
  },{lang});
- await page.goto(`${origin}/${version}/?prerender=1`);await page.locator('#question').waitFor();
+ await page.goto(`${origin}/${version==='v1'?'v1/':''}?prerender=1`);await page.locator('#question').waitFor();
  // Stop legacy autoplay before it starts. Angular honours prerender mode.
  await page.locator('#question').focus();
  return {page,context,errors,setAudit(mode){auditMode=mode;},async waitAudit(){await auditStarted;},finishAudit(){auditResolve?.();},resetAudit(){auditStarted=new Promise(r=>auditStartedResolve=r);},};

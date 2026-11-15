@@ -3,7 +3,8 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const {spawnSync}=require('node:child_process');
 const root=path.resolve(__dirname,'..');
-const catalogue=JSON.parse(fs.readFileSync(path.join(root,'docs/catalogue.json')));
+const sharedRoot=path.resolve(root,'..');
+const catalogue=JSON.parse(fs.readFileSync(path.join(sharedRoot,'docs/catalogue.json')));
 const legacy=JSON.parse(fs.readFileSync(path.join(root,'fixtures/legacy-pdfs.json')));
 const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 function checkBytes(bytes) {
@@ -13,9 +14,9 @@ function checkBytes(bytes) {
 function checkLocal(doc) {
  assert.equal(doc.url,'docs/'+doc.source.replace(/\.md$/,'.pdf'));
  assert.ok(!doc.url.includes('..'));
- const file=path.join(root,doc.url),bytes=fs.readFileSync(file);checkBytes(bytes);
+ const file=path.join(sharedRoot,doc.url),bytes=fs.readFileSync(file);checkBytes(bytes);
  assert.equal(hash(bytes),doc.pdfSha256);
- assert.equal(hash(fs.readFileSync(path.resolve(root,'../knowledge',doc.source))),doc.sha256);
+ assert.equal(hash(fs.readFileSync(path.resolve(sharedRoot,'../knowledge',doc.source))),doc.sha256);
  const result=spawnSync('pdfinfo',[file],{encoding:'utf8'});assert.equal(result.status,0,result.stderr);
  const count=Number(/^Pages:\s+(\d+)/m.exec(result.stdout)?.[1]);assert.ok(count>0);
  for(const page of Object.values(doc.sectionPages))assert.ok(Number.isInteger(page)&&page>=1&&page<=count);
@@ -41,7 +42,7 @@ test('41 stable IDs have matching ES/EN PDF sources, valid content and real page
 });
 test('legacy public PDFs are unchanged',()=>{
  assert.equal(Object.keys(legacy).length,8);
- for(const [url,digest] of Object.entries(legacy)){const bytes=fs.readFileSync(path.join(root,url));checkBytes(bytes);assert.equal(hash(bytes),digest);}
+ for(const [url,digest] of Object.entries(legacy)){const bytes=fs.readFileSync(path.join(sharedRoot,url));checkBytes(bytes);assert.equal(hash(bytes),digest);}
 });
 test('broken, HTML and truncated PDF links are rejected',()=>{
  assert.throws(()=>checkBytes(Buffer.from('<html>error</html>')));
