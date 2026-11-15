@@ -235,6 +235,14 @@ ssh "${SSH_OPTIONS[@]}" -tt "$REMOTE" "
   sudo \"\$DOCKER_BIN\" logs --tail 80 r4r-api
 "
 
+# Final stage: the backend deployment and its remote checks have already completed.
+echo
+echo "==> Backend desplegado. Compilando Angular y distribuyendo el frontend (SMB al final)..."
+if ! bash "$ROOT/scripts/build-frontend-angular.sh"; then
+  echo "ERROR: la distribución del frontend no ha terminado. El backend ya está desplegado y no se revierte." >&2
+  exit 1
+fi
+
 echo
 echo "=========================================="
 echo " Despliegue finalizado: $IMAGE"
