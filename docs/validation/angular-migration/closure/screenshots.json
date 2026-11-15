@@ -1,0 +1,74 @@
+[
+  {
+    "file": "selected/v1-es-before.png",
+    "source": "full/v1-es-before.png",
+    "version": "v1",
+    "caption": "Inicio · ES"
+  },
+  {
+    "file": "selected/v1-es-progress.png",
+    "source": "full/v1-es-loading.png",
+    "version": "v1",
+    "caption": "Progreso inmediato · ES"
+  },
+  {
+    "file": "selected/v1-en-partial.png",
+    "source": "full/v1-en-partial.png",
+    "version": "v1",
+    "caption": "Respuesta parcial · EN"
+  },
+  {
+    "file": "selected/v1-en-audit.png",
+    "source": "full/v1-en-audit-pending.png",
+    "version": "v1",
+    "caption": "Auditoría pendiente · EN"
+  },
+  {
+    "file": "selected/v1-es-context.png",
+    "source": "full/v1-es-context-restored.png",
+    "version": "v1",
+    "caption": "Contexto al volver arriba · ES"
+  },
+  {
+    "file": "selected/v1-en-desktop.png",
+    "source": "full/v1-1440-en-answer.png",
+    "version": "v1",
+    "caption": "Dos columnas y revisión finalizada · EN"
+  },
+  {
+    "file": "selected/v2-ng-es-before.png",
+    "source": "full/v2-ng-es-before.png",
+    "version": "v2-ng",
+    "caption": "Inicio · ES"
+  },
+  {
+    "file": "selected/v2-ng-es-progress.png",
+    "source": "full/v2-ng-es-loading.png",
+    "version": "v2-ng",
+    "caption": "Progreso inmediato · ES"
+  },
+  {
+    "file": "selected/v2-ng-en-partial.png",
+    "source": "full/v2-ng-en-partial.png",
+    "version": "v2-ng",
+    "caption": "Respuesta parcial · EN"
+  },
+  {
+    "file": "selected/v2-ng-en-audit.png",
+    "source": "full/v2-ng-en-audit-pending.png",
+    "version": "v2-ng",
+    "caption": "Auditoría pendiente · EN"
+  },
+  {
+    "file": "selected/v2-ng-es-context.png",
+    "source": "full/v2-ng-es-context-restored.png",
+    "version": "v2-ng",
+    "caption": "Contexto al volver arriba · ES"
+  },
+  {
+    "file": "selected/v2-ng-en-desktop.png",
+    "source": "full/v2-ng-1440-en-answer.png",
+    "version": "v2-ng",
+    "caption": "Dos columnas y revisión finalizada · EN"
+  }
+]

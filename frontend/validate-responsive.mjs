@@ -24,23 +24,47 @@ if(!process.env.R4R_ZOOM_ONLY){
 for(const version of ['v1','v2-ng'])for(const width of [320,360,390,430,768,1024,1440])for(const lang of ['es','en']){
  const t=await setup(version,width,lang),{page}=t;
  assert.equal(await page.locator('h1').count(),1);assert.equal((await page.locator('h1').textContent()).trim(),lang==='es'?'Asistente de IA para reformas':'AI assistant for renovations');assert(await page.locator('h1').isVisible());
+ assert.equal((await page.locator('.hero-lede').textContent()).trim(),lang==='es'?'Respuestas basadas en documentación de Riansares 4R.':'Answers grounded in Riansares 4R documentation.');assert(await page.locator('.hero-lede').isVisible());
+ const originalContext=await page.evaluate(()=>['h1','.hero-lede'].map(selector=>document.querySelector(selector).getBoundingClientRect().top+scrollY));
  assert.equal(await page.locator('#languageSelect option:checked').textContent(),lang==='es'?'🇪🇸 ES':'🇬🇧 EN');
  if(width===390)await page.screenshot({path:new URL(`${version}-${lang}-before.png`,out).pathname});
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'initial overflow');
  if(width<=960){assert((await page.locator('.site-header').boundingBox()).height<85,'compact header');await page.locator('#menuToggle').click();assert.equal(await page.locator('#menuToggle').getAttribute('aria-expanded'),'true');await page.keyboard.press('Escape');assert.equal(await page.locator('#menuToggle').getAttribute('aria-expanded'),'false');await page.locator('#menuToggle').click();await page.locator('.nav a[href="#arquitectura"]').click();assert.equal(await page.locator('#menuToggle').getAttribute('aria-expanded'),'false');await page.locator('#architectureContent').waitFor({state:'visible'});}
  if(width>=1024){const a=await page.locator('.query-panel').boundingBox(),b=await page.locator('.response-panel').boundingBox();assert(Math.abs(a.y-b.y)<2&&b.x>a.x,'desktop columns');}
  await page.locator('#question').fill('¿Cómo pinto una pared?');await page.locator('#sendButton').click();await page.locator('#loadingState').waitFor({state:'visible'});await page.waitForTimeout(60);
- if(width<=760){assert((await visibleStart(page,'h1')).visible,'compact h1 stays in viewport');const title=await page.locator('h1').boundingBox(),summary=await page.locator('#querySummary').boundingBox();assert(title.y+title.height<=summary.y,'title before question');const pos=await visibleStart(page,'#loadingState');assert(pos.visible,JSON.stringify({version,width,lang,stage:'progress',pos}));assert.equal(await page.locator('.query-panel').isVisible(),false);}
+ if(width<=760){assert(await page.locator('h1').isVisible(),'h1 retained in document');assert(await page.locator('.hero-lede').isVisible(),'description retained in document');assert((await visibleStart(page,'#querySummary')).visible,'question immediately visible');const title=await page.locator('h1').boundingBox(),summary=await page.locator('#querySummary').boundingBox();assert(title.y+title.height<=summary.y,'title before question');const pos=await visibleStart(page,'#loadingState');assert(pos.visible,JSON.stringify({version,width,lang,stage:'progress',pos}));assert.equal(await page.locator('.query-panel').isVisible(),false);}
  if(width===390)await page.screenshot({path:new URL(`${version}-${lang}-loading.png`,out).pathname});
+ const contextAfterSubmit=await page.evaluate(()=>['h1','.hero-lede'].map(selector=>document.querySelector(selector).getBoundingClientRect().top+scrollY));
+ contextAfterSubmit.forEach((top,index)=>assert(Math.abs(top-originalContext[index])<2,'context keeps its document position'));
+ if(width===390){
+  const positionedScroll=await page.evaluate(()=>scrollY);
+  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+  assert((await visibleStart(page,'h1')).visible && (await visibleStart(page,'.hero-lede')).visible,'scrolling up restores context during SSE');
+  await page.evaluate(()=>window.testStream.enqueue(new TextEncoder().encode('data: {"stage":"GENERATION_STARTED","elapsedMs":2}\n\n')));
+  await page.waitForTimeout(40);assert.equal(await page.evaluate(()=>scrollY),0,'SSE respects manual scroll');
+  await page.evaluate(top=>window.scrollTo({top,behavior:'instant'}),positionedScroll);
+ }
+
  await finish(page,lang);await t.waitAudit();await page.locator('#auditNote[data-state="pending"]').waitFor();if(width===390)await page.screenshot({path:new URL(`${version}-${lang}-audit-pending.png`,out).pathname});
- if(width<=760){assert((await visibleStart(page,'h1')).visible,'h1 remains visible with final answer');const pos=await visibleStart(page,'#answerText');assert(pos.visible,JSON.stringify({version,width,lang,stage:'answer',pos}));}
- const before=await page.locator('#answerText').boundingBox();t.finishAudit();await page.locator('#auditNote[data-state="reviewed"]').waitFor();const after=await page.locator('#answerText').boundingBox();assert(Math.abs(before.y-after.y)<2,'audit layout shift');
+ if(width<=760){assert(await page.locator('h1').isVisible(),'h1 retained with final answer');assert(await page.locator('.hero-lede').isVisible(),'description retained with final answer');const pos=await visibleStart(page,'#answerText');assert(pos.visible,JSON.stringify({version,width,lang,stage:'answer',pos}));}
+ const auditScroll=await page.evaluate(()=>scrollY);const before=await page.locator('#answerText').boundingBox();t.finishAudit();await page.locator('#auditNote[data-state="reviewed"]').waitFor();const after=await page.locator('#answerText').boundingBox();assert(Math.abs(before.y-after.y)<2,'audit layout shift');assert.equal(await page.evaluate(()=>scrollY),auditScroll,'audit never scrolls');
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'result overflow');
  const badge=await page.locator('#auditNote').evaluate(el=>({w:el.getBoundingClientRect().width,h:el.getBoundingClientRect().height}));assert(badge.w>100&&badge.h<65,'badge readable');
  const spacing=await page.evaluate(()=>{const head=document.querySelector('.response-panel > .panel-head').getBoundingClientRect(),text=document.querySelector('#answerText').getBoundingClientRect(),box=document.querySelector('.answer-box').getBoundingClientRect();return {headerHeight:head.height,toolbarGap:text.top-box.top};});assert(spacing.toolbarGap<30,'no empty copy/provider toolbar row');
  await page.screenshot({path:new URL(`${version}-${width}-${lang}-answer.png`,out).pathname,fullPage:true});
+
+ if(width<=760){
+  const resultScroll=await page.evaluate(()=>scrollY);
+  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+  assert((await visibleStart(page,'h1')).visible && (await visibleStart(page,'.hero-lede')).visible,'context reappears at page top');
+  if(width===390)await page.screenshot({path:new URL(`${version}-${lang}-context-restored.png`,out).pathname,fullPage:true});
+  await page.evaluate(()=>{const hero=document.querySelector('.hero');window.scrollTo({top:hero.getBoundingClientRect().bottom+scrollY+8,behavior:'instant'});});
+  assert(await page.evaluate(()=>document.querySelector('.hero-lede').getBoundingClientRect().bottom<=document.querySelector('.site-header').getBoundingClientRect().bottom),'context scrolls away naturally');
+  assert(await page.evaluate(()=>Math.abs(document.querySelector('.site-header').getBoundingClientRect().top)<2),'only app bar remains sticky');
+  await page.evaluate(top=>window.scrollTo({top,behavior:'instant'}),resultScroll);
+ }
  if(width<=760){await page.locator('#editQuestion').click();assert.equal(await page.locator('#question').inputValue(),'¿Cómo pinto una pared?');assert(await page.locator('#question').isVisible());}
- assert.deepEqual(t.errors,[]);report.push({version,width,lang,progressInViewport:true,answerInViewport:width<=760?'passed':'desktop',auditShift:after.y-before.y,spacing,consoleErrors:t.errors});await t.context.close();
+ assert.deepEqual(t.errors,[]);report.push({version,width,lang,progressInViewport:true,answerInViewport:width<=760?'passed':'desktop',auditShift:after.y-before.y,contextPreserved:true,naturalScroll:true,questionBeforeAnswer:true,spacing,consoleErrors:t.errors});await t.context.close();
 }
 for(const version of ['v1','v2-ng'])for(const lang of ['es','en'])for(const mode of ['partial','abstained','downgrade','inconclusive','failed']){
  const t=await setup(version,390,lang),{page}=t;t.setAudit(mode);await page.locator('#question').fill('¿Cómo pinto una pared?');await page.locator('#sendButton').click();await page.locator('#loadingState').waitFor({state:'visible'});await finish(page,lang,mode==='partial'?'PARTIAL':mode==='abstained'?'ABSTAINED':'ANSWERED');await t.waitAudit();const before=await page.locator('#answerText').boundingBox();t.finishAudit();const state=mode==='inconclusive'?'inconclusive':mode==='failed'?'unavailable':'reviewed';await page.locator(`#auditNote[data-state="${state}"]`).waitFor();const after=await page.locator('#answerText').boundingBox();

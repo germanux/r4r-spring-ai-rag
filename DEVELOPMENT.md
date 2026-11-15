@@ -571,3 +571,21 @@ Se conserva íntegro el contenido previo de memoria y el commit SSE del usuario.
   endpoint y preferencias del navegador conservan el comportamiento existente.
 - No queda carpeta `migration/` en el código Angular. Las rutas de evidencias
   históricas `docs/validation/angular-migration/` mantienen su nombre.
+
+## Cierre definitivo: contexto y scroll natural
+
+- Esta regla sustituye el posicionamiento del remate anterior: título y descripción
+  conservan su posición original en el documento y no son sticky. El hero móvil
+  es compacto siempre; al consultar solo se retiran sus acciones secundarias.
+- ES: «Asistente de IA para reformas» y «Respuestas basadas en documentación de
+  Riansares 4R.» EN: «AI assistant for renovations» y «Answers grounded in Riansares
+  4R documentation.» Se mantiene un único h1 y el selector visual ES/EN accesible.
+- El envío posiciona una sola vez la pregunta resumida bajo la barra sticky. No
+  fuerza que todo el contexto permanezca en el viewport; al volver arriba se
+  recuperan naturalmente el título y la descripción. SSE y auditoría no desplazan.
+- Pruebas reproducibles con el servidor estático local:
+  `R4R_RESPONSIVE_OUTPUT=closure/full/ node frontend/validate-responsive.mjs`.
+  Las capturas completas quedan locales e ignoradas; doce representativas y los
+  informes JSON están bajo `docs/validation/angular-migration/closure/`.
+- La estructura Angular por funcionalidades, los servicios, los contratos y el
+  comportamiento RAG permanecen sin cambios por este cierre visual.

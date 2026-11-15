@@ -116,3 +116,20 @@ config/r4r-agents.json.**
 !/docs/validation/angular-migration/polish/selected/v2-ng-es-partial.png
 !/docs/validation/angular-migration/polish/selected/v1-en-partial.png
 !/docs/validation/angular-migration/polish/selected/v2-ng-en-partial.png
+
+# Definitive frontend closure: retain full captures locally, curate twelve images.
+/docs/validation/angular-migration/closure/full/**/*.png
+/docs/validation/angular-migration/closure/full/**/*.txt
+/docs/validation/angular-migration/closure/selected/*.png
+!/docs/validation/angular-migration/closure/selected/v1-es-before.png
+!/docs/validation/angular-migration/closure/selected/v1-en-audit.png
+!/docs/validation/angular-migration/closure/selected/v1-es-progress.png
+!/docs/validation/angular-migration/closure/selected/v1-en-partial.png
+!/docs/validation/angular-migration/closure/selected/v1-es-context.png
+!/docs/validation/angular-migration/closure/selected/v1-en-desktop.png
+!/docs/validation/angular-migration/closure/selected/v2-ng-es-before.png
+!/docs/validation/angular-migration/closure/selected/v2-ng-en-audit.png
+!/docs/validation/angular-migration/closure/selected/v2-ng-es-progress.png
+!/docs/validation/angular-migration/closure/selected/v2-ng-en-partial.png
+!/docs/validation/angular-migration/closure/selected/v2-ng-es-context.png
+!/docs/validation/angular-migration/closure/selected/v2-ng-en-desktop.png

@@ -1,0 +1,664 @@
+[
+  {
+    "version": "v1",
+    "width": 320,
+    "lang": "es",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 93.78125,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v1",
+    "width": 320,
+    "lang": "en",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 93.78125,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v1",
+    "width": 360,
+    "lang": "es",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 73.390625,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v1",
+    "width": 360,
+    "lang": "en",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 73.390625,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v1",
+    "width": 390,
+    "lang": "es",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 73.390625,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v1",
+    "width": 390,
+    "lang": "en",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 73.390625,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v1",
+    "width": 430,
+    "lang": "es",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 73.390625,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v1",
+    "width": 430,
+    "lang": "en",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 73.390625,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v1",
+    "width": 768,
+    "lang": "es",
+    "progressInViewport": true,
+    "answerInViewport": "desktop",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 90,
+      "toolbarGap": 22
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v1",
+    "width": 768,
+    "lang": "en",
+    "progressInViewport": true,
+    "answerInViewport": "desktop",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 90,
+      "toolbarGap": 22
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v1",
+    "width": 1024,
+    "lang": "es",
+    "progressInViewport": true,
+    "answerInViewport": "desktop",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 90,
+      "toolbarGap": 22
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v1",
+    "width": 1024,
+    "lang": "en",
+    "progressInViewport": true,
+    "answerInViewport": "desktop",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 90,
+      "toolbarGap": 22
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v1",
+    "width": 1440,
+    "lang": "es",
+    "progressInViewport": true,
+    "answerInViewport": "desktop",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 45,
+      "toolbarGap": 22
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v1",
+    "width": 1440,
+    "lang": "en",
+    "progressInViewport": true,
+    "answerInViewport": "desktop",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 45,
+      "toolbarGap": 22
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 320,
+    "lang": "es",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 93.78125,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 320,
+    "lang": "en",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 93.78125,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 360,
+    "lang": "es",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 73.390625,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 360,
+    "lang": "en",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 73.390625,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 390,
+    "lang": "es",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 73.390625,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 390,
+    "lang": "en",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 73.390625,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 430,
+    "lang": "es",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 73.390625,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 430,
+    "lang": "en",
+    "progressInViewport": true,
+    "answerInViewport": "passed",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 73.390625,
+      "toolbarGap": 16
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 768,
+    "lang": "es",
+    "progressInViewport": true,
+    "answerInViewport": "desktop",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 90,
+      "toolbarGap": 22
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 768,
+    "lang": "en",
+    "progressInViewport": true,
+    "answerInViewport": "desktop",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 90,
+      "toolbarGap": 22
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 1024,
+    "lang": "es",
+    "progressInViewport": true,
+    "answerInViewport": "desktop",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 90,
+      "toolbarGap": 22
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 1024,
+    "lang": "en",
+    "progressInViewport": true,
+    "answerInViewport": "desktop",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 90,
+      "toolbarGap": 22
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 1440,
+    "lang": "es",
+    "progressInViewport": true,
+    "answerInViewport": "desktop",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 45,
+      "toolbarGap": 22
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v2-ng",
+    "width": 1440,
+    "lang": "en",
+    "progressInViewport": true,
+    "answerInViewport": "desktop",
+    "auditShift": 0,
+    "contextPreserved": true,
+    "naturalScroll": true,
+    "questionBeforeAnswer": true,
+    "spacing": {
+      "headerHeight": 45,
+      "toolbarGap": 22
+    },
+    "consoleErrors": []
+  },
+  {
+    "version": "v1",
+    "lang": "es",
+    "mode": "partial",
+    "state": "reviewed",
+    "auditShift": 0
+  },
+  {
+    "version": "v1",
+    "lang": "es",
+    "mode": "abstained",
+    "state": "reviewed",
+    "auditShift": 0
+  },
+  {
+    "version": "v1",
+    "lang": "es",
+    "mode": "downgrade",
+    "state": "reviewed",
+    "auditShift": 0
+  },
+  {
+    "version": "v1",
+    "lang": "es",
+    "mode": "inconclusive",
+    "state": "inconclusive",
+    "auditShift": 0
+  },
+  {
+    "version": "v1",
+    "lang": "es",
+    "mode": "failed",
+    "state": "unavailable",
+    "auditShift": 0
+  },
+  {
+    "version": "v1",
+    "lang": "en",
+    "mode": "partial",
+    "state": "reviewed",
+    "auditShift": 0
+  },
+  {
+    "version": "v1",
+    "lang": "en",
+    "mode": "abstained",
+    "state": "reviewed",
+    "auditShift": 0
+  },
+  {
+    "version": "v1",
+    "lang": "en",
+    "mode": "downgrade",
+    "state": "reviewed",
+    "auditShift": 0
+  },
+  {
+    "version": "v1",
+    "lang": "en",
+    "mode": "inconclusive",
+    "state": "inconclusive",
+    "auditShift": 0
+  },
+  {
+    "version": "v1",
+    "lang": "en",
+    "mode": "failed",
+    "state": "unavailable",
+    "auditShift": 0
+  },
+  {
+    "version": "v2-ng",
+    "lang": "es",
+    "mode": "partial",
+    "state": "reviewed",
+    "auditShift": 0
+  },
+  {
+    "version": "v2-ng",
+    "lang": "es",
+    "mode": "abstained",
+    "state": "reviewed",
+    "auditShift": 0
+  },
+  {
+    "version": "v2-ng",
+    "lang": "es",
+    "mode": "downgrade",
+    "state": "reviewed",
+    "auditShift": 0
+  },
+  {
+    "version": "v2-ng",
+    "lang": "es",
+    "mode": "inconclusive",
+    "state": "inconclusive",
+    "auditShift": 0
+  },
+  {
+    "version": "v2-ng",
+    "lang": "es",
+    "mode": "failed",
+    "state": "unavailable",
+    "auditShift": 0
+  },
+  {
+    "version": "v2-ng",
+    "lang": "en",
+    "mode": "partial",
+    "state": "reviewed",
+    "auditShift": 0
+  },
+  {
+    "version": "v2-ng",
+    "lang": "en",
+    "mode": "abstained",
+    "state": "reviewed",
+    "auditShift": 0
+  },
+  {
+    "version": "v2-ng",
+    "lang": "en",
+    "mode": "downgrade",
+    "state": "reviewed",
+    "auditShift": 0
+  },
+  {
+    "version": "v2-ng",
+    "lang": "en",
+    "mode": "inconclusive",
+    "state": "inconclusive",
+    "auditShift": 0
+  },
+  {
+    "version": "v2-ng",
+    "lang": "en",
+    "mode": "failed",
+    "state": "unavailable",
+    "auditShift": 0
+  },
+  {
+    "version": "v1",
+    "test": "copy, documents, cancellation, network, 429, 503, timeout, REST, stale audit, dynamic language",
+    "passed": true
+  },
+  {
+    "version": "v2-ng",
+    "test": "copy, documents, cancellation, network, 429, 503, timeout, REST, stale audit, dynamic language",
+    "passed": true
+  },
+  {
+    "version": "v1",
+    "lang": "es",
+    "width": 320,
+    "test": "125% text size",
+    "auditShift": 0,
+    "passed": true
+  },
+  {
+    "version": "v1",
+    "lang": "es",
+    "width": 390,
+    "test": "125% text size",
+    "auditShift": 0,
+    "passed": true
+  },
+  {
+    "version": "v1",
+    "lang": "en",
+    "width": 320,
+    "test": "125% text size",
+    "auditShift": 0,
+    "passed": true
+  },
+  {
+    "version": "v1",
+    "lang": "en",
+    "width": 390,
+    "test": "125% text size",
+    "auditShift": 0,
+    "passed": true
+  },
+  {
+    "version": "v2-ng",
+    "lang": "es",
+    "width": 320,
+    "test": "125% text size",
+    "auditShift": 0,
+    "passed": true
+  },
+  {
+    "version": "v2-ng",
+    "lang": "es",
+    "width": 390,
+    "test": "125% text size",
+    "auditShift": 0,
+    "passed": true
+  },
+  {
+    "version": "v2-ng",
+    "lang": "en",
+    "width": 320,
+    "test": "125% text size",
+    "auditShift": 0,
+    "passed": true
+  },
+  {
+    "version": "v2-ng",
+    "lang": "en",
+    "width": 390,
+    "test": "125% text size",
+    "auditShift": 0,
+    "passed": true
+  }
+]

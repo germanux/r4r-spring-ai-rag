@@ -1,0 +1,50 @@
+{
+  "status": "PASSED",
+  "build": "Angular production and Chromium prerender",
+  "unitTests": {
+    "angular": 16,
+    "legacy": 106
+  },
+  "browserScenarios": 58,
+  "widths": [
+    320,
+    360,
+    390,
+    430,
+    768,
+    1024,
+    1440
+  ],
+  "languages": [
+    "es",
+    "en"
+  ],
+  "API": "deterministic mocks; no real inference",
+  "context": "Single h1 and description retain their original document coordinates; visible again at scroll top; only app bar sticky",
+  "query": "One positioning operation at submit; question before response; progress and answer begin in viewport",
+  "manualScroll": "SSE respects manual scrolling; audit never scrolls",
+  "maxObservedAuditShiftPx": 0,
+  "spacing": "Natural badge slots and the short explanation reserve retained for audit stability; no extra fixed result height introduced. Partial notice-to-answer gap <=12px, copy/provider gap <30px.",
+  "representativeCaptures": 12,
+  "fullLocalCaptures": 80,
+  "backendChanged": false,
+  "documentsRecordingsOrEndpointsChanged": false,
+  "productionDeployment": "NOT RUN",
+  "regressionsDetected": [],
+  "existingTestMaintenance": "Historical standalone PDF test still refers to obsolete paths; no document changes in this intervention.",
+  "modifiedTrackedFiles": [
+    ".gitignore",
+    "DEVELOPMENT.md",
+    "front-athagon-r4r-static/v1/index.html",
+    "front-athagon-r4r-static/v1/js/app.js",
+    "front-athagon-r4r-static/v1/js/i18n.js",
+    "front-athagon-r4r-static/v1/styles/responsive-ux.css",
+    "front-athagon-r4r-static/v2-ng/index.html",
+    "front-athagon-r4r-static/v2-ng/main-AHVBWTDZ.js",
+    "front-athagon-r4r-static/v2-ng/styles-MJR2XEP7.css",
+    "frontend/src/app/core/i18n/translations.ts",
+    "frontend/src/app/features/rag/services/assistant-state.service.ts",
+    "frontend/src/responsive-ux.scss",
+    "frontend/validate-responsive.mjs"
+  ]
+}
