@@ -1,5 +1,8 @@
 # Integración Athagon Labs / Riansares 4R — informe de ejecución
 
+Este informe registra la primera integración. El esquema, privacidad y conservación han sido
+sustituidos por `rag-history-privacy-report.md`; no debe utilizarse para configurar el nuevo registro.
+
 Fecha: 2026-11-15. Estado: cambios implementados y validados localmente; sin publicación.
 La investigación del publicador externo permanece bloqueada: su configuración no está
 versionada en los repositorios inspeccionados. No se declara cumplido el cierre en producción.
@@ -156,17 +159,10 @@ El almacenamiento del texto de preguntas **no existe ni se activa**: requiere
 revisión de privacidad previa y un trabajo expresamente autorizado. No hay FAQ de
 preguntas reales disponible mientras no se guarden textos.
 
-Retención: 30 días. Consultas de lectura y percentiles:
-`docs/operations/sql/assistant-usage.sql`. Eliminación diaria separada:
-`docs/operations/sql/assistant-usage-retention.sql`. Configurar un servicio libpq
-privado `r4r-usage-maintenance` con privilegio DELETE y ejecutar diariamente:
+Actualización posterior: la política y el procedimiento de conservación de este informe
+han sido sustituidos por `rag-history-privacy-report.md`. No hay cron ni purga automática;
+la revisión y supresión son manuales. El script de borrado a 30 días fue retirado.
 
-```sh
-psql 'service=r4r-usage-maintenance' -v ON_ERROR_STOP=1 \
-  -f docs/operations/sql/assistant-usage-retention.sql
-```
-
-No se ha instalado un cron en producción. Debe configurarse junto con la activación.
 VIEW cuenta impresiones, no personas; QUERY/VIEW mide interacción, no conversión
 única. Recargas, varias preguntas, bloqueadores y descartes de cola limitan precisión.
 
@@ -200,7 +196,7 @@ mvn -Dtest=AssistantUsageTest,RagQueryControllerTest,RagStreamControllerTest,Rag
 CHROME_BIN=$(bash scripts/resolve-chrome-bin.sh) npm --prefix frontend run test:ci
 npm --prefix frontend run build -- --base-href ./
 # El destino debe ser NUEVO: el preparador nunca borra una publicación existente.
-python3 scripts/prepare-commercial-release.py \
+python3 py-scripts/prepare-commercial-release.py \
   --commercial /home/german/Desarrollo/R4R/R4R.git --output /tmp/r4r-release-review
 CHROMIUM_PATH=$(bash scripts/resolve-chrome-bin.sh) \
   node frontend/validate-commercial.cjs /tmp/r4r-release-review
@@ -220,9 +216,8 @@ npx wrangler deploy
 
 Ese comando es de producción y **no se ha ejecutado**. Para actualizar además
 las visitas PostgreSQL del asistente completo de Athagon, generar su frontend con
-`scripts/build-frontend-angular.sh` y promover el resultado de
-`front-athagon-r4r-static/` a `html-static/r4r-rag/` siguiendo el procedimiento
-existente; la tarjeta no necesita ese paso para su diseño.
+`scripts/build-frontend-angular.sh`, que también copia el resultado a
+`athagon-web.git/html-static/r4r-rag/` y sincroniza el gestor de consentimiento; la tarjeta no necesita ese paso para su diseño.
 
 Para Riansares no se puede dar honestamente un comando de publicación verificado:
 el destino real y la integración externa de Git no se conocen. Primero revisar
@@ -232,5 +227,5 @@ sin modificar el pipeline por conjetura. Tampoco debe hacerse un push ciego a
 
 Pendientes reales: identificar el publicador; comprobar CSP/CORS HTTPS efectivos
 en ambos dominios y variantes; desplegar backend con V5, CORS y estadísticas
-activadas junto con su eliminación diaria; publicar artefactos completos; verificar
+activadas conforme al nuevo procedimiento de revisión manual; publicar artefactos completos; verificar
 una consulta controlada en producción. Todo lo anterior permanece local y sin publicar.
