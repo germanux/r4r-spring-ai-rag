@@ -23,7 +23,7 @@ public class WebConfiguration implements WebMvcConfigurer {
         registry.addMapping("/api/**")
                 .allowedOrigins(securityProperties.allowedOrigins().toArray(String[]::new))
                 .allowedMethods("GET", "POST", "OPTIONS")
-                .allowedHeaders("Content-Type", "Accept", "X-R4R-Visitor", "X-R4R-Session", "X-R4R-Analytics-Consent", "X-R4R-History-Consent", "X-R4R-Request-Id")
+                .allowedHeaders("Content-Type", "Accept", "X-R4R-Request-Id", "X-R4R-View-Id", "X-R4R-Usage-Opt-Out")
                 .exposedHeaders("Retry-After", "X-R4R-RateLimit-Min-Interval-Seconds")
                 .maxAge(3600);
     }

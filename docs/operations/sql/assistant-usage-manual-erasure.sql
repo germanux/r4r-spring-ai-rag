@@ -11,9 +11,9 @@ DELETE FROM assistant_usage WHERE id=:'event_id'::uuid AND :'confirm'='ERASE-ONE
 ROLLBACK;
 -- To request restriction first, manually run with a single UUID and verified authority:
 -- UPDATE assistant_usage SET restricted_at=now() WHERE id=...;
--- Identifiers can instead be unlinked manually without deleting aggregate metadata:
--- UPDATE assistant_usage SET visitor_id=NULL,session_id=NULL,analytics_consent=NULL WHERE id=...;
--- Minimisation: question=NULL,answer=NULL,audit_result=NULL,history_consent=NULL (scope by verified IDs).
--- Do not execute bulk text searches/exports into shared terminals or application logs.
--- Network minimisation for a verified single event (review the security incident first):
--- UPDATE assistant_usage SET client_ip=NULL,country_code=NULL,security_basis=NULL,network_review_due_at=NULL WHERE id=... AND restricted_at IS NULL;
+-- Minimise a single reviewed record, preserving its technical aggregate outcome:
+-- UPDATE assistant_usage SET question=NULL,answer=NULL,audit_result=NULL,citations=NULL,
+--   content_basis=NULL,content_exclusion='manually_minimized',client_ip=NULL,country_code=NULL,
+--   network_basis=NULL,view_id=NULL WHERE id=...;
+-- Do not export personal text/IPs to shared terminals or application logs.
+-- Restricted records require assessment of legal holds before their final erasure.

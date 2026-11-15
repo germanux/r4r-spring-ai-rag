@@ -69,7 +69,7 @@ public class RagStreamController implements AutoCloseable {
         var ticket = usage == null ? null : usage.begin();
         if (ticket != null) ticket.question(request.question());
         if (stopping.get() || !admission.tryAcquire()) {
-            if (ticket != null) ticket.finish("ERROR");
+            if (ticket != null) ticket.error("unavailable");
             return busy();
         }
         Session session;
@@ -150,7 +150,7 @@ public class RagStreamController implements AutoCloseable {
         }
         void terminal(Map<String, Object> event) {
             if (!closed.get() && terminalQueued.compareAndSet(false, true)) {
-                if (ticket != null) ticket.finish("ANSWER_READY".equals(event.get("stage")) ? String.valueOf(event.get("status")) : "ERROR");
+                if (ticket != null && "ERROR".equals(event.get("stage"))) ticket.error(String.valueOf(event.get("message")));
                 if (!output.offer(new Packet(event, true))) abort();
             }
         }
@@ -198,7 +198,7 @@ public class RagStreamController implements AutoCloseable {
             if (forcedClose != null) forcedClose.cancel(false);
         }
         void abort() {
-            if (ticket != null) ticket.finish("ERROR");
+            if (ticket != null) ticket.error("cancelled");
             closed.set(true);
             progress.cancel();
             cancelTimers(); // Repeatable: also removes timers assigned after an early callback.

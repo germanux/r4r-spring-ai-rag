@@ -83,7 +83,7 @@ final class RagApiSecurityFilter extends OncePerRequestFilter {
         try { filterRequest(request, response, filterChain); }
         finally {
             // Validation/quota rejections never enter a controller ticket.
-            if (ticket != null && (response.getStatus() == 400 || response.getStatus() == 429)) ticket.finish("ERROR");
+            if (ticket != null && (response.getStatus() == 400 || response.getStatus() == 429)) ticket.error(response.getStatus()==429?"rate_limited":"invalid_request");
         }
     }
 

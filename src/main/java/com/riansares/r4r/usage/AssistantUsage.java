@@ -17,11 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-/** Bounded, best effort usage ledger. Text and tracking require separate affirmative consent. */
+/** Bounded technical ledger. No persistent visitor tracking; supports objections to content logging. */
 @Service
 public class AssistantUsage {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AssistantUsage.class);
-    public static final String CONSENT_VERSION = "2026-11-v1";
     private final JdbcTemplate jdbc;
     private final boolean enabled;
     private boolean privacyReady, contentEnabled, securityEnabled;
@@ -55,80 +54,81 @@ public class AssistantUsage {
     }
     public Ticket begin(HttpServletRequest request) { return new Ticket(request); }
     public final class Ticket {
-        private final UUID id;
-        private final String source, analytics, history;
-        private final UUID visitor, session;
-        private final String ip, country;
+        private final UUID id, viewId;
+        private final String source, ip, country;
+        private final boolean keepContent;
         private final long started = System.nanoTime();
         private final AtomicBoolean done = new AtomicBoolean();
         private String question;
         private Ticket(HttpServletRequest request) {
             source = request == null ? "UNKNOWN" : origin(request.getHeader("Origin"));
-            boolean known = !"UNKNOWN".equals(source) && privacyReady && request != null;
-            analytics = known && CONSENT_VERSION.equals(request.getHeader("X-R4R-Analytics-Consent")) ? CONSENT_VERSION : null;
-            history = known && contentEnabled && CONSENT_VERSION.equals(request.getHeader("X-R4R-History-Consent")) ? CONSENT_VERSION : null;
-            var details = known && securityEnabled ? network.publicDetails(request) : new com.riansares.r4r.config.ClientNetwork.Details(null,null);
-            ip=details.address(); country=details.country();
-            visitor = analytics == null ? null : uuid(request.getHeader("X-R4R-Visitor"));
-            session = visitor == null ? null : uuid(request.getHeader("X-R4R-Session"));
-            UUID supplied = request != null && !"UNKNOWN".equals(source) ? uuid(request.getHeader("X-R4R-Request-Id")) : null;
+            boolean known = !"UNKNOWN".equals(source) && request != null;
+            boolean objected = known && "1".equals(request.getHeader("X-R4R-Usage-Opt-Out"));
+            keepContent = enabled && known && privacyReady && contentEnabled && !objected;
+            var details = known && privacyReady ? network.publicDetails(request) : new com.riansares.r4r.config.ClientNetwork.Details(null,null);
+            ip = securityEnabled && !objected ? details.address() : null;
+            country = details.country();
+            viewId = known ? uuid(request.getHeader("X-R4R-View-Id")) : null;
+            UUID supplied = known ? uuid(request.getHeader("X-R4R-Request-Id")) : null;
             id = supplied == null ? UUID.randomUUID() : supplied;
         }
-        public void question(String value) { if (history != null) question = value; }
-        public void finish(String status) { complete(status, null, null, null, null, null); }
-        public void response(RagQueryResponse response, Double generationMs) {
-            complete(response.status().name(), response.answer(), response.provider() == null ? null : response.provider().name(),
-                    response.provider() == null ? null : response.provider().model(), generationMs, uuid(response.auditId()));
+        public void question(String value) { if (keepContent) question = value; }
+        public void finish(String status) { complete(status, null, null, null, null, null, null, "ERROR".equals(status)?"request_failed":null); }
+        public void error(String code) {
+            String safe = code != null && java.util.Set.of("timeout","cancelled","processing_failed","rate_limited","invalid_request","unavailable").contains(code) ? code : "request_failed";
+            complete("ERROR",null,null,null,null,null,null,safe);
         }
-        private void complete(String status, String answer, String provider, String model, Double generationMs, UUID auditId) {
+        public void response(RagQueryResponse response, Double generationMs) {
+            complete(response.status().name(),response.answer(),response.provider()==null?null:response.provider().name(),
+                response.provider()==null?null:response.provider().model(),generationMs,uuid(response.auditId()),response.citations(),null);
+        }
+        private void complete(String status, String answer, String provider, String model, Double generationMs, UUID auditId,
+                              Object citations, String error) {
             if (!done.compareAndSet(false, true)) return;
             long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime()-started);
-            write("INSERT INTO assistant_usage(id,origin,event_type,outcome,duration_ms,visitor_id,session_id,analytics_consent,history_consent,consent_at,question,answer,provider,model,generation_ms,audit_id,effective_outcome,total_duration_ms,client_ip,country_code,security_basis,network_review_due_at) " +
-                    "VALUES (?,?,?,?,?,?,?,?,?,CASE WHEN ? THEN now() ELSE NULL END,?,?,?,?,?,?,?,?,?::inet,?,?,CASE WHEN ? THEN now()+interval '7 days' ELSE NULL END) ON CONFLICT(id) DO NOTHING",
-                    id, source, "QUERY", status, duration, visitor, session, analytics, history, analytics != null || history != null,
-                    question, history == null ? null : answer, provider, model, generationMs, auditId, status, duration, ip, country, ip == null ? null : "availability-abuse-v1", ip != null);
+            String exclusion = keepContent ? HistoryContentPolicy.exclusion(question,answer) : "disabled_or_objected";
+            boolean retain = keepContent && exclusion == null;
+            String sources = null;
+            try { if (retain && citations != null) sources = new ObjectMapper().writeValueAsString(citations); }
+            catch (java.io.IOException ignored) { }
+            write("INSERT INTO assistant_usage(id,origin,event_type,outcome,duration_ms,view_id,question,answer,provider,model,generation_ms,audit_id,effective_outcome,total_duration_ms,client_ip,country_code,network_basis,content_basis,content_exclusion,citations,error_code,basis_recorded_at) " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::inet,?,?,?,?,?::jsonb,?,now()) ON CONFLICT(id) DO NOTHING",
+                id,source,"QUERY",status,duration,viewId,retain?question:null,retain?answer:null,provider,model,generationMs,auditId,status,duration,
+                ip,country,ip!=null?"security-interest-v1":country!=null?"technical-geography-v1":null,
+                retain?"legitimate-interest-v1":null,exclusion,sources,error);
         }
         private void view() {
-            write("INSERT INTO assistant_usage(id,origin,event_type,visitor_id,session_id,analytics_consent,consent_at,client_ip,country_code,security_basis,network_review_due_at) VALUES (?,?,?,?,?,?,CASE WHEN ? THEN now() ELSE NULL END,?::inet,?,?,CASE WHEN ? THEN now()+interval '7 days' ELSE NULL END) ON CONFLICT(id) DO UPDATE SET visitor_id=excluded.visitor_id,session_id=excluded.session_id,analytics_consent=excluded.analytics_consent,consent_at=excluded.consent_at WHERE assistant_usage.origin=excluded.origin AND assistant_usage.event_type='VIEW' AND assistant_usage.restricted_at IS NULL",
-                    id, source, "VIEW", visitor, session, analytics, analytics != null, ip, country, ip == null ? null : "availability-abuse-v1", ip != null);
+            write("INSERT INTO assistant_usage(id,origin,event_type,view_id,client_ip,country_code,network_basis) VALUES (?,?,?,?,?::inet,?,?) ON CONFLICT(id) DO NOTHING",
+                id,source,"VIEW",viewId,ip,country,ip!=null?"security-interest-v1":country!=null?"technical-geography-v1":null);
         }
     }
-    public void view(String source) { write("INSERT INTO assistant_usage(id,origin,event_type) VALUES (?,?,?)", UUID.randomUUID(),source,"VIEW"); }
+    public void view(String source) { write("INSERT INTO assistant_usage(id,origin,event_type) VALUES (?,?,?)",UUID.randomUUID(),source,"VIEW"); }
     public void view(HttpServletRequest request) { begin(request).view(); }
     public void audit(String id, RagAuditResult result) {
-        UUID auditId = uuid(id);
-        if (auditId == null || result == null) return;
-        // Store structured public review only; no retrieval evidence. Free text requires history consent.
+        UUID auditId=uuid(id);
+        if(auditId==null || result==null)return;
         try {
-            var json = new ObjectMapper();
-            String technical = json.writeValueAsString(Map.of("conclusive",result.conclusive(),"originalStatus",result.originalStatus(),
-                    "recommendedStatus",result.recommendedStatus(),"effectiveStatus",result.effectiveStatus()));
-            String full = json.writeValueAsString(result);
-            write("UPDATE assistant_usage SET audit_result=CASE WHEN history_consent IS NOT NULL THEN ?::jsonb ELSE ?::jsonb END, " +
-                    "effective_outcome=?, audit_completed_at=now(), total_duration_ms=duration_ms+GREATEST(0,(extract(epoch FROM (now()-occurred_at))*1000)::bigint) " +
-                    "WHERE audit_id=? AND audit_completed_at IS NULL AND restricted_at IS NULL", full,technical,result.effectiveStatus().name(),auditId);
-        } catch (java.io.IOException ignored) { }
+            var json=new ObjectMapper();
+            String technical=json.writeValueAsString(Map.of("conclusive",result.conclusive(),"originalStatus",result.originalStatus(),
+                "recommendedStatus",result.recommendedStatus(),"effectiveStatus",result.effectiveStatus()));
+            String full=json.writeValueAsString(result);
+            write("UPDATE assistant_usage SET audit_result=CASE WHEN content_basis IS NOT NULL AND ? THEN ?::jsonb ELSE ?::jsonb END, " +
+                "effective_outcome=?,audit_completed_at=now(),total_duration_ms=duration_ms+GREATEST(0,(extract(epoch FROM (now()-occurred_at))*1000)::bigint) " +
+                "WHERE audit_id=? AND audit_completed_at IS NULL AND restricted_at IS NULL",
+                HistoryContentPolicy.exclusion(full)==null,full,technical,result.effectiveStatus().name(),auditId);
+        } catch(java.io.IOException ignored) { }
     }
-    public void withdraw(HttpServletRequest request, java.util.List<String> references, boolean analytics, boolean history) {
+    public void object(HttpServletRequest request, java.util.List<String> references) {
         String source=origin(request.getHeader("Origin"));
-        if ("UNKNOWN".equals(source)) return;
-        UUID visitor=uuid(request.getHeader("X-R4R-Visitor"));
+        if("UNKNOWN".equals(source))return;
         var ids=references.stream().map(AssistantUsage::uuid).filter(java.util.Objects::nonNull).toList();
-        if (history && !ids.isEmpty()) {
-            var tombstones=new java.util.ArrayList<Object>();
-            for(UUID id:ids){tombstones.add(id);tombstones.add(source);}
-            // Same query reference wins even if the in-flight answer has not been inserted yet.
-            maintenance("INSERT INTO assistant_usage(id,origin,event_type,restricted_at) VALUES " +
-                String.join(",",java.util.Collections.nCopies(ids.size(),"(?,?,'QUERY',now())")) +
-                " ON CONFLICT(id) DO UPDATE SET restricted_at=now() WHERE assistant_usage.origin=excluded.origin AND assistant_usage.event_type='QUERY'",tombstones.toArray());
-        }
-        if (history && (visitor!=null || !ids.isEmpty())) {
-            var values=new java.util.ArrayList<Object>(); values.add(source);values.add(visitor);
-            String scope="visitor_id=?";
-            if (!ids.isEmpty()) { scope+=" OR id IN ("+String.join(",",java.util.Collections.nCopies(ids.size(),"?"))+")";values.addAll(ids); }
-            maintenance("UPDATE assistant_usage SET restricted_at=now() WHERE origin=? AND history_consent IS NOT NULL AND ("+scope+")",values.toArray());
-        }
-        if (analytics && visitor!=null) maintenance("UPDATE assistant_usage SET visitor_id=NULL,session_id=NULL,analytics_consent=NULL WHERE origin=? AND visitor_id=?",source,visitor);
+        if(ids.isEmpty())return;
+        var values=new java.util.ArrayList<Object>();
+        for(UUID id:ids){values.add(id);values.add(source);}
+        // Restriction wins over an answer still being generated. No history is returned.
+        maintenance("INSERT INTO assistant_usage(id,origin,event_type,restricted_at) VALUES " +
+            String.join(",",java.util.Collections.nCopies(ids.size(),"(?,?,'QUERY',now())")) +
+            " ON CONFLICT(id) DO UPDATE SET restricted_at=now() WHERE assistant_usage.origin=excluded.origin",values.toArray());
     }
     private void write(String sql, Object... values) {
         if (!enabled) return;
