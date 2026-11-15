@@ -97,3 +97,22 @@ config/r4r-agents.json.**
 .r4r-translation-cache*/
 /docs/evaluation.zip
 /docs/evaluation/runs/triple-window-experiment.zip
+
+# Complete browser capture sets stay local; tracked historical images are retained.
+/docs/validation/angular-migration/responsive/**/*.png
+/docs/validation/angular-migration/polish/full/**/*.png
+/docs/validation/angular-migration/polish/full/*.txt
+# Only the explicitly curated set below is eligible for new image commits.
+/docs/validation/angular-migration/polish/selected/*.png
+!/docs/validation/angular-migration/polish/selected/v1-es-before.png
+!/docs/validation/angular-migration/polish/selected/v1-en-before.png
+!/docs/validation/angular-migration/polish/selected/v1-es-after.png
+!/docs/validation/angular-migration/polish/selected/v1-en-after.png
+!/docs/validation/angular-migration/polish/selected/v1-es-partial.png
+!/docs/validation/angular-migration/polish/selected/v2-ng-es-before.png
+!/docs/validation/angular-migration/polish/selected/v2-ng-en-before.png
+!/docs/validation/angular-migration/polish/selected/v2-ng-es-after.png
+!/docs/validation/angular-migration/polish/selected/v2-ng-en-after.png
+!/docs/validation/angular-migration/polish/selected/v2-ng-es-partial.png
+!/docs/validation/angular-migration/polish/selected/v1-en-partial.png
+!/docs/validation/angular-migration/polish/selected/v2-ng-en-partial.png

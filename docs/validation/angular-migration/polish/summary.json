@@ -1,0 +1,52 @@
+{
+  "status": "PASSED",
+  "build": "Angular production build and Chromium prerender",
+  "angularUnitTests": 29,
+  "legacyUnitTests": 106,
+  "responsiveScenarios": 58,
+  "widths": [
+    320,
+    360,
+    390,
+    430,
+    768,
+    1024,
+    1440
+  ],
+  "languages": [
+    "es",
+    "en"
+  ],
+  "increasedTextSize": "125%",
+  "singleVisibleH1BeforeAndAfter": true,
+  "languageSelector": "ES/EN with flag; full accessible names",
+  "maxAuditLayoutShiftPx": 0,
+  "responseHeaderHeightAt390Px": 73.390625,
+  "copyToolbarGapAt390Px": 16,
+  "partialNoticeToAnswerGapPx": 10,
+  "representativeCaptures": 12,
+  "allCapturesLocal": 76,
+  "API": "mocked; no real LLM calls",
+  "regressionsDetected": [],
+  "existingLimitation": "Historical PDF test uses obsolete paths; unchanged by this visual-only task. Canonical documents and recordings preserved.",
+  "productionDeployment": "NOT RUN",
+  "modifiedTrackedFiles": [
+    ".gitignore",
+    "DEVELOPMENT.md",
+    "front-athagon-r4r-static/v1/index.html",
+    "front-athagon-r4r-static/v1/js/app.js",
+    "front-athagon-r4r-static/v1/js/app.test.cjs",
+    "front-athagon-r4r-static/v1/js/i18n.js",
+    "front-athagon-r4r-static/v1/styles/responsive-ux.css",
+    "front-athagon-r4r-static/v2-ng/index.html",
+    "front-athagon-r4r-static/v2-ng/main-RJHLQG3Y.js",
+    "front-athagon-r4r-static/v2-ng/styles-QUOMDF74.css",
+    "frontend/src/app/migration/answer-panel.component.ts",
+    "frontend/src/app/migration/assistant-state.service.ts",
+    "frontend/src/app/migration/header.html",
+    "frontend/src/app/migration/translations.ts",
+    "frontend/src/responsive-ux.scss",
+    "frontend/validate-edge-cases.mjs",
+    "frontend/validate-responsive.mjs"
+  ]
+}

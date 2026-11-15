@@ -1,0 +1,98 @@
+[
+  {
+    "file": "selected/v1-es-before.png",
+    "source": "full/v1-es-before.png",
+    "version": "v1",
+    "language": "es",
+    "state": "before",
+    "width": 390
+  },
+  {
+    "file": "selected/v1-es-after.png",
+    "source": "full/v1-390-es-answer.png",
+    "version": "v1",
+    "language": "es",
+    "state": "after",
+    "width": 390
+  },
+  {
+    "file": "selected/v1-es-partial.png",
+    "source": "full/v1-es-partial.png",
+    "version": "v1",
+    "language": "es",
+    "state": "partial",
+    "width": 390
+  },
+  {
+    "file": "selected/v1-en-before.png",
+    "source": "full/v1-en-before.png",
+    "version": "v1",
+    "language": "en",
+    "state": "before",
+    "width": 390
+  },
+  {
+    "file": "selected/v1-en-after.png",
+    "source": "full/v1-390-en-answer.png",
+    "version": "v1",
+    "language": "en",
+    "state": "after",
+    "width": 390
+  },
+  {
+    "file": "selected/v1-en-partial.png",
+    "source": "full/v1-en-partial.png",
+    "version": "v1",
+    "language": "en",
+    "state": "partial",
+    "width": 390
+  },
+  {
+    "file": "selected/v2-ng-es-before.png",
+    "source": "full/v2-ng-es-before.png",
+    "version": "v2-ng",
+    "language": "es",
+    "state": "before",
+    "width": 390
+  },
+  {
+    "file": "selected/v2-ng-es-after.png",
+    "source": "full/v2-ng-390-es-answer.png",
+    "version": "v2-ng",
+    "language": "es",
+    "state": "after",
+    "width": 390
+  },
+  {
+    "file": "selected/v2-ng-es-partial.png",
+    "source": "full/v2-ng-es-partial.png",
+    "version": "v2-ng",
+    "language": "es",
+    "state": "partial",
+    "width": 390
+  },
+  {
+    "file": "selected/v2-ng-en-before.png",
+    "source": "full/v2-ng-en-before.png",
+    "version": "v2-ng",
+    "language": "en",
+    "state": "before",
+    "width": 390
+  },
+  {
+    "file": "selected/v2-ng-en-after.png",
+    "source": "full/v2-ng-390-en-answer.png",
+    "version": "v2-ng",
+    "language": "en",
+    "state": "after",
+    "width": 390
+  },
+  {
+    "file": "selected/v2-ng-en-partial.png",
+    "source": "full/v2-ng-en-partial.png",
+    "version": "v2-ng",
+    "language": "en",
+    "state": "partial",
+    "width": 390
+  }
+]

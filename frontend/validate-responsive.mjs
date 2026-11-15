@@ -1,7 +1,7 @@
 import {chromium} from 'playwright';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
-const out=new URL('../docs/validation/angular-migration/responsive/',import.meta.url);await mkdir(out,{recursive:true});
+const out=new URL('../docs/validation/angular-migration/'+(process.env.R4R_RESPONSIVE_OUTPUT||'responsive/'),import.meta.url);await mkdir(out,{recursive:true});
 const recordings=JSON.parse(await readFile(new URL('./src/app/migration/recordedExamples.json',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']});const report=[];
 const origin='http://127.0.0.1:8765';
@@ -23,24 +23,28 @@ try{
 if(!process.env.R4R_ZOOM_ONLY){
 for(const version of ['v1','v2-ng'])for(const width of [320,360,390,430,768,1024,1440])for(const lang of ['es','en']){
  const t=await setup(version,width,lang),{page}=t;
+ assert.equal(await page.locator('h1').count(),1);assert.equal((await page.locator('h1').textContent()).trim(),lang==='es'?'Asistente de IA para reformas':'AI assistant for renovations');assert(await page.locator('h1').isVisible());
+ assert.equal(await page.locator('#languageSelect option:checked').textContent(),lang==='es'?'🇪🇸 ES':'🇬🇧 EN');
+ if(width===390)await page.screenshot({path:new URL(`${version}-${lang}-before.png`,out).pathname});
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'initial overflow');
  if(width<=960){assert((await page.locator('.site-header').boundingBox()).height<85,'compact header');await page.locator('#menuToggle').click();assert.equal(await page.locator('#menuToggle').getAttribute('aria-expanded'),'true');await page.keyboard.press('Escape');assert.equal(await page.locator('#menuToggle').getAttribute('aria-expanded'),'false');await page.locator('#menuToggle').click();await page.locator('.nav a[href="#arquitectura"]').click();assert.equal(await page.locator('#menuToggle').getAttribute('aria-expanded'),'false');await page.locator('#architectureContent').waitFor({state:'visible'});}
  if(width>=1024){const a=await page.locator('.query-panel').boundingBox(),b=await page.locator('.response-panel').boundingBox();assert(Math.abs(a.y-b.y)<2&&b.x>a.x,'desktop columns');}
  await page.locator('#question').fill('¿Cómo pinto una pared?');await page.locator('#sendButton').click();await page.locator('#loadingState').waitFor({state:'visible'});await page.waitForTimeout(60);
- if(width<=760){const pos=await visibleStart(page,'#loadingState');assert(pos.visible,JSON.stringify({version,width,lang,stage:'progress',pos}));assert.equal(await page.locator('.query-panel').isVisible(),false);}
+ if(width<=760){assert((await visibleStart(page,'h1')).visible,'compact h1 stays in viewport');const title=await page.locator('h1').boundingBox(),summary=await page.locator('#querySummary').boundingBox();assert(title.y+title.height<=summary.y,'title before question');const pos=await visibleStart(page,'#loadingState');assert(pos.visible,JSON.stringify({version,width,lang,stage:'progress',pos}));assert.equal(await page.locator('.query-panel').isVisible(),false);}
  if(width===390)await page.screenshot({path:new URL(`${version}-${lang}-loading.png`,out).pathname});
  await finish(page,lang);await t.waitAudit();await page.locator('#auditNote[data-state="pending"]').waitFor();if(width===390)await page.screenshot({path:new URL(`${version}-${lang}-audit-pending.png`,out).pathname});
- if(width<=760){const pos=await visibleStart(page,'#answerText');assert(pos.visible,JSON.stringify({version,width,lang,stage:'answer',pos}));}
+ if(width<=760){assert((await visibleStart(page,'h1')).visible,'h1 remains visible with final answer');const pos=await visibleStart(page,'#answerText');assert(pos.visible,JSON.stringify({version,width,lang,stage:'answer',pos}));}
  const before=await page.locator('#answerText').boundingBox();t.finishAudit();await page.locator('#auditNote[data-state="reviewed"]').waitFor();const after=await page.locator('#answerText').boundingBox();assert(Math.abs(before.y-after.y)<2,'audit layout shift');
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'result overflow');
  const badge=await page.locator('#auditNote').evaluate(el=>({w:el.getBoundingClientRect().width,h:el.getBoundingClientRect().height}));assert(badge.w>100&&badge.h<65,'badge readable');
+ const spacing=await page.evaluate(()=>{const head=document.querySelector('.response-panel > .panel-head').getBoundingClientRect(),text=document.querySelector('#answerText').getBoundingClientRect(),box=document.querySelector('.answer-box').getBoundingClientRect();return {headerHeight:head.height,toolbarGap:text.top-box.top};});assert(spacing.toolbarGap<30,'no empty copy/provider toolbar row');
  await page.screenshot({path:new URL(`${version}-${width}-${lang}-answer.png`,out).pathname,fullPage:true});
  if(width<=760){await page.locator('#editQuestion').click();assert.equal(await page.locator('#question').inputValue(),'¿Cómo pinto una pared?');assert(await page.locator('#question').isVisible());}
- assert.deepEqual(t.errors,[]);report.push({version,width,lang,progressInViewport:true,answerInViewport:width<=760?'passed':'desktop',auditShift:after.y-before.y,consoleErrors:t.errors});await t.context.close();
+ assert.deepEqual(t.errors,[]);report.push({version,width,lang,progressInViewport:true,answerInViewport:width<=760?'passed':'desktop',auditShift:after.y-before.y,spacing,consoleErrors:t.errors});await t.context.close();
 }
 for(const version of ['v1','v2-ng'])for(const lang of ['es','en'])for(const mode of ['partial','abstained','downgrade','inconclusive','failed']){
  const t=await setup(version,390,lang),{page}=t;t.setAudit(mode);await page.locator('#question').fill('¿Cómo pinto una pared?');await page.locator('#sendButton').click();await page.locator('#loadingState').waitFor({state:'visible'});await finish(page,lang,mode==='partial'?'PARTIAL':mode==='abstained'?'ABSTAINED':'ANSWERED');await t.waitAudit();const before=await page.locator('#answerText').boundingBox();t.finishAudit();const state=mode==='inconclusive'?'inconclusive':mode==='failed'?'unavailable':'reviewed';await page.locator(`#auditNote[data-state="${state}"]`).waitFor();const after=await page.locator('#answerText').boundingBox();
- if(mode==='partial'){const title=lang==='es'?'Respuesta parcial':'Partial answer';assert.equal(await page.getByText(title,{exact:true}).filter({visible:true}).count(),1);assert.equal((await page.locator('#decisionText').textContent()).trim(),lang==='es'?'Las fuentes solo permiten responder parte de la pregunta.':'The sources only cover part of your question.');assert(Math.abs(before.y-after.y)<2);}
+ if(mode==='partial'){const gap=await page.evaluate(()=>document.querySelector('.answer-box').getBoundingClientRect().top-document.querySelector('#decisionRow').getBoundingClientRect().bottom);assert(gap<=12,'partial notice immediately precedes answer');const title=lang==='es'?'Respuesta parcial':'Partial answer';assert.equal(await page.getByText(title,{exact:true}).filter({visible:true}).count(),1);assert.equal((await page.locator('#decisionText').textContent()).trim(),lang==='es'?'Las fuentes solo permiten responder parte de la pregunta.':'The sources only cover part of your question.');assert(Math.abs(before.y-after.y)<2);}
  if(mode==='downgrade')assert.match(await page.locator('#resultMode').textContent(),/parcial|Partial/);
  if(['inconclusive','failed'].includes(mode)){assert.match(await page.locator('#resultMode').textContent(),/verificada|verified/);assert(Math.abs(before.y-after.y)<2);}
  await page.screenshot({path:new URL(`${version}-${lang}-${mode}.png`,out).pathname,fullPage:true});assert.deepEqual(t.errors,[]);report.push({version,lang,mode,state,auditShift:after.y-before.y});await t.context.close();

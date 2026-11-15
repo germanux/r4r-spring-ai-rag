@@ -44,7 +44,7 @@
     $("demo").classList.toggle("has-query", true); closeMenu();
     if (!window.matchMedia?.("(max-width:760px)")?.matches) return;
     question.blur();
-    requestAnimationFrame(() => { const summary = $("querySummary"); summary.style.scrollMarginTop = `${document.querySelector(".site-header").getBoundingClientRect().height + 12}px`; summary.focus({preventScroll:true}); summary.scrollIntoView({behavior:"instant", block:"start"}); });
+    requestAnimationFrame(() => { const summary = $("querySummary"); const heading = document.querySelector(".hero") || summary; heading.style.scrollMarginTop = `${document.querySelector(".site-header").getBoundingClientRect().height + 8}px`; summary.focus({preventScroll:true}); heading.scrollIntoView({behavior:"instant", block:"start"}); });
   }
   $("editQuestion").addEventListener("click", () => { if (activeQueryController) { activeQueryController.abort(); activeQueryController = null; phase = "idle"; lastPayload = null; renderEmpty(); setLoading(false); } $("demo").classList.toggle("has-query", false); question.focus({preventScroll:true}); question.scrollIntoView({behavior:"instant",block:"center"}); });
   const disclosures = [

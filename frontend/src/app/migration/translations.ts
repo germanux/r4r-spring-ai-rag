@@ -376,7 +376,7 @@ export const dictionary: Record<string, Record<string, Translation>> = {
         "page.gpu_acceleration": "The NVIDIA GeForce RTX 4060 is the graphics card in the main computer, used to accelerate AI.",
         "page.public_frontend_scope": "Questions are sent to the server without translation. Retrieval strategy is configured in the backend; answers retain the requested language.",
         "page.embedding_description": "Embeddings represent text as numbers to find passages with similar meaning.",
-        "page.hero_title": "Your AI assistant for renovations",
+        "page.hero_title": "AI assistant for renovations",
         "page.hero_subtitle": "Ask about Riansares 4R materials, methods and projects and get answers with sources you can check.",
         "page.architecture_flow": "Query flow: Web UI, Spring Boot and Spring AI, vector retrieval and local inference.",
         "page.topology_note": "Several computers coordinate retrieval and generation. The NAS and its connection are still required: retrieval backup does not replace the backend.",

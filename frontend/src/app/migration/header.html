@@ -5,7 +5,7 @@
       <span class="brand-name">ATHAGON</span>
       <span class="brand-labs">LABS</span>
     </a>
-    <select [value]="i.language()" (change)="s.language($any($event.target).value); closeMenu()" id="languageSelect" [attr.aria-label]="i.t('page.language')"><option value="es">🇪🇸 Español</option><option value="en">🇬🇧 English</option></select>
+    <select [value]="i.language()" (change)="s.language($any($event.target).value); closeMenu()" id="languageSelect" [attr.aria-label]="i.t('page.language')"><option value="es" aria-label="Español">🇪🇸 ES</option><option value="en" aria-label="English">🇬🇧 EN</option></select>
     <button #menuButton id="menuToggle" class="menu-toggle" type="button" [attr.aria-expanded]="menuOpen()" aria-controls="mainNavigation" [attr.aria-label]="i.t('menu')" (click)="menuOpen.set(!menuOpen())">☰</button>
     <nav id="mainNavigation" class="nav" [class.is-open]="menuOpen()" (click)="closeMenu()" [attr.aria-label]="i.t('page.main_navigation')">
       <a href="#demo">Demo</a>

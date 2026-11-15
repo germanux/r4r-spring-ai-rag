@@ -59,10 +59,11 @@ export class AssistantState {
             const summary = document.getElementById('querySummary');
             if (!summary) return;
             const header = document.querySelector('.site-header')?.getBoundingClientRect().height || 64;
-            summary.style.scrollMarginTop = `${header + 12}px`;
+            const heading = document.querySelector<HTMLElement>('.hero') || summary;
+            heading.style.scrollMarginTop = `${header + 8}px`;
             summary.focus({preventScroll:true});
             // One positioning operation per submission. SSE and review never scroll.
-            summary.scrollIntoView({behavior:'instant',block:'start'});
+            heading.scrollIntoView({behavior:'instant',block:'start'});
         });
     }
     receive(e: ProgressEvent) { if (typeof e?.stage !== 'string')

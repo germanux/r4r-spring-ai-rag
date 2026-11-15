@@ -534,3 +534,21 @@ Se conserva íntegro el contenido previo de memoria y el commit SSE del usuario.
   servidor estático local anterior. Evidencias nuevas bajo
   `docs/validation/angular-migration/responsive/`; las evidencias de la migración
   original se mantienen como registro histórico.
+
+## Remate visual móvil: título, espaciado y evidencias
+
+- Se conserva un solo h1: en la vista móvil de resultado el hero se reduce al
+  título compacto, situado antes de la pregunta resumida. El posicionamiento
+  inicial incluye ese título; SSE y auditoría no vuelven a desplazar la vista.
+- Selector visual ES/EN con bandera y nombres accesibles completos. Se mantienen
+  la cabecera de una fila y el menú existente.
+- Los estados reservan únicamente el tamaño natural de sus etiquetas. Se reducen
+  el padding del aviso parcial, la separación entre bloques y el espacio vacío
+  del botón copiar/proveedor, conservando la estabilidad de la auditoría.
+- Regenerar evidencias completas con el servidor estático local y:
+  `R4R_RESPONSIVE_OUTPUT=polish/full/ node frontend/validate-responsive.mjs`.
+  Puede indicarse CHROMIUM_PATH como en las pruebas anteriores.
+- Las capturas completas bajo `docs/validation/angular-migration/polish/full/`
+  permanecen locales e ignoradas. Se seleccionan doce capturas de 390 px en
+  `polish/selected/`; informes JSON y scripts permiten reproducir el conjunto.
+  No se eliminan imágenes históricas ya versionadas ni se utiliza Git LFS.

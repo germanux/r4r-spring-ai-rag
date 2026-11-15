@@ -447,7 +447,7 @@ for (const lang of ['es', 'en']) {
       modelStatus: 'Modelo cargado', loadedModels: [{ name: 'qwen2.5:7b', parameterSize: '7.6B' }], topK: 3, minScore: .63
     } });
     await tick();
-    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Asistente de IA para reformas' : 'Your AI assistant for renovations');
+    assert.equal(p.document.querySelectorAll('h1')[0].textContent, lang === 'es' ? 'Asistente de IA para reformas' : 'AI assistant for renovations');
     assert.equal(p.document.querySelectorAll('.arch-step').length, 6);
     assert.equal(p.document.querySelectorAll('.inference-host').length, 3);
     assert.equal(p.document.querySelectorAll('.primary-host')[0].textContent.includes('NVIDIA GeForce RTX 4060'), true);
