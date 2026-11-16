@@ -10,7 +10,7 @@ guardado del RAG; sólo propone una revisión visual y una nota. Nunca eleva est
 2. Los controladores REST/SSE registran ese snapshot temporalmente. Si no hay chunks,
    el auditor está desactivado o no hay capacidad, no ofrecen auditoría.
 3. `ANSWER_READY` conserva su contrato y sigue terminando el SSE. Sólo puede añadir
-   `auditId`. Tras renderizar la respuesta y habilitar el formulario, el JS público
+   `auditId`. Tras renderizar la respuesta, el JS público
    envía `POST /api/rag/audits/{auditId}`, sin pregunta ni evidencias del navegador.
 4. Un worker separado hace una única llamada al modelo configurado. Jackson valida
    el JSON, estado original, recomendación, veredicto, motivo y límites de texto.
@@ -22,6 +22,30 @@ Así la auditoría no prolonga sus timeouts ni su admisión. El frontend cancela
 y descarta resultados antiguos cuando cambia la consulta. Preview, grabaciones y
 fallbacks guardados no llaman al auditor. Los clientes REST conservan compatibilidad;
 pueden ignorar el `auditId` opcional.
+
+## Indicadores mientras se revisan referencias (2026-11-16)
+
+La respuesta y sus fuentes se pueden leer inmediatamente. El listado de pasos
+inicial se recoge al recibirla, pero «Revisando referencias… / Checking sources…»
+mantiene un círculo giratorio visible y el botón de consulta conserva su indicador
+de carga hasta que termine la auditoría. Se marca `aria-busy` y se evita enviar
+otra consulta desde ese botón mientras la revisión está pendiente. Los indicadores
+terminan tanto con revisión válida y posible degradación como con resultado
+inconcluso, indisponibilidad o error. Limpiar la consulta descarta la revisión
+pendiente para que su resultado posterior no modifique otra respuesta.
+Se respeta la preferencia del navegador de reducir movimiento.
+
+El frontend distingue el equipo y modelo de generación de los del embedding mediante
+el campo opcional [embeddingProvider](rag-sse.md). No se atribuye un proveedor
+preferido cuando no se ha observado cuál respondió.
+
+Validación de este ajuste: `mvn verify` mediante el gate de aislamiento de secretos,
+593 unitarias y 86 integraciones offline correctas, 27 entradas externas omitidas
+explícitamente; 31 pruebas Angular correctas y build de producción correcto.
+Se comprobaron failover, aislamiento por consulta, serialización REST/SSE y estados
+de revisión en español e inglés. Exportación estática local actualizada; sin
+despliegue. La revisión visual final queda a cargo del usuario; no se continuaron
+las comprobaciones de navegador tras su instrucción de no renderizar.
 
 ## Configuración
 

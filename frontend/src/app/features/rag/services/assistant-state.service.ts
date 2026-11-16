@@ -5,7 +5,7 @@ import { RagApiService } from '../../../core/rag/rag-api.service';
 import { RagAuditService } from '../../../core/rag/rag-audit.service';
 import { DemoPlaybackService } from './demo-playback.service';
 import { RuntimeService } from '../../../core/rag/runtime.service';
-import { AuditResult, ProgressEvent, RAGAnswerResult, statusOf } from '../../../core/rag/rag.models';
+import { AuditResult, ProgressEvent, RAGAnswerResult, statusOf, describeProvider } from '../../../core/rag/rag.models';
 @Injectable({ providedIn: 'root' })
 export class AssistantState {
     readonly i = inject(I18nService);
@@ -23,6 +23,7 @@ export class AssistantState {
     readonly events = signal<ProgressEvent[]>([]);
     readonly audit = signal<AuditResult | null>(null);
     readonly auditing = signal(false);
+    readonly busy = computed(() => this.loading() || this.auditing());
     readonly recorded = signal(false);
     readonly duration = signal(0);
     readonly copied = signal(false);
@@ -30,7 +31,8 @@ export class AssistantState {
     private controller?: AbortController;
     private cycle = 0;
     readonly status = computed(() => this.audit()?.effectiveStatus || (this.response() ? statusOf(this.response()!) : 'ANSWERED'));
-    readonly provider = computed(() => { const r = this.response(); return r?.capture?.provider || [r?.provider?.name || r?.providerName, r?.provider?.model || r?.model, this.recorded() ? r?.recordedAt : null].filter(Boolean).join(' · '); });
+    readonly provider = computed(() => { const r = this.response(); return r?.capture?.provider || [describeProvider(r?.provider || {name:r?.providerName,model:r?.model}), this.recorded() ? r?.recordedAt : null].filter(Boolean).join(' · '); });
+    readonly embeddingProvider = computed(() => describeProvider(this.response()?.embeddingProvider));
     readonly heading = computed(() => this.loading() ? this.i.t('inProgress') : this.error() && !this.response() ? this.i.t('failed') : this.response() ? (this.response()?.capture?.display || this.i.t(this.status() === 'ANSWERED' ? 'verified' : this.status() === 'PARTIAL' ? 'partialAnswer' : 'abstention')) : this.i.t('waiting'));
     stopDemo() { if (this.demo.active()) {
         this.demo.stop();
@@ -73,7 +75,7 @@ export class AssistantState {
         return; this.question.set(r.question || ''); await this.send(true); }
     async send(allowSaved = false) {
         this.stopDemo();
-        if (this.loading())
+        if (this.busy())
             return;
         const q = this.question().trim();
         try {
@@ -103,8 +105,8 @@ export class AssistantState {
                 void this.audits.review(r.auditId, statusOf(r)).then(a => { if (cycle === this.cycle) {
                     this.audit.set(a.result);
                     this.auditState.set(a.state);
-                    this.auditing.set(false);
-                } });
+                } }).catch(() => { if (cycle === this.cycle) this.auditState.set('unavailable'); })
+                .finally(() => { if (cycle === this.cycle) this.auditing.set(false); });
             }
         }
         catch (e) {

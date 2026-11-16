@@ -58,6 +58,18 @@ La abstención por cero evidencias no emite ninguna fase de generación.
 recuento recuperado y `metrics`. Los eventos anteriores usan un nombre público de
 proveedor; el evento final usa el objeto de proveedor del contrato REST.
 
+Desde el ajuste del 2026-11-16, REST y `ANSWER_READY` incluyen opcionalmente
+`embeddingProvider`, con `name`, `model` e `inferenceHost`, igual que el proveedor
+de generación. Identifica el servidor que completó y validó el embedding, también
+tras failover; no se deduce del primero configurado. `EMBEDDING_COMPLETED` incluye
+el nombre público del proveedor que lo devolvió. No se exponen URLs ni direcciones
+IP internas. La información vive en el seguimiento de cada consulta, no en un
+último proveedor global compartido entre usuarios. Si el proveedor no es observable
+o los embeddings finales se calculan remotamente, se omite este campo antes que
+atribuirlos a un servidor local anterior. El frontend muestra el hostname conocido
+y el modelo de embeddings junto al proveedor LLM, sin inventarlos para grabaciones
+ni servidores antiguos que no envíen el nuevo campo.
+
 ## Métricas y limitación de la búsqueda
 
 Se inspeccionó la implementación de `PgVectorStore.doSimilaritySearch` de Spring AI

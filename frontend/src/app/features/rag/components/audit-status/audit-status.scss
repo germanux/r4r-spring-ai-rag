@@ -1,4 +1,7 @@
 :host { display: contents; }
+.audit-note { display: inline-flex; align-items: center; gap: .4rem; }
+.spinner { flex-shrink: 0; border-color: #b5c9df; border-top-color: currentColor; }
+.audit-note span:last-child { min-width: 0; }
 .audit-note { margin: 0; min-width: 0; overflow-wrap: normal; }
 .audit-note[data-level="neutral"] { color: #365a82; background: #eff6ff; border-color: #b5c9df; }
 .audit-note[data-state="pending"] { color: #365a82; background: #eff6ff; border-color: #b5c9df; }

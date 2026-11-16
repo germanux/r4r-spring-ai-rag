@@ -43,13 +43,9 @@ public class RagQueryController {
         com.riansares.r4r.rag.RagResult result = auditEnabled
                 ? citedRagService.answer(request.question(), request.retrievalQuestion(), request.responseLanguage(),
                     progress, captured::set)
-                : ticket != null ? citedRagService.answer(request.question(), request.retrievalQuestion(), request.responseLanguage(), progress)
-                : request.retrievalQuestion() == null
-                && request.responseLanguage() == null
-                ? citedRagService.answer(request.question())
-                : citedRagService.answer(request.question(), request.retrievalQuestion(), request.responseLanguage());
+                : citedRagService.answer(request.question(), request.retrievalQuestion(), request.responseLanguage(), progress);
 
-        RagQueryResponse response = response(result, router == null ? null : router.requestExecution());
+        RagQueryResponse response = response(result, router == null ? null : router.requestExecution(), progress);
         if (auditEnabled) response = response.withAuditId(audits.prepare(captured.get()));
 
         if (ticket != null) ticket.response(response, (Double)progress.metrics().get("generationMs"));
@@ -58,11 +54,19 @@ public class RagQueryController {
     }
 
     static RagQueryResponse response(com.riansares.r4r.rag.RagResult result, com.riansares.r4r.rag.GenerationRouter.Execution execution) {
+        return response(result, execution, null);
+    }
+    static RagQueryResponse response(com.riansares.r4r.rag.RagResult result, com.riansares.r4r.rag.GenerationRouter.Execution execution,
+                                     com.riansares.r4r.rag.RagProgress progress) {
         var provider = execution == null ? null : execution.provider();
         return new RagQueryResponse(result.answer(), result.abstention(), convertCitations(result.citations()),
-                provider == null ? null : new RagQueryResponse.Provider(provider.name(), provider.model(),
+                providerInfo(provider), result.status())
+                .withEmbeddingProvider(progress == null ? null : providerInfo(progress.usedEmbeddingProvider()));
+    }
+    private static RagQueryResponse.Provider providerInfo(com.riansares.r4r.rag.GenerationRouter.Provider provider) {
+        return provider == null ? null : new RagQueryResponse.Provider(provider.name(), provider.model(),
                         "OpenAI".equals(provider.name()) ? new InferenceHost.Details("cloud", null, null, null, null)
-                                : InferenceHost.identify(provider.baseUrl(), provider.model())), result.status());
+                                : InferenceHost.identify(provider.baseUrl(), provider.model()));
     }
 
     private static List<RagQueryResponse.Citation> convertCitations(java.util.List<com.riansares.r4r.rag.Citation> citations) {

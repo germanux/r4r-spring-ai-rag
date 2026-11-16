@@ -18,6 +18,7 @@ export interface ProviderInfo {
     model?: string;
     inferenceHost?: {
         type?: string;
+        hostname?: string;
     };
     state?: string;
     refreshing?: boolean;
@@ -45,6 +46,7 @@ export interface RAGAnswerResult {
     citations: RAGCitation[];
     auditId?: string;
     provider?: ProviderInfo;
+    embeddingProvider?: ProviderInfo;
     providerName?: string;
     model?: string;
     question?: string;
@@ -59,4 +61,5 @@ export interface RAGAnswerResult {
     };
 }
 export const statusOf = (r: RAGAnswerResult): RagStatus => r.abstained ? 'ABSTAINED' : r.status === 'PARTIAL' ? 'PARTIAL' : 'ANSWERED';
+export const describeProvider = (p?: ProviderInfo): string => [p?.inferenceHost?.hostname || p?.name, p?.model].filter(Boolean).join(' · ');
 export function validResponse(r: unknown): r is RAGAnswerResult { const v = r as RAGAnswerResult; return !!v && typeof v.answer === 'string' && typeof v.abstained === 'boolean' && Array.isArray(v.citations); }

@@ -37,9 +37,26 @@ class RagQueryControllerTest {
         objectMapper = new ObjectMapper();
     }
 
+    @Test void reportsEmbeddingHostSeparatelyAndPreservesItWhenAddingAnAuditId() throws Exception {
+        var progress = org.mockito.Mockito.mock(com.riansares.r4r.rag.RagProgress.class);
+        when(progress.usedEmbeddingProvider()).thenReturn(new com.riansares.r4r.rag.GenerationRouter.Provider(
+                "laptop-embedding", "http://192.168.1.209:11434", "qwen3-embedding:0.6b"));
+        var generation = new com.riansares.r4r.rag.GenerationRouter.Execution(
+                new com.riansares.r4r.rag.GenerationRouter.Provider("desktop", "http://192.168.1.207:11434", "qwen3:8b"), false);
+        var response = RagQueryController.response(com.riansares.r4r.rag.RagResult.ofAnswer("Answer [S1]",
+                List.of(new com.riansares.r4r.rag.Citation("[S1]", "guide.md", List.of("Guide"), 0))), generation, progress)
+                .withAuditId("audit-reference");
+        var json = objectMapper.readTree(objectMapper.writeValueAsString(response));
+        org.assertj.core.api.Assertions.assertThat(json.path("embeddingProvider").path("inferenceHost").path("type").asText()).isEqualTo("laptop");
+        org.assertj.core.api.Assertions.assertThat(json.path("embeddingProvider").path("model").asText()).isEqualTo("qwen3-embedding:0.6b");
+        org.assertj.core.api.Assertions.assertThat(json.path("provider").path("inferenceHost").path("type").asText()).isEqualTo("desktop");
+        org.assertj.core.api.Assertions.assertThat(json.path("auditId").asText()).isEqualTo("audit-reference");
+        org.assertj.core.api.Assertions.assertThat(json.toString()).doesNotContain("192.168.1.", "http://");
+    }
+
     @Test
     void returnsAnswerWithCitations() throws Exception {
-        when(citedRagService.answer(anyString())).thenReturn(
+        when(citedRagService.answer(anyString(), org.mockito.ArgumentMatchers.nullable(String.class), org.mockito.ArgumentMatchers.nullable(String.class), org.mockito.ArgumentMatchers.any(com.riansares.r4r.rag.RagProgress.class))).thenReturn(
                 new com.riansares.r4r.rag.RagResult(
                         "Generated answer",
                         false,
@@ -76,7 +93,7 @@ class RagQueryControllerTest {
 
     @Test
     void returnsAbstentionWhenServiceReturnsEmptyResult() throws Exception {
-        when(citedRagService.answer(anyString())).thenReturn(
+        when(citedRagService.answer(anyString(), org.mockito.ArgumentMatchers.nullable(String.class), org.mockito.ArgumentMatchers.nullable(String.class), org.mockito.ArgumentMatchers.any(com.riansares.r4r.rag.RagProgress.class))).thenReturn(
                 com.riansares.r4r.rag.RagResult.abstain()
         );
 
@@ -94,7 +111,7 @@ class RagQueryControllerTest {
 
     @Test
     void acceptsEnglishRequestWithoutChangingCitationMetadata() throws Exception {
-        when(citedRagService.answer("How much?", "¿Cuánto cuesta?", "en"))
+        when(citedRagService.answer(org.mockito.ArgumentMatchers.eq("How much?"), org.mockito.ArgumentMatchers.eq("¿Cuánto cuesta?"), org.mockito.ArgumentMatchers.eq("en"), org.mockito.ArgumentMatchers.any(com.riansares.r4r.rag.RagProgress.class)))
                 .thenReturn(new com.riansares.r4r.rag.RagResult("It depends. [S1]", false,
                         List.of(new com.riansares.r4r.rag.Citation("[S1]", "baño.md", List.of("Reformas"), 1))));
         mockMvc.perform(post("/api/rag/answers")
@@ -145,7 +162,7 @@ class RagQueryControllerTest {
                 .andExpect(status().isBadRequest());
     }
     @Test void returnsRequestProviderWithoutChangingAnswerAndCitations() throws Exception {
-        when(citedRagService.answer("question")).thenReturn(com.riansares.r4r.rag.RagResult.ofAnswer("Answer [S1]", List.of(new com.riansares.r4r.rag.Citation("[S1]", "guide.md", List.of("Guide"), 0))));
+        when(citedRagService.answer(org.mockito.ArgumentMatchers.eq("question"), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.any(com.riansares.r4r.rag.RagProgress.class))).thenReturn(com.riansares.r4r.rag.RagResult.ofAnswer("Answer [S1]", List.of(new com.riansares.r4r.rag.Citation("[S1]", "guide.md", List.of("Guide"), 0))));
         when(router.requestExecution()).thenReturn(new com.riansares.r4r.rag.GenerationRouter.Execution(
                 new com.riansares.r4r.rag.GenerationRouter.Provider("OpenAI","https://api.openai.com/v1","gpt-6-luna"),false));
         mockMvc.perform(post("/api/rag/answers").contentType(MediaType.APPLICATION_JSON).content("{\"question\":\"question\"}"))

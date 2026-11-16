@@ -125,6 +125,7 @@ public final class EmbeddingProviderRouter {
                 if (System.nanoTime() > deadline) throw new EmbeddingUnavailableException("Embedding time budget exhausted");
                 outcome = "success";
                 unavailableSince.remove(target.baseUrl());
+                RagProgress.embeddingUsed(new GenerationRouter.Provider(target.name(), target.baseUrl(), model));
                 return response;
             } catch (RuntimeException failure) {
                 checkCancellation(failure);

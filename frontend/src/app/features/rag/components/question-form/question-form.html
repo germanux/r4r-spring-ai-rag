@@ -22,9 +22,9 @@
           </div>
 
           <div class="query-actions main-actions">
-            <button id="sendButton" (click)="s.send()" [disabled]="s.loading() && !s.demo.active()" type="button" class="btn primary submit-btn" [class.is-loading]="s.loading()">
+            <button id="sendButton" (click)="s.send()" [disabled]="s.busy() && !s.demo.active()" type="button" class="btn primary submit-btn" [class.is-loading]="s.busy()" [attr.aria-busy]="s.busy()">
               <span id="sendLabel">{{ i.t('page.ask') }}</span>
-              <span id="spinner" [class.is-active]="s.loading()" class="spinner" aria-hidden="true"></span>
+              <span id="spinner" [class.is-active]="s.busy()" class="spinner" aria-hidden="true"></span>
             </button>
             <button id="clearButton" (click)="s.clear()" type="button" class="btn ghost">{{ i.t('page.clear') }}</button>
 

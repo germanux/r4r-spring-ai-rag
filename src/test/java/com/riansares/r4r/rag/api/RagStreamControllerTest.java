@@ -39,6 +39,42 @@ class RagStreamControllerTest {
                 new com.riansares.r4r.chunking.MarkdownChunk("doc.md", List.of("Reformas"), 0, "Reforma oficinas.")));
         when(pc.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Reforma oficinas. [S1]")))));
     }
+    @Test void terminalEventIncludesTheEmbeddingProviderThatActuallyReturnedTheVector() throws Exception {
+        evidence();
+        var embedding = com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress("127.0.0.1", 0), 0);
+        String model = "qwen3-embedding:0.6b";
+        String digest = "ac6da0dfba84a81fdbfbaf330198c33cd77c4cdfc53e8bc50eb581914a15621d";
+        embedding.createContext("/", exchange -> {
+            Object body = exchange.getRequestURI().getPath().equals("/api/tags")
+                    ? java.util.Map.of("models", List.of(java.util.Map.of("name", model, "digest", digest)))
+                    : java.util.Map.of("model", model, "embeddings", List.of(java.util.Collections.nCopies(1024, 1.0)));
+            exchange.getRequestBody().readAllBytes();
+            byte[] bytes = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(body);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, bytes.length); exchange.getResponseBody().write(bytes); exchange.close();
+        });
+        embedding.start();
+        String url = "http://127.0.0.1:" + embedding.getAddress().getPort();
+        var config = new com.riansares.r4r.config.EmbeddingFailoverProperties(List.of(
+                new com.riansares.r4r.config.EmbeddingFailoverProperties.Provider("test-embedding", url, Duration.ofSeconds(1))),
+                Duration.ofMillis(400), Duration.ofMillis(600), Duration.ofSeconds(3), 1024, digest);
+        var options = org.springframework.ai.ollama.api.OllamaOptions.builder().model(model).build();
+        var observed = new com.riansares.r4r.rag.ObservedEmbeddingModel(
+                org.springframework.ai.ollama.api.OllamaApi.builder().baseUrl(url).build(), options,
+                new com.riansares.r4r.rag.EmbeddingProviderRouter(config, options, Duration.ofSeconds(3)));
+        var chunks = store.search("fixture", 3, .63);
+        when(store.search(anyString(), anyInt(), anyDouble())).thenAnswer(call -> {
+            observed.embed("test query"); return chunks;
+        });
+        try (var controller = new RagStreamController(service, router, Duration.ofSeconds(3))) {
+            MockMvc mvc = mvc(controller);
+            var result = request(mvc);
+            awaitNoWorkers(controller);
+            String body = mvc.perform(asyncDispatch(result)).andReturn().getResponse().getContentAsString();
+            assertThat(body).contains("\"embeddingProvider\":{\"name\":\"test-embedding\"", "\"inferenceHost\":{\"type\":\"unknown\"");
+            assertThat(body).doesNotContain(url, "private-pc", "private-laptop");
+        } finally { embedding.stop(0); }
+    }
     private MockMvc mvc(RagStreamController controller) { return MockMvcBuilders.standaloneSetup(controller).build(); }
     private org.springframework.test.web.servlet.MvcResult request(MockMvc mvc) throws Exception {
         var result = mvc.perform(post("/api/rag/answers/stream").accept(MediaType.TEXT_EVENT_STREAM)

@@ -17,6 +17,7 @@ public final class RagProgress {
     private volatile Double embeddingMs, retrievalIncludingEmbeddingMs, generationMs;
     private volatile Double vectorSearchMs, lambdaInvokeMs;
     private GenerationRouter.Provider used;
+    private GenerationRouter.Provider embeddingUsed;
     private volatile Integer documentsFound;
 
     public RagProgress(Consumer<Map<String, Object>> sink) { this.sink = sink; }
@@ -29,6 +30,11 @@ public final class RagProgress {
     public long elapsedMs() { return (System.nanoTime() - started) / 1_000_000; }
     public GenerationRouter.Provider usedProvider() { return used; }
     public void usedProvider(GenerationRouter.Provider provider) { this.used = provider; }
+    public GenerationRouter.Provider usedEmbeddingProvider() { return embeddingUsed; }
+    static void embeddingUsed(GenerationRouter.Provider provider) {
+        RagProgress progress = EMBEDDING_SCOPE.get();
+        if (progress != null) progress.embeddingUsed = provider;
+    }
     public void retrievalMs(double ms) { retrievalIncludingEmbeddingMs = ms; }
     public void generationMs(double ms) { generationMs = ms; }
     public Map<String, Object> metrics() {
@@ -64,6 +70,13 @@ public final class RagProgress {
     }
     public static String publicProvider(GenerationRouter.Provider provider) {
         if ("OpenAI".equals(provider.name())) return "OpenAI";
+        String host;
+        try { host = java.net.URI.create(provider.baseUrl()).getHost(); }
+        catch (IllegalArgumentException | NullPointerException ignored) { host = null; }
+        if ("192.168.1.209".equals(host)) return "Portátil ASUS";
+        if ("192.168.1.207".equals(host)) return "PC principal";
+        if ("192.168.1.203".equals(host) || "ollama-embeddings".equals(host)) return "Synology NAS";
+        if (provider.model().contains("embedding")) return provider.name();
         return provider.model().toLowerCase(java.util.Locale.ROOT).startsWith("qwen2.5")
                 || provider.name().contains("ASUS") ? "Portátil ASUS" : "PC principal";
     }
@@ -79,6 +92,7 @@ public final class RagProgress {
         RagProgress progress = EMBEDDING_SCOPE.get();
         if (progress == null) return;
         progress.checkCancelled();
+        progress.embeddingUsed = null; // Remote embeddings must not inherit a previous local provider.
         progress.embeddingMs = (progress.embeddingMs == null ? 0 : progress.embeddingMs) + embedding;
         progress.vectorSearchMs = search;
         progress.lambdaInvokeMs = invoke;
@@ -99,6 +113,7 @@ public final class RagProgress {
     public static <T> T observeEmbedding(String model, Supplier<T> action) {
         RagProgress progress = EMBEDDING_SCOPE.get();
         if (progress == null) return action.get(); // Ingestion, warmup and other callers are unaffected.
+        progress.embeddingUsed = null;
         var event = progress.event("EMBEDDING_STARTED", null, null, null, null);
         event.put("model", model);
         progress.checkCancelled();
@@ -112,7 +127,7 @@ public final class RagProgress {
             duration = (System.nanoTime() - start) / 1_000_000.0;
             progress.embeddingMs = (progress.embeddingMs == null ? 0 : progress.embeddingMs) + duration;
         }
-        var completed = progress.event("EMBEDDING_COMPLETED", null, null, duration, null);
+        var completed = progress.event("EMBEDDING_COMPLETED", progress.embeddingUsed, null, duration, null);
         completed.put("model", model);
         progress.checkCancelled();
         progress.sink.accept(completed);

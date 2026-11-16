@@ -117,6 +117,25 @@ class EmbeddingProviderFailoverTest {
         assertThat(events).extracting(e -> e.get("stage")).containsExactly("EMBEDDING_STARTED","EMBEDDING_COMPLETED");
         assertThat((Double)progress.metrics().get("embeddingMs")).isGreaterThan(0);
         assertThat(calls).filteredOn(s -> s.endsWith("/api/embed")).hasSize(1);
+        assertThat(progress.usedEmbeddingProvider().baseUrl()).isEqualTo(b.url());
+        assertThat(events.getLast()).containsEntry("provider", "desktop").containsEntry("model", MODEL);
+        assertThat(events.toString()).doesNotContain("127.0.0.1", "private input");
+    }
+    @Test void embeddingProviderBelongsToTheRequestAndSurvivesAnotherRequestsFailover() throws Exception {
+        Node lp=node("lp"), pc=node("pc"), nas=node("nas");
+        var observed=new ObservedEmbeddingModel(OllamaApi.builder().baseUrl(lp.url()).build(),options,router(lp,pc,nas));
+        var first=RagProgress.silent(); var second=RagProgress.silent();
+        first.duringRetrieval(() -> observed.embed("first request"));
+        lp.status=503;
+        second.duringRetrieval(() -> observed.embed("second request"));
+        assertThat(first.usedEmbeddingProvider().baseUrl()).isEqualTo(lp.url());
+        assertThat(second.usedEmbeddingProvider().baseUrl()).isEqualTo(pc.url());
+        assertThat(RagProgress.silent().usedEmbeddingProvider()).isNull();
+        pc.status=503; nas.status=503;
+        assertThatThrownBy(() -> first.duringRetrieval(() -> observed.embed("failed request")))
+                .isInstanceOf(EmbeddingUnavailableException.class);
+        assertThat(first.usedEmbeddingProvider()).isNull();
+        assertThat(second.usedEmbeddingProvider().baseUrl()).isEqualTo(pc.url());
     }
     @Test void timeoutIsRecoverable() throws Exception {
         Node a=node("lp"), b=node("pc"), c=node("nas"); a.delay=200;

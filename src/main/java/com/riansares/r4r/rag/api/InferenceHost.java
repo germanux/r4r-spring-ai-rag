@@ -15,6 +15,8 @@ final class InferenceHost {
         catch (IllegalArgumentException | NullPointerException ex) { host = null; }
         if ("192.168.1.209".equals(host)) return laptop();
         if ("192.168.1.207".equals(host)) return desktop();
+        if ("192.168.1.203".equals(host) || "ollama-embeddings".equals(host))
+            return new Details("nas", "synox-nas", null, null, null);
         String name = model == null ? "" : model.toLowerCase(Locale.ROOT);
         if (name.matches(".*qwen[\\s._-]*2[._-]5.*")) return laptop();
         Matcher size = QWEN3_SIZE.matcher(name);

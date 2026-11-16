@@ -92,12 +92,13 @@ public class RagStreamController implements AutoCloseable {
                         ? service.answer(request.question(), request.retrievalQuestion(), request.responseLanguage(), session.progress, captured::set)
                         : service.answer(request.question(), request.retrievalQuestion(), request.responseLanguage(), session.progress);
                 session.progress.checkCancelled();
-                var response = RagQueryController.response(result, router.requestExecution());
+                var response = RagQueryController.response(result, router.requestExecution(), session.progress);
                 var event = session.progress.event("ANSWER_READY", null, session.progress.documentsFound(), null,
                         response.abstained() ? "abstained" : "answered");
                 event.put("status", response.status());
                 event.put("answer", response.answer()); event.put("abstained", response.abstained());
                 event.put("citations", response.citations()); event.put("provider", response.provider());
+                if (response.embeddingProvider() != null) event.put("embeddingProvider", response.embeddingProvider());
                 event.put("metrics", session.progress.metrics());
                 if (auditEnabled) {
                     String id = audits.prepare(captured.get());

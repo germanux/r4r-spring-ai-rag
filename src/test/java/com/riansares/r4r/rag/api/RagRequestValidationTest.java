@@ -77,8 +77,6 @@ class RagRequestValidationTest {
 
     @ParameterizedTest @MethodSource("validRequests")
     void acceptsBoundariesWithoutTruncation(RagQueryRequest input) throws Exception {
-        when(service.answer(anyString())).thenReturn(RagResult.abstain());
-        when(service.answer(anyString(), nullable(String.class), nullable(String.class))).thenReturn(RagResult.abstain());
         when(service.answer(anyString(), nullable(String.class), nullable(String.class), any(RagProgress.class))).thenReturn(RagResult.abstain());
         try (var streams = new RagStreamController(service, router, Duration.ofSeconds(3))) {
             var mvc = MockMvcBuilders.standaloneSetup(new RagQueryController(service), streams).build();
@@ -89,9 +87,7 @@ class RagRequestValidationTest {
                     .andExpect(request().asyncStarted()).andReturn();
             response.getAsyncResult(3000);
             mvc.perform(asyncDispatch(response)).andExpect(status().isOk());
-            verify(service).answer(eq(input.question()), eq(input.retrievalQuestion()), eq(input.responseLanguage()), any(RagProgress.class));
-            if (input.retrievalQuestion() == null && input.responseLanguage() == null) verify(service).answer(input.question());
-            else verify(service).answer(input.question(), input.retrievalQuestion(), input.responseLanguage());
+            verify(service, times(2)).answer(eq(input.question()), eq(input.retrievalQuestion()), eq(input.responseLanguage()), any(RagProgress.class));
         }
     }
 }

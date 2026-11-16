@@ -9,6 +9,10 @@ class InferenceHostTest {
     void endpointTakesPriorityOverModel() {
         assertThat(InferenceHost.identify("http://192.168.1.209:11434", "qwen3:8b").type()).isEqualTo("laptop");
         assertThat(InferenceHost.identify("http://192.168.1.207:11434", "qwen2.5:7b").type()).isEqualTo("desktop");
+        assertThat(InferenceHost.identify("http://192.168.1.209:11434", "qwen3-embedding:0.6b").type()).isEqualTo("laptop");
+        assertThat(InferenceHost.identify("http://192.168.1.203:11434", "qwen3-embedding:0.6b").type()).isEqualTo("nas");
+        assertThat(InferenceHost.identify("http://ollama-embeddings:11434", "qwen3-embedding:0.6b").type()).isEqualTo("nas");
+        assertThat(InferenceHost.identify("http://unidentified:11434", "qwen3-embedding:0.6b").type()).isEqualTo("unknown");
     }
 
     @Test
