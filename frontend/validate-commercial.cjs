@@ -65,7 +65,7 @@ async function main() {
         assert.equal(calls, previous + 1, 'One SSE attempt per submission');
         if (['ANSWERED','PARTIAL'].includes(status)) {
           const source = await frame.locator('#citations a').first().getAttribute('href');
-          const response = await page.request.get('http://127.0.0.1:' + server.address().port + '/asistente/' + source);
+          const response = await page.request.get('http://127.0.0.1:' + server.address().port + '/asistente-ia/' + source);
           assert.equal(response.status(), 200);
         }
       }

@@ -19,6 +19,8 @@ if not (bundle / 'index.html').is_file():
 files = subprocess.check_output(['git', '-C', str(args.commercial), 'ls-files', '-z', 'dist/']).decode().split('\0')
 for name in filter(None, files):
     relative = pathlib.Path(name).relative_to('dist')
+    if relative.parts[0] in {'asistente', 'r4r-rag-demo', 'asistente-ia'}:
+        continue  # Rebuild the single current assistant tree below.
     if '.gitignore' in relative.parts or relative.name.startswith('webpack.'):
         continue
     destination = out / relative
@@ -27,6 +29,6 @@ for name in filter(None, files):
 # Explicit new source files, not yet tracked by the controller.
 for name in ['js/assistant-embed.js', '_headers', 'privacy-consent.js']:
     shutil.copy2(args.commercial / 'dist' / name, out / name)
-shutil.copytree(bundle, out / 'asistente', ignore=shutil.ignore_patterns('fixtures'))
-shutil.copytree(root / 'front-athagon-r4r-static/docs', out / 'asistente/docs')
+shutil.copytree(bundle, out / 'asistente-ia', ignore=shutil.ignore_patterns('fixtures'))
+shutil.copytree(root / 'front-athagon-r4r-static/docs', out / 'asistente-ia/docs')
 print(out)

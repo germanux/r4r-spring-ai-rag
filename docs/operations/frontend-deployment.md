@@ -10,9 +10,8 @@ Compila Angular en producción, prerenderiza y actualiza `front-athagon-r4r-stat
 Después copia el resultado completo, incluidos documentos y consentimiento, a:
 
 1. `athagon-web.git/html-static/r4r-rag/`.
-2. `R4R.git/dist/asistente/`, usado por la portada comercial.
-3. `R4R.git/dist/r4r-rag-demo/`, para pruebas desde el dominio comercial.
-4. `smb://synox-nas.local/web/r4r-rag`, mediante el recurso SMB ya montado.
+2. `R4R.git/dist/asistente-ia/`, único destino comercial, usado por la portada y para pruebas directas.
+3. `smb://synox-nas.local/web/r4r-rag`, mediante el recurso SMB ya montado.
 
 También sincroniza `privacy-consent.js` en las raíces estáticas de Athagon y Riansares.
 No elimina documentos, archivos históricos ni `v1/` de los destinos. En SMB copia
@@ -67,7 +66,7 @@ temporal existente como padre; los otros destinos siguen siendo los repositorios
 ## Validación de esta modificación
 
 - `bash -n` de ambos scripts: correcto.
-- Prueba aislada con destinos temporales y build simulado: copias a los cuatro
+- Prueba aislada con destinos temporales y build simulado: copias a los tres
   destinos, documentos y archivos ocultos completos, preservación de `v1/`,
   desreferenciado SMB y error ante montaje ausente: correctos.
 - No se copió a SMB real ni se inició el despliegue backend durante la validación.

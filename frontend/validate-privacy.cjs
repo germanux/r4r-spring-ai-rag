@@ -17,8 +17,8 @@ async function main(){
    }
    if(['athagon.tech','riansares4r.com'].includes(url.hostname)){
     let file;
-    if(url.pathname.startsWith('/r4r-rag/')||url.pathname.startsWith('/asistente/')){
-     const relative=url.pathname.replace(/^\/(r4r-rag|asistente)\//,'')||'index.html';
+    if(url.pathname.startsWith('/r4r-rag/')||url.pathname.startsWith('/asistente-ia/')){
+     const relative=url.pathname.replace(/^\/(r4r-rag|asistente-ia)\//,'')||'index.html';
      file=path.join(root,'frontend/dist/r4r-frontend/browser',relative);
     }else file=path.join(url.hostname==='athagon.tech'?'/home/german/Desarrollo/athagon-web.git/html-static':'/home/german/Desarrollo/R4R/R4R.git/dist',url.pathname==='/'?'index.html':url.pathname);
     if(fs.existsSync(file)&&fs.statSync(file).isFile())return route.fulfill({contentType:({'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.ico':'image/x-icon'})[path.extname(file)]||'application/octet-stream',body:fs.readFileSync(file)});

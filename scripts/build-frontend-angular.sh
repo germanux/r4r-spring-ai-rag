@@ -31,7 +31,7 @@ test -s "$DEST/index.html"
 test -s "$DEST/docs/catalogue.json"
 
 # Overlay generated files, preserving shared documents, historical assets and v1/.
-for destination in "$ATHAGON_DEST" "$COMMERCIAL_STATIC/asistente" "$COMMERCIAL_STATIC/r4r-rag-demo"; do
+for destination in "$ATHAGON_DEST" "$COMMERCIAL_STATIC/asistente-ia"; do
   mkdir -p "$destination"
   cp -a "$DEST/." "$destination/"
   test -s "$destination/index.html"
