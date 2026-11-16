@@ -6,7 +6,7 @@ Public values live in versioned `docker-spring/.env.base`; optional private `.en
 contains only secrets and overrides, and has priority. The canonical endpoint list is:
 
 ```dotenv
-RAG_EMBEDDING_PROVIDERS=http://192.168.1.209:11434|1500ms,http://192.168.1.207:11434|1500ms,http://192.168.1.203:11434|30s
+RAG_EMBEDDING_PROVIDERS=http://192.168.1.209:11434|qwen3-embedding:0.6b|1500ms,http://192.168.1.207:11434|qwen3-embedding:0.6b|1500ms,http://192.168.1.203:11434|qwen3-embedding:0.6b|30s
 ```
 
 `PublicRagEnvironment` adapts that list to the existing typed providers. Each new
@@ -14,9 +14,9 @@ batch starts with laptop, then desktop, then NAS. Any positive number of entries
 See [migration status and cutover commands](qwen3-embedding-migration.md) before deploying.
 Read timeouts belong to their URLs in the compact entries (1500ms, 1500ms, 30s by default);
 the connection limit is 400ms, the probe read limit is 600ms and the total is 35s.
-The public file also pins the expected digest. Warmup prepares every embedding
-provider in parallel with generation, with a separate 30s loading budget and 8h
-keep-alive; see [warmup](model-warmup.md). Runtime exposes their independent states.
+The public file also pins the expected digest. Warmup uses a separate 30s loading
+budget and 8h keep-alive, with per-instance serialization and resident-model
+protection instead of competing cold loads; see [warmup](model-warmup.md). Runtime exposes their independent states.
 
 Individual URL aliases and the previous indexed-YAML configuration are superseded
 by the compact list. For Docker service DNS, use `http://ollama-embeddings:11434` as
@@ -30,6 +30,9 @@ One Spring AI `EmbeddingModel` serves ingestion and retrieval, preserving the
 `ollamaEmbeddingModel` name and Ollama type. `ObservedEmbeddingModel` measures one
 operation, including probes and failed attempts. The router consumes the configured
 provider records directly; there is no duplicate internal target definition.
+The shared `OrderedProviderFailover` and `ProviderExecution` handle ordered execution,
+transport budgets and technical classification. Compatibility and cooldown remain
+inside the embedding router. See [the three circuits](ordered-provider-failover.md).
 The configuration record, routing class and two typed exceptions remain separate
 because they represent binding, execution and distinct failure classifications.
 
@@ -40,7 +43,7 @@ Changing the pin requires checking compatibility with the stored corpus, not mer
 that the servers agree. Models are never downloaded or the corpus reindexed automatically.
 
 Each batch follows the configured order, temporarily skipping providers with a
-recoverable failure for 30s. The next batch after expiry tries them again in their
+recoverable failure for 30s, except loading/read timeouts and exhausted call budgets. The next batch after expiry tries them again in their
 original order; see [availability and measured connection times](embedding-availability.md).
 No sticky routing, background retries, partial batches or fake vectors.
 Technical HTTP 408/429/500/502/503/504, socket/connection/read-timeout and EOF failures

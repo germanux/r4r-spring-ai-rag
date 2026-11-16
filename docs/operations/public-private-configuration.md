@@ -7,33 +7,31 @@ revision is historical; bootstrap tests now generate YAML with no private import
 
 ## Provider lists
 
+The authoritative format for all three independent circuits is
+`URL-or-openai|model|read-timeout`, comma separated. See the complete
+[ordered failover configuration and migration](ordered-provider-failover.md).
+
 ```dotenv
-RAG_GENERATION_PROVIDERS=http://192.168.1.207:11434|qwen3:8b|20s,http://192.168.1.209:11434|qwen2.5:7b|30s
-RAG_EMBEDDING_PROVIDERS=http://192.168.1.209:11434|8s,http://192.168.1.207:11434|8s,http://192.168.1.203:11434|30s
-RAG_EMBEDDING_MODEL=nomic-embed-text:latest
+RAG_GENERATION_PROVIDERS=http://192.168.1.207:11434|qwen3:8b|20s,http://192.168.1.209:11434|qwen2.5:7b|60s,openai|gpt-6-luna|35s
+RAG_AUDIT_PROVIDERS=http://192.168.1.207:11434|qwen3:8b|20s,openai|gpt-6-luna|35s
+RAG_EMBEDDING_PROVIDERS=http://192.168.1.209:11434|qwen3-embedding:0.6b|1500ms,http://192.168.1.207:11434|qwen3-embedding:0.6b|1500ms,http://192.168.1.203:11434|qwen3-embedding:0.6b|30s
+RAG_EMBEDDING_MODEL=qwen3-embedding:0.6b
 ```
 
-Entries are tried in order. Each URL owns its model/read timeout (generation) or
-read timeout (embeddings). Both lists require at least one entry and have no fixed
-upper size. Add, remove or reorder entire entries; timeout associations do not change.
-The embedding model/digest/dimensions remain common for compatibility with the corpus.
-Every new request returns to the first provider. No downloads, reindex or live
-provider interruption is used to test this behavior.
+Order is priority, including `openai` at any position in chat lists. No OpenAI
+entry means no remote use for that function; the audit list can be empty.
+Generation and embedding lists must be nonempty. Embeddings reject remote models
+and preserve the common Qwen3 model, digest and 1024 dimensions.
 
-`PublicRagEnvironment` only adapts compact text to typed Spring lists after imports.
-`GenerationProviderProperties` binds the local generation list, replacing PC/fallback
-properties. URL-based opaque IDs remain stable on reorder; neither names nor timeouts
-are inferred from position. Existing known host display roles use actual addresses,
-not priority. Unknown hosts receive no invented hardware identity in this adapter.
-Translation iterates the same local list with its global translation cap, and shares
-Luna's quota/client independently of the number of local providers. Warmup uses each
-entry's own timeout, never calls Luna, and retains the existing asynchronous behavior.
-
-Global connection/probe limits, embedding total budget, translation cap and SSE
-limits remain. Model and digest validation, single embedding instrumentation and
-cancellation behavior are preserved. One `RAG_CORS_ALLOWED_ORIGINS` list is shared
-by MVC and the consumption-security filter. Values may be unquoted or the compact
-lists may have matching outer quotes. Invalid entries fail without echoing content.
+`PublicRagEnvironment` adapts all lists after imports. IDs derive from endpoint,
+not position. Each query starts from the preferred provider; only embeddings retain
+the existing short negative cache. Cold loading timeouts do not enter that cache.
+Warmup filters remote entries and keeps the first local generator's protected
+priority, including when OpenAI precedes it. Runtime observation never loads models.
+Connection/probe and global budgets remain separate. CORS still uses one origin
+list. Malformed lists and obsolete activation settings fail without echoing values. Compose forwards only an internal
+`RAG_LEGACY_PROVIDER_SETTINGS` marker when obsolete variables remain in interpolation
+inputs, so an old private false flag cannot silently enable remote spending.
 
 ## Spring and Compose precedence
 
@@ -61,7 +59,7 @@ An explicit `SPRING_DATASOURCE_URL` override is honored; otherwise the API uses
 No AWS root credentials or AWS service call is used. The API container uses standard
 AWS access/secret/session environment variables; it does not depend on `AWS_PROFILE`
 or `~/.aws` mounts. `RAG_S3_VECTORS_REGION` is the only regional configuration input.
-S3 flags and Luna flags remain independent. See [AWS environment integration](s3-vectors-environment.md).
+S3 flags and explicit OpenAI list entries remain independent. See [AWS environment integration](s3-vectors-environment.md).
 
 Normal API startup still requires PostgreSQL for migrations, but Compose no longer waits for PostgreSQL health. Ollama/NAS health is not a prerequisite
 for API startup. For `docker compose up api`, neither Ollama nor PostgreSQL is a transitive dependency.
@@ -97,7 +95,6 @@ RAG_EMBEDDING_PC_TIMEOUT
 RAG_EMBEDDING_NAS_TIMEOUT
 RAG_WARMUP_PC_TIMEOUT
 RAG_WARMUP_LAPTOP_TIMEOUT
-RAG_WARMUP_EMBEDDING_TIMEOUT
 RAG_API_ALLOWED_ORIGIN_PUBLIC
 RAG_API_ALLOWED_ORIGIN_LOCALHOST
 RAG_API_ALLOWED_ORIGIN_LOOPBACK
@@ -110,19 +107,19 @@ RAG_API_ALLOWED_ORIGIN_SYNOX_NAS_S
 Keep private `POSTGRES_PASSWORD`, `OPENAI_API_KEY`, `TUNNEL_TOKEN`, and, if S3 needs
 them, least-privilege `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, optional
 `AWS_SESSION_TOKEN`. Never use root credentials. Keep genuine overrides such as
-`RAG_GENERATION_PROVIDERS`, `RAG_EMBEDDING_PROVIDERS`, `RAG_CORS_ALLOWED_ORIGINS`,
-knowledge paths, differing DB identity, and S3/Luna activation flags when required.
+`RAG_GENERATION_PROVIDERS`, `RAG_AUDIT_PROVIDERS`, `RAG_EMBEDDING_PROVIDERS`, `RAG_CORS_ALLOWED_ORIGINS`,
+knowledge paths, differing DB identity, and S3 activation flags when required. OpenAI is enabled only by its list entries.
 The **old compact list syntax must also be updated** to include each entry's timeout.
 Public values identical to `.env.base` can be removed from `.env`. Native indexed
 provider/old PC/fallback Spring properties are obsolete; use compact lists instead.
 Arbitrary extra private variables are no longer forwarded automatically to containers.
 
 All previously exposed operational defaults now live in `.env.base`. Constants
-that are not currently configurable remain in code: generation keep-alive 3h,
+that are not currently configurable remain in code: generation and embedding keep-alive 8h,
 OpenAI output cap 2048 tokens, input guard 32000 characters, and internal executor/
 telemetry bounds. They are not new environment settings and were left unchanged
 rather than extending the configuration surface during this correction.
-S3 bucket/index deliberately stay blank until the owner supplies verified resources.
+S3 bucket/index remain the existing configured resources; this refactor does not change them.
 
 Private native S3/OpenAI overrides previously forwarded by shared `env_file` must
 be migrated to the canonical public names if used. Examples:
@@ -130,7 +127,8 @@ be migrated to the canonical public names if used. Examples:
 `R4R_RAG_VECTOR_FAILOVERENABLED` → `RAG_VECTOR_FAILOVER_ENABLED`,
 `R4R_RAG_VECTOR_S3VECTORS_ENABLED` → `RAG_S3_VECTORS_ENABLED`,
 `R4R_RAG_VECTOR_S3VECTORS_REGION/BUCKET/INDEX` → `RAG_S3_VECTORS_REGION/BUCKET/INDEX`,
-`R4R_RAG_OPENAI_ENABLED/MODEL` → `RAG_OPENAI_ENABLED/MODEL`.
+Legacy OpenAI flags/model/timeouts and singular audit settings must instead become
+explicit entries in the corresponding provider lists. Do not retain activation flags: startup rejects them.
 Use the actual native spelling you had configured; no private variables were
 inspected, so this is a migration checklist, not a claim about their presence.
 

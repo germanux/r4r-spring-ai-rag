@@ -10,6 +10,25 @@ conserva criterios del documento anterior sin atribuirlos de nuevo al usuario co
 si se hubieran formulado en esta sesión. «Interpretaciones» son conclusiones del
 asistente; no autorizan cambios funcionales.
 
+## Failover ordenado — decisión del usuario del 2026-11-16
+
+- Tres listas independientes: `RAG_GENERATION_PROVIDERS`, `RAG_AUDIT_PROVIDERS` y
+  `RAG_EMBEDDING_PROVIDERS`, todas con `URL-o-openai|modelo|timeout` por entrada.
+  Su orden es la prioridad efectiva; ausencia de OpenAI lo desactiva por función.
+- Generación PC → portátil → Luna; auditoría PC → Luna; embeddings portátil → PC →
+  NAS en los defaults públicos. El operador puede reordenar sin cambiar código.
+- Compartir recorrido y tratamiento técnico, manteniendo validación semántica,
+  digest/dimensiones y cooldown específicos. No reintentar inferencia por dictámenes.
+- Cuota y reserva OpenAI únicas entre generación y auditoría. No tocar secretos.
+  Retirar los flags redundantes mediante migración explícita, sin ignorarlos y
+  activar gasto remoto accidentalmente.
+- Mantener Qwen3/1024/digest, precarga protegida por instancia, residencia 8h,
+  contratos y corpus. No añadir selector público de modelos.
+- Trabajar en rama específica y validar con proveedores simulados; dejar merge,
+  pruebas live de pago y despliegue para autorización/revisión del usuario.
+- La configuración vigente sustituye los flags históricos de OpenAI indicados
+  más abajo. Detalles y evidencias en `docs/operations/ordered-provider-failover.md`.
+
 ## Alcance, autorización y forma de trabajar
 
 ### Decisiones vigentes del usuario: cambios mínimos, formato y validación

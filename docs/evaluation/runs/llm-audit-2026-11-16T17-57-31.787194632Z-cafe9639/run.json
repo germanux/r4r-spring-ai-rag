@@ -1,0 +1,776 @@
+{
+  "runId" : "llm-audit-2026-11-16T17-57-31.787194632Z-cafe9639",
+  "summary" : {
+    "runId" : "llm-audit-2026-11-16T17-57-31.787194632Z-cafe9639",
+    "total" : 10,
+    "ragStatuses" : {
+      "ANSWERED" : 10
+    },
+    "ragChecks" : {
+      "PASS" : 10
+    },
+    "proposedDowngrades" : 0,
+    "appliedDowngrades" : 0,
+    "auditFailures" : 10,
+    "auditSkipped" : 0,
+    "meanRagHttpMs" : 9095.7619903,
+    "meanAuditHttpMs" : 20056.8548535,
+    "meanAuditServiceMs" : 20000.1632257
+  },
+  "cases" : [ {
+    "caseId" : "case-01",
+    "number" : 1,
+    "language" : "es",
+    "question" : "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 12081.801849,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Facilita fotos, ubicación, superficie o medidas aproximadas, uso actual, problema, resultado esperado, distribución, materiales deseados, acceso, plazos y prioridades; si es cocina o baño, indica si se mantienen las posiciones del agua y los desagües [S1]. Esta información permite una primera orientación, pero no sustituye la visita, las mediciones ni el diagnóstico de instalaciones ocultas [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
+        "headingPath" : [ "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance", "¿Qué necesito para pedir presupuesto de reforma?" ],
+        "ordinal" : 1
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "ERROR",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : null,
+      "reason" : null,
+      "provider" : "Ollama",
+      "model" : "qwen3:8b",
+      "durationMs" : 20000.152331,
+      "httpLatencyMs" : 20057.24092,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : false,
+        "note" : "",
+        "metadata" : {
+          "verdict" : null,
+          "reason" : null,
+          "provider" : "Ollama",
+          "model" : "qwen3:8b",
+          "durationMs" : 20000.152331,
+          "outcome" : "timeout"
+        }
+      },
+      "note" : "",
+      "error" : "audit_inconclusive_or_mismatched"
+    },
+    "runId" : "llm-audit-2026-11-16T17-57-31.787194632Z-cafe9639"
+  }, {
+    "caseId" : "case-02",
+    "number" : 2,
+    "language" : "es",
+    "question" : "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 10167.782932,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "La solera es la base o soporte que puede recibir el pavimento; el solado es el acabado transitable, como una baldosa. Son elementos distintos [S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S2]",
+        "source" : "es/guides/R4R_105_SOLERA_SOLADO_PATIOS_DRENAJE_Y_PENDIENTES.md",
+        "headingPath" : [ "Patios y pavimentos — solera, solado, humedad y evacuación", "¿Qué diferencia hay entre solera y solado?" ],
+        "ordinal" : 1
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "ERROR",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : null,
+      "reason" : null,
+      "provider" : "Ollama",
+      "model" : "qwen3:8b",
+      "durationMs" : 20000.187411,
+      "httpLatencyMs" : 20115.760636,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : false,
+        "note" : "",
+        "metadata" : {
+          "verdict" : null,
+          "reason" : null,
+          "provider" : "Ollama",
+          "model" : "qwen3:8b",
+          "durationMs" : 20000.187411,
+          "outcome" : "timeout"
+        }
+      },
+      "note" : "",
+      "error" : "audit_inconclusive_or_mismatched"
+    },
+    "runId" : "llm-audit-2026-11-16T17-57-31.787194632Z-cafe9639"
+  }, {
+    "caseId" : "case-03",
+    "number" : 3,
+    "language" : "es",
+    "question" : "¿Por qué el acceso cambia el precio de una solera?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 9400.05354,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Cuando el acceso impide descargar directamente o bombear, puede ser necesario mezclar y transportar el material manualmente; esto aumenta las jornadas, la coordinación y el riesgo de ejecución, y por eso cambia el precio de la solera [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Patios", "FAQ-045 — ¿Por qué el acceso cambia el precio de una solera?" ],
+        "ordinal" : 57
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "ERROR",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : null,
+      "reason" : null,
+      "provider" : "Ollama",
+      "model" : "qwen3:8b",
+      "durationMs" : 20000.14785,
+      "httpLatencyMs" : 20028.99821,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : false,
+        "note" : "",
+        "metadata" : {
+          "verdict" : null,
+          "reason" : null,
+          "provider" : "Ollama",
+          "model" : "qwen3:8b",
+          "durationMs" : 20000.14785,
+          "outcome" : "timeout"
+        }
+      },
+      "note" : "",
+      "error" : "audit_inconclusive_or_mismatched"
+    },
+    "runId" : "llm-audit-2026-11-16T17-57-31.787194632Z-cafe9639"
+  }, {
+    "caseId" : "case-04",
+    "number" : 4,
+    "language" : "es",
+    "question" : "¿Cuánto orienta una reforma integral de una casa antigua?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7559.413343,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Una reforma integral de una casa antigua se orienta en 350–450 €/m² si no incluye estructura ni redistribución. Si incluye trabajos estructurales o cambios de distribución, puede subir a 533–600 €/m² o más [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Casas antiguas", "FAQ-030 — ¿Cuánto orienta una reforma integral de casa antigua?" ],
+        "ordinal" : 36
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "ERROR",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : null,
+      "reason" : null,
+      "provider" : "Ollama",
+      "model" : "qwen3:8b",
+      "durationMs" : 20000.152178,
+      "httpLatencyMs" : 20013.576081,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : false,
+        "note" : "",
+        "metadata" : {
+          "verdict" : null,
+          "reason" : null,
+          "provider" : "Ollama",
+          "model" : "qwen3:8b",
+          "durationMs" : 20000.152178,
+          "outcome" : "timeout"
+        }
+      },
+      "note" : "",
+      "error" : "audit_inconclusive_or_mismatched"
+    },
+    "runId" : "llm-audit-2026-11-16T17-57-31.787194632Z-cafe9639"
+  }, {
+    "caseId" : "case-05",
+    "number" : 5,
+    "language" : "es",
+    "question" : "¿Una primera orientación económica sustituye una visita técnica?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7548.014941,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "No. Una primera orientación económica no sustituye una visita técnica ni la medición del espacio [S1][S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/guides/R4R_114_GUIA_DE_RESPUESTAS_PRUDENTES_Y_LIMITES_DEL_ASESORAMIENTO.md",
+        "headingPath" : [ "Orientación al visitante — qué puede responder un asistente de reformas" ],
+        "ordinal" : 1000000
+      }, {
+        "label" : "[S2]",
+        "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Presupuesto", "FAQ-001 — ¿Qué información hace falta para una primera orientación?" ],
+        "ordinal" : 3
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "ERROR",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : null,
+      "reason" : null,
+      "provider" : "Ollama",
+      "model" : "qwen3:8b",
+      "durationMs" : 20000.150881,
+      "httpLatencyMs" : 20016.410538,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : false,
+        "note" : "",
+        "metadata" : {
+          "verdict" : null,
+          "reason" : null,
+          "provider" : "Ollama",
+          "model" : "qwen3:8b",
+          "durationMs" : 20000.150881,
+          "outcome" : "timeout"
+        }
+      },
+      "note" : "",
+      "error" : "audit_inconclusive_or_mismatched"
+    },
+    "runId" : "llm-audit-2026-11-16T17-57-31.787194632Z-cafe9639"
+  }, {
+    "caseId" : "case-06",
+    "number" : 6,
+    "language" : "es",
+    "question" : "¿Qué debe revisarse antes de pavimentar un patio?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 6688.767556,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Antes de pavimentar un patio, deben revisarse la base, la compactación, el espesor, la armadura, las pendientes, las juntas, las arquetas, las canaletas, los encuentros y el acceso [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Patios", "FAQ-046 — ¿Qué debe revisarse antes de pavimentar un patio?" ],
+        "ordinal" : 58
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "ERROR",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : null,
+      "reason" : null,
+      "provider" : "Ollama",
+      "model" : "qwen3:8b",
+      "durationMs" : 20000.251815,
+      "httpLatencyMs" : 20070.099892,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : false,
+        "note" : "",
+        "metadata" : {
+          "verdict" : null,
+          "reason" : null,
+          "provider" : "Ollama",
+          "model" : "qwen3:8b",
+          "durationMs" : 20000.251815,
+          "outcome" : "timeout"
+        }
+      },
+      "note" : "",
+      "error" : "audit_inconclusive_or_mismatched"
+    },
+    "runId" : "llm-audit-2026-11-16T17-57-31.787194632Z-cafe9639"
+  }, {
+    "caseId" : "case-07",
+    "number" : 7,
+    "language" : "es",
+    "question" : "¿Cuándo conviene usar hormigón de camión en una solera?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 12181.203883,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Como orientación, parece conveniente usar hormigón de camión cuando hay acceso que permita descargar cerca de la solera: la fuente señala que así se reduce la manipulación y se agiliza la ejecución [S1]. En patios interiores o pasillos estrechos, el acceso indirecto y el transporte con carretillas dificultan esa opción [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+        "headingPath" : [ "Riansares 4R — casos de patios, viviendas, humedades y reparaciones", "6. Caso A — Patio, solera, pavimento y drenaje", "6.4. Hormigón de camión y ejecución manual", "Patio exterior con acceso" ],
+        "ordinal" : 1000006
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "ERROR",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : null,
+      "reason" : null,
+      "provider" : "Ollama",
+      "model" : "qwen3:8b",
+      "durationMs" : 20000.15582,
+      "httpLatencyMs" : 20043.898405,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : false,
+        "note" : "",
+        "metadata" : {
+          "verdict" : null,
+          "reason" : null,
+          "provider" : "Ollama",
+          "model" : "qwen3:8b",
+          "durationMs" : 20000.15582,
+          "outcome" : "timeout"
+        }
+      },
+      "note" : "",
+      "error" : "audit_inconclusive_or_mismatched"
+    },
+    "runId" : "llm-audit-2026-11-16T17-57-31.787194632Z-cafe9639"
+  }, {
+    "caseId" : "case-08",
+    "number" : 8,
+    "language" : "es",
+    "question" : "¿Cómo afecta un pasillo estrecho a la ejecución de una solera?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 10228.611961,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Un pasillo estrecho dificulta el acceso y obliga a transportar materiales con carretillas; puede requerir mezclar en obra o verter por fases, colocando también el mallazo y los separadores por tramos. Aumentan la mano de obra y la atención a encuentros y pendientes, y apresurar la ejecución eleva el riesgo de una mala ejecución [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+        "headingPath" : [ "Riansares 4R — casos de patios, viviendas, humedades y reparaciones", "6. Caso A — Patio, solera, pavimento y drenaje", "6.4. Hormigón de camión y ejecución manual", "Patio interior o pasillo estrecho" ],
+        "ordinal" : 7
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "ERROR",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : null,
+      "reason" : null,
+      "provider" : "Ollama",
+      "model" : "qwen3:8b",
+      "durationMs" : 20000.131946,
+      "httpLatencyMs" : 20069.494998,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : false,
+        "note" : "",
+        "metadata" : {
+          "verdict" : null,
+          "reason" : null,
+          "provider" : "Ollama",
+          "model" : "qwen3:8b",
+          "durationMs" : 20000.131946,
+          "outcome" : "timeout"
+        }
+      },
+      "note" : "",
+      "error" : "audit_inconclusive_or_mismatched"
+    },
+    "runId" : "llm-audit-2026-11-16T17-57-31.787194632Z-cafe9639"
+  }, {
+    "caseId" : "case-09",
+    "number" : 9,
+    "language" : "es",
+    "question" : "¿Qué causas de humedad pueden aparecer en una vivienda antigua?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7327.15135,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "En una vivienda antigua pueden aparecer humedad ascendente, lateral procedente del terreno o la roca, condensación, filtraciones antiguas, fugas y sales [S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S2]",
+        "source" : "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+        "headingPath" : [ "Riansares 4R — casos de patios, viviendas, humedades y reparaciones", "7. Caso B — Vivienda antigua: rehabilitar sin demoler de más", "7.3. Humedad en muros antiguos" ],
+        "ordinal" : 1000014
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "ERROR",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : null,
+      "reason" : null,
+      "provider" : "Ollama",
+      "model" : "qwen3:8b",
+      "durationMs" : 20000.14132,
+      "httpLatencyMs" : 20096.130232,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : false,
+        "note" : "",
+        "metadata" : {
+          "verdict" : null,
+          "reason" : null,
+          "provider" : "Ollama",
+          "model" : "qwen3:8b",
+          "durationMs" : 20000.14132,
+          "outcome" : "timeout"
+        }
+      },
+      "note" : "",
+      "error" : "audit_inconclusive_or_mismatched"
+    },
+    "runId" : "llm-audit-2026-11-16T17-57-31.787194632Z-cafe9639"
+  }, {
+    "caseId" : "case-10",
+    "number" : 10,
+    "language" : "es",
+    "question" : "¿Debe incluir el presupuesto de una reforma los plazos de ejecución?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7774.818548,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Sí. El presupuesto debe indicar un plazo orientativo de ejecución, condicionado a la disponibilidad y a los hallazgos [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/guides/R4R_103_PRESUPUESTO_COCINA_MEDICIONES_Y_VARIACIONES.md",
+        "headingPath" : [ "Cocinas — presupuesto por partidas y control de cambios", "¿Qué debe incluir un presupuesto de reforma de cocina?" ],
+        "ordinal" : 1
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "ERROR",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : null,
+      "reason" : null,
+      "provider" : "Ollama",
+      "model" : "qwen3:8b",
+      "durationMs" : 20000.160705,
+      "httpLatencyMs" : 20056.938623,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : false,
+        "note" : "",
+        "metadata" : {
+          "verdict" : null,
+          "reason" : null,
+          "provider" : "Ollama",
+          "model" : "qwen3:8b",
+          "durationMs" : 20000.160705,
+          "outcome" : "timeout"
+        }
+      },
+      "note" : "",
+      "error" : "audit_inconclusive_or_mismatched"
+    },
+    "runId" : "llm-audit-2026-11-16T17-57-31.787194632Z-cafe9639"
+  } ]
+}
