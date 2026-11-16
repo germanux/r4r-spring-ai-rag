@@ -57,8 +57,8 @@ recogida innecesaria; se excluye/revisa ese material. GA sí mantiene consentimi
 La necesidad real de guardar IPs debe justificarse antes de habilitar ese campo,
 especialmente con poco tráfico; no se inventa un incidente o una finalidad distinta.
 
-**Oposición:** checkbox junto al formulario, en memoria de la apertura, sin cookies ni
-permiso de GA. Los siguientes envíos omiten texto e IP; se solicita restricción de
+**Oposición:** controles en la sección discreta «Opciones de privacidad» bajo el
+asistente, enlazada desde la política; estado en memoria, sin cookies ni permiso de GA. Los siguientes envíos omiten texto e IP; se solicita restricción de
 referencias recientes y de la apertura, incluso si una consulta sigue en curso. No se
 exponen conversaciones. Si falla la red, la exclusión futura permanece y se muestra el
 canal manual para los registros anteriores. Otra apertura no identifica a esa persona:
@@ -217,3 +217,24 @@ No se ejecutó la distribución a los repositorios externos ni la copia SMB; par
 actualizarlos se utiliza `bash scripts/build-frontend-angular.sh`, que sí escribe en el NAS.
 Documentación: [randomUUID](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID)
 y [getRandomValues](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues).
+
+
+## Ajuste de UX — 2026-11-16
+
+El formulario muestra únicamente la frase breve EN/ES solicitada y el enlace legal,
+en tipografía secundaria. No contiene checkbox, mensajes de oposición ni referencia
+larga. Los controles, estados de oposición y referencia propia quedan dentro de
+«Opciones de privacidad», cerrada por defecto y accesible desde la política. La
+oposición/supresión conserva sus canales y endpoint; X-R4R-Usage-Opt-Out sigue operativo.
+Las políticas mantienen el detalle jurídico y explican cómo volver a la apertura
+original para conservar sus referencias; también enlazan las opciones de una apertura
+nueva y el contacto para registros anteriores. No se expone historial ajeno ni se
+convierte el interés legítimo en consentimiento. El botón de respuesta no se modifica.
+
+Validación de este ajuste: 21 pruebas Angular correctas y ocho combinaciones de
+origen/idioma/ancho (Athagon y Riansares, ES/EN, 1440/390 px), enlaces legales reales
+locales y acceso desde las políticas a las opciones. El iframe comercial se mantiene
+en español; el formulario inglés también se valida en su vista completa del dominio.
+Se comprueba el fallo/reintento de oposición fuera del formulario y el header de
+exclusión en consultas posteriores. No se cambió backend, migraciones ni base jurídica.
+Evidencias: `/tmp/r4r-clean-form-*-tests.log` y capturas `/tmp/r4r-clean-form-*.png`.

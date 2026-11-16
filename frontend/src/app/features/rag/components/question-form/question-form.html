@@ -7,15 +7,7 @@
             <span class="api-state" id="apiState" hidden>{{ i.t('page.ready') }}</span>
           </div>
 
-          <p class="privacy-notice">{{i.language()==='es' ? 'Las consultas y respuestas pueden registrarse por interés legítimo para evaluar precisión, contrastar las fuentes citadas, investigar errores y mejorar el asistente. No incluyas datos sensibles ni información personal innecesaria.' : 'Questions and AI-generated answers may be stored under legitimate interests to evaluate accuracy, verify cited sources, investigate errors and improve the assistant. Please avoid sensitive or unnecessary personal information.'}}
-            <a [href]="privacy.policy()" target="_blank" rel="noopener">{{i.language()==='es'?'Política de privacidad':'Privacy Policy'}}</a>.
-          </p>
-          <label class="privacy-notice"><input type="checkbox" [checked]="privacy.objected()" (change)="privacy.oppose($any($event.target).checked,s.api.base())"/>
-            {{i.language()==='es'?'Me opongo al registro de texto e IP de mis consultas en esta apertura. Puedo seguir usando el asistente.':'I object to recording my query text and IP during this opening. I can still use the assistant.'}}
-          </label>
-          @if(privacy.objectionState()==='submitted'){<p role="status">{{i.language()==='es'?'Oposición comunicada para las referencias recientes. Para otras consultas o solicitudes de supresión, contacta por el canal de privacidad.':'Objection sent for recent references. For other queries or erasure requests, use the privacy contact.'}}</p>}
-          @if(privacy.objectionState()==='failed'){<p role="alert">{{i.language()==='es'?'No se pudo comunicar la oposición sobre consultas anteriores. Los siguientes envíos omitirán texto e IP; contacta por el canal de privacidad para los anteriores.':'The objection for previous queries could not be sent. Future submissions will omit text and IP; use the privacy contact for previous records.'}}</p>}
-          @if (s.api.requestId()) {<p class="privacy-reference">{{i.language()==='es'?'Referencia de consulta:':'Query reference:'}} <code>{{s.api.requestId()}}</code></p>}
+          <p class="privacy-notice">{{i.language()==='es' ? 'Las preguntas y respuestas pueden guardarse para mejorar este asistente de IA.' : 'Questions and answers may be stored to improve this AI assistant.'}} <a [href]="privacy.policy()" target="_blank" rel="noopener">{{i.language()==='es'?'Política de privacidad':'Privacy Policy'}}</a></p>
           <label for="question" class="visually-hidden">{{ i.t('page.enter_a_question') }}</label>
           <textarea
             id="question" [disabled]="s.loading() && !s.demo.active()" [class.is-demo-typing]="s.demo.active()" [value]="s.question()" (focus)="s.stopDemo()" (input)="s.edit($any($event.target).value)" (keydown.control.enter)="s.send()"

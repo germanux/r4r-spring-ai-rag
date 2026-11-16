@@ -5,12 +5,12 @@ const root=path.resolve(__dirname,'..');
 async function main(){
  const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
  try {
-  const context=await browser.newContext();const requests=[];const withdrawals=[];let gaLoads=0;
+  const context=await browser.newContext();const requests=[];const withdrawals=[];let gaLoads=0,failObjection=false;
   await context.route('**/*',async route=>{
    const url=new URL(route.request().url());
    if(url.hostname==='www.googletagmanager.com'){gaLoads++;return route.fulfill({contentType:'text/javascript',body:''});}
    if(url.hostname==='r4r-api.athagon.tech'){
-    if(url.pathname.endsWith('/usage/objections'))withdrawals.push(route.request().postDataJSON());
+    if(url.pathname.endsWith('/usage/objections')){withdrawals.push(route.request().postDataJSON());if(failObjection)return route.fulfill({status:503});}
     if(url.pathname.endsWith('/usage/views')||url.pathname.endsWith('/answers/stream')) requests.push({path:url.pathname,headers:route.request().headers()});
     if(url.pathname.endsWith('/answers/stream')) return route.fulfill({contentType:'text/event-stream',body:'data: '+JSON.stringify({stage:'ANSWER_READY',status:'ANSWERED',answer:'Mock answer',abstained:false,citations:[]})+'\n\n'});
     return route.fulfill({json:{models:[]}});
@@ -39,7 +39,16 @@ async function main(){
    assert(headers['x-r4r-request-id']);assert(headers['x-r4r-view-id']);return headers;
   }
   let headers=await ask();const view=headers['x-r4r-view-id'];assert(!headers['x-r4r-usage-opt-out']);
-  await page.locator('.privacy-notice input[type=checkbox]').check();
+  assert.equal(await page.locator('.query-panel input[type=checkbox]').count(),0);
+  await page.locator('#rag-privacy-controls summary').click();
+  failObjection=true;await page.locator('#privacy-object').click();
+  await page.locator('#rag-privacy-controls [role=alert]').waitFor();
+  assert.equal(await page.locator('.query-panel [role=alert]').count(),0);
+  await page.locator('#rag-privacy-controls summary').click();
+  assert.equal(await page.locator('#rag-privacy-controls [role=alert]').isVisible(),false);
+  headers=await ask();assert.equal(headers['x-r4r-usage-opt-out'],'1');
+  failObjection=false;await page.locator('#rag-privacy-controls summary').click();await page.locator('#privacy-object').click();
+  await page.locator('#rag-privacy-controls [role=status]').waitFor();
   await page.waitForTimeout(100);assert(withdrawals.some(w=>w.references.includes(headers['x-r4r-request-id'])));
   headers=await ask();assert.equal(headers['x-r4r-view-id'],view);assert.equal(headers['x-r4r-usage-opt-out'],'1');
   assert(!JSON.stringify(withdrawals).includes('Test renovation question'));
@@ -64,7 +73,33 @@ async function main(){
   await page.setViewportSize({width:390,height:900});
   await page.locator('#asistente').evaluate(el=>el.scrollIntoView({block:'start',behavior:'instant'}));
   await page.screenshot({path:'/tmp/r4r-final-privacy-mobile.png'});
-  await context.close();console.log('PASS: no Athagon analytics/banner, no persistent IDs, ephemeral correlation, objection, GA reject/accept/withdraw independent of RAG');
+  // Both origins/languages and desktop/mobile: compact notice, legal navigation and scoped controls.
+  for(const host of ['athagon.tech','riansares4r.com'])for(const lang of ['es','en'])for(const width of [1440,390]){
+   const example=await context.newPage();await example.setViewportSize({width,height:1000});
+   await example.addInitScript(value=>localStorage.setItem('r4r.language',value),lang);
+   const routePath=host==='athagon.tech'?'/r4r-rag/':'/asistente-ia/';
+   await example.goto('https://'+host+routePath+'?prerender=1');await example.locator('#question').waitFor();
+   const notice=example.locator('.query-panel .privacy-notice');
+   assert.equal((await notice.innerText()).replace(/\s+/g,' ').trim(),lang==='es'?
+    'Las preguntas y respuestas pueden guardarse para mejorar este asistente de IA. Política de privacidad':
+    'Questions and answers may be stored to improve this AI assistant. Privacy Policy');
+   assert.equal(await example.locator('.query-panel input[type=checkbox]').count(),0);
+   assert.equal(await example.locator('.query-panel #privacy-object').count(),0);
+   assert.equal(await example.locator('.query-panel .privacy-reference').count(),0);
+   assert.equal(await example.locator('#rag-privacy-controls').getAttribute('open'),null);
+   assert((await notice.boundingBox()).height<75);
+   assert(!(await example.evaluate(()=>document.documentElement.scrollWidth>innerWidth)));
+   const [policyPage]=await Promise.all([context.waitForEvent('page'),notice.locator('a').click()]);
+   await policyPage.waitForLoadState('domcontentloaded');
+   const access=policyPage.getByRole('link',{name:host==='athagon.tech'?'Open the assistant’s privacy options':'Abrir las opciones de privacidad del asistente'});
+   await access.click();await policyPage.locator('#rag-privacy-controls[open]').waitFor();
+   assert.equal(await policyPage.locator('.query-panel input[type=checkbox]').count(),0);
+   await policyPage.close();
+   await example.locator('#question').evaluate(el=>el.scrollIntoView({block:'center',behavior:'instant'}));
+   await example.screenshot({path:`/tmp/r4r-clean-form-${host}-${lang}-${width}.png`});
+   await example.close();
+  }
+  await context.close();console.log('PASS: compact EN/ES form on both origins at 1440/390, legal links and privacy controls; no Athagon analytics; GA independent; objections keep opt-out headers');
  } finally{await browser.close();}
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

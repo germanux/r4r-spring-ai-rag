@@ -1,1 +1,7 @@
 :host { display: contents; }
+
+.privacy-options { margin-top: 16px; font-size: .85rem; color: var(--text); }
+.privacy-options summary { cursor: pointer; width: fit-content; }
+.privacy-options p { margin: 10px 0; }
+.privacy-options button { margin: 4px 8px 4px 0; }
+.privacy-reference code { overflow-wrap: anywhere; }
