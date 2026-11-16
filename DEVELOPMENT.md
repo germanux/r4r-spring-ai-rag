@@ -29,6 +29,13 @@ asistente; no autorizan cambios funcionales.
 - La configuración vigente sustituye los flags históricos de OpenAI indicados
   más abajo. Detalles y evidencias en `docs/operations/ordered-provider-failover.md`.
 
+## Nombres de evaluaciones — decisión del usuario del 2026-11-16
+
+- Directorios de ejecución con fecha y hora hasta el minuto: `yyyy-MM-dd_HH-mm`
+  en UTC, por ejemplo `2026-11-16_19-22`. Sin prefijo, `T`, segundos ni UUID.
+- Conservar `results.json` y `summary.json`, con `runId` consistente con la carpeta.
+  Una colisión de nombre debe impedir sobrescribir resultados existentes.
+
 ## Alcance, autorización y forma de trabajar
 
 ### Decisiones vigentes del usuario: cambios mínimos, formato y validación

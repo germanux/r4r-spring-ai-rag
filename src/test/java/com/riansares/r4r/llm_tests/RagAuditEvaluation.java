@@ -78,9 +78,14 @@ final class RagAuditEvaluation {
         catch (Exception invalid) { return "<non-JSON response>"; }
     }
 
+    static String defaultRunId(Instant timestamp) {
+        return java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm")
+                .withZone(java.time.ZoneOffset.UTC).format(timestamp);
+    }
+
     private static class Current {
         static final Run RUN = new Run(Path.of(System.getProperty("r4r.test.results-dir", "docs/evaluation/runs")),
-                System.getProperty("r4r.test.run-id", "llm-audit-" + Instant.now().toString().replace(':', '-') + "-" + UUID.randomUUID().toString().substring(0, 8)));
+                System.getProperty("r4r.test.run-id", defaultRunId(Instant.now())));
     }
     static void prepare() throws java.io.IOException { Current.RUN.initialize(); }
     static void record(HttpClient client, String base, String language, int number, QuestionCase test,

@@ -1,0 +1,21 @@
+{
+  "runId" : "2026-11-16_19-22",
+  "total" : 70,
+  "ragStatuses" : {
+    "ANSWERED" : 38,
+    "ABSTAINED" : 17,
+    "PARTIAL" : 14,
+    "ERROR" : 1
+  },
+  "ragChecks" : {
+    "PASS" : 59,
+    "FAIL" : 11
+  },
+  "proposedDowngrades" : 0,
+  "appliedDowngrades" : 0,
+  "auditFailures" : 1,
+  "auditSkipped" : 14,
+  "meanRagHttpMs" : 9502.513884942857,
+  "meanAuditHttpMs" : 3109.9968920892857,
+  "meanAuditServiceMs" : 3049.786716017857
+}

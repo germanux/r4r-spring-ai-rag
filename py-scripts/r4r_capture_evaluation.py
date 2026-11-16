@@ -268,7 +268,8 @@ if __name__ == "__main__":
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--capture-dir", help="Explicit capture directory of the dedicated API on this PC")
     mode.add_argument("--http-only", action="store_true", help="Collect RAG + audit without filesystem chunk capture")
-    parser.add_argument("--run-id", required=True, help="New run directory name, e.g. qwen-evidence-2026-11-14")
+    parser.add_argument("--run-id", default=datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M"),
+                        help="New run directory name; defaults to UTC date and minute, e.g. 2026-11-16_19-22")
     parser.add_argument("--include-controls", action="store_true", help="Also collect 01 ES, 02 EN and 17 ES/EN")
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument("--case-ids", default="", help="Comma-separated canonical caseId values, not question positions")

@@ -1,0 +1,4851 @@
+{
+  "runId" : "2026-11-16_19-22",
+  "cases" : [ {
+    "caseId" : "case-01",
+    "number" : 1,
+    "language" : "es",
+    "question" : "Si quiero una orientación inicial sobre mi reforma, ¿qué detalles debería facilitar?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 8152.619608,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Facilita la ubicación, fotos, superficie o medidas aproximadas, uso actual del espacio, problema, resultado esperado y plazo; también ayuda indicar la distribución, los materiales deseados, el acceso y tus prioridades. [S1] Si es cocina o baño, indica si se mantienen las posiciones de agua y desagüe. [S1]",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
+        "headingPath" : [ "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance", "¿Qué necesito para pedir presupuesto de reforma?" ],
+        "ordinal" : 1
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta enumera los datos pertinentes para obtener una orientación inicial y añade la información específica para cocinas y baños, todo respaldado por [S1].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 1413.530971,
+      "httpLatencyMs" : 1451.210633,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta enumera los datos pertinentes para obtener una orientación inicial y añade la información específica para cocinas y baños, todo respaldado por [S1].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 1413.530971,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-02",
+    "number" : 2,
+    "language" : "es",
+    "question" : "En una obra, ¿en qué se distinguen la base de solera y el acabado de solado?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 8289.424302000001,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "La solera es la base o soporte que puede recibir el pavimento; el solado es el acabado transitable, como una baldosa. No son lo mismo, y la solución concreta depende del sistema constructivo y del uso [S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S2]",
+        "source" : "es/guides/R4R_105_SOLERA_SOLADO_PATIOS_DRENAJE_Y_PENDIENTES.md",
+        "headingPath" : [ "Patios y pavimentos — solera, solado, humedad y evacuación", "¿Qué diferencia hay entre solera y solado?" ],
+        "ordinal" : 1
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta distingue correctamente la solera como base o soporte del solado como acabado transitable, en consonancia con [S2], y responde directamente a la pregunta.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 1549.18142,
+      "httpLatencyMs" : 1632.888577,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta distingue correctamente la solera como base o soporte del solado como acabado transitable, en consonancia con [S2], y responde directamente a la pregunta.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 1549.18142,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-03",
+    "number" : 3,
+    "language" : "es",
+    "question" : "¿Por qué el acceso cambia el precio de una solera?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7967.616344,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "El acceso puede obligar a mezclar y transportar el material manualmente, en vez de descargarlo directamente o bombearlo; eso aumenta las jornadas, la coordinación y el riesgo de ejecución [S1]. En patios interiores o pasillos estrechos también pueden hacer falta carretillas y vertidos por fases, con más mano de obra [S3].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Patios", "FAQ-045 — ¿Por qué el acceso cambia el precio de una solera?" ],
+        "ordinal" : 57
+      }, {
+        "label" : "[S3]",
+        "source" : "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+        "headingPath" : [ "Riansares 4R — casos de patios, viviendas, humedades y reparaciones", "6. Caso A — Patio, solera, pavimento y drenaje", "6.5. Ejemplo editorial simplificado" ],
+        "ordinal" : 1000008
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta explica que el transporte o la mezcla manual, el acceso estrecho y los vertidos por fases pueden aumentar las jornadas y la mano de obra, de acuerdo con las fuentes citadas.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2346.004739,
+      "httpLatencyMs" : 2456.062897,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta explica que el transporte o la mezcla manual, el acceso estrecho y los vertidos por fases pueden aumentar las jornadas y la mano de obra, de acuerdo con las fuentes citadas.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2346.004739,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-04",
+    "number" : 4,
+    "language" : "es",
+    "question" : "¿Cuánto orienta una reforma integral de una casa antigua?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7249.598499000001,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Una reforma integral de una casa antigua se orienta en 350–450 €/m² si no incluye estructura ni redistribución; si las incluye, el coste puede subir a 533–600 €/m² o más [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Casas antiguas", "FAQ-030 — ¿Cuánto orienta una reforma integral de casa antigua?" ],
+        "ordinal" : 36
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta da el rango orientativo solicitado y distingue el coste sin estructura ni redistribución del posible incremento cuando hay intervenciones estructurales o cambios, en consonancia con [S1].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2800.137842,
+      "httpLatencyMs" : 2866.650056,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta da el rango orientativo solicitado y distingue el coste sin estructura ni redistribución del posible incremento cuando hay intervenciones estructurales o cambios, en consonancia con [S1].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2800.137842,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-05",
+    "number" : 5,
+    "language" : "es",
+    "question" : "¿Una primera orientación económica sustituye una visita técnica?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7178.2618139999995,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "No. Una primera orientación económica no sustituye una visita ni una medición [S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S2]",
+        "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Presupuesto", "FAQ-001 — ¿Qué información hace falta para una primera orientación?" ],
+        "ordinal" : 3
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta contesta directamente que la orientación inicial no sustituye una visita ni una medición, tal como indica [S2].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3605.638882,
+      "httpLatencyMs" : 3627.86705,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta contesta directamente que la orientación inicial no sustituye una visita ni una medición, tal como indica [S2].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3605.638882,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-06",
+    "number" : 6,
+    "language" : "es",
+    "question" : "¿Qué debe revisarse antes de pavimentar un patio?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 6661.711683,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Antes de pavimentar un patio, revise la base, la compactación, el espesor, la armadura, las pendientes, las juntas, las arquetas, las canaletas, los encuentros y el acceso [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Patios", "FAQ-046 — ¿Qué debe revisarse antes de pavimentar un patio?" ],
+        "ordinal" : 58
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta enumera los aspectos que la fuente indica revisar antes de pavimentar un patio y responde directamente a la pregunta.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 1997.850414,
+      "httpLatencyMs" : 2045.982853,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta enumera los aspectos que la fuente indica revisar antes de pavimentar un patio y responde directamente a la pregunta.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 1997.850414,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-07",
+    "number" : 7,
+    "language" : "es",
+    "question" : "¿Cuándo conviene usar hormigón de camión en una solera?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 9252.824622,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Conviene usar hormigón de camión cuando el acceso permite descargar cerca de la solera: facilita una ejecución rápida, reduce la manipulación y el riesgo de que fragüe antes de extenderlo [S1]. En patios interiores o pasillos estrechos, el acceso indirecto puede exigir transporte con carretillas o vertidos por fases, por lo que la ejecución manual puede ser más adecuada [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+        "headingPath" : [ "Riansares 4R — casos de patios, viviendas, humedades y reparaciones", "6. Caso A — Patio, solera, pavimento y drenaje", "6.4. Hormigón de camión y ejecución manual", "Patio exterior con acceso" ],
+        "ordinal" : 1000006
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta explica cuándo conviene el hormigón de camión y cuándo el acceso difícil puede hacer más adecuada la ejecución manual. Sus afirmaciones están respaldadas por [S1].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2855.731549,
+      "httpLatencyMs" : 2910.028225,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta explica cuándo conviene el hormigón de camión y cuándo el acceso difícil puede hacer más adecuada la ejecución manual. Sus afirmaciones están respaldadas por [S1].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2855.731549,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-08",
+    "number" : 8,
+    "language" : "es",
+    "question" : "¿Cómo afecta un pasillo estrecho a la ejecución de una solera?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7910.215492,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Un pasillo estrecho dificulta el acceso y puede exigir transportar materiales con carretillas, mezclar en obra o verter por fases, y colocar el mallazo y los separadores por etapas. También complica los encuentros y las pendientes, requiere más mano de obra y aumenta el riesgo de una ejecución deficiente si se intenta trabajar demasiado deprisa [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+        "headingPath" : [ "Riansares 4R — casos de patios, viviendas, humedades y reparaciones", "6. Caso A — Patio, solera, pavimento y drenaje", "6.4. Hormigón de camión y ejecución manual", "Patio interior o pasillo estrecho" ],
+        "ordinal" : 7
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta explica las dificultades de acceso y transporte, la ejecución por fases, el trabajo con mallazo y separadores, y el efecto sobre encuentros, pendientes, mano de obra y riesgo de ejecución, todo respaldado por [S1].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2444.661379,
+      "httpLatencyMs" : 2513.560939,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta explica las dificultades de acceso y transporte, la ejecución por fases, el trabajo con mallazo y separadores, y el efecto sobre encuentros, pendientes, mano de obra y riesgo de ejecución, todo respaldado por [S1].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2444.661379,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-09",
+    "number" : 9,
+    "language" : "es",
+    "question" : "¿Qué causas de humedad pueden aparecer en una vivienda antigua?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7835.443491,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "En una vivienda antigua pueden aparecer humedad ascendente, lateral por terreno o roca, condensación, filtraciones antiguas, fugas y sales; varias causas pueden coexistir [S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S2]",
+        "source" : "es/R4R_10_CASOS_PATIOS_VIVIENDAS_HUMEDADES_Y_REPARACIONES.md",
+        "headingPath" : [ "Riansares 4R — casos de patios, viviendas, humedades y reparaciones", "7. Caso B — Vivienda antigua: rehabilitar sin demoler de más", "7.3. Humedad en muros antiguos" ],
+        "ordinal" : 1000014
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta enumera las formas y fuentes de humedad indicadas en [S2], incluidas las causas que pueden coexistir; responde directamente a la pregunta.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2687.287467,
+      "httpLatencyMs" : 2792.688951,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta enumera las formas y fuentes de humedad indicadas en [S2], incluidas las causas que pueden coexistir; responde directamente a la pregunta.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2687.287467,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-10",
+    "number" : 10,
+    "language" : "es",
+    "question" : "¿Debe incluir el presupuesto de una reforma los plazos de ejecución?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7864.071586999999,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Sí. Debe incluir un plazo orientativo de ejecución, condicionado a la disponibilidad y a los hallazgos durante la obra [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/guides/R4R_103_PRESUPUESTO_COCINA_MEDICIONES_Y_VARIACIONES.md",
+        "headingPath" : [ "Cocinas — presupuesto por partidas y control de cambios", "¿Qué debe incluir un presupuesto de reforma de cocina?" ],
+        "ordinal" : 1
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta contesta directamente que el presupuesto debe incluir un plazo orientativo y conserva la condición sobre disponibilidad y hallazgos indicada en [S1].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 1451.364187,
+      "httpLatencyMs" : 1470.39768,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta contesta directamente que el presupuesto debe incluir un plazo orientativo y conserva la condición sobre disponibilidad y hallazgos indicada en [S1].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 1451.364187,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-11",
+    "number" : 11,
+    "language" : "es",
+    "question" : "¿Qué datos debe aportar el cliente para solicitar un presupuesto?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7122.925961,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Para solicitar un presupuesto, aporta fotos, ubicación, superficie aproximada, problema, resultado esperado, distribución, materiales deseados, acceso, uso actual, plazos y prioridades; para cocina o baño, indica si se mantienen las posiciones de agua y desagüe [S5].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S5]",
+        "source" : "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
+        "headingPath" : [ "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance", "¿Qué necesito para pedir presupuesto de reforma?" ],
+        "ordinal" : 1
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta enumera los datos solicitados y está respaldada por [S5], incluida la indicación específica para cocinas y baños.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2502.640916,
+      "httpLatencyMs" : 2529.266313,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta enumera los datos solicitados y está respaldada por [S5], incluida la indicación específica para cocinas y baños.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2502.640916,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-12",
+    "number" : 12,
+    "language" : "es",
+    "question" : "¿Qué datos hacen falta para orientar una reforma de baño?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 8700.353995000001,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Para una primera orientación, aporta fotos, ubicación, superficie aproximada, problema, resultado esperado, distribución, materiales deseados, acceso, uso actual, plazos y prioridades; en un baño, indica también si se mantienen las posiciones de agua y desagüe [S2]. Conviene incluir lo que se conozca sobre instalaciones, pendientes, ventilación y estado de los soportes, aspectos que se revisan al planificar la reforma [S3].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S2]",
+        "source" : "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
+        "headingPath" : [ "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance", "¿Qué necesito para pedir presupuesto de reforma?" ],
+        "ordinal" : 1
+      }, {
+        "label" : "[S3]",
+        "source" : "es/guides/R4R_81_BANOS_DUCHAS_Y_SANEAMIENTO.md",
+        "headingPath" : [ "Riansares 4R — baños: fugas, duchas, saneamiento e impermeabilización", "¿En qué orden se reforma un baño?" ],
+        "ordinal" : 1
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta enumera los datos generales necesarios para una primera orientación y añade aspectos específicos del baño, como las posiciones de agua y desagüe, las instalaciones, las pendientes, la ventilación y el estado de los soportes, respaldados por las fuentes citadas.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 4147.418376,
+      "httpLatencyMs" : 4167.27811,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta enumera los datos generales necesarios para una primera orientación y añade aspectos específicos del baño, como las posiciones de agua y desagüe, las instalaciones, las pendientes, la ventilación y el estado de los soportes, respaldados por las fuentes citadas.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 4147.418376,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-13",
+    "number" : 13,
+    "language" : "es",
+    "question" : "¿Qué tipos de reformas realiza esta empresa? ¿Trabaja en viviendas y oficinas?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 8270.845886,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Realiza reformas de baños, cocinas y viviendas, así como redistribuciones prudentes, mejoras de habitabilidad y renovaciones parciales o integrales de acabados e instalaciones. Sí, trabaja tanto en viviendas como en pequeñas oficinas y locales [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/R4R_00_IDENTIDAD_CRITERIOS_Y_VOZ_EDITORIAL.md",
+        "headingPath" : [ "Riansares 4R — identidad, criterios y voz editorial", "2. Identidad de Riansares 4R", "2.3. Servicios nucleares", "Reformas" ],
+        "ordinal" : 5
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta enumera los tipos de reformas indicados en [S1] y confirma correctamente que trabaja en viviendas y pequeñas oficinas; es una contestación directa y respaldada.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2745.409909,
+      "httpLatencyMs" : 2765.28314,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta enumera los tipos de reformas indicados en [S1] y confirma correctamente que trabaja en viviendas y pequeñas oficinas; es una contestación directa y respaldada.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2745.409909,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-14",
+    "number" : 14,
+    "language" : "es",
+    "question" : "¿Qué diferencias hay entre la cal aérea y la cal hidráulica natural para trabajar sobre muros antiguos?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 10252.862427,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "La cal aérea es muy transpirable y tradicional, pero fragua lentamente y es menos apropiada para capas gruesas sobre soportes húmedos o débiles. La cal hidráulica natural (NHL 2 o NHL 3.5) se considera más compatible con piedra, tierra y fábricas antiguas; fragua también con la humedad ambiental y mantiene una rigidez moderada [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/R4R_20_CASOS_OFICINAS_CUEVAS_BANOS_Y_FILTROS.md",
+        "headingPath" : [ "Riansares 4R — casos de oficinas, cuevas, baños y filtros comerciales", "12. Caso G — Cueva o bodega antigua: estabilización con mortero de cal y malla", "12.2. Cal aérea, NHL y morteros híbridos" ],
+        "ordinal" : 11
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta compara las diferencias solicitadas: transpirabilidad y fraguado lento de la cal aérea frente a la compatibilidad con fábricas antiguas, el fraguado con humedad y la rigidez moderada de la NHL. Estas afirmaciones están respaldadas por [S1].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2554.134003,
+      "httpLatencyMs" : 2662.24083,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta compara las diferencias solicitadas: transpirabilidad y fraguado lento de la cal aérea frente a la compatibilidad con fábricas antiguas, el fraguado con humedad y la rigidez moderada de la NHL. Estas afirmaciones están respaldadas por [S1].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2554.134003,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-15",
+    "number" : 15,
+    "language" : "es",
+    "question" : "¿Qué precauciones hay que tomar antes de colocar baldosa nueva sobre un pavimento existente?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 9093.555045000001,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Antes de colocar baldosa nueva, comprueba que el soporte esté firme, limpio, plano y bien adherido, y revisa si hay piezas huecas, humedad, cotas y puertas; el sistema adhesivo debe ser compatible [S3][S1]. En patios, verifica además que las alturas, pendientes y evacuación sean admisibles [S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/guides/R4R_102_REFORMA_COCINA_MUEBLES_AZULEJOS_Y_ELECTRODOMESTICOS.md",
+        "headingPath" : [ "Cocinas — alcance, materiales y coordinación de oficios", "¿Qué precauciones hay al colocar azulejos nuevos sobre antiguos?" ],
+        "ordinal" : 5
+      }, {
+        "label" : "[S2]",
+        "source" : "es/guides/R4R_105_SOLERA_SOLADO_PATIOS_DRENAJE_Y_PENDIENTES.md",
+        "headingPath" : [ "Patios y pavimentos — solera, solado, humedad y evacuación", "¿Se pueden colocar baldosas nuevas sobre otras en un patio?" ],
+        "ordinal" : 5
+      }, {
+        "label" : "[S3]",
+        "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Suelos", "FAQ-040 — ¿Se puede colocar baldosa sobre baldosa?" ],
+        "ordinal" : 49
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta enumera precauciones pertinentes y respaldadas: estado y adherencia del soporte, humedad, piezas huecas, cotas, puertas y compatibilidad del adhesivo; para patios añade pendientes y evacuación.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2900.931257,
+      "httpLatencyMs" : 2921.413223,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta enumera precauciones pertinentes y respaldadas: estado y adherencia del soporte, humedad, piezas huecas, cotas, puertas y compatibilidad del adhesivo; para patios añade pendientes y evacuación.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2900.931257,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-16",
+    "number" : 16,
+    "language" : "es",
+    "question" : "Estoy pensando en comprar un piso bastante antiguo, pero tiene grietas en algunas paredes. ¿Cómo puedo saber si es algo superficial o si me voy a meter en un problema serio?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 14977.847343000001,
+    "ragOutcome" : "FAIL",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "ERROR",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ABSTAINED",
+      "verdict" : null,
+      "reason" : null,
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3247.096969,
+      "httpLatencyMs" : 3376.623189,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ABSTAINED",
+        "recommendedStatus" : "ABSTAINED",
+        "effectiveStatus" : "ABSTAINED",
+        "conclusive" : false,
+        "note" : "",
+        "metadata" : {
+          "verdict" : null,
+          "reason" : null,
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3247.096969,
+          "outcome" : "invalid_json"
+        }
+      },
+      "note" : "",
+      "error" : "audit_inconclusive_or_mismatched"
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-17",
+    "number" : 17,
+    "language" : "es",
+    "question" : "Los muebles de la cocina están bien. ¿Cómo la renuevo sin desmontarlo todo?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 15337.188511,
+    "ragOutcome" : "FAIL",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Si el mobiliario no está afectado, conservarlo es una opción; renovar la fontanería no obliga a cambiarlo. [S5] Para organizar la obra por fases, primero se resuelven averías y se deciden las instalaciones, y después se abordan acabados y mobiliario. [S2] La documentación no confirma que en esta cocina se pueda renovar sin desmontar nada: hay que comprobar si dividir la obra exigiría demoliciones repetidas y, si se interviene en las instalaciones, verificar accesos y compatibilidad. [S2] [S5]",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S2]",
+        "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Consultas prácticas ampliadas — noviembre 2026", "FAQ-068 — ¿Se puede renovar una cocina por fases?" ],
+        "ordinal" : 84
+      }, {
+        "label" : "[S5]",
+        "source" : "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+        "headingPath" : [ "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma", "Pregunta — ¿Conviene mantener fregadero, lavavajillas y lavadora en el mismo sitio?" ],
+        "ordinal" : 1000006
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "PARTIAL",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta contesta cómo conservar los muebles y ordenar la reforma por fases, con respaldo en [S2] y [S5]. También aclara que la posibilidad de evitar desmontajes en esta cocina concreta requiere comprobación; no deja sin responder una parte esencial de la pregunta general.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 15189.12654,
+      "httpLatencyMs" : 15257.326666,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "PARTIAL",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "PARTIAL",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta contesta cómo conservar los muebles y ordenar la reforma por fases, con respaldo en [S2] y [S5]. También aclara que la posibilidad de evitar desmontajes en esta cocina concreta requiere comprobación; no deja sin responder una parte esencial de la pregunta general.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 15189.12654,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-19",
+    "number" : 18,
+    "language" : "es",
+    "question" : "Cuando llueve fuerte, mi terraza cala al piso de abajo. ¿Por dónde empiezo?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 10643.39047,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Empieza revisando la evacuación de agua, las juntas y los encuentros de la terraza; no empieces pintando el techo [S2]. Anota cuándo llueve y cuándo reaparece la mancha, y conserva pruebas [S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S2]",
+        "source" : "es/guides/R4R_106_HUMEDADES_CAPILARIDAD_CONDENSACION_FILTRACION.md",
+        "headingPath" : [ "Humedades — identificación del origen y decisiones de reparación", "Caso H-11 — Mancha en techo bajo terraza" ],
+        "ordinal" : 11
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta indica por dónde empezar —revisar la evacuación, las juntas y los encuentros— y recomienda no pintar antes de resolver el origen; también aconseja registrar los episodios y conservar pruebas, todo respaldado por [S2].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2705.334539,
+      "httpLatencyMs" : 2749.095747,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta indica por dónde empezar —revisar la evacuación, las juntas y los encuentros— y recomienda no pintar antes de resolver el origen; también aconseja registrar los episodios y conservar pruebas, todo respaldado por [S2].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2705.334539,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-22",
+    "number" : 19,
+    "language" : "es",
+    "question" : "Acabamos de comprar un piso y queremos reformarlo antes de mudarnos. ¿En qué orden conviene hacer los trabajos para evitar tener que romper cosas que ya están terminadas?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 13380.949616,
+    "ragOutcome" : "FAIL",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Como orientación, prioricen seguridad, fugas e instalaciones; definan la distribución y comprueben las instalaciones antes de cerrar paredes o colocar acabados definitivos. Después pueden abordarse, cuando correspondan, impermeabilización y soportes, y finalmente acabados y mobiliario [S4] [S1]. Las fuentes no establecen un orden único para todos los trabajos de un piso: el orden concreto depende de la intervención y de la coordinación de los oficios [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/guides/R4R_102_REFORMA_COCINA_MUEBLES_AZULEJOS_Y_ELECTRODOMESTICOS.md",
+        "headingPath" : [ "Cocinas — alcance, materiales y coordinación de oficios", "¿Conviene hacer primero fontanería, electricidad o alicatado?" ],
+        "ordinal" : 10
+      }, {
+        "label" : "[S4]",
+        "source" : "es/guides/R4R_86_PRESUPUESTOS_MEDICIONES_Y_CAMBIOS.md",
+        "headingPath" : [ "Riansares 4R — presupuestos, mediciones, extras y cambios de alcance", "¿Se pueden hacer reformas por fases?" ],
+        "ordinal" : 5
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "PARTIAL",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta ofrece un orden general útil para evitar rehacer trabajos: priorizar seguridad, fugas e instalaciones; comprobarlas antes de cerrar paredes y abordar después los acabados. También aclara que el orden concreto depende de la intervención y la coordinación de oficios.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3368.301226,
+      "httpLatencyMs" : 3494.743145,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "PARTIAL",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "PARTIAL",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta ofrece un orden general útil para evitar rehacer trabajos: priorizar seguridad, fugas e instalaciones; comprobarlas antes de cerrar paredes y abordar después los acabados. También aclara que el orden concreto depende de la intervención y la coordinación de oficios.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3368.301226,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-31",
+    "number" : 20,
+    "language" : "es",
+    "question" : "Tengo tuberías rotas en mi cocina. ¿Qué hago?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7652.659023,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Si la fuga sigue activa, cierra la llave de paso accesible si puedes hacerlo con seguridad, evita usar esa instalación, protege muebles y suelo y contacta con un profesional para localizar y reparar la fuga [S2]. Si hay agua cerca de enchufes, aparatos o cables, no los toques ni trabajes sobre elementos energizados; antes de cerrar paredes o recolocar muebles, comprueba la reparación, la estanqueidad y que la zona esté seca [S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S2]",
+        "source" : "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+        "headingPath" : [ "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma", "Pregunta — Tengo tuberías rotas en la cocina, ¿qué hago primero?" ],
+        "ordinal" : 1
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta ofrece pasos inmediatos y pertinentes para una fuga activa, y sus recomendaciones sobre electricidad, protección de la zona y comprobación antes de cerrar o recolocar elementos están respaldadas por [S2].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2437.427165,
+      "httpLatencyMs" : 2567.374352,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta ofrece pasos inmediatos y pertinentes para una fuga activa, y sus recomendaciones sobre electricidad, protección de la zona y comprobación antes de cerrar o recolocar elementos están respaldadas por [S2].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2437.427165,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-32",
+    "number" : 21,
+    "language" : "es",
+    "question" : "Tengo tuberías rotas en mi cocina. ¿Qué hago?\nAdemás, quiero reformar la cocina. ¿Qué me recomiendas?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 11318.980336999999,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Si la fuga sigue activa, cierra la llave de paso accesible solo si puedes hacerlo con seguridad; no manipules instalaciones eléctricas mojadas y solicita una reparación profesional. Antes de cerrar paredes o colocar muebles, comprueba la estanqueidad y que la zona se haya secado [S3]. Para la reforma, revisa fontanería y desagües antes de instalar azulejos, muebles o acabados; separa la reparación necesaria de los cambios opcionales y presupuesta las partidas por separado. Una fuga localizada no obliga a renovar toda la cocina [S1][S4].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+        "headingPath" : [ "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma", "Pregunta — Tengo tuberías rotas y también quiero reformar la cocina. ¿Qué me recomiendas?" ],
+        "ordinal" : 3
+      }, {
+        "label" : "[S3]",
+        "source" : "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+        "headingPath" : [ "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma", "Pregunta — ¿Hay que cambiar todas las tuberías o solo la parte averiada?" ],
+        "ordinal" : 1000002
+      }, {
+        "label" : "[S4]",
+        "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Consultas prácticas ampliadas — noviembre 2026", "FAQ-054 — ¿Una avería obliga a reformar toda la cocina?" ],
+        "ordinal" : 1000070
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta cubre qué hacer ante una fuga activa y cómo coordinar la reparación con la reforma. Sus recomendaciones están respaldadas por las fuentes citadas: actuar con seguridad, solicitar una reparación profesional, verificar estanqueidad y secado, revisar las instalaciones antes de los acabados y separar lo imprescindible de lo opcional.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2532.437351,
+      "httpLatencyMs" : 2569.408985,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta cubre qué hacer ante una fuga activa y cómo coordinar la reparación con la reforma. Sus recomendaciones están respaldadas por las fuentes citadas: actuar con seguridad, solicitar una reparación profesional, verificar estanqueidad y secado, revisar las instalaciones antes de los acabados y separar lo imprescindible de lo opcional.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2532.437351,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-33",
+    "number" : 22,
+    "language" : "es",
+    "question" : "Tengo tuberías rotas en mi cocina. ¿Qué hago?\nAdemás, quiero reformar la cocina. ¿Qué me recomiendas?\n¿Puedo cambiar también los azulejos?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 13512.99249,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Si la fuga está activa, cierra el suministro accesible si es seguro, evita instalaciones eléctricas mojadas y solicita una reparación profesional; verifica la estanqueidad y el secado antes de cerrar paredes o instalar muebles [S4]. Para la reforma, revisa fontanería y desagües antes de colocar acabados, y separa la reparación imprescindible de los cambios opcionales [S1]. Sí, puedes cambiar los azulejos después de reparar la fuga y comprobar que el soporte esté firme y seco; no los coloques sobre superficies sueltas o húmedas sin diagnóstico, y presupuesta ese trabajo por separado [S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+        "headingPath" : [ "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma", "Pregunta — Tengo tuberías rotas y también quiero reformar la cocina. ¿Qué me recomiendas?" ],
+        "ordinal" : 3
+      }, {
+        "label" : "[S2]",
+        "source" : "es/guides/R4R_80_COCINAS_FONTANERIA_Y_FUGAS.md",
+        "headingPath" : [ "Riansares 4R — cocinas: tuberías rotas, fugas y decisiones previas a la reforma", "Pregunta — ¿Puedo sustituir también los azulejos de la cocina?" ],
+        "ordinal" : 1000004
+      }, {
+        "label" : "[S4]",
+        "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Consultas prácticas ampliadas — noviembre 2026", "FAQ-054 — ¿Una avería obliga a reformar toda la cocina?" ],
+        "ordinal" : 1000070
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta cubre qué hacer ante una fuga activa, cómo priorizar y planificar la reforma, y cuándo cambiar los azulejos. Las recomendaciones están respaldadas por los pasajes citados.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2075.455336,
+      "httpLatencyMs" : 2095.014197,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta cubre qué hacer ante una fuga activa, cómo priorizar y planificar la reforma, y cuándo cambiar los azulejos. Las recomendaciones están respaldadas por los pasajes citados.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2075.455336,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-34",
+    "number" : 23,
+    "language" : "es",
+    "question" : "Tengo una piscina que pierde agua y algunas piezas del revestimiento se desprenden. ¿Basta con volver a pegarlas?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 11445.00096,
+    "ragOutcome" : "FAIL",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "No conviene asumir que basta con volver a pegarlas: primero hay que identificar el origen de la pérdida y diagnosticar la estanqueidad y la compatibilidad de los materiales y sistemas; pintar sobre una fisura puede ocultar el síntoma [S2]. La evidencia no determina si las piezas desprendidas de tu piscina pueden volver a pegarse ni si eso resolvería la fuga; hace falta valorar el caso concreto.",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S2]",
+        "source" : "es/guides/R4R_89_OTROS_ESPACIOS_Y_OBRAS_ESPECIALES.md",
+        "headingPath" : [ "Riansares 4R — otras obras: piscinas, naves, terrazas y equipamientos", "¿Se puede reparar una piscina que pierde agua?" ],
+        "ordinal" : 1
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "PARTIAL",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "PARTIAL",
+      "verdict" : "PASS",
+      "reason" : "La respuesta desaconseja asumir que basta con pegar las piezas y señala que primero hay que diagnosticar la pérdida y la compatibilidad, en línea con [S2]. También deja claro que la evidencia no permite decidir si volver a pegarlas resolvería este caso concreto.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3783.644488,
+      "httpLatencyMs" : 3846.696716,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "PARTIAL",
+        "recommendedStatus" : "PARTIAL",
+        "effectiveStatus" : "PARTIAL",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta desaconseja asumir que basta con pegar las piezas y señala que primero hay que diagnosticar la pérdida y la compatibilidad, en línea con [S2]. También deja claro que la evidencia no permite decidir si volver a pegarlas resolvería este caso concreto.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3783.644488,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-35",
+    "number" : 24,
+    "language" : "es",
+    "question" : "Quiero reformar los vestuarios de un polideportivo abierto al público. ¿Qué debo revisar para ejecutar la obra por fases?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 12033.964593,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Revisa el uso intensivo, la ventilación y la humedad, las pendientes y el drenaje, los revestimientos antideslizantes adecuados, la accesibilidad, las instalaciones y el mantenimiento; planifica también los cierres por fases [S2]. Al tratarse de un espacio abierto al público, verifica los requisitos específicos de uso y seguridad y considera evacuación, permisos y ejecución por fases conforme a la normativa aplicable [S1][S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Consultas prácticas ampliadas — noviembre 2026", "FAQ-075 — ¿Qué cambia en la reforma de un polideportivo?" ],
+        "ordinal" : 91
+      }, {
+        "label" : "[S2]",
+        "source" : "es/guides/R4R_89_OTROS_ESPACIOS_Y_OBRAS_ESPECIALES.md",
+        "headingPath" : [ "Riansares 4R — otras obras: piscinas, naves, terrazas y equipamientos", "¿Qué hay que valorar antes de renovar un vestuario de polideportivo?" ],
+        "ordinal" : 2
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "La respuesta enumera los aspectos relevantes de la reforma y menciona expresamente cierres y ejecución por fases, además de requisitos de seguridad y uso público; todo está respaldado por [S1] y [S2].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2722.81213,
+      "httpLatencyMs" : 2792.323719,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta enumera los aspectos relevantes de la reforma y menciona expresamente cierres y ejecución por fases, además de requisitos de seguridad y uso público; todo está respaldado por [S1] y [S2].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2722.81213,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-18",
+    "number" : 25,
+    "language" : "es",
+    "question" : "En mi casa se oye absolutamente todo lo que hacen los vecinos de arriba. ¿Se puede mejorar el aislamiento acústico sin perder demasiada altura en las habitaciones?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 12374.112599,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "El aislamiento acústico busca controlar la transmisión del sonido; elegir una solución depende del objetivo, del soporte y de las exigencias aplicables [S1]. La documentación no establece qué solución reduciría el ruido de los vecinos de arriba ni cuánto reduciría la altura de las habitaciones.",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/guides/R4R_87_AISLAMIENTO_VENTILACION_Y_REHABILITACION_ENERGETICA.md",
+        "headingPath" : [ "Riansares 4R — eficiencia energética, aislamiento y ventilación", "Caso hipotético E-01 — Dormitorio muy frío con ventanas renovadas" ],
+        "ordinal" : 1000006
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "PARTIAL",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "PARTIAL",
+      "verdict" : "PASS",
+      "reason" : "La respuesta distingue correctamente el aislamiento acústico del térmico y señala que la solución depende del soporte y del objetivo, según [S1]. La evidencia no permite determinar una solución para el ruido de los vecinos de arriba ni su efecto en la altura, y la respuesta lo reconoce.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3900.355817,
+      "httpLatencyMs" : 3989.504964,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "PARTIAL",
+        "recommendedStatus" : "PARTIAL",
+        "effectiveStatus" : "PARTIAL",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta distingue correctamente el aislamiento acústico del térmico y señala que la solución depende del soporte y del objetivo, según [S1]. La evidencia no permite determinar una solución para el ruido de los vecinos de arriba ni su efecto en la altura, y la respuesta lo reconoce.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3900.355817,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-20",
+    "number" : 26,
+    "language" : "es",
+    "question" : "Quiero cambiar las ventanas de mi casa, pero no sé si realmente merece la pena instalar triple acristalamiento o si con doble es suficiente.",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 11142.187852,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Al cambiar ventanas, si mejora la estanqueidad, hay que revisar cómo se renueva el aire y si existe riesgo de condensación, además de los requisitos aplicables [S1]. La evidencia no compara el doble y el triple acristalamiento ni permite determinar cuál merece la pena en tu casa.",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — todas las preguntas frecuentes", "Consultas prácticas ampliadas — noviembre 2026", "FAQ-070 — ¿Se puede dar un precio para una cocina sin conocer los metros?" ],
+        "ordinal" : 1000086
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "PARTIAL",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "PARTIAL",
+      "verdict" : "PASS",
+      "reason" : "La respuesta ofrece una advertencia pertinente sobre ventilación y condensación al mejorar la estanqueidad, respaldada por la evidencia, y reconoce que esta no permite comparar los acristalamientos ni decidir cuál conviene en esa casa. La recomendación solicitada queda sin resolver, por lo que PARTIAL es adecuado.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3013.217028,
+      "httpLatencyMs" : 3033.117509,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "PARTIAL",
+        "recommendedStatus" : "PARTIAL",
+        "effectiveStatus" : "PARTIAL",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta ofrece una advertencia pertinente sobre ventilación y condensación al mejorar la estanqueidad, respaldada por la evidencia, y reconoce que esta no permite comparar los acristalamientos ni decidir cuál conviene en esa casa. La recomendación solicitada queda sin resolver, por lo que PARTIAL es adecuado.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3013.217028,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-21",
+    "number" : 27,
+    "language" : "es",
+    "question" : "Tengo un pasillo largo y oscuro. ¿Cómo gano luz y aprovecho el espacio?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 5391.85253,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : false,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : null,
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "SKIPPED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : null,
+      "verdict" : null,
+      "reason" : null,
+      "provider" : null,
+      "model" : null,
+      "durationMs" : null,
+      "httpLatencyMs" : null,
+      "skipReason" : "no_audit_id"
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-23",
+    "number" : 28,
+    "language" : "es",
+    "question" : "Las vigas de madera de mi casa vieja están combadas. ¿Se refuerzan o se cambian?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 13857.460962,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Las vigas combadas deben revisarse; la guía recomienda una evaluación estructural ante deformaciones relevantes y revisar vigas, apoyos y, cuando proceda, humedad, ataques biológicos y cargas [S1]. La evidencia no permite decidir si estas vigas deben reforzarse o sustituirse; esa elección requiere evaluar su estado en la vivienda.",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "es/guides/R4R_83_VIVIENDAS_ANTIGUAS_Y_REHABILITACION.md",
+        "headingPath" : [ "Riansares 4R — viviendas antiguas: rehabilitar con criterio y seguridad", "¿Cómo se planifica una reforma con madera y muros antiguos?" ],
+        "ordinal" : 2
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "PARTIAL",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "PARTIAL",
+      "verdict" : "PASS",
+      "reason" : "La respuesta no elige entre refuerzo y sustitución sin datos sobre el estado de las vigas. La guía respalda revisar la estructura ante deformaciones relevantes, por lo que ofrece una orientación útil y delimita correctamente lo que puede concluirse.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2963.692923,
+      "httpLatencyMs" : 3070.874608,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "PARTIAL",
+        "recommendedStatus" : "PARTIAL",
+        "effectiveStatus" : "PARTIAL",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "La respuesta no elige entre refuerzo y sustitución sin datos sobre el estado de las vigas. La guía respalda revisar la estructura ante deformaciones relevantes, por lo que ofrece una orientación útil y delimita correctamente lo que puede concluirse.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2963.692923,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-24",
+    "number" : 29,
+    "language" : "es",
+    "question" : "Tenemos una oficina donde hace mucho calor en unas zonas y frío en otras. ¿Se puede solucionar con una reforma de la climatización sin cambiar todo el sistema?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 11960.319631999999,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ABSTAINED",
+      "verdict" : "PASS",
+      "reason" : "Los fragmentos no permiten determinar si las diferencias de temperatura pueden corregirse reformando la climatización sin sustituir el sistema; solo mencionan factores de la envolvente y aspectos generales de climatización.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 4023.301364,
+      "httpLatencyMs" : 4094.125718,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ABSTAINED",
+        "recommendedStatus" : "ABSTAINED",
+        "effectiveStatus" : "ABSTAINED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "Los fragmentos no permiten determinar si las diferencias de temperatura pueden corregirse reformando la climatización sin sustituir el sistema; solo mencionan factores de la envolvente y aspectos generales de climatización.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 4023.301364,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-25",
+    "number" : 30,
+    "language" : "es",
+    "question" : "Quiero pasar de tienda a cafetería. ¿Qué obras necesito para abrir?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7659.56682,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ABSTAINED",
+      "verdict" : "PASS",
+      "reason" : "Los fragmentos tratan de abrir una cocina doméstica al salón, no de convertir una tienda en cafetería; no aportan evidencia útil sobre las obras necesarias para esa actividad.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 1931.57109,
+      "httpLatencyMs" : 2048.647368,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ABSTAINED",
+        "recommendedStatus" : "ABSTAINED",
+        "effectiveStatus" : "ABSTAINED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "Los fragmentos tratan de abrir una cocina doméstica al salón, no de convertir una tienda en cafetería; no aportan evidencia útil sobre las obras necesarias para esa actividad.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 1931.57109,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-26",
+    "number" : 31,
+    "language" : "es",
+    "question" : "¿Qué potencia y qué número de captadores geotérmicos necesito para climatizar una vivienda de 180 m²?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 6832.693824999999,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : false,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : null,
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "SKIPPED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : null,
+      "verdict" : null,
+      "reason" : null,
+      "provider" : null,
+      "model" : null,
+      "durationMs" : null,
+      "httpLatencyMs" : null,
+      "skipReason" : "no_audit_id"
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-27",
+    "number" : 32,
+    "language" : "es",
+    "question" : "¿Qué sección exacta de cable y qué magnetotérmico exige el REBT para instalar un cargador de coche eléctrico de 11 kW en mi garaje?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 10636.363087,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : false,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : null,
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "SKIPPED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : null,
+      "verdict" : null,
+      "reason" : null,
+      "provider" : null,
+      "model" : null,
+      "durationMs" : null,
+      "httpLatencyMs" : null,
+      "skipReason" : "no_audit_id"
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-28",
+    "number" : 33,
+    "language" : "es",
+    "question" : "¿De qué manera producen alimento las plantas mediante la fotosíntesis?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 5101.42998,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : false,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : null,
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "SKIPPED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : null,
+      "verdict" : null,
+      "reason" : null,
+      "provider" : null,
+      "model" : null,
+      "durationMs" : null,
+      "httpLatencyMs" : null,
+      "skipReason" : "no_audit_id"
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-29",
+    "number" : 34,
+    "language" : "es",
+    "question" : "¿Cuál es la masa de Júpiter en kilogramos?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 8896.520972,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : false,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : null,
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "SKIPPED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : null,
+      "verdict" : null,
+      "reason" : null,
+      "provider" : null,
+      "model" : null,
+      "durationMs" : null,
+      "httpLatencyMs" : null,
+      "skipReason" : "no_audit_id"
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-30",
+    "number" : 35,
+    "language" : "es",
+    "question" : "¿Quién escribió la novela Cien años de soledad?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 8921.390508,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : false,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : null,
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "SKIPPED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : null,
+      "verdict" : null,
+      "reason" : null,
+      "provider" : null,
+      "model" : null,
+      "durationMs" : null,
+      "httpLatencyMs" : null,
+      "skipReason" : "no_audit_id"
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-01",
+    "number" : 1,
+    "language" : "en",
+    "question" : "If I want initial guidance on my renovation, what details should I provide?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 13680.165321,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Provide your location, photos, approximate measurements or area, how the space is used, the problem, the result you want, and your timeframe [S4]. You can also include the layout, desired materials, access, current use, deadlines and priorities; for a kitchen or bathroom, say whether the water supply and drainage positions will stay as they are [S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S2]",
+        "source" : "en/guides/R4R_86_QUOTATIONS_MEASUREMENTS_AND_SCOPE_CHANGES.md",
+        "headingPath" : [ "Riansares 4R — quotations, measurements, extras and scope changes", "What do I need to request a renovation quotation?" ],
+        "ordinal" : 1
+      }, {
+        "label" : "[S4]",
+        "source" : "en/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — all frequently asked questions", "Quotations", "FAQ-001 — What information is needed for initial guidance?" ],
+        "ordinal" : 3
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer gives the requested details for initial guidance, supported directly by [S4], and adds relevant renovation information supported by [S2].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2235.840086,
+      "httpLatencyMs" : 2320.406917,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer gives the requested details for initial guidance, supported directly by [S4], and adds relevant renovation information supported by [S2].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2235.840086,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-02",
+    "number" : 2,
+    "language" : "en",
+    "question" : "In construction, how does the concrete base differ from the finished flooring?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7036.123191,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "The concrete base is the supporting layer or element that carries loads according to the construction system; the finished flooring is the final walkable surface, such as tile or stone laid on a suitable substrate. They are not the same thing. [S4]",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S4]",
+        "source" : "en/guides/R4R_84_PATIOS_CONCRETE_BASES_FLOOR_FINISHES_AND_DRAINAGE.md",
+        "headingPath" : [ "Riansares 4R — patios and paving: concrete base, floor finish and drainage", "What is the difference between a concrete floor base and a floor finish?" ],
+        "ordinal" : 1
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer clearly distinguishes the supporting concrete base from the final walkable flooring and is supported by [S4].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 1647.865221,
+      "httpLatencyMs" : 1749.243771,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer clearly distinguishes the supporting concrete base from the final walkable flooring and is supported by [S4].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 1647.865221,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-03",
+    "number" : 3,
+    "language" : "en",
+    "question" : "Why does access affect the price of a concrete slab?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 6890.178861,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Restricted access may require manual mixing and transport instead of direct discharge or pumping, increasing working days, coordination and risk [S1]. The resulting cost difference can come from logistics and preparation, rather than necessarily from the concrete price itself [S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — all frequently asked questions", "Patios", "FAQ-045 — Why does access change the price of a concrete floor base?" ],
+        "ordinal" : 57
+      }, {
+        "label" : "[S2]",
+        "source" : "en/guides/R4R_84_PATIOS_CONCRETE_BASES_FLOOR_FINISHES_AND_DRAINAGE.md",
+        "headingPath" : [ "Riansares 4R — patios and paving: concrete base, floor finish and drainage", "Hypothetical case P-01 — Patio allowing water into a kitchen" ],
+        "ordinal" : 1000006
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer directly explains that restricted access can require manual mixing and transport, increasing work time, coordination and risk; it also clarifies that the added cost may reflect logistics and preparation rather than the concrete itself.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2251.082203,
+      "httpLatencyMs" : 2273.379274,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer directly explains that restricted access can require manual mixing and transport, increasing work time, coordination and risk; it also clarifies that the added cost may reflect logistics and preparation rather than the concrete itself.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2251.082203,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-04",
+    "number" : 4,
+    "language" : "en",
+    "question" : "What is the approximate cost of a complete renovation of an old house?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7383.6566809999995,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "An indicative cost for renovating an old house is €350–450/m² without structural work or layout changes; structural work or changes may raise it to €533–600/m² or more [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — all frequently asked questions", "Old houses", "FAQ-030 — What indicative cost applies to complete renovation of an old house?" ],
+        "ordinal" : 36
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer gives the documented indicative per-square-metre range for an old-house renovation and explains how structural work or layout changes may increase the cost [S1].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2362.048357,
+      "httpLatencyMs" : 2457.032633,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer gives the documented indicative per-square-metre range for an old-house renovation and explains how structural work or layout changes may increase the cost [S1].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2362.048357,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-05",
+    "number" : 5,
+    "language" : "en",
+    "question" : "Does initial cost guidance replace a technical site visit?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 5903.846396999999,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "No. Initial cost guidance does not replace a technical site visit [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/guides/R4R_114_CAUTIOUS_RESPONSES_AND_LIMITS_OF_ADVICE.md",
+        "headingPath" : [ "Visitor guidance — what a renovation assistant can answer", "What does initial guidance mean?" ],
+        "ordinal" : 1
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer directly states that initial cost guidance does not replace a technical site visit, as supported by [S1].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 1690.460339,
+      "httpLatencyMs" : 1709.175964,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer directly states that initial cost guidance does not replace a technical site visit, as supported by [S1].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 1690.460339,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-06",
+    "number" : 6,
+    "language" : "en",
+    "question" : "What should be checked before paving a patio?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 9807.219593,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Before paving a patio, check the base, compaction, thickness, reinforcement, gradients, joints, inspection chambers, channels, junctions and access [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — all frequently asked questions", "Patios", "FAQ-046 — What should be checked before paving a patio?" ],
+        "ordinal" : 58
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer directly lists the checks identified in [S1], including the base, compaction, gradients, joints, drainage features and access.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3387.640633,
+      "httpLatencyMs" : 3428.367698,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer directly lists the checks identified in [S1], including the base, compaction, gradients, joints, drainage features and access.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3387.640633,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-07",
+    "number" : 7,
+    "language" : "en",
+    "question" : "When is it advisable to use ready-mix concrete for a slab?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 9103.324645,
+    "ragOutcome" : "FAIL",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "For a courtyard concrete pour, ready-mix delivered by truck is advantageous when access lets the truck discharge close to the work area; the source notes rapid execution, less handling, and a lower risk of the concrete setting before it is spread. [S1] The evidence concerns courtyard paving and base work; it does not establish technical selection criteria for slabs generally or for sites where truck access is limited.",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/R4R_10_PATIO_HOME_DAMP_AND_REPAIR_CASES.md",
+        "headingPath" : [ "Riansares 4R — Patio, Home, Damp and Repair Cases", "6. Case A — Courtyard, Base, Paving and Drainage", "6.4. Concrete from Truck and Manual Execution", "Exterior Courtyard with Access" ],
+        "ordinal" : 1000006
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "PARTIAL",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "PARTIAL",
+      "verdict" : "PASS",
+      "reason" : "The answer gives a supported condition for using truck-delivered ready-mix—access for close discharge—and explains its practical advantages. It appropriately limits the evidence to courtyard paving and base work rather than generalizing to all slabs.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3869.054341,
+      "httpLatencyMs" : 3983.451925,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "PARTIAL",
+        "recommendedStatus" : "PARTIAL",
+        "effectiveStatus" : "PARTIAL",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer gives a supported condition for using truck-delivered ready-mix—access for close discharge—and explains its practical advantages. It appropriately limits the evidence to courtyard paving and base work rather than generalizing to all slabs.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3869.054341,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-08",
+    "number" : 8,
+    "language" : "en",
+    "question" : "How does a narrow corridor affect the construction of a concrete slab?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 7979.776731,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "A narrow corridor makes access and delivery harder: concrete may need to be moved by wheelbarrow, mixed on site or poured in phases, and the welded mesh and spacers may also need phased installation [S1]. Junctions and gradients require attention; the work involves more labor and carries a higher risk of poor execution if too much is attempted at once [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/R4R_10_PATIO_HOME_DAMP_AND_REPAIR_CASES.md",
+        "headingPath" : [ "Riansares 4R — Patio, Home, Damp and Repair Cases", "6. Case A — Courtyard, Base, Paving and Drainage", "6.4. Concrete from Truck and Manual Execution", "Interior Courtyard or Narrow Corridor" ],
+        "ordinal" : 7
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer directly explains the access, delivery, pouring, reinforcement-installation, labor, and execution challenges described in [S1].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2580.088748,
+      "httpLatencyMs" : 2599.024858,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer directly explains the access, delivery, pouring, reinforcement-installation, labor, and execution challenges described in [S1].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2580.088748,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-09",
+    "number" : 9,
+    "language" : "en",
+    "question" : "What causes of damp can occur in an old home?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 10776.605806,
+    "ragOutcome" : "FAIL",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Possible issues include leaks or water ingress, condensation, and inadequate ventilation [S3][S5]. Ground and external levels, downpipes, salts, and previous waterproofing are also listed for review during diagnosis, rather than confirmed causes [S5]. The evidence lists possible issues to investigate, but does not establish which one causes damp in a particular home; one documented case had an unconfirmed cause [S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S2]",
+        "source" : "en/R4R_10_PATIO_HOME_DAMP_AND_REPAIR_CASES.md",
+        "headingPath" : [ "Riansares 4R — Patio, Home, Damp and Repair Cases", "8. Case C — Communal Entrance with Damp and Old Substrates", "8.1. Context" ],
+        "ordinal" : 22
+      }, {
+        "label" : "[S3]",
+        "source" : "en/guides/R4R_83_OLD_HOMES_AND_REHABILITATION.md",
+        "headingPath" : [ "Riansares 4R — old homes: sound and safe rehabilitation", "What risks arise in an old home left closed for years?" ],
+        "ordinal" : 4
+      }, {
+        "label" : "[S5]",
+        "source" : "en/guides/R4R_82_DAMP_LEAKS_CONDENSATION_AND_MOULD.md",
+        "headingPath" : [ "Riansares 4R — damp: differential diagnosis and repair", "What should be done about longstanding damp in a house with thick walls?" ],
+        "ordinal" : 6
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "PARTIAL",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer names supported possible causes—leaks or water ingress, condensation, and inadequate ventilation—and distinguishes diagnostic factors from confirmed causes. That sufficiently answers the general question without claiming a specific cause for any home.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3860.243283,
+      "httpLatencyMs" : 3896.543799,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "PARTIAL",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "PARTIAL",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer names supported possible causes—leaks or water ingress, condensation, and inadequate ventilation—and distinguishes diagnostic factors from confirmed causes. That sufficiently answers the general question without claiming a specific cause for any home.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3860.243283,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-10",
+    "number" : 10,
+    "language" : "en",
+    "question" : "Should a renovation estimate include the execution timeline?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 6072.548429,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Yes. A renovation estimate should include an indicative timeframe, subject to availability and findings [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/guides/R4R_103_KITCHEN_QUOTATIONS_MEASUREMENTS_AND_VARIATIONS.md",
+        "headingPath" : [ "Kitchens — itemised quotations and change control", "What should a kitchen renovation quotation include?" ],
+        "ordinal" : 1
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The cited guidance says a renovation quotation should state an indicative timeframe, subject to availability and findings, which directly answers the question.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2325.059874,
+      "httpLatencyMs" : 2345.11627,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The cited guidance says a renovation quotation should state an indicative timeframe, subject to availability and findings, which directly answers the question.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2325.059874,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-11",
+    "number" : 11,
+    "language" : "en",
+    "question" : "What information should a customer provide to request an estimate?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 8847.124183,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Provide the location, photos, approximate measurements, how the space is used, the problem, the result you want and your timeframe [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/faqs/R4R_40_ALL_FAQ.md",
+        "headingPath" : [ "Riansares 4R — all frequently asked questions", "Quotations", "FAQ-001 — What information is needed for initial guidance?" ],
+        "ordinal" : 3
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer lists the information the source requests for a quotation: location, photos, approximate measurements, space use, problem, expected result and timeframe.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2854.497173,
+      "httpLatencyMs" : 2968.767365,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer lists the information the source requests for a quotation: location, photos, approximate measurements, space use, problem, expected result and timeframe.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2854.497173,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-12",
+    "number" : 12,
+    "language" : "en",
+    "question" : "What information is needed to estimate a bathroom renovation?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 6635.5895279999995,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "To request an initial estimate, provide photos, the location and approximate area, the problem and expected result, the bathroom layout, desired materials, access, current use, deadlines and priorities. State whether the water-supply and drainage positions will be retained; this information supports initial guidance but does not replace a site visit, measurements or diagnosis of concealed services [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/guides/R4R_86_QUOTATIONS_MEASUREMENTS_AND_SCOPE_CHANGES.md",
+        "headingPath" : [ "Riansares 4R — quotations, measurements, extras and scope changes", "What do I need to request a renovation quotation?" ],
+        "ordinal" : 1
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer lists the information specified in [S1] and clarifies that it supports an initial estimate, not a substitute for a site visit, measurements, or diagnosis.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 1856.435218,
+      "httpLatencyMs" : 1945.142852,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer lists the information specified in [S1] and clarifies that it supports an initial estimate, not a substitute for a site visit, measurements, or diagnosis.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 1856.435218,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-13",
+    "number" : 13,
+    "language" : "en",
+    "question" : "What kinds of renovation work does this company do? Does it work on houses and offices?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 9298.833462999999,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "The company renovates bathrooms, kitchens, homes, small offices and commercial premises. Its work can include carefully assessed layout changes, habitability improvements, and partial or full renovation of finishes and installations [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/R4R_00_IDENTITY_CRITERIA_AND_EDITORIAL_VOICE.md",
+        "headingPath" : [ "Riansares 4R — identity, criteria, and editorial voice", "2. Riansares 4R identity", "2.3. Core services", "Renovations" ],
+        "ordinal" : 5
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer lists the renovation work described in [S1] and directly confirms that the company works on homes and small offices or commercial premises.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 1978.66191,
+      "httpLatencyMs" : 1999.578757,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer lists the renovation work described in [S1] and directly confirms that the company works on homes and small offices or commercial premises.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 1978.66191,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-14",
+    "number" : 14,
+    "language" : "en",
+    "question" : "What are the differences between air lime and natural hydraulic lime when working on old walls?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 8124.857670000001,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Air lime is highly breathable and traditional, but sets slowly and is less suitable for thick applications over damp or weak substrates. Natural hydraulic lime (NHL 2 or NHL 3.5) is described as technically more compatible with stone, earth and old buildings; it sets with ambient humidity and has moderate stiffness. For either mortar, assess its binders, strength, application thickness, support and breathability [S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S2]",
+        "source" : "en/R4R_20_OFFICE_CELLAR_BATHROOM_AND_CLIENT_SCREENING_CASES.md",
+        "headingPath" : [ "Riansares 4R — Office, Cave, Bathroom and Client Screening Cases", "12. Case G — Cave or old cellar: stabilization with lime mortar and mesh", "12.2. Air Lime, NHL and Hybrid Mortars" ],
+        "ordinal" : 11
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer directly compares air lime and NHL on breathability, setting, suitability for thick applications on damp or weak substrates, and compatibility with old masonry. Its points and the advice to check the mortar’s properties are supported by [S2].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2618.105868,
+      "httpLatencyMs" : 2756.240704,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer directly compares air lime and NHL on breathability, setting, suitability for thick applications on damp or weak substrates, and compatibility with old masonry. Its points and the advice to check the mortar’s properties are supported by [S2].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2618.105868,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-15",
+    "number" : 15,
+    "language" : "en",
+    "question" : "What precautions should be taken before laying new tiles over an existing floor?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 8391.206747,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Check that the existing floor is sound: assess adhesion, flatness, moisture, permissible loads, junctions and compatibility with the adhesive system; repair or remove loose tiles and deteriorated substrate first [S1]. For a patio, also check added height, door clearance, falls and drainage, since extra layers can conceal damp or obstruct a door [S3].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.md",
+        "headingPath" : [ "Kitchens — scope, materials and trade coordination", "What precautions apply when laying new tiles over existing ones?" ],
+        "ordinal" : 5
+      }, {
+        "label" : "[S3]",
+        "source" : "en/guides/R4R_105_FLOOR_SLAB_FLOOR_FINISH_PATIOS_DRAINAGE_AND_GRADIENTS.md",
+        "headingPath" : [ "Patios and flooring — slab base, floor finish, damp and drainage", "Can new patio tiles be laid over existing ones?" ],
+        "ordinal" : 5
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer gives the key checks before tiling over an existing floor and adds relevant patio-specific height, falls, and drainage precautions, all supported by the cited passages.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 4258.539213,
+      "httpLatencyMs" : 4388.283793,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer gives the key checks before tiling over an existing floor and adds relevant patio-specific height, falls, and drainage precautions, all supported by the cited passages.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 4258.539213,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-16",
+    "number" : 16,
+    "language" : "en",
+    "question" : "I'm thinking of buying a fairly old flat, but there are cracks in some walls. How can I tell whether they are superficial or whether I'm getting into a serious problem?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 12281.513933,
+    "ragOutcome" : "FAIL",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Progressive cracks, walls that are out of plumb, subsidence, doors that suddenly stop fitting, or significant deformation are signs that warrant structural inspection; stability cannot be diagnosed remotely [S2]. The documented checks include recording the cracks and checking for possible movement and water entry [S1], but a qualified assessment is needed to determine what the cracks mean in this particular flat. The evidence does not establish how to distinguish superficial cracks from serious ones in this flat or diagnose its condition remotely.",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/guides/R4R_83_OLD_HOMES_AND_REHABILITATION.md",
+        "headingPath" : [ "Riansares 4R — old homes: sound and safe rehabilitation", "Hypothetical case V-01 — Rural home with cracks and damp walls" ],
+        "ordinal" : 6
+      }, {
+        "label" : "[S2]",
+        "source" : "en/guides/R4R_107_FACADES_ROOFS_AND_CAUTIOUS_REHABILITATION.md",
+        "headingPath" : [ "Rehabilitation — façades, roofs and existing buildings", "Which symptoms require structural inspection?" ],
+        "ordinal" : 8
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "PARTIAL",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "PARTIAL",
+      "verdict" : "PASS",
+      "reason" : "The answer gives documented warning signs that warrant structural inspection and correctly avoids diagnosing the flat remotely. It does not distinguish superficial cracks from serious ones, so it only partially answers the question.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3205.422352,
+      "httpLatencyMs" : 3261.341317,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "PARTIAL",
+        "recommendedStatus" : "PARTIAL",
+        "effectiveStatus" : "PARTIAL",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer gives documented warning signs that warrant structural inspection and correctly avoids diagnosing the flat remotely. It does not distinguish superficial cracks from serious ones, so it only partially answers the question.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3205.422352,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-17",
+    "number" : 17,
+    "language" : "en",
+    "question" : "The kitchen cabinets are fine. How can I refresh it without taking everything apart?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 11091.968584,
+    "ragOutcome" : "FAIL",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Keeping the cabinets may be possible, depending on their condition, water damage, pipe access, and removability [S1]. Before choosing finishes, assess leaks and concealed pipework, and check that appliances will retain adequate ventilation and accessible connections [S2][S1]. The evidence does not establish whether these cabinets can be refreshed in place or what specific refresh work would avoid dismantling; that depends partly on access to affected pipes and whether the cabinets can be removed and reinstalled [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.md",
+        "headingPath" : [ "Kitchens — scope, materials and trade coordination", "Can I keep the cabinets while the plumbing is replaced?" ],
+        "ordinal" : 2
+      }, {
+        "label" : "[S2]",
+        "source" : "en/guides/R4R_122_REAL_VISITOR_WORDING.md",
+        "headingPath" : [ "How to express renovation concerns — examples of real-world and ambiguous queries", "I want a new-looking kitchen while fixing a fault. Should I start with cabinets?" ],
+        "ordinal" : 4
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "PARTIAL",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "PARTIAL",
+      "verdict" : "PASS",
+      "reason" : "The answer gives relevant guidance on keeping cabinets and checking plumbing access and appliance connections, but it does not identify specific ways to refresh the kitchen without dismantling it. Its partial status and stated limitation are justified.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2725.469107,
+      "httpLatencyMs" : 2752.363159,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "PARTIAL",
+        "recommendedStatus" : "PARTIAL",
+        "effectiveStatus" : "PARTIAL",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer gives relevant guidance on keeping cabinets and checking plumbing access and appliance connections, but it does not identify specific ways to refresh the kitchen without dismantling it. Its partial status and stated limitation are justified.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2725.469107,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-19",
+    "number" : 18,
+    "language" : "en",
+    "question" : "When it rains heavily, my terrace leaks into the flat below. Where do I start?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 9978.561786,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Start by confirming the source of the leak and checking drainage, falls, drains, joints, thresholds, and terrace junctions, including those at parapets, doors, and downpipes; inspect the substrate and ensure the waterproofing layers are compatible, recording watertightness tests where appropriate [S4][S5]. A complete system design or work on communal elements may be needed, so consult professionals and the owners’ association [S4].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S4]",
+        "source" : "en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.md",
+        "headingPath" : [ "Riansares 4R — other works: pools, industrial buildings, terraces and facilities", "What should be checked when waterproofing a terrace above homes?" ],
+        "ordinal" : 5
+      }, {
+        "label" : "[S5]",
+        "source" : "en/guides/R4R_105_FLOOR_SLAB_FLOOR_FINISH_PATIOS_DRAINAGE_AND_GRADIENTS.md",
+        "headingPath" : [ "Patios and flooring — slab base, floor finish, damp and drainage", "What should be checked before waterproofing a terrace?" ],
+        "ordinal" : 4
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer gives a relevant starting checklist for tracing terrace leaks and checking drainage, falls, junctions, and waterproofing, with professional and owners’ association involvement supported by the cited passages.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3036.657702,
+      "httpLatencyMs" : 3050.725997,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer gives a relevant starting checklist for tracing terrace leaks and checking drainage, falls, junctions, and waterproofing, with professional and owners’ association involvement supported by the cited passages.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3036.657702,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-22",
+    "number" : 19,
+    "language" : "en",
+    "question" : "We've just bought a flat and want to renovate it before moving in. In what order should the work be done to avoid having to break things that are already finished?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 12387.908705,
+    "ragOutcome" : "FAIL",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Prioritise risks to people and active faults, followed by stability, watertightness and services, then habitability and optional finishes [S4]. Define the layout and services before finishes, and generally install and test services before closing walls or laying final finishes, to reduce the risk of having to reopen completed work [S1][S2]. The evidence gives general renovation sequencing and examples for bathrooms and kitchens, but does not establish a complete work order for every part of a flat; the precise sequence depends on the work [S1][S2][S4].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/guides/R4R_81_BATHROOMS_SHOWERS_DRAINAGE_AND_WATERPROOFING.md",
+        "headingPath" : [ "Riansares 4R — bathrooms: leaks, showers, drainage and waterproofing", "In what order should a bathroom be renovated?" ],
+        "ordinal" : 1
+      }, {
+        "label" : "[S2]",
+        "source" : "en/guides/R4R_102_KITCHEN_RENOVATION_CABINETS_TILES_AND_APPLIANCES.md",
+        "headingPath" : [ "Kitchens — scope, materials and trade coordination", "Should plumbing, electrical work or tiling come first?" ],
+        "ordinal" : 10
+      }, {
+        "label" : "[S4]",
+        "source" : "en/guides/R4R_118_INITIAL_QUESTIONS_AND_WORK_FOLLOW_UP.md",
+        "headingPath" : [ "Customer service — initial questions, handover and maintenance", "How should renovation actions be prioritised?" ],
+        "ordinal" : 6
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "PARTIAL",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "PARTIAL",
+      "verdict" : "PASS",
+      "reason" : "The answer gives supported sequencing principles relevant to avoiding rework, including planning services before finishes and testing them before closing walls. It appropriately notes that the evidence does not provide a complete order for every part of a flat.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3849.64674,
+      "httpLatencyMs" : 3889.467914,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "PARTIAL",
+        "recommendedStatus" : "PARTIAL",
+        "effectiveStatus" : "PARTIAL",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer gives supported sequencing principles relevant to avoiding rework, including planning services before finishes and testing them before closing walls. It appropriately notes that the evidence does not provide a complete order for every part of a flat.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3849.64674,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-31",
+    "number" : 20,
+    "language" : "en",
+    "question" : "I have broken pipes in my kitchen. What should I do?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 6841.036702,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "If water is actively leaking, shut off the accessible supply if it is safe, avoid touching wet electrical equipment or wiring, and contact a professional to locate and repair the leak. Check the repair, watertightness, and drying before closing walls or reinstalling cabinets. [S3]",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S3]",
+        "source" : "en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.md",
+        "headingPath" : [ "Riansares 4R — kitchens: broken pipes, leaks and pre-renovation decisions", "Question — Must all the pipes be replaced or only the broken section?" ],
+        "ordinal" : 1000002
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer gives relevant immediate safety steps, recommends professional leak repair, and explains what to check before closing the area, all supported by [S3].",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2321.131419,
+      "httpLatencyMs" : 2356.197494,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer gives relevant immediate safety steps, recommends professional leak repair, and explains what to check before closing the area, all supported by [S3].",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2321.131419,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-32",
+    "number" : 21,
+    "language" : "en",
+    "question" : "I have broken pipes in my kitchen. What should I do?\nI also want to renovate my kitchen. What do you recommend?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 9718.085258000001,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "If water is actively leaking, shut off the accessible supply if it is safe, avoid wet electrical installations, and have a professional repair the fault; check watertightness and drying before closing walls or reinstalling cabinets [S2][S3]. For the renovation, assess the water supply and drainage before installing finishes, decide whether the sink and appliances will stay or move, and separate essential repairs from optional layout, finish, or equipment changes [S1].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.md",
+        "headingPath" : [ "Riansares 4R — kitchens: broken pipes, leaks and pre-renovation decisions", "Question — My pipes are broken and I also want to renovate the kitchen. What do you recommend?" ],
+        "ordinal" : 3
+      }, {
+        "label" : "[S2]",
+        "source" : "en/R4R_10_PATIO_HOME_DAMP_AND_REPAIR_CASES.md",
+        "headingPath" : [ "Riansares 4R — Patio, Home, Damp and Repair Cases", "Thematic Expansion — Kitchen Leaks and Progressive Renovations (November 2026)", "Question: \"I have broken pipes in my kitchen. What should I do?\"" ],
+        "ordinal" : 1000048
+      }, {
+        "label" : "[S3]",
+        "source" : "en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.md",
+        "headingPath" : [ "Riansares 4R — kitchens: broken pipes, leaks and pre-renovation decisions", "Question — Must all the pipes be replaced or only the broken section?" ],
+        "ordinal" : 1000002
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer covers both parts: immediate steps for an active leak and practical renovation planning. Its recommendations are supported by the cited passages.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2659.907979,
+      "httpLatencyMs" : 2676.405778,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer covers both parts: immediate steps for an active leak and practical renovation planning. Its recommendations are supported by the cited passages.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2659.907979,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-33",
+    "number" : 22,
+    "language" : "en",
+    "question" : "I have broken pipes in my kitchen. What should I do?\nI also want to renovate my kitchen. What do you recommend?\nCan I replace the tiles too?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 10300.194227,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "If water is actively leaking, shut off the supply at an accessible valve if safe, avoid using the affected installation, and contact a professional; check the repair, watertightness, and drying before closing walls or reinstalling cabinets [S5]. For the renovation, assess water supply and drainage before installing finishes, decide whether the sink and appliances will stay or move, and quote essential repairs separately from optional changes [S1]. Tiles can also be replaced after the leak is repaired and the substrate is confirmed stable and dry; budget the tiling separately from plumbing work [S2].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.md",
+        "headingPath" : [ "Riansares 4R — kitchens: broken pipes, leaks and pre-renovation decisions", "Question — My pipes are broken and I also want to renovate the kitchen. What do you recommend?" ],
+        "ordinal" : 3
+      }, {
+        "label" : "[S2]",
+        "source" : "en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.md",
+        "headingPath" : [ "Riansares 4R — kitchens: broken pipes, leaks and pre-renovation decisions", "Question — May I replace the kitchen wall tiles too?" ],
+        "ordinal" : 1000004
+      }, {
+        "label" : "[S5]",
+        "source" : "en/guides/R4R_80_KITCHEN_PLUMBING_AND_LEAKS.md",
+        "headingPath" : [ "Riansares 4R — kitchens: broken pipes, leaks and pre-renovation decisions", "Question — Must all the pipes be replaced or only the broken section?" ],
+        "ordinal" : 1000002
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer addresses what to do about an active leak, how to plan the kitchen renovation, and whether tiles can be replaced. Its cited guidance supports shutting off the supply if safe, getting the leak repaired, assessing services before finishes, and tiling only after checking the substrate is stable and dry.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3193.768093,
+      "httpLatencyMs" : 3272.761988,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer addresses what to do about an active leak, how to plan the kitchen renovation, and whether tiles can be replaced. Its cited guidance supports shutting off the supply if safe, getting the leak repaired, assessing services before finishes, and tiling only after checking the substrate is stable and dry.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3193.768093,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-34",
+    "number" : 23,
+    "language" : "en",
+    "question" : "My swimming pool is losing water and some tiles are coming loose. Is reattaching them enough?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 9533.309686,
+    "ragOutcome" : "FAIL",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Do not assume reattaching the tiles will stop the water loss: inspect the tile substrate, adhesion and waterproofing, and distinguish surface repairs from watertightness work [S1]. First determine whether the loss is from evaporation, pipes, joints, fittings or the pool shell; repair should follow that diagnosis [S2][S4]. The evidence cannot establish whether reattaching tiles will be enough without checking the tile substrate, adhesion and waterproofing, and determining the source of the water loss.",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.md",
+        "headingPath" : [ "Riansares 4R — other works: pools, industrial buildings, terraces and facilities", "Hypothetical case X-01 — Pool with detached tiles" ],
+        "ordinal" : 6
+      }, {
+        "label" : "[S2]",
+        "source" : "en/cases/R4R_91_VARIED_HYPOTHETICAL_CASES.md",
+        "headingPath" : [ "Riansares 4R — hypothetical consultation cases to broaden coverage", "C-10 — Pool water leak (hypothetical)" ],
+        "ordinal" : 11
+      }, {
+        "label" : "[S4]",
+        "source" : "en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.md",
+        "headingPath" : [ "Riansares 4R — other works: pools, industrial buildings, terraces and facilities" ],
+        "ordinal" : 1000000
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "PARTIAL",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer directly explains that reattaching tiles cannot be assumed to stop water loss and that the leak source and tile-area condition need diagnosis first. This is supported by the cited guidance and sufficiently answers the question without claiming a site-specific diagnosis.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 4872.751361,
+      "httpLatencyMs" : 4890.446988,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "PARTIAL",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "PARTIAL",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer directly explains that reattaching tiles cannot be assumed to stop water loss and that the leak source and tile-area condition need diagnosis first. This is supported by the cited guidance and sufficiently answers the question without claiming a site-specific diagnosis.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 4872.751361,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-35",
+    "number" : 24,
+    "language" : "en",
+    "question" : "I want to renovate changing rooms in a sports centre that remains open. What should I check to carry out the work in phases?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 9952.913886999999,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Check that each phase is compatible with hygiene, access, escape routes and continued use; pay particular attention to water, wet-surface slipping risks and services [S3]. Also check ventilation, moisture, gradients, drainage, slip-resistant finishes, accessibility and maintenance, and verify the specific public-use and safety requirements [S1]. Sequence work from safety, leaks and services through healthy conditions, waterproofing and substrates to finishes, and confirm that phasing will not require repeated demolition or compromise technical solutions [S4].",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S1]",
+        "source" : "en/guides/R4R_89_OTHER_SPACES_AND_SPECIAL_WORKS.md",
+        "headingPath" : [ "Riansares 4R — other works: pools, industrial buildings, terraces and facilities", "What should be considered before renovating sports centre changing rooms?" ],
+        "ordinal" : 2
+      }, {
+        "label" : "[S3]",
+        "source" : "en/guides/R4R_113_OTHER_SPACES_GARAGES_POOLS_AND_SPORTS_CENTRES.md",
+        "headingPath" : [ "Other spaces — garages, pools, sports areas and industrial buildings", "Can public changing rooms be renovated without closing them?" ],
+        "ordinal" : 4
+      }, {
+        "label" : "[S4]",
+        "source" : "en/guides/R4R_86_QUOTATIONS_MEASUREMENTS_AND_SCOPE_CHANGES.md",
+        "headingPath" : [ "Riansares 4R — quotations, measurements, extras and scope changes", "Can renovations be carried out in phases?" ],
+        "ordinal" : 5
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ANSWERED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ANSWERED",
+      "effectiveStatus" : "ANSWERED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ANSWERED",
+      "verdict" : "PASS",
+      "reason" : "The answer gives relevant checks for keeping the changing rooms in use during phased work and a supported sequence for the phases, addressing the question with the cited evidence.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 2968.261869,
+      "httpLatencyMs" : 3025.222948,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ANSWERED",
+        "recommendedStatus" : "ANSWERED",
+        "effectiveStatus" : "ANSWERED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer gives relevant checks for keeping the changing rooms in use during phased work and a supported sequence for the phases, addressing the question with the cited evidence.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 2968.261869,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-18",
+    "number" : 25,
+    "language" : "en",
+    "question" : "In my home, we can hear absolutely everything the upstairs neighbours do. Can the sound insulation be improved without losing too much ceiling height in the rooms?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 10527.437293,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "Acoustic insulation is intended to control sound transmission, but systems are not automatically interchangeable; selection depends on the objective, the substrate, and applicable requirements [S3]. The evidence does not establish whether sound insulation to your ceiling would address the noise from upstairs, what solution would be suitable, or how much ceiling height it would use.",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S3]",
+        "source" : "en/guides/R4R_87_INSULATION_VENTILATION_AND_ENERGY_RENOVATION.md",
+        "headingPath" : [ "Riansares 4R — energy efficiency, insulation and ventilation", "Hypothetical case E-01 — Very cold bedroom with replacement windows" ],
+        "ordinal" : 1000006
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "PARTIAL",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "PARTIAL",
+      "verdict" : "PASS",
+      "reason" : "The answer gives a relevant general point about acoustic insulation and appropriately states that the evidence does not determine whether a ceiling treatment would help or how much height it would use.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3655.8742,
+      "httpLatencyMs" : 3687.077509,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "PARTIAL",
+        "recommendedStatus" : "PARTIAL",
+        "effectiveStatus" : "PARTIAL",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer gives a relevant general point about acoustic insulation and appropriately states that the evidence does not determine whether a ceiling treatment would help or how much height it would use.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3655.8742,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-20",
+    "number" : 26,
+    "language" : "en",
+    "question" : "I want to replace my home's windows, but I don't know whether triple glazing is really worthwhile or whether double glazing is enough.",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 6863.517571,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : false,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : null,
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "SKIPPED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : null,
+      "verdict" : null,
+      "reason" : null,
+      "provider" : null,
+      "model" : null,
+      "durationMs" : null,
+      "httpLatencyMs" : null,
+      "skipReason" : "no_audit_id"
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-21",
+    "number" : 27,
+    "language" : "en",
+    "question" : "I have a long, dark corridor. How can I get more light and make better use of the space?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 10680.142243,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : false,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : null,
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "SKIPPED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : null,
+      "verdict" : null,
+      "reason" : null,
+      "provider" : null,
+      "model" : null,
+      "durationMs" : null,
+      "httpLatencyMs" : null,
+      "skipReason" : "no_audit_id"
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-23",
+    "number" : 28,
+    "language" : "en",
+    "question" : "The wooden beams in my old house are bowed. Can they be reinforced or do they need replacing?",
+    "httpStatus" : 429,
+    "httpLatencyMs" : 19518.820622,
+    "ragOutcome" : "FAIL",
+    "auditIdPresent" : false,
+    "httpResponse" : {
+      "error" : "rate_limited",
+      "message" : "Solo se permite una consulta por IP cada 12 segundos."
+    },
+    "audit" : {
+      "outcome" : "SKIPPED",
+      "skipReason" : "rag_request_failed"
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-24",
+    "number" : 29,
+    "language" : "en",
+    "question" : "Our office is very hot in some areas and cold in others. Can this be solved by renovating the climate-control installation without replacing the whole system?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 11492.588205,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "ABSTAINED",
+      "verdict" : "PASS",
+      "reason" : "The supplied passages do not establish whether renovating the climate-control installation can resolve uneven temperatures without replacing the whole system. They mention office heating and cooling only as a renovation topic, not as evidence for a solution.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3179.917959,
+      "httpLatencyMs" : 3207.488623,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "ABSTAINED",
+        "recommendedStatus" : "ABSTAINED",
+        "effectiveStatus" : "ABSTAINED",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The supplied passages do not establish whether renovating the climate-control installation can resolve uneven temperatures without replacing the whole system. They mention office heating and cooling only as a renovation topic, not as evidence for a solution.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3179.917959,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-25",
+    "number" : 30,
+    "language" : "en",
+    "question" : "I want to turn a shop into a café. What building work do I need before opening?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 12652.651723,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : true,
+    "httpResponse" : {
+      "answer" : "To assess the project, gather the shop’s address and municipality, current and planned activities, plans, photos and measurements, expected hours and occupancy, existing installations, any required owner or community authorization, and licensing requirements [S4]. A renovation proposal alone does not certify administrative compliance [S4]. The evidence does not establish which building works this particular shop needs before opening as a café or whether it will meet applicable requirements.",
+      "abstained" : false,
+      "citations" : [ {
+        "label" : "[S4]",
+        "source" : "es/guides/R4R_85_OFICINAS_LOCALES_Y_COMUNIDADES.md",
+        "headingPath" : [ "Riansares 4R — oficinas, locales y comunidades: alcance y coordinación", "¿Qué documentación pedir en la reforma de un local comercial?" ],
+        "ordinal" : 1000004
+      } ],
+      "provider" : {
+        "name" : "OpenAI",
+        "model" : "gpt-6-luna",
+        "inferenceHost" : {
+          "type" : "cloud",
+          "hostname" : null,
+          "cpu" : null,
+          "ram" : null,
+          "gpu" : null
+        }
+      },
+      "status" : "PARTIAL",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "COMPLETED",
+      "originalStatus" : "PARTIAL",
+      "effectiveStatus" : "PARTIAL",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : "PARTIAL",
+      "verdict" : "PASS",
+      "reason" : "The answer gives relevant initial information supported by [S4] and correctly states that the evidence cannot determine the work this specific shop needs to open as a café. It therefore does not overclaim a project-specific list of required works.",
+      "provider" : "OpenAI",
+      "model" : "gpt-6-luna",
+      "durationMs" : 3447.927572,
+      "httpLatencyMs" : 3472.873302,
+      "httpStatus" : 200,
+      "response" : {
+        "originalStatus" : "PARTIAL",
+        "recommendedStatus" : "PARTIAL",
+        "effectiveStatus" : "PARTIAL",
+        "conclusive" : true,
+        "note" : "",
+        "metadata" : {
+          "verdict" : "PASS",
+          "reason" : "The answer gives relevant initial information supported by [S4] and correctly states that the evidence cannot determine the work this specific shop needs to open as a café. It therefore does not overclaim a project-specific list of required works.",
+          "provider" : "OpenAI",
+          "model" : "gpt-6-luna",
+          "durationMs" : 3447.927572,
+          "outcome" : "completed"
+        }
+      },
+      "note" : ""
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-26",
+    "number" : 31,
+    "language" : "en",
+    "question" : "What capacity and how many geothermal collectors do I need to heat and cool a 180 m² home?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 5918.172624000001,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : false,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : null,
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "SKIPPED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : null,
+      "verdict" : null,
+      "reason" : null,
+      "provider" : null,
+      "model" : null,
+      "durationMs" : null,
+      "httpLatencyMs" : null,
+      "skipReason" : "no_audit_id"
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-27",
+    "number" : 32,
+    "language" : "en",
+    "question" : "What exact cable cross-section and circuit breaker does the REBT require for installing an 11 kW electric car charger in my garage?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 9035.441950999999,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : false,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : null,
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "SKIPPED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : null,
+      "verdict" : null,
+      "reason" : null,
+      "provider" : null,
+      "model" : null,
+      "durationMs" : null,
+      "httpLatencyMs" : null,
+      "skipReason" : "no_audit_id"
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-28",
+    "number" : 33,
+    "language" : "en",
+    "question" : "How do plants make their food through photosynthesis?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 6995.883627,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : false,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : null,
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "SKIPPED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : null,
+      "verdict" : null,
+      "reason" : null,
+      "provider" : null,
+      "model" : null,
+      "durationMs" : null,
+      "httpLatencyMs" : null,
+      "skipReason" : "no_audit_id"
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-29",
+    "number" : 34,
+    "language" : "en",
+    "question" : "What is the mass of Jupiter in kilograms?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 8891.826282,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : false,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : null,
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "SKIPPED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : null,
+      "verdict" : null,
+      "reason" : null,
+      "provider" : null,
+      "model" : null,
+      "durationMs" : null,
+      "httpLatencyMs" : null,
+      "skipReason" : "no_audit_id"
+    },
+    "runId" : "2026-11-16_19-22"
+  }, {
+    "caseId" : "case-30",
+    "number" : 35,
+    "language" : "en",
+    "question" : "Who wrote the novel One Hundred Years of Solitude?",
+    "httpStatus" : 200,
+    "httpLatencyMs" : 9703.736925,
+    "ragOutcome" : "PASS",
+    "auditIdPresent" : false,
+    "httpResponse" : {
+      "answer" : "",
+      "abstained" : true,
+      "citations" : [ ],
+      "provider" : null,
+      "status" : "ABSTAINED",
+      "embeddingProvider" : {
+        "name" : "ollama-e8f9827b-3d53-3aa4-8130-14a068af00e7",
+        "model" : "qwen3-embedding:0.6b",
+        "inferenceHost" : {
+          "type" : "nas",
+          "hostname" : "synox-nas",
+          "cpu" : "Dual-core · 2 GHz",
+          "ram" : "6 GB",
+          "gpu" : null
+        }
+      }
+    },
+    "audit" : {
+      "outcome" : "SKIPPED",
+      "originalStatus" : "ABSTAINED",
+      "effectiveStatus" : "ABSTAINED",
+      "proposedDowngrade" : false,
+      "appliedDowngrade" : false,
+      "recommendedStatus" : null,
+      "verdict" : null,
+      "reason" : null,
+      "provider" : null,
+      "model" : null,
+      "durationMs" : null,
+      "httpLatencyMs" : null,
+      "skipReason" : "no_audit_id"
+    },
+    "runId" : "2026-11-16_19-22"
+  } ]
+}
