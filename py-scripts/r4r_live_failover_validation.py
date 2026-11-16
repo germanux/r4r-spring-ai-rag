@@ -97,12 +97,29 @@ def serve(block_openai=False):
   ('embed_lp','192.168.1.209',11434),('embed_pc','192.168.1.207',11434),('embed_nas','192.168.1.203',11434)]}
  public={line.split('=',1)[0]:line.split('=',1)[1] for line in (ROOT/'docker-spring/.env.base').read_text().splitlines() if line and not line.startswith('#')}
  generation_entries=[entry.split('|') for entry in public['RAG_GENERATION_PROVIDERS'].split(',')]
- generation=','.join(f'http://127.0.0.1:{proxies[k].port}|{entry[1]}|{entry[2]}' for k,entry in zip(['gen_pc','gen_lp'],generation_entries))
- embedding=','.join(f'http://127.0.0.1:{proxies[k].port}|{timeout}' for k,timeout in [('embed_lp','8s'),('embed_pc','8s'),('embed_nas','30s')])
+ generation_parts=[]; local_index=0
+ for entry in generation_entries:
+  if entry[0].lower()=='openai': generation_parts.append('|'.join(entry)); continue
+  key=['gen_pc','gen_lp'][local_index]; local_index+=1
+  generation_parts.append(f'http://127.0.0.1:{proxies[key].port}|{entry[1]}|{entry[2]}')
+ generation=','.join(generation_parts)
+ embedding_entries=[entry.split('|') for entry in public['RAG_EMBEDDING_PROVIDERS'].split(',')]
+ embedding=','.join(f'http://127.0.0.1:{proxies[k].port}|{entry[1]}|{entry[2]}' for k,entry in zip(['embed_lp','embed_pc','embed_nas'],embedding_entries))
+ audit_parts=[]
+ for raw in public.get('RAG_AUDIT_PROVIDERS','').split(','):
+  if not raw: continue
+  endpoint,model,timeout=raw.split('|')
+  if endpoint.lower()!='openai':
+   key='gen_pc' if '192.168.1.207' in endpoint else 'gen_lp'
+   endpoint=f'http://127.0.0.1:{proxies[key].port}'
+  audit_parts.append('|'.join([endpoint,model,timeout]))
+ audit=','.join(audit_parts)
  (OUT/'proxy-map.json').write_text(json.dumps({k:dict(target=p.target,port=p.port) for k,p in proxies.items()},indent=2))
  # Maven may rebuild the main artifact while tests run: pin a separate immutable snapshot.
  snapshot=OUT/'application-under-test.jar'
- shutil.copyfile(ROOT/'target/r4r-spring-ai-rag-0.3.2.jar',snapshot)
+ import xml.etree.ElementTree as ET
+ version=ET.parse(ROOT/'pom.xml').getroot().find('{http://maven.apache.org/POM/4.0.0}version').text
+ shutil.copyfile(ROOT/f'target/r4r-spring-ai-rag-{version}.jar',snapshot)
  remote_block=None;java_options=[]
  if block_openai:
   class RemoteFailure(http.server.BaseHTTPRequestHandler):
@@ -123,7 +140,7 @@ def serve(block_openai=False):
   f'--spring.datasource.url=jdbc:postgresql://127.0.0.1:{proxies["pg"].port}/r4r_rag?connectTimeout=3&socketTimeout=5',
   '--r4r.catalog-on-startup=false','--r4r.rag.warmup.on-startup=false',
   '--r4r.api-security.min-interval=0s','--r4r.api-security.max-global-requests-per-minute=10000',
-  '--RAG_GENERATION_PROVIDERS='+generation,'--RAG_EMBEDDING_PROVIDERS='+embedding]
+  '--RAG_GENERATION_PROVIDERS='+generation,'--RAG_EMBEDDING_PROVIDERS='+embedding,'--RAG_AUDIT_PROVIDERS='+audit]
  process=subprocess.Popen(args,cwd=ROOT,env=os.environ.copy(),stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
  log=OUT/'application.log'
  def output():

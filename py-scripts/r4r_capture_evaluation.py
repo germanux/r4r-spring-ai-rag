@@ -195,8 +195,11 @@ def collect(args):
         flag = 'RAG_LIVE_TEST' if lang == 'es' else 'RAG_LIVE_EN_TEST'
         if os.getenv(flag, '').lower() != 'true':
             raise ValueError(flag + '=true is required for real calls')
-    if os.getenv('RAG_OPENAI_ENABLED', '').lower() != 'false' and not getattr(args, 'allow_openai', False):
-        raise ValueError('RAG_OPENAI_ENABLED=false is required, or explicitly opt in with --allow-openai')
+    provider_lists = [os.getenv('RAG_GENERATION_PROVIDERS'), os.getenv('RAG_AUDIT_PROVIDERS')]
+    remote_or_unknown = any(value is None or any(entry.split('|', 1)[0].strip().lower() == 'openai'
+                            for entry in value.split(',')) for value in provider_lists)
+    if remote_or_unknown and not getattr(args, 'allow_openai', False):
+        raise ValueError('Explicit local-only generation/audit provider lists required, or opt in with --allow-openai')
     base = os.environ['RAG_TEST_BASE_URL'].rstrip('/')
     captures = Path(args.capture_dir).resolve() if args.capture_dir else None
     run = ROOT / 'docs/evaluation/runs' / args.run_id

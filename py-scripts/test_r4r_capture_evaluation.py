@@ -153,7 +153,7 @@ class CaptureEvaluationTest(unittest.TestCase):
             return self.fake_http(self.review())
         args = SimpleNamespace(capture_dir=None, run_id='simulated', case_ids='case-01', all_cases=False,
                                languages='es,en', include_controls=False, allow_openai=False)
-        env = dict(RAG_LIVE_TEST='true', RAG_LIVE_EN_TEST='true', RAG_OPENAI_ENABLED='false', RAG_TEST_BASE_URL='http://localhost')
+        env = dict(RAG_LIVE_TEST='true', RAG_LIVE_EN_TEST='true', RAG_GENERATION_PROVIDERS='http://localhost:1|test|1s', RAG_AUDIT_PROVIDERS='', RAG_TEST_BASE_URL='http://localhost')
         with tempfile.TemporaryDirectory() as directory, patch('r4r_capture_evaluation.ROOT', Path(directory)), \
                 patch.dict('os.environ', env), patch('urllib.request.urlopen', side_effect=server), patch('time.sleep'), \
                 patch('builtins.print'):
@@ -201,7 +201,7 @@ class CaptureEvaluationTest(unittest.TestCase):
             return self.fake_http(self.review(status, status, status, 'PASS'))
         args = SimpleNamespace(capture_dir=None, run_id='simulated-70', case_ids='', all_cases=True,
                                languages='es,en', include_controls=False, allow_openai=False)
-        env = dict(RAG_LIVE_TEST='true', RAG_LIVE_EN_TEST='true', RAG_OPENAI_ENABLED='false', RAG_TEST_BASE_URL='http://localhost')
+        env = dict(RAG_LIVE_TEST='true', RAG_LIVE_EN_TEST='true', RAG_GENERATION_PROVIDERS='http://localhost:1|test|1s', RAG_AUDIT_PROVIDERS='', RAG_TEST_BASE_URL='http://localhost')
         with tempfile.TemporaryDirectory() as directory, patch('r4r_capture_evaluation.ROOT', Path(directory)), \
                 patch.dict('os.environ', env), patch('urllib.request.urlopen', side_effect=server), \
                 patch('time.sleep') as sleep, patch('builtins.print'):

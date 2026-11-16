@@ -63,8 +63,12 @@ class ComposeConfigurationTest(unittest.TestCase):
         self.assertEqual(api['environment']['RAG_PG_SOCKET_TIMEOUT'], '5s')
         self.assertEqual(api['environment']['RAG_EMBEDDING_CONNECT_TIMEOUT'], '400ms')
         self.assertEqual(api['environment']['RAG_EMBEDDING_PROBE_TIMEOUT'], '600ms')
-        self.assertIn('209:11434|1500ms', api['environment']['RAG_EMBEDDING_PROVIDERS'])
-        self.assertIn('207:11434|1500ms', api['environment']['RAG_EMBEDDING_PROVIDERS'])
+        self.assertIn('209:11434|qwen3-embedding:0.6b|1500ms', api['environment']['RAG_EMBEDDING_PROVIDERS'])
+        self.assertIn('207:11434|qwen3-embedding:0.6b|1500ms', api['environment']['RAG_EMBEDDING_PROVIDERS'])
+        self.assertNotIn('RAG_OPENAI_ENABLED', api['environment'])
+        self.assertEqual(api['environment']['RAG_LEGACY_PROVIDER_SETTINGS'], '')
+        self.assertIn('openai|gpt-6-luna|35s', api['environment']['RAG_AUDIT_PROVIDERS'])
+        self.assertEqual(api['environment']['RAG_AUDIT_TOTAL_TIMEOUT'], '60s')
         self.assertEqual(api['environment']['RAG_WARMUP_EMBEDDING_TIMEOUT'], '30s')
         self.assertEqual(services['ollama-embeddings']['environment']['OLLAMA_KEEP_ALIVE'], '8h')
         self.assertEqual(api['environment']['RAG_EMBEDDING_UNAVAILABLE_COOLDOWN'], '30s')
@@ -85,6 +89,11 @@ class ComposeConfigurationTest(unittest.TestCase):
             if name != 'api':
                 self.assertNotIn('dns', service)
                 self.assertFalse(any(key.startswith('AWS_') for key in variables))
+        # An old private false flag must fail closed, never silently enable the public remote list.
+        with overrides.open('a') as out:
+            out.write('RAG_OPENAI_ENABLED=false\n')
+        legacy = subprocess.run(command, cwd=fixture, env=env, capture_output=True, text=True, check=True)
+        self.assertEqual(json.loads(legacy.stdout)['services']['api']['environment']['RAG_LEGACY_PROVIDER_SETTINGS'], 'obsolete')
         # Synology's standalone Compose must also work without a public defaults file.
         empty_env = fixture / 'empty.properties'
         empty_env.write_text('')
