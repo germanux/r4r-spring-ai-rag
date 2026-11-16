@@ -6,4 +6,11 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 export class HeroComponent {
     readonly s = inject(AssistantState);
     readonly i = inject(I18nService);
+
+    async tryAssistant(event: Event) {
+        event.preventDefault();
+        if (this.s.busy()) return;
+        this.s.edit(this.i.t('demoQuestion'));
+        await this.s.send(true);
+    }
 }

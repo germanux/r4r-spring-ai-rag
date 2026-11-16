@@ -516,7 +516,7 @@
       },
       {
         "language": "es",
-        "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago? Además, quiero reformar la cocina. ¿Qué me recomiendas?",
+        "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago?\nAdemás, quiero reformar la cocina. ¿Qué me recomiendas?",
         "answer": "Si tienes tuberías rotas en tu cocina, la prioridad es detener el suministro de agua con la llave de paso accesible y contactar a un profesional para la reparación de la fuga [S3]. Una vez resuelta la avería, es recomendable revisar la fontanería y desagües antes de colocar azulejos, muebles y acabados, y separar las reparaciones imprescindibles de las opciones [S1].",
         "citations": [
           {
@@ -558,7 +558,7 @@
       },
       {
         "language": "es",
-        "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago? Además, quiero reformar la cocina. ¿Qué me recomiendas? ¿Puedo cambiar también los azulejos?",
+        "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago?\nAdemás, quiero reformar la cocina. ¿Qué me recomiendas?\n¿Puedo cambiar también los azulejos?",
         "answer": "Conviene resolver primero la fuga y revisar fontanería y desagües antes de colocar azulejos, muebles y acabados [S1]. Es posible incluir nuevos azulejos en una reforma de cocina, después de reparar fugas y comprobar que el soporte esté firme y seco [S2].",
         "citations": [
           {
@@ -654,7 +654,7 @@
       },
       {
         "language": "en",
-        "question": "Tengo tuberías rotas en mi cocina. ¿Qué hago? Además, quiero reformar la cocina. ¿Qué me recomiendas? ¿Puedo cambiar también los azulejos?",
+        "question": "I have broken pipes in my kitchen. What should I do?\nI also want to renovate my kitchen. What do you recommend?\nCan I also change the tiles?",
         "answer": "If you have broken pipes in your kitchen, it is recommended to address the leak first and inspect the plumbing and drains before installing tiles, furniture, and finishes [S1]. You can also reform your kitchen, including replacing tiles, after resolving the leak and ensuring the support is firm and dry [S2]. The renovation can be coordinated to avoid multiple openings, but it is not mandatory to renovate the entire kitchen for a localized leak [S1].",
         "citations": [
           {

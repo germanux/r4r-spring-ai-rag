@@ -12,6 +12,64 @@ asistente; no autorizan cambios funcionales.
 
 ## Alcance, autorización y forma de trabajar
 
+### Decisiones vigentes del usuario: cambios mínimos, formato y validación
+
+Estas instrucciones posteriores prevalecen sobre los procedimientos visuales
+históricos recogidos más abajo:
+
+- No cambiar textos, traducciones, ejemplos, saltos de línea, distribución ni
+  comportamiento que el usuario no haya pedido modificar. Una corrección de
+  formato de código no autoriza a reformatear el contenido mostrado.
+- Conservar la pregunta progresiva de cocina en una, dos y tres líneas según
+  su etapa, tanto en español como en inglés. Usar saltos reales de línea,
+  no `\\n` visible ni todas las frases juntas. Mantener estas tres líneas:
+
+  ```text
+  Tengo tuberías rotas en mi cocina. ¿Qué hago?
+  Además, quiero reformar la cocina. ¿Qué me recomiendas?
+  ¿Puedo cambiar también los azulejos?
+  ```
+
+  ```text
+  I have broken pipes in my kitchen. What should I do?
+  I also want to renovate my kitchen. What do you recommend?
+  Can I also change the tiles?
+  ```
+
+- Plantillas Angular legibles y compactas: etiquetas con texto o interpolación
+  simple en una línea, por ejemplo `<h2>{{i.t('page.your_answer_will_appear_here')}}</h2>`.
+  Indentar contenedores y bloques; no convertir todo el componente en una sola
+  línea ni separar innecesariamente apertura, contenido y cierre.
+- El botón «Probar el asistente / Try the assistant» conserva su acción original:
+  enviar al RAG «¿Qué significan las cuatro R de Riansares 4R?» / «What do the four
+  Rs in Riansares 4R stand for?», según el idioma. No sustituirlo por la reproducción
+  de la demo de cocina ni por otra pregunta. La demo automática es independiente.
+- No renderizar páginas, generar imágenes ni hacer capturas salvo petición
+  explícita. La revisión visual la hace el usuario. Validar solo lo necesario;
+  si pide «no verifiques», no ejecutar pruebas, compilaciones ni comprobaciones
+  visuales. Una petición expresa posterior de tests o `mvn verify` sí se ejecuta.
+- Commits en inglés, de una a tres líneas y con el formato convencional existente.
+  Agrupar por bloques coherentes y hacer primero el commit pendiente cuando se
+  solicite. No hacer push ni desplegar sin autorización expresa.
+- Privacidad del formulario: una línea discreta y enlace válido también desde
+  el NAS; sin casillas ni explicaciones legales extensas. Mantener oposición y
+  supresión accesibles desde la política. Athagon sin GA ni banner analítico;
+  Riansares conserva `G-41CEFW6B5P` condicionado al consentimiento.
+- Mostrar el equipo real de embeddings separado del LLM, también tras failover.
+  Tras recibir la respuesta, mantener indicadores giratorios de revisión y del
+  botón hasta terminar la auditoría; la respuesta permanece legible.
+- Distribución frontend: Athagon `html-static/r4r-rag/`, Riansares únicamente
+  `dist/asistente-ia/` y NAS `web/r4r-rag`. En el despliegue NAS, el build y las
+  copias van después del backend; SMB es la última copia. Python en `py-scripts/`.
+  Copiar `.env.base` y `.env` al NAS de forma segura; no leer, imprimir ni versionar
+  el archivo privado para resolver fallos de tests. Usar claves ficticias en tests.
+- Decisiones operativas autorizadas: precargar LLM y todos los embeddings al
+  arrancar Spring y abrir la página; residencia solicitada de ambos de 8 h.
+  Embeddings: TCP 400 ms, `/api/tags` 600 ms, lectura PC/portátil 1500 ms y NAS
+  30 s; precarga independiente de 30 s. No modificar estos valores por iniciativa
+  propia. Historial PostgreSQL bajo administración manual, sin purgas automáticas
+  ni seguimiento persistente de visitantes.
+
 ### Instrucciones explícitas
 
 - Revisar primero el estado Git, incluidos los cambios staged, y el último cambio
