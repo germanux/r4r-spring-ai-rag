@@ -19,6 +19,16 @@ export class PrivacyService {
         this.http.post(apiBase+'/api/rag/usage/objections',{references:[...this.references.slice(-99),...(this.viewReference?[this.viewReference]:[])]}).subscribe({
             next:()=>this.objectionState.set('submitted'),error:()=>this.objectionState.set('failed')});
     }
-    contact(){return this.policy()==='/politica-privacidad.html'?'mailto:riansares4r@gmail.com':'mailto:german.caballero.rguez@gmail.com';}
-    policy(){return location.hostname.includes('riansares')||new URLSearchParams(location.search).get('embed')==='1'?'/politica-privacidad.html':'/privacy.html';}
+    contact() {
+        return this.policy().endsWith('/politica-privacidad.html')
+            ? 'mailto:riansares4r@gmail.com'
+            : 'mailto:german.caballero.rguez@gmail.com';
+    }
+    policy() {
+        const commercial = location.hostname.includes('riansares')
+            || new URLSearchParams(location.search).get('embed') === '1';
+        return commercial
+            ? 'https://riansares4r.com/politica-privacidad.html'
+            : 'https://athagon.tech/privacy.html';
+    }
 }
