@@ -105,11 +105,15 @@ public final class EmbeddingProviderRouter {
             Provider target = targets.get(i);
             Long failedAt = unavailableSince.get(target.baseUrl());
             if (failedAt != null && clock.getAsLong() - failedAt < unavailableCooldownNanos) {
-                log.info("Embedding id={} provider={} model={} outcome=cooldown", id, target.name(), model);
+                log.info("Embedding id={} provider={} model={} outcome=cooldown remainingMs={}",
+                        id, target.name(), model, (unavailableCooldownNanos - (clock.getAsLong() - failedAt)) / 1_000_000);
                 continue;
             }
             long attempt = System.nanoTime();
-            String outcome = "failed";
+            String outcome = "failed", phase = "probe";
+            log.info("Embedding id={} provider={} host={} model={} outcome=attempt connectTimeoutMs={} probeTimeoutMs={} readTimeoutMs={}",
+                    id, target.name(), RagProgress.publicProvider(new GenerationRouter.Provider(target.name(), target.baseUrl(), model)),
+                    model, config.connectTimeout().toMillis(), config.probeTimeout().toMillis(), target.readTimeout().toMillis());
             try {
                 var tags = api(target, config.probeTimeout(), deadline).listModels();
                 var installed = tags.models().stream().filter(m -> model.equals(canonical(m.name()))).findFirst()
@@ -117,6 +121,7 @@ public final class EmbeddingProviderRouter {
                 if (!config.expectedDigest().equalsIgnoreCase(installed.digest()))
                     throw new EmbeddingConfigurationException("Embedding model digest mismatch");
                 RagProgress.checkEmbeddingCancellation();
+                phase = "inference";
                 var client = new OllamaEmbeddingModel(api(target, target.readTimeout(), deadline), options,
                         ObservationRegistry.NOOP, ModelManagementOptions.defaults());
                 EmbeddingResponse response = client.call(request);
@@ -130,10 +135,15 @@ public final class EmbeddingProviderRouter {
             } catch (RuntimeException failure) {
                 checkCancellation(failure);
                 last = failure;
-                log.warn("Embedding attempt id={} provider={} model={} error={}", id, target.name(), model,
-                        failure.getClass().getSimpleName());
+                boolean cacheFailure = recoverable(failure) && !timedOut(failure);
+                log.warn("Embedding attempt id={} provider={} model={} phase={} error={} timeout={} cooldownMs={}",
+                        id, target.name(), model, phase, failure.getClass().getSimpleName(), timedOut(failure),
+                        cacheFailure ? unavailableCooldownNanos / 1_000_000 : 0);
                 if (!recoverable(failure)) throw failure;
-                if (unavailableCooldownNanos > 0) unavailableSince.put(target.baseUrl(), clock.getAsLong());
+                // Loading/queueing can time out while Ollama remains healthy. Do not
+                // turn that into 30 seconds of bypassing a now-ready preferred host.
+                if (cacheFailure && unavailableCooldownNanos > 0) unavailableSince.put(target.baseUrl(), clock.getAsLong());
+                else unavailableSince.remove(target.baseUrl());
                 if (i + 1 < targets.size() && System.nanoTime() < deadline)
                     log.info("Embedding fallback id={} from={} to={}", id, target.name(), targets.get(i + 1).name());
             } finally {
@@ -196,6 +206,12 @@ public final class EmbeddingProviderRouter {
             transport |= cause instanceof SocketTimeoutException || cause instanceof SocketException || cause instanceof EOFException;
         }
         return transport;
+    }
+    private static boolean timedOut(Throwable failure) {
+        if (failure instanceof RestClientResponseException http && http.getStatusCode().value() == 408) return true;
+        for (Throwable cause = failure; cause != null; cause = cause.getCause())
+            if (cause instanceof SocketTimeoutException) return true;
+        return false;
     }
     private static String canonical(String value) { return value == null ? "" : value.contains(":") ? value : value + ":latest"; }
     private static double elapsed(long start) { return (System.nanoTime() - start) / 1_000_000.0; }

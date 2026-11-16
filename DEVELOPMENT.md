@@ -63,11 +63,19 @@ históricos recogidos más abajo:
   copias van después del backend; SMB es la última copia. Python en `py-scripts/`.
   Copiar `.env.base` y `.env` al NAS de forma segura; no leer, imprimir ni versionar
   el archivo privado para resolver fallos de tests. Usar claves ficticias en tests.
-- Decisiones operativas autorizadas: precargar LLM y todos los embeddings al
-  arrancar Spring y abrir la página; residencia solicitada de ambos de 8 h.
+- Decisiones operativas autorizadas: solicitar precarga al arrancar Spring y abrir
+  la página, coordinada por instancia Ollama. No cargar simultáneamente LLM y
+  embeddings en el mismo servidor, repetir cargas de modelos residentes ni
+  expulsar otro modelo para anticipar una consulta. En una instancia vacía,
+  priorizar generación principal del PC y embeddings frente a generación de
+  respaldo; las consultas conservan portátil → PC → NAS para embeddings.
+  Residencia solicitada de ambos de 8 h, condicionada a la memoria real.
   Embeddings: TCP 400 ms, `/api/tags` 600 ms, lectura PC/portátil 1500 ms y NAS
   30 s; precarga independiente de 30 s. No modificar estos valores por iniciativa
-  propia. Historial PostgreSQL bajo administración manual, sin purgas automáticas
+  propia. Un timeout no debe excluir durante 30 s a un servidor que sigue cargando;
+  conservar cooldown para fallos recuperables no clasificados como timeout.
+  No asumir que la configuración Ollama del NAS controla PC/portátil.
+  Historial PostgreSQL bajo administración manual, sin purgas automáticas
   ni seguimiento persistente de visitantes.
 
 ### Instrucciones explícitas

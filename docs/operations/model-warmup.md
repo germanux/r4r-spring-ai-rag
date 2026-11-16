@@ -1,10 +1,17 @@
 # Precarga local y estado de modelos
 
-La API sigue usando Spring MVC. Tras `ApplicationReadyEvent`, un executor con un
-hilo por destino configurado prepara en paralelo los LLM y **todos** los servidores
-de embeddings (portátil, PC y NAS). En la configuración actual son cinco trabajos.
-Un equipo desconectado no bloquea los otros trabajos ni la API. Antes solo se
-precargaban embeddings en el primer proveedor, dejando los respaldos en frío.
+La API sigue usando Spring MVC. Tras `ApplicationReadyEvent`, prepara los destinos
+configurados con exclusión mutua por origen Ollama (esquema, host y puerto).
+Instancias distintas siguen trabajando en paralelo; generación y embeddings de
+una misma instancia ya no hacen precargas simultáneas.
+
+Para una instancia vacía se elige un único papel: generación local principal tiene
+prioridad sobre embeddings, y embeddings sobre generación de respaldo. Con los
+defaults actuales, el PC prepara su LLM y el portátil prepara Qwen3 embeddings.
+El NAS prepara únicamente su respaldo de embeddings. Esto no cambia el orden de
+inferencia: embeddings portátil → PC → NAS; generación PC → portátil → OpenAI.
+El PC sigue siendo candidato de embeddings bajo demanda, aunque su precarga no
+expulse el LLM para anticipar una consulta que quizá no llegue.
 
 - Generación: cliente Spring AI `OllamaApi`, `/api/chat`, mensajes vacíos y
   `keep_alive=8h`. Conserva las opciones de generación configuradas.
@@ -24,8 +31,14 @@ precarga (arranque y HTTP) comparten las mismas exclusiones por modelo y proceso
 No hay colas de trabajos duplicados ni reintentos automáticos. Si una observación
 está en curso, se reserva como máximo una precarga pendiente por modelo y se ejecuta
 al terminar, en el mismo worker. El cooldown se reserva al aceptar la petición.
-Se consulta `/api/ps` antes y después. La petición vacía también renueva la
-residencia de un modelo ya cargado; siguen aplicándose deduplicación y cooldown.
+Se consulta `/api/ps` antes y, si hubo carga, después. No se repite la petición
+vacía si el modelo ya está residente: unas opciones distintas pueden recargarlo.
+Tampoco se carga si hay otro modelo residente, si falta telemetría fiable o si el
+modelo no es el elegido para el arranque en frío de esa instancia. Se conserva
+su estado observado (`loaded`, `unloaded` o `available`), sin confundir instalación
+con residencia ni marcar una precarga aplazada como caída del proveedor.
+Solicitudes repetidas y observaciones no intercambian modelos; siguen aplicándose
+la deduplicación y el intervalo mínimo de precarga.
 La duración solicitada no garantiza residencia si Ollama necesita liberar memoria,
 se reinicia o limita el número de modelos simultáneos. Para alojar LLM y embeddings
 en PC/portátil, su servidor debe admitir ambos y disponer de memoria suficiente;
@@ -125,6 +138,9 @@ verifican contrato, CORS y la independencia de la cuota de respuestas. No son pr
 contra los LLM físicos ni una certificación del despliegue.
 
 ## Validación del ajuste de 8 horas y precarga completa (2026-11-16)
+
+Este apartado registra el ajuste anterior. La corrección posterior de competencia
+por instancia y su validación están en [disponibilidad de embeddings](embedding-availability.md#corrección-de-competencia-por-instancia-2026-11-16).
 
 - 88 pruebas Java seleccionadas correctas: precarga 13, separación/configuración
   Ollama 11, configuración pública 5, runtime 14, REST 8, SSE 10 y failover de

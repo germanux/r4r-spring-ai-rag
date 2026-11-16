@@ -62,7 +62,7 @@ class OllamaModelPreloaderTest {
         } finally { release.countDown(); }
     }
 
-    @Test void startupLoadsAllEmbeddingProvidersAlongsideBothLanguageModels() throws Exception {
+    @Test void startupLoadsModelsOnDifferentOllamaInstancesInParallel() throws Exception {
         var entered = new CountDownLatch(5);
         var release = new CountDownLatch(1);
         try (var pc = new Server("qwen3:8b", entered, release);
@@ -100,6 +100,65 @@ class OllamaModelPreloaderTest {
             await(() -> state(preloader, "embeddings").equals("loaded"));
             assertThat(embedding.posts).hasSize(1);
         } finally { release.countDown(); }
+    }
+
+    @Test void sharedSingleSlotInstancesProtectGenerationAndPrepareLaptopEmbeddingsWithoutThrashing() throws Exception {
+        try (var pc = new Server("qwen3:8b"); var laptop = new Server("qwen2.5:7b");
+             var nas = new Server("qwen3-embedding:0.6b")) {
+            pc.secondaryModel = laptop.secondaryModel = "qwen3-embedding:0.6b";
+            try (var preloader = preloader(pc, laptop, List.of(laptop, pc, nas), Duration.ofSeconds(1),
+                    Duration.ofMillis(50), Duration.ofSeconds(2))) {
+                preloader.preloadAfterStartup();
+                try (var tabs = Executors.newFixedThreadPool(8)) {
+                    tabs.invokeAll(java.util.stream.IntStream.range(0,20)
+                            .<java.util.concurrent.Callable<OllamaModelPreloader.WarmupResult>>mapToObj(i -> preloader::requestWarmup).toList());
+                }
+                await(() -> preloader.modelStates().stream().allMatch(s -> s.checkedAt()!=null && !s.state().equals("loading")));
+                assertThat(pc.residentModel).isEqualTo("qwen3:8b");
+                assertThat(laptop.residentModel).isEqualTo("qwen3-embedding:0.6b");
+                assertThat(pc.posts).hasSize(1); assertThat(laptop.posts).hasSize(1);
+                assertThat(pc.evictions.get()).isZero(); assertThat(laptop.evictions.get()).isZero();
+                assertThat(pc.maxOperations.get()).isEqualTo(1); assertThat(laptop.maxOperations.get()).isEqualTo(1);
+
+                Thread.sleep(60);
+                preloader.requestWarmup();
+                await(() -> preloader.modelStates().stream().noneMatch(s -> s.state().equals("loading")));
+                for (int i=0;i<10;i++) preloader.modelStates();
+                assertThat(pc.posts).hasSize(1); assertThat(laptop.posts).hasSize(1);
+                assertThat(pc.evictions.get()).isZero(); assertThat(laptop.evictions.get()).isZero();
+
+                // Real Spring AI routing through the same limited servers after warmup.
+                var config = new com.riansares.r4r.config.EmbeddingFailoverProperties(List.of(
+                        new com.riansares.r4r.config.EmbeddingFailoverProperties.Provider("laptop",laptop.url(),Duration.ofMillis(1500)),
+                        new com.riansares.r4r.config.EmbeddingFailoverProperties.Provider("desktop",pc.url(),Duration.ofMillis(1500)),
+                        new com.riansares.r4r.config.EmbeddingFailoverProperties.Provider("nas",nas.url(),Duration.ofSeconds(30))),
+                        Duration.ofMillis(400),Duration.ofMillis(600),Duration.ofSeconds(35),1024,EmbeddingProviderFailoverTest.DIGEST);
+                var options=org.springframework.ai.ollama.api.OllamaOptions.builder().model("qwen3-embedding:0.6b").keepAlive("8h").build();
+                var observed=new ObservedEmbeddingModel(org.springframework.ai.ollama.api.OllamaApi.builder().baseUrl(laptop.url()).build(),
+                        options,new EmbeddingProviderRouter(config,options,Duration.ofSeconds(35)));
+                var first=RagProgress.silent(); first.duringRetrieval(() -> observed.embed("test query"));
+                assertThat(first.usedEmbeddingProvider().baseUrl()).isEqualTo(laptop.url());
+                laptop.server.stop(0);
+                var second=RagProgress.silent(); second.duringRetrieval(() -> observed.embed("fallback query"));
+                assertThat(second.usedEmbeddingProvider().baseUrl()).isEqualTo(pc.url());
+                assertThat(nas.posts).hasSize(1); // Only the warmup; neither query falls back to the NAS.
+            }
+        }
+    }
+
+    @Test void aResidentFallbackLanguageModelIsNotEvictedByPageOpeningOrObservation() throws Exception {
+        try (var pc=new Server("qwen3:8b"); var laptop=new Server("qwen2.5:7b"); var nas=new Server("qwen3-embedding:0.6b")) {
+            pc.secondaryModel=laptop.secondaryModel="qwen3-embedding:0.6b";
+            pc.loaded=laptop.loaded=true;
+            try (var preloader=preloader(pc,laptop,List.of(laptop,pc,nas),Duration.ofSeconds(1),Duration.ofMinutes(1),Duration.ofSeconds(2))) {
+                preloader.requestWarmup();
+                await(() -> preloader.modelStates().stream().allMatch(s -> s.checkedAt()!=null && !s.state().equals("loading")));
+                assertThat(pc.posts).isEmpty(); assertThat(laptop.posts).isEmpty();
+                assertThat(pc.evictions.get()).isZero(); assertThat(laptop.evictions.get()).isZero();
+                assertThat(state(preloader,"embeddings")).isEqualTo("unloaded");
+                assertThat(state(preloader,"laptop")).isEqualTo("loaded");
+            }
+        }
     }
 
     @org.junit.jupiter.params.ParameterizedTest
@@ -204,12 +263,12 @@ class OllamaModelPreloaderTest {
             embedding.psBody = "{\"models\":[]}";
             preloader.requestWarmup();
             await(() -> state(preloader, "desktop").equals("loaded") && state(preloader, "embeddings").equals(psAvailable ? "unloaded" : "available"));
-            assertThat(pc.posts).hasSize(1);
-            assertThat(mapper.readTree(pc.posts.getFirst()).path("keep_alive").asText()).isEqualTo("8h");
+            assertThat(pc.posts).isEmpty();
             var status = preloader.statusFor(provider("Embeddings", embedding));
-            assertThat(status.warmupCompletedAt()).isNotNull();
+            if (psAvailable) assertThat(status.warmupCompletedAt()).isNotNull();
+            else assertThat(status.warmupCompletedAt()).isNull();
             assertThat(status.memoryObserved()).isEqualTo(psAvailable);
-            assertThat(preloader.statusFor(provider("PC", pc)).warmupCompletedAt()).isNotNull();
+            assertThat(preloader.statusFor(provider("PC", pc)).warmupCompletedAt()).isNull();
             assertThat(preloader.statusFor(provider("PC", pc)).memoryObserved()).isTrue();
         }
     }
@@ -228,7 +287,7 @@ class OllamaModelPreloaderTest {
             preloader.requestWarmup();
             await(() -> state(preloader, "laptop").equals("loaded"));
             assertThat(laptop.posts).hasSize(1);
-            await(() -> pc.posts.size() == 2);
+            assertThat(pc.posts).isEmpty();
         }
     }
 
@@ -244,7 +303,7 @@ class OllamaModelPreloaderTest {
                 new GenerationRouter.Target(provider("ASUS", laptop), mock(ChatModel.class), () -> true),
                 new GenerationRouter.Target(new GenerationRouter.Provider("OpenAI", "https://api.openai.com/v1", "gpt-6-luna"), remote, () -> { throw new AssertionError("Remote probe during warmup"); })));
         var properties = new OllamaEmbeddingProperties();
-        properties.getOptions().setModel(embedding.model);
+        properties.getOptions().setModel("qwen3-embedding:0.6b");
         properties.getOptions().setKeepAlive("8h");
         // No reference to remote is retained by the preloader, so it cannot call it.
         assertThat(router.localProviders()).hasSize(2);
@@ -280,6 +339,10 @@ class OllamaModelPreloaderTest {
         volatile boolean loaded, installed = true;
         volatile int psStatus = 200, tagsStatus = 200;
         volatile String psBody;
+        volatile String secondaryModel, residentModel;
+        final java.util.concurrent.atomic.AtomicInteger operations = new java.util.concurrent.atomic.AtomicInteger();
+        final java.util.concurrent.atomic.AtomicInteger maxOperations = new java.util.concurrent.atomic.AtomicInteger();
+        final java.util.concurrent.atomic.AtomicInteger evictions = new java.util.concurrent.atomic.AtomicInteger();
         volatile CountDownLatch observing = new CountDownLatch(0), releaseObservation = new CountDownLatch(0);
         Server(String model) throws Exception { this(model, new CountDownLatch(0), new CountDownLatch(0)); }
         Server(String model, CountDownLatch entered, CountDownLatch release) throws Exception {
@@ -287,7 +350,9 @@ class OllamaModelPreloaderTest {
             server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
             server.setExecutor(executor);
             server.createContext("/", exchange -> {
+                maxOperations.accumulateAndGet(operations.incrementAndGet(), Math::max);
                 try {
+                    if (secondaryModel != null) Thread.sleep(10);
                     String path = exchange.getRequestURI().getPath();
                     Object payload;
                     int status = 200;
@@ -295,24 +360,32 @@ class OllamaModelPreloaderTest {
                         status = tagsStatus;
                         observing.countDown();
                         releaseObservation.await(3, TimeUnit.SECONDS);
-                        payload = Map.of("models", installed ? List.of(Map.of("name", model)) : List.of());
+                        var models = new java.util.ArrayList<Map<String,String>>();
+                        if (installed) models.add(Map.of("name",model,"digest",EmbeddingProviderFailoverTest.DIGEST));
+                        if (secondaryModel!=null) models.add(Map.of("name",secondaryModel,"digest",EmbeddingProviderFailoverTest.DIGEST));
+                        payload = Map.of("models",models);
                     }
                     else if (path.equals("/api/ps")) {
                         status = psStatus;
-                        payload = psBody == null ? Map.of("models", loaded ? List.of(Map.of("name", model, "size", 5295200000L, "size_vram", 4294967296L)) : List.of()) : mapper.readTree(psBody);
+                        payload = psBody == null ? Map.of("models", loaded ? List.of(Map.of("name", residentModel==null?model:residentModel, "size", 5295200000L, "size_vram", 4294967296L)) : List.of()) : mapper.readTree(psBody);
                     } else if (path.equals("/api/chat") || path.equals("/api/embed")) {
-                        posts.add(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+                        String body=new String(exchange.getRequestBody().readAllBytes(),StandardCharsets.UTF_8);
+                        posts.add(body);
+                        var request=mapper.readTree(body);
+                        String requested=request.path("model").asText();
                         entered.countDown();
                         release.await(4, TimeUnit.SECONDS);
-                        loaded = true;
-                        payload = path.equals("/api/chat") ? Map.of("model", model, "done", true) : Map.of("model", model, "embeddings", List.of());
+                        if (loaded && !requested.equals(residentModel==null?model:residentModel)) evictions.incrementAndGet();
+                        residentModel=requested; loaded = true;
+                        payload = path.equals("/api/chat") ? Map.of("model", requested, "done", true) : Map.of("model", requested, "embeddings",
+                                request.path("input").isEmpty()?List.of():List.of(java.util.Collections.nCopies(1024,1.0)));
                     } else throw new AssertionError("Unexpected model operation " + path);
                     byte[] bytes = mapper.writeValueAsBytes(payload);
                     exchange.getResponseHeaders().set("Content-Type", "application/json");
                     exchange.sendResponseHeaders(status, bytes.length);
                     exchange.getResponseBody().write(bytes);
                 } catch (InterruptedException ex) { Thread.currentThread().interrupt(); }
-                finally { exchange.close(); }
+                finally { operations.decrementAndGet(); exchange.close(); }
             });
             server.start();
         }

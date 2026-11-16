@@ -53,6 +53,22 @@ class EmbeddingProviderFailoverTest {
         Node a=node("lp"), b=node("pc"), c=node("nas"); a.server.stop(0);
         router(a,b,c).call(request()); assertThat(calls).containsExactly("pc /api/tags", "pc /api/embed");
     }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={false,true})
+    void loadingTimeoutDoesNotHideARecoveredLaptopForThirtySeconds(boolean inferenceOnly) throws Exception {
+        Node lp=node("lp"), pc=node("pc"), nas=node("nas");
+        var router=new EmbeddingProviderRouter(properties(lp,pc,nas,1024),options,
+                Duration.ofSeconds(3),Duration.ofSeconds(30));
+        if (inferenceOnly) lp.embeddingDelay=160; else lp.delay=160;
+        router.call(request());
+        assertThat(calls).contains("pc /api/embed").doesNotContain("nas /api/embed");
+        if (inferenceOnly) assertThat(calls).contains("lp /api/embed");
+        lp.delay=lp.embeddingDelay=0;
+        Thread.sleep(180); // The simulated cold/queued request finishes, well before the cooldown.
+        calls.clear();
+        router.call(request());
+        assertThat(calls).containsExactly("lp /api/tags","lp /api/embed");
+    }
     @Test void digestMismatchStopsWithoutFallback() throws Exception {
         Node a=node("lp"), b=node("pc"), c=node("nas"); a.digest="f".repeat(64);
         assertThatThrownBy(() -> router(a,b,c).call(request())).isInstanceOf(EmbeddingConfigurationException.class);
@@ -266,7 +282,7 @@ class EmbeddingProviderFailoverTest {
     Node node(String name) throws Exception { var n=new Node(name); nodes.add(n); return n; }
     class Node {
         final HttpServer server;
-        volatile int status=200, dimensions=1024, delay=0;
+        volatile int status=200, dimensions=1024, delay=0, embeddingDelay=0;
         volatile String model=MODEL, responseModel=MODEL, digest=DIGEST;
         volatile boolean zero;
         Node(String name) throws Exception {
@@ -274,7 +290,8 @@ class EmbeddingProviderFailoverTest {
             server.createContext("/", exchange -> {
                 calls.add(name+" "+exchange.getRequestURI().getPath()); exchange.getRequestBody().readAllBytes();
                 try {
-                    if (delay>0) Thread.sleep(delay);
+                    int wait = exchange.getRequestURI().getPath().equals("/api/embed") && embeddingDelay>0 ? embeddingDelay : delay;
+                    if (wait>0) Thread.sleep(wait);
                     float[] vector=new float[dimensions]; if (dimensions>0 && !zero) vector[0]=1;
                     Object payload=exchange.getRequestURI().getPath().equals("/api/tags")
                             ? Map.of("models",List.of(Map.of("name",model,"digest",digest)))

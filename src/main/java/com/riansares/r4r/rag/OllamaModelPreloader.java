@@ -28,9 +28,10 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** Bounded, independent local-only warmups. Runtime observations never trigger inference. */
+/** Host-serialized, conservative warmups. Runtime observations never trigger inference. */
 @Component
 public class OllamaModelPreloader implements AutoCloseable {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(OllamaModelPreloader.class);
     public record ModelStatus(String id, String model, String state, Instant checkedAt, String error, boolean refreshing,
                               Instant warmupCompletedAt, boolean memoryObserved) {
         public ModelStatus(String id, String model, String state, Instant checkedAt, String error, boolean refreshing) {
@@ -40,7 +41,8 @@ public class OllamaModelPreloader implements AutoCloseable {
     public record WarmupResult(List<String> accepted, List<String> skipped, long retryAfterSeconds) { }
     public record LoadedModel(String name, String parameterSize, Long sizeBytes, Long vramBytes) { }
     public record MemoryState(boolean available, List<LoadedModel> models) { }
-    record Target(String id, GenerationRouter.Provider provider, OllamaApi api, Runnable warmup) { }
+    record Target(String id, GenerationRouter.Provider provider, OllamaApi api,
+                  Duration warmupTimeout, int priority, Runnable warmup) { }
     private static final class Job {
         final Target target;
         boolean running, warming, pendingWarmup;
@@ -60,6 +62,8 @@ public class OllamaModelPreloader implements AutoCloseable {
     private final ObjectMapper mapper;
     private final HttpClient http;
     private final ExecutorService executor;
+    private final java.util.Map<String, Object> instanceLocks = new java.util.HashMap<>();
+    private final java.util.Set<Target> preferredWarmups;
 
     @Autowired
     public OllamaModelPreloader(ObjectMapper mapper, OllamaEmbeddingProperties embeddings, OllamaChatProperties chat,
@@ -76,6 +80,15 @@ public class OllamaModelPreloader implements AutoCloseable {
         this.mapper = mapper;
         this.http = http;
         this.minInterval = minInterval;
+        var preferred = new java.util.LinkedHashMap<String, Target>();
+        // Primary generation > embeddings > standby generation on a shared instance.
+        // This selects a cold-start role, not a different inference/failover order.
+        for (Target target : targets) {
+            String instance = instanceKey(target.provider().baseUrl());
+            instanceLocks.computeIfAbsent(instance, ignored -> new Object());
+            preferred.merge(instance, target, (old, next) -> next.priority() > old.priority() ? next : old);
+        }
+        preferredWarmups = java.util.Set.copyOf(preferred.values());
         this.executor = Executors.newFixedThreadPool(Math.max(1, targets.size()), runnable -> {
             Thread thread = new Thread(runnable, "r4r-local-model");
             thread.setDaemon(true);
@@ -89,7 +102,8 @@ public class OllamaModelPreloader implements AutoCloseable {
         for (var configured : generation.providers()) {
             var provider = new GenerationRouter.Provider(configured.name(), configured.baseUrl(), configured.model());
             var api = api(provider.baseUrl(), configured.readTimeout());
-            targets.add(new Target(displayId(provider), provider, api(provider.baseUrl(), generation.probeTimeout()), () -> {
+            targets.add(new Target(displayId(provider), provider, api(provider.baseUrl(), generation.probeTimeout()),
+                    configured.readTimeout(), configured == generation.providers().getFirst() ? 2 : 0, () -> {
                 var result = api.chat(OllamaApi.ChatRequest.builder(provider.model()).messages(List.of())
                         .stream(false).keepAlive(chat.getOptions().getKeepAlive()).options(chat.getOptions()).build());
                 if (result == null || !Boolean.TRUE.equals(result.done())) throw new IllegalStateException("Empty warmup response");
@@ -100,7 +114,8 @@ public class OllamaModelPreloader implements AutoCloseable {
             var api = api(configured.baseUrl(), embedding.connectTimeout(), embeddingWarmupTimeout);
             var provider = new GenerationRouter.Provider("Embeddings", configured.baseUrl(), options.getModel());
             String id = configured == embedding.providers().getFirst() ? "embeddings" : "embeddings-" + configured.name();
-            targets.add(new Target(id, provider, api(provider.baseUrl(), embedding.connectTimeout(), embedding.probeTimeout()), () -> {
+            targets.add(new Target(id, provider, api(provider.baseUrl(), embedding.connectTimeout(), embedding.probeTimeout()),
+                    embeddingWarmupTimeout, 1, () -> {
                 var result = api.embed(new OllamaApi.EmbeddingsRequest(options.getModel(), List.of(),
                         OllamaEmbeddingModel.DurationParser.parse(options.getKeepAlive()),
                         OllamaOptions.filterNonSupportedFields(options.toMap()), options.getTruncate()));
@@ -117,6 +132,13 @@ public class OllamaModelPreloader implements AutoCloseable {
             case "192.168.1.209" -> "laptop";
             default -> provider.name();
         };
+    }
+
+    private static String instanceKey(String url) {
+        URI uri = URI.create(url);
+        int port = uri.getPort() >= 0 ? uri.getPort() : "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
+        return uri.getScheme().toLowerCase(java.util.Locale.ROOT) + "://"
+                + uri.getHost().toLowerCase(java.util.Locale.ROOT) + ":" + port;
     }
 
     private static OllamaApi api(String url, Duration timeout) {
@@ -193,21 +215,40 @@ public class OllamaModelPreloader implements AutoCloseable {
     }
 
     private void observeOrWarm(Job job, boolean warmup) {
+        synchronized (instanceLocks.get(instanceKey(job.target.provider().baseUrl()))) {
+            if (!closed.get()) observeOrWarmLocked(job, warmup);
+        }
+    }
+
+    private void observeOrWarmLocked(Job job, boolean warmup) {
+        long started = System.nanoTime();
+        String outcome = "observation", phase = "probe";
         try {
             boolean installed = job.target.api().listModels().models().stream()
                     .anyMatch(m -> canonical(m.name()).equals(canonical(job.target.provider().model())));
             if (!installed) {
+                outcome = "model_missing";
                 synchronized (job) { job.memory = new MemoryState(false, List.of()); job.status = status(job, "unreachable", "model_missing"); }
                 return; // Never pull a missing model automatically.
             }
+            phase = "memory";
             MemoryState memory = loadedModels(job.target.provider().baseUrl());
             boolean loaded = containsModel(memory, job.target.provider().model());
-            // Empty input also refreshes keep_alive for a model already resident.
-            if (warmup && !closed.get()) {
+            // A resident model may have different runtime options: even an empty
+            // request can reload it. Never warm speculatively over another model.
+            boolean safeToLoad = memory.available() && memory.models().isEmpty()
+                    && preferredWarmups.contains(job.target);
+            outcome = loaded ? "already_loaded" : !memory.available() ? "memory_unknown"
+                    : warmup && !preferredWarmups.contains(job.target) ? "deferred_role"
+                    : warmup && !memory.models().isEmpty() ? "deferred_resident" : "observed_unloaded";
+            if (warmup && !loaded && safeToLoad && !closed.get()) {
+                phase = "load";
                 job.target.warmup().run();
                 synchronized (job) { job.warmupCompletedAt = Instant.now(); }
+                phase = "confirmation";
                 memory = loadedModels(job.target.provider().baseUrl());
                 loaded = containsModel(memory, job.target.provider().model());
+                outcome = loaded ? "loaded" : "load_unconfirmed";
             }
             synchronized (job) {
                 job.memory = memory;
@@ -222,6 +263,13 @@ public class OllamaModelPreloader implements AutoCloseable {
                 job.memory = new MemoryState(false, List.of());
                 job.status = status(job, "unreachable", timeout ? "timeout" : "provider_unavailable");
             }
+            outcome = timeout ? "timeout" : "provider_unavailable";
+            log.warn("Ollama warmup provider={} phase={} loadTimeoutMs={} error={}",
+                    job.target.id(), phase, job.target.warmupTimeout().toMillis(), ex.getClass().getSimpleName());
+        } finally {
+            log.info("Ollama model provider={} host={} model={} action={} outcome={} durationMs={}",
+                    job.target.id(), RagProgress.publicProvider(job.target.provider()), job.target.provider().model(),
+                    warmup ? "warmup" : "observe", outcome, (System.nanoTime() - started) / 1_000_000.0);
         }
     }
     private static boolean containsModel(MemoryState memory, String model) {
