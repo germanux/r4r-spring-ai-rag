@@ -49,7 +49,7 @@ class RagLiveQuestionsIT {
             Pattern.compile("^(?:\\[S\\d+\\][\\s,;:.]*)+$");
     private static final Pattern CITATION_REFERENCE = Pattern.compile("\\[S\\d+\\]");
 
-    public static final long SLEEP_WAIT = 2_000;
+    public static final long SLEEP_WAIT = 3_500;
     private static final List<QuestionCase> CASES = EvaluationQuestions.cases("es");
 
     @org.junit.jupiter.api.BeforeAll

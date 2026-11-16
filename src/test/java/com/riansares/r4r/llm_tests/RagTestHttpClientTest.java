@@ -65,7 +65,6 @@ class RagTestHttpClientTest {
                 "Fri, 13 Nov 2026 11:59:00 GMT")) {
             assertThat(RagTestHttpClient.retryDelay(value, clock)).isEqualTo(2000);
         }
-        assertThat(RagLiveQuestionsIT.SLEEP_WAIT).isEqualTo(2000);
     }
 
     @Test void auditRetriesOnly429AndNeverReplaysA503WithAConsumedToken() throws Exception {

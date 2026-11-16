@@ -109,6 +109,17 @@ class OllamaServerSeparationTest {
                 });
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"true", "primary"})
+    void enabledRemoteStillRequiresAnExplicitKey(String mode) {
+        runner().withPropertyValues("r4r.rag.openai.enabled=" + mode, "OPENAI_API_KEY=")
+                .run(context -> {
+                    assertThat(context).hasFailed();
+                    assertThat(context.getStartupFailure()).hasRootCauseInstanceOf(IllegalStateException.class)
+                            .hasRootCauseMessage("OPENAI_API_KEY required when remote generation is enabled");
+                });
+    }
+
     @Test void orderedDefaultsIgnoreRemovedAliases() {
         runner().withPropertyValues("RAG_EMBEDDING_BASE_URL=http://legacy:11434",
                 "RAG_EMBEDDING_LP_BASE_URL=http://legacy-lp:11434", "RAG_EMBEDDING_PC_BASE_URL=http://legacy-pc:11434",
@@ -222,6 +233,11 @@ class OllamaServerSeparationTest {
 
     private ApplicationContextRunner runner() {
         return new ApplicationContextRunner()
+                // Local scenarios never inherit remote activation or credentials from the host.
+                // Remote configuration scenarios opt in explicitly with a fictitious key.
+                .withPropertyValues("RAG_OPENAI_ENABLED=false", "r4r.rag.openai.enabled=false",
+                        "OPENAI_API_KEY=", "r4r.rag.audit.enabled=false",
+                        "RAG_GENERATION_PROVIDERS=http://127.0.0.1:1|qwen3:8b|20s,http://127.0.0.1:2|qwen2.5:7b|60s")
                 .withInitializer(context -> {
                     context.getBeanFactory().setConversionService(org.springframework.boot.convert.ApplicationConversionService.getSharedInstance());
                     try {
