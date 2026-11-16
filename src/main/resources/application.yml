@@ -58,6 +58,7 @@ r4r:
       connect-timeout: ${RAG_EMBEDDING_CONNECT_TIMEOUT}
       probe-timeout: ${RAG_EMBEDDING_PROBE_TIMEOUT}
       total-timeout: ${RAG_EMBEDDING_TOTAL_TIMEOUT}
+      unavailable-cooldown: ${RAG_EMBEDDING_UNAVAILABLE_COOLDOWN:30s}
       dimensions: ${spring.ai.vectorstore.pgvector.dimensions}
       expected-digest: ${RAG_EMBEDDING_EXPECTED_DIGEST}
     warmup:

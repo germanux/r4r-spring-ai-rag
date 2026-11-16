@@ -20,8 +20,9 @@ public class OllamaEmbeddingConfiguration {
     @ConditionalOnProperty(name = "spring.ai.model.embedding", havingValue = "ollama", matchIfMissing = true)
     OllamaEmbeddingModel ollamaEmbeddingModel(EmbeddingFailoverProperties failover,
             OllamaEmbeddingProperties properties,
-            @Value("${r4r.rag.stream.timeout:180s}") Duration streamTimeout) {
-        var router = new EmbeddingProviderRouter(failover, properties.getOptions(), streamTimeout);
+            @Value("${r4r.rag.stream.timeout:180s}") Duration streamTimeout,
+            @Value("${r4r.rag.embedding.unavailable-cooldown:30s}") Duration cooldown) {
+        var router = new EmbeddingProviderRouter(failover, properties.getOptions(), streamTimeout, cooldown);
         return new ObservedEmbeddingModel(OllamaApi.builder().baseUrl(failover.providers().getFirst().baseUrl()).build(),
                 properties.getOptions(), router);
     }

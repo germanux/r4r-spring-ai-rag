@@ -182,14 +182,59 @@ class EmbeddingProviderFailoverTest {
         var p=new EmbeddingFailoverProperties(List.of(provider("a",a,1000),provider("b",b,1000),
                 provider("c",c,1000),provider("d",d,1000)),Duration.ofMillis(50),Duration.ofMillis(100),
                 Duration.ofSeconds(2),1024,DIGEST);
-        var router=new EmbeddingProviderRouter(p,options,Duration.ofSeconds(3));
+        var router=new EmbeddingProviderRouter(p,options,Duration.ofSeconds(3),Duration.ZERO);
         router.call(request());
         assertThat(calls).containsExactly("a /api/tags","b /api/tags","c /api/tags","d /api/tags","d /api/embed");
         calls.clear(); a.status=200; router.call(request());
         assertThat(calls).containsExactly("a /api/tags","a /api/embed");
     }
+    @Test void unavailableLaptopIsSkippedUntilCooldownThenRegainsPriority() throws Exception {
+        Node lp=node("lp"),pc=node("pc"),nas=node("nas");lp.status=503;
+        var clock=new java.util.concurrent.atomic.AtomicLong();
+        var r=new EmbeddingProviderRouter(properties(lp,pc,nas,1024),options,Duration.ofSeconds(3),Duration.ofSeconds(30),clock::get);
+        r.call(request());assertThat(calls).containsExactly("lp /api/tags","pc /api/tags","pc /api/embed");
+        calls.clear();lp.status=200;clock.set(Duration.ofSeconds(29).toNanos());r.call(request());
+        assertThat(calls).containsExactly("pc /api/tags","pc /api/embed");
+        calls.clear();clock.set(Duration.ofSeconds(30).toNanos());r.call(request());
+        assertThat(calls).containsExactly("lp /api/tags","lp /api/embed");
+        calls.clear();r.call(request());assertThat(calls).containsExactly("lp /api/tags","lp /api/embed");
+    }
+    @Test void healthyLaptopIsNeverDelayedByCooldown() throws Exception {
+        Node lp=node("lp"),pc=node("pc"),nas=node("nas");
+        var r=new EmbeddingProviderRouter(properties(lp,pc,nas,1024),options,Duration.ofSeconds(3));
+        r.call(request());calls.clear();r.call(request());
+        assertThat(calls).containsExactly("lp /api/tags","lp /api/embed");
+    }
+    @Test void connectionRefusedIsCachedWithoutRepeatedNetworkAttempts() throws Exception {
+        Node lp=node("lp"),pc=node("pc"),nas=node("nas");lp.server.stop(0);
+        var logger=(ch.qos.logback.classic.Logger)org.slf4j.LoggerFactory.getLogger(EmbeddingProviderRouter.class);
+        var appender=new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();appender.start();logger.addAppender(appender);
+        try {
+            var r=new EmbeddingProviderRouter(properties(lp,pc,nas,1024),options,Duration.ofSeconds(3));
+            r.call(request());appender.list.clear();r.call(request());
+            assertThat(appender.list).anyMatch(e->e.getFormattedMessage().contains("provider=laptop")&&e.getFormattedMessage().contains("outcome=cooldown"));
+            assertThat(appender.list).noneMatch(e->e.getFormattedMessage().contains("Embedding attempt")&&e.getFormattedMessage().contains("provider=laptop"));
+        } finally {logger.detachAppender(appender);appender.stop();}
+    }
+    @Test void allProvidersCoolingDownFailFastWithoutExtraTraffic() throws Exception {
+        Node lp=node("lp"),pc=node("pc"),nas=node("nas");lp.status=pc.status=nas.status=503;
+        var r=new EmbeddingProviderRouter(properties(lp,pc,nas,1024),options,Duration.ofSeconds(3));
+        assertThatThrownBy(()->r.call(request())).isInstanceOf(EmbeddingUnavailableException.class);
+        calls.clear();assertThatThrownBy(()->r.call(request())).isInstanceOf(EmbeddingUnavailableException.class);
+        assertThat(calls).isEmpty();
+    }
+    @Test void cooldownDoesNotHideDigestOrAuthorizationFailures() throws Exception {
+        Node lp=node("lp"),pc=node("pc"),nas=node("nas");lp.digest="f".repeat(64);
+        var r=new EmbeddingProviderRouter(properties(lp,pc,nas,1024),options,Duration.ofSeconds(3));
+        for(int i=0;i<2;i++)assertThatThrownBy(()->r.call(request())).isInstanceOf(EmbeddingConfigurationException.class);
+        assertThat(calls).containsExactly("lp /api/tags","lp /api/tags");
+        calls.clear();lp.digest=DIGEST;lp.status=401;
+        for(int i=0;i<2;i++)assertThatThrownBy(()->r.call(request())).isInstanceOf(RestClientResponseException.class);
+        assertThat(calls).containsExactly("lp /api/tags","lp /api/tags");
+    }
+
     EmbeddingProviderRouter router(Node a, Node b, Node c) {
-        return new EmbeddingProviderRouter(properties(a,b,c,1024),options,Duration.ofSeconds(3));
+        return new EmbeddingProviderRouter(properties(a,b,c,1024),options,Duration.ofSeconds(3),Duration.ZERO);
     }
     EmbeddingFailoverProperties properties(Node a, Node b, Node c, int dimensions) {
         return new EmbeddingFailoverProperties(List.of(provider("laptop",a,100),provider("desktop",b,1000),provider("nas",c,1000)),

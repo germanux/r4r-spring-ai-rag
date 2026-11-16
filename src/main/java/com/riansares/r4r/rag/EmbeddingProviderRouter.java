@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.LongSupplier;
 import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +30,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
-/** Bounded, stateless failover: every batch starts again at the preferred laptop. */
+/** Ordered failover with a short negative cache; healthy preferred providers remain first. */
 public final class EmbeddingProviderRouter {
     private static final Logger log = LoggerFactory.getLogger(EmbeddingProviderRouter.class);
     private static final Set<Integer> RECOVERABLE = Set.of(408, 429, 500, 502, 503, 504);
@@ -37,10 +39,24 @@ public final class EmbeddingProviderRouter {
     private final OllamaOptions options;
     private final Duration streamTimeout;
     private final String model;
+    private final long unavailableCooldownNanos;
+    private final LongSupplier clock;
+    private final ConcurrentHashMap<String,Long> unavailableSince = new ConcurrentHashMap<>();
 
     public int dimensions() { return config.dimensions(); }
 
     public EmbeddingProviderRouter(EmbeddingFailoverProperties config, OllamaOptions options, Duration streamTimeout) {
+        this(config, options, streamTimeout, Duration.ofSeconds(30));
+    }
+    public EmbeddingProviderRouter(EmbeddingFailoverProperties config, OllamaOptions options, Duration streamTimeout, Duration cooldown) {
+        this(config, options, streamTimeout, cooldown, System::nanoTime);
+    }
+    EmbeddingProviderRouter(EmbeddingFailoverProperties config, OllamaOptions options, Duration streamTimeout,
+                            Duration cooldown, LongSupplier clock) {
+        if (cooldown == null || cooldown.isNegative() || cooldown.compareTo(Duration.ofMinutes(5)) > 0)
+            throw new EmbeddingConfigurationException("Embedding unavailable cooldown must be between 0 and 5 minutes");
+        this.unavailableCooldownNanos = cooldown.toNanos();
+        this.clock = java.util.Objects.requireNonNull(clock);
         this.config = config;
         this.options = OllamaOptions.fromOptions(options);
         this.model = canonical(options.getModel());
@@ -87,6 +103,11 @@ public final class EmbeddingProviderRouter {
         for (int i = 0; i < targets.size(); i++) {
             RagProgress.checkEmbeddingCancellation();
             Provider target = targets.get(i);
+            Long failedAt = unavailableSince.get(target.baseUrl());
+            if (failedAt != null && clock.getAsLong() - failedAt < unavailableCooldownNanos) {
+                log.info("Embedding id={} provider={} model={} outcome=cooldown", id, target.name(), model);
+                continue;
+            }
             long attempt = System.nanoTime();
             String outcome = "failed";
             try {
@@ -103,6 +124,7 @@ public final class EmbeddingProviderRouter {
                 validate(response, request.getInstructions().size());
                 if (System.nanoTime() > deadline) throw new EmbeddingUnavailableException("Embedding time budget exhausted");
                 outcome = "success";
+                unavailableSince.remove(target.baseUrl());
                 return response;
             } catch (RuntimeException failure) {
                 checkCancellation(failure);
@@ -110,6 +132,7 @@ public final class EmbeddingProviderRouter {
                 log.warn("Embedding attempt id={} provider={} model={} error={}", id, target.name(), model,
                         failure.getClass().getSimpleName());
                 if (!recoverable(failure)) throw failure;
+                if (unavailableCooldownNanos > 0) unavailableSince.put(target.baseUrl(), clock.getAsLong());
                 if (i + 1 < targets.size() && System.nanoTime() < deadline)
                     log.info("Embedding fallback id={} from={} to={}", id, target.name(), targets.get(i + 1).name());
             } finally {
