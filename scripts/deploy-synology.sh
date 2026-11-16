@@ -196,7 +196,7 @@ ssh "${SSH_OPTIONS[@]}" -tt "$REMOTE" "
     -f docker-compose.yml \
     up -d
 
-  # La etiqueta Maven se reutiliza (0.3.2); garantizar que la API toma la
+  # La etiqueta Maven puede reutilizarse; garantizar que la API toma la
   # imagen recién importada, sin recrear PostgreSQL ni Ollama.
   sudo \"\$COMPOSE_BIN\" \
     --env-file .env.base --env-file .env \
