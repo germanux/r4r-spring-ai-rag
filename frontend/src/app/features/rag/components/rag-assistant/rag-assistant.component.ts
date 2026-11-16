@@ -38,8 +38,10 @@ export class RagAssistantComponent implements AfterViewInit, OnDestroy {
             }, {threshold:.1});
             const demo = document.getElementById('demo'); if (demo) this.usageObserver.observe(demo);
         }
-        if (new URLSearchParams(location.search).has('prerender') || new URLSearchParams(location.search).get('embed') === '1')
-        return; this.s.runtime.warmup(); window.addEventListener('pointerdown', this.engage, { once: true }); window.addEventListener('keydown', this.engage, { once: true }); this.observer = new IntersectionObserver(entries => { if (entries.some(e => e.isIntersecting) && !this.engaged) {
+        if (new URLSearchParams(location.search).has('prerender')) return;
+        this.s.runtime.warmup();
+        if (new URLSearchParams(location.search).get('embed') === '1') return;
+        window.addEventListener('pointerdown', this.engage, { once: true }); window.addEventListener('keydown', this.engage, { once: true }); this.observer = new IntersectionObserver(entries => { if (entries.some(e => e.isIntersecting) && !this.engaged) {
         this.observer?.disconnect();
         setTimeout(() => { if (!this.engaged)
             this.s.play(); }, 700);

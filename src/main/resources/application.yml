@@ -26,10 +26,11 @@ spring:
         think: ${RAG_GENERATION_THINK}
         options:
           temperature: ${RAG_GENERATION_TEMPERATURE:0}
-          keep-alive: 3h
+          keep-alive: 8h
       embedding:
         options:
           model: ${RAG_EMBEDDING_MODEL}
+          keep-alive: 8h
     vectorstore:
       pgvector:
         initialize-schema: false
@@ -64,6 +65,7 @@ r4r:
     warmup:
       on-startup: ${RAG_WARMUP_ON_STARTUP}
       min-interval: ${RAG_WARMUP_MIN_INTERVAL}
+      embedding-timeout: ${RAG_WARMUP_EMBEDDING_TIMEOUT:30s}
     generation:
       # Local URLs/models are derived from RAG_GENERATION_PROVIDERS.
       connect-timeout: ${RAG_GENERATION_CONNECT_TIMEOUT}

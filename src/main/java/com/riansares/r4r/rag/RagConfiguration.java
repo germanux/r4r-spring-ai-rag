@@ -59,7 +59,7 @@ public class RagConfiguration {
 
     private GenerationRouter.Target target(String name, String url, String model, OllamaOptions defaults,
                                            Duration connectTimeout, Duration probeTimeout, Duration readTimeout) {
-        return target(name, url, model, defaults, connectTimeout, probeTimeout, readTimeout, "3h");
+        return target(name, url, model, defaults, connectTimeout, probeTimeout, readTimeout, "8h");
     }
     private GenerationRouter.Target target(String name, String url, String model, OllamaOptions defaults,
                                            Duration connectTimeout, Duration probeTimeout, Duration readTimeout, String keepAlive) {
@@ -120,7 +120,7 @@ public class RagConfiguration {
         boolean sharedModel = local.providers().stream().anyMatch(p -> p.baseUrl().replaceAll("/$", "").equals(url)
                 && canonical(p.model()).equals(canonical(model)));
         var selected = target("Ollama", url, model, properties.getOptions(), local.connectTimeout(), local.probeTimeout(),
-                readTimeout, sharedModel ? "3h" : "0s");
+                readTimeout, sharedModel ? "8h" : "0s");
         return new RagAuditService(true, selected.model(), "Ollama", model, readTimeout, json);
     }
 

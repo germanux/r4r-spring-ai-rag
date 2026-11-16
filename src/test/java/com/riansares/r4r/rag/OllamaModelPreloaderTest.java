@@ -47,18 +47,58 @@ class OllamaModelPreloaderTest {
             assertThat(pc.posts).hasSize(1);
             assertThat(laptop.posts).hasSize(1);
             assertThat(embedding.posts).hasSize(1);
-            assertThat(mapper.readTree(pc.posts.getFirst()).path("keep_alive").asText()).isEqualTo("3h");
+            assertThat(mapper.readTree(pc.posts.getFirst()).path("keep_alive").asText()).isEqualTo("8h");
             var laptopBody = mapper.readTree(laptop.posts.getFirst());
             assertThat(laptopBody.path("messages")).isEmpty();
             assertThat(laptopBody.path("model").asText()).isEqualTo("qwen2.5:7b");
             assertThat(laptopBody.path("options").path("num_ctx").asInt()).isEqualTo(4096);
             var embedBody = mapper.readTree(embedding.posts.getFirst());
             assertThat(embedBody.path("input")).isEmpty();
-            assertThat(embedBody.path("keep_alive").asDouble()).isEqualTo(420); // Spring AI serializes Duration in seconds.
+            assertThat(embedBody.path("keep_alive").asDouble()).isEqualTo(28800); // Spring AI serializes Duration in seconds.
             var repeated = preloader.requestWarmup();
             assertThat(repeated.accepted()).isEmpty();
             assertThat(repeated.skipped()).hasSize(3);
             assertThat(repeated.retryAfterSeconds()).isPositive();
+        } finally { release.countDown(); }
+    }
+
+    @Test void startupLoadsAllEmbeddingProvidersAlongsideBothLanguageModels() throws Exception {
+        var entered = new CountDownLatch(5);
+        var release = new CountDownLatch(1);
+        try (var pc = new Server("qwen3:8b", entered, release);
+             var laptop = new Server("qwen2.5:7b", entered, release);
+             var lpEmbedding = new Server("qwen3-embedding:0.6b", entered, release);
+             var pcEmbedding = new Server("qwen3-embedding:0.6b", entered, release);
+             var nasEmbedding = new Server("qwen3-embedding:0.6b", entered, release);
+             var preloader = preloader(pc, laptop, List.of(lpEmbedding, pcEmbedding, nasEmbedding),
+                     Duration.ofSeconds(2), Duration.ofMinutes(1), Duration.ofSeconds(2))) {
+            preloader.preloadAfterStartup();
+            assertThat(entered.await(3, TimeUnit.SECONDS)).as("All five loads start without waiting for another model").isTrue();
+            assertThat(preloader.requestWarmup().accepted()).isEmpty();
+            release.countDown();
+            await(() -> preloader.modelStates().stream().allMatch(s -> s.state().equals("loaded")));
+            for (var embedding : List.of(lpEmbedding, pcEmbedding, nasEmbedding)) {
+                assertThat(embedding.posts).hasSize(1);
+                var body = mapper.readTree(embedding.posts.getFirst());
+                assertThat(body.path("input")).isEmpty();
+                assertThat(body.path("keep_alive").asDouble()).isEqualTo(28800);
+            }
+        } finally { release.countDown(); }
+    }
+
+    @Test void coldEmbeddingLoadHasSeparateBudgetFromQueryReadTimeout() throws Exception {
+        var entered = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        try (var pc = new Server("qwen3:8b"); var laptop = new Server("qwen2.5:7b");
+             var embedding = new Server("qwen3-embedding:0.6b", entered, release);
+             var preloader = preloader(pc, laptop, List.of(embedding), Duration.ofMillis(150),
+                     Duration.ofMinutes(1), Duration.ofSeconds(2))) {
+            preloader.requestWarmup();
+            assertThat(entered.await(1, TimeUnit.SECONDS)).isTrue();
+            Thread.sleep(350); // Longer than query read timeout, shorter than the dedicated load budget.
+            release.countDown();
+            await(() -> state(preloader, "embeddings").equals("loaded"));
+            assertThat(embedding.posts).hasSize(1);
         } finally { release.countDown(); }
     }
 
@@ -164,11 +204,12 @@ class OllamaModelPreloaderTest {
             embedding.psBody = "{\"models\":[]}";
             preloader.requestWarmup();
             await(() -> state(preloader, "desktop").equals("loaded") && state(preloader, "embeddings").equals(psAvailable ? "unloaded" : "available"));
-            assertThat(pc.posts).isEmpty();
+            assertThat(pc.posts).hasSize(1);
+            assertThat(mapper.readTree(pc.posts.getFirst()).path("keep_alive").asText()).isEqualTo("8h");
             var status = preloader.statusFor(provider("Embeddings", embedding));
             assertThat(status.warmupCompletedAt()).isNotNull();
             assertThat(status.memoryObserved()).isEqualTo(psAvailable);
-            assertThat(preloader.statusFor(provider("PC", pc)).warmupCompletedAt()).isNull();
+            assertThat(preloader.statusFor(provider("PC", pc)).warmupCompletedAt()).isNotNull();
             assertThat(preloader.statusFor(provider("PC", pc)).memoryObserved()).isTrue();
         }
     }
@@ -187,11 +228,16 @@ class OllamaModelPreloaderTest {
             preloader.requestWarmup();
             await(() -> state(preloader, "laptop").equals("loaded"));
             assertThat(laptop.posts).hasSize(1);
-            assertThat(pc.posts).isEmpty();
+            await(() -> pc.posts.size() == 2);
         }
     }
 
     private OllamaModelPreloader preloader(Server pc, Server laptop, Server embedding, Duration timeout, Duration cooldown) {
+        return preloader(pc, laptop, List.of(embedding), timeout, cooldown, timeout);
+    }
+    private OllamaModelPreloader preloader(Server pc, Server laptop, List<Server> embeddingServers,
+                                         Duration timeout, Duration cooldown, Duration embeddingWarmupTimeout) {
+        Server embedding = embeddingServers.getFirst();
         ChatModel remote = mock(ChatModel.class);
         var router = new GenerationRouter(List.of(
                 new GenerationRouter.Target(provider("PC", pc), mock(ChatModel.class), () -> true),
@@ -199,20 +245,21 @@ class OllamaModelPreloaderTest {
                 new GenerationRouter.Target(new GenerationRouter.Provider("OpenAI", "https://api.openai.com/v1", "gpt-6-luna"), remote, () -> { throw new AssertionError("Remote probe during warmup"); })));
         var properties = new OllamaEmbeddingProperties();
         properties.getOptions().setModel(embedding.model);
-        properties.getOptions().setKeepAlive("7m");
+        properties.getOptions().setKeepAlive("8h");
         // No reference to remote is retained by the preloader, so it cannot call it.
         assertThat(router.localProviders()).hasSize(2);
         verifyNoInteractions(remote);
         var chat = new org.springframework.ai.model.ollama.autoconfigure.OllamaChatProperties();
         chat.getOptions().setNumCtx(4096);
+        chat.getOptions().setKeepAlive("8h");
         var generation=new com.riansares.r4r.config.GenerationProviderProperties(List.of(
                 new com.riansares.r4r.config.GenerationProviderProperties.Provider("desktop",pc.url(),pc.model,timeout),
                 new com.riansares.r4r.config.GenerationProviderProperties.Provider("laptop",laptop.url(),laptop.model,timeout)),
                 timeout,timeout);
-        var embeddingConfig=new com.riansares.r4r.config.EmbeddingFailoverProperties(List.of(
-                new com.riansares.r4r.config.EmbeddingFailoverProperties.Provider("embeddings",embedding.url(),timeout)),
+        var embeddingConfig=new com.riansares.r4r.config.EmbeddingFailoverProperties(embeddingServers.stream().map(server ->
+                new com.riansares.r4r.config.EmbeddingFailoverProperties.Provider("embedding-"+embeddingServers.indexOf(server),server.url(),timeout)).toList(),
                 timeout,timeout,timeout,1024,"test-unused");
-        return new OllamaModelPreloader(mapper, properties, chat, generation,embeddingConfig,cooldown);
+        return new OllamaModelPreloader(mapper, properties, chat, generation,embeddingConfig,cooldown,embeddingWarmupTimeout);
     }
     private static GenerationRouter.Provider provider(String name, Server server) {
         return new GenerationRouter.Provider(name.equals("PC") ? "desktop" : name.equals("ASUS") ? "laptop" : name, server.url(), server.model);

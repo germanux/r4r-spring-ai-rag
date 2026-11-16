@@ -46,6 +46,7 @@ class OllamaServerSeparationTest {
                         assertThat(context).hasNotFailed().hasSingleBean(EmbeddingModel.class).hasSingleBean(ChatModel.class);
                         assertThat((List<?>) context.getBean("generationTargets")).hasSize(2);
                         var model = context.getBean(EmbeddingModel.class);
+                        assertThat(context.getEnvironment().getProperty("spring.ai.ollama.embedding.options.keep-alive")).isEqualTo("8h");
                         assertThat(model.embed("Documento para ingesta")).hasSize(1024);
                         assertThat(model.embed("Consulta para recuperar documentos")).hasSize(1024);
                         var router = context.getBean(GenerationRouter.class);
@@ -58,7 +59,9 @@ class OllamaServerSeparationTest {
                         assertThat(operations).filteredOn(s -> s.contains("/api/embed")).hasSize(2)
                                 .allMatch(s -> s.startsWith("embedding ") && s.contains("qwen3-embedding:0.6b"));
                         assertThat(operations).noneMatch(s -> s.startsWith("embedding ") && s.contains("/api/chat"));
-                        assertThat(operations).anyMatch(s -> s.startsWith("pc /api/chat") && s.contains("qwen3:8b") && s.contains("\"temperature\":0.0"));
+                        assertThat(operations).anyMatch(s -> s.startsWith("pc /api/chat") && s.contains("qwen3:8b") && s.contains("\"temperature\":0.0") && s.contains("\"keep_alive\":\"8h\""));
+                        assertThat(operations).filteredOn(s -> s.contains("/api/embed"))
+                                .allMatch(s -> s.contains("\"keep_alive\":28800"));
                         assertThat(operations).anyMatch(s -> s.startsWith("backup /api/chat") && s.contains("qwen2.5:7b"));
                         assertThat(context.getEnvironment().getProperty("spring.ai.vectorstore.pgvector.dimensions")).isEqualTo("1024");
                     });
@@ -118,7 +121,9 @@ class OllamaServerSeparationTest {
                     assertThat(p.providers()).extracting(EmbeddingFailoverProperties.Provider::baseUrl)
                             .containsExactly("http://192.168.1.209:11434", "http://192.168.1.207:11434", "http://192.168.1.203:11434");
                     assertThat(p.providers()).extracting(EmbeddingFailoverProperties.Provider::readTimeout)
-                            .containsExactly(java.time.Duration.ofSeconds(8), java.time.Duration.ofSeconds(8), java.time.Duration.ofSeconds(30));
+                            .containsExactly(java.time.Duration.ofMillis(1500), java.time.Duration.ofMillis(1500), java.time.Duration.ofSeconds(30));
+                    assertThat(p.connectTimeout()).isEqualTo(java.time.Duration.ofMillis(400));
+                    assertThat(p.probeTimeout()).isEqualTo(java.time.Duration.ofMillis(600));
                     assertThat(p.dimensions()).isEqualTo(Integer.parseInt(context.getEnvironment()
                             .getProperty("spring.ai.vectorstore.pgvector.dimensions")));
                 });

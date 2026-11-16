@@ -59,17 +59,14 @@ public class OllamaModelPreloader implements AutoCloseable {
     private final Duration minInterval;
     private final ObjectMapper mapper;
     private final HttpClient http;
-    private final ExecutorService executor = Executors.newFixedThreadPool(3, runnable -> {
-        Thread thread = new Thread(runnable, "r4r-local-model");
-        thread.setDaemon(true);
-        return thread;
-    });
+    private final ExecutorService executor;
 
     @Autowired
     public OllamaModelPreloader(ObjectMapper mapper, OllamaEmbeddingProperties embeddings, OllamaChatProperties chat,
             GenerationProviderProperties generation, EmbeddingFailoverProperties embedding,
-            @Value("${r4r.rag.warmup.min-interval:1m}") Duration minInterval) {
-        this(targets(generation, embedding, embeddings, chat), mapper,
+            @Value("${r4r.rag.warmup.min-interval:1m}") Duration minInterval,
+            @Value("${r4r.rag.warmup.embedding-timeout:30s}") Duration embeddingWarmupTimeout) {
+        this(targets(generation, embedding, embeddings, chat, embeddingWarmupTimeout), mapper,
                 HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(1)).build(), minInterval);
     }
 
@@ -79,32 +76,37 @@ public class OllamaModelPreloader implements AutoCloseable {
         this.mapper = mapper;
         this.http = http;
         this.minInterval = minInterval;
+        this.executor = Executors.newFixedThreadPool(Math.max(1, targets.size()), runnable -> {
+            Thread thread = new Thread(runnable, "r4r-local-model");
+            thread.setDaemon(true);
+            return thread;
+        });
     }
 
     private static List<Target> targets(GenerationProviderProperties generation, EmbeddingFailoverProperties embedding,
-            OllamaEmbeddingProperties embeddings, OllamaChatProperties chat) {
+            OllamaEmbeddingProperties embeddings, OllamaChatProperties chat, Duration embeddingWarmupTimeout) {
         List<Target> targets = new ArrayList<>();
         for (var configured : generation.providers()) {
             var provider = new GenerationRouter.Provider(configured.name(), configured.baseUrl(), configured.model());
             var api = api(provider.baseUrl(), configured.readTimeout());
             targets.add(new Target(displayId(provider), provider, api(provider.baseUrl(), generation.probeTimeout()), () -> {
                 var result = api.chat(OllamaApi.ChatRequest.builder(provider.model()).messages(List.of())
-                        .stream(false).keepAlive("3h").options(chat.getOptions()).build());
+                        .stream(false).keepAlive(chat.getOptions().getKeepAlive()).options(chat.getOptions()).build());
                 if (result == null || !Boolean.TRUE.equals(result.done())) throw new IllegalStateException("Empty warmup response");
             }));
         }
-        var preferredEmbedding=embedding.providers().getFirst();
-        String embeddingUrl=preferredEmbedding.baseUrl();
-        Duration embeddingTimeout=preferredEmbedding.readTimeout();
         var options = embeddings.getOptions();
-        var api = api(embeddingUrl, embeddingTimeout);
-        var provider = new GenerationRouter.Provider("Embeddings", embeddingUrl, options.getModel());
-        targets.add(new Target("embeddings", provider, api(provider.baseUrl(), Duration.ofSeconds(2)), () -> {
-            var result = api.embed(new OllamaApi.EmbeddingsRequest(options.getModel(), List.of(),
-                    OllamaEmbeddingModel.DurationParser.parse(options.getKeepAlive()),
-                    OllamaOptions.filterNonSupportedFields(options.toMap()), options.getTruncate()));
-            if (result == null || result.embeddings() == null) throw new IllegalStateException("Empty warmup response");
-        }));
+        for (var configured : embedding.providers()) {
+            var api = api(configured.baseUrl(), embedding.connectTimeout(), embeddingWarmupTimeout);
+            var provider = new GenerationRouter.Provider("Embeddings", configured.baseUrl(), options.getModel());
+            String id = configured == embedding.providers().getFirst() ? "embeddings" : "embeddings-" + configured.name();
+            targets.add(new Target(id, provider, api(provider.baseUrl(), embedding.connectTimeout(), embedding.probeTimeout()), () -> {
+                var result = api.embed(new OllamaApi.EmbeddingsRequest(options.getModel(), List.of(),
+                        OllamaEmbeddingModel.DurationParser.parse(options.getKeepAlive()),
+                        OllamaOptions.filterNonSupportedFields(options.toMap()), options.getTruncate()));
+                if (result == null || result.embeddings() == null) throw new IllegalStateException("Empty warmup response");
+            }));
+        }
         return targets;
     }
 
@@ -118,9 +120,12 @@ public class OllamaModelPreloader implements AutoCloseable {
     }
 
     private static OllamaApi api(String url, Duration timeout) {
+        return api(url, Duration.ofSeconds(2), timeout);
+    }
+    private static OllamaApi api(String url, Duration connectTimeout, Duration timeout) {
         if (timeout.isNegative() || timeout.isZero()) throw new IllegalArgumentException("Positive warmup timeout required");
         var factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(Duration.ofSeconds(2));
+        factory.setConnectTimeout(connectTimeout);
         factory.setReadTimeout(timeout);
         return OllamaApi.builder().baseUrl(url).restClientBuilder(RestClient.builder().requestFactory(factory)).build();
     }
@@ -197,7 +202,8 @@ public class OllamaModelPreloader implements AutoCloseable {
             }
             MemoryState memory = loadedModels(job.target.provider().baseUrl());
             boolean loaded = containsModel(memory, job.target.provider().model());
-            if (warmup && !loaded && !closed.get()) {
+            // Empty input also refreshes keep_alive for a model already resident.
+            if (warmup && !closed.get()) {
                 job.target.warmup().run();
                 synchronized (job) { job.warmupCompletedAt = Instant.now(); }
                 memory = loadedModels(job.target.provider().baseUrl());

@@ -17,16 +17,19 @@ SSH (autenticación no disponible) no se atribuye todo ese tiempo a una única c
   30 s. Al vencer, la siguiente consulta vuelve a probarlo en su orden original.
   Un éxito elimina la marca. No hay pinning permanente al PC ni cambio de prioridad.
 - La comprobación es HTTP Ollama, no ICMP: ping no acredita que el servicio funcione.
-  No se introduce un scheduler ni sondeos de fondo/inferencias de calentamiento.
-- Se conservan los límites de lectura de embeddings (8/8/30 s), el probe HTTP de 1 s,
-  presupuesto global/SSE, modelo, digest, dimensiones, corpus y validaciones.
+  No se introduce un scheduler. La precarga explícita al arrancar/abrir la página
+  se describe en [precarga local](model-warmup.md).
+- Lectura de consultas: 1,5 s en portátil y PC, 30 s en NAS; probe HTTP de 600 ms.
+  Se conservan presupuesto global/SSE, modelo, digest, dimensiones, corpus y validaciones.
 - Configuración/digest/autenticación/vectores inválidos siguen fallando explícitamente;
   no se convierten en disponibilidad positiva ni en fallback silencioso.
 - Si todos están en cooldown, se devuelve indisponibilidad sin esperar de nuevo.
 
 ```properties
 RAG_EMBEDDING_CONNECT_TIMEOUT=400ms
+RAG_EMBEDDING_PROBE_TIMEOUT=600ms
 RAG_EMBEDDING_UNAVAILABLE_COOLDOWN=30s
+RAG_WARMUP_EMBEDDING_TIMEOUT=30s
 ```
 
 Cooldown configurable entre 0 y 5 minutos; `0s` recupera el comportamiento sin caché.
@@ -49,13 +52,26 @@ accesible en esta comprobación.
 
 El límite de 400 ms solo acota el establecimiento de la conexión TCP, no el tiempo
 de la llamada completa ni el cálculo del embedding. Los límites de lectura siguen
-siendo independientes (probe 1 s, inferencia 8/8/30 s). En esta muestra 250 ms no
+siendo independientes (probe 600 ms, inferencia 1,5/1,5/30 s). En esta muestra 250 ms no
 rozaba el tiempo de conexión; se conservan 400 ms como margen adicional.
 No es una medición desde el NAS ni una garantía frente a congestión, pérdida de
 paquetes o cambios de cobertura Wi-Fi. No se afirma que la inferencia del portátil
 tarde menos de un segundo a partir de una consulta de estado.
 
+### Lectura real de `/api/tags`
+
+Medición posterior del 2026-11-16 desde el PC: 20 peticiones HTTP por equipo,
+separadas por 100 ms, incluidas conexión y lectura JSON; 0 errores. Qwen3 instalado
+en ambos. PC: mediana 1,01 ms, p95 1,24 ms, máximo 1,74 ms. Portátil: mediana
+23,20 ms, p95 102,32 ms, máximo 264,85 ms. Ambos por debajo de 500 ms en esta
+muestra: se eligen los 600 ms solicitados, manteniendo conexión TCP de 400 ms.
+No es una medición desde el NAS ni un benchmark del cálculo de embeddings.
+
 ## Validación y estado
+
+El ajuste posterior de precarga completa, 8 h y lecturas de 1,5 s/600 ms está
+validado en [precarga local](model-warmup.md#validación-del-ajuste-de-8-horas-y-precarga-completa-2026-11-16).
+Las cifras siguientes corresponden al cambio inicial de caché de indisponibilidad.
 
 50 pruebas Java correctas: 27 de failover (incluidas caché, expiración, recuperación,
 proveedor sano, conexión rechazada y errores no recuperables), 5 de configuración,

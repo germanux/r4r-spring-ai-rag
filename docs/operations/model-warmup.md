@@ -1,13 +1,16 @@
 # Precarga local y estado de modelos
 
-La API sigue usando Spring MVC. Tras `ApplicationReadyEvent`, un executor de tres
-hilos prepara independientemente el PC, el portátil ASUS y los embeddings del
-Synology. Un equipo desconectado no bloquea los otros trabajos ni la API.
+La API sigue usando Spring MVC. Tras `ApplicationReadyEvent`, un executor con un
+hilo por destino configurado prepara en paralelo los LLM y **todos** los servidores
+de embeddings (portátil, PC y NAS). En la configuración actual son cinco trabajos.
+Un equipo desconectado no bloquea los otros trabajos ni la API. Antes solo se
+precargaban embeddings en el primer proveedor, dejando los respaldos en frío.
 
 - Generación: cliente Spring AI `OllamaApi`, `/api/chat`, mensajes vacíos y
-  `keep_alive=3h`. Conserva las opciones de generación configuradas.
+  `keep_alive=8h`. Conserva las opciones de generación configuradas.
 - Embeddings: `/api/embed`, entrada vacía y las opciones del modelo de embeddings,
-  incluido su `keep_alive` cuando esté configurado. No genera vectores de documentos.
+  incluido `keep_alive=8h`. No genera vectores de documentos. Las consultas normales
+  también envían 8 h para ambos tipos de modelo, evitando acortar su residencia.
 - No descarga modelos, modifica pgvector ni invoca OpenAI. La lista de proveedores
   locales se toma del router, sin pasar por su mecanismo de generación/failover.
 - [Ollama documenta la precarga mediante solicitudes vacías](https://github.com/ollama/ollama/blob/main/docs/api.md).
@@ -21,13 +24,19 @@ precarga (arranque y HTTP) comparten las mismas exclusiones por modelo y proceso
 No hay colas de trabajos duplicados ni reintentos automáticos. Si una observación
 está en curso, se reserva como máximo una precarga pendiente por modelo y se ejecuta
 al terminar, en el mismo worker. El cooldown se reserva al aceptar la petición.
-Antes de cargar se consulta /api/ps: un modelo ya residente no recibe otra carga.
+Se consulta `/api/ps` antes y después. La petición vacía también renueva la
+residencia de un modelo ya cargado; siguen aplicándose deduplicación y cooldown.
+La duración solicitada no garantiza residencia si Ollama necesita liberar memoria,
+se reinicia o limita el número de modelos simultáneos. Para alojar LLM y embeddings
+en PC/portátil, su servidor debe admitir ambos y disponer de memoria suficiente;
+el Compose de este repositorio configura solo el Ollama del NAS.
 
 El POST respeta los orígenes permitidos, pero no consume la cuota de consultas RAG.
 El control de concurrencia y frecuencia lo aplica el servicio de precarga.
 
 `GET /api/rag/runtime` conserva sus campos y añade `models`, con identificadores
-públicos `desktop`, `laptop`, `embeddings`, modelo, estado, `checkedAt`, código de
+públicos `desktop`, `laptop`, `embeddings` para el embedding preferido y
+`embeddings-<id del proveedor>` para los respaldos, modelo, estado, `checkedAt`, código de
 error saneado y `refreshing`. Añade `warmupCompletedAt` (última precarga completada)
 y `memoryObserved` (memoria comprobada mediante /api/ps). Una precarga completada
 no sustituye esa observación. El estado seleccionado se resuelve por identidad
@@ -48,17 +57,21 @@ de la última respuesta permanece separado del estado actual de cada equipo.
 Los datos de memoria se conservan en bytes; valores ausentes/invalidos siguen siendo
 `null`, diferentes de cero. El frontend convierte los bytes a GiB.
 
-## Configuración (sin cambios en Compose ni en el .env activo)
+## Configuración vigente (2026-11-16)
 
 | Variable | Valor predeterminado |
 | --- | --- |
 | `RAG_WARMUP_MIN_INTERVAL` | `1m` entre inicios por modelo |
-| `RAG_WARMUP_PC_TIMEOUT` | `60s` de lectura para precarga |
-| `RAG_WARMUP_LAPTOP_TIMEOUT` | `60s` de lectura para precarga |
 | `RAG_WARMUP_EMBEDDING_TIMEOUT` | `30s` de lectura para precarga |
-| `RAG_FALLBACK_READ_TIMEOUT` | `60s` de lectura para generación en el portátil |
+| `RAG_EMBEDDING_PROVIDERS` | Lectura de consultas: portátil/PC `1500ms`; NAS `30s` |
+| `RAG_EMBEDDING_CONNECT_TIMEOUT` | `400ms` para conexión TCP de embeddings |
+| `RAG_EMBEDDING_PROBE_TIMEOUT` | `600ms` de lectura de `/api/tags` de embeddings |
+| `OLLAMA_KEEP_ALIVE` | `8h` por defecto en el contenedor Ollama del NAS |
 
-Conexión de precarga: 2 s. Sondeo de modelos: 2 s de conexión/lectura; telemetría:
+La precarga LLM conserva los tiempos propios de cada proveedor de generación.
+La precarga de embeddings usa los 30 s independientes: bajar las consultas a 1,5 s
+no debe abortar una carga inicial. Conexión de precarga LLM: 2 s; sondeo de sus
+modelos según la configuración de generación. Telemetría `/api/ps`:
 1 s de conexión y 2 s de petición. Los límites de sondeo y telemetría se suman al
 límite de lectura de la operación de precarga. La propiedad Spring
 `r4r.rag.warmup.on-startup=false` se utiliza en el perfil de test para evitar
@@ -69,8 +82,9 @@ Las consultas y el contrato de `POST /api/rag/answers` se conservan.
 
 ## Frontend
 
-Al abrir la página y al cambiar explícitamente de endpoint, solicita una precarga
-opcional con timeout de 5 s y un intervalo mínimo de 60 s por endpoint en esa página.
+Al abrir la página, también en modo `embed=1`, y al cambiar explícitamente de
+endpoint, solicita una precarga opcional con timeout HTTP de 15 s y un intervalo
+mínimo de 60 s por endpoint en esa página. El prerender no solicita precarga.
 El backend aplica además su control global por proceso, también entre pestañas.
 Una API antigua sin `/warmup`, un error o un timeout no impiden consultar el RAG.
 
@@ -110,7 +124,38 @@ concurrencia, repetición, cooldown, timeout, opciones y telemetría. Los tests 
 verifican contrato, CORS y la independencia de la cuota de respuestas. No son pruebas
 contra los LLM físicos ni una certificación del despliegue.
 
+## Validación del ajuste de 8 horas y precarga completa (2026-11-16)
+
+- 88 pruebas Java seleccionadas correctas: precarga 13, separación/configuración
+  Ollama 11, configuración pública 5, runtime 14, REST 8, SSE 10 y failover de
+  embeddings 27. La prueba de defaults se adaptó de 8 s a 1500 ms tras detectar
+  esa expectativa antigua; las dos suites afectadas volvieron a pasar (24 pruebas),
+  y la ejecución final conjunta confirmó las 88 correctas, sin fallos ni errores.
+- Pruebas nuevas: cinco cargas independientes en paralelo sin duplicados,
+  carga inicial con presupuesto separado de la consulta y renovación a 8 horas
+  de un modelo residente. Las solicitudes usan clientes Spring AI contra dobles
+  HTTP locales; no requieren LLM ni PostgreSQL real.
+- Angular: 24 pruebas correctas, incluidas apertura normal, `embed=1` y ausencia
+  de precarga en prerender. Build de producción y prerender HTML correctos.
+  Exportación estática local actualizada, conservando documentos compartidos.
+- Compose: 1 prueba correcta con valores sintéticos, nuevos timeouts y residencia.
+- Los primeros intentos en sandbox fallaron por permisos de sockets/Mockito;
+  las ejecuciones con los permisos necesarios pasaron. Sin imágenes ni capturas.
+- Solo se midió `/api/tags` real: PC máximo 1,74 ms; portátil 264,85 ms en
+  20 muestras por equipo. [Detalle y límites](embedding-availability.md#lectura-real-de-apitags).
+- No se hizo push ni despliegue backend/frontend. Para activar estos cambios hay
+  que desplegar la API/configuración y distribuir el frontend compilado. Un `.env`
+  privado o variables externas pueden sobrescribir los nuevos defaults. No se
+  editaron servicios Ollama del PC/portátil ni se verificó allí su configuración
+  de capacidad de memoria; el ajuste de keep-alive se realiza mediante la API.
+
+Evidencias locales: `/tmp/r4r-warmup-final-tests.log`, `/tmp/r4r-warmup-8h-tests.log`,
+`/tmp/r4r-warmup-corrected-tests.log`, `/tmp/r4r-warmup-angular-tests.log`,
+`/tmp/r4r-warmup-angular-build.log` y `/tmp/r4r-warmup-prerender.log`.
+
 ## Resultado de la implementación inicial (de8beb6)
+
+Las cifras y la lista siguientes son históricas; no describen los nuevos defaults.
 
 - `mvn verify`: **143 unitarios PASSED**, **23 integraciones PASSED** en la base
   dedicada `r4r_rag_test`; **3 suites live SKIPPED** por activación opt-in.
