@@ -202,3 +202,18 @@ publicar juntos frontend/políticas/assets mediante el procedimiento existente,
 verificar proxies, contratos/permisos/copias y activar los flags apropiados. No se
 ha contactado el backend de producción ni alterado sus datos. No hay bloqueo técnico
 local. Los commits por bloques se enumeran en la entrega; no se hizo push.
+
+
+## Corrección HTTP LAN — 2026-11-16
+
+El NAS por HTTP no ofrece necesariamente `crypto.randomUUID`, reservado a contextos
+seguros. Se centraliza la generación de referencias en `correlationId`: UUID nativo
+cuando existe, o UUID v4 con `crypto.getRandomValues` cuando no existe. No se usa
+Math.random ni se debilita la aleatoriedad de referencias utilizadas para oposición.
+21 pruebas Angular y una prueba Chromium con origen LAN HTTP no seguro: correctas,
+con arranque y respuesta simulada sin errores. Build y prerender renovados en
+`frontend/dist/r4r-frontend/browser` y `front-athagon-r4r-static`.
+No se ejecutó la distribución a los repositorios externos ni la copia SMB; para
+actualizarlos se utiliza `bash scripts/build-frontend-angular.sh`, que sí escribe en el NAS.
+Documentación: [randomUUID](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID)
+y [getRandomValues](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues).
