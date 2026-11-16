@@ -14,15 +14,9 @@ import { ProgressEvent } from '../../../../core/rag/rag.models';
         >
           @for(stage of stages();track stage;let idx=$index){
             <li [attr.data-state]="s.response() || idx < stages().length-1?'complete':'current'">
-              <span class="step-number">
-                {{idx+1}}
-              </span>
-              <span class="step-label">
-                {{i.t(stage)}}
-              </span>
-              <span class="step-state">
-                {{s.response() || idx < stages().length-1?'✓':'…'}}
-              </span>
+              <span class="step-number">{{idx+1}}</span>
+              <span class="step-label">{{i.t(stage)}}</span>
+              <span class="step-state">{{s.response() || idx < stages().length-1?'✓':'…'}}</span>
             </li>
           }
         </ol>
@@ -31,13 +25,9 @@ import { ProgressEvent } from '../../../../core/rag/rag.models';
           class="query-telemetry"
           [hidden]="!s.events().length && !s.playbackStage()"
         >
-          <summary>
-            {{i.t('page.technical_details')}}
-          </summary>
+          <summary>{{i.t('page.technical_details')}}</summary>
           @if(s.recorded() && !s.events().length){
-            <p>
-              {{i.t('noRecordedTimeline')}}
-            </p>
+            <p>{{i.t('noRecordedTimeline')}}</p>
           }
           <ol id="ragProgress" class="rag-progress">
             @for(e of s.events();track $index){
@@ -48,12 +38,8 @@ import { ProgressEvent } from '../../../../core/rag/rag.models';
                 ms —
                 {{message(e)}}
                 <details>
-                  <summary>
-                    {{i.t('showJson')}}
-                  </summary>
-                  <pre>
-                    {{e|json}}
-                  </pre>
+                  <summary>{{i.t('showJson')}}</summary>
+                  <pre>{{e|json}}</pre>
                 </details>
               </li>
             }
