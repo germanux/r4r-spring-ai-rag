@@ -29,6 +29,28 @@ bash scripts/deploy-synology.sh
 Ese segundo comando despliega realmente el backend y puede aplicar migraciones al arrancar.
 No se ha ejecutado como parte de esta modificación.
 
+## Configuración del despliegue NAS
+
+`deploy-synology.sh` requiere y copia **ambos archivos locales**:
+`docker-spring/.env.base` y `docker-spring/.env`. Sustituye sus equivalentes en
+`/volume1/docker/r4r`; los valores privados locales pasan a ser los del NAS.
+Revisar las sobrescrituras locales antes de ejecutar el despliegue: `.env` tiene
+prioridad sobre `.env.base` y cambiar una contraseña no cambia automáticamente la
+contraseña de un usuario PostgreSQL ya existente.
+
+La transferencia utiliza SSH y un directorio temporal privado (`0700`). Se valida
+el Compose con ambos archivos transferidos antes de sustituir la configuración
+activa o cargar la imagen. `.env` se instala con permisos `0600`, sin imprimir su
+contenido, añadirlo a Git ni generar respaldos del archivo privado. La salida del
+script intenta retirar su copia temporal también ante errores; si se pierde la
+conexión, comprobar y retirar manualmente el temporal anunciado por el script.
+El archivo privado activo queda propiedad de root y Compose lo lee mediante sudo.
+La validación previa no garantiza un rollback si el arranque posterior falla.
+
+Se conserva el orden: backend y comprobaciones remotas, después build y copias del
+frontend, con SMB en último lugar. La copia de configuración forma parte del
+despliegue backend, no del script de compilación de Angular.
+
 ## Montaje y rutas
 
 El montaje detectado en esta máquina es:
@@ -69,4 +91,11 @@ temporal existente como padre; los otros destinos siguen siendo los repositorios
 - Prueba aislada con destinos temporales y build simulado: copias a los tres
   destinos, documentos y archivos ocultos completos, preservación de `v1/`,
   desreferenciado SMB y error ante montaje ausente: correctos.
+- `python3 -m unittest discover -s py-scripts -p test_deploy_synology.py -v`:
+  3 pruebas correctas con SSH/Docker simulados y configuración sintética. Verifican
+  copia de ambos archivos, permisos privados, retirada del temporal, frontend al
+  final y conservación de la configuración activa ante transferencia o validación fallida.
+- `python3 -m unittest discover -s py-scripts -p test_compose_configuration.py -v`:
+  1 prueba correcta de Compose real sin arrancar servicios, incluidos los 400 ms
+  tanto en defaults públicos como en el fallback autónomo de Compose.
 - No se copió a SMB real ni se inició el despliegue backend durante la validación.

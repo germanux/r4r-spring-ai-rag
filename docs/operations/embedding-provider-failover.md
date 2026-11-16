@@ -13,7 +13,7 @@ RAG_EMBEDDING_PROVIDERS=http://192.168.1.209:11434|8s,http://192.168.1.207:11434
 batch starts with laptop, then desktop, then NAS. Any positive number of entries is allowed; order defines failover priority. The prepared configuration uses `qwen3-embedding:0.6b` and 1024 dimensions.
 See [migration status and cutover commands](qwen3-embedding-migration.md) before deploying.
 Read timeouts belong to their URLs in the compact entries (8s, 8s, 30s by default);
-connection/probe limits are 1s and the total is 35s.
+the connection limit is 400ms, the probe read limit is 1s and the total is 35s.
 The public file also pins the expected digest. Warmup/runtime use the first entry.
 
 Individual URL aliases and the previous indexed-YAML configuration are superseded
@@ -37,8 +37,10 @@ one ordered, nonzero, finite 1024-dimensional vector per input and the expected 
 Changing the pin requires checking compatibility with the stored corpus, not merely
 that the servers agree. Models are never downloaded or the corpus reindexed automatically.
 
-Each batch starts at the first provider, including after fallback on a previous
-request. No sticky routing, background retries, partial batches or fake vectors.
+Each batch follows the configured order, temporarily skipping providers with a
+recoverable failure for 30s. The next batch after expiry tries them again in their
+original order; see [availability and measured connection times](embedding-availability.md).
+No sticky routing, background retries, partial batches or fake vectors.
 Technical HTTP 408/429/500/502/503/504, socket/connection/read-timeout and EOF failures
 advance to the next entry. Configuration/authentication/parameter/model/digest/vector
 errors and cancellation stop immediately. TLS configuration errors do not trigger

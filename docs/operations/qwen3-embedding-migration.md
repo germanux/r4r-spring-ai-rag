@@ -22,8 +22,10 @@ se completó la carga; no se reutilizaron embeddings Nomic.
 bash scripts/deploy-synology.sh
 ```
 
-El script despliega `.env.base` y carga después el `.env` privado existente.
-No copia, respalda ni modifica `.env`. La configuración Compose efectiva del PC
+El script despliega ahora los `.env.base` y `.env` locales; el privado sustituye al
+del NAS con permisos `0600`, sin respaldos de secretos. Valida ambos antes de
+reemplazar la configuración activa; ver [despliegue NAS](frontend-deployment.md#configuración-del-despliegue-nas).
+La configuración Compose efectiva del PC
 confirma Qwen3/1024 y failover S3 habilitado mediante Lambda. No hay overrides de
 embeddings en el `.env` privado del PC, que el usuario confirma igual al del NAS.
 No se ha probado todavía el failover end-to-end con la API nueva y PostgreSQL detenido.

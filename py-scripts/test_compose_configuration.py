@@ -61,6 +61,8 @@ class ComposeConfigurationTest(unittest.TestCase):
         self.assertEqual(api['environment']['RAG_PG_RECOVERY_INTERVAL'], '12s')
         self.assertEqual(api['environment']['RAG_PG_CONNECTION_TIMEOUT'], '2s')
         self.assertEqual(api['environment']['RAG_PG_SOCKET_TIMEOUT'], '5s')
+        self.assertEqual(api['environment']['RAG_EMBEDDING_CONNECT_TIMEOUT'], '400ms')
+        self.assertEqual(api['environment']['RAG_EMBEDDING_UNAVAILABLE_COOLDOWN'], '30s')
         self.assertNotIn('TUNNEL_TOKEN', api['environment'])
         self.assertNotIn('POSTGRES_TEST_USER', api['environment'])
         self.assertEqual(api['environment']['OPENAI_API_KEY'], 'fake-openai')
@@ -86,6 +88,7 @@ class ComposeConfigurationTest(unittest.TestCase):
             cwd=fixture, env=env, capture_output=True, text=True, check=True)
         default_api = json.loads(defaults.stdout)['services']['api']
         self.assertEqual(default_api['environment']['RAG_TITAN_ENABLED'], 'false')
+        self.assertEqual(default_api['environment']['RAG_EMBEDDING_CONNECT_TIMEOUT'], '400ms')
         self.assertEqual(default_api['environment']['RAG_TITAN_MIN_SIMILARITY'], '')
         self.assertEqual(default_api['environment']['RAG_TITAN_FUNCTION'], 'r4r-titan-retrieval')
         self.assertEqual(default_api['dns'], ['1.1.1.1', '8.8.8.8'])

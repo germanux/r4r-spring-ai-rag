@@ -17,10 +17,18 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REMOTE="${NAS_USER}@${NAS_IP}"
 
 COMPOSE="$ROOT/docker-spring/docker-compose.yml"
+ENV_BASE="$ROOT/docker-spring/.env.base"
+PRIVATE_ENV="$ROOT/docker-spring/.env"
 
 cd "$ROOT"
 
-# Public configuration is deployed separately from the existing private .env.
+# Deploy both local configuration files; never print or version private values.
+for config_file in "$ENV_BASE" "$PRIVATE_ENV"; do
+  [[ -f "$config_file" && -r "$config_file" ]] || {
+    echo "ERROR: falta el archivo de configuración legible: $config_file" >&2
+    exit 1
+  }
+done
 [[ "$(sed -n 's/^RAG_EMBEDDING_MODEL=//p' docker-spring/.env.base)" == qwen3-embedding:0.6b ]]
 [[ "$(sed -n 's/^RAG_EMBEDDING_DIMENSIONS=//p' docker-spring/.env.base)" == 1024 ]]
 
@@ -108,6 +116,11 @@ SSH_OPTIONS=(
 )
 
 cleanup_ssh() {
+  # Remove the private upload even when validation or deployment fails.
+  if [[ -n "${STAGE:-}" ]]; then
+    ssh "${SSH_OPTIONS[@]}" -o BatchMode=yes -o ConnectTimeout=5 "$REMOTE" \
+      "rm -f -- '$STAGE/.env'" >/dev/null 2>&1 || true
+  fi
   ssh -o BatchMode=yes -S "$SSH_CONTROL_PATH" -O exit "$REMOTE" >/dev/null 2>&1 || true
   rmdir "$SSH_CONTROL_DIR" 2>/dev/null || true
 }
@@ -120,7 +133,8 @@ STAGE="$(ssh "${SSH_OPTIONS[@]}" "$REMOTE" \
 echo "Destino: $REMOTE"
 echo "Temporal: $STAGE"
 
-scp -O "${SSH_OPTIONS[@]}" "$TAR" "$COMPOSE" "$ROOT/docker-spring/.env.base" "$REMOTE:$STAGE/"
+# mktemp creates a private remote directory (0700), including during transfer.
+scp -O "${SSH_OPTIONS[@]}" "$TAR" "$COMPOSE" "$ENV_BASE" "$PRIVATE_ENV" "$REMOTE:$STAGE/"
 
 # ============================================================
 # 5. IMPORTAR Y DESPLEGAR POR SSH
@@ -142,11 +156,21 @@ ssh "${SSH_OPTIONS[@]}" -tt "$REMOTE" "
 
   cd '$NAS_DIR'
 
-  # Comprobar que existe la configuración del NAS.
-  test -f .env
+  test -f '$STAGE/.env.base'
+  test -f '$STAGE/.env'
+  chmod 600 '$STAGE/.env'
 
   echo '==> Autenticación sudo...'
   sudo -v
+
+  # Validate the uploaded pair before replacing any active configuration.
+  # Keep relative Compose paths anchored to the real NAS project directory.
+  echo '==> Validando Compose y configuración transferida...'
+  sudo \"\$COMPOSE_BIN\" \
+    --project-directory '$NAS_DIR' \
+    --env-file '$STAGE/.env.base' --env-file '$STAGE/.env' \
+    -f '$STAGE/docker-compose.yml' \
+    config --quiet
 
   # Importar la nueva imagen.
   echo '==> Importando Docker...'
@@ -159,25 +183,10 @@ ssh "${SSH_OPTIONS[@]}" -tt "$REMOTE" "
   # Actualizar Compose.
   sudo cp '$STAGE/docker-compose.yml' docker-compose.yml
 
-  # Deploy public defaults; never modify or back up the private .env.
-  sudo cp '$STAGE/.env.base' .env.base
-
-  # Validar antes de desplegar el proyecto.
-  echo '==> Validando Compose...'
-
-  if ! sudo \"\$COMPOSE_BIN\" \
-    --env-file .env.base --env-file .env \
-    -f docker-compose.yml \
-    config --quiet; then
-
-    echo 'ERROR: Compose inválido. Restaurando versión anterior.'
-
-    sudo cp -p \
-      'docker-compose.yml.bak.$BACKUP_DATE' \
-      docker-compose.yml
-
-    exit 1
-  fi
+  # Replace NAS settings with the validated local files. No secret backups.
+  sudo install -m 644 '$STAGE/.env.base' .env.base
+  sudo install -m 600 '$STAGE/.env' .env
+  rm '$STAGE/.env'
 
   # Crear servicios nuevos y actualizar solo los que hayan cambiado.
   echo '==> Desplegando proyecto R4R...'

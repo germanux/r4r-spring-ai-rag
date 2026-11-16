@@ -11,7 +11,8 @@ SSH (autenticación no disponible) no se atribuye todo ese tiempo a una única c
 ## Cambio
 
 - Se conserva el portátil como primera opción y se consulta como siempre si está sano.
-- Conexión TCP de embeddings: 250 ms en los defaults públicos y Docker Compose.
+- Conexión TCP de embeddings: 400 ms en los defaults públicos y Docker Compose,
+  con margen adicional solicitado para la red Wi-Fi doméstica.
 - Tras un fallo recuperable de transporte/servicio, se omite ese proveedor durante
   30 s. Al vencer, la siguiente consulta vuelve a probarlo en su orden original.
   Un éxito elimina la marca. No hay pinning permanente al PC ni cambio de prioridad.
@@ -24,7 +25,7 @@ SSH (autenticación no disponible) no se atribuye todo ese tiempo a una única c
 - Si todos están en cooldown, se devuelve indisponibilidad sin esperar de nuevo.
 
 ```properties
-RAG_EMBEDDING_CONNECT_TIMEOUT=250ms
+RAG_EMBEDDING_CONNECT_TIMEOUT=400ms
 RAG_EMBEDDING_UNAVAILABLE_COOLDOWN=30s
 ```
 
@@ -33,6 +34,26 @@ La caché es acotada a los endpoints configurados, vive en memoria y no contiene
 La pausa afecta solo a proveedores que han fallado; el portátil sano no espera 30 s.
 Esto reduce la espera evitable, no promete un tiempo total inferior a un segundo si
 la generación local o la carga de otro modelo tardan más.
+
+## Comprobación del margen de conexión
+
+2026-11-16, desde el PC de desarrollo: 10 conexiones TCP y 5 lecturas HTTP de
+`/api/ps` por servidor, sin generar embeddings ni respuestas. El portátil ya estaba
+accesible en esta comprobación.
+
+| Servidor | TCP mediana / máximo | HTTP `/api/ps` mediana / máximo |
+| --- | --- | --- |
+| Portátil `.209` | 4,50 / 63,73 ms | 8,97 / 17,72 ms |
+| PC `.207` | 0,04 / 1,31 ms | 0,15 / 0,79 ms |
+| NAS `.203` | 3,26 / 5,69 ms | 8,37 / 8,82 ms |
+
+El límite de 400 ms solo acota el establecimiento de la conexión TCP, no el tiempo
+de la llamada completa ni el cálculo del embedding. Los límites de lectura siguen
+siendo independientes (probe 1 s, inferencia 8/8/30 s). En esta muestra 250 ms no
+rozaba el tiempo de conexión; se conservan 400 ms como margen adicional.
+No es una medición desde el NAS ni una garantía frente a congestión, pérdida de
+paquetes o cambios de cobertura Wi-Fi. No se afirma que la inferencia del portátil
+tarde menos de un segundo a partir de una consulta de estado.
 
 ## Validación y estado
 
