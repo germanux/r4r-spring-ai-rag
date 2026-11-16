@@ -67,7 +67,7 @@ class RagIndependentQuestionsIT {
             var titan=binder.bind("r4r.rag.vector.titan",TitanRetrievalProperties.class).get();
             report.put("configuration",Map.of("topK",retrieval.topK(),"minScore",retrieval.minScore(),"rerank",ranking,
                     "primary",routing.primary(),"failoverEnabled",routing.failoverEnabled(),"titanEnabled",titan.enabled(),
-                    "openaiEnabled",com.riansares.r4r.rag.OpenAiMode.parse(env.getProperty("r4r.rag.openai.enabled", "false")) != com.riansares.r4r.rag.OpenAiMode.DISABLED));
+                    "openaiEnabled",binder.bind("r4r.rag.generation",com.riansares.r4r.config.GenerationProviderProperties.class).get().providers().stream().anyMatch(com.riansares.r4r.config.GenerationProviderProperties.Provider::remote)));
             var source=new DriverManagerDataSource(env.getRequiredProperty("spring.datasource.url"));
             source.setUsername(env.getRequiredProperty("spring.datasource.username"));source.setPassword(env.getRequiredProperty("spring.datasource.password"));
             var jdbcProperties=new Properties();jdbcProperties.setProperty("options","-c default_transaction_read_only=on");

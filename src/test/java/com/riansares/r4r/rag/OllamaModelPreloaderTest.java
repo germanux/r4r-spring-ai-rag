@@ -312,6 +312,8 @@ class OllamaModelPreloaderTest {
         chat.getOptions().setNumCtx(4096);
         chat.getOptions().setKeepAlive("8h");
         var generation=new com.riansares.r4r.config.GenerationProviderProperties(List.of(
+                // Remote-first configuration must not become a warmup target or change local VRAM priority.
+                new com.riansares.r4r.config.GenerationProviderProperties.Provider("OpenAI","http://127.0.0.1:1","remote-model",timeout),
                 new com.riansares.r4r.config.GenerationProviderProperties.Provider("desktop",pc.url(),pc.model,timeout),
                 new com.riansares.r4r.config.GenerationProviderProperties.Provider("laptop",laptop.url(),laptop.model,timeout)),
                 timeout,timeout);

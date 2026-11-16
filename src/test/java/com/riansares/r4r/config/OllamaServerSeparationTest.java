@@ -38,12 +38,11 @@ class OllamaServerSeparationTest {
         try {
             runner().withPropertyValues(embeddingEndpoints(embedding,embedding,embedding)).withPropertyValues(
                     // This scenario isolates the two simulated local servers; remote routing has separate tests.
-                    "r4r.rag.openai.enabled=false",
                     "RAG_GENERATION_PROVIDERS="+url(pc)+"|qwen3:8b|20s,"+url(backup)+"|qwen2.5:7b|30s",
                     // A legacy global URL must never capture either operation.
                     "spring.ai.ollama.base-url=http://127.0.0.1:1")
                     .run(context -> {
-                        assertThat(context).hasNotFailed().hasSingleBean(EmbeddingModel.class).hasSingleBean(ChatModel.class);
+                        assertThat(context).hasNotFailed().hasSingleBean(EmbeddingModel.class).hasSingleBean(GenerationRouter.class);
                         assertThat((List<?>) context.getBean("generationTargets")).hasSize(2);
                         var model = context.getBean(EmbeddingModel.class);
                         assertThat(context.getEnvironment().getProperty("spring.ai.ollama.embedding.options.keep-alive")).isEqualTo("8h");
@@ -75,7 +74,7 @@ class OllamaServerSeparationTest {
     }
 
     @Test void enabledRemoteAddsOnlyThirdGenerationTarget() {
-        runner().withPropertyValues("r4r.rag.openai.enabled=true", "OPENAI_API_KEY=TEST_ONLY", "r4r.rag.openai.model=gpt-6-luna")
+        runner().withPropertyValues("RAG_GENERATION_PROVIDERS=http://127.0.0.1:1|qwen3:8b|20s,http://127.0.0.1:2|qwen2.5:7b|60s,openai|gpt-6-luna|35s", "OPENAI_API_KEY=TEST_ONLY")
                 .run(context -> {
                     assertThat(context).hasNotFailed();
                     var targets=(List<GenerationRouter.Target>)context.getBean("generationTargets");
@@ -86,7 +85,7 @@ class OllamaServerSeparationTest {
     }
 
     @Test void disabledRemoteKeepsOnlyLocalsInConfiguredOrder() {
-        runner().withPropertyValues("r4r.rag.openai.enabled=false").run(context -> {
+        runner().run(context -> {
             assertThat(context).hasNotFailed();
             var targets = (List<GenerationRouter.Target>) context.getBean("generationTargets");
             assertThat(targets).extracting(t -> t.provider().baseUrl())
@@ -97,26 +96,26 @@ class OllamaServerSeparationTest {
     }
 
     @Test void primaryRemoteIsFirstAndLocalOrderIsPreserved() {
-        runner().withPropertyValues("r4r.rag.openai.enabled=primary", "OPENAI_API_KEY=TEST_ONLY")
+        runner().withPropertyValues("RAG_GENERATION_PROVIDERS=openai|gpt-6-luna|35s,http://127.0.0.1:1|qwen3:8b|20s,http://127.0.0.1:2|qwen2.5:7b|60s", "OPENAI_API_KEY=TEST_ONLY")
                 .run(context -> {
                     assertThat(context).hasNotFailed();
                     var router = context.getBean(GenerationRouter.class);
                     assertThat(router.preferred().name()).isEqualTo("OpenAI");
                     var targets = (List<GenerationRouter.Target>) context.getBean("generationTargets");
                     assertThat(targets.subList(1, targets.size())).extracting(t -> t.provider().baseUrl())
-                            .containsExactlyElementsOf(context.getBean(GenerationProviderProperties.class).providers().stream()
+                            .containsExactlyElementsOf(context.getBean(GenerationProviderProperties.class).providers().stream().filter(p -> !p.remote())
                                     .map(GenerationProviderProperties.Provider::baseUrl).toList());
                 });
     }
 
     @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(strings = {"true", "primary"})
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"openai|gpt-6-luna|35s,http://127.0.0.1:1|qwen3:8b|20s", "http://127.0.0.1:1|qwen3:8b|20s,openai|gpt-6-luna|35s"})
     void enabledRemoteStillRequiresAnExplicitKey(String mode) {
-        runner().withPropertyValues("r4r.rag.openai.enabled=" + mode, "OPENAI_API_KEY=")
+        runner().withPropertyValues("RAG_GENERATION_PROVIDERS=" + mode, "OPENAI_API_KEY=")
                 .run(context -> {
                     assertThat(context).hasFailed();
                     assertThat(context.getStartupFailure()).hasRootCauseInstanceOf(IllegalStateException.class)
-                            .hasRootCauseMessage("OPENAI_API_KEY required when remote generation is enabled");
+                            .hasRootCauseMessage("OPENAI_API_KEY required when a provider list contains openai");
                 });
     }
 
@@ -168,12 +167,12 @@ class OllamaServerSeparationTest {
                 c=server("c","model-c",operations), d=server("d","model-d",operations);
         try {
             runner().withBean(ObjectMapper.class, ObjectMapper::new).withUserConfiguration(com.riansares.r4r.rag.OllamaModelPreloader.class)
-                    .withPropertyValues("r4r.rag.warmup.on-startup=false", "r4r.rag.openai.enabled=true", "OPENAI_API_KEY=TEST_ONLY",
-                            "RAG_GENERATION_PROVIDERS="+url(a)+"|model-a|1s,"+url(b)+"|model-b|2s,"+url(c)+"|model-c|3s,"+url(d)+"|model-d|4s")
+                    .withPropertyValues("r4r.rag.warmup.on-startup=false", "OPENAI_API_KEY=TEST_ONLY",
+                            "RAG_GENERATION_PROVIDERS="+url(a)+"|model-a|1s,"+url(b)+"|model-b|2s,"+url(c)+"|model-c|3s,"+url(d)+"|model-d|4s,openai|gpt-6-luna|35s")
                     .run(context -> {
                         assertThat(context).hasNotFailed().hasSingleBean(com.riansares.r4r.rag.OllamaModelPreloader.class);
                         var configured=context.getBean(GenerationProviderProperties.class).providers();
-                        assertThat(configured).extracting(GenerationProviderProperties.Provider::readTimeout)
+                        assertThat(configured.stream().filter(p -> !p.remote())).extracting(GenerationProviderProperties.Provider::readTimeout)
                                 .containsExactly(java.time.Duration.ofSeconds(1),java.time.Duration.ofSeconds(2),
                                         java.time.Duration.ofSeconds(3),java.time.Duration.ofSeconds(4));
                         var targets=(List<GenerationRouter.Target>)context.getBean("generationTargets");
@@ -205,8 +204,7 @@ class OllamaServerSeparationTest {
         var operations = new CopyOnWriteArrayList<String>();
         var local = server("audit", "larger-audit-model", operations);
         try {
-            runner().withPropertyValues("r4r.rag.audit.enabled=true",
-                    "r4r.rag.audit.provider=" + url(local) + "|larger-audit-model|2s")
+            runner().withPropertyValues("RAG_AUDIT_PROVIDERS=" + url(local) + "|larger-audit-model|2s")
                     .run(context -> {
                         assertThat(context).hasNotFailed();
                         var audit = context.getBean(com.riansares.r4r.rag.RagAuditService.class);
@@ -218,11 +216,9 @@ class OllamaServerSeparationTest {
         } finally { local.stop(0); }
     }
 
-    @Test void openAiAuditorRequiresExplicitRemoteEnablementAndSharesTheConfiguredClient() {
-        runner().withPropertyValues("r4r.rag.audit.enabled=true", "r4r.rag.audit.provider=openai|audit-model",
-                "r4r.rag.openai.enabled=false").run(context -> assertThat(context).hasFailed());
-        runner().withPropertyValues("r4r.rag.audit.enabled=true", "r4r.rag.audit.provider=openai|audit-model",
-                "r4r.rag.openai.enabled=true", "OPENAI_API_KEY=TEST_ONLY").run(context -> {
+    @Test void openAiAuditorRequiresAKeyIndependentlyOfGeneration() {
+        runner().withPropertyValues("RAG_AUDIT_PROVIDERS=openai|audit-model|15s", "OPENAI_API_KEY=").run(context -> assertThat(context).hasFailed());
+        runner().withPropertyValues("RAG_AUDIT_PROVIDERS=openai|audit-model|15s", "OPENAI_API_KEY=TEST_ONLY").run(context -> {
                     assertThat(context).hasNotFailed();
                     var audit = context.getBean(com.riansares.r4r.rag.RagAuditService.class);
                     assertThat(audit.enabled()).isTrue();
@@ -235,8 +231,7 @@ class OllamaServerSeparationTest {
         return new ApplicationContextRunner()
                 // Local scenarios never inherit remote activation or credentials from the host.
                 // Remote configuration scenarios opt in explicitly with a fictitious key.
-                .withPropertyValues("RAG_OPENAI_ENABLED=false", "r4r.rag.openai.enabled=false",
-                        "OPENAI_API_KEY=", "r4r.rag.audit.enabled=false",
+                .withPropertyValues("OPENAI_API_KEY=", "RAG_AUDIT_PROVIDERS=",
                         "RAG_GENERATION_PROVIDERS=http://127.0.0.1:1|qwen3:8b|20s,http://127.0.0.1:2|qwen2.5:7b|60s")
                 .withInitializer(context -> {
                     context.getBeanFactory().setConversionService(org.springframework.boot.convert.ApplicationConversionService.getSharedInstance());

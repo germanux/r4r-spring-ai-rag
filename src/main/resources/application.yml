@@ -44,13 +44,11 @@ spring:
 r4r:
   rag:
     audit:
-      enabled: ${RAG_AUDIT_ENABLED:false}
-      provider: ${RAG_AUDIT_PROVIDER:}
+      connect-timeout: ${RAG_AUDIT_CONNECT_TIMEOUT:400ms}
+      probe-timeout: ${RAG_AUDIT_PROBE_TIMEOUT:600ms}
+      total-timeout: ${RAG_AUDIT_TOTAL_TIMEOUT:60s}
     openai:
-      read-timeout: ${RAG_OPENAI_READ_TIMEOUT}
       max-calls-per-day: ${RAG_OPENAI_MAX_CALLS_PER_DAY}
-      enabled: ${RAG_OPENAI_ENABLED}
-      model: ${RAG_OPENAI_MODEL}
     stream:
       timeout: ${RAG_SSE_TIMEOUT}
       heartbeat-interval: ${RAG_SSE_HEARTBEAT_INTERVAL}
@@ -67,9 +65,10 @@ r4r:
       min-interval: ${RAG_WARMUP_MIN_INTERVAL}
       embedding-timeout: ${RAG_WARMUP_EMBEDDING_TIMEOUT:30s}
     generation:
-      # Local URLs/models are derived from RAG_GENERATION_PROVIDERS.
+      # Ordered local/remote entries are derived from RAG_GENERATION_PROVIDERS.
       connect-timeout: ${RAG_GENERATION_CONNECT_TIMEOUT}
       probe-timeout: ${RAG_GENERATION_PROBE_TIMEOUT}
+      total-timeout: ${RAG_GENERATION_TOTAL_TIMEOUT:180s}
     retrieval:
       top-k: ${RAG_TOP_K}
       min-score: ${RAG_MIN_SCORE}

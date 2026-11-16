@@ -24,7 +24,7 @@ class OpenAiFallbackTest {
         var localCalls = new java.util.concurrent.atomic.AtomicInteger();
         ChatModel failingLocal = prompt -> {
             localCalls.incrementAndGet();
-            throw new IllegalStateException("simulated local generation failure");
+            throw new org.springframework.web.client.ResourceAccessException("unavailable", new java.net.ConnectException());
         };
         ChatModel remote = prompt -> {
             calls.incrementAndGet();
@@ -78,9 +78,9 @@ class OpenAiFallbackTest {
             var answer=new ChatResponse(List.of(new Generation(new AssistantMessage("Answer [S1]"))));
             when(pc.call(prompt)).thenReturn(scenario==6?new ChatResponse(List.of(new Generation(new AssistantMessage("__R4R_ABSTAIN__")))):answer);
             when(lp.call(prompt)).thenReturn(answer);when(remote.call(prompt)).thenReturn(answer);
-            if(scenario>=1 && scenario!=6) when(pc.call(prompt)).thenThrow(new IllegalStateException());
-            if(scenario>=2 && scenario!=6) when(lp.call(prompt)).thenThrow(new IllegalStateException());
-            if(scenario==3) when(remote.call(prompt)).thenThrow(new IllegalStateException());
+            if(scenario>=1 && scenario!=6) when(pc.call(prompt)).thenThrow(new org.springframework.web.client.ResourceAccessException("unavailable", new java.net.ConnectException()));
+            if(scenario>=2 && scenario!=6) when(lp.call(prompt)).thenThrow(new org.springframework.web.client.ResourceAccessException("unavailable", new java.net.ConnectException()));
+            if(scenario==3) when(remote.call(prompt)).thenThrow(new org.springframework.web.client.ResourceAccessException("unavailable", new java.net.ConnectException()));
             var targets=new ArrayList<GenerationRouter.Target>();
             targets.add(new GenerationRouter.Target(new GenerationRouter.Provider("PC","http://pc","qwen3:8b"),pc,()->true));
             targets.add(new GenerationRouter.Target(new GenerationRouter.Provider("LP","http://lp","qwen2.5:7b"),lp,()->true));
@@ -126,14 +126,6 @@ class OpenAiFallbackTest {
         }
     }
 
-    @Test void modesRemainBackwardCompatibleAndRejectInvalidConfiguration() {
-        assertThat(OpenAiMode.parse("false")).isEqualTo(OpenAiMode.DISABLED);
-        assertThat(OpenAiMode.parse("true")).isEqualTo(OpenAiMode.FALLBACK);
-        assertThat(OpenAiMode.parse("primary")).isEqualTo(OpenAiMode.PRIMARY);
-        assertThat(OpenAiMode.parse("TRUE")).isEqualTo(OpenAiMode.FALLBACK);
-        assertThatThrownBy(() -> OpenAiMode.parse("unknown")).isInstanceOf(IllegalArgumentException.class);
-    }
-
     @Test
     @org.junit.jupiter.api.extension.ExtendWith(org.springframework.boot.test.system.OutputCaptureExtension.class)
     void primarySkipsLocalProbesUntilQuotaExhaustionAndPreservesTrace(org.springframework.boot.test.system.CapturedOutput output) {
@@ -143,6 +135,7 @@ class OpenAiFallbackTest {
                 .andRespond(withSuccess("{\"status\":\"completed\",\"output\":[{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"OK\"}]}]}", MediaType.APPLICATION_JSON));
         var remote = new OpenAiResponsesModel(builder.build(), "TEST_ONLY", "gpt-6-luna", 1);
         var local = mock(ChatModel.class);
+        when(local.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("local")))));
         var available = mock(java.util.function.BooleanSupplier.class);
         when(available.getAsBoolean()).thenReturn(true);
         var router = new GenerationRouter(List.of(
@@ -197,13 +190,13 @@ class OpenAiFallbackTest {
             var first = pool.submit(() -> model.call(new Prompt("first")));
             try {
                 assertThat(entered.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
-                assertThatThrownBy(() -> model.call(new Prompt("concurrent")))
+                assertThatThrownBy(() -> model.forModel("audit-model").call(new Prompt("concurrent")))
                         .isInstanceOf(OpenAiResponsesModel.RemoteFailure.class);
             } finally { release.countDown(); }
             assertThat(first.get(5, java.util.concurrent.TimeUnit.SECONDS)).isNotNull();
             var attempts = new ArrayList<java.util.concurrent.Future<?>>();
             for (int i = 0; i < 8; i++) attempts.add(pool.submit(() ->
-                    assertThatThrownBy(() -> model.call(new Prompt("over quota")))
+                    assertThatThrownBy(() -> model.forModel("audit-model").call(new Prompt("over quota")))
                             .isInstanceOfSatisfying(OpenAiResponsesModel.RemoteFailure.class,
                                     ex -> assertThat(ex.reason()).isEqualTo("quota_exhausted"))));
             for (var attempt : attempts) attempt.get(5, java.util.concurrent.TimeUnit.SECONDS);

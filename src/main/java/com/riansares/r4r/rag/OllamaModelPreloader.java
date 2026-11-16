@@ -99,11 +99,12 @@ public class OllamaModelPreloader implements AutoCloseable {
     private static List<Target> targets(GenerationProviderProperties generation, EmbeddingFailoverProperties embedding,
             OllamaEmbeddingProperties embeddings, OllamaChatProperties chat, Duration embeddingWarmupTimeout) {
         List<Target> targets = new ArrayList<>();
-        for (var configured : generation.providers()) {
+        var locals = generation.providers().stream().filter(p -> !p.remote()).toList();
+        for (var configured : locals) {
             var provider = new GenerationRouter.Provider(configured.name(), configured.baseUrl(), configured.model());
             var api = api(provider.baseUrl(), configured.readTimeout());
             targets.add(new Target(displayId(provider), provider, api(provider.baseUrl(), generation.probeTimeout()),
-                    configured.readTimeout(), configured == generation.providers().getFirst() ? 2 : 0, () -> {
+                    configured.readTimeout(), configured == locals.getFirst() ? 2 : 0, () -> {
                 var result = api.chat(OllamaApi.ChatRequest.builder(provider.model()).messages(List.of())
                         .stream(false).keepAlive(chat.getOptions().getKeepAlive()).options(chat.getOptions()).build());
                 if (result == null || !Boolean.TRUE.equals(result.done())) throw new IllegalStateException("Empty warmup response");

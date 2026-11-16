@@ -17,9 +17,16 @@ public final class PublicRagEnvironment implements EnvironmentPostProcessor, Ord
         apply(environment);
     }
     public static void apply(ConfigurableEnvironment env) {
+        for (String key : new String[]{"RAG_OPENAI_ENABLED","RAG_OPENAI_MODEL","RAG_OPENAI_READ_TIMEOUT",
+                "RAG_AUDIT_ENABLED","RAG_AUDIT_PROVIDER","r4r.rag.openai.enabled","r4r.rag.openai.model","r4r.rag.openai.read-timeout","r4r.rag.audit.enabled","r4r.rag.audit.provider"}) {
+            if (env.containsProperty(key)) throw new IllegalArgumentException("Legacy provider setting must be migrated to provider lists: " + key);
+        }
+        if (!env.getProperty("RAG_LEGACY_PROVIDER_SETTINGS", "").isBlank())
+            throw new IllegalArgumentException("Legacy provider settings must be migrated before restarting Compose");
         Map<String,Object> values = new LinkedHashMap<>();
         providers(env, values, "RAG_GENERATION_PROVIDERS", "generation", true);
         providers(env, values, "RAG_EMBEDDING_PROVIDERS", "embedding", false);
+        providers(env, values, "RAG_AUDIT_PROVIDERS", "audit", true);
         String[] origins=list(env,"RAG_CORS_ALLOWED_ORIGINS");
         if (origins != null) {
             for (String origin:origins) {
@@ -35,24 +42,17 @@ public final class PublicRagEnvironment implements EnvironmentPostProcessor, Ord
     }
     private static void providers(ConfigurableEnvironment env, Map<String,Object> values,
             String key, String type, boolean generation) {
-        String[] entries=list(env,key);
-        if (entries==null) return;
-        for (int i=0;i<entries.length;i++) {
-            String[] parts=entries[i].split("\\|",-1);
-            if (parts.length!=(generation ? 3 : 2) || generation && parts[1].isBlank())
-                throw new IllegalArgumentException(generation ? "Provider requires URL|model|timeout" : "Provider requires URL|timeout");
-            String url=endpoint(parts[0]).toString();
-            java.time.Duration timeout;
-            try { timeout=org.springframework.boot.convert.DurationStyle.detectAndParse(parts[parts.length-1].trim()); }
-            catch (RuntimeException invalid) { throw new IllegalArgumentException("Invalid provider timeout"); }
-            if (timeout.toMillis()<2) throw new IllegalArgumentException("Positive provider timeout required");
+        String text=env.getProperty(key);
+        if (text==null) return;
+        var entries=ProviderList.parse(text,!generation);
+        if (entries.isEmpty()) values.put("r4r.rag."+type+".providers",java.util.List.of());
+        for (int i=0;i<entries.size();i++) {
+            var entry=entries.get(i);
             String prefix="r4r.rag."+type+".providers["+i+"].";
-            // Stable endpoint identity, without exposing an address or inventing a machine role.
-            String id="ollama-"+java.util.UUID.nameUUIDFromBytes(url.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            values.put(prefix+"name",id);
-            values.put(prefix+"base-url",url);
-            values.put(prefix+"read-timeout",timeout);
-            if (generation) values.put(prefix+"model",parts[1].trim());
+            values.put(prefix+"name",entry.name());
+            values.put(prefix+"base-url",entry.baseUrl());
+            values.put(prefix+"model",entry.model());
+            values.put(prefix+"read-timeout",entry.readTimeout());
         }
     }
     private static String[] list(ConfigurableEnvironment env, String key) {

@@ -81,7 +81,7 @@ class RagStreamingTest {
 
     @Test void pcFailureUsesLaptopWithoutChangingRouterPriority() {
         var service = service(documents(), true, true);
-        when(pc.call(any(Prompt.class))).thenThrow(new IllegalStateException("private error"));
+        when(pc.call(any(Prompt.class))).thenThrow(new org.springframework.web.client.ResourceAccessException("private error", new java.net.ConnectException()));
         when(laptop.call(any(Prompt.class))).thenReturn(answer());
         service.answer("Pregunta", null, "es", progress);
         assertThat(stages()).containsSubsequence("GENERATION_STARTED", "PROVIDER_FAILED", "FAILOVER_STARTED", "GENERATION_STARTED", "GENERATION_COMPLETED");
@@ -103,7 +103,7 @@ class RagStreamingTest {
 
     @Test void allProviderErrorsNeverInventCompletionAndClearEmbeddingScope() {
         var service = service(documents(), true, true);
-        for (var model : List.of(pc, laptop, remote)) when(model.call(any(Prompt.class))).thenThrow(new IllegalStateException("secret"));
+        for (var model : List.of(pc, laptop, remote)) when(model.call(any(Prompt.class))).thenThrow(new org.springframework.web.client.ResourceAccessException("secret", new java.net.ConnectException()));
         assertThatThrownBy(() -> service.answer("Pregunta", null, "es", progress)).isInstanceOf(RuntimeException.class);
         assertThat(stages()).filteredOn(s -> s.equals("PROVIDER_FAILED")).hasSize(3);
         assertThat(stages()).doesNotContain("GENERATION_COMPLETED", "VALIDATION_COMPLETED");

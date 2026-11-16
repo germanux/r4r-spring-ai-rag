@@ -33,14 +33,18 @@ class RagRuntimeControllerTest {
         assertThat(info.database()).isEqualTo("PostgreSQL · pgvector");
     }
 
+    private ChatModel respondingModel() {
+        return prompt -> new org.springframework.ai.chat.model.ChatResponse(java.util.List.of(
+                new org.springframework.ai.chat.model.Generation(new org.springframework.ai.chat.messages.AssistantMessage("Answer"))));
+    }
     @org.junit.jupiter.api.BeforeEach void defaults() {
         when(preloader.modelStates()).thenReturn(java.util.List.of());
         when(preloader.memoryFor(any())).thenReturn(new OllamaModelPreloader.MemoryState(false, java.util.List.of()));
     }
     private final AtomicBoolean pcUp = new AtomicBoolean(false), laptopUp = new AtomicBoolean(true);
     private final GenerationRouter router = new GenerationRouter(
-            new GenerationRouter.Target(new GenerationRouter.Provider("PC", "http://192.168.1.207:11434", "qwen3:8b"), mock(ChatModel.class), pcUp::get),
-            new GenerationRouter.Target(new GenerationRouter.Provider("ASUS", "http://192.168.1.209:11434", "qwen2.5:7b"), mock(ChatModel.class), laptopUp::get));
+            new GenerationRouter.Target(new GenerationRouter.Provider("PC", "http://192.168.1.207:11434", "qwen3:8b"), respondingModel(), pcUp::get),
+            new GenerationRouter.Target(new GenerationRouter.Provider("ASUS", "http://192.168.1.209:11434", "qwen2.5:7b"), respondingModel(), laptopUp::get));
     private final OllamaModelPreloader preloader = mock(OllamaModelPreloader.class);
     private final RagRuntimeController controller = new RagRuntimeController(new RagRetrievalProperties(3, .63),
             "nomic-embed-text", "1024", "", preloader, router);
@@ -132,11 +136,10 @@ class RagRuntimeControllerTest {
         assertThat(models.get(2).vramBytes()).isZero();
     }
     @Test void cloudNeverProbesOllamaOrReportsLocalHardware() {
-        var remote = new GenerationRouter.Target(new GenerationRouter.Provider("OpenAI","https://api.openai.com/v1","gpt-6-luna"), mock(ChatModel.class),()->true);
+        var remote = new GenerationRouter.Target(new GenerationRouter.Provider("OpenAI","https://api.openai.com/v1","gpt-6-luna"), respondingModel(),()->true);
         var cloudRouter=new GenerationRouter(java.util.List.of(remote));
         cloudRouter.call(new Prompt("question"));
         var cloud=new RagRuntimeController(new RagRetrievalProperties(3,.63),"nomic-embed-text", "1024","jdbc:postgresql://db/rag",preloader,cloudRouter);
-        org.springframework.test.util.ReflectionTestUtils.setField(cloud, "remoteEnabled", "primary");
         var info=cloud.runtime();
         assertThat(info.remoteFallback().enabled()).isTrue();
         assertThat(info.lastUsedProvider().name()).isEqualTo("OpenAI");
@@ -147,8 +150,8 @@ class RagRuntimeControllerTest {
 
     @Test void selectedProviderStatusIsNotInferredFromFirstMatchingModelName() throws Exception {
         var sameRouter = new GenerationRouter(
-                new GenerationRouter.Target(new GenerationRouter.Provider("PC", "http://192.168.1.207:11434", "shared:latest"), mock(ChatModel.class), () -> false),
-                new GenerationRouter.Target(new GenerationRouter.Provider("ASUS", "http://192.168.1.209:11434", "shared:latest"), mock(ChatModel.class), () -> true));
+                new GenerationRouter.Target(new GenerationRouter.Provider("PC", "http://192.168.1.207:11434", "shared:latest"), respondingModel(), () -> false),
+                new GenerationRouter.Target(new GenerationRouter.Provider("ASUS", "http://192.168.1.209:11434", "shared:latest"), respondingModel(), () -> true));
         sameRouter.call(new Prompt("fallback"));
         memory("{\"models\":[]}");
         var pcStatus = new OllamaModelPreloader.ModelStatus("desktop", "shared:latest", "loaded", null, null, false);

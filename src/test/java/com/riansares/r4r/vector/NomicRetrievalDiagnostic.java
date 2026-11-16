@@ -49,7 +49,7 @@ public final class NomicRetrievalDiagnostic {
         var env=new StandardEnvironment();
         // Native production imports resolve credentials internally; no private file parsing or credential output.
         env.getPropertySources().addFirst(new MapPropertySource("diagnostic-only",Map.of(
-                "spring.config.location","file:./src/main/resources/application.yml","r4r.rag.openai.enabled","false")));
+                "spring.config.location","file:./src/main/resources/application.yml","RAG_GENERATION_PROVIDERS","http://127.0.0.1:1|offline|100ms","RAG_AUDIT_PROVIDERS","")));
         ConfigDataEnvironmentPostProcessor.applyTo(env);
         if(generalization) {
             String pc=Arrays.stream(env.getRequiredProperty("RAG_GENERATION_PROVIDERS").split(","))

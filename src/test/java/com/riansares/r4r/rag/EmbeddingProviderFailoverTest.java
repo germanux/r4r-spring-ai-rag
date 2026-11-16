@@ -164,6 +164,14 @@ class EmbeddingProviderFailoverTest {
                 .isInstanceOf(EmbeddingConfigurationException.class);
         assertThat(calls).isEmpty();
     }
+    @Test void incompatibleModelInOneProviderIsRejectedBeforeAnyNetwork() {
+        var bad = new EmbeddingFailoverProperties(List.of(new EmbeddingFailoverProperties.Provider(
+                "lp", "http://127.0.0.1:1", "other-model", Duration.ofMillis(100))),
+                Duration.ofMillis(50), Duration.ofMillis(100), Duration.ofSeconds(2), 1024, DIGEST);
+        assertThatThrownBy(() -> new EmbeddingProviderRouter(bad, options, Duration.ofSeconds(3)))
+                .isInstanceOf(EmbeddingConfigurationException.class);
+        assertThat(calls).isEmpty();
+    }
     @Test void elapsedSseDeadlinePreventsNetworkAndScopeIsReleased() throws Exception {
         Node a=node("lp"), b=node("pc"), c=node("nas");
         var p=new EmbeddingFailoverProperties(List.of(provider("laptop",a,10),provider("desktop",b,10),provider("nas",c,10)),

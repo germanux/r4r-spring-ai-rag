@@ -51,7 +51,7 @@ class DatabaseEnvironmentTest {
                     .isEqualTo(TestDatabaseGuard.NoExternalJdbcDriver.class.getName());
             assertThat(env.getProperty("spring.flyway.enabled", Boolean.class)).isFalse();
             assertThat(env.getProperty("r4r.rag.vector.s3vectors.enabled", Boolean.class)).isFalse();
-            assertThat(env.getProperty("r4r.rag.openai.enabled", Boolean.class)).isFalse();
+            assertThat(env.getProperty("r4r.rag.generation.providers[0].name")).isEqualTo("offline-generation");
             assertThat(env.getProperty("r4r.rag.generation.providers[0].base-url")).isEqualTo("http://127.0.0.1:1");
             assertThat(env.getPropertySources().stream().map(org.springframework.core.env.PropertySource::getName))
                     .noneMatch(name -> name.contains("/.env[") || name.endsWith("/.env"));

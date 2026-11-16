@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.LongSupplier;
 
-/** One-shot, short-lived evidence handoff. No retrieval, persistence, fallback or model preloading. */
+/** One-shot, short-lived evidence handoff. No retrieval, persistence or model preloading; technical failover only. */
 public final class RagAuditService implements AutoCloseable {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RagAuditService.class);
     private static final int MAX_PENDING = 8, MAX_CONTEXT_CHARS = 100_000;
@@ -30,10 +30,16 @@ public final class RagAuditService implements AutoCloseable {
     private final Map<String, Pending> pending = new HashMap<>();
     private final Set<CompletableFuture<RagAuditResult>> active = ConcurrentHashMap.newKeySet();
     private final ThreadPoolExecutor worker = new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS,
-            new SynchronousQueue<>(), r -> daemon(r, "r4r-audit"));
+            new ArrayBlockingQueue<>(1), r -> daemon(r, "r4r-audit"));
     private final ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor(1, r -> daemon(r, "r4r-audit-timeout"));
+    private final Semaphore admission = new Semaphore(1);
     private volatile boolean closed;
 
+    public RagAuditService(List<GenerationRouter.Target> targets, Duration timeout, ObjectMapper json) {
+        this(!targets.isEmpty(), targets.isEmpty() ? null : new GenerationRouter(targets, timeout, "audit"),
+                targets.isEmpty() ? null : targets.getFirst().provider().name(),
+                targets.isEmpty() ? null : targets.getFirst().provider().model(), timeout, json);
+    }
     public RagAuditService(boolean enabled, ChatModel model, String provider, String modelName,
                            Duration timeout, ObjectMapper json) {
         this(enabled, model, provider, modelName, timeout, json, System::nanoTime);
@@ -81,33 +87,51 @@ public final class RagAuditService implements AutoCloseable {
         var result = new CompletableFuture<RagAuditResult>();
         long requested = System.nanoTime();
         var invoked = new java.util.concurrent.atomic.AtomicBoolean();
+        var attempted = new java.util.concurrent.atomic.AtomicReference<GenerationRouter.Provider>();
+        if (!admission.tryAcquire()) {
+            result.complete(metadata(RagAuditResult.inconclusive(input.status()), "busy", requested, false, null));
+            log.info("RAG audit result=busy");
+            return result;
+        }
+        // Reserve admission until the actual call exits, even if it ignores cancellation.
+        // One handoff slot prevents a false busy response between completion and worker reuse.
+        var lifecycle = new java.util.concurrent.atomic.AtomicInteger();
         var task = new FutureTask<Void>(() -> {
-            long started = System.nanoTime();
-            String technical = "invalid";
+            if (!lifecycle.compareAndSet(0, 1)) return null;
             RagAuditResult review = RagAuditResult.inconclusive(input.status());
+            String technical = "invalid_json";
             try {
                 var auditPrompt = prompt(input);
                 invoked.set(true);
-                var response = model.call(auditPrompt);
+                var response = ProviderExecution.until(requested + timeout.toNanos(), () ->
+                        model instanceof GenerationRouter router
+                                ? router.route(auditPrompt, RagProgress.silent(), attempted::set)
+                                : model.call(auditPrompt));
                 review = validate(response.getResult().getOutput().getText(), input.status());
-                technical = review.conclusive() ? "completed" : "inconclusive";
-            } catch (RuntimeException ignored) { technical = "unavailable"; }
+                technical = review.conclusive() ? "completed" : review.metadata() == null ? "invalid_json" : "inconclusive";
+            } catch (RuntimeException failure) { technical = ProviderExecution.reason(failure); }
             finally {
-                review = metadata(review, technical, requested, invoked.get());
+                if (lifecycle.compareAndSet(1, 2)) admission.release();
+                review = metadata(review, technical, requested, invoked.get(), attempted.get());
                 if (!result.complete(review)) technical = result.isCancelled() ? "cancelled" : "discarded";
-                log.info("RAG audit provider={} model={} durationMs={} effectiveStatus={} result={}",
-                        provider, modelName, (System.nanoTime() - started) / 1_000_000.0,
-                        result.isCancelled() ? input.status() : result.getNow(RagAuditResult.inconclusive(input.status())).effectiveStatus(), technical);
+                log.info("RAG audit provider={} model={} durationMs={} result={}",
+                        attempted.get() == null ? provider : attempted.get().name(),
+                        attempted.get() == null ? modelName : attempted.get().model(),
+                        (System.nanoTime() - requested) / 1_000_000.0, technical);
             }
             return null;
-        });
+        }) {
+            @Override protected void done() {
+                // A cancelled task that never entered its callable also owns a reservation.
+                if (lifecycle.compareAndSet(0, 2)) admission.release();
+                worker.remove(this);
+            }
+        };
         active.add(result);
         try {
             var deadline = timer.schedule(() -> {
-                if (result.complete(metadata(RagAuditResult.inconclusive(input.status()), "timeout", requested, invoked.get()))) {
-                    task.cancel(true);
-                    log.info("RAG audit provider={} model={} durationMs={} effectiveStatus={} result=timeout", provider, modelName, timeout.toMillis(), input.status());
-                }
+                if (result.complete(metadata(RagAuditResult.inconclusive(input.status()), "timeout", requested,
+                        invoked.get(), attempted.get()))) task.cancel(true);
             }, timeout.toMillis(), TimeUnit.MILLISECONDS);
             result.whenComplete((value, error) -> {
                 deadline.cancel(false); active.remove(result);
@@ -115,17 +139,21 @@ public final class RagAuditService implements AutoCloseable {
             });
             worker.execute(task);
         } catch (RejectedExecutionException busy) {
+            task.cancel(true);
             active.remove(result);
-            result.complete(metadata(RagAuditResult.inconclusive(input.status()), "busy", requested, false));
-            log.info("RAG audit provider={} model={} durationMs=0 effectiveStatus={} result=busy", provider, modelName, input.status());
+            result.complete(metadata(RagAuditResult.inconclusive(input.status()), "busy", requested, false, null));
         }
         return result;
     }
 
-    private RagAuditResult metadata(RagAuditResult result, String outcome, long started, boolean invoked) {
+    private RagAuditResult metadata(RagAuditResult result, String outcome, long started, boolean invoked,
+                                   GenerationRouter.Provider selected) {
         var validated = result.metadata();
+        boolean attributed = invoked && (!(model instanceof GenerationRouter) || selected != null);
         return result.withMetadata(new RagAuditResult.Metadata(validated == null ? null : validated.verdict(),
-                validated == null ? null : validated.reason(), invoked ? provider : null, invoked ? modelName : null,
+                validated == null ? null : validated.reason(),
+                attributed ? selected == null ? provider : selected.name() : null,
+                attributed ? selected == null ? modelName : selected.model() : null,
                 (System.nanoTime() - started) / 1_000_000.0, outcome));
     }
 

@@ -16,7 +16,7 @@ public final class LiveFailoverExecution {
             var result=new LinkedHashMap<String,Object>();
             for (String name:List.of("RAG_GENERATION_PROVIDERS","RAG_GENERATION_TEMPERATURE","RAG_EMBEDDING_PROVIDERS","RAG_EMBEDDING_MODEL",
                     "RAG_EMBEDDING_EXPECTED_DIGEST","RAG_VECTOR_PRIMARY","RAG_VECTOR_FAILOVER_ENABLED",
-                    "RAG_S3_VECTORS_ENABLED","RAG_OPENAI_ENABLED","RAG_S3_VECTORS_REGION","RAG_S3_VECTORS_BUCKET",
+                    "RAG_S3_VECTORS_ENABLED","RAG_AUDIT_PROVIDERS","RAG_S3_VECTORS_REGION","RAG_S3_VECTORS_BUCKET",
                     "RAG_S3_VECTORS_INDEX","POSTGRES_HOST","POSTGRES_PORT","POSTGRES_DB","POSTGRES_TEST_PORT",
                     "POSTGRES_TEST_DB","POSTGRES_TEST_USER")) result.put(name,env.getProperty(name));
             for (String name:List.of("AWS_ACCESS_KEY_ID","AWS_SECRET_ACCESS_KEY","OPENAI_API_KEY","POSTGRES_PASSWORD"))

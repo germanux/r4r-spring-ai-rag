@@ -42,9 +42,11 @@ public final class OpenAiResponsesModel implements ChatModel {
     @Override public ChatResponse call(Prompt prompt) { return call(prompt, model); }
     private ChatResponse call(Prompt prompt, String selectedModel) {
         if (LocalDate.now(ZoneOffset.UTC).equals(exhaustedDay)) throw new RemoteFailure("quota_exhausted");
-        if (key == null || key.isBlank() || !inFlight.tryAcquire()) throw failure();
+        ProviderExecution.check();
+        if (key == null || key.isBlank()) throw new RemoteFailure("authentication");
+        if (!inFlight.tryAcquire()) throw new RemoteFailure("saturated");
         try {
-            if (prompt.getContents().length() > 32000) throw failure();
+            if (prompt.getContents().length() > 32000) throw new RemoteFailure("invalid_request");
             LocalDate today = LocalDate.now(ZoneOffset.UTC);
             if (!today.equals(callDay)) { callDay = today; callsOnDay = 0; }
             if (callsOnDay >= maxCallsPerDay) {
@@ -76,6 +78,7 @@ public final class OpenAiResponsesModel implements ChatModel {
             if (text.toString().isBlank()) throw failure();
             return new ChatResponse(List.of(new Generation(new AssistantMessage(text.toString()))));
         } catch (RuntimeException ex) {
+            ProviderExecution.checkCancellation(ex);
             // Do not propagate provider bodies, headers or causes containing credentials/content.
             if (ex instanceof RemoteFailure safe) throw safe;
             throw new RemoteFailure(GenerationRouter.failureReason(ex));

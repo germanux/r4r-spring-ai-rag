@@ -28,8 +28,11 @@ class LunaLiveIT {
     void realRemoteAnswerPreservesEnglishAndCitationsAfterSimulatedLocalFailures() {
         String key = setting("OPENAI_API_KEY", "");
         assertThat(key).as("Existing API key available").isNotBlank();
-        String remoteModel = setting("RAG_OPENAI_MODEL", "gpt-6-luna");
-        var readTimeout = DurationStyle.detectAndParse(setting("RAG_OPENAI_READ_TIMEOUT", "35s"));
+        var remoteEntry = com.riansares.r4r.config.ProviderList.parse(setting("RAG_GENERATION_PROVIDERS", ""), false)
+                .stream().filter(com.riansares.r4r.config.ProviderList.Entry::remote).findFirst()
+                .orElseThrow(() -> new IllegalStateException("Explicit openai generation entry required"));
+        String remoteModel = remoteEntry.model();
+        var readTimeout = remoteEntry.readTimeout();
         int dailyLimit = Integer.parseInt(setting("RAG_OPENAI_MAX_CALLS_PER_DAY", "20"));
         var http = new SimpleClientHttpRequestFactory();
         http.setConnectTimeout(Duration.ofSeconds(3));

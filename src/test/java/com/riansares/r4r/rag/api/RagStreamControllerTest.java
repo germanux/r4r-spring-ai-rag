@@ -120,8 +120,8 @@ class RagStreamControllerTest {
     }
     @Test void allProvidersFailWithSanitizedErrorAndNoAnswerReady() throws Exception {
         evidence();
-        when(pc.call(any(Prompt.class))).thenThrow(new IllegalStateException("http://192.168.1.207 secret prompt"));
-        when(laptop.call(any(Prompt.class))).thenThrow(new IllegalStateException("credential secret"));
+        when(pc.call(any(Prompt.class))).thenThrow(new org.springframework.web.client.ResourceAccessException("http://192.168.1.207 secret prompt", new java.net.ConnectException()));
+        when(laptop.call(any(Prompt.class))).thenThrow(new org.springframework.web.client.ResourceAccessException("credential secret", new java.net.ConnectException()));
         try (var controller = new RagStreamController(service, router, Duration.ofSeconds(3))) {
             String body = request(mvc(controller)).getResponse().getContentAsString();
             assertThat(body).contains("event:PROVIDER_FAILED", "event:FAILOVER_STARTED", "event:ERROR", "processing_failed")

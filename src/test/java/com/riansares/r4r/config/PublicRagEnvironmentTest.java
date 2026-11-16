@@ -17,7 +17,7 @@ class PublicRagEnvironmentTest {
     @Test void privateOverridesPublicAndListsReachExistingConsumers() throws Exception {
         Path base=root.resolve("public.properties"), overrides=root.resolve("private.properties");
         Files.copy(Path.of("docker-spring/.env.base"),base);
-        Files.writeString(overrides,"RAG_EMBEDDING_PROVIDERS=\"http://127.0.0.1:9999|8s,http://127.0.0.1:9998|9s\"\n"
+        Files.writeString(overrides,"RAG_EMBEDDING_PROVIDERS=\"http://127.0.0.1:9999|qwen3-embedding:0.6b|8s,http://127.0.0.1:9998|qwen3-embedding:0.6b|9s\"\n"
                 +"RAG_GENERATION_PROVIDERS=http://127.0.0.1:9997|test-a|20s,http://127.0.0.1:9996|test-b|30s\n"
                 +"POSTGRES_PASSWORD=fictitious\nRAG_CORS_ALLOWED_ORIGINS=http://localhost:8000\n");
         var env=new org.springframework.core.env.StandardEnvironment();
@@ -47,7 +47,7 @@ class PublicRagEnvironmentTest {
         ConfigDataEnvironmentPostProcessor.applyTo(env);
         PublicRagEnvironment.apply(env);
         assertThat(env.getProperty("r4r.rag.embedding.providers[0].base-url")).isEqualTo("http://192.168.1.209:11434");
-        assertThat(env.getProperty("RAG_OPENAI_ENABLED")).isEqualTo("true");
+        assertThat(env.getProperty("r4r.rag.generation.providers[2].name")).isEqualTo("OpenAI");
         assertThat(env.getProperty("RAG_S3_VECTORS_ENABLED")).isEqualTo("true");
         assertThat(env.getProperty("RAG_VECTOR_FAILOVER_ENABLED")).isEqualTo("true");
         assertThat(env.getProperty("RAG_VECTOR_PRIMARY")).isEqualTo("pgvector");
@@ -55,7 +55,7 @@ class PublicRagEnvironmentTest {
         assertThat(env.getProperty("RAG_S3_LAMBDA_FUNCTION")).isEqualTo("r4r-s3-vectors-retrieval");
         assertThat(env.getProperty("RAG_S3_LAMBDA_REGION")).isEqualTo("eu-north-1");
         assertThat(env.getProperty("RAG_S3_LAMBDA_TIMEOUT")).isEqualTo("10s");
-        assertThat(env.getProperty("RAG_AUDIT_ENABLED")).isEqualTo("true");
+        assertThat(env.getProperty("r4r.rag.audit.providers[1].name")).isEqualTo("OpenAI");
         assertThat(env.getProperty("RAG_TOP_K")).isEqualTo("5");
         assertThat(env.getProperty("RAG_MIN_SCORE")).isEqualTo("0.49");
         assertThat(env.getProperty("RAG_EMBEDDING_DIMENSIONS")).isEqualTo("1024");
@@ -88,14 +88,14 @@ class PublicRagEnvironmentTest {
     @Test void arbitraryListsPreserveEndpointTimeoutAndIdentityWhenReordered() {
         var env=new MockEnvironment().withProperty("RAG_GENERATION_PROVIDERS",
                 "http://a:11434|a|20s,http://b:11434|b|30s,http://c:11434|c|40s,http://d:11434|d|50s")
-                .withProperty("RAG_EMBEDDING_PROVIDERS","http://a:11434|8s,http://b:11434|9s,http://c:11434|10s,http://d:11434|11s");
+                .withProperty("RAG_EMBEDDING_PROVIDERS","http://a:11434|qwen3-embedding:0.6b|8s,http://b:11434|qwen3-embedding:0.6b|9s,http://c:11434|qwen3-embedding:0.6b|10s,http://d:11434|qwen3-embedding:0.6b|11s");
         PublicRagEnvironment.apply(env);
         String identity=env.getProperty("r4r.rag.embedding.providers[3].name");
         assertThat(env.getProperty("r4r.rag.generation.providers[3].model")).isEqualTo("d");
         assertThat(env.getProperty("r4r.rag.embedding.providers[3].read-timeout",java.time.Duration.class))
                 .isEqualTo(java.time.Duration.ofSeconds(11));
         env.withProperty("RAG_GENERATION_PROVIDERS","http://d:11434|d|50s")
-                .withProperty("RAG_EMBEDDING_PROVIDERS","http://d:11434|11s");
+                .withProperty("RAG_EMBEDDING_PROVIDERS","http://d:11434|qwen3-embedding:0.6b|11s");
         PublicRagEnvironment.apply(env);
         assertThat(env.getProperty("r4r.rag.embedding.providers[0].name")).isEqualTo(identity);
         assertThat(env.getProperty("r4r.rag.embedding.providers[0].read-timeout",java.time.Duration.class))
@@ -110,5 +110,30 @@ class PublicRagEnvironmentTest {
         }
         assertThatThrownBy(() -> PublicRagEnvironment.apply(new MockEnvironment().withProperty("RAG_CORS_ALLOWED_ORIGINS","*")))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test void remotePositionIsExplicitAndEachCircuitIsIndependent() {
+        var env = new MockEnvironment().withProperty("RAG_GENERATION_PROVIDERS",
+                "http://a:11434|local|20s,openai|remote|30s,http://b:11434|backup|40s")
+                .withProperty("RAG_AUDIT_PROVIDERS", "openai|audit|15s,http://a:11434|audit-local|10s");
+        PublicRagEnvironment.apply(env);
+        assertThat(env.getProperty("r4r.rag.generation.providers[1].name")).isEqualTo("OpenAI");
+        assertThat(env.getProperty("r4r.rag.generation.providers[2].model")).isEqualTo("backup");
+        assertThat(env.getProperty("r4r.rag.audit.providers[0].model")).isEqualTo("audit");
+        env.withProperty("RAG_AUDIT_PROVIDERS", "");
+        PublicRagEnvironment.apply(env);
+        assertThat(Binder.get(env).bind("r4r.rag.audit", AuditProviderProperties.class).get().providers()).isEmpty();
+    }
+
+    @Test void rejectsIncompatibleEmbeddingProviderAndLegacyActivationWithoutEchoingValues() {
+        assertThatThrownBy(() -> ProviderList.parse("openai|any|1s", true)).isInstanceOf(IllegalArgumentException.class);
+        for (String timeout : new String[]{"-1s", "0s", "private-secret", "4m"}) {
+            assertThatThrownBy(() -> ProviderList.parse("http://a:11434|model|" + timeout, false))
+                    .isInstanceOf(IllegalArgumentException.class).hasMessageNotContaining("private-secret");
+        }
+        assertThatThrownBy(() -> PublicRagEnvironment.apply(new MockEnvironment().withProperty("RAG_LEGACY_PROVIDER_SETTINGS", "obsolete")))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("migrated");
+        assertThatThrownBy(() -> PublicRagEnvironment.apply(new MockEnvironment().withProperty("RAG_OPENAI_ENABLED", "private-secret")))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("migrated").hasMessageNotContaining("private-secret");
     }
 }

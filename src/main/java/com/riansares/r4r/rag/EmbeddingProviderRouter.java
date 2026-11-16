@@ -3,20 +3,13 @@ package com.riansares.r4r.rag;
 import com.riansares.r4r.config.EmbeddingFailoverProperties;
 import com.riansares.r4r.config.EmbeddingFailoverProperties.Provider;
 import io.micrometer.observation.ObservationRegistry;
-import java.io.EOFException;
-import java.io.InterruptedIOException;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
-import java.nio.channels.ClosedByInterruptException;
 import java.time.Duration;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.LongSupplier;
-import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.embedding.EmbeddingRequest;
@@ -25,15 +18,12 @@ import org.springframework.ai.ollama.OllamaEmbeddingModel;
 import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.ollama.api.OllamaOptions;
 import org.springframework.ai.ollama.management.ModelManagementOptions;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
 /** Ordered failover with a short negative cache; healthy preferred providers remain first. */
 public final class EmbeddingProviderRouter {
     private static final Logger log = LoggerFactory.getLogger(EmbeddingProviderRouter.class);
-    private static final Set<Integer> RECOVERABLE = Set.of(408, 429, 500, 502, 503, 504);
     private final List<Provider> targets;
     private final EmbeddingFailoverProperties config;
     private final OllamaOptions options;
@@ -73,6 +63,8 @@ public final class EmbeddingProviderRouter {
         if (config.totalTimeout().compareTo(streamTimeout) > 0)
             throw new EmbeddingConfigurationException("Embedding budget must not exceed SSE timeout");
         for (Provider target : targets) {
+            if (!model.equals(canonical(target.model())))
+                throw new EmbeddingConfigurationException("Incompatible embedding provider model");
             if (target.name() == null || !target.name().matches("[a-zA-Z0-9_-]+")
                     || target.readTimeout() == null || target.readTimeout().toMillis() < 2)
                 throw new EmbeddingConfigurationException("Provider name and positive read timeout required");
@@ -99,30 +91,34 @@ public final class EmbeddingProviderRouter {
         long budget = Math.min(config.totalTimeout().toMillis(), RagProgress.embeddingTimeLeft(streamTimeout));
         long deadline = started + Duration.ofMillis(budget).toNanos();
         String id = UUID.randomUUID().toString();
-        RuntimeException last = null;
-        for (int i = 0; i < targets.size(); i++) {
+        var previous = new java.util.concurrent.atomic.AtomicReference<Provider>();
+        try { return ProviderExecution.until(deadline, () -> OrderedProviderFailover.execute(
+                targets.stream().map(t -> new OrderedProviderFailover.Target<>(t.name(), t)).toList(), entry -> {
             RagProgress.checkEmbeddingCancellation();
-            Provider target = targets.get(i);
+            Provider target = entry.client();
             Long failedAt = unavailableSince.get(target.baseUrl());
             if (failedAt != null && clock.getAsLong() - failedAt < unavailableCooldownNanos) {
                 log.info("Embedding id={} provider={} model={} outcome=cooldown remainingMs={}",
                         id, target.name(), model, (unavailableCooldownNanos - (clock.getAsLong() - failedAt)) / 1_000_000);
-                continue;
+                return false;
             }
+            return true;
+        }, target -> {
+            previous.set(target);
             long attempt = System.nanoTime();
             String outcome = "failed", phase = "probe";
             log.info("Embedding id={} provider={} host={} model={} outcome=attempt connectTimeoutMs={} probeTimeoutMs={} readTimeoutMs={}",
                     id, target.name(), RagProgress.publicProvider(new GenerationRouter.Provider(target.name(), target.baseUrl(), model)),
                     model, config.connectTimeout().toMillis(), config.probeTimeout().toMillis(), target.readTimeout().toMillis());
             try {
-                var tags = api(target, config.probeTimeout(), deadline).listModels();
+                var tags = api(target, config.probeTimeout()).listModels();
                 var installed = tags.models().stream().filter(m -> model.equals(canonical(m.name()))).findFirst()
                         .orElseThrow(() -> new EmbeddingConfigurationException("Configured embedding model is not installed"));
                 if (!config.expectedDigest().equalsIgnoreCase(installed.digest()))
                     throw new EmbeddingConfigurationException("Embedding model digest mismatch");
                 RagProgress.checkEmbeddingCancellation();
                 phase = "inference";
-                var client = new OllamaEmbeddingModel(api(target, target.readTimeout(), deadline), options,
+                var client = new OllamaEmbeddingModel(api(target, target.readTimeout()), options,
                         ObservationRegistry.NOOP, ModelManagementOptions.defaults());
                 EmbeddingResponse response = client.call(request);
                 RagProgress.checkEmbeddingCancellation();
@@ -134,7 +130,6 @@ public final class EmbeddingProviderRouter {
                 return response;
             } catch (RuntimeException failure) {
                 checkCancellation(failure);
-                last = failure;
                 boolean cacheFailure = recoverable(failure) && !timedOut(failure);
                 log.warn("Embedding attempt id={} provider={} model={} phase={} error={} timeout={} cooldownMs={}",
                         id, target.name(), model, phase, failure.getClass().getSimpleName(), timedOut(failure),
@@ -144,28 +139,26 @@ public final class EmbeddingProviderRouter {
                 // turn that into 30 seconds of bypassing a now-ready preferred host.
                 if (cacheFailure && unavailableCooldownNanos > 0) unavailableSince.put(target.baseUrl(), clock.getAsLong());
                 else unavailableSince.remove(target.baseUrl());
-                if (i + 1 < targets.size() && System.nanoTime() < deadline)
-                    log.info("Embedding fallback id={} from={} to={}", id, target.name(), targets.get(i + 1).name());
+                throw failure;
             } finally {
                 log.info("Embedding id={} provider={} model={} outcome={} attemptMs={} totalMs={}",
                         id, target.name(), model, outcome, elapsed(attempt), elapsed(started));
             }
-            if (System.nanoTime() >= deadline) break;
+        }, ProviderExecution::recoverable, next ->
+                log.info("Embedding fallback id={} from={} to={}", id, previous.get().name(), next.client().name())).value());
+        } catch (OrderedProviderFailover.Exhausted exhausted) {
+            throw new EmbeddingUnavailableException("Embedding providers unavailable or time budget exhausted", exhausted.getCause());
+        } catch (ProviderExecution.BudgetExpired exhausted) {
+            throw new EmbeddingUnavailableException("Embedding time budget exhausted", exhausted);
         }
-        throw new EmbeddingUnavailableException("Embedding providers unavailable or time budget exhausted", last);
     }
 
-    private OllamaApi api(Provider target, Duration readTimeout, long deadline) {
-        long remaining = Math.min((deadline - System.nanoTime()) / 1_000_000,
-                RagProgress.embeddingTimeLeft(streamTimeout));
-        if (remaining < 2) throw new EmbeddingUnavailableException("Embedding time budget exhausted");
-        long connect = Math.min(config.connectTimeout().toMillis(), remaining / 2);
-        var http = new SimpleClientHttpRequestFactory();
-        http.setConnectTimeout(Duration.ofMillis(connect));
-        http.setReadTimeout(Duration.ofMillis(Math.min(readTimeout.toMillis(), remaining - connect)));
+    private OllamaApi api(Provider target, Duration readTimeout) {
+        // The outer scope already combines the embedding and remaining SSE budgets.
         return OllamaApi.builder().baseUrl(target.baseUrl())
                 .responseErrorHandler(new org.springframework.web.client.DefaultResponseErrorHandler())
-                .restClientBuilder(RestClient.builder().requestFactory(http)).build();
+                .restClientBuilder(RestClient.builder().requestFactory(
+                        ProviderExecution.http(config.connectTimeout(), readTimeout))).build();
     }
 
     private void validate(EmbeddingResponse response, int count) {
@@ -187,27 +180,14 @@ public final class EmbeddingProviderRouter {
     }
 
     private static void checkCancellation(Throwable failure) {
-        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
-            if (cause instanceof CancellationException) throw (CancellationException) cause;
-            if (cause instanceof InterruptedException || cause instanceof ClosedByInterruptException
-                    || cause instanceof InterruptedIOException && !(cause instanceof SocketTimeoutException)) {
-                Thread.currentThread().interrupt();
-                throw new CancellationException("Embedding cancelled");
-            }
-        }
+        ProviderExecution.checkCancellation(failure);
         RagProgress.checkEmbeddingCancellation();
     }
     private static boolean recoverable(RuntimeException failure) {
-        if (failure instanceof RestClientResponseException http) return RECOVERABLE.contains(http.getStatusCode().value());
-        if (!(failure instanceof RestClientException)) return false;
-        boolean transport = false;
-        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
-            if (cause instanceof SSLException) return false;
-            transport |= cause instanceof SocketTimeoutException || cause instanceof SocketException || cause instanceof EOFException;
-        }
-        return transport;
+        return ProviderExecution.recoverable(failure);
     }
     private static boolean timedOut(Throwable failure) {
+        if (failure instanceof ProviderExecution.BudgetExpired) return true;
         if (failure instanceof RestClientResponseException http && http.getStatusCode().value() == 408) return true;
         for (Throwable cause = failure; cause != null; cause = cause.getCause())
             if (cause instanceof SocketTimeoutException) return true;

@@ -18,6 +18,10 @@ class GenerationRouterTest {
     private final GenerationRouter router = new GenerationRouter(
             new GenerationRouter.Target(new GenerationRouter.Provider("PC", "http://pc", "preferred"), pc, pcUp::get),
             new GenerationRouter.Target(new GenerationRouter.Provider("Laptop", "http://laptop", "fallback"), laptop, laptopUp::get));
+    @org.junit.jupiter.api.BeforeEach void responses() {
+        var answer = new ChatResponse(List.of(new Generation(new AssistantMessage("Answer [S1]"))));
+        when(pc.call(any(Prompt.class))).thenReturn(answer); when(laptop.call(any(Prompt.class))).thenReturn(answer);
+    }
     private final Prompt prompt = new Prompt("Evidence and original question");
 
     @Test void prefersPcAndDoesNotFallbackForAValidResponse() {
@@ -38,15 +42,15 @@ class GenerationRouterTest {
         verify(pc).call(prompt);
     }
     @Test void reusesSamePromptIfGenerationFailsAfterProbe() {
-        when(pc.call(prompt)).thenThrow(new IllegalStateException("connection lost"));
+        when(pc.call(prompt)).thenThrow(new org.springframework.web.client.ResourceAccessException("unavailable", new java.net.ConnectException()));
         router.call(prompt);
         verify(pc).call(prompt);
         verify(laptop).call(prompt);
         assertThat(router.lastUsed().model()).isEqualTo("fallback");
     }
     @Test void bothGenerationFailuresProduceControlled503() {
-        when(pc.call(prompt)).thenThrow(new IllegalStateException("disconnected"));
-        when(laptop.call(prompt)).thenThrow(new IllegalStateException("disconnected"));
+        when(pc.call(prompt)).thenThrow(new org.springframework.web.client.ResourceAccessException("unavailable", new java.net.ConnectException()));
+        when(laptop.call(prompt)).thenThrow(new org.springframework.web.client.ResourceAccessException("unavailable", new java.net.ConnectException()));
         assertThatThrownBy(() -> router.call(prompt)).isInstanceOfSatisfying(ResponseStatusException.class,
                 ex -> assertThat(ex.getStatusCode().value()).isEqualTo(503));
     }
@@ -55,5 +59,21 @@ class GenerationRouterTest {
         assertThatThrownBy(() -> router.call(prompt)).isInstanceOfSatisfying(ResponseStatusException.class,
                 ex -> assertThat(ex.getStatusCode().value()).isEqualTo(503));
         verifyNoInteractions(pc, laptop);
+    }
+    @Test void remoteInTheMiddleIsUsedBeforeTheLastLocalAndCanFailOverToIt() {
+        var remoteUp = new AtomicBoolean(true);
+        var remote = mock(ChatModel.class);
+        var response = new ChatResponse(List.of(new Generation(new AssistantMessage("remote"))));
+        when(remote.call(prompt)).thenReturn(response);
+        var ordered = new GenerationRouter(List.of(
+                new GenerationRouter.Target(new GenerationRouter.Provider("PC", "http://pc", "primary"), pc, () -> false),
+                new GenerationRouter.Target(new GenerationRouter.Provider("OpenAI", "https://api.openai.com/v1", "remote"), remote, remoteUp::get),
+                new GenerationRouter.Target(new GenerationRouter.Provider("LP", "http://lp", "backup"), laptop, () -> true)));
+        assertThat(ordered.call(prompt)).isSameAs(response);
+        verifyNoInteractions(laptop);
+        remoteUp.set(false);
+        ordered.call(prompt);
+        verify(laptop).call(prompt);
+        assertThat(ordered.lastUsed().name()).isEqualTo("LP");
     }
 }

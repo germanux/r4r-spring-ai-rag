@@ -29,8 +29,8 @@ spring:
 
 r4r:
   rag:
-    openai:
-      enabled: false
+    audit:
+      providers: []
     retrieval:
       top-k: 5
       min-score: 0.63

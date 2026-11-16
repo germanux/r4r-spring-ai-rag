@@ -111,7 +111,8 @@ class KnowledgeIngestionCliProcessIT {
         args.add("-Dr4r.rag.vector.primary=pgvector");
         args.add("-Dr4r.rag.vector.failover-enabled=false");
         args.add("-Dr4r.rag.vector.s3vectors.enabled=false");
-        args.add("-Dr4r.rag.openai.enabled=false");
+        args.add("-DRAG_AUDIT_PROVIDERS=");
+        args.add("-DRAG_GENERATION_PROVIDERS=http://127.0.0.1:1|offline|100ms");
         args.add("-Dr4r.rag.warmup.on-startup=false");
         args.add("-Dr4r.catalog-on-startup=false");
         args.add("-Dr4r.knowledge.root=" + corpus.toAbsolutePath());
