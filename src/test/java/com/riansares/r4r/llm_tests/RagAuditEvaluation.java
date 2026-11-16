@@ -120,10 +120,29 @@ final class RagAuditEvaluation {
         synchronized void save(ObjectNode record) throws java.io.IOException {
             initialize();
             record.put("runId", id);
-            Files.writeString(directory.resolve("%s-%02d.json".formatted(record.path("language").asText(), record.path("number").asInt())),
-                    JSON.writerWithDefaultPrettyPrinter().writeValueAsString(record) + "\n", StandardOpenOption.CREATE_NEW);
+            if (records.stream().anyMatch(row -> row.path("language").equals(record.path("language"))
+                    && row.path("number").equals(record.path("number"))))
+                throw new FileAlreadyExistsException("Case already recorded in " + id);
             records.add(record);
-            Files.writeString(directory.resolve("summary.json"), JSON.writerWithDefaultPrettyPrinter().writeValueAsString(summary()) + "\n");
+            try {
+                var payload = JSON.createObjectNode().put("runId", id);
+                payload.set("cases", JSON.valueToTree(records));
+                writeSnapshot("results.json", payload);
+                writeSnapshot("summary.json", summary());
+            } catch (java.io.IOException failure) {
+                records.remove(records.size() - 1);
+                throw failure;
+            }
+        }
+        private void writeSnapshot(String name, JsonNode contents) throws java.io.IOException {
+            Path pending = directory.resolve(name + ".tmp");
+            try {
+                Files.writeString(pending, JSON.writerWithDefaultPrettyPrinter().writeValueAsString(contents) + "\n");
+                try { Files.move(pending, directory.resolve(name), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE); }
+                catch (AtomicMoveNotSupportedException unsupported) {
+                    Files.move(pending, directory.resolve(name), StandardCopyOption.REPLACE_EXISTING);
+                }
+            } finally { Files.deleteIfExists(pending); }
         }
         synchronized ObjectNode summary() {
             var result = JSON.createObjectNode(); result.put("runId", id).put("total", records.size());

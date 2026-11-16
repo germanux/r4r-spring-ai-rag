@@ -159,9 +159,10 @@ class CaptureEvaluationTest(unittest.TestCase):
                 patch('builtins.print'):
             collect(args)
             run = Path(directory) / 'docs/evaluation/runs/simulated'
-            spanish = json.loads((run / 'es-01.json').read_text())
-            english = json.loads((run / 'en-01.json').read_text())
+            payload = json.loads((run / 'results.json').read_text())
+            spanish, english = payload['cases']
             summary = json.loads((run / 'summary.json').read_text())
+            self.assertEqual(['results.json', 'summary.json'], sorted(path.name for path in run.iterdir()))
             self.assertEqual('ANSWERED', spanish['httpResponse']['status'])
             self.assertEqual('PARTIAL', spanish['audit']['effectiveStatus'])
             self.assertEqual('ERROR', english['audit']['outcome'])
@@ -206,12 +207,14 @@ class CaptureEvaluationTest(unittest.TestCase):
                 patch('time.sleep') as sleep, patch('builtins.print'):
             collect(args)
             run = Path(directory) / 'docs/evaluation/runs/simulated-70'
+            payload = json.loads((run / 'results.json').read_text())
             summary = json.loads((run / 'summary.json').read_text())
             self.assertEqual(70, summary['total'])
             self.assertEqual({'PASS': 70}, summary['ragChecks'])
             self.assertEqual(0, summary['auditFailures'])
             self.assertEqual(10, summary['auditSkipped'])
-            self.assertEqual(71, len(list(run.glob('*.json'))))
+            self.assertEqual(70, len(payload['cases']))
+            self.assertEqual(['results.json', 'summary.json'], sorted(path.name for path in run.iterdir()))
         self.assertEqual(70, len(queries))
         self.assertEqual(60, len(audit_calls))
         self.assertEqual(69, sleep.call_count)

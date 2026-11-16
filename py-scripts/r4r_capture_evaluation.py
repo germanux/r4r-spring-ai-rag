@@ -201,10 +201,8 @@ def collect(args):
     captures = Path(args.capture_dir).resolve() if args.capture_dir else None
     run = ROOT / 'docs/evaluation/runs' / args.run_id
     run.mkdir(parents=True, exist_ok=False)
-    audit_dir = ROOT / 'docs/evaluation/audit' / args.run_id
-    if captures:
-        audit_dir.mkdir(parents=True, exist_ok=False)
     rows = []
+    records = []
     for index, case in enumerate(selected):
         if index:
             time.sleep(2)
@@ -242,10 +240,8 @@ def collect(args):
                       ragOutcome='FAIL' if errors else 'PASS', ragErrors=errors)
         if capture is not None:
             record['capture'] = capture
-        filename = f"{case['lang']}-{case['number']:02d}"
-        (run / (filename + '.json')).write_text(json.dumps(record, ensure_ascii=False, indent=2) + '\n')
-        if capture is not None:
-            (audit_dir / (filename + '.txt')).write_text(audit_text(record))
+            record['auditText'] = audit_text(record)
+        records.append(record)
         rows.append(dict(caseId=case['caseId'], number=case['number'], language=case['lang'],
                          status=response.get('status', 'ERROR'), generationInvoked=capture['generationInvoked'] if capture else None,
                          chunks=len(capture['chunks']) if capture else None,
@@ -253,7 +249,11 @@ def collect(args):
                          provider=response.get('provider'), httpLatencyMs=elapsed, ragOutcome=record['ragOutcome'],
                          audit={key: value for key, value in review.items() if key != 'response'}))
         totals = evaluation_summary(rows)
-        (run / 'summary.json').write_text(json.dumps(dict(runId=args.run_id, cases=rows, **totals), ensure_ascii=False, indent=2) + '\n')
+        for name, payload in (('results.json', dict(runId=args.run_id, cases=records)),
+                              ('summary.json', dict(runId=args.run_id, **totals))):
+            pending = run / (name + '.tmp')
+            pending.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n')
+            pending.replace(run / name)
         print(f"Respuesta: {response['answer'] or '(vacía)'}\nEstado RAG: {response['status']} | HTTP: {elapsed:.0f}ms", flush=True)
         print('AUDIT: ' + json.dumps(rows[-1]['audit'], ensure_ascii=False), flush=True)
     print('RAG + AUDIT SUMMARY: ' + json.dumps(evaluation_summary(rows), ensure_ascii=False), flush=True)

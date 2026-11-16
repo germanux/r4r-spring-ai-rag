@@ -3,12 +3,19 @@
 La auditoría pública opcional se describe en [Auditoría posterior del RAG](../operations/rag-audit.md).
 La captura a disco de este documento sigue siendo explícita e independiente de esa funcionalidad.
 
-- `runs/<run-id>/`: JSON de cada petición seleccionada y `summary.json`.
-- `audit/<run-id>/`: un `.txt` por caso, listo para Ollama. Incluye pregunta,
-  respuesta entregada, estado y **todos** los chunks suministrados al generador.
-  No contiene valoraciones previas ni el estado esperado del test.
+- `runs/<run-id>/results.json`: todos los casos de la ejecución, con `runId`
+  y `cases`. Cada caso conserva pregunta, respuesta completa, proveedor, tiempos
+  y resultado de auditoría.
+- `runs/<run-id>/summary.json`: resumen agregado separado. Son dos JSON en total.
+- Con captura explícita, cada caso incorpora `capture` y `auditText`, listo para
+  Ollama e incluyendo todos los chunks suministrados al generador. No se crean
+  ficheros adicionales por pregunta. No contiene valoraciones previas ni el
+  estado esperado del test.
+- Los resultados se actualizan tras cada caso mediante sustitución de los ficheros
+  temporales, conservando lo completado si se interrumpe la batería. Los formatos
+  por caso y `.txt` mencionados en ejemplos históricos corresponden a ejecuciones antiguas.
 
-Los números de archivo son las posiciones actuales de las preguntas; cada JSON
+Los números de los casos son las posiciones actuales de las preguntas; cada caso
 conserva también su `caseId` original de `questions-es.json` / `questions-en.json`.
 Estos bancos siguen siendo la única fuente de preguntas del exportador.
 
@@ -118,7 +125,7 @@ ausencia de evidencias en la respuesta pública y ausencia de juicios previos en
 
 `RagLiveQuestionsIT` y `RagLiveEnglishQuestionsIT` mantienen sus comprobaciones RAG.
 Después de cada consulta llaman al auditor sólo si existe `auditId`. Guardan el par
-RAG/auditoría y un `summary.json` en `runs/<run-id>/`. Un fallo del auditor no falla
+RAG/auditoría en `runs/<run-id>/results.json` y su resumen en `summary.json`. Un fallo del auditor no falla
 el test RAG; un fallo de las comprobaciones RAG sigue fallando como antes.
 
 Selección por **caseId**, no por posición (por ejemplo, `case-23` ocupa la posición 28):

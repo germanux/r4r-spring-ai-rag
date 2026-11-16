@@ -88,7 +88,7 @@ class RagAuditEvaluationTest {
         verify(client, times(5)).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
     }
 
-    @Test void writesPairedResultsAndSummaryWithoutMutatingOriginalStatus() throws Exception {
+    @Test void writesCombinedCasesAndSeparateSummaryWithoutMutatingOriginalStatus() throws Exception {
         var run = new RagAuditEvaluation.Run(directory, "simulated");
         var row = json.createObjectNode().put("caseId", "case-01").put("number", 1).put("language", "es")
                 .put("httpLatencyMs", 100).put("ragOutcome", "PASS");
@@ -96,12 +96,23 @@ class RagAuditEvaluationTest {
         row.set("audit", json.createObjectNode().put("outcome", "COMPLETED").put("proposedDowngrade", true)
                 .put("appliedDowngrade", true).put("httpLatencyMs", 50).put("durationMs", 40));
         run.save(row);
-        assertThat(Files.readString(directory.resolve("simulated/es-01.json"))).doesNotContain(token);
+        Path output = directory.resolve("simulated/results.json");
+        assertThat(Files.readString(output)).doesNotContain(token);
         var summary = json.readTree(directory.resolve("simulated/summary.json").toFile());
         assertThat(summary.path("ragStatuses").path("ANSWERED").asInt()).isEqualTo(1);
         assertThat(summary.path("appliedDowngrades").asInt()).isEqualTo(1);
         assertThat(summary.path("meanRagHttpMs").asDouble()).isEqualTo(100);
         assertThat(summary.path("meanAuditHttpMs").asDouble()).isEqualTo(50);
+        run.save(row.deepCopy().put("language", "en").put("httpLatencyMs", 300));
+        var payload = json.readTree(output.toFile());
+        assertThat(payload.path("cases").size()).isEqualTo(2);
+        assertThat(payload.path("cases").get(1).path("httpResponse").path("answer").asText()).isEqualTo("Original answer [S1].");
+        assertThat(json.readTree(directory.resolve("simulated/summary.json").toFile()).path("total").asInt()).isEqualTo(2);
+        assertThat(json.readTree(directory.resolve("simulated/summary.json").toFile()).path("meanRagHttpMs").asDouble()).isEqualTo(200);
+        try (var files = Files.list(directory.resolve("simulated"))) {
+            assertThat(files.map(path -> path.getFileName().toString()).toList()).containsExactlyInAnyOrder("results.json", "summary.json");
+        }
+        assertThatThrownBy(() -> run.save(row)).isInstanceOf(FileAlreadyExistsException.class);
         assertThatThrownBy(() -> new RagAuditEvaluation.Run(directory, "simulated").initialize())
                 .isInstanceOf(FileAlreadyExistsException.class);
     }

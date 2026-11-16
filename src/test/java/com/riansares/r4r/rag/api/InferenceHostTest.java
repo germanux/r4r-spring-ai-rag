@@ -5,6 +5,12 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class InferenceHostTest {
+    @Test void nasUsesDeclaredCpuAndRamWithoutInventingAGpu() {
+        var nas = InferenceHost.identify("http://192.168.1.203:11434", "qwen3-embedding:0.6b");
+        assertThat(nas.cpu()).isEqualTo("Dual-core · 2 GHz");
+        assertThat(nas.ram()).isEqualTo("6 GB");
+        assertThat(nas.gpu()).isNull();
+    }
     @Test
     void endpointTakesPriorityOverModel() {
         assertThat(InferenceHost.identify("http://192.168.1.209:11434", "qwen3:8b").type()).isEqualTo("laptop");

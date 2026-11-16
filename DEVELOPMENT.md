@@ -51,6 +51,12 @@ históricos recogidos más abajo:
 - Commits en inglés, de una a tres líneas y con el formato convencional existente.
   Agrupar por bloques coherentes y hacer primero el commit pendiente cuando se
   solicite. No hacer push ni desplegar sin autorización expresa.
+- Evaluaciones RAG: exactamente dos JSON por ejecución: `summary.json` separado
+  y `results.json` con todos los casos completos en `cases`. Actualizar ambos tras
+  cada consulta; no generar un JSON por pregunta ni mezclar el resumen dentro de
+  los resultados. Java y Python usan el mismo formato.
+- Hardware declarado del NAS: 6 GB de RAM y CPU de dos núcleos a 2 GHz. No inventar
+  modelo de procesador ni GPU; la ausencia de salida de vídeo no certifica su ausencia.
 - Privacidad del formulario: una línea discreta y enlace válido también desde
   el NAS; sin casillas ni explicaciones legales extensas. Mantener oposición y
   supresión accesibles desde la política. Athagon sin GA ni banner analítico;
