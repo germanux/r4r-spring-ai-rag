@@ -61,6 +61,10 @@ class ComposeConfigurationTest(unittest.TestCase):
         self.assertEqual(api['environment']['RAG_PG_RECOVERY_INTERVAL'], '12s')
         self.assertEqual(api['environment']['RAG_PG_CONNECTION_TIMEOUT'], '2s')
         self.assertEqual(api['environment']['RAG_PG_SOCKET_TIMEOUT'], '5s')
+        self.assertEqual(api['environment']['SERVER_FORWARD_HEADERS_STRATEGY'], 'none')
+        self.assertEqual(api['environment']['RAG_API_TRUST_PROXY_HEADERS'], 'true')
+        self.assertEqual(api['environment']['RAG_API_TRUSTED_PROXY_ADDRESSES'], '172.20.0.6')
+        self.assertEqual(api['environment']['RAG_USAGE_SECURITY_ENABLED'], 'true')
         self.assertEqual(api['environment']['RAG_EMBEDDING_CONNECT_TIMEOUT'], '400ms')
         self.assertEqual(api['environment']['RAG_EMBEDDING_PROBE_TIMEOUT'], '600ms')
         self.assertIn('209:11434|qwen3-embedding:0.6b|1500ms', api['environment']['RAG_EMBEDDING_PROVIDERS'])
@@ -101,6 +105,7 @@ class ComposeConfigurationTest(unittest.TestCase):
             ['docker', 'compose', '--env-file', empty_env.name, 'config', '--no-env-resolution', '--format', 'json'],
             cwd=fixture, env=env, capture_output=True, text=True, check=True)
         default_api = json.loads(defaults.stdout)['services']['api']
+        self.assertEqual(default_api['environment']['RAG_API_TRUSTED_PROXY_ADDRESSES'], '')
         self.assertEqual(default_api['environment']['RAG_TITAN_ENABLED'], 'false')
         self.assertEqual(default_api['environment']['RAG_EMBEDDING_CONNECT_TIMEOUT'], '400ms')
         self.assertEqual(default_api['environment']['RAG_TITAN_MIN_SIMILARITY'], '')
