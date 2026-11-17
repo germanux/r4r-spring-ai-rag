@@ -16,17 +16,28 @@ public final class ClientNetwork {
     public ClientNetwork(@Value("${r4r.api-security.trusted-proxy-addresses:}") String peers,
                          @Value("${r4r.api-security.trust-proxy-headers:false}") boolean enabled) {
         this.peers = new HashSet<>();
-        for (String peer : peers.split(",")) if (!peer.isBlank()) this.peers.add(peer.trim());
+        for (String peer : peers.split(",")) {
+            if (peer.isBlank()) continue;
+            String address = literal(peer.trim());
+            if (address == null || "0.0.0.0".equals(address) || "0:0:0:0:0:0:0:0".equals(address))
+                throw new IllegalArgumentException("Trusted proxies must be individual IP literals; no wildcard, CIDR or hostname");
+            this.peers.add(address);
+        }
         this.enabled = enabled;
     }
     public Details resolve(HttpServletRequest request) {
         if (request == null) return new Details(null,null);
         String address = literal(request.getRemoteAddr()), country = null;
-        if (enabled && peers.contains(request.getRemoteAddr())) {
-            String asserted = literal(request.getHeader("CF-Connecting-IP"));
+        if (enabled && peers.contains(address)) {
+            String asserted = literal(singleHeader(request, "CF-Connecting-IP"));
+            // Cloudflare Pseudo IPv4 "Overwrite Headers" preserves the real IPv6 here.
+            if (asserted != null && !asserted.contains(":") && Integer.parseInt(asserted.split("\\.")[0]) >= 240) {
+                String ipv6 = literal(singleHeader(request, "CF-Connecting-IPv6"));
+                asserted = ipv6 != null && ipv6.contains(":") ? ipv6 : asserted;
+            }
             if (asserted != null) {
                 address = asserted;
-                String code = request.getHeader("CF-IPCountry");
+                String code = singleHeader(request, "CF-IPCountry");
                 if (code != null && COUNTRIES.contains(code)) country = code;
             }
         }
@@ -52,6 +63,12 @@ public final class ClientNetwork {
                     || address.isLinkLocalAddress() || address.isMulticastAddress()) return new Details(null,null);
             return details;
         } catch (java.net.UnknownHostException ignored) { return new Details(null,null); }
+    }
+    private static String singleHeader(HttpServletRequest request, String name) {
+        var values = request.getHeaders(name);
+        if (values == null || !values.hasMoreElements()) return null;
+        String value = values.nextElement();
+        return values.hasMoreElements() ? null : value;
     }
     static String literal(String value) {
         if (value == null || value.length()>45 || !value.matches("[0-9a-fA-F:.]+")) return null;

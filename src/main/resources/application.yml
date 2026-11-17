@@ -1,3 +1,7 @@
+# Preserve the socket peer for the explicit Cloudflare trust check; never rewrite it from XFF.
+server:
+  forward-headers-strategy: none
+
 spring:
   config:
     # Later imports win. The private file is optional and never versioned.
@@ -114,7 +118,7 @@ r4r:
     # true = un POST sin Origin (por ejemplo curl/Postman sin cabecera Origin) recibe 403.
     require-origin: ${RAG_API_REQUIRE_ORIGIN}
     # Activar solo detrás de Cloudflare/reverse proxy de confianza; entonces se usa
-    # CF-Connecting-IP y, como fallback, X-Forwarded-For para limitar por IP real.
+    # CF-Connecting-IP (o IPv6 original de Cloudflare) desde un peer autorizado. Nunca XFF.
     trust-proxy-headers: ${RAG_API_TRUST_PROXY_HEADERS}
     trusted-proxy-addresses: ${RAG_API_TRUSTED_PROXY_ADDRESSES:}
     # Cota de memoria para IP activas dentro de la ventana del rate limit.

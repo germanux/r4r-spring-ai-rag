@@ -149,5 +149,13 @@ public class AssistantUsage {
             } catch (RuntimeException ignored) { log.warn("Assistant usage database write failed; record omitted"); }
         });
     }
-    @PreDestroy public void close() { writer.shutdownNow(); }
+    @PreDestroy public void close() {
+        writer.shutdown();
+        try {
+            if (!writer.awaitTermination(3, TimeUnit.SECONDS)) writer.shutdownNow();
+        } catch (InterruptedException interrupted) {
+            writer.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
 }

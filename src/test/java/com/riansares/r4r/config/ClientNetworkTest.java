@@ -32,4 +32,38 @@ class ClientNetworkTest {
         assertNull(n.publicDetails(request("10.0.0.2","2001:db8::1","ES")).address());
         assertNull(new ClientNetwork("10.0.0.2",false).publicDetails(request("10.0.0.2","8.8.8.8","US")).address());
     }
+    @Test void missingMalformedAndRepeatedHeadersNeverInventAnAddressOrCountry() {
+        var n = new ClientNetwork("172.20.0.6", true);
+        for (String value : new String[]{null, "8.8.8.8,1.1.1.1", "bad", "8.8.8.8:443"}) {
+            var result = n.publicDetails(request("172.20.0.6", value, "ES"));
+            assertNull(result.address()); assertNull(result.country());
+        }
+        var duplicate = request("172.20.0.6", "8.8.8.8", "ES");
+        duplicate.addHeader("CF-Connecting-IP", "1.1.1.1");
+        assertNull(n.publicDetails(duplicate).address());
+        var duplicateCountry = request("172.20.0.6", "8.8.8.8", "ES");
+        duplicateCountry.addHeader("CF-IPCountry", "IE");
+        assertNull(n.publicDetails(duplicateCountry).country());
+        assertNull(n.publicDetails(request("172.20.0.6", "8.8.8.8", "T1")).country());
+    }
+    @Test void equivalentIpv6ProxyLiteralsMatchWithoutAHostnameLookup() {
+        var n = new ClientNetwork("fd00::2", true);
+        var result = n.publicDetails(request("fd00:0:0:0:0:0:0:2", "2001:4860:4860::8888", "IE"));
+        assertEquals("2001:4860:4860:0:0:0:0:8888", result.address());
+        assertEquals("IE", result.country());
+    }
+    @Test void preservesOriginalIpv6WhenCloudflareOverwritesItsIpv4Header() {
+        var n = new ClientNetwork("172.20.0.6", true);
+        var r = request("172.20.0.6", "240.1.2.3", "IE");
+        r.addHeader("CF-Connecting-IPv6", "2606:4700:4700::1111");
+        assertEquals("2606:4700:4700:0:0:0:0:1111", n.publicDetails(r).address());
+        assertEquals("IE", n.publicDetails(r).country());
+        r.setRemoteAddr("172.20.0.1");
+        assertNull(n.publicDetails(r).address());
+        assertNull(n.publicDetails(r).country());
+    }
+    @Test void rejectsWildcardSubnetAndHostnameProxyConfiguration() {
+        for (String peer : new String[]{"0.0.0.0/0", "172.20.0.0/16", "*", "cloudflared", "0.0.0.0", "::"})
+            assertThrows(IllegalArgumentException.class, () -> new ClientNetwork(peer, true));
+    }
 }
