@@ -13,6 +13,9 @@ for site_root in "$ATHAGON_STATIC" "$COMMERCIAL_STATIC"; do
     exit 1
   }
 done
+# Keep the original commercial stylesheet in sync, without reimplementing it.
+mkdir -p "$ROOT/frontend/public/assets/riansares"
+cp "$COMMERCIAL_STATIC/css/home-blueprint.css" "$ROOT/frontend/public/assets/riansares/home-blueprint.css"
 ATHAGON_DEST="$ATHAGON_STATIC/r4r-rag"
 cd "$ROOT/frontend"
 if [[ ! -x node_modules/.bin/ng || ! -d node_modules/playwright ]]; then npm ci --no-audit --no-fund; fi
@@ -39,6 +42,7 @@ for destination in "$ATHAGON_DEST" "$COMMERCIAL_STATIC/asistente-ia"; do
   test -s "$destination/docs/catalogue.json"
   printf 'Frontend copied to %s\n' "$destination"
 done
+node "$ROOT/frontend/prepare-commercial-frontend.mjs" "$COMMERCIAL_STATIC/asistente-ia"
 cp "$ROOT/frontend/public/privacy-consent.js" "$ATHAGON_STATIC/privacy-consent.js"
 cp "$ROOT/frontend/public/privacy-consent.js" "$COMMERCIAL_STATIC/privacy-consent.js"
 

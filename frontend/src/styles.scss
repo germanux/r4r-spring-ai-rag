@@ -1258,3 +1258,5 @@ html.embedded-assistant { scroll-behavior: auto; }
 .embedded-assistant .demo-grid { grid-template-columns: 1fr; }
 .embedded-assistant .response-panel { min-height: 0; }
 .embedded-assistant .answer-text, .embedded-assistant .result-content { max-height: none; overflow: visible; }
+
+@import "./commercial-assistant";

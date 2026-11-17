@@ -1,3 +1,4 @@
+import { isCommercialAssistant } from '../../../../core/presentation';
 import { PrivacyService } from '../../../../core/rag/privacy.service';
 import { Component, ChangeDetectionStrategy, inject, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -5,6 +6,7 @@ import { AssistantState } from '../../services/assistant-state.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({ selector: 'app-question-form', standalone: true, imports: [CommonModule], changeDetection: ChangeDetectionStrategy.OnPush, templateUrl: './question-form.html', styleUrl: './question-form.scss' })
 export class QuestionFormComponent {
+    readonly commercial = isCommercialAssistant();
     readonly privacy = inject(PrivacyService);
     readonly s = inject(AssistantState);
     readonly i = inject(I18nService);

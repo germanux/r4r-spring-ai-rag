@@ -1,9 +1,11 @@
+import { isCommercialAssistant } from '../../../../core/presentation';
 import { Component, ChangeDetectionStrategy, inject, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AssistantState } from '../../../rag/services/assistant-state.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({ selector: 'app-info-sections', standalone: true, imports: [CommonModule], changeDetection: ChangeDetectionStrategy.OnPush, templateUrl: './info-sections.html', styleUrl: './info-sections.scss' })
 export class InfoSectionsComponent implements AfterViewInit, OnDestroy {
+    readonly commercial = isCommercialAssistant();
     readonly s = inject(AssistantState);
     readonly i = inject(I18nService);
     opened: Record<string, boolean> = {};
@@ -24,6 +26,6 @@ export class InfoSectionsComponent implements AfterViewInit, OnDestroy {
         if (key === 'runtime')
             void this.s.runtime.load();
     } };
-    ngAfterViewInit() { window.addEventListener('hashchange', this.hash); setTimeout(this.hash, 0); }
+    ngAfterViewInit() { if (this.commercial) return; window.addEventListener('hashchange', this.hash); setTimeout(this.hash, 0); }
     ngOnDestroy() { window.removeEventListener('hashchange', this.hash); }
 }

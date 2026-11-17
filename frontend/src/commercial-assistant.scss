@@ -1,0 +1,35 @@
+/* Minimal selector adapters over the unmodified Riansares home-blueprint.css copy. */
+:root.commercial-assistant {
+  --text: var(--muted);
+  --panel: var(--white);
+  --panel-2: var(--paper);
+  --line-soft: var(--border);
+  --steel-dark: var(--blueprint);
+  --steel-deep: var(--blueprint-dark);
+  --radius: 8px;
+}
+.commercial-assistant {
+  .shell { width: min(1280px, calc(100% - 32px)); }
+  .site-header .brand { font-family: inherit; font-size: 1.1rem; letter-spacing: normal; }
+  .site-header .brand img { width: 52px; height: auto; }
+  .site-header select { color: var(--ink); background: var(--paper); border: 1px solid var(--border); padding: 8px; border-radius: 6px; }
+  .hero-shell { display: block; min-height: 0; padding: 40px 0; }
+  .hero h1 { color: var(--white); font-family: inherit; text-transform: none; max-width: none; font-size: clamp(1.8rem, 4vw, 2.6rem); letter-spacing: normal; }
+  .hero-lede { color: #e8dcc8; font-size: 1.05rem; }
+  .demo-section { padding: 16px 0 24px; }
+  .demo-grid { align-items: start; gap: 20px; }
+  .panel { border: 1px solid var(--line-soft); border-radius: 8px; box-shadow: none; }
+  .query-panel, .response-panel { min-height: 0; }
+  .response-panel { position: static; }
+  .btn.primary { color: var(--white); background: var(--terracotta); border-color: var(--terracotta-dark); box-shadow: none; }
+  .btn.ghost { color: var(--white); background: var(--blueprint); border-color: var(--blueprint-dark); }
+  .sample-card, .citation, .citations-head, .btn, .text-btn { border-radius: 6px; box-shadow: none; }
+  .mini-label { color: var(--white); background: var(--blueprint); }
+  .query-panel .panel-head > div { flex-wrap: wrap; }
+  .answer-box { border-left-color: var(--blueprint); background: transparent; border-radius: 0; }
+  .answer-text, .result-content { max-height: none; overflow: visible; }
+  .commercial-info { padding: 16px 0; }
+  .commercial-info h2 { font-size: 1.5rem; }
+  .commercial-info p { max-width: 85ch; }
+  .site-footer { margin-top: 24px; }
+}

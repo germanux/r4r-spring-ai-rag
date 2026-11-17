@@ -36,6 +36,36 @@ asistente; no autorizan cambios funcionales.
 - Conservar `results.json` y `summary.json`, con `runId` consistente con la carpeta.
   Una colisión de nombre debe impedir sobrescribir resultados existentes.
 
+## Presentación comercial — decisión del usuario del 2026-11-17
+
+- Esta decisión sustituye la restricción anterior de exportar solo una carpeta
+  comercial: ahora se preparan `dist/r4r-rag/` y `dist/asistente-ia/`.
+- Un solo Angular y backend. `/r4r-rag/` conserva la demo técnica de Athagon;
+  `/asistente-ia/` usa la marca y CSS originales de Riansares, con presentación
+  comercial, sin navegación Athagon ni paneles de hardware, modelos o JSON.
+- Conservar ejemplos rápidos, demo, tiempos, fuentes, revisión, «Cómo funciona»,
+  «Por qué puedes comprobarlo» y opciones de privacidad. No cambiar el RAG.
+- Quitar el espacio sobrante de la sección de portada sin tocar otras secciones.
+- En todas las variantes, revisión adicional como texto normal, sin desplegable;
+  omitirla si solo repite el indicador de referencias revisadas.
+- Aviso breve de almacenamiento visible junto a Opciones de privacidad, fuera del
+  desplegable y asociado al textarea. Conservar oposición, supresión y base jurídica.
+- No renderizar capturas ni desplegar automáticamente. Las copias locales preparadas
+  no autorizan publicar en NAS ni en las webs.
+
+## Ajuste comercial — decisión del usuario del 2026-11-17
+
+- Se acepta conservar la vista condicional existente en el mismo Angular; la petición
+  inicial del usuario era una versión nueva, no esa elección de arquitectura.
+- Copiar literalmente el CSS original `R4R.git/dist/css/home-blueprint.css` al
+  frontend y conservar el azul blueprint, fondo y paleta originales. Los ajustes
+  SCSS solo adaptan selectores del asistente; no sustituyen la hoja original.
+- Esta decisión sustituye la exportación técnica anterior a Riansares: eliminar
+  `R4R.git/dist/r4r-rag/` y no volver a copiarla desde el script. El enlace técnico
+  de la portada comercial apunta a `https://athagon.tech/r4r-rag/`.
+- Conservar `R4R.git/dist/asistente-ia/` para el asistente comercial. No renderizar
+  capturas ni publicar automáticamente.
+
 ## Alcance, autorización y forma de trabajar
 
 ### Decisiones vigentes del usuario: cambios mínimos, formato y validación

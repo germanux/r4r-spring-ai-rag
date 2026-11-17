@@ -1,3 +1,19 @@
+@if (commercial) {
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="/" aria-label="Riansares 4R - Inicio">
+        <img src="/img/logo-web-riansares-4R.png" alt="Logotipo de Riansares 4R">
+        <span>Riansares 4R</span>
+      </a>
+      <nav class="main-nav" [attr.aria-label]="i.t('page.main_navigation')">
+        <a href="/#trabajos">{{i.language()==='es'?'Trabajos':'Our work'}}</a>
+        <a href="/#servicios">{{i.language()==='es'?'Servicios':'Services'}}</a>
+        <a href="/#contacto">{{i.language()==='es'?'Contacto':'Contact'}}</a>
+        <select [value]="i.language()" (change)="s.language($any($event.target).value)" id="languageSelect" [attr.aria-label]="i.t('page.language')"><option value="es">ES</option><option value="en">EN</option></select>
+      </nav>
+    </div>
+  </header>
+} @else {
 <header class="site-header">
   <div class="shell nav-shell">
     <a class="brand" href="https://athagon.tech/" aria-label="A Athagon Labs">
@@ -16,3 +32,4 @@
   </div>
 </header>
 
+}

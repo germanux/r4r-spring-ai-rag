@@ -1,3 +1,4 @@
+import { isCommercialAssistant } from '../../../../core/presentation';
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { AssistantState } from '../../services/assistant-state.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
@@ -28,7 +29,7 @@ import { MarkdownPipe } from '../../pipes/markdown.pipe';
             <span id="elapsed" class="elapsed">{{s.response()?.capture?.duration || (s.duration()?(s.duration()/1000).toFixed(2)+' s':'')}}</span>
           </div>
           <div class="empty-state" id="emptyState" [hidden]="s.loading() || !!s.response() || !!s.error()">
-            <div class="empty-icon">RAG</div>
+            <div class="empty-icon">{{commercial ? '?' : 'RAG'}}</div>
             <h2>{{i.t('page.your_answer_will_appear_here')}}</h2>
           </div>
           <div
@@ -52,16 +53,17 @@ import { MarkdownPipe } from '../../pipes/markdown.pipe';
               <div class="block-head">
                 <button id="copyAnswerButton" type="button" class="text-btn" (click)="s.copy()">{{i.t(s.copied()?'copied':'copy')}}</button>
               </div>
+              @if (!commercial) {
               <p id="answerProvider" class="translation-note">{{s.provider()}}</p>
               @if(s.embeddingProvider()){
                 <p id="embeddingProvider" class="translation-note">Embeddings: {{s.embeddingProvider()}}</p>
               }
+              }
               <div id="answerText" class="answer-text" aria-live="off" [innerHTML]="(s.response()?.answer || (s.response()?.abstained?i.t('abstained'):''))|markdown"></div>
             </div>
-            <details class="audit-details" id="auditDetails" [hidden]="!auditDetail()">
-              <summary>{{i.t('auditDetails')}}</summary>
-              <p id="auditDetailText">{{auditDetail()}}</p>
-            </details>
+            @if (auditDetail()) {
+              <p class="audit-details" id="auditDetails"><strong>{{i.t('auditDetails')}}:</strong> <span id="auditDetailText">{{auditDetail()}}</span></p>
+            }
             <app-citations />
           </div>
           <app-rag-progress />
@@ -70,7 +72,13 @@ import { MarkdownPipe } from '../../pipes/markdown.pipe';
     `
 })
 export class AnswerPanelComponent {
+    readonly commercial = isCommercialAssistant();
     readonly s = inject(AssistantState);
     readonly i = inject(I18nService);
-    auditDetail() { return this.s.audit()?.note || this.s.response()?.capture?.auditor || ''; }
+    auditDetail() {
+        const detail = (this.s.audit()?.note || this.s.response()?.capture?.auditor || '').trim();
+        const normalize = (text: string) => text.replace(/[✓⚠.!…\s]/g, '').toLocaleLowerCase();
+        const badges = ['auditReviewed', 'auditChecking', 'auditInconclusive', 'auditUnavailable', 'auditDowngraded'];
+        return badges.some(key => normalize(this.i.t(key)) === normalize(detail)) ? '' : detail;
+    }
 }

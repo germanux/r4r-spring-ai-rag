@@ -1,3 +1,12 @@
+@if (commercial) {
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <a href="/">Riansares 4R</a>
+      <a href="/#contacto">{{i.language()==='es'?'Contacto':'Contact'}}</a>
+      <a [href]="privacy.policy()">{{i.language()==='es'?'Política de privacidad':'Privacy Policy'}}</a>
+    </div>
+  </footer>
+} @else {
 <footer class="footer">
   <div class="shell footer-row">
     <a href="https://athagon.tech/">ATHAGON LABS · Germán Caballero</a><a href="https://github.com/germanux/r4r-spring-ai-rag">GitHub</a><a [href]="privacy.policy()">Privacy &amp; cookies</a><span>{{ i.t('page.author') }}</span>
@@ -5,3 +14,4 @@
   </div>
 </footer>
 
+}

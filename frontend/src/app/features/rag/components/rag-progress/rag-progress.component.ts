@@ -1,3 +1,4 @@
+import { isCommercialAssistant } from '../../../../core/presentation';
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AssistantState } from '../../services/assistant-state.service';
@@ -20,6 +21,7 @@ import { ProgressEvent } from '../../../../core/rag/rag.models';
             </li>
           }
         </ol>
+        @if (!commercial) {
         <details
           id="progressDetails"
           class="query-telemetry"
@@ -45,9 +47,11 @@ import { ProgressEvent } from '../../../../core/rag/rag.models';
             }
           </ol>
         </details>
+        }
     `
 })
 export class RagProgressComponent {
+    readonly commercial = isCommercialAssistant();
     readonly s = inject(AssistantState);
     readonly i = inject(I18nService);
     stages() {

@@ -7,10 +7,9 @@
             <span class="api-state" id="apiState" hidden>{{ i.t('page.ready') }}</span>
           </div>
 
-          <p class="privacy-notice">{{i.language()==='es' ? 'Las preguntas y respuestas pueden guardarse para mejorar este asistente de IA.' : 'Questions and answers may be stored to improve this AI assistant.'}} <a [href]="privacy.policy()" target="_blank" rel="noopener">{{i.language()==='es'?'Política de privacidad':'Privacy Policy'}}</a></p>
           <label for="question" class="visually-hidden">{{ i.t('page.enter_a_question') }}</label>
           <textarea
-            id="question" [disabled]="s.loading() && !s.demo.active()" [class.is-demo-typing]="s.demo.active()" [value]="s.question()" (focus)="s.stopDemo()" (input)="s.edit($any($event.target).value)" (keydown.control.enter)="s.send()"
+            id="question" aria-describedby="rag-privacy-notice" [disabled]="s.loading() && !s.demo.active()" [class.is-demo-typing]="s.demo.active()" [value]="s.question()" (focus)="s.stopDemo()" (input)="s.edit($any($event.target).value)" (keydown.control.enter)="s.send()"
             rows="6"
             maxlength="700"
            
@@ -50,6 +49,7 @@
             </div>
           </div>
 
+          @if (!commercial) {
           <details class="endpoint-settings" id="endpointSettings" [hidden]="!s.developer">
             <summary>{{ i.t('page.demo_api_endpoint') }}</summary>
             <div class="endpoint-row">
@@ -62,5 +62,6 @@
               {{ i.t('page.this_setting_changes_the_endpoint_only_in_this_browser') }}
             </p>
           </details>
+          }
         </article>
 

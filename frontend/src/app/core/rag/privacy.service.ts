@@ -1,3 +1,4 @@
+import { isCommercialAssistant } from '../presentation';
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 interface CommercialAnalytics { open():void; withdraw():void; read():{analytics:boolean}; }
@@ -25,7 +26,7 @@ export class PrivacyService {
             : 'mailto:german.caballero.rguez@gmail.com';
     }
     policy() {
-        const commercial = location.hostname.includes('riansares')
+        const commercial = isCommercialAssistant() || location.hostname.includes('riansares')
             || new URLSearchParams(location.search).get('embed') === '1';
         return commercial
             ? 'https://riansares4r.com/politica-privacidad.html'

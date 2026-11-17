@@ -1,3 +1,4 @@
+import { isCommercialAssistant } from '../../../core/presentation';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { I18nService } from '../../../core/i18n/i18n.service';
@@ -27,7 +28,7 @@ export class AssistantState {
     readonly recorded = signal(false);
     readonly duration = signal(0);
     readonly copied = signal(false);
-    readonly developer = new URLSearchParams(location.search).get('dev') === '1';
+    readonly developer = !isCommercialAssistant() && new URLSearchParams(location.search).get('dev') === '1';
     private controller?: AbortController;
     private cycle = 0;
     readonly status = computed(() => this.audit()?.effectiveStatus || (this.response() ? statusOf(this.response()!) : 'ANSWERED'));

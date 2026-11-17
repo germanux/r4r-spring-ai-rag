@@ -1,8 +1,10 @@
+import { isCommercialAssistant } from '../../core/presentation';
 import { Component, ChangeDetectionStrategy, HostListener, ViewChild, ElementRef, inject, signal, effect } from '@angular/core';
 import { AssistantState } from '../../features/rag/services/assistant-state.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 @Component({ selector: 'app-header', standalone: true, changeDetection: ChangeDetectionStrategy.OnPush, templateUrl: './header.html', styleUrl: './header.scss' })
 export class HeaderComponent {
+    readonly commercial = isCommercialAssistant();
     readonly s = inject(AssistantState);
     readonly i = inject(I18nService);
     readonly menuOpen = signal(false);

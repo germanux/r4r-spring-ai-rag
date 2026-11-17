@@ -1,3 +1,18 @@
+@if (commercial) {
+  <section class="section commercial-info" id="como-funciona">
+    <div class="shell">
+      <h2>{{i.language()==='es'?'Cómo funciona':'How it works'}}</h2>
+      <p>{{i.language()==='es'?'Escribe tu duda sobre una reforma. El asistente consulta la documentación de Riansares 4R y prepara una respuesta con enlaces a las fuentes. Después revisa las referencias y señala las limitaciones que detecte.':'Ask a renovation question. The assistant consults Riansares 4R documentation and prepares an answer with links to its sources. It then reviews the references and highlights any limitations it detects.'}}</p>
+    </div>
+  </section>
+  <section class="section commercial-info" id="por-que-puedes-comprobarlo">
+    <div class="shell">
+      <h2>{{i.language()==='es'?'Por qué puedes comprobarlo':'Why you can check it'}}</h2>
+      <p>{{i.language()==='es'?'Puedes abrir las fuentes citadas y contrastar la respuesta. Si la documentación no basta, el asistente puede responder parcialmente o indicar que no dispone de información suficiente. La revisión automática también puede equivocarse.':'You can open the cited sources and check the answer. When the documentation is insufficient, the assistant may give a partial answer or explain that it lacks enough information. Automated review can also be wrong.'}}</p>
+      <p>{{i.language()==='es'?'La orientación no sustituye una visita profesional ni un presupuesto.':'This guidance does not replace a professional visit or a quotation.'}}</p>
+    </div>
+  </section>
+} @else {
   <section class="section concept-section" id="como-funciona">
     <div class="shell">
       <h2 class="section-heading"><button id="conceptToggle" (click)="toggle('concept')" class="section-toggle" type="button" [attr.aria-expanded]="opened['concept']" aria-controls="conceptContent"><span>{{ i.t('page.what_it_demonstrates') }}</span><span class="section-chevron" aria-hidden="true">⌄</span></button></h2>
@@ -109,3 +124,4 @@
   </section>
 
 
+}

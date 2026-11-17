@@ -1,3 +1,4 @@
+import { isCommercialAssistant } from '../presentation';
 import { correlationId } from './correlation-id';
 import { PrivacyService } from './privacy.service';
 import { Injectable, inject, signal } from '@angular/core';
@@ -11,7 +12,7 @@ export class RagApiService {
     readonly requestId = signal('');
     readonly viewId = correlationId();
     readonly base = signal('https://r4r-api.athagon.tech');
-    constructor() { this.privacy.noteView(this.viewId); if (new URLSearchParams(location.search).get('embed') === '1') return; try {
+    constructor() { this.privacy.noteView(this.viewId); if (isCommercialAssistant() || new URLSearchParams(location.search).get('embed') === '1') return; try {
         this.setBase(localStorage.getItem('r4r.apiBaseUrl') || this.base());
     }
     catch { } }

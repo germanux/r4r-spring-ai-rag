@@ -14,6 +14,7 @@ import { AnswerPanelComponent } from '../answer-panel/answer-panel.component';
               <app-question-form/>
               <app-answer-panel/>
             </div>
+            <p id="rag-privacy-notice" class="privacy-notice">{{s.i.language()==='es' ? 'Las preguntas y respuestas pueden guardarse para mejorar este asistente de IA.' : 'Questions and answers may be stored to improve this AI assistant.'}} <a [href]="s.api.privacy.policy()" target="_blank" rel="noopener">{{s.i.language()==='es'?'Política de privacidad':'Privacy Policy'}}</a></p>
             <details id="rag-privacy-controls" class="privacy-options">
               <summary>{{s.i.language()==='es'?'Opciones de privacidad':'Privacy options'}}</summary>
               <p>{{s.i.language()==='es'?'Puedes oponerte al registro de texto e IP en esta apertura sin dejar de usar el asistente. Se solicitará restringir las referencias recientes disponibles.':'You can object to text and IP recording during this opening and keep using the assistant. Restriction of available recent references will be requested.'}}</p>
