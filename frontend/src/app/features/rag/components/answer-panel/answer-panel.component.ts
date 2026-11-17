@@ -53,12 +53,6 @@ import { MarkdownPipe } from '../../pipes/markdown.pipe';
               <div class="block-head">
                 <button id="copyAnswerButton" type="button" class="text-btn" (click)="s.copy()">{{i.t(s.copied()?'copied':'copy')}}</button>
               </div>
-              @if (!commercial) {
-              <p id="answerProvider" class="translation-note">{{s.provider()}}</p>
-              @if(s.embeddingProvider()){
-                <p id="embeddingProvider" class="translation-note">Embeddings: {{s.embeddingProvider()}}</p>
-              }
-              }
               <div id="answerText" class="answer-text" aria-live="off" [innerHTML]="(s.response()?.answer || (s.response()?.abstained?i.t('abstained'):''))|markdown"></div>
             </div>
             @if (auditDetail()) {

@@ -79,6 +79,13 @@ asistente; no autorizan cambios funcionales.
 - No modificar modelos, embeddings, índices, auditoría o frontend salvo privacidad;
   no desplegar. Distinguir pruebas PostgreSQL locales de validación pública real.
 
+## Ubicación de metadatos — decisión del usuario del 2026-11-17
+
+- Eliminar las etiquetas de equipos, proveedores y modelos del bloque de respuesta.
+  Los detalles técnicos existentes ya contienen esa información: no añadir otra
+  copia ni modificar ese apartado. La vista comercial sigue sin panel técnico.
+- No alterar la pregunta enviada, generación, auditoría ni registro por este ajuste.
+
 ## Alcance, autorización y forma de trabajar
 
 ### Decisiones vigentes del usuario: cambios mínimos, formato y validación
