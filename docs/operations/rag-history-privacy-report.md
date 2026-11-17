@@ -238,3 +238,13 @@ en español; el formulario inglés también se valida en su vista completa del d
 Se comprueba el fallo/reintento de oposición fuera del formulario y el header de
 exclusión en consultas posteriores. No se cambió backend, migraciones ni base jurídica.
 Evidencias: `/tmp/r4r-clean-form-*-tests.log` y capturas `/tmp/r4r-clean-form-*.png`.
+
+## Activación de IP completa y país — 2026-11-17
+
+Se mantiene almacenamiento `inet` completo de IPv4/IPv6, sin hash ni truncado,
+separado de `country_code`. La configuración pública habilita cabeceras proxy y
+Compose pasa la allowlist concreta `172.20.0.6` identificada por el operador.
+La comprobación del salto activo y la aplicación al NAS están pendientes; no se
+ha desplegado. Políticas de ambas webs actualizadas para IP persistente por
+visita/consulta, geografía, acceso restringido, conservación manual y derechos.
+Validación detallada y condiciones de activación: [registro de red](usage-network-activation.md).

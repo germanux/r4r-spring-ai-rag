@@ -66,6 +66,19 @@ asistente; no autorizan cambios funcionales.
 - Conservar `R4R.git/dist/asistente-ia/` para el asistente comercial. No renderizar
   capturas ni publicar automáticamente.
 
+## IP completa y país — decisión del usuario del 2026-11-17
+
+- Activar registro persistente de IPv4/IPv6 públicas completas por visita y consulta,
+  salvo oposición o exclusión legal. No truncar, hashear ni descartar IP públicas
+  fiables por una preferencia de minimización.
+- Separar país para análisis geográfico técnico de preguntas (incluidos ES/IE) e IP
+  para seguridad/abuso/disponibilidad; no perfilar personas ni usar IP como visitante.
+- Confiar solo en peers autorizados comprobados, nunca NAS/pasarela/subred/comodines.
+  Compose debe transmitir la allowlist; no debilitar rate limiting ni imprimir datos.
+- Mantener conservación manual, revisión justificada y derechos, sin purgas automáticas.
+- No modificar modelos, embeddings, índices, auditoría o frontend salvo privacidad;
+  no desplegar. Distinguir pruebas PostgreSQL locales de validación pública real.
+
 ## Alcance, autorización y forma de trabajar
 
 ### Decisiones vigentes del usuario: cambios mínimos, formato y validación

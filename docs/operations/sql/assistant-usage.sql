@@ -36,3 +36,22 @@ WHERE restricted_at IS NULL AND client_ip IS NOT NULL ORDER BY occurred_at DESC 
 -- Explain gaps in retained text without collecting the excluded personal material.
 SELECT content_exclusion,count(*) FROM assistant_usage
 WHERE event_type='QUERY' AND restricted_at IS NULL GROUP BY content_exclusion;
+
+-- Geographic product/quality review: country is independent of full-IP security access.
+SELECT origin,country_code,count(*) AS questions,
+ count(*) FILTER (WHERE outcome='ABSTAINED') AS abstentions,
+ count(*) FILTER (WHERE outcome='ERROR') AS errors,
+ avg(total_duration_ms) AS mean_total_ms
+FROM assistant_usage WHERE event_type='QUERY' AND restricted_at IS NULL
+GROUP BY origin,country_code ORDER BY questions DESC;
+-- Operator-only texts by country; deliberately no client_ip in this geographic projection.
+SELECT id,occurred_at,origin,country_code,question,answer,model,outcome,effective_outcome,audit_result
+FROM assistant_usage WHERE event_type='QUERY' AND country_code IN ('ES','IE')
+ AND restricted_at IS NULL ORDER BY occurred_at DESC LIMIT 100;
+-- Activation check: missing reliable metadata stays NULL, never a guessed location.
+SELECT origin,network_basis,count(*) AS records,
+ count(client_ip) AS with_ip,count(country_code) AS with_country,
+ count(*) FILTER (WHERE family(client_ip)=4 AND masklen(client_ip)=32) AS full_ipv4,
+ count(*) FILTER (WHERE family(client_ip)=6 AND masklen(client_ip)=128) AS full_ipv6
+FROM assistant_usage WHERE occurred_at >= now()-interval '1 day'
+ AND restricted_at IS NULL GROUP BY origin,network_basis;
